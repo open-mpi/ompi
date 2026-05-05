@@ -13,6 +13,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2014-2015 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,8 +43,8 @@
  *           - communicator
  * Returns:  - MPI_SUCCESS or error code
  */
-int32_t ompi_datatype_sndrcv( const void *sbuf, int32_t scount, const ompi_datatype_t* sdtype,
-                              void *rbuf, int32_t rcount, const ompi_datatype_t* rdtype)
+int32_t ompi_datatype_sndrcv( const void *sbuf, size_t scount, const ompi_datatype_t* sdtype,
+                              void *rbuf, size_t rcount, const ompi_datatype_t* rdtype)
 {
     opal_convertor_t send_convertor, recv_convertor;
     struct iovec iov;
@@ -73,11 +74,11 @@ int32_t ompi_datatype_sndrcv( const void *sbuf, int32_t scount, const ompi_datat
         iov_count = 1;
         iov.iov_base = (IOVBASE_TYPE*)rbuf;
         iov.iov_len = scount * sdtype->super.size;
-        if( (int32_t)iov.iov_len > rcount ) iov.iov_len = rcount;
+        if( iov.iov_len > rcount ) iov.iov_len = rcount;
 
         opal_convertor_pack( &send_convertor, &iov, &iov_count, &max_data );
         OBJ_DESTRUCT( &send_convertor );
-        return ((max_data < (size_t)rcount) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
+        return ((max_data < rcount) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
     }
 
     /* If send packed. */
@@ -90,11 +91,11 @@ int32_t ompi_datatype_sndrcv( const void *sbuf, int32_t scount, const ompi_datat
         iov_count = 1;
         iov.iov_base = (IOVBASE_TYPE*)sbuf;
         iov.iov_len = rcount * rdtype->super.size;
-        if( (int32_t)iov.iov_len > scount ) iov.iov_len = scount;
+        if( iov.iov_len > scount ) iov.iov_len = scount;
 
         opal_convertor_unpack( &recv_convertor, &iov, &iov_count, &max_data );
         OBJ_DESTRUCT( &recv_convertor );
-        return (((size_t)scount > max_data) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
+        return ((scount > max_data) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
     }
 
     iov.iov_len = length = 64 * 1024;

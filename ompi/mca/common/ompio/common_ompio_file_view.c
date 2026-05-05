@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,8 +48,8 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
         ompi_datatype_destroy (&type);
         return MPI_ERR_INTERN;
     }
-    
-    ompi_datatype_set_args( type, 0, NULL, 0, NULL, 1, &oldtype, MPI_COMBINER_DUP );
+
+    ompi_datatype_set_args( type, 0, 0, NULL, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_DUP );
 
     *newtype = type;
     return OMPI_SUCCESS;

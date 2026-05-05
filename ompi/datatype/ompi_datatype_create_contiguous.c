@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,7 +25,7 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "mpi.h"
 
-int32_t ompi_datatype_create_contiguous( int count, const ompi_datatype_t* oldType,
+int32_t ompi_datatype_create_contiguous( size_t count, const ompi_datatype_t* oldType,
                                          ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;

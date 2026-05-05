@@ -21,6 +21,7 @@
 #                         All Rights reserved.
 # Copyright (c) 2021      Google, LLC. All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      Stony Brook University.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -55,6 +56,7 @@ headers = \
         bit_ops.h \
         clock_gettime.h \
         cmd_line.h \
+        count_disp_array.h \
         crc.h \
 	ethtool.h \
         error.h \

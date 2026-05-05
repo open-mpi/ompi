@@ -20,7 +20,7 @@ minor=1
 release=0
 
 # MPI Standard Compliance Level
-mpi_standard_version=3
+mpi_standard_version=4
 mpi_standard_subversion=1
 
 # OMPI required dependency versions.
