@@ -33,6 +33,5 @@ int MPI_T_event_get_num (int *num_event)
         return MPI_ERR_ARG;
     }
 
-    *num_event = 0;
-    return MPI_SUCCESS;
+    return mca_base_event_get_count (num_event);
 }
