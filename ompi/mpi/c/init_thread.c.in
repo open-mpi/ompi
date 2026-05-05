@@ -30,6 +30,7 @@
 
 #include "opal/util/show_help.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/ompi_hwpc_cxi_counters.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
@@ -96,6 +97,8 @@ PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, INT required,
     }
 
     SPC_INIT();
+
+    HWPC_CXI_INIT();
 
     ompi_hook_base_mpi_init_thread_bottom(argc, argv, required, provided);
 
