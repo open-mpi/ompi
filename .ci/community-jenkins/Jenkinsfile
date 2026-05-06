@@ -62,20 +62,25 @@ def prepare_check_stages() {
 	"--enable-ipv6",
 	"--enable-mca-dso"
     ]
+    // explicitly list the newest and oldest versions of GCC that are included
+    // in the distros listed below to try and give us good version coverage.
     def compilers = [
-	"gcc14",
-	"clang18"
+	"gcc9",
+	"gcc15",
+	"clang11",
+	"clang21"
     ]
     def platforms = [
-	"amazon_linux_2",
-	"amazon_linux_2-arm64",
 	"rhel8",
+	"rhel9",
+	"rhel10",
 	"amazon_linux_2023-arm64",
 	"amazon_linux_2023-x86_64",
 	"freebsd_15",
-	"ubuntu_20.04",
 	"ubuntu_24.04-arm64",
-	"ubuntu_24.04-x86_64"
+	"ubuntu_24.04-x86_64",
+	"ubuntu_26.04-arm64",
+	"ubuntu_26.04-x86_64"
     ]
     def check_stages_list = []
 

@@ -145,13 +145,16 @@ if test "${COMPILER}" != "" ; then
         exit 1
     fi
 
+    set +u
     . ${HOME}/ompi-compiler-setup.sh
     activate_compiler ${COMPILER}
+    set -u
 
-    CONFIGURE_ARGS="${CONFIGURE_ARGS} CC=${CC} CPP=${CPP} CXX=${CXX} FC=${FC}"
-    if test "$FC" = "" ; then
+    CONFIGURE_ARGS="${CONFIGURE_ARGS} CC=${CC} CPP=${CPP} CXX=${CXX}"
+    if [ -z "${FC:-}" ] ; then
         CONFIGURE_ARGS="${CONFIGURE_ARGS} --disable-mpi-fortran"
     else
+        CONFIGURE_ARGS="${CONFIGURE_ARGS} FC=${FC}"
         # Flang doesn't seem good enough (yet) to compile our Fortran bindings,
         # so skip for now.
         case "${COMPILER}" in
