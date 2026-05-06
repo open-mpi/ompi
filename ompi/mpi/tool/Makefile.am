@@ -27,6 +27,8 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+SUFFIXES= _ompi_generated.c _abi_generated.c .c.in
+
 noinst_LTLIBRARIES = libmpi_mpit.la libmpi_mpit_profile.la
 if BUILD_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_mpit_noprofile.la
@@ -117,11 +119,53 @@ interface_profile_sources_np = \
 	source_get_num.c \
 	source_get_timestamp.c
 
-interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c) \
-	$(interface_profile_sources_np)
+#
+# List of all C files that have profile versions (*_generated.c files were
+# generated from prototype_sources above).
+#
+#
+#
+
+#interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c) \
+#	$(interface_profile_sources_np)
+#
+
+interface_profile_sources = \
+	cvar_get_info_ompi_generated.c \
+	cvar_handle_alloc_ompi_generated.c \
+	cvar_handle_free_ompi_generated.c \
+	cvar_read_ompi_generated.c \
+	cvar_write_ompi_generated.c \
+	enum_get_info_ompi_generated.c \
+	enum_get_item_ompi_generated.c \
+	event_callback_get_info_ompi_generated.c \
+	event_callback_set_info_ompi_generated.c \
+	event_copy_ompi_generated.c \
+	event_handle_get_info_ompi_generated.c \
+	event_handle_set_info_ompi_generated.c \
+	event_get_info_ompi_generated.c \
+	event_get_source_ompi_generated.c \
+	event_get_timestamp_ompi_generated.c \
+	event_handle_alloc_ompi_generated.c \
+	event_handle_free_ompi_generated.c \
+	event_read_ompi_generated.c \
+	event_register_callback_ompi_generated.c \
+	event_set_dropped_handler_ompi_generated.c \
+	pvar_get_info_ompi_generated.c \
+	pvar_handle_alloc_ompi_generated.c \
+	pvar_handle_free_ompi_generated.c \
+	pvar_read_ompi_generated.c \
+	pvar_readreset_ompi_generated.c \
+	pvar_reset_ompi_generated.c \
+	pvar_session_create_ompi_generated.c \
+	pvar_session_free_ompi_generated.c \
+	pvar_start_ompi_generated.c \
+	pvar_stop_ompi_generated.c \
+	pvar_write_ompi_generated.c \
+	source_get_info_ompi_generated.c
 
 if OMPI_GENERATE_BINDINGS
-%_ompi_generated.c: %.c.in
+.c.in_ompi_generated.c:
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
@@ -132,7 +176,7 @@ if OMPI_GENERATE_BINDINGS
 	    --mpit \
 	    $<
 
-%_abi_generated.c: %.c.in
+.c.in_abi_generated.c:
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
@@ -144,10 +188,10 @@ if OMPI_GENERATE_BINDINGS
 	    $<
 endif
 
-libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources)
+libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources) $(interface_profile_sources_np)
 libmpi_mpit_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_mpit_noprofile_la_SOURCES = $(interface_profile_sources)
+libmpi_mpit_noprofile_la_SOURCES = $(interface_profile_sources) $(interface_profile_sources_np)
 libmpi_mpit_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
 EXTRA_DIST = $(prototype_sources)

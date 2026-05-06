@@ -11,6 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +30,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS type_get_contents_c(DATATYPE datatype,
+PROTOTYPE ERROR_CLASS type_get_contents_c(DATATYPE mtype,
                                           COUNT max_integers,
                                           COUNT max_addresses,
                                           COUNT max_large_counts,
@@ -41,27 +44,45 @@ PROTOTYPE ERROR_CLASS type_get_contents_c(DATATYPE datatype,
     MPI_Datatype newtype;
 
     MEMCHECKER(
-        memchecker_datatype(datatype);
+        memchecker_datatype(mtype);
     );
 
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
+        if (NULL == mtype || MPI_DATATYPE_NULL == mtype) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                           FUNC_NAME );
         } else if( ((NULL == array_of_integers) && (max_integers != 0)) ||
                    ((NULL == array_of_addresses) && (max_addresses != 0)) ||
-                   ((NULL == array_of_large_counts) && (max_large_counts != 0)) ||
                    ((NULL == array_of_datatypes) && (max_datatypes != 0)) ) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
                                           FUNC_NAME );
         }
     }
 
-/* TODO:BIGCOUNT: Need to embiggen ompi_datatype_get_args */
-    rc = ompi_datatype_get_args( datatype, 1, (int *)&max_integers, array_of_integers,
-                            (int *)&max_addresses, array_of_addresses,
-                            (int *)&max_datatypes, array_of_datatypes, NULL );
+    size_t ci, cl, ca, cd;
+    int32_t type;
+    rc = ompi_datatype_get_args( mtype, 0, &ci, NULL,
+                                &cl, NULL,
+                                &ca, NULL,
+                                &cd, NULL, &type );
+    if( rc != MPI_SUCCESS ) {
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN,
+                                MPI_ERR_INTERN, FUNC_NAME );
+    }
+    // check that we have enough space
+    if (cl > (size_t)max_large_counts ||
+        ci > (size_t)max_integers ||
+        ca > (size_t)max_addresses ||
+        cd > (size_t)max_datatypes) {
+        OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_TYPE,
+                                MPI_ERR_TYPE, FUNC_NAME );
+    }
+
+    rc = ompi_datatype_get_args( mtype, 1, &ci, array_of_integers,
+                                 &cl, array_of_large_counts,
+                                 &ca, array_of_addresses,
+                                 &cd, array_of_datatypes, NULL );
     if( rc != MPI_SUCCESS ) {
         OMPI_ERRHANDLER_NOHANDLE_RETURN( MPI_ERR_INTERN, 
                                 MPI_ERR_INTERN, FUNC_NAME );

@@ -40,7 +40,7 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
-SUFFIXES= _ompi_generated.c _abi_generated.c .c.in
+SUFFIXES= _ompi_generated.c _abi_generated.c .c.in .c.in_obc .c.in_nbc
 
 noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
@@ -1093,7 +1093,7 @@ type_get_contents_ompi_generated.c: type_get_contents.c.in_nbc
 	    source \
 	    ompi \
 	    --suppress_bc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_contents.c.in_nbc
 
 type_get_envelope_ompi_generated.c: type_get_envelope.c.in_nbc
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -1104,7 +1104,7 @@ type_get_envelope_ompi_generated.c: type_get_envelope.c.in_nbc
 	    source \
 	    ompi \
 	    --suppress_bc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope.c.in_nbc
 
 type_get_contents_c_ompi_generated.c: type_get_contents_c.c.in_obc
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -1115,7 +1115,7 @@ type_get_contents_c_ompi_generated.c: type_get_contents_c.c.in_obc
 	    source \
 	    ompi \
 	    --suppress_nbc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_contents_c.c.in_obc
 
 type_get_envelope_c_ompi_generated.c: type_get_envelope_c.c.in_obc
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -1126,7 +1126,7 @@ type_get_envelope_c_ompi_generated.c: type_get_envelope_c.c.in_obc
 	    source \
 	    ompi \
 	    --suppress_nbc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope_c.c.in_obc
 
 # Non-mangled version of mpi.h
 standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
@@ -1184,7 +1184,7 @@ type_get_contents_abi_generated.c: type_get_contents.c.in_nbc
 	    source \
 	    standard \
 	    --suppress_bc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_contents.c.in_nbc
 
 type_get_envelope_abi_generated.c: type_get_envelope.c.in_nbc
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -1195,7 +1195,7 @@ type_get_envelope_abi_generated.c: type_get_envelope.c.in_nbc
 	    source \
 	    standard \
 	    --suppress_bc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope.c.in_nbc
 
 type_get_contents_c_abi_generated.c: type_get_contents_c.c.in_obc
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -1206,7 +1206,7 @@ type_get_contents_c_abi_generated.c: type_get_contents_c.c.in_obc
 	    source \
 	    standard \
 	    --suppress_nbc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_contents_c.c.in_obc
 
 type_get_envelope_c_abi_generated.c: type_get_envelope_c.c.in_obc
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
@@ -1217,7 +1217,7 @@ type_get_envelope_c_abi_generated.c: type_get_envelope_c.c.in_obc
 	    source \
 	    standard \
 	    --suppress_nbc \
-	    $<
+	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope_c.c.in_obc
 endif
 
 
