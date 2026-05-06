@@ -490,7 +490,7 @@ mca_part_persist_psend_init(const void* buf,
     return err;
 }
 
-__opal_attribute_always_inline__ static inline int
+static inline int
 mca_part_persist_start(size_t count, ompi_request_t** requests)
 {
     int err = OMPI_SUCCESS;
