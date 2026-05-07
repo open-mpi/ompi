@@ -625,7 +625,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
         /* create contexts */
         module->contexts = mca_btl_ofi_context_alloc_scalable(ofi_info, domain, ep, av,
-                                                              num_contexts_to_create);
+                                                              module, num_contexts_to_create);
 
     } else {
         /* warn the user if they want more than 1 context */
@@ -647,7 +647,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         module->is_scalable_ep = false;
 
         /* create contexts */
-        module->contexts = mca_btl_ofi_context_alloc_normal(ofi_info, domain, ep, av);
+        module->contexts = mca_btl_ofi_context_alloc_normal(ofi_info, domain, ep, av, module);
     }
 
     if (NULL == module->contexts) {
