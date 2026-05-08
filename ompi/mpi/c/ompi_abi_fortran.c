@@ -81,7 +81,7 @@ int ompi_abi_get_fortran_info(ompi_info_t **info)
     const char *cptr;
 
     newinfo = ompi_info_allocate ();
-    if (NULL == (*info)) {
+    if (NULL == newinfo) {
         return MPI_ERR_NO_MEM;
     }
 
