@@ -228,6 +228,9 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
 
     if (OPAL_LIKELY(0 < rdma_size)) {
 
+        /* ensure pipeline_depth and frag cleanup are visible before
+         * bytes_received update that complete_check observes */
+        opal_atomic_wmb();
         /* check completion status */
         OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, rdma_size);
         SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)rdma_size,
@@ -443,6 +446,9 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
         MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
     }
 
+    /* ensure all prior stores (bytes_received, error status, frag cleanup)
+     * are visible before complete_check may recycle the request */
+    opal_atomic_wmb();
     recv_request_pml_complete_check(recvreq);
 
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
@@ -596,6 +602,9 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
                                recvreq->req_recv.req_base.req_datatype);
                );
 
+    /* ensure unpack stores are visible before bytes_received update
+     * that complete_check observes */
+    opal_atomic_wmb();
     OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                     OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
@@ -674,6 +683,9 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
      * known that the data has been copied out of the descriptor. */
     des->des_cbfunc(NULL, NULL, des, 0);
 
+    /* ensure copy and descriptor cleanup are visible before
+     * bytes_received update that complete_check observes */
+    opal_atomic_wmb();
     OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                     OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
@@ -887,6 +899,9 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
         SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                         OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
     }
+    /* ensure all prior stores (unpack, match, bytes_received) are visible
+     * before complete_check may recycle the request */
+    opal_atomic_wmb();
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
        recvreq->req_rdma_offset < recvreq->req_send_offset) {
