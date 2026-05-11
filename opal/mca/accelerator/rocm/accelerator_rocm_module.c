@@ -352,7 +352,7 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
 {
     hipError_t err;
 
-    if (NULL == src || NULL == dest || size < 0) {
+    if (NULL == src || NULL == dest) {
         return OPAL_ERR_BAD_PARAM;
     }
     if (0 == size) {
