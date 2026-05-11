@@ -652,8 +652,8 @@ static int mca_accelerator_rocm_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HAN
      * and the process ID for comparison.
      * We definitily need to exclude the offset component in the comparison.
      */
-    static const int rocr_ipc_handle_size = 32;
-    static const int pos = rocr_ipc_handle_size + 2*sizeof(size_t);
+    const int rocr_ipc_handle_size = 32;
+    const int pos = rocr_ipc_handle_size + 2*sizeof(size_t);
     int *pid_1 = (int *)&handle_1[pos];
     int *pid_2 = (int *)&handle_2[pos];
 
