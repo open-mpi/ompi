@@ -161,9 +161,12 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
 
     # We always need these defines -- even if we don't have a given
     # type, there are some places in the code where we have to have
-    # *something*.  Note that the bpatsubst's are the same as used
-    # above (see comment above), but we added a translit to make them
-    # uppercase.
+    # *something*.  We strip '*' from the type name (e.g. INTEGER*4 ->
+    # INTEGER4) and then run AS_TR_SH to map any remaining non-symbol
+    # characters to '_'.  AS_TR_SH is locale-safe; an earlier version
+    # used m4_bpatsubst with a regex character class, which mis-handled
+    # locales whose collation defines digraphs (e.g. cs_CZ.UTF-8 treats
+    # 'ch' as one element and would mangle "char" -> "_ar").
 
     # If we got a pretty name, use that as the basis.  If not, use the
     # first part of the provided fortran type (e.g.,
@@ -174,38 +177,38 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
     # the result of the BLUm4E in a shell variable and use that in
     # AC_DEFINE_UNQUOTED), autoheader won't put them in the
     # AC_CONFIG_HEADER (or AM_CONFIG_HEADER, in our case).
-    AC_DEFINE_UNQUOTED([OMPI_HAVE_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_FORTRAN_]m4_translit(AS_TR_SH(m4_bpatsubst([$1], [*], [])), [a-z], [A-Z]),
                        [$ofc_have_type],
                        [Whether we have Fortran $1 or not])
-    AC_DEFINE_UNQUOTED([OMPI_SIZEOF_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+    AC_DEFINE_UNQUOTED([OMPI_SIZEOF_FORTRAN_]m4_translit(AS_TR_SH(m4_bpatsubst([$1], [*], [])), [a-z], [A-Z]),
                        [$ofc_type_size],
                        [Size of Fortran $1])
-    AC_DEFINE_UNQUOTED([OMPI_ALIGNMENT_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+    AC_DEFINE_UNQUOTED([OMPI_ALIGNMENT_FORTRAN_]m4_translit(AS_TR_SH(m4_bpatsubst([$1], [*], [])), [a-z], [A-Z]),
                        [$ofc_type_alignment],
                        [Alignment of Fortran $1])
-    AC_DEFINE_UNQUOTED([OMPI_KIND_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
+    AC_DEFINE_UNQUOTED([OMPI_KIND_FORTRAN_]m4_translit(AS_TR_SH(m4_bpatsubst([$1], [*], [])), [a-z], [A-Z]),
                        [$ofc_type_kind],
                        [Fortran KIND number for $1])
     if test "$3" != "" && test "$ofc_define_type" = "yes"; then
-        AC_DEFINE_UNQUOTED([ompi_fortran_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [A-Z], [a-z])[_t],
+        AC_DEFINE_UNQUOTED([ompi_fortran_]m4_translit(AS_TR_SH(m4_bpatsubst([$1], [*], [])), [A-Z], [a-z])[_t],
                            [$ofc_c_type],
                            [C type corresponding to Fortran $1])
     fi
 
     # Save some in shell variables for later use (e.g., need
     # OMPI_SIZEOF_FORTRAN_INTEGER in OMPI_FORTRAN_GET_HANDLE_MAX)
-    [OMPI_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[_C_TYPE=$ofc_c_type]
-    [OMPI_KIND_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_kind]
-    [OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_have_type]
-    [OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_size]
-    [OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])[=$ofc_type_alignment]
+    [OMPI_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], []))[_C_TYPE=$ofc_c_type]
+    [OMPI_KIND_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], []))[=$ofc_type_kind]
+    [OMPI_HAVE_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], []))[=$ofc_have_type]
+    [OMPI_SIZEOF_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], []))[=$ofc_type_size]
+    [OMPI_ALIGNMENT_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], []))[=$ofc_type_alignment]
 
     # Wow, this is sick.  But it works!  :-)
-    AC_SUBST([OMPI_HAVE_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]))
-    AC_SUBST([OMPI_KIND_FORTRAN_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]))
-    AC_SUBST([OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]))
-    AC_SUBST([OMPI_SIZEOF_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]))
-    AC_SUBST([OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]))
+    AC_SUBST([OMPI_HAVE_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], [])))
+    AC_SUBST([OMPI_KIND_FORTRAN_]m4_translit(AS_TR_SH(m4_bpatsubst([$1], [*], [])), [a-z], [A-Z]))
+    AC_SUBST([OMPI_SIZEOF_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], [])))
+    AC_SUBST([OMPI_SIZEOF_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], [])))
+    AC_SUBST([OMPI_ALIGNMENT_FORTRAN_]AS_TR_SH(m4_bpatsubst([$1], [*], [])))
 
     # Clean up
     OPAL_VAR_SCOPE_POP
