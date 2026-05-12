@@ -103,6 +103,12 @@ OMPI_COMM_TYPE_CLUSTER
    This type splits the communicator into subcommunicators, each of
    which belongs to the same cluster.
 
+OMPI_COMM_TYPE_NVLINK
+   This type splits the communicator into subcommunicators based on
+   the NVLink domain associated with each process. It may also be
+   requested via ``MPI_COMM_TYPE_HW_GUIDED`` with
+   ``mpi_hw_resource_type`` set to ``nvlink``.
+
 
 NOTES
 -----
