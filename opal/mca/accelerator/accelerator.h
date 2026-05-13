@@ -8,6 +8,7 @@
  * Copyright (c) 2024      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -147,6 +148,17 @@ struct opal_accelerator_pci_attr_t {
 };
 typedef struct opal_accelerator_pci_attr_t opal_accelerator_pci_attr_t;
 
+#define OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN 16
+
+/*
+ * CUDA NVLink domain information used by OMPI_COMM_TYPE_NVLINK. Only the CUDA
+ * accelerator fills this structure.
+ */
+typedef struct {
+    int cuda_device;
+    uint8_t cluster_uuid[OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN];
+    uint32_t clique_id;
+} opal_accelerator_cuda_nvlink_domain_t;
 
 struct opal_accelerator_event_t {
     opal_object_t super;
