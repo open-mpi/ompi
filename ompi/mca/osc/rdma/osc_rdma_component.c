@@ -56,6 +56,8 @@
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/util/info_subscriber.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/smsc/smsc.h"
+#include "opal/mca/smsc/base/base.h"
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
@@ -1648,57 +1650,158 @@ int ompi_osc_rdma_shared_query(
     struct ompi_win_t *win, int rank, size_t *size,
     ptrdiff_t *disp_unit, void *baseptr)
 {
-    int rc = OMPI_ERR_NOT_SUPPORTED;
-    ompi_osc_rdma_peer_t *peer = NULL;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
-    /* currently only supported for allocated windows */
-    if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
+    if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+        int rc = OMPI_ERR_NOT_SUPPORTED;
+        ompi_osc_rdma_peer_t *peer = NULL;
 
-    if (MPI_PROC_NULL == rank) {
-        /* iterate until we find a rank that has a non-zero size */
-        for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
-            peer = ompi_osc_module_get_peer (module, i);
-            if (NULL == peer) {
-                /* peer object not cached yet (typically non-local here since local peers are added eagerly) */
-                continue;
-            }
-            ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-            if (ompi_osc_rdma_peer_local_base(peer)) {
-                if (module->same_size && ex_peer->super.base) {
-                    break;
-                } else if (ex_peer->size > 0) {
-                    break;
+        if (MPI_PROC_NULL == rank) {
+            /* iterate until we find a local rank that has a non-zero size */
+            for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
+                peer = ompi_osc_module_get_peer (module, i);
+                if (NULL == peer) {
+                    /* peer object not cached yet */
+                    continue;
                 }
+                ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
+                if (ompi_osc_rdma_peer_local_base(peer)) {
+                    if (module->same_size && ex_peer->super.base) {
+                        break;
+                    } else if (ex_peer->size > 0) {
+                        break;
+                    }
+                }
+                peer = NULL;
             }
-            // reset so we don't mistakenly use a peer without memory
-            peer = NULL;
+        } else {
+            peer = ompi_osc_module_get_peer (module, rank);
         }
-    } else {
-        peer = ompi_osc_module_get_peer (module, rank);
-    }
 
-    if (NULL == peer || !ompi_osc_rdma_peer_local_base(peer)) {
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
+        if (NULL == peer || !ompi_osc_rdma_peer_local_base(peer)) {
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
 
-    if (module->same_size && module->same_disp_unit) {
-        *size = module->size;
-        *disp_unit = module->disp_unit;
-        ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
-        *((void**) baseptr) = (void *) (intptr_t)ex_peer->base;
-        rc = OMPI_SUCCESS;
-    } else {
-        ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-        if (ex_peer->super.base != 0) {
-            /* we know the base of the peer */
-            *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.base;
-            *size = ex_peer->size;
-            *disp_unit = ex_peer->disp_unit;
+        if (module->same_size && module->same_disp_unit) {
+            *size = module->size;
+            *disp_unit = module->disp_unit;
+            ompi_osc_rdma_peer_basic_t *basic_peer = (ompi_osc_rdma_peer_basic_t *) peer;
+            *((void**) baseptr) = (void *) (intptr_t) basic_peer->base;
             rc = OMPI_SUCCESS;
+        } else {
+            ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
+            if (ex_peer->super.base != 0) {
+                *((void**) baseptr) = (void *) (intptr_t) ex_peer->super.base;
+                *size = ex_peer->size;
+                *disp_unit = ex_peer->disp_unit;
+                rc = OMPI_SUCCESS;
+            }
         }
+        return rc;
     }
-    return rc;
+
+    if (MPI_WIN_FLAVOR_CREATE == module->flavor) {
+        if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
+
+        ompi_osc_rdma_peer_t *peer = NULL;
+        ompi_proc_t *proc = NULL;
+
+        if (MPI_PROC_NULL == rank) {
+            /* iterate to find the first on-node rank with non-zero window size */
+            for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
+                ompi_proc_t *cand_proc = ompi_comm_peer_lookup(module->comm, i);
+                if (!OPAL_PROC_ON_LOCAL_NODE(cand_proc->super.proc_flags)) {
+                    continue;
+                }
+                ompi_osc_rdma_peer_t *cand_peer = ompi_osc_module_get_peer(module, i);
+                if (NULL == cand_peer) {
+                    continue;
+                }
+                size_t cand_size = module->same_size
+                                   ? module->size
+                                   : ((ompi_osc_rdma_peer_extended_t *) cand_peer)->size;
+                if (0 == cand_size) {
+                    continue;
+                }
+                peer = cand_peer;
+                proc = cand_proc;
+                break;
+            }
+            if (NULL == peer) {
+                /* no on-node rank with non-zero size */
+                *((void **) baseptr) = NULL;
+                *size = 0;
+                *disp_unit = module->disp_unit;
+                return OMPI_SUCCESS;
+            }
+        } else {
+            proc = ompi_comm_peer_lookup(module->comm, rank);
+            if (!OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
+            peer = ompi_osc_rdma_module_peer(module, rank);
+            if (NULL == peer) {
+                return OMPI_ERR_NOT_FOUND;
+            }
+        }
+
+        ompi_osc_rdma_peer_basic_t *basic_peer = (ompi_osc_rdma_peer_basic_t *) peer;
+
+        size_t peer_size = module->same_size
+                           ? module->size
+                           : ((ompi_osc_rdma_peer_extended_t *) peer)->size;
+        ptrdiff_t peer_disp = module->same_disp_unit
+                              ? module->disp_unit
+                              : ((ompi_osc_rdma_peer_extended_t *) peer)->disp_unit;
+
+        if (0 == peer_size) {
+            *((void **) baseptr) = NULL;
+            *size = 0;
+            *disp_unit = peer_disp;
+            return OMPI_SUCCESS;
+        }
+
+        /* Self: buffer is in our own address space, no mapping needed */
+        if (ompi_osc_rdma_peer_local_base(peer)) {
+            *((void **) baseptr) = (void *)(intptr_t) basic_peer->base;
+            *size = peer_size;
+            *disp_unit = peer_disp;
+            return OMPI_SUCCESS;
+        }
+
+        /* Same-node non-self peer: map via smsc (lazy, cached in peer object) */
+        OPAL_THREAD_LOCK(&peer->lock);
+        if (!basic_peer->local_base) {
+            mca_smsc_endpoint_t *ep = MCA_SMSC_CALL(get_endpoint, &proc->super);
+            if (NULL == ep) {
+                OPAL_THREAD_UNLOCK(&peer->lock);
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
+
+            void *local_ptr;
+            void *map_ctx = MCA_SMSC_CALL(map_peer_region, ep,
+                                          MCA_RCACHE_FLAGS_PERSIST,
+                                          (void *)(intptr_t) basic_peer->base,
+                                          peer_size, &local_ptr);
+            if (NULL == map_ctx) {
+                MCA_SMSC_CALL(return_endpoint, ep);
+                OPAL_THREAD_UNLOCK(&peer->lock);
+                return OMPI_ERR_NOT_SUPPORTED;
+            }
+
+            basic_peer->local_base    = (osc_rdma_base_t)(intptr_t) local_ptr;
+            basic_peer->smsc_map_ctx  = map_ctx;
+            basic_peer->smsc_endpoint = ep;
+        }
+        OPAL_THREAD_UNLOCK(&peer->lock);
+
+        *((void **) baseptr) = (void *)(intptr_t) basic_peer->local_base;
+        *size = peer_size;
+        *disp_unit = peer_disp;
+        return OMPI_SUCCESS;
+    }
+
+    return OMPI_ERR_NOT_SUPPORTED;
 }

@@ -22,6 +22,7 @@
 #include "osc_rdma_comm.h"
 
 #include "ompi/mca/bml/base/base.h"
+#include "opal/mca/smsc/smsc.h"
 
 #define NODE_ID_TO_RANK(module, peer_data, node_id) ((int)(peer_data)->len)
 
@@ -372,6 +373,12 @@ static void ompi_osc_rdma_peer_basic_construct (ompi_osc_rdma_peer_basic_t *peer
 
 static void ompi_osc_rdma_peer_basic_destruct (ompi_osc_rdma_peer_basic_t *peer)
 {
+    if (peer->smsc_map_ctx && mca_smsc) {
+        MCA_SMSC_CALL(unmap_peer_region, peer->smsc_map_ctx);
+    }
+    if (peer->smsc_endpoint && mca_smsc) {
+        MCA_SMSC_CALL(return_endpoint, peer->smsc_endpoint);
+    }
     if (peer->base_handle && (peer->super.flags & OMPI_OSC_RDMA_PEER_BASE_FREE)) {
         free (peer->base_handle);
     }
