@@ -57,6 +57,9 @@
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/util/info_subscriber.h"
 #include "opal/mca/mpool/base/base.h"
+#include "opal/mca/rcache/rcache.h"
+#include "opal/mca/smsc/smsc.h"
+#include "opal/mca/smsc/base/base.h"
 
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
@@ -1651,6 +1654,17 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
 }
 
 
+/* MPI_Win_shared_query with MPI_PROC_NULL where no process attached memory:
+ * report size = 0 and a NULL base, matching osc/sm */
+static inline int ompi_osc_rdma_shared_query_empty (ompi_osc_rdma_module_t *module, size_t *size,
+                                                    ptrdiff_t *disp_unit, void *baseptr)
+{
+    *((void **) baseptr) = NULL;
+    *size = 0;
+    *disp_unit = module->same_disp_unit ? module->disp_unit : 0;
+    return OMPI_SUCCESS;
+}
+
 static const char*
 ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, const char *value)
 {
@@ -1687,64 +1701,132 @@ ompi_osc_rdma_set_no_lock_info(opal_infosubscriber_t *obj, const char *key, cons
     return module->no_locks ? "true" : "false";
 }
 
+/* size and displacement unit of a peer's window memory, which are only
+ * stored in the peer if they differ between processes */
+static inline size_t ompi_osc_rdma_shared_query_size (ompi_osc_rdma_module_t *module,
+                                                      ompi_osc_rdma_peer_t *peer)
+{
+    return module->same_size ? module->size : ((ompi_osc_rdma_peer_extended_t *) peer)->size;
+}
+
+static inline ptrdiff_t ompi_osc_rdma_shared_query_disp_unit (ompi_osc_rdma_module_t *module,
+                                                              ompi_osc_rdma_peer_t *peer)
+{
+    return module->same_disp_unit ? module->disp_unit : ((ompi_osc_rdma_peer_extended_t *) peer)->disp_unit;
+}
+
+static inline bool ompi_osc_rdma_shared_query_on_node (ompi_osc_rdma_module_t *module, int rank)
+{
+    ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, rank);
+    return OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags);
+}
+
+/* map the window memory of a peer on this node into our address space using
+ * smsc. the mapping is stored in the peer's local_base and released when the
+ * peer is destroyed. */
+static int ompi_osc_rdma_shared_query_map_peer (ompi_osc_rdma_module_t *module,
+                                                ompi_osc_rdma_peer_t *peer, size_t size)
+{
+    ompi_osc_rdma_peer_basic_t *basic_peer = (ompi_osc_rdma_peer_basic_t *) peer;
+    int ret = OMPI_SUCCESS;
+
+    if (!mca_smsc_base_has_feature (MCA_SMSC_FEATURE_CAN_MAP)) {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+
+    OPAL_THREAD_LOCK(&peer->lock);
+    if (0 == basic_peer->local_base) {
+        ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, peer->rank);
+        mca_smsc_endpoint_t *ep = MCA_SMSC_CALL(get_endpoint, &proc->super);
+        void *local_ptr, *map_ctx = NULL;
+
+        if (NULL != ep) {
+            map_ctx = MCA_SMSC_CALL(map_peer_region, ep, MCA_RCACHE_FLAGS_PERSIST,
+                                    (void *) (intptr_t) basic_peer->base, size, &local_ptr);
+        }
+
+        if (NULL != map_ctx) {
+            basic_peer->local_base    = (osc_rdma_base_t) (intptr_t) local_ptr;
+            basic_peer->smsc_map_ctx  = map_ctx;
+            basic_peer->smsc_endpoint = ep;
+        } else {
+            if (NULL != ep) {
+                MCA_SMSC_CALL(return_endpoint, ep);
+            }
+            ret = OMPI_ERR_NOT_SUPPORTED;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&peer->lock);
+
+    return ret;
+}
+
 int ompi_osc_rdma_shared_query(
     struct ompi_win_t *win, int rank, size_t *size,
     ptrdiff_t *disp_unit, void *baseptr)
 {
-    int rc = OMPI_ERR_NOT_SUPPORTED;
-    ompi_osc_rdma_peer_t *peer = NULL;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
+    ompi_osc_rdma_peer_t *peer = NULL;
+    size_t peer_size;
+    int ret;
 
-    /* currently only supported for allocated windows */
-    if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor) {
+    /* dynamic windows have no memory attached at creation time */
+    if (MPI_WIN_FLAVOR_ALLOCATE != module->flavor && MPI_WIN_FLAVOR_CREATE != module->flavor) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
     if (MPI_PROC_NULL == rank) {
-        /* iterate until we find a rank that has a non-zero size */
-        for (int i = 0 ; i < ompi_comm_size(module->comm) ; ++i) {
-            peer = ompi_osc_module_get_peer (module, i);
-            if (NULL == peer) {
-                /* peer object not cached yet (typically non-local here since local peers are added eagerly) */
+        /* find the first process on this node that attached memory */
+        for (int i = 0 ; i < ompi_comm_size (module->comm) ; ++i) {
+            if (!ompi_osc_rdma_shared_query_on_node (module, i)) {
                 continue;
             }
-            ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-            if (ompi_osc_rdma_peer_shared_mem(peer)) {
-                if (module->same_size && ex_peer->super.local_base) {
-                    break;
-                } else if (ex_peer->size > 0) {
-                    break;
-                }
+            ompi_osc_rdma_peer_t *candidate = ompi_osc_rdma_module_peer (module, i);
+            if (OPAL_UNLIKELY(NULL == candidate)) {
+                /* lookup only fails if the peer could not be allocated or set up */
+                return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            // reset so we don't mistakenly use a peer without memory
-            peer = NULL;
+            if (ompi_osc_rdma_shared_query_size (module, candidate) > 0) {
+                peer = candidate;
+                break;
+            }
+        }
+        if (NULL == peer) {
+            return ompi_osc_rdma_shared_query_empty (module, size, disp_unit, baseptr);
         }
     } else {
-        peer = ompi_osc_module_get_peer (module, rank);
+        if (!ompi_osc_rdma_shared_query_on_node (module, rank)) {
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
+        peer = ompi_osc_rdma_module_peer (module, rank);
+        if (OPAL_UNLIKELY(NULL == peer)) {
+            /* lookup only fails if the peer could not be allocated or set up */
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
     }
 
-    if (NULL == peer || !ompi_osc_rdma_peer_shared_mem(peer)) {
-        return OMPI_ERR_NOT_SUPPORTED;
+    peer_size = ompi_osc_rdma_shared_query_size (module, peer);
+
+    if (peer_size > 0 && !ompi_osc_rdma_peer_shared_mem (peer)) {
+        /* with MPI_Win_allocate all memory on this node lives in the shared
+         * segment and every peer with memory has a local_base. with
+         * MPI_Win_create only our own memory does, so other peers on this
+         * node have to be mapped first. */
+        if (MPI_WIN_FLAVOR_CREATE != module->flavor) {
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
+        ret = ompi_osc_rdma_shared_query_map_peer (module, peer, peer_size);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
     }
 
     /* report local_base rather than base: base is the address the peer is
      * reached at through the btl, which is only also a valid address in this
      * process when cpu atomics are in use */
-    if (module->same_size && module->same_disp_unit) {
-        *size = module->size;
-        *disp_unit = module->disp_unit;
-        ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
-        *((void**) baseptr) = (void *) (intptr_t)ex_peer->local_base;
-        rc = OMPI_SUCCESS;
-    } else {
-        ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-        if (ex_peer->super.local_base != 0) {
-            /* we know the base of the peer */
-            *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.local_base;
-            *size = ex_peer->size;
-            *disp_unit = ex_peer->disp_unit;
-            rc = OMPI_SUCCESS;
-        }
-    }
-    return rc;
+    *((void **) baseptr) = peer_size > 0 ? (void *) (intptr_t) ((ompi_osc_rdma_peer_basic_t *) peer)->local_base : NULL;
+    *size = peer_size;
+    *disp_unit = ompi_osc_rdma_shared_query_disp_unit (module, peer);
+
+    return OMPI_SUCCESS;
 }
