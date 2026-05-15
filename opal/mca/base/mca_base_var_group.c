@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #    include <unistd.h>
@@ -395,6 +396,7 @@ int mca_base_var_group_deregister(int group_index)
 int mca_base_var_group_find(const char *project_name, const char *framework_name,
                             const char *component_name)
 {
+    assert(NULL != project_name);
     return group_find(project_name, framework_name, component_name, false);
 }
 
