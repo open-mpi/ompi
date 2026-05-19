@@ -53,7 +53,7 @@ static inline int mca_btl_uct_get_rkey(mca_btl_uct_module_t *module,
     }
 
 #    if UCT_API >= UCT_VERSION(1, 7)
-    ucs_status = uct_rkey_unpack(module->uct_component, (void *) remote_handle, rkey);
+    ucs_status = uct_rkey_unpack(module->md->uct_component, (void *) remote_handle, rkey);
 #    else
     ucs_status = uct_rkey_unpack((void *) remote_handle, rkey);
 #    endif
@@ -63,7 +63,7 @@ static inline int mca_btl_uct_get_rkey(mca_btl_uct_module_t *module,
 static inline void mca_btl_uct_rkey_release(mca_btl_uct_module_t *uct_btl, uct_rkey_bundle_t *rkey)
 {
 #    if UCT_API >= UCT_VERSION(1, 7)
-    uct_rkey_release(uct_btl->uct_component, rkey);
+    uct_rkey_release(uct_btl->md->uct_component, rkey);
 #    else
     (void) uct_btl;
     uct_rkey_release(rkey);
