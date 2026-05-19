@@ -22,7 +22,7 @@
  *                         All Rights reserved.
  * Copyright (c) 2018      Mellanox Technologies, Inc.
  *                         All rights reserved.
- * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
@@ -131,6 +131,7 @@ static mca_base_framework_t *opal_init_frameworks[] = {
     &opal_backtrace_base_framework, &opal_timer_base_framework,
     &opal_shmem_base_framework, &opal_reachable_base_framework,
     &opal_pmix_base_framework,
+    &opal_accelerator_base_framework,
     NULL,
 };
 
@@ -196,11 +197,11 @@ int opal_init(int *pargc, char ***pargv)
         return opal_init_error("opal_init framework open", ret);
     }
 
-    /* Intitialize Accelerator framework
+    /* Select Accelerator framework
      * The datatype convertor code has a dependency on the accelerator framework
      * being initialized. */
-    ret = mca_base_framework_open(&opal_accelerator_base_framework, 0);
-    if (OPAL_SUCCESS == ret && OPAL_SUCCESS != (ret = opal_accelerator_base_select())) {
+    ret = opal_accelerator_base_select();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
         return opal_init_error("opal_accelerator_base_select", ret);
     }
     opal_finalize_register_cleanup(opal_accelerator_base_selected_component.accelerator_finalize);
