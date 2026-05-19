@@ -296,7 +296,7 @@ static void mca_base_component_repository_release_internal(mca_base_component_re
 {
     int group_id;
 
-    group_id = mca_base_var_group_find(NULL, ri->ri_type, ri->ri_name);
+    group_id = mca_base_var_group_find("*", ri->ri_type, ri->ri_name);
     if (0 <= group_id) {
         /* ensure all variables are deregistered before we dlclose the component */
         mca_base_var_group_deregister(group_id);
