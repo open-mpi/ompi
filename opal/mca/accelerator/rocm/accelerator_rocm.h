@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2023  Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022-2026  Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -35,6 +35,9 @@
 /* Restore warnings to original state */
 #pragma GCC diagnostic pop
 
+#if HIP_VERSION >= 70100000
+#    define OPAL_ROCM_VMM_SUPPORT 1
+#endif
 
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/threads/mutex.h"
@@ -70,13 +73,19 @@ struct opal_accelerator_rocm_ipc_event_handle_t {
 typedef struct opal_accelerator_rocm_ipc_event_handle_t opal_accelerator_rocm_ipc_event_handle_t;
 OBJ_CLASS_DECLARATION(opal_accelerator_rocm_ipc_event_handle_t);
 
-extern hipStream_t *opal_accelerator_rocm_MemcpyStream;
+extern hipStream_t *opal_accelerator_rocm_MemcpyStreams;
 extern int opal_accelerator_rocm_memcpy_async;
 extern int opal_accelerator_rocm_verbose;
 extern size_t opal_accelerator_rocm_memcpyH2D_limit;
 extern size_t opal_accelerator_rocm_memcpyD2H_limit;
 extern int opal_accelerator_rocm_num_devices;
 extern float *opal_accelerator_rocm_mem_bw;
+
+#if OPAL_ROCM_VMM_SUPPORT
+extern int opal_accelerator_rocm_vmm_support;
+extern void mca_accelerator_rocm_vmm_cache_init(void);
+extern void mca_accelerator_rocm_vmm_cache_fini(void);
+#endif
 
 extern int opal_accelerator_rocm_lazy_init(void);
 

@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All Rights reserved.
+ * Copyright (c) 2022-2026 Advanced Micro Devices, Inc. All Rights reserved.
  * Copyright (c) 2024      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -20,6 +20,7 @@
 #include "opal_config.h"
 
 #include <stdio.h>
+#include <sys/utsname.h>
 
 #include "opal/mca/dl/base/base.h"
 #include "opal/mca/accelerator/base/base.h"
@@ -32,6 +33,13 @@ int opal_accelerator_rocm_verbose = 0;
 size_t opal_accelerator_rocm_memcpyD2H_limit=1024;
 size_t opal_accelerator_rocm_memcpyH2D_limit=1048576;
 
+#if OPAL_ROCM_VMM_SUPPORT
+/* MCA parameter to enable/disable VMM IPC support at runtime
+ * Enable with: --mca mpi_accelerator_rocm_vmm_support 1  (default is 0 - disabled)
+ */
+int opal_accelerator_rocm_vmm_support = 0;
+#endif
+
 /* Initialization lock for lazy rocm initialization */
 static opal_mutex_t accelerator_rocm_init_lock;
 static bool accelerator_rocm_init_complete = false;
@@ -39,7 +47,7 @@ static bool accelerator_rocm_init_complete = false;
 /* Define global variables, used in accelerator_rocm.c */
 int opal_accelerator_rocm_num_devices = 0;
 float *opal_accelerator_rocm_mem_bw = NULL;
-hipStream_t *opal_accelerator_rocm_MemcpyStream = NULL;
+hipStream_t *opal_accelerator_rocm_MemcpyStreams = NULL;
 
 /*
  * Public string showing the accelerator rocm component version number
@@ -177,6 +185,21 @@ static int accelerator_rocm_component_register(void)
                                               &opal_accelerator_rocm_memcpy_async);
     (void) mca_base_var_register_synonym (var_id, "ompi", "mpi", "accelerator_rocm", "memcpy_async",
                                           MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+
+#if OPAL_ROCM_VMM_SUPPORT
+    /* Enable/disable VMM-based IPC support */
+    opal_accelerator_rocm_vmm_support = 0;
+    var_id = mca_base_component_var_register (&mca_accelerator_rocm_component.super.base_version,
+                                              "vmm_support",
+                                              "Enable VMM-based IPC support (0=disabled, 1=enabled). "
+                                              "Default is disabled.",
+                                              MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                              MCA_BASE_VAR_SCOPE_READONLY,
+                                              &opal_accelerator_rocm_vmm_support);
+    (void) mca_base_var_register_synonym (var_id, "ompi", "mpi", "accelerator_rocm", "vmm_support",
+                                          MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+#endif
+
     return OPAL_SUCCESS;
 }
 
@@ -206,22 +229,43 @@ int opal_accelerator_rocm_lazy_init()
         goto out;
     }
 
-    hipStream_t memcpy_stream;
-    hip_err = hipStreamCreate(&memcpy_stream);
+    int saved_dev;
+    hip_err = hipGetDevice(&saved_dev);
     if (hipSuccess != hip_err) {
-        opal_output(0, "Could not create hipStream, err=%d %s\n",
+        opal_output(0, "Could not get current device, err=%d %s\n",
                 hip_err, hipGetErrorString(hip_err));
-        err = OPAL_ERROR;  // we got hipErrorInvalidValue, pretty bad
+        err = OPAL_ERROR;
         goto out;
     }
 
-    opal_accelerator_rocm_MemcpyStream = malloc(sizeof(hipStream_t));
-    if (NULL == opal_accelerator_rocm_MemcpyStream) {
-        opal_output(0, "Could not allocate hipStream\n");
+    opal_accelerator_rocm_MemcpyStreams = malloc(opal_accelerator_rocm_num_devices * sizeof(hipStream_t));
+    if (NULL == opal_accelerator_rocm_MemcpyStreams) {
+        opal_output(0, "Could not allocate MemcpyStreams array\n");
         err = OPAL_ERR_OUT_OF_RESOURCE;
         goto out;
     }
-    *opal_accelerator_rocm_MemcpyStream = memcpy_stream;
+
+    for (int i = 0; i < opal_accelerator_rocm_num_devices; i++) {
+        hip_err = hipSetDevice(i);
+        if (hipSuccess != hip_err) {
+            opal_output(0, "Could not set device %d, err=%d %s\n",
+                    i, hip_err, hipGetErrorString(hip_err));
+            free(opal_accelerator_rocm_MemcpyStreams);
+            opal_accelerator_rocm_MemcpyStreams = NULL;
+            err = OPAL_ERROR;
+            goto out;
+        }
+        hip_err = hipStreamCreate(&opal_accelerator_rocm_MemcpyStreams[i]);
+        if (hipSuccess != hip_err) {
+            opal_output(0, "Could not create hipStream for device %d, err=%d %s\n",
+                    i, hip_err, hipGetErrorString(hip_err));
+            free(opal_accelerator_rocm_MemcpyStreams);
+            opal_accelerator_rocm_MemcpyStreams = NULL;
+            err = OPAL_ERROR;
+            goto out;
+        }
+    }
+    hipSetDevice(saved_dev);
 
     opal_accelerator_rocm_mem_bw = malloc(sizeof(float)*opal_accelerator_rocm_num_devices);
     if (NULL == opal_accelerator_rocm_mem_bw) {
@@ -311,21 +355,77 @@ static opal_accelerator_base_module_t* accelerator_rocm_init(void)
         return NULL;
     }
 
+#if OPAL_ROCM_VMM_SUPPORT
+    /* Warn if the Linux kernel is older than 6.8 */
+    {
+        struct utsname kernel_info;
+        if (uname(&kernel_info) == 0) {
+            int kmajor = 0, kminor = 0;
+            if (sscanf(kernel_info.release, "%d.%d", &kmajor, &kminor) == 2) {
+                if (kmajor < 6 || (kmajor == 6 && kminor < 8)) {
+                    opal_output_verbose(1, opal_accelerator_base_framework.framework_output,
+                                        "ROCm accelerator: Linux kernel %d.%d detected. "
+                                        "VMM IPC via pidfd requires kernel 6.8 or higher "
+                                        "for reliable operation.",
+                                        kmajor, kminor);
+                }
+            }
+        }
+    }
+
+    /* Verify hardware VMM support before honouring the vmm_support MCA param.
+     * Require ALL devices to support VMM: if even one device does not report
+     * hipDeviceAttributeVirtualMemoryManagementSupported, disable VMM IPC for
+     * the whole job.  A mixed-capability node would silently corrupt IPC for
+     * any transfer involving the incapable device. */
+    if (opal_accelerator_rocm_vmm_support) {
+        int first_no_vmm = -1;
+        for (int i = 0; i < count; i++) {
+            int vmm_supported = 0;
+            hipError_t vmm_err = hipDeviceGetAttribute(
+                &vmm_supported,
+                hipDeviceAttributeVirtualMemoryManagementSupported, i);
+            if (hipSuccess != vmm_err || !vmm_supported) {
+                first_no_vmm = i;
+                break;
+            }
+        }
+        if (first_no_vmm >= 0) {
+            opal_output(0, "ROCm accelerator: VMM IPC requested "
+                        "(accelerator_rocm_vmm_support=1) but device %d does not "
+                        "report hipDeviceAttributeVirtualMemoryManagementSupported. "
+                        "All devices must support VMM. Disabling VMM IPC.",
+                        first_no_vmm);
+            opal_accelerator_rocm_vmm_support = 0;
+        }
+    }
+#endif
+
     opal_atomic_mb();
     opal_rocm_runtime_initialized = true;
+
+#if OPAL_ROCM_VMM_SUPPORT
+    mca_accelerator_rocm_vmm_cache_init();
+#endif
 
     return &opal_accelerator_rocm_module;
 }
 
 static void accelerator_rocm_finalize(opal_accelerator_base_module_t* module)
 {
-    if (NULL != opal_accelerator_rocm_MemcpyStream) {
-        hipError_t err = hipStreamDestroy(*opal_accelerator_rocm_MemcpyStream);
-        if (hipSuccess != err) {
-            opal_output_verbose(10, 0, "hip_dl_finalize: error while destroying the hipStream\n");
+#if OPAL_ROCM_VMM_SUPPORT
+    mca_accelerator_rocm_vmm_cache_fini();
+#endif
+
+    if (NULL != opal_accelerator_rocm_MemcpyStreams) {
+        for (int i = 0; i < opal_accelerator_rocm_num_devices; i++) {
+            hipError_t err = hipStreamDestroy(opal_accelerator_rocm_MemcpyStreams[i]);
+            if (hipSuccess != err) {
+                opal_output_verbose(10, 0, "hip_dl_finalize: error destroying hipStream for device %d\n", i);
+            }
         }
-        free(opal_accelerator_rocm_MemcpyStream);
-        opal_accelerator_rocm_MemcpyStream = NULL;
+        free(opal_accelerator_rocm_MemcpyStreams);
+        opal_accelerator_rocm_MemcpyStreams = NULL;
 
         free(opal_accelerator_rocm_mem_bw);
         opal_accelerator_rocm_mem_bw = NULL;
