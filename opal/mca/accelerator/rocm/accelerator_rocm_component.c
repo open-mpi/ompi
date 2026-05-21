@@ -365,7 +365,7 @@ static opal_accelerator_base_module_t* accelerator_rocm_init(void)
                 if (kmajor < 6 || (kmajor == 6 && kminor < 8)) {
                     opal_output_verbose(1, opal_accelerator_base_framework.framework_output,
                                         "ROCm accelerator: Linux kernel %d.%d detected. "
-                                        "VMM IPC via pidfd requires kernel 6.8 or higher "
+                                        "VMM IPC requires kernel 6.8 or higher "
                                         "for reliable operation.",
                                         kmajor, kminor);
                 }
