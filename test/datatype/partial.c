@@ -5,6 +5,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +72,7 @@ static void show_neighborhood(double* ptr, int how_many, bool show_hex)
 
 int main( int argc, char* argv[] )
 {
-    opal_datatype_t* vector;
+    ompi_datatype_t* vector;
     ompi_datatype_t* base;
     uint32_t iov_count;
     size_t max_data, size, length;
@@ -88,13 +89,13 @@ int main( int argc, char* argv[] )
     ompi_datatype_create_vector(TYPE_COUNT, TYPE_BLEN, TYPE_STRIDE, MPI_DOUBLE, &base);
     ompi_datatype_create_contiguous(CONT_COUNT, base, &vector);
 
-    opal_datatype_commit( vector );
+    opal_datatype_commit(&vector->super);
 
     ompi_datatype_dump(vector);
 
-    opal_datatype_type_size(vector, &size);
-    opal_datatype_type_extent(vector, &extent);
-    opal_datatype_type_extent(base, &base_extent);
+    opal_datatype_type_size(&vector->super, &size);
+    opal_datatype_type_extent(&vector->super, &extent);
+    opal_datatype_type_extent(&base->super, &base_extent);
 
     array = (double*)malloc( extent * COUNT );
     packed = (double*)malloc( size * COUNT );
@@ -112,8 +113,8 @@ int main( int argc, char* argv[] )
      * Pack the sparse data into the packed array. This simulate the first step
      * of the buffered operation.
      */
-    convertor = opal_convertor_create( opal_local_arch, 0 );
-    opal_convertor_prepare_for_recv( convertor, vector, COUNT, array );
+    convertor = opal_convertor_create(opal_local_arch, 0);
+    opal_convertor_prepare_for_recv(convertor, &vector->super, COUNT, array);
 
     for( length = 0; length < (size * COUNT); ) {
         iov[0].iov_base = bpacked + length;
