@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+# Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -104,10 +104,6 @@ class StandardABIType(Type):
     @property
     def argument(self):
         return self.tmpname
-
-    @staticmethod
-    def async_callback_index(self):
-        return "idx"
 
 @Type.add_type('ERROR_CLASS', abi_type=['ompi'])
 class TypeErrorClass(Type):
@@ -679,12 +675,12 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         request_tmp_name = util.abi_tmp_name('request')
         code = []
         code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
-        code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
-        code.append('assert(nb_request->data.release_arrays[idx] == NULL);')
-        code.append(f'if (NULL != {self.tmpname}) nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
-        code.append('nb_request->data.release_arrays[idx] = NULL;')
+        code.append(f'if (NULL != {self.tmpname})' + '{')
+        code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
+        code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
+        code.append('}')
         code.append('}')
         return code
 
@@ -753,17 +749,17 @@ class TypeNeighborDatatypeArrayAsyncStandard(TypeNeighborDatatypeArrayStandard):
 
     @property
     def final_code(self):
-       request_tmp_name = util.abi_tmp_name('request')
-       code = []
-       code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
-       code.append(f'ompi_coll_base_nbc_request_t* nb_request = (ompi_coll_base_nbc_request_t*){request_tmp_name};')
-       code.append('assert(nb_request->data.release_arrays[idx] == NULL);')
-       code.append(f'nb_request->data.release_arrays[idx++] = (void *){self.tmpname};')
-       code.append('nb_request->data.release_arrays[idx] = NULL;')
-       code.append('} else {')
-       code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
-       code.append('}')
-       return code
+        request_tmp_name = util.abi_tmp_name('request')
+        code = []
+        code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
+        code.append(f'if (NULL != {self.tmpname})' + '{')
+        code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
+        code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
+        code.append('} else {')
+        code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
+        code.append('}')
+        code.append('}')
+        return code
 
 @Type.add_type('OP', abi_type=['ompi'])
 class TypeOp(Type):
