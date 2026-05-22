@@ -16,7 +16,7 @@ jobs:
       if:   ${{ runner.os == 'Linux' }}
 
     - name: Checkout Open MPI
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
        path: mpi-build
        submodules: recursive
@@ -74,7 +74,7 @@ jobs:
               numpy cffi pyyaml
 
     - name: Checkout mpi4py
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: "mpi4py/mpi4py"
 
