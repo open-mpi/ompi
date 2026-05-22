@@ -20,17 +20,20 @@
 
 BEGIN_C_DECLS
 
-void mca_hook_fault_injector_mpi_init_top_post_opal(int argc, char **argv, int requested, int *provided);
+void ompi_hook_fault_injector_mpi_init_top_post_opal(int argc, char **argv, int requested, int *provided);
 
-void mca_hook_fault_injector_mpi_init_bottom(int argc, char **argv, int requested, int *provided);
+void ompi_hook_fault_injector_mpi_init_bottom(int argc, char **argv, int requested, int *provided);
 
-int mca_hook_fault_injector_progress(void);
+int ompi_hook_fault_injector_progress(void);
 
-struct mca_hook_fault_injector_module_t {
-    int global_seed;
-    unsigned rank_mttf_s;
-    unsigned injection_delay_ms;
+struct ompi_hook_fault_injector_module_t {
+    int injection_signal;
+    uint32_t global_seed;
+    uint32_t rank_mttf_s;
+    uint32_t injection_delay_ms;
+    bool high_priority;
     bool inject_in_init;
+    bool pause_injection;
 
     // Time offset from start to fail
     opal_timer_t target_injection_offset_us;
@@ -40,12 +43,12 @@ struct mca_hook_fault_injector_module_t {
     int verbose;
     int output;
 };
-typedef struct mca_hook_fault_injector_module_t mca_hook_fault_injector_module_t;
+typedef struct ompi_hook_fault_injector_module_t ompi_hook_fault_injector_module_t;
 
 
 OMPI_DECLSPEC extern ompi_hook_base_component_1_0_0_t mca_hook_fault_injector_component;
 
-OMPI_DECLSPEC extern mca_hook_fault_injector_module_t mca_hook_fault_injector_module;
+OMPI_DECLSPEC extern ompi_hook_fault_injector_module_t ompi_hook_fault_injector_module;
 
 
 END_C_DECLS
