@@ -20,7 +20,7 @@ jobs:
         sed -i "s|libdir='/mnt/riscv/riscv64-unknown-linux-gnu/lib'|libdir='/opt/riscv/riscv64-unknown-linux-gnu/lib'|g" /opt/riscv/riscv64-unknown-linux-gnu/lib/libatomic.la
 
     - name: Checkout Open MPI
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
        submodules: recursive
     
