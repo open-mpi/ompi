@@ -19,7 +19,7 @@ jobs:
         wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/jammy/amdgpu-install_7.2.70200-1_all.deb
         sudo apt install -y ./amdgpu-install_7.2.70200-1_all.deb
         sudo amdgpu-install --usecase=rocmdev
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
             submodules: recursive
     - name: Build Open MPI
