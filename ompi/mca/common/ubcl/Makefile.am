@@ -1,4 +1,4 @@
-# Copyright (c) 2025      Bull SAS.  All rights reserved.
+# Copyright (c) 2025-2026 Bull SAS.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -8,7 +8,7 @@
 
 #AM_CPPFLAGS = $(common_ubcl_CPPFLAGS)
 
-common_ubcl_sources  = \
+ompi_common_ubcl_sources  = \
 	common_ubcl.c \
 	common_ubcl.h
 
@@ -27,14 +27,16 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-libmca_common_ubcl_la_SOURCES = $(common_ubcl_sources)
-libmca_common_ubcl_la_CFLAGS = $(common_ubcl_CFLAGS)
-libmca_common_ubcl_la_CPPFLAGS = $(common_ubcl_CPPFLAGS)
-libmca_common_ubcl_la_LDFLAGS = $(common_ubcl_LDFLAGS)
-libmca_common_ubcl_la_LIBADD = $(common_ubcl_LIBS) \
+libmca_common_ubcl_la_SOURCES = $(ompi_common_ubcl_sources)
+libmca_common_ubcl_la_CFLAGS = $(ompi_common_ubcl_CFLAGS)
+libmca_common_ubcl_la_CPPFLAGS = $(ompi_common_ubcl_CPPFLAGS)
+libmca_common_ubcl_la_LDFLAGS = $(ompi_common_ubcl_LDFLAGS)
+libmca_common_ubcl_la_LIBADD = $(ompi_common_ubcl_LIBS) \
 	$(OPAL_TOP_BUILDDIR)/opal/mca/common/ubcl/lib@OPAL_LIB_NAME@mca_common_ubcl.la
 
-libmca_common_ubcl_noinst_la_SOURCES = $(common_ubcl_sources)
+libmca_common_ubcl_noinst_la_SOURCES = $(ompi_common_ubcl_sources)
+libmca_common_ubcl_noinst_la_CPPFLAGS = $(ompi_common_ubcl_CPPFLAGS)
+libmca_common_ubcl_noinst_la_LDFLAGS = $(ompi_common_ubcl_LDFLAGS)
 
 # Conditionally install the header files
 

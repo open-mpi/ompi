@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2025      Bull S.A.S. All rights reserved.
+# Copyright (c) 2025-2026 Bull S.A.S. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -15,6 +15,12 @@ AC_DEFUN([MCA_ompi_common_ubcl_CONFIG],[
                     [common_ubcl_happy="yes"],
                     [common_ubcl_happy="no"])
 
+    # common/ubcl let endusers provide a more recent version of UBCL
+    # An mca parameter is exposed to select a specific UBCL path that is dlopen
+    # at runtime. We don't want any previous linking on DSO files.
+    AS_IF([test "$compile_mode" = "dso"],
+          [common_ubcl_LDFLAGS=""],
+          [AC_MSG_WARN([Only DSO mode of common/ubcl is tested])])
 
     AC_REQUIRE([MCA_opal_common_ubcl_CONFIG])
 
@@ -23,7 +29,7 @@ AC_DEFUN([MCA_ompi_common_ubcl_CONFIG],[
           [$2])
 
     # substitute in the things needed to build ubcl
-    AC_SUBST([common_ubcl_CPPFLAGS])
-    AC_SUBST([common_ubcl_LDFLAGS])
-    AC_SUBST([common_ubcl_LIBS])
+    AC_SUBST([ompi_common_ubcl_CPPFLAGS])
+    AC_SUBST([ompi_common_ubcl_LDFLAGS])
+    AC_SUBST([ompi_common_ubcl_LIBS])
 ])dnl
