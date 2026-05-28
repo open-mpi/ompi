@@ -44,6 +44,10 @@ AC_DEFUN([OMPI_CHECK_UBCL],[
           [ompi_check_ubcl_happy="yes"
            $1_CPPFLAGS="${$1_CPPFLAGS} -I$with_ubcl/include/"
            AC_MSG_NOTICE([$1_CPPFLAGS is set to: ${$1_CPPFLAGS}])
+           # Let define UBCL linking flags even if they will be ignored afterwards
+           # as ubcl components are very likely compiled in dynamic mode
+           # See ompi/mca/common/ubcl/configure.m4 comment explaining why UBCL linking
+           # flags are removed only in dynamic mode
            $1_LDFLAGS="${$1_LDFLAGS} -lubcl -L$with_ubcl/lib/"
            AC_MSG_NOTICE([$1_LDFLAGS is set to: ${$1_LDFLAGS}])])
 
