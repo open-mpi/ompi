@@ -18,6 +18,7 @@
  * of these functions, refer to ompi/mca/osc/osc.h.
  */
 
+#include "opal/include/opal_config.h"
 #include "ompi/mca/osc/ubcl/osc_ubcl.h"
 #include "opal/mca/common/ubcl/common_ubcl.h"
 #include "ompi/mca/osc/ubcl/osc_ubcl_info.h"
