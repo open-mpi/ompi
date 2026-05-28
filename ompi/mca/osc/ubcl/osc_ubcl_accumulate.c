@@ -25,7 +25,6 @@
 #include "ompi/mca/osc/ubcl/osc_ubcl_sync.h"
 #include "ompi/mca/osc/ubcl/osc_ubcl_request.h"
 #include "ompi/mca/common/ubcl/common_ubcl.h"
-#include "opal/include/opal_config.h"
 
 static int get_ubcl_int_type(size_t size, bool is_signed, ubcl_win_atomic_datatype_t *ubcl_type)
 {
@@ -211,6 +210,9 @@ static int get_logical_ubcl_type(struct ompi_datatype_t *origin_dt,
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL8
                || MPI_LOGICAL8 == origin_dt
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL16
+               || MPI_LOGICAL16 == origin_dt
 #endif
     ) {
         ret = OMPI_ERR_NOT_IMPLEMENTED;
