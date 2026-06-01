@@ -212,8 +212,11 @@ static int get_logical_ubcl_type(struct ompi_datatype_t *origin_dt,
 #if OMPI_HAVE_FORTRAN_LOGICAL8
                || MPI_LOGICAL8 == origin_dt
 #endif
+/* To ease backport to older ompi versions */
+#if defined OMPI_HAVE_FORTRAN_LOGICAL16
 #if OMPI_HAVE_FORTRAN_LOGICAL16
                || MPI_LOGICAL16 == origin_dt
+#endif
 #endif
     ) {
         ret = OMPI_ERR_NOT_IMPLEMENTED;
