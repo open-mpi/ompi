@@ -227,11 +227,12 @@ honor:
 - **Commit messages:** a short first line saying *what* changed, then a
   body explaining *why*. Open MPI does **not** use Conventional Commits
   (`feat:`/`fix:` prefixes) — write prose. Don't add AI tooling
-  attribution.
+  attribution. Wrap commit-message lines at around 75 characters.
 - **Branch flow:** land on `main` first via a GitHub pull request, then
   cherry-pick to the relevant release branch(es) `vMAJOR.MINOR.x` with a
-  `(cherry picked from commit ...)` line. Never commit features directly
-  to a release branch. See
+  `(cherry picked from commit ...)` line at the end of the commit
+  message; use `git cherry-pick -x` to add it. Never commit features
+  directly to a release branch. See
   [`docs/developers/git-github.rst`](docs/developers/git-github.rst).
 - **Update the docs and the changelog** when user-visible behavior
   changes: RST under [`docs/`](docs/), and a release-notes entry under
