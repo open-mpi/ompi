@@ -138,7 +138,7 @@ thumb that the developers use are:
 #. Instead of using a constant for an important value, make it an MCA
    parameter.
 #. If a task can be implemented in multiple, user-discernible ways,
-   implement as many as possible, and use an an MCA parameter to
+   implement as many as possible, and use an MCA parameter to
    choose between them at run-time.
 
 For example, an easy MCA parameter to describe is the boundary between

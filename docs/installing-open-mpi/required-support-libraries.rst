@@ -29,7 +29,7 @@ system.
               compared to later versions.
 
               Other than the Hwloc restriction about v3.0.0 and beyond
-              (see below), the Open MPI community generally recomends
+              (see below), the Open MPI community generally recommends
               using the latest available version of Hwloc unless there
               is a specific reason not to.
 
@@ -88,7 +88,7 @@ system.
               may still have bugs and/or have less functionality as
               compared to later versions.
 
-              The Open MPI community generally recomends using the
+              The Open MPI community generally recommends using the
               latest available version of OpenPMIx unless there is a
               specific reason not to.
 
@@ -114,7 +114,7 @@ system.
               and run with |prte_min_version|, you will not get a
               fully-populated ``mpirun(1)`` man page.
 
-              The Open MPI community generally recomends using the
+              The Open MPI community generally recommends using the
               latest available version of PRRTE unless there is a
               specific reason not to.
 
@@ -277,7 +277,7 @@ Build example 1
 
    * If ``configure`` is unable to find header files and libraries for
      PMIx, Hwloc, and Libevent elsewhere on the build machine (i.e.,
-     assumedly the same PMIx, Hwloc, and Libevent than the PRRTE in
+     presumably the same PMIx, Hwloc, and Libevent as the PRRTE in
      ``/usr/local`` is using), this is an error: ``configure`` will
      abort, and therefore refuse to build Open MPI.
 
@@ -298,7 +298,7 @@ will cause the following to occur:
 
    * If ``configure`` is unable to find header files and libraries for
      Hwloc and Libevent elsewhere on the build machine (i.e.,
-     assumedly the same Hwloc and Libevent than the PMIx in
+     presumably the same Hwloc and Libevent as the PMIx in
      ``/opt/local`` is using), this is an error: ``configure`` will
      abort, and therefore refuse to build Open MPI.
 

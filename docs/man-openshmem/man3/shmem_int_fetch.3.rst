@@ -75,7 +75,7 @@ RETURN VALUES
 -------------
 
 The contents at the *target* address on the remote PE. The data type of
-the return value is the same as the the type of the remote data object.
+the return value is the same as the type of the remote data object.
 
 
 .. seealso::

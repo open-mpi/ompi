@@ -90,7 +90,7 @@ class MPI_ERR_PROC_FAILED due to this acknowledged failure.
 USAGE PATTERNS
 --------------
 
-One may query, without side effect, for the number of currently aknowledged
+One may query, without side effect, for the number of currently acknowledged
 process failures *comm* by supplying 0 in *num_to_ack*.
 
 Conversely, one may unconditionally acknowledge all currently known process

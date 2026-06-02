@@ -34,7 +34,7 @@ Open MPI v4.x might not execute correctly with Open MPI |ompi_series|.
     compilers (e.g., GNU Fortran >= v4.9), Open MPI v5.0.0 removed the
     names from the MPI interfaces when there is only a single
     subroutine in the interface, and that subroutine name exactly
-    matches the iterface name.  This change is likely to make Open MPI
+    matches the interface name.  This change is likely to make Open MPI
     |ompi_series|'s ``mpi`` module bindings *less* restrictive than
     Open MPI v4.x, but it *may* also have ABI implications, depending
     on your Fortran compiler.

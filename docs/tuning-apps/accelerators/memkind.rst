@@ -48,7 +48,7 @@ information to Open MPI at application launch:
 Asserting usage of memory kind when creating a Communicator
 ===========================================================
 
-The following code-snipplet demonstrates how to assert that a
+The following code snippet demonstrates how to assert that a
 communicator will only be used for ROCm device buffers:
 
 .. code:: c

@@ -448,7 +448,7 @@ If we run the above, we get an output of:
 
 The ``MPI_TYPE_RESIZED`` function allows us to take any arbitrary
 datatype and set the lower bound and extent directly (which indirectly
-sets the upper bound), without needing to setup the arrays and
+sets the upper bound), without needing to set up the arrays and
 computing the displacements necessary to invoke
 ``MPI_TYPE_CREATE_STRUCT``.
 

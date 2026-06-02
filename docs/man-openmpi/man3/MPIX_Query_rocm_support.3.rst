@@ -41,7 +41,7 @@ DESCRIPTION
 -----------
 
 This function is part of an :ref:`Open MPI extension
-<ompi-features-extentions-label>`; it is not part of standard MPI.
+<ompi-features-extensions-label>`; it is not part of standard MPI.
 
 This routine returns 1 if both the MPI library was built with the AMD
 ROCm library and the runtime supports ROCm buffers.  Otherwise, it

@@ -1157,7 +1157,7 @@ If only ``--bind-to OBJ`` is specified, then ``--map-by`` is determined by the n
   R2  hostA  [../../../../../../../..][BB/../../../../../../..]
   R3  hostA  [../../../../../../../..][../BB/../../../../../..]
 
-The mapping pattern might be better seen if we change the default ``--rank-by`` from ``fill`` to ``span``. First, the processes are mapped by package iterating between the two marking a core at a time. Next, the processes are ranked in a spanning manner that load balances them across the object they were mapped against. Finally, the processes are bound to the core that they were mapped againast.
+The mapping pattern might be better seen if we change the default ``--rank-by`` from ``fill`` to ``span``. First, the processes are mapped by package iterating between the two marking a core at a time. Next, the processes are ranked in a spanning manner that load balances them across the object they were mapped against. Finally, the processes are bound to the core that they were mapped against.
 
 .. code::
 
@@ -1206,12 +1206,12 @@ Means that:
 * Rank 1 runs on node bb, bound to logical package 0, cores 0 and 1.
 * Rank 2 runs on node cc, bound to logical cores 2 and 3.
 
-Note that only logicical processor locations are supported. By default, the values specified are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
+Note that only logical processor locations are supported. By default, the values specified are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
 
 If the binding specification overlaps between any two ranks then an error occurs. If you intend to allow processes to share the same logical processing unit then you must pass the ``--bind-to :overload-allowed`` command line option to tell the runtime to ignore this check.
 
 The hostnames listed above are "absolute," meaning that actual
-resolveable hostnames are specified.  However, hostnames can also be
+resolvable hostnames are specified.  However, hostnames can also be
 specified as "relative," meaning that they are specified in relation
 to an externally-specified list of hostnames (e.g., by ``mpirun``'s
 ``--host`` argument, a hostfile, or a job scheduler).
@@ -1230,7 +1230,7 @@ hostnames, indexed from 0.  For example:
 
 All package/core slot locations are specified as logical indexes.
 
-.. note:: The Open MPI v1.6 series used physical indexes. Starting in Open MPI v5.0 only logicial indexes are supported and the ``rmaps_rank_file_physical`` MCA parameter is no longer recognized.
+.. note:: The Open MPI v1.6 series used physical indexes. Starting in Open MPI v5.0 only logical indexes are supported and the ``rmaps_rank_file_physical`` MCA parameter is no longer recognized.
 
 You can use tools such as Hwloc's `lstopo(1)` to find the logical
 indexes of package and cores.
