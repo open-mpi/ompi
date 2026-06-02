@@ -50,7 +50,7 @@ There are three mechanisms for specifying the hosts that an MPI job will run on:
 Non-interactive ``ssh`` logins
 ------------------------------
 
-SSH keys must be setup such that the following can be executed without
+SSH keys must be set up such that the following can be executed without
 being prompted for password or passphrase:
 
 .. code-block:: sh
@@ -60,7 +60,7 @@ being prompted for password or passphrase:
    shell$
 
 Consult instructions and tutorials from around the internet to learn
-how to setup SSH keys.  Try Google search terms like "passwordless
+how to set up SSH keys.  Try Google search terms like "passwordless
 SSH" or "SSH key authentication".
 
 For simplicity, it may be desirable to configure your SSH keys
@@ -75,12 +75,12 @@ comfortable with.
    or passphrase |mdash| *to any node* in the host list *from any
    node* in the host list.
 
-   It may *not* be sufficient to only setup an SSH key from the node
+   It may *not* be sufficient to only set up an SSH key from the node
    where you are invoking :ref:`mpirun(1) <man1-mpirun>` to all other
    nodes.
 
 If you have a shared ``$HOME`` filesystem between your nodes, you can
-setup a single SSH key that is used to login to all nodes.
+set up a single SSH key that is used to login to all nodes.
 
 Finding Open MPI executables and libraries
 ------------------------------------------

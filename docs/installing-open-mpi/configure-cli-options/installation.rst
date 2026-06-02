@@ -147,7 +147,7 @@ be used with ``configure``:
             <label-customizing-wrapper-compiler>` to build Open
             MPI/OpenSHMEM applications.
 
-.. _building-ompi-cli-options-diable-dlopen-label:
+.. _building-ompi-cli-options-disable-dlopen-label:
 
 * ``--enable-dlopen``: Enable Open MPI to load components as
   standalone Dynamic Shared Objects (DSOs) at run-time.  This option

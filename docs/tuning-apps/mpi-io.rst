@@ -207,7 +207,7 @@ individual files are merged into the actual output file, using the
 time stamps as the main criteria.
 
 The component has certain limitations and restrictions, such as its
-relience on the synchronization clocks on the individual cluster nodes
+reliance on the synchronization clocks on the individual cluster nodes
 to determine the order between entries in the final file, which might
 lead to some deviations compared to the actual calling sequence.
 

@@ -167,7 +167,7 @@ Main
    * - coll_xhc_<op>_hierarchy
      - bcast/barrier: ``numa,socket``
        (all)reduce: ``l3,numa,socket``
-     - Topological features to consider for XHC's hierarchy, specifially for
+     - Topological features to consider for XHC's hierarchy, specifically for
        this primitive. Mutually exclusive with the respective non-specific
        parameter.
    

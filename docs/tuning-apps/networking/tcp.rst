@@ -200,7 +200,7 @@ not use specific IP networks |mdash| or not use any IP networks at all
              This interface was automatically given an IP address in
              the 192.168.1.0/24 subnet and marked as "up".  Since Open
              MPI saw this 192.168.1.0/24 "up" interface in all MPI
-             processes on all nodes, it assumed that that network was
+             processes on all nodes, it assumed that network was
              usable for MPI communications.  This is obviously
              incorrect, and it led to MPI applications hanging when
              they tried to send or receive MPI messages.

@@ -7,7 +7,7 @@ Old versions of Open MPI (starting from v1.3 series) had support for
 the transparent, coordinated checkpointing and restarting of MPI
 processes (similar to LAM/MPI).
 
-Open MPI supported both the the `BLCR <http://ftg.lbl.gov/checkpoint/>`_
+Open MPI supported both the `BLCR <http://ftg.lbl.gov/checkpoint/>`_
 checkpoint/restart system and a "self" checkpointer that allows
 applications to perform their own checkpoint/restart functionality while taking
 advantage of the Open MPI checkpoint/restart infrastructure.

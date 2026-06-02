@@ -63,7 +63,7 @@ Open MPI version 3.0.5
 - Add support for unwinding info to all files that are present in the
   stack starting from ``MPI_Init``, which is helpful with parallel
   debuggers.  Thanks to James Clark for the report and initial fix.
-- Fixed inadvertant use of bitwise operators in the MPI C++ bindings
+- Fixed inadvertent use of bitwise operators in the MPI C++ bindings
   header files.  Thanks to Bert Wesarg for the report and the fix.
 - Added configure option ``--disable-wrappers-runpath`` (alongside the
   already-existing ``--disable-wrappers-rpath`` option) to prevent Open
@@ -79,7 +79,7 @@ Open MPI version 3.0.4
   ``--with-devel-headers``.  Thanks to @g-raffy for reporting the issue.
 - Fix possible floating point rounding and division issues in OMPIO
   which led to crashes and/or data corruption with very large data.
-  Thanks to Axel Huebl and René Widera for identifing the issue,
+  Thanks to Axel Huebl and René Widera for identifying the issue,
   supplying and testing the fix (** also appeared: v3.0.4).
 - Use ``static_cast<>`` in ``mpi.h`` where appropriate.  Thanks to @shadow-fx
   for identifying the issue.
@@ -152,7 +152,7 @@ Open MPI version 3.0.2
   rather than those documented in the MPI standard.
 - Fixed ``MPI_SIZEOF`` in the "mpi" Fortran module for the NAG compiler.
 - Fix RMA function signatures for ``use-mpi-f08`` bindings to have the
-  asynchonous property on all buffers.
+  asynchronous property on all buffers.
 - Fix Fortran ``MPI_COMM_SPAWN_MULTIPLE`` to properly follow the count
   length argument when parsing the array_of_commands variable.
 - Revamp Java detection to properly handle new Java versions which do
@@ -197,9 +197,9 @@ Open MPI version 3.0.1
   propagation tools.  By default it is set to false, except for Cray XC systems.
 - Fix a problem reported on the mailing separately by Kevin McGrattan and Stephen
   Guzik about consistency issues on NFS file systems when using OMPIO. This fix
-  also introduces a new mca parameter ``fs_ufs_lock_algorithm`` which allows to
+  also introduces a new mca parameter ``fs_ufs_lock_algorithm`` which allows users to
   control the locking algorithm used by ompio for read/write operations. By
-  default, ompio does not perfom locking on local UNIX file systems, locks the
+  default, ompio does not perform locking on local UNIX file systems, locks the
   entire file per operation on NFS file systems, and selective byte-range
   locking on other distributed file systems.
 - Add an mca parameter ``pmix_server_usock_connections`` to allow mpirun to

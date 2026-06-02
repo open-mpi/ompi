@@ -6,7 +6,7 @@ MPI_Buffer_flush
 .. include_body
 
 :ref:`MPI_Buffer_flush`, :ref:`MPI_Buffer_iflush` |mdash| Wait till all messages currently in 
-the the MPI process specific buffer of the calling MPI process have been transmitted.
+the MPI process specific buffer of the calling MPI process have been transmitted.
 
 .. The following directive tells the man page generation script to
    generate multiple bindings for this file.
