@@ -36,6 +36,8 @@ SPHINX_OPTS       ?= -W --keep-going -j auto
 # However, it is necessary to list $(srcdir) when using wildcards.
 TEXT_SOURCE_FILES  = \
         $(srcdir)/license/*.txt
+MARKDOWN_SOURCE_FILES = \
+        $(top_srcdir)/.github/CODE_OF_CONDUCT.md
 IMAGE_SOURCE_FILES = \
         $(srcdir)/openmpi_logo.png \
         $(srcdir)/installing-open-mpi/required-support-libraries-dependency-graph.png \
@@ -62,12 +64,14 @@ RST_SOURCE_FILES   = \
 EXTRA_DIST         = \
         requirements.txt \
         no-prrte-content.rst.txt \
+        generate-code-of-conduct-rst.py \
         generate-mpi-man3-bindings.py \
         mpi-standard-apis.json \
         html \
         man \
         $(SPHINX_CONFIG) \
         $(TEXT_SOURCE_FILES) \
+        $(MARKDOWN_SOURCE_FILES) \
         $(IMAGE_SOURCE_FILES) \
         $(RST_SOURCE_FILES)
 
@@ -868,6 +872,10 @@ OMPI_MAN3_RST = $(OMPI_MAN3:%.3=man-openmpi/man3/%.3.rst)
 OMPI_MAN3_BUILT = $(OMPI_MAN3:%.3=$(MAN_OUTDIR)/%.3)
 OMPI_MAN3_INSTALL_FROM = $(OMPI_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 
+# Generate this file from CODE_OF_CONDUCT.md as part of the Sphinx
+# docs build.
+CODE_OF_CONDUCT_RST = $(builddir)/code-of-conduct.rst
+
 # Use this one file as a sentinel for building all the Open MPI man
 # page API bindings files
 SENTINEL_OMPI_MAN3_BINDING = $(builddir)/man-openmpi/man3/bindings/mpi_init.rst
@@ -950,7 +958,7 @@ man: $(ALL_MAN_BUILT)
 # Remove the copies of the built HTML and man pages to get back to a
 # clean git clone.
 maintainer-clean-local:
-	rm -rf html man man-openmpi/man3/bindings
+	rm -rf html man man-openmpi/man3/bindings $(CODE_OF_CONDUCT_RST)
 
 # If we're doing a VPATH build, we may have "html" and "man"
 # directories in the build tree (e.g., if we did "make dist").  Remove
@@ -1036,10 +1044,16 @@ $(SENTINEL_OMPI_MAN3_BINDING): mpi-standard-apis.json
 	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-mpi-man3-bindings.py \
 		--srcdir $(srcdir) --builddir $(builddir)
 
+$(CODE_OF_CONDUCT_RST): $(top_srcdir)/.github/CODE_OF_CONDUCT.md
+$(CODE_OF_CONDUCT_RST): generate-code-of-conduct-rst.py
+	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-code-of-conduct-rst.py \
+		--input $(top_srcdir)/.github/CODE_OF_CONDUCT.md --output $@
+
 $(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
 $(ALL_MAN_BUILT): $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
 $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
+$(ALL_MAN_BUILT): $(CODE_OF_CONDUCT_RST)
 $(ALL_MAN_BUILT): $(SENTINEL_OMPI_MAN3_BINDING)
 
 # Render the RST source into both 1) full HTML docs and 2) nroff man
@@ -1131,6 +1145,7 @@ linkcheck:
 # RST source files to the build tree.  So delete all of those, too.
 clean-local:
 	rm -rf $(OUTDIR)
+	rm -f $(CODE_OF_CONDUCT_RST)
 	rm -rf prrte-rst-content schizo-ompi-rst-content
 	rm -rf ompi-prrte-objects.inv opal-pmix-objects.inv
 	if test "$(srcdir)" != "$(builddir)"; then \
@@ -1150,7 +1165,7 @@ clean-local:
 # macro.  This hooks into the normal Automake build mechanisms, and
 # will ultimately cause the invocation of the above rule that runs
 # Sphinx to build the HTML and man pages.
-BUILT_SOURCES = $(ALL_MAN_BUILT)
+BUILT_SOURCES = $(CODE_OF_CONDUCT_RST) $(ALL_MAN_BUILT)
 
 endif OPAL_BUILD_DOCS
 
