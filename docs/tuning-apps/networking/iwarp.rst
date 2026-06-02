@@ -6,7 +6,7 @@ Open MPI's support for iWARP devices has changed over time.
 In the Open MPI |ompi_series| series, iWARP devices are
 supported via the OFI (``ofi``) MTL via the CM (``cm``) PML.
 
-.. note:: Prior versions of Open MPI supported iWARP devies via the
+.. note:: Prior versions of Open MPI supported iWARP devices via the
           ``openib`` BTL.  Open MPI |ompi_series| no longer includes
           the ``openib`` BTL.
 

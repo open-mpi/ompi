@@ -28,7 +28,7 @@ abstractions and configuration options belong to Open MPI vs. PMIx
 vs. PRRTE.
 
 Advanced users can peek into the PMIx and PRRTE internals and tweak
-additional configuration settings if necessary, but we hope that that
+additional configuration settings if necessary, but we hope that
 will rarely be necessary.
 
 PMIx
@@ -48,7 +48,7 @@ PMIx presents a unified API that hides many of the complexities of
 communication with these back-end run-time environments.  Open MPI
 uses the PMIx API to discover, communicate, and coordinate with any
 supported back-end run-time system without needing to know the
-intimiate details of that system.
+intimate details of that system.
 
 PRRTE
 -----

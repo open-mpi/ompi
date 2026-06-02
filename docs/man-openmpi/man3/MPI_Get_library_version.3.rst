@@ -29,7 +29,7 @@ Fortran Syntax
    ! or the older form: INCLUDE 'mpif.h'
 
    MPI_GET_LIBRARY_VERSION(VERSION, RESULTLEN, IERROR)
-       CHARACTER*(*)   NAME
+       CHARACTER*(*)   VERSION
        INTEGER RESULTLEN, IERROR
 
 Fortran 2008 Syntax
@@ -39,7 +39,7 @@ Fortran 2008 Syntax
 
    USE mpi_f08
 
-   MPI_Get_library_version(version, resulten, ierror)
+   MPI_Get_library_version(version, resultlen, ierror)
        CHARACTER(LEN=MPI_MAX_LIBRARY_VERSION_STRING), INTENT(OUT) :: version
        INTEGER, INTENT(OUT) :: resultlen
        INTEGER, OPTIONAL, INTENT(OUT) :: ierror
