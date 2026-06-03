@@ -143,12 +143,12 @@ static int mca_smsc_xpmem_component_query(void)
     mca_smsc_xpmem_component.my_seg_id = xpmem_make(0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE,
                                                     (void *) 0666);
     if (-1 == mca_smsc_xpmem_component.my_seg_id) {
+        opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, opal_smsc_base_framework.framework_output,
+                            "mca_smsc_xpmem_component_query: xpmem_make returned %d", mca_smsc_xpmem_component.my_seg_id);
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    mca_smsc_xpmem_send_modex();
-
-    return OPAL_SUCCESS;
+    return mca_smsc_xpmem_send_modex();
 }
 
 static mca_smsc_module_t *mca_smsc_xpmem_component_enable(void)
