@@ -533,6 +533,9 @@ docs/schizo-ompi-rst-content
 docs/html
 docs/man
 
+# other doc RST files to ignore as they are generated
+docs/code-of-conduct.rst
+
 # Generated C Bindings
 ompi/mpi/c/*_generated*.c
 
