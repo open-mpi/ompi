@@ -41,7 +41,12 @@
 #define MCA_COLL_BASE_TAG_SCAN -24
 #define MCA_COLL_BASE_TAG_SCATTER -25
 #define MCA_COLL_BASE_TAG_SCATTERV -26
-#define MCA_COLL_BASE_TAG_NONBLOCKING_BASE -27
+/* Distributed graph construction uses PML messages before the new
+ * communicator is fully created. Keep these tags out of the nonblocking
+ * collective tag range. */
+#define MCA_COLL_BASE_TAG_TOPO_DIST_EDGE_IN -27
+#define MCA_COLL_BASE_TAG_TOPO_DIST_EDGE_OUT -28
+#define MCA_COLL_BASE_TAG_NONBLOCKING_BASE -29
 #define MCA_COLL_BASE_TAG_NONBLOCKING_END ((-1 * INT_MAX/2) + 1)
 #define MCA_COLL_BASE_TAG_NEIGHBOR_BASE  (MCA_COLL_BASE_TAG_NONBLOCKING_END - 1)
 #define MCA_COLL_BASE_TAG_NEIGHBOR_END   (MCA_COLL_BASE_TAG_NEIGHBOR_BASE - 1024)
