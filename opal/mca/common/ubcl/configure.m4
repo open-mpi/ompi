@@ -15,6 +15,7 @@ AC_DEFUN([MCA_opal_common_ubcl_CONFIG],[
                     [common_ubcl_happy="yes"],
                     [common_ubcl_happy="no"])
 
+    # opal/mca/common/ubcl does not handle any UBCL symbols
     common_ubcl_LDFLAGS=""
 
     AS_IF([test "$common_ubcl_happy" = "yes"],

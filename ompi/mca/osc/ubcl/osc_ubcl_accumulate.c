@@ -18,6 +18,7 @@
  * of these functions, refer to ompi/mca/osc/osc.h.
  */
 
+#include "opal/include/opal_config.h"
 #include "ompi/mca/osc/ubcl/osc_ubcl.h"
 #include "opal/mca/common/ubcl/common_ubcl.h"
 #include "ompi/mca/osc/ubcl/osc_ubcl_info.h"
@@ -25,7 +26,6 @@
 #include "ompi/mca/osc/ubcl/osc_ubcl_sync.h"
 #include "ompi/mca/osc/ubcl/osc_ubcl_request.h"
 #include "ompi/mca/common/ubcl/common_ubcl.h"
-#include "opal/include/opal_config.h"
 
 static int get_ubcl_int_type(size_t size, bool is_signed, ubcl_win_atomic_datatype_t *ubcl_type)
 {
@@ -211,6 +211,12 @@ static int get_logical_ubcl_type(struct ompi_datatype_t *origin_dt,
 #endif
 #if OMPI_HAVE_FORTRAN_LOGICAL8
                || MPI_LOGICAL8 == origin_dt
+#endif
+/* To ease backport to older ompi versions */
+#if defined OMPI_HAVE_FORTRAN_LOGICAL16
+#if OMPI_HAVE_FORTRAN_LOGICAL16
+               || MPI_LOGICAL16 == origin_dt
+#endif
 #endif
     ) {
         ret = OMPI_ERR_NOT_IMPLEMENTED;

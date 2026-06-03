@@ -21,6 +21,8 @@ AC_DEFUN([MCA_ompi_osc_ubcl_CONFIG], [
         [osc_ubcl_happy="yes"],
         [osc_ubcl_happy="no"])
 
+    # See ompi/mca/common/ubcl/configure.m4 comment explaining why UBCL linking
+    # flags are removed only in dynamic mode
     AS_IF([test "$compile_mode" = "dso"],
           [osc_ubcl_LDFLAGS=""],
           [AC_MSG_WARN([Only DSO mode of osc/ubcl is tested (see --enable-mca-dso)])])

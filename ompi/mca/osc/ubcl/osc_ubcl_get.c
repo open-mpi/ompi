@@ -114,7 +114,7 @@ int ompi_osc_ubcl_rget(void *origin_addr, size_t origin_count,
         opal_free_list_return(&mca_osc_ubcl_component.req_free_list, &(osc_req->super));
         mca_osc_ubcl_error(
             OPAL_ERR_NOT_SUPPORTED,
-            "GPU buffer not supported by osc/ubcl: cannot cannot perform MPI_Get of buffer %p",
+            "GPU buffer not supported by osc/ubcl: cannot perform MPI_Get of buffer %p",
             origin_addr);
         ret = OPAL_ERR_NOT_SUPPORTED;
         goto exit;
