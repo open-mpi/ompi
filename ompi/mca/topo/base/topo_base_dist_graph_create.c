@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/info/info.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -27,8 +28,6 @@
 
 #define IN_INDEX   0
 #define OUT_INDEX  1
-#define MCA_TOPO_BASE_TAG_DIST_EDGE_IN    -50
-#define MCA_TOPO_BASE_TAG_DIST_EDGE_OUT   -51
 
 typedef struct _dist_graph_elem {
     int in;
@@ -172,7 +171,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                 position *= 2;
             }
             err = MCA_PML_CALL(isend( &rin[position], count, (ompi_datatype_t*)&ompi_mpi_int,
-                                      i, MCA_TOPO_BASE_TAG_DIST_EDGE_IN, MCA_PML_BASE_SEND_STANDARD,
+                                      i, MCA_COLL_BASE_TAG_TOPO_DIST_EDGE_IN, MCA_PML_BASE_SEND_STANDARD,
                                       comm, &reqs[pending_reqs]));
             pending_reqs++;
         }
@@ -183,7 +182,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
                 position *= 2;
             }
             err = MCA_PML_CALL(isend(&rout[position], count, (ompi_datatype_t*)&ompi_mpi_int,
-                                     i, MCA_TOPO_BASE_TAG_DIST_EDGE_OUT, MCA_PML_BASE_SEND_STANDARD,
+                                     i, MCA_COLL_BASE_TAG_TOPO_DIST_EDGE_OUT, MCA_PML_BASE_SEND_STANDARD,
                                      comm, &reqs[pending_reqs]));
             pending_reqs++;
         }
@@ -210,7 +209,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     for( left_over = count, current_pos = i = 0; left_over > 0; i++ ) {
 
         MCA_PML_CALL(recv( &temp[count - left_over], left_over, (ompi_datatype_t*)&ompi_mpi_int,  /* keep receiving in the same buffer */
-                           MPI_ANY_SOURCE, MCA_TOPO_BASE_TAG_DIST_EDGE_IN,
+                           MPI_ANY_SOURCE, MCA_COLL_BASE_TAG_TOPO_DIST_EDGE_IN,
                            comm, &status ));
         how_much = status._ucount / int_size;
         if (MPI_UNWEIGHTED != weights) {
@@ -246,7 +245,7 @@ int mca_topo_base_dist_graph_distribute(mca_topo_base_module_t* module,
     for( left_over = count, current_pos = i = 0; left_over > 0; i++ ) {
 
         MCA_PML_CALL(recv( &temp[count - left_over], left_over, (ompi_datatype_t*)&ompi_mpi_int,  /* keep receiving in the same buffer */
-                           MPI_ANY_SOURCE, MCA_TOPO_BASE_TAG_DIST_EDGE_OUT,
+                           MPI_ANY_SOURCE, MCA_COLL_BASE_TAG_TOPO_DIST_EDGE_OUT,
                            comm, &status ));
         how_much = status._ucount / int_size;
 
