@@ -255,6 +255,12 @@ do {                                                            \
         (opal_free_list_item_t*)pckt);                          \
 } while(0)
 
+/**
+ * A thread-safe function that should be called every time we need the OB1
+ * progress to be turned (or kept) on.
+ */
+int mca_pml_ob1_enable_progress(int32_t count);
+
 static inline void mca_pml_ob1_add_to_pending (ompi_proc_t *proc, mca_bml_base_btl_t *bml_btl,
                                                int order, mca_pml_ob1_hdr_t *hdr, size_t hdr_size)
 {
@@ -270,6 +276,10 @@ static inline void mca_pml_ob1_add_to_pending (ompi_proc_t *proc, mca_bml_base_b
     OPAL_THREAD_SCOPED_LOCK(&mca_pml_ob1.lock, {
             opal_list_append(&mca_pml_ob1.pckt_pending, &pckt->super.super);
         });
+    /* Drive mca_pml_ob1_progress() so the queue is retried from opal_progress()
+     * even if no further BTL completion fires to call
+     * MCA_PML_OB1_PROGRESS_PENDING. */
+    mca_pml_ob1_enable_progress(1);
 }
 
 #define OB1_MATCHING_LOCK(lock)                                  \
@@ -410,12 +420,6 @@ mca_pml_ob1_calc_weighted_length( mca_pml_ob1_com_btl_t *btls, int num_btls, siz
     /* account for rounding errors */
     btls[0].length += length_left;
 }
-
-/**
- * A thread-safe function that should be called every time we need the OB1
- * progress to be turned (or kept) on.
- */
-int mca_pml_ob1_enable_progress(int32_t count);
 
 int mca_pml_ob1_send_control_any (ompi_proc_t *proc, int order, mca_pml_ob1_hdr_t *hdr, size_t hdr_size,
                                   bool add_to_pending);
