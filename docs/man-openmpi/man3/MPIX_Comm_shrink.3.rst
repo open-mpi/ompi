@@ -104,7 +104,7 @@ group of *comm* contains failed MPI processes. In particular,
 even when *comm* is revoked.
 
 The implementation will strive to detect all failures during the shrink
-operation, but in certain circumpstances, the group of *newcomm* may still
+operation, but in certain circumstances, the group of *newcomm* may still
 contain failed MPI processes, whose failure will be detected in subsequent
 MPI operations on *newcomm*.
 

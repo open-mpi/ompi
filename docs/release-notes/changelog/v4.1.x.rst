@@ -31,7 +31,7 @@ Open MPI version 4.1.6
 - Fix minor issues and add some minor performance optimizations with
   OFI support.
 - Support the ``striping_factor`` and ``striping_unit`` MPI_Info names
-  recomended by the MPI standard for parallel IO.
+  recommended by the MPI standard for parallel IO.
 - Fixed some minor issues with UCX support.
 - Minor optimization for 0-byte MPI_Alltoallw (i.e., make it a no-op).
 
@@ -119,7 +119,7 @@ Open MPI version 4.1.3
   based on float precision.
 - Fix compile failure for ``--enable-heterogeneous``.  Also updated
   the README to clarify that ``--enable-heterogeneous`` is functional,
-  but still not recomended for most environments.
+  but still not recommended for most environments.
 - Minor fixes to OMPIO, including:
 
   - Fixing the open behavior of shared memory shared file pointers.
@@ -154,7 +154,7 @@ Open MPI version 4.1.2
 - Correctly process 0 slots with the ``mpirun --host`` option.
 - Ensure to unlink and rebind socket when the Open MPI session
   directory already exists.
-- Fix a segv in ``mpirun --disable-dissable-map``.
+- Fix a segv in ``mpirun --disable-display-map``.
 - Fix a potential hang in the memory hook handling.
 - Slight performance improvement in ``MPI_WAITALL`` when running in
   ``MPI_THREAD_MULTIPLE``.

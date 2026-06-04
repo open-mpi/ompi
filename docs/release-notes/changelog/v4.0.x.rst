@@ -153,7 +153,7 @@ Open MPI version 4.0.2
   Thanks to Orivej Desh for reporting and providing a fix.
 - Fix divide by zero segfault in ompio.
   Thanks to @haraldkl for reporting and providing a fix.
-- Fix finalize of flux compnents.
+- Fix finalize of flux components.
   Thanks to Stephen Herbein and Jim Garlick for providing a fix.
 - Fix osc_rdma_acc_single_intrinsic regression.
   Thanks to Joseph Schuchart for reporting and providing a fix.
@@ -231,7 +231,7 @@ Open MPI version 4.0.1
   Thanks to Igor Andriyash and Axel Huebl for reporting.
 - Fix two memory leaks encountered for certain MPI-RMA usage patterns.
   Thanks to Joseph Schuchart for reporting and fixing.
-- Fix a problem with the ORTE ``rmaps_base_oversubscribe`` MCA paramater.
+- Fix a problem with the ORTE ``rmaps_base_oversubscribe`` MCA parameter.
   Thanks to @iassiour for reporting.
 - Fix a problem with UCX PML default error handler for MPI communicators.
   Thanks to Marcin Krotkiewski for reporting.
@@ -277,7 +277,7 @@ Open MPI version 4.0.0
 - Fix problems with use of newer map-by mpirun options.  Thanks to
   Tony Reina for reporting.
 - Fix rank-by algorithms to properly rank by object and span
-- Allow for running as root of two environment variables are set.
+- Allow for running as root if two environment variables are set.
   Requested by Axel Huebl.
 - Fix a problem with building the Java bindings when using Java 10.
   Thanks to Bryce Glover for reporting.

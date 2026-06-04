@@ -217,7 +217,7 @@ but the usage differs slightly. See the example below.
 	// Create an info object using MPI_Info_create()
 	...
 
-	// Retrieve the the value of a provided key later in the code
+	// Retrieve the value of a provided key later in the code
 	char key[] = "my_key";
 	char value[64];
         int valuelen=64;
@@ -248,7 +248,7 @@ Please refer to the example shown in :ref:`MPI_INFO_GET <label-mpi-info-get>`.
 MPI_Sizeof
 ----------
 
-The ``MPI_SIZEOF`` construct in Fortran has been deprected since there
+The ``MPI_SIZEOF`` construct in Fortran has been deprecated since there
 are standard Fortran language constructs such as ``c_sizeof`` and
 ``storage_size`` that can be used instead.
 

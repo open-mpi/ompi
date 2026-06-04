@@ -48,7 +48,7 @@ this edge is stored in
 *weights*\ [*degrees*\ [0]+...+\ *degrees*\ [i-1]+j]. Both the *sources*
 and the *destinations* arrays may contain the same node more than once,
 and the order in which nodes are listed as destinations or sources is
-not signicant. Similarly, different processes may specify edges with the
+not significant. Similarly, different processes may specify edges with the
 same source and destination nodes. Source and destination nodes must be
 process ranks of comm_old. Different processes may specify different
 numbers of source and destination nodes, as well as different source to

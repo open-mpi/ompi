@@ -22,7 +22,7 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-:ref:`MPI_T_source_get_timestamp` returns the current timestamp from the specificed source.
+:ref:`MPI_T_source_get_timestamp` returns the current timestamp from the specified source.
 
 
 ERRORS

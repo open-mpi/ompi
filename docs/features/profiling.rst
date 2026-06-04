@@ -1,10 +1,10 @@
-.. _open-mpi-profileing-label:
+.. _open-mpi-profiling-label:
 
 Open MPI profiling interface
 ============================
 
-Open MPI |ompi_ver| supportings the "PMPI" profiling interface as
-perscribed by the MPI standard for the C and Fortran bindings (*not*
+Open MPI |ompi_ver| supports the "PMPI" profiling interface as
+prescribed by the MPI standard for the C and Fortran bindings (*not*
 the :ref:`Open MPI Java binding extensions <open-mpi-java-label>`).
 
 Per MPI-4.0 section 15.2.1, MPI implementations must document which
@@ -15,7 +15,7 @@ level routines.
 
 In general, Open MPI's Fortran bindings are implemented on top of the
 C bindings.  Hence, a profile developer who implements ``MPI_Init()``
-in C will also intecept all Fortran calls to ``MPI_INIT`` regardless
+in C will also intercept all Fortran calls to ``MPI_INIT`` regardless
 of whether the user is utilizing the ``mpif.h``, ``use mpi``, or ``use
 mpi_f08`` Fortran interfaces.
 
@@ -78,4 +78,4 @@ interfaces.  Indeed, that is the most portable way to implement a
 profiling interface.  Since Open MPI's Fortran bindings are |mdash|
 for the most part |mdash| implemented on top of its C bindings,
 profile developers can ignore all Fortran interfaces except for the
-ones enumated above.
+ones enumerated above.
