@@ -218,19 +218,19 @@ static int cycles = 100;
 static int trials = 20;
 static int warmups = 2;
 
-static void print_result(int length, int trials, double *timers)
+static void print_result(int length, int num_trials, double *timers)
 {
     double bandwidth, clock_prec, temp;
     double min_time, max_time, average, std_dev = 0.0;
-    double ordered[trials];
+    double ordered[num_trials];
     int t, pos, quartile_start, quartile_end;
 
-    for (t = 0; t < trials; ordered[t] = timers[t], t++)
+    for (t = 0; t < num_trials; ordered[t] = timers[t], t++)
         ;
-    for (t = 0; t < trials - 1; t++) {
+    for (t = 0; t < num_trials - 1; t++) {
         temp = ordered[t];
         pos = t;
-        for (int i = t + 1; i < trials; i++) {
+        for (int i = t + 1; i < num_trials; i++) {
             if (temp > ordered[i]) {
                 temp = ordered[i];
                 pos = i;
@@ -242,8 +242,8 @@ static void print_result(int length, int trials, double *timers)
             ordered[pos] = temp;
         }
     }
-    quartile_start = trials - (3 * trials) / 4;
-    quartile_end = trials - (1 * trials) / 4;
+    quartile_start = num_trials - (3 * num_trials) / 4;
+    quartile_end = num_trials - (1 * num_trials) / 4;
     clock_prec = MPI_Wtick();
     min_time = ordered[quartile_start];
     max_time = ordered[quartile_start];
@@ -266,7 +266,7 @@ static void print_result(int length, int trials, double *timers)
            min_time, max_time, (100.0 * std_dev) / average);
 }
 
-static int pack(int cycles, MPI_Datatype sdt, int scount, void *sbuf, void *packed_buf)
+static int pack(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, void *packed_buf)
 {
     int position, myself, c, t, outsize;
     double timers[trials];
@@ -277,7 +277,7 @@ static int pack(int cycles, MPI_Datatype sdt, int scount, void *sbuf, void *pack
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
     for (t = 0; t < warmups; t++) {
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             position = 0;
             MPI_Pack(sbuf, scount, sdt, packed_buf, outsize, &position, MPI_COMM_WORLD);
         }
@@ -285,17 +285,17 @@ static int pack(int cycles, MPI_Datatype sdt, int scount, void *sbuf, void *pack
 
     for (t = 0; t < trials; t++) {
         timers[t] = MPI_Wtime();
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             position = 0;
             MPI_Pack(sbuf, scount, sdt, packed_buf, outsize, &position, MPI_COMM_WORLD);
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / cycles;
+        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
     print_result(outsize, trials, timers);
     return 0;
 }
 
-static int unpack(int cycles, void *packed_buf, MPI_Datatype rdt, int rcount, void *rbuf)
+static int unpack(int num_cycles, void *packed_buf, MPI_Datatype rdt, int rcount, void *rbuf)
 {
     int position, myself, c, t, insize;
     double timers[trials];
@@ -306,7 +306,7 @@ static int unpack(int cycles, void *packed_buf, MPI_Datatype rdt, int rcount, vo
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
     for (t = 0; t < warmups; t++) {
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             position = 0;
             MPI_Unpack(packed_buf, insize, &position, rbuf, rcount, rdt, MPI_COMM_WORLD);
         }
@@ -314,17 +314,17 @@ static int unpack(int cycles, void *packed_buf, MPI_Datatype rdt, int rcount, vo
 
     for (t = 0; t < trials; t++) {
         timers[t] = MPI_Wtime();
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             position = 0;
             MPI_Unpack(packed_buf, insize, &position, rbuf, rcount, rdt, MPI_COMM_WORLD);
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / cycles;
+        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
     print_result(insize, trials, timers);
     return 0;
 }
 
-static int isend_recv(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
+static int isend_recv(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                       int rcount, void *rbuf)
 {
     int myself, tag = 0, c, t, slength, rlength;
@@ -341,18 +341,18 @@ static int isend_recv(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
 
     for (t = 0; t < trials; t++) {
         timers[t] = MPI_Wtime();
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &req);
             MPI_Recv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &status);
             MPI_Wait(&req, &status);
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / cycles;
+        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
     print_result(rlength, trials, timers);
     return 0;
 }
 
-static int irecv_send(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
+static int irecv_send(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                       int rcount, void *rbuf)
 {
     int myself, tag = 0, c, t, slength, rlength;
@@ -369,18 +369,18 @@ static int irecv_send(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_
 
     for (t = 0; t < trials; t++) {
         timers[t] = MPI_Wtime();
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &req);
             MPI_Send(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD);
             MPI_Wait(&req, &status);
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / cycles;
+        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
     print_result(rlength, trials, timers);
     return 0;
 }
 
-static int isend_irecv_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
+static int isend_irecv_wait(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                             int rcount, void *rbuf)
 {
     int myself, tag = 0, c, t, slength, rlength;
@@ -397,18 +397,18 @@ static int isend_irecv_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
 
     for (t = 0; t < trials; t++) {
         timers[t] = MPI_Wtime();
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &requests[0]);
             MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &requests[1]);
             MPI_Waitall(2, requests, statuses);
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / cycles;
+        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
     print_result(rlength, trials, timers);
     return 0;
 }
 
-static int irecv_isend_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
+static int irecv_isend_wait(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                             int rcount, void *rbuf)
 {
     int myself, tag = 0, c, t, slength, rlength;
@@ -425,12 +425,12 @@ static int irecv_isend_wait(int cycles, MPI_Datatype sdt, int scount, void *sbuf
 
     for (t = 0; t < trials; t++) {
         timers[t] = MPI_Wtime();
-        for (c = 0; c < cycles; c++) {
+        for (c = 0; c < num_cycles; c++) {
             MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &requests[0]);
             MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &requests[1]);
             MPI_Waitall(2, requests, statuses);
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / cycles;
+        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
     print_result(rlength, trials, timers);
     return 0;
