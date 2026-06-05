@@ -1,0 +1,226 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+debugger_available()
+{
+    command -v lldb >/dev/null 2>&1
+}
+
+debugger_marker_command()
+{
+    marker=$1
+
+    safe=$(printf '%s' "$marker" | sed "s/'/\\\\'/g")
+    emit "script print('%s')\n" "$safe"
+}
+
+debugger_backtrace_command()
+{
+    emit "thread backtrace all\n"
+}
+
+debugger_current_backtrace_command()
+{
+    emit "thread backtrace\n"
+}
+
+debugger_select_frame_command()
+{
+    frame_number=$1
+
+    emit "frame select %s\n" "$frame_number"
+}
+
+debugger_start()
+{
+    pid=$1
+    command_file=$2
+    log_file=$3
+    tail_pid_file=$4
+
+    feeder_fifo="$tmpdir/$pid.feeder"
+    mkfifo "$feeder_fifo"
+    # Open the FIFO once, O_RDWR, and let tail and lldb inherit that
+    # already-open descriptor (fd 9) rather than re-opening the path, so the
+    # FIFO can be unlinked immediately without racing the children's open()
+    # calls.  tail (fd 1 -> fd 9) stays the persistent writer so lldb never
+    # sees EOF.  'tail -n +1 -f' feeds the command file from the beginning
+    # instead of only its last 10 lines.  See the gdb module for the full
+    # rationale.
+    exec 9<>"$feeder_fifo"
+    rm -f "$feeder_fifo"
+    tail -n +1 -f "$command_file" >&9 9>&- 2>/dev/null &
+    printf "%s\n" "$!" > "$tail_pid_file"
+    lldb --no-lldbinit -p "$pid" <&9 9>&- > "$log_file" 2>&1 &
+    exec 9>&-
+    printf "%s\n" "$!"
+}
+
+debugger_startup_commands()
+{
+    emit "settings set interpreter.prompt-on-quit false\n"
+    emit "settings set auto-confirm true\n"
+}
+
+debugger_attach_probe_command()
+{
+    emit "process status\n"
+}
+
+debugger_attach_ok()
+{
+    attach_output_file=$1
+    attach_pid=$2
+
+    # "process status" reports "Process <pid> ..." only when lldb is attached
+    # to a live process; a failed attach leaves lldb with no current process.
+    grep -Eq "[Pp]rocess[[:space:]]+$attach_pid([[:space:]]|\$)" \
+        "$attach_output_file" 2>/dev/null
+}
+
+debugger_find_frame_number()
+{
+    raw_file=$1
+    function_name=$2
+
+    awk -v function_name="$function_name" '
+        index($0, function_name) && match($0, /frame #[0-9]+/) {
+            frame = substr($0, RSTART + 7, RLENGTH - 7)
+            print frame
+            exit
+        }
+    ' "$raw_file"
+}
+
+debugger_parse_stack()
+{
+    raw_file=$1
+    funcs_file=$2
+    details_file=$3
+    labels_file=$4
+
+    : > "$funcs_file"
+    : > "$details_file"
+    : > "$labels_file"
+
+    awk -v funcs_file="$funcs_file" \
+        -v details_file="$details_file" \
+        -v labels_file="$labels_file" '
+        function trim(s)
+        {
+            sub(/^[[:space:]]*/, "", s)
+            sub(/[[:space:]]*$/, "", s)
+            return s
+        }
+
+        function strip_function(s)
+        {
+            s = trim(s)
+            sub(/[[:space:]]+at[[:space:]].*/, "", s)
+            sub(/[[:space:]]+from[[:space:]].*/, "", s)
+            sub(/[[:space:]]+[+][[:space:]].*/, "", s)
+            sub(/[[:space:]]+[+][0-9].*/, "", s)
+            sub(/\(.*/, "", s)
+            return trim(s)
+        }
+
+        function lldb_function(line, parts, n, s)
+        {
+            if (0 < index(line, "`")) {
+                n = split(line, parts, "`")
+                return strip_function(parts[n])
+            }
+
+            s = line
+            sub(/^.*frame #[0-9]+:[[:space:]]*/, "", s)
+            sub(/^0x[0-9a-fA-F]+[[:space:]]*/, "", s)
+            return strip_function(s)
+        }
+
+        function frame_location(line, location)
+        {
+            if (match(line, /[[:space:]]at[[:space:]][^[:space:]]+:[0-9][0-9]*/)) {
+                location = substr(line, RSTART + 4, RLENGTH - 4)
+                # LLDB appends a column number (file:line:col); strip only the
+                # column when there are two colon-numeric suffixes.
+                if (match(location, /:[0-9][0-9]*:[0-9][0-9]*$/)) {
+                    sub(/:[0-9][0-9]*$/, "", location)
+                }
+                return trim(location)
+            }
+
+            return ""
+        }
+
+        # Buffer frames per thread block, trimming each block at main; the
+        # block to report is chosen in END (see the gdb module for rationale).
+        function record_frame(function_name, detail,    location)
+        {
+            if ("" == function_name) {
+                return
+            }
+            if (block_done[cur]) {
+                return
+            }
+            location = frame_location(detail)
+            ++nframe[cur]
+            bfunc[cur, nframe[cur]] = function_name
+            bdetail[cur, nframe[cur]] = trim(detail)
+            if ("" == location) {
+                blabel[cur, nframe[cur]] = function_name
+            } else {
+                blabel[cur, nframe[cur]] = function_name " (" location ")"
+            }
+            if ("main" == function_name) {
+                has_main[cur] = 1
+                block_done[cur] = 1
+            }
+        }
+
+        /^[[:space:]]*[*]?[[:space:]]*thread #[0-9]+,/ {
+            ++cur
+            nframe[cur] = 0
+            has_main[cur] = 0
+            block_done[cur] = 0
+            next
+        }
+
+        /^[[:space:]]*[*]?[[:space:]]*frame #[0-9]+:/ {
+            if (0 == cur) {
+                cur = 1
+                nframe[cur] = 0
+                has_main[cur] = 0
+                block_done[cur] = 0
+            }
+            record_frame(lldb_function($0), $0)
+            next
+        }
+
+        END {
+            # Report the first thread block that reaches main; fall back to the
+            # first block.  lldb already lists thread #1 first, so this normally
+            # selects block 1.
+            chosen = 0
+            for (b = 1; b <= cur; b++) {
+                if (has_main[b]) {
+                    chosen = b
+                    break
+                }
+            }
+            if (0 == chosen) {
+                chosen = 1
+            }
+            for (i = 1; i <= nframe[chosen]; i++) {
+                print bfunc[chosen, i] >> funcs_file
+                print bdetail[chosen, i] >> details_file
+                print blabel[chosen, i] >> labels_file
+            }
+        }
+    ' "$raw_file"
+}
