@@ -71,6 +71,21 @@ int mca_pml_ob1_progress(void)
 
     completed_requests += mca_pml_ob1_process_pending_accelerator_async_copies();
 
+    /* Drain the FIN/ACK control-packet retry queue. It is otherwise drained
+     * only as a side effect of BTL completion callbacks (see
+     * MCA_PML_OB1_PROGRESS_PENDING). If the BTL goes idle while packets are
+     * still queued -- e.g. the tail of an incast where btl_sendi() repeatedly
+     * returned OPAL_ERR_OUT_OF_RESOURCE -- no further completion fires, the
+     * queue is never revisited, and every peer waiting on those FINs hangs
+     * forever. Retrying it here, driven by mca_pml_ob1_progress_needed (which
+     * mca_pml_ob1_add_to_pending() bumps via mca_pml_ob1_enable_progress()),
+     * guarantees the queue makes progress even with no BTL traffic in flight. */
+    if( opal_list_get_size(&mca_pml_ob1.pckt_pending) ) {
+        int pckt_before = (int) opal_list_get_size(&mca_pml_ob1.pckt_pending);
+        mca_pml_ob1_process_pending_packets(NULL);
+        completed_requests += pckt_before - (int) opal_list_get_size(&mca_pml_ob1.pckt_pending);
+    }
+
     for( i = 0; i < queue_length; i++ ) {
         mca_pml_ob1_send_pending_t pending_type = MCA_PML_OB1_SEND_PENDING_NONE;
         mca_pml_ob1_send_request_t* sendreq;
