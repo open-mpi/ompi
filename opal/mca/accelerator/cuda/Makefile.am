@@ -16,6 +16,8 @@ AM_CPPFLAGS = $(common_cuda_CPPFLAGS)
 EXTRA_DIST = help-accelerator-cuda.txt
 sources = \
         accelerator_cuda.h \
+        accelerator_cuda_addr_cache.h \
+        accelerator_cuda_addr_cache.c \
         accelerator_cuda_component.c \
         accelerator_cuda.c
 

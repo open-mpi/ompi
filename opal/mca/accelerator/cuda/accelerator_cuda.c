@@ -22,6 +22,7 @@
 #include <cuda.h>
 
 #include "accelerator_cuda.h"
+#include "accelerator_cuda_addr_cache.h"
 #include "opal/mca/accelerator/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/util/show_help.h"
@@ -137,6 +138,39 @@ static inline int opal_accelerator_cuda_delayed_init_check(void)
         return opal_accelerator_cuda_delayed_init();
     }
     return OPAL_SUCCESS;
+}
+
+/*
+ * Insert a positive (device-memory) classification into the address cache.
+ * Best-effort: any failure leaves the cache untouched and check_addr keeps
+ * functioning via the cold path. Caller passes the device pointer being
+ * classified; we look up its full allocation extent via cuMemGetAddressRange
+ * so any future probe inside the allocation hits the cache.
+ */
+static void cache_device_classification(const void *addr, int dev_id, uint64_t flags)
+{
+    if (!opal_accelerator_cuda_addr_cache_enabled) {
+        return;
+    }
+    CUdeviceptr   base = 0;
+    size_t        size = 0;
+    unsigned long long buf_id = 0;
+    if (CUDA_SUCCESS != cuMemGetAddressRange(&base, &size, (CUdeviceptr) addr)) {
+        return;
+    }
+    if (CUDA_SUCCESS != cuPointerGetAttribute(&buf_id,
+                                              CU_POINTER_ATTRIBUTE_BUFFER_ID,
+                                              (CUdeviceptr) addr)) {
+        return;
+    }
+    opal_accelerator_cuda_addr_class_t cls = {
+        .mem_type      = 1,
+        .dev_id        = dev_id,
+        .flags         = flags,
+        .buffer_id     = (uint64_t) buf_id,
+        .has_buffer_id = true,
+    };
+    opal_accelerator_cuda_addr_cache_insert((const void *) (uintptr_t) base, size, &cls);
 }
 
 static int accelerator_cuda_get_device_id(CUcontext mem_ctx) {
@@ -321,6 +355,18 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
 
     *flags = 0;
 
+    /* Fast path: previously-classified pointer. The cache validates
+     * device entries via BUFFER_ID and host entries via opal_mem_hooks
+     * release notifications, so a hit is safe to act on. */
+    {
+        opal_accelerator_cuda_addr_class_t cached;
+        if (opal_accelerator_cuda_addr_cache_lookup(addr, &cached)) {
+            *dev_id = cached.dev_id;
+            *flags  = cached.flags;
+            return cached.mem_type;
+        }
+    }
+
 #if OPAL_CUDA_GET_ATTRIBUTES
     uint32_t is_managed = 0;
     /* With CUDA 7.0, we can get multiple attributes with a single call */
@@ -356,6 +402,7 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         if (OPAL_UNLIKELY(NULL == ctx)) {
             cuCtxSetCurrent(mem_ctx);
         }
+        cache_device_classification(addr, *dev_id, *flags);
         return 1;
     }
 
@@ -522,6 +569,7 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
     }
     /* First access on a device pointer finalizes CUDA support initialization. */
     (void)opal_accelerator_cuda_delayed_init_check();
+    cache_device_classification(addr, *dev_id, *flags);
     return 1;
 }
 

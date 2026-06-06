@@ -45,6 +45,12 @@ Open MPI version v6.0.0
   intra-node device-to-device transfers for AMD and NVIDIA GPUs
   (independent of UCX or Libfabric).
 
+- Added an address-classification cache to the CUDA accelerator
+  component to avoid repeated CUDA driver queries when classifying
+  pointers on the per-message hot path.  The cache can be tuned or
+  disabled with the new ``accelerator_cuda_addr_cache_enable`` and
+  ``accelerator_cuda_addr_cache_size`` MCA parameters.
+
 - Added support for MPI sessions when using UCX.
 
 - Added support for MPI-4.1 ``MPI_REQUEST_GET_STATUS_[ALL|ANY_SOME]`` functions.
