@@ -157,6 +157,34 @@ make -j
 See [`docs/developers/building-open-mpi.rst`](docs/developers/building-open-mpi.rst)
 and the [install docs](docs/installing-open-mpi/) for options.
 
+## Modifying the configure / build system
+
+Editing the build system means regenerating it — `make` alone can't,
+and trying will wedge the tree. If you change `configure.ac` or any
+`config/*.m4` file (including the embedded oac/Autotools macros), the
+change does not take effect until the build system is regenerated. Do
+not rely on a plain `make`: Open MPI builds in maintainer mode, so
+`make` auto-triggers a partial in-tree Autotools regeneration that
+frequently fails (e.g., unexpanded `OAC_*` macros, `config.status`
+errors) and can leave the tree half-regenerated and
+unbuildable. Instead, regenerate and reconfigure explicitly:
+
+```sh
+./autogen.pl
+./configure <same options as the original configure>
+make -j
+```
+
+Recover the original configure invocation options from the existing
+tree with `./config.status --config` (or read the header of
+`config.log`). This process is slow but mandatory after any
+build-system source change — there is no safe shortcut.
+
+Note that editing `Makefile.am` files do *not* require the full
+`autogen.pl` + `./configure` process.  A simple `make` will regenerate
+the relevant `Makefile[.in]` files and then complete the build
+successfully.
+
 **"Did I break it?" — layered:**
 
 1. **Build cleanly.** A clean `make` after your change is the baseline.
