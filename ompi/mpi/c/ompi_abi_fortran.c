@@ -264,6 +264,7 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
                 unavailable = true;
                 break;
              }
+            break;
         case OMPI_SIZEOF_FORTRAN_LOGICAL2:
             switch (OMPI_DATATYPE_MPI_LOGICAL2) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -282,6 +283,7 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
                 unavailable = true;
                 break;
             }
+            break;
         case OMPI_SIZEOF_FORTRAN_LOGICAL4:
             switch (OMPI_DATATYPE_MPI_LOGICAL4) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -300,6 +302,7 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
                 unavailable = true;
                 break;
             }
+            break;
         case OMPI_SIZEOF_FORTRAN_LOGICAL8:
             switch (OMPI_DATATYPE_MPI_LOGICAL8) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -318,6 +321,7 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
                 unavailable = true;
                 break;
             }
+            break;
         case OMPI_SIZEOF_FORTRAN_LOGICAL16:
             switch (OMPI_DATATYPE_MPI_LOGICAL16) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -336,6 +340,7 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
                 unavailable = true;
                 break;
             }
+            break;
         default:
             unavailable = true;
         }
@@ -374,9 +379,18 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
         return MPI_ERR_ARG;
     }
 
-    logical_size_pow2 = opal_hibit(logical_size, 0);
+    /*
+     * logical_size is a power-of-two byte count (1, 2, 4, 8, 16); its single
+     * set bit gives the index (0..4) into user_logicals[].  Scan bits [0,7]
+     * so the shift inside opal_hibit() stays well-defined -- opal_hibit(x, 0)
+     * masks out every bit and always returns -1.  Reject any out-of-range
+     * result before using it as an array index.  (This guard previously read
+     * "4 > logical_size_pow2", which both relied on the broken -1 result and
+     * was inverted relative to the set path, which stores indices 0..4.)
+     */
+    logical_size_pow2 = opal_hibit(logical_size, 8);
 
-    if (4 > logical_size_pow2) {
+    if (logical_size_pow2 < 0 || logical_size_pow2 > 4) {
         return MPI_ERR_ARG;
     }
 
@@ -438,7 +452,7 @@ int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *lo
     int logical_size_pow2;
     int64_t logical_true64 = 0;
     int64_t logical_false64 = 0;
-#ifdef HAVING_INT128_T
+#ifdef HAVE_INT128_T
     int128_t logical_true128 = 0;
     int128_t logical_false128 = 0;
 #else

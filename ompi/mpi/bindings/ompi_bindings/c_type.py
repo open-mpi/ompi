@@ -1,5 +1,6 @@
 # Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -678,9 +679,9 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         code.append(f'if (NULL != {self.tmpname})' + '{')
         code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
         code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
+        code.append('}')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
-        code.append('}')
         code.append('}')
         return code
 
@@ -755,9 +756,9 @@ class TypeNeighborDatatypeArrayAsyncStandard(TypeNeighborDatatypeArrayStandard):
         code.append(f'if (NULL != {self.tmpname})' + '{')
         code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
         code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
+        code.append('}')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
-        code.append('}')
         code.append('}')
         return code
 

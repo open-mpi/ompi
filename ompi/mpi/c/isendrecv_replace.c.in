@@ -15,6 +15,7 @@
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
  * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -187,6 +188,7 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
     if( context->packed_size > sizeof(context->packed_data) ) {
         context->iov.iov_base = (void *)mca_mpool_base_alloc ((size_t)context->packed_size, NULL, NULL);
         if(NULL == context->iov.iov_base) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
             OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
             OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
