@@ -150,8 +150,8 @@ definitions** of MPI constants:
 4. Converts output arguments (OMPI ABI → MPI ABI), including
    `MPI_Status` fields and error return values.
 
-**Generated helpers:** The framework also generates `abi_converter.h`
-and `abi_converter.c` (in addition to the binding source files).
+**Generated helpers:** The framework also generates `abi_converters.h`
+and `abi_converters.c` (in addition to the binding source files).
 
 ### Critical implications for agents
 
@@ -197,7 +197,7 @@ When working on ABI-related code, remember:
 **DO NOT hand-edit:**
 - Generated bindings (`.c` files emitted from `.c.in` templates) — edit
   the **template** or the **generator** instead.
-- `abi_converter.h` / `abi_converter.c` — regenerate via the binding
+- `abi_converters.h` / `abi_converters.c` — regenerate via the binding
   infrastructure.
 - The generated `mpi.h` and `abi.h` — edit the `abi.h.in` template or
   the JSON files / `c_header.py` generator.
@@ -334,7 +334,7 @@ python -B mpi_abi_tests.py --srcdir=<top-srcdir> --builddir=<top-builddir> <mode
 | Scenario | Test target | Why |
 |----------|-------------|-----|
 | Modified binding templates (`.c.in`) | `make check` | Fast check for metadata consistency |
-| Modified `abi_converter.*` or ABI constants | `make check-abi` | Validate handle translation and conversion logic |
+| Modified `abi_converters.*` or ABI constants | `make check-abi` | Validate handle translation and conversion logic |
 | Modified `abi.h.in` or `c_header.py` | `make check-abi` | Validate generated header correctness |
 | Modified JSON files in `docs/` | `make check` first, then `make check-abi` | Catch metadata drift, then validate runtime behavior |
 | Before submitting a PR touching ABI code | Prefer `make check`, then `make check-abi`, and `make check-abi-mpich` when MPICH is available | Best practical validation coverage |

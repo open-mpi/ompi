@@ -8,8 +8,8 @@ MPI API manual pages (section 3)
    MPI_Abi_get_fortran_info.3.rst
    MPI_Abi_get_info.3.rst
    MPI_Abi_get_version.3.rst
-   MPI_Abi_set_fortran_info.3.rst
    MPI_Abi_set_fortran_booleans.3.rst
+   MPI_Abi_set_fortran_info.3.rst
    MPI_Abort.3.rst
    MPI_Accumulate.3.rst
    MPI_Add_error_class.3.rst

@@ -33,6 +33,13 @@ check if the logical values are already set using :ref:`MPI_Abi_get_fortran_bool
 otherwise ``MPI_ERR_ARG`` is returned.  This routine may be called at most once; a
 subsequent call returns ``MPI_ERR_ABI``.
 
+When Open MPI is built with Fortran logical support, the values returned
+by :ref:`MPI_Abi_get_fortran_booleans` come from Open MPI's configured
+Fortran support.  User-supplied values from
+``MPI_Abi_set_fortran_booleans`` are used by
+``MPI_Abi_get_fortran_booleans`` only when Open MPI is built without
+Fortran logical support.
+
 ERRORS
 ------
 
