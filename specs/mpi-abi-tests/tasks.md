@@ -144,24 +144,32 @@ the branch is not complete until all completion-gate tasks pass.
 
 ## Phase 6: Installed `make check-abi` Framework
 
-- [ ] Require installed Open MPI tools to be available through `PATH` or
+- [x] Require installed Open MPI tools to be available through `PATH` or
       override variables.
-- [ ] Skip with a stable machine-readable reason when installed Open MPI
+- [x] Skip with a stable machine-readable reason when installed Open MPI
       standard ABI tools are unavailable.
-- [ ] Use installed `mpicc_abi` for standard ABI C compile/link tests.
-- [ ] Use installed `mpirun` for runtime tests.
-- [ ] Verify installed standard ABI headers are used.
-- [ ] Verify installed `libmpi_abi` is linked.
-- [ ] Build one executable per generated runtime test case.
-- [ ] Run one-rank tests by default for APIs that do not require
+- [x] Use installed `mpicc_abi` for standard ABI C compile/link tests.
+      The Phase 6 framework uses a seed set of generated C ABI probes;
+      exhaustive generated C probes remain in Phase 7 and later.
+- [x] Use installed `mpirun` for runtime tests.
+- [x] Verify installed standard ABI headers are used.
+      Generated C probes require `MPI_H_ABI` from the included
+      `mpi.h`, so a non-standard-ABI header fails at compile time.
+- [x] Verify installed `libmpi_abi` is linked.
+      The runner checks wrapper flags and inspects each generated
+      executable's dynamic-library dependencies.
+- [x] Build one executable per generated runtime test case.
+- [x] Run one-rank tests by default for APIs that do not require
       communication.
-- [ ] Run two-rank tests by default for point-to-point and collective
+- [x] Run two-rank tests by default for point-to-point and collective
       APIs.
+      Seed two-rank cases cover point-to-point and collective framework
+      paths; broader API family expansion remains in Phase 9 and later.
 - [ ] Support optional tests that require larger scale or unusual launch
       support.
-- [ ] Support launcher argument overrides for CI and site-specific
+- [x] Support launcher argument overrides for CI and site-specific
       launch requirements.
-- [ ] Store generated sources, executables, logs, and reports in the
+- [x] Store generated sources, executables, logs, and reports in the
       build tree or selected temporary directory.
 
 ## Phase 7: C ABI Header, Constant, and Symbol Tests

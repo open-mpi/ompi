@@ -9,6 +9,10 @@
 
 #include "mpi.h"
 
+#ifndef MPI_H_ABI
+#error "standard ABI mpi.h was not used"
+#endif
+
 int main(int argc, char **argv)
 {
     @BODY@

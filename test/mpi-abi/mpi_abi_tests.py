@@ -10,10 +10,11 @@
 
 """MPI standard ABI test manifest and runner.
 
-This implementation provides the phase 1-5 infrastructure: metadata
-loading, manifest generation, fast metadata checks, tool discovery, skip
-handling, and JSON/text reporting.  Later phases add generated compile,
-link, and runtime tests on top of this runner.
+This implementation provides the phase 1-6 infrastructure: metadata
+loading, manifest generation, fast metadata checks, installed ABI smoke
+tests, tool discovery, skip handling, and JSON/text reporting.  Later
+phases add exhaustive generated compile, link, and runtime tests on top
+of this runner.
 """
 
 import argparse
@@ -23,7 +24,9 @@ import os
 from pathlib import Path
 import platform
 import re
+import shlex
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -42,12 +45,14 @@ SKIP_STANDARD_ABI_DISABLED = "standard_abi_disabled"
 SKIP_OPEN_MPI_TOOLS_UNAVAILABLE = "open_mpi_tools_unavailable"
 SKIP_MPICH_TOOLS_UNAVAILABLE = "mpich_tools_unavailable"
 SKIP_HEADER_UNAVAILABLE = "generated_standard_abi_header_unavailable"
+SKIP_LINKAGE_INSPECTION_UNAVAILABLE = "linkage_inspection_unavailable"
 SKIP_FORTRAN_BINDINGS_DISABLED = "fortran_bindings_disabled"
 SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
 
 EXPECTED_METADATA_VERSION = "5.0"
 EXPECTED_API_COUNT = 567
 EXPECTED_CONSTANT_COUNT = 373
+DEFAULT_COMMAND_TIMEOUT = 120
 
 VALID_CLASSIFICATIONS = {
     CLASS_IMPLEMENTED,
@@ -86,6 +91,116 @@ FORTRAN_ABI_HELPERS = (
     "abi_set_fortran_info",
 )
 
+INSTALLED_C_ABI_PROBES = (
+    {
+        "name": "abi_version",
+        "rank_count": 1,
+        "body": """
+    int major = -1;
+    int minor = -1;
+    int ret = MPI_Abi_get_version(&major, &minor);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    if (MPI_ABI_VERSION != major) {
+        return 2;
+    }
+    if (MPI_ABI_SUBVERSION != minor) {
+        return 3;
+    }
+""",
+    },
+    {
+        "name": "init_finalize",
+        "rank_count": 1,
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+""",
+    },
+    {
+        "name": "barrier_two_rank",
+        "rank_count": 2,
+        "body": """
+    int size = 0;
+    int rank = -1;
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+    ret = MPI_Barrier(MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+""",
+    },
+    {
+        "name": "sendrecv_two_rank",
+        "rank_count": 2,
+        "body": """
+    int size = 0;
+    int rank = -1;
+    int value = -1;
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+    if (0 == rank) {
+        value = 1234;
+        ret = MPI_Send(&value, 1, MPI_INT, 1, 99, MPI_COMM_WORLD);
+        if (MPI_SUCCESS != ret) {
+            return 5;
+        }
+    } else if (1 == rank) {
+        ret = MPI_Recv(&value, 1, MPI_INT, 0, 99,
+                       MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret) {
+            return 6;
+        }
+        if (1234 != value) {
+            return 7;
+        }
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 8;
+    }
+""",
+    },
+)
+
 
 def _read_json(path):
     with path.open("r", encoding="utf-8") as stream:
@@ -121,6 +236,30 @@ def _which(env_name, default_name):
     if override:
         return override
     return shutil.which(default_name)
+
+
+def _tool_available(path):
+    if not path:
+        return False
+    if os.path.sep in path:
+        return os.access(path, os.X_OK)
+    return shutil.which(path) is not None
+
+
+def _open_mpi_tools_available(tools):
+    ompi_tools = tools["open_mpi"]
+    return (
+        _tool_available(ompi_tools["mpicc_abi"]) and
+        _tool_available(ompi_tools["mpirun"])
+    )
+
+
+def _mpich_tools_available(tools):
+    mpich_tools = tools["mpich"]
+    return (
+        _tool_available(mpich_tools["mpicc"]) and
+        _tool_available(mpich_tools["mpirun"])
+    )
 
 
 def _api_stem(api_key, api_name):
@@ -1057,6 +1196,340 @@ def _check_counts(checks):
     return _count_by(checks, "result")
 
 
+def _command_timeout():
+    return int(os.environ.get("OMPI_ABI_TEST_TIMEOUT",
+                              str(DEFAULT_COMMAND_TIMEOUT)))
+
+
+def _command_result(name, command, cwd, env, log_path):
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    timeout = _command_timeout()
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(cwd),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+            timeout=timeout)
+        return_code = completed.returncode
+        stdout = completed.stdout
+        stderr = completed.stderr
+        timed_out = False
+    except subprocess.TimeoutExpired as exc:
+        return_code = 124
+        stdout = exc.stdout or ""
+        stderr = exc.stderr or ""
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
+        stderr += "\ncommand timed out after {0} seconds".format(timeout)
+        timed_out = True
+    except OSError as exc:
+        return_code = 127
+        stdout = ""
+        stderr = str(exc)
+        timed_out = False
+
+    log = {
+        "name": name,
+        "command": command,
+        "cwd": str(cwd),
+        "returncode": return_code,
+        "timeout": timeout,
+        "timed_out": timed_out,
+        "stdout": stdout,
+        "stderr": stderr,
+    }
+    _write_json(log_path, log)
+    return {
+        "command": command,
+        "returncode": return_code,
+        "timeout": timeout,
+        "timed_out": timed_out,
+        "stdout": stdout,
+        "stderr": stderr,
+        "log": str(log_path),
+    }
+
+
+def _installed_test_env(tools):
+    env = os.environ.copy()
+    library_path = tools["paths"]["library"]
+    loader_var = tools["paths"]["runtime_loader"]
+    if library_path and loader_var:
+        existing = env.get(loader_var)
+        env[loader_var] = (
+            library_path if not existing
+            else library_path + os.pathsep + existing
+        )
+    return env
+
+
+def _installed_test_dirs(outdir):
+    base = outdir / "installed"
+    dirs = {
+        "base": base,
+        "src": base / "src",
+        "bin": base / "bin",
+        "logs": base / "logs",
+    }
+    for path in dirs.values():
+        path.mkdir(parents=True, exist_ok=True)
+    return dirs
+
+
+def _launcher_args(tools):
+    args = tools["paths"]["launcher_args"]
+    return shlex.split(args) if args else []
+
+
+def _compile_overrides(tools):
+    args = []
+    include_path = tools["paths"]["include"]
+    library_path = tools["paths"]["library"]
+    if include_path:
+        args.append("-I" + include_path)
+    if library_path:
+        args.append("-L" + library_path)
+    return args
+
+
+def _linkage_command(executable):
+    system = platform.system()
+    if system == "Darwin":
+        tool = shutil.which("otool")
+        if tool:
+            return [tool, "-L", str(executable)]
+    if system == "Linux":
+        tool = shutil.which("readelf")
+        if tool:
+            return [tool, "-d", str(executable)]
+    return None
+
+
+def _verify_executable_libmpi_abi(executable, dirs, env, name):
+    command = _linkage_command(executable)
+    if command is None:
+        return {
+            "result": "SKIP",
+            "skip_reason": SKIP_LINKAGE_INSPECTION_UNAVAILABLE,
+            "command": None,
+            "returncode": 127,
+            "log": None,
+        }
+
+    result = _command_result(
+        "linkage_" + name,
+        command,
+        dirs["base"],
+        env,
+        dirs["logs"] / ("linkage_" + name + ".json"))
+    output = result["stdout"] + result["stderr"]
+    if result["returncode"] != 0:
+        result["result"] = "FAIL"
+        result["message"] = "executable linkage inspection failed"
+    elif re.search(r"(?<![A-Za-z0-9_])libmpi_abi(?:[.][A-Za-z0-9_.-]+)?",
+                   output) is None:
+        result["result"] = "FAIL"
+        result["message"] = "executable is not linked against libmpi_abi"
+    else:
+        result["result"] = "PASS"
+        result["message"] = None
+    return result
+
+
+def _installed_wrapper_checks(tools, dirs):
+    checks = []
+    mpicc_abi = tools["open_mpi"]["mpicc_abi"]
+    env = _installed_test_env(tools)
+    compile_log = dirs["logs"] / "mpicc_abi_showme_compile.json"
+    link_log = dirs["logs"] / "mpicc_abi_showme_link.json"
+    compile_result = _command_result(
+        "mpicc_abi_showme_compile",
+        [mpicc_abi, "--showme:compile"],
+        dirs["base"],
+        env,
+        compile_log)
+    link_result = _command_result(
+        "mpicc_abi_showme_link",
+        [mpicc_abi, "--showme:link"],
+        dirs["base"],
+        env,
+        link_log)
+
+    if compile_result["returncode"] != 0:
+        checks.append(_fail(
+            "installed_standard_abi_wrapper_flags",
+            "mpicc_abi --showme:compile failed",
+            command=compile_result["command"],
+            returncode=compile_result["returncode"],
+            log=compile_result["log"]))
+    elif "standard_abi" not in compile_result["stdout"]:
+        checks.append(_fail(
+            "installed_standard_abi_wrapper_flags",
+            "mpicc_abi does not advertise standard ABI include path",
+            command=compile_result["command"],
+            stdout=compile_result["stdout"],
+            log=compile_result["log"]))
+    else:
+        checks.append(_pass(
+            "installed_standard_abi_wrapper_flags",
+            command=compile_result["command"],
+            stdout=compile_result["stdout"].strip(),
+            log=compile_result["log"]))
+
+    if link_result["returncode"] != 0:
+        checks.append(_fail(
+            "installed_libmpi_abi_wrapper_flags",
+            "mpicc_abi --showme:link failed",
+            command=link_result["command"],
+            returncode=link_result["returncode"],
+            log=link_result["log"]))
+    elif re.search(r"(?<![A-Za-z0-9_])-lmpi_abi(?![A-Za-z0-9_])",
+                   link_result["stdout"]) is None:
+        checks.append(_fail(
+            "installed_libmpi_abi_wrapper_flags",
+            "mpicc_abi does not advertise libmpi_abi linkage",
+            command=link_result["command"],
+            stdout=link_result["stdout"],
+            log=link_result["log"]))
+    else:
+        checks.append(_pass(
+            "installed_libmpi_abi_wrapper_flags",
+            command=link_result["command"],
+            stdout=link_result["stdout"].strip(),
+            log=link_result["log"]))
+
+    return checks
+
+
+def _c_probe_source(srcdir, body, rank_count):
+    template = _read_text(srcdir / "test" / "mpi-abi" /
+                          "templates" / "c_probe.c.in")
+    body = body.replace("@EXPECTED_RANKS@", str(rank_count))
+    return template.replace("@BODY@", body.rstrip())
+
+
+def _installed_c_probe_checks(srcdir, tools, dirs):
+    checks = []
+    mpicc_abi = tools["open_mpi"]["mpicc_abi"]
+    mpirun = tools["open_mpi"]["mpirun"]
+    env = _installed_test_env(tools)
+    launcher_args = _launcher_args(tools)
+    compile_overrides = _compile_overrides(tools)
+
+    for case in INSTALLED_C_ABI_PROBES:
+        name = case["name"]
+        rank_count = tools["rank_counts"]["np{0}".format(
+            case["rank_count"])]
+        source = dirs["src"] / (name + ".c")
+        executable = dirs["bin"] / name
+        _write_text(source, _c_probe_source(srcdir, case["body"], rank_count))
+
+        compile_command = (
+            [mpicc_abi] + compile_overrides +
+            [str(source), "-o", str(executable)]
+        )
+        compile_result = _command_result(
+            "compile_" + name,
+            compile_command,
+            dirs["base"],
+            env,
+            dirs["logs"] / ("compile_" + name + ".json"))
+        if compile_result["returncode"] != 0:
+            checks.append(_fail(
+                "installed_c_probe_" + name,
+                "installed C ABI probe compile failed",
+                phase="compile",
+                source=str(source),
+                executable=str(executable),
+                command=compile_result["command"],
+                returncode=compile_result["returncode"],
+                log=compile_result["log"]))
+            continue
+
+        linkage_result = _verify_executable_libmpi_abi(
+            executable, dirs, env, name)
+        if linkage_result["result"] == "SKIP":
+            checks.append(_skip(
+                "installed_c_probe_" + name,
+                linkage_result["skip_reason"],
+                phase="linkage",
+                source=str(source),
+                executable=str(executable),
+                command=linkage_result["command"],
+                returncode=linkage_result["returncode"],
+                compile_log=compile_result["log"],
+                linkage_log=linkage_result["log"]))
+            continue
+
+        if linkage_result["result"] != "PASS":
+            checks.append(_fail(
+                "installed_c_probe_" + name,
+                linkage_result["message"],
+                phase="linkage",
+                source=str(source),
+                executable=str(executable),
+                command=linkage_result["command"],
+                returncode=linkage_result["returncode"],
+                compile_log=compile_result["log"],
+                linkage_log=linkage_result["log"]))
+            continue
+
+        run_command = (
+            [mpirun] + launcher_args +
+            ["--np", str(rank_count), str(executable)]
+        )
+        run_result = _command_result(
+            "run_" + name,
+            run_command,
+            dirs["base"],
+            env,
+            dirs["logs"] / ("run_" + name + ".json"))
+        if run_result["returncode"] != 0:
+            checks.append(_fail(
+                "installed_c_probe_" + name,
+                "installed C ABI probe runtime failed",
+                phase="run",
+                source=str(source),
+                executable=str(executable),
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"]))
+            continue
+
+        checks.append(_pass(
+            "installed_c_probe_" + name,
+            source=str(source),
+            executable=str(executable),
+            rank_count=rank_count,
+            compile_command=compile_result["command"],
+            run_command=run_result["command"],
+            compile_log=compile_result["log"],
+            linkage_command=linkage_result["command"],
+            linkage_log=linkage_result["log"],
+            run_log=run_result["log"]))
+
+    return checks
+
+
+def run_installed_checks(manifest, mode, srcdir, outdir, tools):
+    del manifest
+    if mode != "check-abi":
+        return []
+    dirs = _installed_test_dirs(outdir)
+    checks = []
+    checks.extend(_installed_wrapper_checks(tools, dirs))
+    checks.extend(_installed_c_probe_checks(srcdir, tools, dirs))
+    return checks
+
+
 def _tool_info(mode):
     tools = {
         "open_mpi": {
@@ -1107,7 +1580,7 @@ def _runtime_loader_var():
     return None
 
 
-def build_report(manifest, mode, srcdir, builddir):
+def build_report(manifest, mode, srcdir, builddir, outdir):
     api_entries = manifest["apis"]
     constant_entries = manifest["constants"]
     standard_abi = manifest["configuration"]["standard_abi"]
@@ -1120,6 +1593,7 @@ def build_report(manifest, mode, srcdir, builddir):
     result = "PASS"
     tools = _tool_info(mode)
     fast_checks = []
+    installed_checks = []
 
     if mode in ("coverage", "check-fast", "check-abi", "check-abi-cross"):
         if standard_abi["enabled"] is False:
@@ -1132,18 +1606,21 @@ def build_report(manifest, mode, srcdir, builddir):
             result = "FAIL"
 
     if result != "SKIP" and mode == "check-abi":
-        ompi_tools = tools["open_mpi"]
-        if not ompi_tools["mpicc_abi"] or not ompi_tools["mpirun"]:
+        if not _open_mpi_tools_available(tools):
             result = "SKIP"
             skip_reason = SKIP_OPEN_MPI_TOOLS_UNAVAILABLE
+        else:
+            installed_checks = run_installed_checks(
+                manifest, mode, srcdir, outdir, tools)
+            if any(check["result"] == "FAIL"
+                   for check in installed_checks):
+                result = "FAIL"
 
     if result != "SKIP" and mode == "check-abi-cross":
-        ompi_tools = tools["open_mpi"]
-        mpich_tools = tools["mpich"]
-        if not ompi_tools["mpicc_abi"] or not ompi_tools["mpirun"]:
+        if not _open_mpi_tools_available(tools):
             result = "SKIP"
             skip_reason = SKIP_OPEN_MPI_TOOLS_UNAVAILABLE
-        elif not mpich_tools["mpicc"] or not mpich_tools["mpirun"]:
+        elif not _mpich_tools_available(tools):
             result = "SKIP"
             skip_reason = SKIP_MPICH_TOOLS_UNAVAILABLE
 
@@ -1158,6 +1635,7 @@ def build_report(manifest, mode, srcdir, builddir):
         "tools": tools,
         "symbol_diagnostics": _symbol_diagnostics(),
         "fast_checks": fast_checks,
+        "installed_checks": installed_checks,
         "summary": {
             "apis_total": len(api_entries),
             "api_classifications": classifications,
@@ -1166,6 +1644,7 @@ def build_report(manifest, mode, srcdir, builddir):
             "constant_classifications": constant_classifications,
             "constant_test_status": constant_test_status,
             "fast_check_status": _check_counts(fast_checks),
+            "installed_check_status": _check_counts(installed_checks),
             "language_coverage": _language_counts(api_entries),
         },
     }
@@ -1205,6 +1684,16 @@ def _summary_text(report):
     lines.append("Fast checks:")
     if report["fast_checks"]:
         for check in report["fast_checks"]:
+            line = "  {0}: {1}".format(check["name"], check["result"])
+            if check["skip_reason"]:
+                line += " ({0})".format(check["skip_reason"])
+            lines.append(line)
+    else:
+        lines.append("  none")
+    lines.append("")
+    lines.append("Installed checks:")
+    if report["installed_checks"]:
+        for check in report["installed_checks"]:
             line = "  {0}: {1}".format(check["name"], check["result"])
             if check["skip_reason"]:
                 line += " ({0})".format(check["skip_reason"])
@@ -1253,7 +1742,7 @@ def command(args):
         print("Wrote {0}".format(path))
         return 0
 
-    report = build_report(manifest, mode, srcdir, builddir)
+    report = build_report(manifest, mode, srcdir, builddir, outdir)
     _, report_path, summary_path = write_outputs(manifest, report, outdir)
     print(_summary_text(report), end="")
     print("Wrote {0}".format(report_path))
