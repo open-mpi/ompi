@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +48,7 @@ int MPI_Request_toint(MPI_Request_ABI_INTERNAL request)
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == request) {
-            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_FILE, FUNC_NAME);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_REQUEST, FUNC_NAME);
         }
     }
 

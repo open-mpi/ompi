@@ -2213,7 +2213,6 @@ class TypeWinCopyAttrFunctionStandard(StandardABIType):
         code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_standard(oldwin);')
         code.append('    int win_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(win_keyval);')
         code.append('    return helper->user_delete_fn((MPI_Win_ABI_INTERNAL)win_tmp, win_keyval_tmp, attribute_val, helper->user_extra_state);')
-        code.append('    free(helper);')
         code.append('}')
         return code
 
