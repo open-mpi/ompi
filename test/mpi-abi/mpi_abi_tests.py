@@ -56,6 +56,12 @@ EXPECTED_CONSTANT_COUNT = 373
 DEFAULT_COMMAND_TIMEOUT = 120
 MIN_EXPECTED_C_HEADER_PROTOTYPES = 1000
 
+ANSI_RED = "\033[0;31m"
+ANSI_GREEN = "\033[0;32m"
+ANSI_BLUE = "\033[1;34m"
+ANSI_MAGENTA = "\033[0;35m"
+ANSI_RESET = "\033[m"
+
 VALID_CLASSIFICATIONS = {
     CLASS_IMPLEMENTED,
     CLASS_NOT_IMPLEMENTED,
@@ -586,6 +592,74 @@ def _pass(name, **details):
 
 def _skip(name, reason, **details):
     return _check_result(name, "SKIP", details, reason)
+
+
+def _color_tests_enabled(setting):
+    if setting in ("yes", "always"):
+        return True
+    if setting in ("no", "never"):
+        return False
+
+    env_setting = os.environ.get("OMPI_ABI_TEST_COLOR_TESTS")
+    if env_setting is None:
+        env_setting = os.environ.get("AM_COLOR_TESTS")
+    if env_setting is not None:
+        env_setting = env_setting.strip().lower()
+        if env_setting in ("yes", "always"):
+            return True
+        if env_setting in ("no", "never"):
+            return False
+
+    return os.environ.get("TERM") != "dumb" and sys.stdout.isatty()
+
+
+class _Colors:
+    def __init__(self, enabled):
+        self.enabled = enabled
+
+    def result(self, status, text):
+        if not self.enabled:
+            return text
+        color = {
+            "PASS": ANSI_GREEN,
+            "SKIP": ANSI_BLUE,
+            "FAIL": ANSI_RED,
+            "ERROR": ANSI_MAGENTA,
+        }.get(status)
+        if color is None:
+            return text
+        return color + text + ANSI_RESET
+
+
+class _Progress:
+    def __init__(self, enabled, colors):
+        self.enabled = enabled
+        self.colors = colors
+
+    def start(self, name):
+        if self.enabled:
+            print("TEST: {0}".format(name), flush=True)
+
+    def check(self, check):
+        if not self.enabled:
+            return
+        line = "{0}: {1}".format(check["result"], check["name"])
+        if check["skip_reason"]:
+            line += " ({0})".format(check["skip_reason"])
+        print(self.colors.result(check["result"], line), flush=True)
+
+
+def _append_check(checks, check, progress):
+    checks.append(check)
+    if progress is not None:
+        progress.check(check)
+
+
+def _extend_checks(checks, new_checks, progress):
+    checks.extend(new_checks)
+    if progress is not None:
+        for check in new_checks:
+            progress.check(check)
 
 
 def _manifest_sanity_checks(manifest):
@@ -1163,12 +1237,24 @@ def _fortran_helper_checks(srcdir, manifest):
     return checks
 
 
-def run_fast_checks(manifest, srcdir, builddir):
+def run_fast_checks(manifest, srcdir, builddir, progress=None):
     checks = []
-    checks.extend(_manifest_sanity_checks(manifest))
-    checks.extend(_header_constant_checks(manifest, srcdir, builddir))
-    checks.extend(_abi_converter_checks(srcdir))
-    checks.extend(_fortran_helper_checks(srcdir, manifest))
+    if progress is not None:
+        progress.start("fast manifest sanity checks")
+    _extend_checks(checks, _manifest_sanity_checks(manifest), progress)
+
+    if progress is not None:
+        progress.start("fast standard ABI header constants")
+    _extend_checks(
+        checks, _header_constant_checks(manifest, srcdir, builddir), progress)
+
+    if progress is not None:
+        progress.start("fast ABI converter source checks")
+    _extend_checks(checks, _abi_converter_checks(srcdir), progress)
+
+    if progress is not None:
+        progress.start("fast Fortran ABI helper source checks")
+    _extend_checks(checks, _fortran_helper_checks(srcdir, manifest), progress)
     return checks
 
 
@@ -1742,22 +1828,30 @@ def _symbol_table_check(prototypes, excluded_names, tools, dirs, env):
         log=result["log"])
 
 
-def _installed_c_header_symbol_checks(manifest, tools, dirs):
+def _installed_c_header_symbol_checks(manifest, tools, dirs, progress=None):
     checks = []
     env = _installed_test_env(tools)
+    if progress is not None:
+        progress.start("installed_c_header_api_prototypes")
     header = _installed_standard_abi_header(tools, dirs, env)
     if header is None:
-        return [_skip("installed_c_header_api_prototypes",
-                      SKIP_HEADER_UNAVAILABLE)]
+        check = _skip("installed_c_header_api_prototypes",
+                      SKIP_HEADER_UNAVAILABLE)
+        if progress is not None:
+            progress.check(check)
+        return [check]
 
     prototypes = _parse_c_header_prototypes(header)
     if len(prototypes) < MIN_EXPECTED_C_HEADER_PROTOTYPES:
-        return [_fail(
+        check = _fail(
             "installed_c_header_api_prototypes",
             "standard ABI header prototype parser found too few entries",
             header=str(header),
             prototype_count=len(prototypes),
-            minimum_expected=MIN_EXPECTED_C_HEADER_PROTOTYPES)]
+            minimum_expected=MIN_EXPECTED_C_HEADER_PROTOTYPES)
+        if progress is not None:
+            progress.check(check)
+        return [check]
 
     expected_signatures, excluded_names = _standard_abi_expected_signatures(
         Path(manifest["metadata"]["api_path"]).parents[1])
@@ -1765,12 +1859,23 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs):
         name: proto for name, proto in prototypes.items()
         if name.startswith("MPI_")
     }
-    checks.append(_prototype_pair_check(prototypes, excluded_names))
-    checks.append(_metadata_c_api_header_check(
-        manifest, mpi_prototypes, excluded_names))
-    checks.append(_signature_comparison_check(prototypes,
-                                              expected_signatures))
-    checks.append(_non_abi_absence_check(prototypes, excluded_names))
+    _append_check(
+        checks, _prototype_pair_check(prototypes, excluded_names), progress)
+
+    if progress is not None:
+        progress.start("installed_c_header_metadata_apis")
+    _append_check(checks, _metadata_c_api_header_check(
+        manifest, mpi_prototypes, excluded_names), progress)
+
+    if progress is not None:
+        progress.start("installed_c_header_signature_semantics")
+    _append_check(checks, _signature_comparison_check(
+        prototypes, expected_signatures), progress)
+
+    if progress is not None:
+        progress.start("installed_c_header_non_abi_absence")
+    _append_check(
+        checks, _non_abi_absence_check(prototypes, excluded_names), progress)
 
     source = dirs["src"] / "c_header_api_prototypes.c"
     executable = dirs["bin"] / "c_header_api_prototypes"
@@ -1780,6 +1885,8 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs):
         [tools["open_mpi"]["mpicc_abi"]] + _compile_overrides(tools) +
         [str(source), "-o", str(executable)]
     )
+    if progress is not None:
+        progress.start("installed_c_header_compile_link")
     compile_result = _command_result(
         "compile_c_header_api_prototypes",
         compile_command,
@@ -1787,7 +1894,7 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs):
         env,
         dirs["logs"] / "compile_c_header_api_prototypes.json")
     if compile_result["returncode"] != 0:
-        checks.append(_fail(
+        _append_check(checks, _fail(
             "installed_c_header_compile_link",
             "standard ABI header prototype compile/link probe failed",
             source=str(source),
@@ -1795,22 +1902,22 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs):
             command=compile_result["command"],
             returncode=compile_result["returncode"],
             log=compile_result["log"],
-            prototype_count=len(prototypes)))
+            prototype_count=len(prototypes)), progress)
         return checks
 
     linkage_result = _verify_executable_libmpi_abi(
         executable, dirs, env, "c_header_api_prototypes")
     if linkage_result["result"] == "SKIP":
-        checks.append(_skip(
+        _append_check(checks, _skip(
             "installed_c_header_compile_link",
             linkage_result["skip_reason"],
             source=str(source),
             executable=str(executable),
             compile_log=compile_result["log"],
             linkage_log=linkage_result["log"],
-            prototype_count=len(prototypes)))
+            prototype_count=len(prototypes)), progress)
     elif linkage_result["result"] != "PASS":
-        checks.append(_fail(
+        _append_check(checks, _fail(
             "installed_c_header_compile_link",
             linkage_result["message"],
             source=str(source),
@@ -1819,83 +1926,89 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs):
             returncode=linkage_result["returncode"],
             compile_log=compile_result["log"],
             linkage_log=linkage_result["log"],
-            prototype_count=len(prototypes)))
+            prototype_count=len(prototypes)), progress)
     else:
-        checks.append(_pass(
+        _append_check(checks, _pass(
             "installed_c_header_compile_link",
             source=str(source),
             executable=str(executable),
             header=str(header),
             prototype_count=len(prototypes),
             compile_log=compile_result["log"],
-            linkage_log=linkage_result["log"]))
+            linkage_log=linkage_result["log"]), progress)
 
-    checks.append(_symbol_table_check(prototypes, excluded_names,
-                                      tools, dirs, env))
+    if progress is not None:
+        progress.start("installed_libmpi_abi_symbols")
+    _append_check(checks, _symbol_table_check(prototypes, excluded_names,
+                                              tools, dirs, env), progress)
     return checks
 
 
-def _installed_wrapper_checks(tools, dirs):
+def _installed_wrapper_checks(tools, dirs, progress=None):
     checks = []
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
     env = _installed_test_env(tools)
     compile_log = dirs["logs"] / "mpicc_abi_showme_compile.json"
     link_log = dirs["logs"] / "mpicc_abi_showme_link.json"
+    if progress is not None:
+        progress.start("installed_standard_abi_wrapper_flags")
     compile_result = _command_result(
         "mpicc_abi_showme_compile",
         [mpicc_abi, "--showme:compile"],
         dirs["base"],
         env,
         compile_log)
+
+    if compile_result["returncode"] != 0:
+        _append_check(checks, _fail(
+            "installed_standard_abi_wrapper_flags",
+            "mpicc_abi --showme:compile failed",
+            command=compile_result["command"],
+            returncode=compile_result["returncode"],
+            log=compile_result["log"]), progress)
+    elif "standard_abi" not in compile_result["stdout"]:
+        _append_check(checks, _fail(
+            "installed_standard_abi_wrapper_flags",
+            "mpicc_abi does not advertise standard ABI include path",
+            command=compile_result["command"],
+            stdout=compile_result["stdout"],
+            log=compile_result["log"]), progress)
+    else:
+        _append_check(checks, _pass(
+            "installed_standard_abi_wrapper_flags",
+            command=compile_result["command"],
+            stdout=compile_result["stdout"].strip(),
+            log=compile_result["log"]), progress)
+
+    if progress is not None:
+        progress.start("installed_libmpi_abi_wrapper_flags")
     link_result = _command_result(
         "mpicc_abi_showme_link",
         [mpicc_abi, "--showme:link"],
         dirs["base"],
         env,
         link_log)
-
-    if compile_result["returncode"] != 0:
-        checks.append(_fail(
-            "installed_standard_abi_wrapper_flags",
-            "mpicc_abi --showme:compile failed",
-            command=compile_result["command"],
-            returncode=compile_result["returncode"],
-            log=compile_result["log"]))
-    elif "standard_abi" not in compile_result["stdout"]:
-        checks.append(_fail(
-            "installed_standard_abi_wrapper_flags",
-            "mpicc_abi does not advertise standard ABI include path",
-            command=compile_result["command"],
-            stdout=compile_result["stdout"],
-            log=compile_result["log"]))
-    else:
-        checks.append(_pass(
-            "installed_standard_abi_wrapper_flags",
-            command=compile_result["command"],
-            stdout=compile_result["stdout"].strip(),
-            log=compile_result["log"]))
-
     if link_result["returncode"] != 0:
-        checks.append(_fail(
+        _append_check(checks, _fail(
             "installed_libmpi_abi_wrapper_flags",
             "mpicc_abi --showme:link failed",
             command=link_result["command"],
             returncode=link_result["returncode"],
-            log=link_result["log"]))
+            log=link_result["log"]), progress)
     elif re.search(r"(?<![A-Za-z0-9_])-lmpi_abi(?![A-Za-z0-9_])",
                    link_result["stdout"]) is None:
-        checks.append(_fail(
+        _append_check(checks, _fail(
             "installed_libmpi_abi_wrapper_flags",
             "mpicc_abi does not advertise libmpi_abi linkage",
             command=link_result["command"],
             stdout=link_result["stdout"],
-            log=link_result["log"]))
+            log=link_result["log"]), progress)
     else:
-        checks.append(_pass(
+        _append_check(checks, _pass(
             "installed_libmpi_abi_wrapper_flags",
             command=link_result["command"],
             stdout=link_result["stdout"].strip(),
-            log=link_result["log"]))
+            log=link_result["log"]), progress)
 
     return checks
 
@@ -1907,7 +2020,7 @@ def _c_probe_source(srcdir, body, rank_count):
     return template.replace("@BODY@", body.rstrip())
 
 
-def _installed_c_probe_checks(srcdir, tools, dirs):
+def _installed_c_probe_checks(srcdir, tools, dirs, progress=None):
     checks = []
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
     mpirun = tools["open_mpi"]["mpirun"]
@@ -1917,6 +2030,7 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
 
     for case in INSTALLED_C_ABI_PROBES:
         name = case["name"]
+        check_name = "installed_c_probe_" + name
         rank_count = tools["rank_counts"]["np{0}".format(
             case["rank_count"])]
         source = dirs["src"] / (name + ".c")
@@ -1927,6 +2041,8 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
             [mpicc_abi] + compile_overrides +
             [str(source), "-o", str(executable)]
         )
+        if progress is not None:
+            progress.start(check_name)
         compile_result = _command_result(
             "compile_" + name,
             compile_command,
@@ -1934,22 +2050,22 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
             env,
             dirs["logs"] / ("compile_" + name + ".json"))
         if compile_result["returncode"] != 0:
-            checks.append(_fail(
-                "installed_c_probe_" + name,
+            _append_check(checks, _fail(
+                check_name,
                 "installed C ABI probe compile failed",
                 phase="compile",
                 source=str(source),
                 executable=str(executable),
                 command=compile_result["command"],
                 returncode=compile_result["returncode"],
-                log=compile_result["log"]))
+                log=compile_result["log"]), progress)
             continue
 
         linkage_result = _verify_executable_libmpi_abi(
             executable, dirs, env, name)
         if linkage_result["result"] == "SKIP":
-            checks.append(_skip(
-                "installed_c_probe_" + name,
+            _append_check(checks, _skip(
+                check_name,
                 linkage_result["skip_reason"],
                 phase="linkage",
                 source=str(source),
@@ -1957,12 +2073,12 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
                 command=linkage_result["command"],
                 returncode=linkage_result["returncode"],
                 compile_log=compile_result["log"],
-                linkage_log=linkage_result["log"]))
+                linkage_log=linkage_result["log"]), progress)
             continue
 
         if linkage_result["result"] != "PASS":
-            checks.append(_fail(
-                "installed_c_probe_" + name,
+            _append_check(checks, _fail(
+                check_name,
                 linkage_result["message"],
                 phase="linkage",
                 source=str(source),
@@ -1970,7 +2086,7 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
                 command=linkage_result["command"],
                 returncode=linkage_result["returncode"],
                 compile_log=compile_result["log"],
-                linkage_log=linkage_result["log"]))
+                linkage_log=linkage_result["log"]), progress)
             continue
 
         run_command = (
@@ -1984,8 +2100,8 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
             env,
             dirs["logs"] / ("run_" + name + ".json"))
         if run_result["returncode"] != 0:
-            checks.append(_fail(
-                "installed_c_probe_" + name,
+            _append_check(checks, _fail(
+                check_name,
                 "installed C ABI probe runtime failed",
                 phase="run",
                 source=str(source),
@@ -1994,11 +2110,11 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
                 command=run_result["command"],
                 returncode=run_result["returncode"],
                 compile_log=compile_result["log"],
-                run_log=run_result["log"]))
+                run_log=run_result["log"]), progress)
             continue
 
-        checks.append(_pass(
-            "installed_c_probe_" + name,
+        _append_check(checks, _pass(
+            check_name,
             source=str(source),
             executable=str(executable),
             rank_count=rank_count,
@@ -2007,19 +2123,21 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
             compile_log=compile_result["log"],
             linkage_command=linkage_result["command"],
             linkage_log=linkage_result["log"],
-            run_log=run_result["log"]))
+            run_log=run_result["log"]), progress)
 
     return checks
 
 
-def run_installed_checks(manifest, mode, srcdir, outdir, tools):
+def run_installed_checks(manifest, mode, srcdir, outdir, tools,
+                         progress=None):
     if mode != "check-abi":
         return []
     dirs = _installed_test_dirs(outdir)
     checks = []
-    checks.extend(_installed_wrapper_checks(tools, dirs))
-    checks.extend(_installed_c_header_symbol_checks(manifest, tools, dirs))
-    checks.extend(_installed_c_probe_checks(srcdir, tools, dirs))
+    checks.extend(_installed_wrapper_checks(tools, dirs, progress))
+    checks.extend(_installed_c_header_symbol_checks(
+        manifest, tools, dirs, progress))
+    checks.extend(_installed_c_probe_checks(srcdir, tools, dirs, progress))
     return checks
 
 
@@ -2073,7 +2191,7 @@ def _runtime_loader_var():
     return None
 
 
-def build_report(manifest, mode, srcdir, builddir, outdir):
+def build_report(manifest, mode, srcdir, builddir, outdir, progress=None):
     api_entries = manifest["apis"]
     constant_entries = manifest["constants"]
     standard_abi = manifest["configuration"]["standard_abi"]
@@ -2094,7 +2212,7 @@ def build_report(manifest, mode, srcdir, builddir, outdir):
             skip_reason = SKIP_STANDARD_ABI_DISABLED
 
     if result != "SKIP" and mode in ("coverage", "check-fast"):
-        fast_checks = run_fast_checks(manifest, srcdir, builddir)
+        fast_checks = run_fast_checks(manifest, srcdir, builddir, progress)
         if any(check["result"] == "FAIL" for check in fast_checks):
             result = "FAIL"
 
@@ -2104,7 +2222,7 @@ def build_report(manifest, mode, srcdir, builddir, outdir):
             skip_reason = SKIP_OPEN_MPI_TOOLS_UNAVAILABLE
         else:
             installed_checks = run_installed_checks(
-                manifest, mode, srcdir, outdir, tools)
+                manifest, mode, srcdir, outdir, tools, progress)
             if any(check["result"] == "FAIL"
                    for check in installed_checks):
                 result = "FAIL"
@@ -2143,12 +2261,15 @@ def build_report(manifest, mode, srcdir, builddir, outdir):
     }
 
 
-def _summary_text(report):
+def _summary_text(report, colors=None):
+    if colors is None:
+        colors = _Colors(False)
     lines = []
     lines.append("MPI ABI test summary")
     lines.append("====================")
     lines.append("mode: {0}".format(report["mode"]))
-    lines.append("result: {0}".format(report["result"]))
+    result_text = "result: {0}".format(report["result"])
+    lines.append(colors.result(report["result"], result_text))
     if report["skip_reason"]:
         lines.append("skip_reason: {0}".format(report["skip_reason"]))
     lines.append("srcdir: {0}".format(report["srcdir"]))
@@ -2180,7 +2301,7 @@ def _summary_text(report):
             line = "  {0}: {1}".format(check["name"], check["result"])
             if check["skip_reason"]:
                 line += " ({0})".format(check["skip_reason"])
-            lines.append(line)
+            lines.append(colors.result(check["result"], line))
     else:
         lines.append("  none")
     lines.append("")
@@ -2190,7 +2311,7 @@ def _summary_text(report):
             line = "  {0}: {1}".format(check["name"], check["result"])
             if check["skip_reason"]:
                 line += " ({0})".format(check["skip_reason"])
-            lines.append(line)
+            lines.append(colors.result(check["result"], line))
     else:
         lines.append("  none")
     lines.append("")
@@ -2235,9 +2356,18 @@ def command(args):
         print("Wrote {0}".format(path))
         return 0
 
-    report = build_report(manifest, mode, srcdir, builddir, outdir)
+    progress_enabled = args.progress
+    env_progress = _env_bool("OMPI_ABI_TEST_PROGRESS")
+    if env_progress is not None:
+        progress_enabled = env_progress
+    colors = _Colors(_color_tests_enabled(args.color_tests))
+    progress = _Progress(progress_enabled, colors)
+
+    report = build_report(manifest, mode, srcdir, builddir, outdir, progress)
     _, report_path, summary_path = write_outputs(manifest, report, outdir)
-    print(_summary_text(report), end="")
+    if progress.enabled:
+        print("")
+    print(_summary_text(report, colors), end="")
     print("Wrote {0}".format(report_path))
     print("Wrote {0}".format(summary_path))
 
@@ -2271,6 +2401,13 @@ def main(argv):
                         help="output directory for generated reports")
     parser.add_argument("--complete-gate", action="store_true",
                         help="fail when implemented ABI entries lack tests")
+    parser.add_argument("--no-progress", dest="progress",
+                        action="store_false",
+                        help="do not print per-check progress lines")
+    parser.set_defaults(progress=True)
+    parser.add_argument("--color-tests", default="auto",
+                        choices=("auto", "yes", "no", "always", "never"),
+                        help="colorize console test results")
     parser.add_argument("mode", choices=(
         "manifest",
         "coverage",
