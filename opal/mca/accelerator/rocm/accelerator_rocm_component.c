@@ -19,7 +19,9 @@
 
 #include "opal_config.h"
 
+#include <errno.h>
 #include <stdio.h>
+#include <sys/prctl.h>
 #include <sys/utsname.h>
 
 #include "opal/mca/dl/base/base.h"
@@ -406,6 +408,15 @@ static opal_accelerator_base_module_t* accelerator_rocm_init(void)
 
 #if OPAL_ROCM_VMM_SUPPORT
     mca_accelerator_rocm_vmm_cache_init();
+    if (opal_accelerator_rocm_vmm_support) {
+        if (prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0) != 0) {
+            opal_output_verbose(1, opal_accelerator_base_framework.framework_output,
+                                "prctl(PR_SET_PTRACER_ANY) failed (errno=%d): "
+                                "VMM IPC peers may need CAP_SYS_PTRACE or "
+                                "pidfd_getfd will be denied on the receiver.",
+                                errno);
+        }
+    }
 #endif
 
     return &opal_accelerator_rocm_module;

@@ -159,8 +159,6 @@ opal_accelerator_base_module_t opal_accelerator_rocm_module =
 };
 
 #if OPAL_ROCM_VMM_SUPPORT
-/* Track if prctl was called for FD exchange permission */
-static int mca_accelerator_rocm_vmm_prctl_set = 0;
 
 /*
  * Key for vmm_region_cache: identifies a remote VMM allocation by the sender's
@@ -527,7 +525,9 @@ static int mca_accelerator_rocm_memcpy(int dest_dev_id, int src_dev_id, void *de
         }
         int dev = (src_dev_id != MCA_ACCELERATOR_NO_DEVICE_ID) ? src_dev_id : dest_dev_id;
         if (dev == MCA_ACCELERATOR_NO_DEVICE_ID) {
-            hipGetDevice(&dev);
+            if (hipSuccess != hipGetDevice(&dev)) {
+                return OPAL_ERROR;
+            }
         }
         hipStream_t stream = opal_accelerator_rocm_MemcpyStreams[dev];
         err = hipMemcpyAsync(dest, src, size, hipMemcpyDefault, stream);
@@ -623,7 +623,9 @@ static int mca_accelerator_rocm_memmove(int dest_dev_id, int src_dev_id, void *d
         }
         int dev = (src_dev_id != MCA_ACCELERATOR_NO_DEVICE_ID) ? src_dev_id : dest_dev_id;
         if (dev == MCA_ACCELERATOR_NO_DEVICE_ID) {
-            hipGetDevice(&dev);
+            if (hipSuccess != hipGetDevice(&dev)) {
+                return OPAL_ERROR;
+            }
         }
         hipStream_t stream = opal_accelerator_rocm_MemcpyStreams[dev];
         err = hipMemcpyAsync(tmp, src, size, hipMemcpyDefault, stream);
@@ -806,19 +808,7 @@ static int mca_accelerator_rocm_get_ipc_handle(int dev_id, void *dev_ptr,
 #if OPAL_ROCM_VMM_SUPPORT
     /* Try to get allocation handle - only works for VMM allocations */
     /* Only attempt VMM detection if explicitly enabled via MCA parameter */
-    if (opal_accelerator_rocm_vmm_support && !is_legacy_ipc) {
-        /* Set prctl permission for FD exchange (only once per process) */
-        if (!mca_accelerator_rocm_vmm_prctl_set) {
-            if (prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0) != 0) {
-                opal_output_verbose(1, opal_accelerator_base_framework.framework_output,
-                                    "prctl(PR_SET_PTRACER_ANY) failed (errno=%d): "
-                                    "VMM IPC peers may need CAP_SYS_PTRACE or "
-                                    "pidfd_getfd will be denied on the receiver.",
-                                    errno);
-            }
-            mca_accelerator_rocm_vmm_prctl_set = 1;
-        }
-
+    if (opal_accelerator_rocm_vmm_support && hipSuccess == err && !is_legacy_ipc) {
         /* hipMemRetainAllocationHandle succeeds only for VMM pointers.
          * It must be called with the allocation base — passing a mid-allocation
          * offset returns a handle that may crash on hipMemRelease.
@@ -1038,7 +1028,9 @@ static int mca_accelerator_rocm_open_ipc_handle(int dev_id, opal_accelerator_ipc
         int actual_dev_id = dev_id;
         if (actual_dev_id == MCA_ACCELERATOR_NO_DEVICE_ID) {
             if (hipSuccess != hipGetDevice(&actual_dev_id)) {
-                actual_dev_id = 0;
+                hipMemUnmap(local_base_addr, vmm_desc.alloc_size);
+                hipMemAddressFree(local_base_addr, vmm_desc.alloc_size);
+                return OPAL_ERROR;
             }
         }
 
@@ -1108,7 +1100,7 @@ static int mca_accelerator_rocm_compare_ipc_handles(uint8_t handle_1[IPC_MAX_HAN
      */
     uint32_t *type_1 = (uint32_t *)&handle_1[48];
     uint32_t *type_2 = (uint32_t *)&handle_2[48];
-    if (*type_1 == 0 && *type_2 == 0) {
+    if (opal_accelerator_rocm_vmm_support && *type_1 == 0 && *type_2 == 0) {
         return memcmp(&handle_1[4], &handle_2[4], sizeof(uint32_t) + sizeof(void *));
     }
 #endif
