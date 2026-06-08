@@ -56,6 +56,12 @@ headers = bindings.h \
 #
 
 prototype_sources = \
+        abi_get_fortran_info.c.in \
+        abi_set_fortran_info.c.in \
+        abi_get_fortran_booleans.c.in \
+        abi_set_fortran_booleans.c.in \
+        abi_get_info.c.in \
+        abi_get_version.c.in \
         abort.c.in \
         accumulate.c.in \
         add_error_class.c.in \
@@ -520,15 +526,14 @@ EXTRA_DIST = $(prototype_sources) \
 	abi_converters.h \
 	abi_converters.c \
 	abi_handle_convert.h \
+	abi_get_info.c.in \
         abi.h.in
 
 # functions that do not require profiling implementations.
 libmpi_c_la_SOURCES = \
-         abi_details.c \
-         abi_supported.c \
-         abi_version.c \
         ompi_isendrecv.c \
-        ompi_sendrecv.c
+        ompi_sendrecv.c \
+        ompi_abi_fortran.c
 
 libmpi_c_la_LIBADD = libmpi_c_profile.la
 if BUILD_MPI_BINDINGS_LAYER
@@ -553,6 +558,12 @@ nobase_include_HEADERS = standard_abi/mpi.h
 #
 #
 interface_profile_sources = \
+        abi_get_fortran_info_ompi_generated.c \
+        abi_set_fortran_info_ompi_generated.c \
+        abi_get_fortran_booleans_ompi_generated.c \
+        abi_set_fortran_booleans_ompi_generated.c \
+        abi_get_info_ompi_generated.c \
+        abi_get_version_ompi_generated.c \
 	abort_ompi_generated.c \
 	accumulate_ompi_generated.c \
 	add_error_class_ompi_generated.c \
