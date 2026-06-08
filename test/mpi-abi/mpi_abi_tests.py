@@ -10,11 +10,11 @@
 
 """MPI standard ABI test manifest and runner.
 
-This implementation provides the phase 1-6 infrastructure: metadata
+This implementation provides the phase 1-7 infrastructure: metadata
 loading, manifest generation, fast metadata checks, installed ABI smoke
-tests, tool discovery, skip handling, and JSON/text reporting.  Later
-phases add exhaustive generated compile, link, and runtime tests on top
-of this runner.
+tests, installed C header/prototype/symbol checks, tool discovery, skip
+handling, and JSON/text reporting.  Later phases add exhaustive runtime
+tests on top of this runner.
 """
 
 import argparse
@@ -46,6 +46,7 @@ SKIP_OPEN_MPI_TOOLS_UNAVAILABLE = "open_mpi_tools_unavailable"
 SKIP_MPICH_TOOLS_UNAVAILABLE = "mpich_tools_unavailable"
 SKIP_HEADER_UNAVAILABLE = "generated_standard_abi_header_unavailable"
 SKIP_LINKAGE_INSPECTION_UNAVAILABLE = "linkage_inspection_unavailable"
+SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE = "symbol_diagnostics_unavailable"
 SKIP_FORTRAN_BINDINGS_DISABLED = "fortran_bindings_disabled"
 SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
 
@@ -53,6 +54,7 @@ EXPECTED_METADATA_VERSION = "5.0"
 EXPECTED_API_COUNT = 567
 EXPECTED_CONSTANT_COUNT = 373
 DEFAULT_COMMAND_TIMEOUT = 120
+MIN_EXPECTED_C_HEADER_PROTOTYPES = 1000
 
 VALID_CLASSIFICATIONS = {
     CLASS_IMPLEMENTED,
@@ -1342,6 +1344,497 @@ def _verify_executable_libmpi_abi(executable, dirs, env, name):
     return result
 
 
+def _showme_words(mpicc_abi, option, dirs, env, name):
+    result = _command_result(
+        name,
+        [mpicc_abi, option],
+        dirs["base"],
+        env,
+        dirs["logs"] / (name + ".json"))
+    if result["returncode"] != 0:
+        return result, []
+    return result, shlex.split(result["stdout"])
+
+
+def _installed_standard_abi_header(tools, dirs, env):
+    include_override = tools["paths"]["include"]
+    candidates = []
+    if include_override:
+        candidates.append(Path(include_override) / "mpi.h")
+
+    mpicc_abi = tools["open_mpi"]["mpicc_abi"]
+    _, incdirs = _showme_words(
+        mpicc_abi, "--showme:incdirs", dirs, env, "mpicc_abi_showme_incdirs")
+    for incdir in incdirs:
+        candidates.append(Path(incdir) / "mpi.h")
+
+    for candidate in candidates:
+        if not candidate.exists():
+            continue
+        text = _read_text(candidate)
+        if re.search(r"^\s*#define\s+MPI_H_ABI\b", text, re.MULTILINE):
+            return candidate
+    return None
+
+
+def _remove_c_comments(text):
+    return re.sub(r"/\*.*?\*/", " ", text, flags=re.DOTALL)
+
+
+def _parse_c_header_prototypes(header):
+    text = _remove_c_comments(_read_text(header))
+    prototypes = {}
+    pattern = re.compile(
+        r"(?m)^\s*(?!typedef\b)"
+        r"(?:(?:extern|OMPI_DECLSPEC)\s+)*"
+        r"(?P<return_type>[A-Za-z_][A-Za-z0-9_\s]*\s*\**)\s+"
+        r"(?P<name>(?:P)?MPI_\w+)\s*"
+        r"\((?P<args>[^;{}]*)\)\s*;")
+    for match in pattern.finditer(text):
+        return_type = _normalize_c_signature_text(
+            " ".join(match.group("return_type").split()))
+        args = _normalize_c_signature_text(
+            " ".join(match.group("args").split()))
+        name = match.group("name")
+        signature = "{0} {1}({2})".format(return_type, name, args)
+        prototypes[name] = {
+            "name": name,
+            "return_type": return_type,
+            "args": args,
+            "signature": _normalize_c_signature_text(signature),
+            "prototype": match.group(0).strip(),
+        }
+    return prototypes
+
+
+def _parse_c_header_deprecated_functions(srcdir):
+    c_header = srcdir / "ompi" / "mpi" / "bindings" / "c_header.py"
+    tree = ast.parse(_read_text(c_header), filename=str(c_header))
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(target, ast.Name)
+                   and target.id == "DEPRECATED_FUNCTIONS"
+                   for target in node.targets):
+            continue
+        value = ast.literal_eval(node.value)
+        return set(value)
+    raise RuntimeError("DEPRECATED_FUNCTIONS not found in {0}".format(
+        c_header))
+
+
+def _normalize_c_signature_text(text):
+    text = text.strip().rstrip(";")
+    text = text.replace("char argv[]", "char *argv[]")
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"\s*\*\s*", "* ", text)
+    text = re.sub(r"\s+([,\)])", r"\1", text)
+    text = re.sub(r"\(\s+", "(", text)
+    return text.strip()
+
+
+def _parse_c_signature(signature):
+    signature = _normalize_c_signature_text(signature)
+    match = re.match(
+        r"^(?P<return_type>.+?)\s+(?P<name>(?:P)?MPI_\w+)\("
+        r"(?P<args>.*)\)$",
+        signature)
+    if match is None:
+        return None
+    return {
+        "name": match.group("name"),
+        "return_type": _normalize_c_signature_text(
+            match.group("return_type")),
+        "args": _normalize_c_signature_text(match.group("args")),
+        "signature": signature,
+    }
+
+
+def _standard_abi_expected_signatures(srcdir):
+    sys.path.insert(
+        0, str((srcdir / "3rd-party" / "pympistandard" / "src").resolve()))
+    import pympistandard as std
+
+    std.use_api_version()
+    deprecated = _parse_c_header_deprecated_functions(srcdir)
+    expected = {}
+    excluded = set()
+
+    def add_signature(signature):
+        signature = str(signature).replace(r"\ldots", "...")
+        signature = signature.replace("@MPI_COUNT@", "MPI_Count")
+        signature = signature.replace("@MPI_AINT@", "MPI_Aint")
+        signature = signature.replace("@MPI_OFFSET@", "MPI_Offset")
+        signature = signature.replace("char argv[]", "char *argv[]")
+        parsed = _parse_c_signature(signature)
+        if parsed is None:
+            raise RuntimeError("could not parse expected C signature: {0}".
+                               format(signature))
+        name = parsed["name"]
+        if any(function in signature for function in deprecated):
+            excluded.add(name)
+            return
+        if "MPI_Fint" in signature or "MPI_F08_status" in signature:
+            excluded.add(name)
+            return
+        expected[name] = parsed
+
+    for proc in std.all_iso_c_procedures():
+        add_signature(proc.express.iso_c)
+        if proc.has_embiggenment():
+            add_signature(proc.express.embiggen.iso_c)
+
+    for proc in std.all_iso_c_procedures():
+        add_signature(proc.express.profile.iso_c)
+        if proc.has_embiggenment():
+            binding = str(proc.express.embiggen.iso_c).split()
+            add_signature("{0} P{1};".format(binding[0],
+                                             " ".join(binding[1:])))
+
+    return expected, excluded
+
+
+def _probe_variable_name(name):
+    return "probe_" + re.sub(r"[^A-Za-z0-9_]", "_", name)
+
+
+def _header_probe_source(prototypes):
+    lines = [
+        "#include \"mpi.h\"",
+        "",
+        "#ifndef MPI_H_ABI",
+        "#error \"standard ABI mpi.h was not used\"",
+        "#endif",
+        "",
+    ]
+    for name in sorted(prototypes):
+        proto = prototypes[name]
+        variable = _probe_variable_name(name)
+        lines.append("static {0} (*{1})({2}) = {3};".format(
+            proto["return_type"], variable, proto["args"], name))
+
+    lines.extend([
+        "",
+        "int main(void)",
+        "{",
+    ])
+    for name in sorted(prototypes):
+        variable = _probe_variable_name(name)
+        lines.extend([
+            "    if (0 == {0}) {{".format(variable),
+            "        return 1;",
+            "    }",
+        ])
+    lines.extend([
+        "    return 0;",
+        "}",
+        "",
+    ])
+    return "\n".join(lines)
+
+
+def _metadata_c_api_header_check(manifest, mpi_prototypes, excluded_names):
+    expected = []
+    missing = []
+    non_abi_absent = []
+    for entry in manifest["apis"]:
+        if entry["classification"] != CLASS_IMPLEMENTED:
+            continue
+        if not entry["languages"]["c"]:
+            continue
+        name = entry["name"]
+        if name in excluded_names:
+            non_abi_absent.append(name)
+            continue
+        expected.append(name)
+        if name not in mpi_prototypes:
+            missing.append(name)
+
+    if missing:
+        return _fail(
+            "installed_c_header_metadata_apis",
+            "implemented C ABI metadata entries are missing from mpi.h",
+            checked=len(expected),
+            missing=missing[:20],
+            missing_count=len(missing),
+            non_abi_absent_count=len(non_abi_absent))
+
+    return _pass(
+        "installed_c_header_metadata_apis",
+        checked=len(expected),
+        non_abi_absent_count=len(non_abi_absent))
+
+
+def _signature_comparison_check(prototypes, expected_signatures):
+    missing = []
+    mismatches = []
+    for name, expected in sorted(expected_signatures.items()):
+        actual = prototypes.get(name)
+        if actual is None:
+            missing.append(name)
+            continue
+        if (actual["return_type"] != expected["return_type"]
+                or actual["args"] != expected["args"]):
+            mismatches.append({
+                "name": name,
+                "expected": expected["signature"],
+                "actual": actual["signature"],
+            })
+
+    extra = sorted(
+        name for name in prototypes
+        if name not in expected_signatures and
+        (name.startswith("MPI_") or name.startswith("PMPI_"))
+    )
+
+    if missing or mismatches or extra:
+        return _fail(
+            "installed_c_header_signature_semantics",
+            "standard ABI header signatures differ from MPI C signatures",
+            checked=len(expected_signatures),
+            missing=missing[:20],
+            missing_count=len(missing),
+            mismatches=mismatches[:20],
+            mismatch_count=len(mismatches),
+            extra=extra[:20],
+            extra_count=len(extra))
+
+    return _pass("installed_c_header_signature_semantics",
+                 checked=len(expected_signatures))
+
+
+def _non_abi_absence_check(prototypes, excluded_names):
+    exposed = [
+        name for name in sorted(prototypes)
+        if (name.startswith("MPI_") or name.startswith("PMPI_"))
+        and name in excluded_names
+    ]
+    if exposed:
+        return _fail(
+            "installed_c_header_non_abi_absence",
+            "non-ABI C APIs are exposed by the standard ABI header",
+            exposed=exposed[:20],
+            exposed_count=len(exposed))
+    return _pass("installed_c_header_non_abi_absence",
+                 checked=len(excluded_names))
+
+
+def _prototype_pair_check(prototypes, excluded_names):
+    mpi_names = sorted(
+        name for name in prototypes
+        if name.startswith("MPI_") and name not in excluded_names
+    )
+    pmpi_names = sorted(name for name in prototypes if name.startswith("PMPI_"))
+    missing_pmpi = []
+    for name in mpi_names:
+        pmpi_name = "P" + name
+        if pmpi_name not in prototypes:
+            missing_pmpi.append(pmpi_name)
+
+    if missing_pmpi:
+        return _fail(
+            "installed_c_header_api_prototypes",
+            "standard ABI header is missing PMPI prototypes",
+            mpi_count=len(mpi_names),
+            pmpi_count=len(pmpi_names),
+            missing_pmpi=missing_pmpi[:20],
+            missing_pmpi_count=len(missing_pmpi))
+
+    return _pass("installed_c_header_api_prototypes",
+                 mpi_count=len(mpi_names),
+                 pmpi_count=len(pmpi_names))
+
+
+def _libmpi_abi_search_names():
+    system = platform.system()
+    if system == "Darwin":
+        return ("libmpi_abi.dylib", "libmpi_abi.0.dylib")
+    if system == "Linux":
+        return ("libmpi_abi.so", "libmpi_abi.so.0")
+    return ("libmpi_abi.so", "libmpi_abi.dylib", "libmpi_abi.a")
+
+
+def _installed_libmpi_abi_path(tools, dirs, env):
+    library_override = tools["paths"]["library"]
+    libdirs = []
+    if library_override:
+        libdirs.append(library_override)
+
+    mpicc_abi = tools["open_mpi"]["mpicc_abi"]
+    _, showme_libdirs = _showme_words(
+        mpicc_abi, "--showme:libdirs", dirs, env, "mpicc_abi_showme_libdirs")
+    libdirs.extend(showme_libdirs)
+
+    for libdir in libdirs:
+        for name in _libmpi_abi_search_names():
+            candidate = Path(libdir) / name
+            if candidate.exists():
+                return candidate
+    return None
+
+
+def _defined_nm_symbols(output):
+    symbols = set()
+    for line in output.splitlines():
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        symbol = parts[-1]
+        symbol_type = parts[-2] if len(parts) >= 3 else parts[0]
+        if symbol_type in ("U", "w", "v"):
+            continue
+        if symbol.startswith("_"):
+            symbol = symbol[1:]
+        symbols.add(symbol)
+    return symbols
+
+
+def _symbol_table_check(prototypes, excluded_names, tools, dirs, env):
+    nm = shutil.which("nm")
+    library = _installed_libmpi_abi_path(tools, dirs, env)
+    if nm is None or library is None:
+        return _skip(
+            "installed_libmpi_abi_symbols",
+            SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE,
+            nm=nm,
+            library=str(library) if library else None)
+
+    result = _command_result(
+        "nm_libmpi_abi",
+        [nm, "-g", str(library)],
+        dirs["base"],
+        env,
+        dirs["logs"] / "nm_libmpi_abi.json")
+    if result["returncode"] != 0:
+        return _fail(
+            "installed_libmpi_abi_symbols",
+            "nm failed while inspecting libmpi_abi",
+            command=result["command"],
+            returncode=result["returncode"],
+            log=result["log"],
+            library=str(library))
+
+    output = result["stdout"] + result["stderr"]
+    defined_symbols = _defined_nm_symbols(output)
+    expected = [
+        name for name in sorted(prototypes)
+        if (name.startswith("MPI_") or name.startswith("PMPI_"))
+        and name not in excluded_names
+    ]
+    missing = [
+        name for name in expected
+        if name not in defined_symbols
+    ]
+    if missing:
+        return _fail(
+            "installed_libmpi_abi_symbols",
+            "libmpi_abi is missing defined standard ABI symbols",
+            library=str(library),
+            checked=len(expected),
+            missing=missing[:20],
+            missing_count=len(missing),
+            log=result["log"])
+
+    return _pass(
+        "installed_libmpi_abi_symbols",
+        library=str(library),
+        checked=len(expected),
+        log=result["log"])
+
+
+def _installed_c_header_symbol_checks(manifest, tools, dirs):
+    checks = []
+    env = _installed_test_env(tools)
+    header = _installed_standard_abi_header(tools, dirs, env)
+    if header is None:
+        return [_skip("installed_c_header_api_prototypes",
+                      SKIP_HEADER_UNAVAILABLE)]
+
+    prototypes = _parse_c_header_prototypes(header)
+    if len(prototypes) < MIN_EXPECTED_C_HEADER_PROTOTYPES:
+        return [_fail(
+            "installed_c_header_api_prototypes",
+            "standard ABI header prototype parser found too few entries",
+            header=str(header),
+            prototype_count=len(prototypes),
+            minimum_expected=MIN_EXPECTED_C_HEADER_PROTOTYPES)]
+
+    expected_signatures, excluded_names = _standard_abi_expected_signatures(
+        Path(manifest["metadata"]["api_path"]).parents[1])
+    mpi_prototypes = {
+        name: proto for name, proto in prototypes.items()
+        if name.startswith("MPI_")
+    }
+    checks.append(_prototype_pair_check(prototypes, excluded_names))
+    checks.append(_metadata_c_api_header_check(
+        manifest, mpi_prototypes, excluded_names))
+    checks.append(_signature_comparison_check(prototypes,
+                                              expected_signatures))
+    checks.append(_non_abi_absence_check(prototypes, excluded_names))
+
+    source = dirs["src"] / "c_header_api_prototypes.c"
+    executable = dirs["bin"] / "c_header_api_prototypes"
+    _write_text(source, _header_probe_source(prototypes))
+
+    compile_command = (
+        [tools["open_mpi"]["mpicc_abi"]] + _compile_overrides(tools) +
+        [str(source), "-o", str(executable)]
+    )
+    compile_result = _command_result(
+        "compile_c_header_api_prototypes",
+        compile_command,
+        dirs["base"],
+        env,
+        dirs["logs"] / "compile_c_header_api_prototypes.json")
+    if compile_result["returncode"] != 0:
+        checks.append(_fail(
+            "installed_c_header_compile_link",
+            "standard ABI header prototype compile/link probe failed",
+            source=str(source),
+            executable=str(executable),
+            command=compile_result["command"],
+            returncode=compile_result["returncode"],
+            log=compile_result["log"],
+            prototype_count=len(prototypes)))
+        return checks
+
+    linkage_result = _verify_executable_libmpi_abi(
+        executable, dirs, env, "c_header_api_prototypes")
+    if linkage_result["result"] == "SKIP":
+        checks.append(_skip(
+            "installed_c_header_compile_link",
+            linkage_result["skip_reason"],
+            source=str(source),
+            executable=str(executable),
+            compile_log=compile_result["log"],
+            linkage_log=linkage_result["log"],
+            prototype_count=len(prototypes)))
+    elif linkage_result["result"] != "PASS":
+        checks.append(_fail(
+            "installed_c_header_compile_link",
+            linkage_result["message"],
+            source=str(source),
+            executable=str(executable),
+            command=linkage_result["command"],
+            returncode=linkage_result["returncode"],
+            compile_log=compile_result["log"],
+            linkage_log=linkage_result["log"],
+            prototype_count=len(prototypes)))
+    else:
+        checks.append(_pass(
+            "installed_c_header_compile_link",
+            source=str(source),
+            executable=str(executable),
+            header=str(header),
+            prototype_count=len(prototypes),
+            compile_log=compile_result["log"],
+            linkage_log=linkage_result["log"]))
+
+    checks.append(_symbol_table_check(prototypes, excluded_names,
+                                      tools, dirs, env))
+    return checks
+
+
 def _installed_wrapper_checks(tools, dirs):
     checks = []
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
@@ -1520,12 +2013,12 @@ def _installed_c_probe_checks(srcdir, tools, dirs):
 
 
 def run_installed_checks(manifest, mode, srcdir, outdir, tools):
-    del manifest
     if mode != "check-abi":
         return []
     dirs = _installed_test_dirs(outdir)
     checks = []
     checks.extend(_installed_wrapper_checks(tools, dirs))
+    checks.extend(_installed_c_header_symbol_checks(manifest, tools, dirs))
     checks.extend(_installed_c_probe_checks(srcdir, tools, dirs))
     return checks
 

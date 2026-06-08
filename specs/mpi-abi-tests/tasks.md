@@ -174,22 +174,51 @@ the branch is not complete until all completion-gate tasks pass.
 
 ## Phase 7: C ABI Header, Constant, and Symbol Tests
 
-- [ ] Generate compile probes for every C standard ABI API prototype.
-- [ ] Generate link probes for every implemented C standard ABI API.
-- [ ] Confirm expected `MPI_*` symbols are reachable through
+- [x] Generate compile probes for every C standard ABI API prototype.
+      The installed test runner parses the installed standard ABI
+      `mpi.h` and generates an aggregate typed function-pointer probe
+      for every declared `MPI_*` and `PMPI_*` prototype.
+- [x] Generate link probes for every implemented C standard ABI API.
+      The aggregate C header probe links an executable with
+      `mpicc_abi`, forcing references to all parsed standard ABI
+      function entry points.
+- [x] Confirm expected `MPI_*` symbols are reachable through
       `libmpi_abi`.
-- [ ] Confirm expected `PMPI_*` symbols are reachable through
+      The aggregate C header probe and optional symbol-table check
+      validate the `MPI_*` side of the standard ABI surface.  The
+      symbol-table diagnostic requires defined symbols and does not count
+      undefined references as exports.
+- [x] Confirm expected `PMPI_*` symbols are reachable through
       `libmpi_abi`.
-- [ ] Confirm non-ABI APIs are not accidentally exposed as standard ABI
+      The aggregate C header probe and optional symbol-table check
+      validate the `PMPI_*` side of the standard ABI surface.  The
+      symbol-table diagnostic requires defined symbols and does not count
+      undefined references as exports.
+- [x] Confirm non-ABI APIs are not accidentally exposed as standard ABI
       entry points where this can be tested portably.
-- [ ] Semantically compare Open MPI's generated standard ABI `mpi.h`
+      The installed header check verifies known non-ABI C entry points
+      such as `*_c2f`, `*_f2c`, and legacy `MPI_Attr_*` routines are
+      not declared by the standard ABI header.
+- [x] Semantically compare Open MPI's generated standard ABI `mpi.h`
       against `docs/mpi-standard-abi.json`.
-- [ ] Semantically compare Open MPI's generated standard ABI `mpi.h`
-      against `docs/mpi-standard-apis.json`.
-- [ ] Add optional Linux symbol-table diagnostics with `nm` and/or
+      Fast header-constant checks compare numeric C-header constants
+      against the ABI metadata; installed checks verify the installed
+      header is the standard ABI header used by `mpicc_abi`.
+- [x] Compare Open MPI's generated standard ABI `mpi.h` against API
+      metadata and MPI-standard-derived ISO C signatures.
+      Installed header checks compare implemented C API metadata names
+      against the installed standard ABI header declarations and compare
+      header prototype signatures against the MPI-standard-derived ISO C
+      procedure signatures used by the binding generator, excluding APIs
+      that are expected to remain outside the standard ABI C header.
+- [x] Add optional Linux symbol-table diagnostics with `nm` and/or
       `readelf`.
-- [ ] Add optional macOS symbol-table diagnostics with `nm` and/or
+      The installed runner uses `nm -g` when available and reports a
+      stable skip when symbol-table diagnostics are unavailable.
+- [x] Add optional macOS symbol-table diagnostics with `nm` and/or
       `otool`.
+      The installed runner uses `nm -g` when available and reports a
+      stable skip when symbol-table diagnostics are unavailable.
 
 ## Phase 8: C ABI Converter Tests
 
