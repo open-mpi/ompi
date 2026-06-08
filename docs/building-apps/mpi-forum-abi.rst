@@ -1,0 +1,265 @@
+.. _label-building-with-mpi-abi:
+
+Building MPI applications using the MPI Forum ABI
+=================================================
+
+.. note:: Open MPI supports two ABIs:
+
+          * **The Open MPI ABI:** this is the ABI that Open MPI has
+            supported for multiple releases over many years.
+
+          * **The MPI Forum ABI:** this is the official ABI as defined
+            by the MPI standard.  It was not supported in Open MPI
+            until v6.0.0.
+
+          These two ABIs are different and not interchangeable.
+
+This section describes the **MPI Forum ABI** support in Open MPI.
+
+For information about the Open MPI ABI, see
+:ref:`ABI compatibility to previous versions of Open MPI
+<label-binary-compatibility>`.
+
+What is the MPI Forum ABI?
+--------------------------
+
+Starting with MPI-5.0, the MPI standard defines an Application Binary
+Interface (ABI) for MPI applications.  In principle, an application can
+be compiled against one MPI implementation that supports the standard
+MPI ABI, and later run with another MPI implementation that supports
+the same standard MPI ABI.
+
+There are a few important limitations:
+
+* The application must be dynamically linked.
+* The application must be launched with a launcher that is suitable for
+  the MPI library used at run time.
+* This release of Open MPI supports building C MPI applications against
+  the standard MPI ABI.  It does not provide a Fortran ABI compiler
+  wrapper.
+* Open MPI's non-standard extensions are not available to applications
+  built against the MPI Forum ABI.  See :ref:`Open MPI extensions are
+  not available in the MPI Forum ABI
+  <label-mpi-abi-no-extensions>`, below.
+
+The MPI standard ABI is different than Open MPI's own ABI compatibility
+within an Open MPI release series.  See :ref:`Open MPI ABI
+compatibility <label-binary-compatibility>` for information about
+running applications that were compiled with an earlier Open MPI
+release.
+
+The MPI-5.0 standard ABI version is 1.0.  Open MPI installs the
+standard ABI library as ``libmpi_abi`` when standard ABI support is
+enabled.
+
+How to build an application using the MPI ABI
+---------------------------------------------
+
+Use the ``mpicc_abi`` compiler wrapper to compile and link C MPI
+applications against the standard MPI ABI:
+
+.. code-block:: sh
+
+   shell$ mpicc_abi hello.c -o hello
+
+Then launch the application with the ``mpirun`` from the MPI
+implementation that will provide ``libmpi_abi`` at run time:
+
+.. code-block:: sh
+
+   shell$ mpirun -np 2 ./hello
+
+When using Open MPI's ``mpicc_abi``, the wrapper adds the standard ABI
+header directory and links against ``libmpi_abi``.  You can inspect the
+wrapper-provided flags with:
+
+.. code-block:: sh
+
+   shell$ mpicc_abi --showme:compile
+   shell$ mpicc_abi --showme:link
+
+The standard ABI ``mpi.h`` is installed under
+``$prefix/include/standard_abi``.  The normal Open MPI ``mpi.h`` remains
+installed under ``$prefix/include`` and is used by the normal ``mpicc``
+wrapper.
+
+.. note:: If Open MPI is configured with ``--disable-standard-abi``,
+          ``libmpi_abi`` is not built and the installation cannot be
+          used as the run-time MPI library for standard MPI ABI
+          applications.
+
+Using ``pkg-config`` with the MPI ABI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As an alternative to using the ``mpicc_abi`` wrapper, you can use
+``pkg-config`` to build MPI ABI applications:
+
+.. code-block:: sh
+
+   shell$ export PKG_CONFIG_PATH=/opt/openmpi/lib/pkgconfig
+   shell$ gcc hello.c -o hello `pkg-config ompi-abi-c --cflags --libs`
+
+Open MPI provides the following ABI pkg-config files:
+
+* ``ompi-abi``: Synonym for ``ompi-abi-c``
+* ``ompi-abi-c``: C applications using the MPI standard ABI
+* ``ompi-abi-cxx``: C++ applications using the MPI standard ABI
+
+.. note:: These pkg-config files are only installed when Open MPI is
+          configured with ``--enable-standard-abi`` (the default).
+
+Like the ``mpicc_abi`` wrapper, these pkg-config files link only
+against ``libmpi_abi`` and use the standard ABI header from
+``$prefix/include/standard_abi``.
+
+Checking ABI support at run time
+--------------------------------
+
+Applications can call :ref:`MPI_Abi_get_version` to query the ABI
+version provided by the MPI library at run time.  When running against
+Open MPI's standard ABI library, this routine returns ABI version 1.0.
+
+The normal Open MPI ``libmpi`` library also provides the
+``MPI_Abi_get_version`` routine, but it returns ``-1`` for both the
+major and minor version numbers because the normal ``libmpi`` library
+uses Open MPI's own ABI, not the MPI standard ABI.
+
+Fortran support
+---------------
+
+As of summer 2026, Open MPI intentionally does not provide support for
+the MPI Forum Fortran standard ABI for the following reasons:
+
+* No other MPI implementation supports the MPI Forum Fortran ABI yet.
+
+* The MPI Forum continues to discuss corrections and updates to the
+  MPI Forum ABI.
+
+Given this, it may actually be counter-productive for Open MPI to
+implement the MPI Forum Fortran ABI at this time.  If the Forum's
+Fortran ABI specification needs breaking changes, making those changes
+becomes much more difficult once there are real-world implementations
+of that Fortran ABI in use by actual MPI applications.
+
+Open MPI has therefore taken a wait-and-see approach: we will let the
+dust settle and let the MPI Forum work out the remaining issues and
+converge on a final Fortran ABI specification before committing to a
+Fortran standard ABI implementation.
+
+Specifically: this release of Open MPI does not provide a
+``mpifort_abi`` compiler wrapper, and does not provide
+``libmpifort_abi``.
+
+Open MPI does provide the MPI ABI query/helper routines documented in
+the MPI API man pages, including their Fortran bindings where the
+normal Open MPI Fortran bindings are available.  Those routines do not
+imply that this release provides a complete Fortran standard ABI build
+path.
+
+.. _label-mpi-abi-no-extensions:
+
+Open MPI extensions are not available in the MPI Forum ABI
+----------------------------------------------------------
+
+Open MPI provides a number of :ref:`Open MPI extensions
+<ompi-features-extensions-label>`: non-standard functions and constants,
+named with the ``OMPI_*`` and ``MPIX_*`` prefixes, such as
+``OMPI_Affinity_str()``, ``MPIX_Query_cuda_support()``, and the ULFM
+``MPIX_Comm_*`` fault-tolerance routines.
+
+.. warning:: The Open MPI extensions are **not** part of the MPI Forum
+             ABI, and are therefore not present in ``libmpi_abi``.
+
+             An application compiled with ``mpicc_abi`` |mdash| or with
+             the ``ompi-abi-c`` pkg-config file |mdash| cannot call the
+             Open MPI extensions.  Their ``OMPI_*`` and ``MPIX_*``
+             symbols will not be found at link time.
+
+This is intentional.  The purpose of the MPI Forum ABI is that an
+application built against it can run with *any* MPI implementation that
+provides that ABI.  Implementation-specific extensions are meaningless
+in that context, since no other MPI implementation provides them.  Other
+MPI implementations that support the MPI Forum ABI likewise omit their
+own extensions from their standard ABI library.
+
+The Open MPI extensions remain fully available in the normal Open MPI
+``libmpi`` library.  An application that needs them must therefore use
+the Open MPI ABI: compile and link it with the normal ``mpicc`` /
+``mpifort`` wrapper compilers (or the ``ompi-c`` / ``ompi-fort``
+pkg-config files).
+
+Mixing Open MPI's ABI and the MPI standard ABI
+----------------------------------------------
+
+The Open MPI ABI and the MPI Forum ABI are separate binary interfaces.
+
+.. danger:: Do not mix object files or libraries that use both MPI
+            ABIs in a single executable.
+
+For example, the following cases are **not** supported:
+
+* Compiling some C source files that call MPI with ``mpicc_abi`` and
+  compiling other C source files that call MPI with ``mpicc``, then
+  linking them into one executable.
+* Compiling C source files that call MPI with ``mpicc_abi`` and
+  compiling Fortran source files that call MPI with ``mpifort``, then
+  linking them into one executable.
+* Linking a library whose MPI-using object files were built with
+  ``mpicc_abi`` into an application whose MPI-using object files were
+  built with ``mpicc`` or ``mpifort``.
+
+These combinations are unsafe because the process-wide ``MPI_*``
+symbols must resolve to one MPI library ABI, while the object files were
+compiled with different binary representations for MPI handles,
+constants, callback arguments, and status objects.  The result is
+undefined behavior; the executable may fail to link, crash, report MPI
+errors, or appear to work until an MPI object crosses the ABI boundary.
+
+Use *one* MPI ABI consistently for every object file that calls MPI:
+
+* For a C MPI application using the MPI-5.0 standard ABI, compile and
+  link all MPI-using C objects with ``mpicc_abi``.
+* For other MPI applications, including mixed C and Fortran
+  applications, compile C objects with ``mpicc`` and Fortran objects
+  with ``mpifort``.
+
+All processes in an MPI job must use the same MPI ABI
+-----------------------------------------------------
+
+The requirement to pick a single MPI ABI is not limited to an
+individual executable: **every process in an MPI job must use the same
+MPI ABI.**
+
+You cannot run an MPI job in which some processes use the Open MPI ABI
+(executables built with ``mpicc`` / ``mpifort`` and linked against
+``libmpi``) while other processes use the MPI Forum standard ABI
+(executables built with ``mpicc_abi`` and linked against
+``libmpi_abi``).  This is true even though both kinds of process are
+ultimately run by the same Open MPI installation.
+
+.. danger:: Do not launch an MPI job that mixes processes built against
+            the Open MPI ABI with processes built against the MPI Forum
+            standard ABI.  Every process in the job must use the same
+            MPI ABI.
+
+This restriction applies to every way that processes can end up in the
+same MPI job, including:
+
+* **Multiple Program, Multiple Data (MPMD) launches**, where a single
+  ``mpirun`` command starts more than one executable.  For example, the
+  following is **not** supported if ``./app`` and ``./app_abi`` were
+  built against different MPI ABIs:
+
+  .. code-block:: sh
+
+     shell$ mpirun -np 2 ./app : -np 2 ./app_abi
+
+* **Dynamically connected jobs**, where processes that were launched
+  separately are joined into a single MPI job at run time via
+  :ref:`MPI_Comm_spawn` / :ref:`MPI_Comm_spawn_multiple`,
+  :ref:`MPI_Comm_connect` and :ref:`MPI_Comm_accept`, or
+  :ref:`MPI_Comm_join`.  All of the participating executables must be
+  built against the same MPI ABI.
+
+Build every executable that will participate in a given MPI job against
+the same MPI ABI, and launch the job accordingly.

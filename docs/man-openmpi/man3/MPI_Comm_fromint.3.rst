@@ -17,7 +17,7 @@ MPI_Comm_fromint
 :ref:`MPI_Session_fromint`, :ref:`MPI_Session_toint`,
 :ref:`MPI_Status_fromint`, :ref:`MPI_Status_toint`,
 :ref:`MPI_Type_fromint`, :ref:`MPI_Type_toint`,
-:ref:`MPI_Win_fromint`, :ref:`MPI_Win_toint` - Translates a C integer to the appropriate C handle, or vice versa.
+:ref:`MPI_Win_fromint`, :ref:`MPI_Win_toint` |mdash| Translates a C integer to the appropriate C handle, or vice versa.
 
 .. The following directive tells the man page generation script to
    generate multiple bindings for this file.
@@ -40,7 +40,7 @@ DESCRIPTION
 -----------
 
 The *fromint* function translates a C integer to the appropriate C handle.
-Only an integer obtained from a previous call to :ref:`MPI_Comm_fromint`, etc.
+Only an integer obtained from a previous call to :ref:`MPI_Comm_toint`, etc.
 may be passed to this function.  It is erroneous to pass to this function an integer associated
 with a handle that has been freed, disconnected, or aborted (or that was derived from a session that has been finalized).
 

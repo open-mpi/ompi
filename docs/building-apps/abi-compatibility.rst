@@ -3,12 +3,7 @@
 ABI compatibility to previous versions of Open MPI
 ==================================================
 
-The Open MPI |ompi_series| series maintains Application Binary Interface (ABI)
-compatibility for the C MPI bindings to the last major Open MPI release. Specifically, an
-application compiled with Open MPI v4.x can be executed with Open MPI
-|ompi_series| without having to recompile the application.
-
-.. important:: ABI is maintained for *most* of the Fortran MPI bindings, too |mdash| see below for additional information.
+.. note:: Open MPI supports two ABIs:
 
           * **The Open MPI ABI:** this is the ABI that Open MPI has
             supported for multiple releases over many years.
@@ -45,7 +40,8 @@ Open MPI ABI exceptions
 -----------------------
 
 There are however a few scenarios where an application compiled with
-Open MPI v4.x might not execute correctly with Open MPI |ompi_series|.
+Open MPI v4.0.x or v4.1.x might not execute correctly with Open MPI
+|ompi_series|.
 
 - Fortran compilers provide varying degrees of ABI guarantees between
   their releases.  As such, Open MPI can only provide ABI guarantees
@@ -80,14 +76,22 @@ Open MPI v4.x might not execute correctly with Open MPI |ompi_series|.
     .. important:: This is likely a compiler-specific issue, and may
                    need to be tested in your environment.
 
+  * Some Fortran interfaces changed ``INTENT`` declarations, added
+    ``ASYNCHRONOUS``, or changed from named to unnamed interfaces.
+    These source-level interface changes may require changes to an
+    application's source code, followed by recompilation and
+    relinking.
+
   * When using the Fortran ``mpi_f08`` module bindings in an
     environment where a Fortran ``INTEGER`` is 8 bytes but a C ``int``
     is 4 bytes, the size of a ``Type(MPI_Status)`` was increased
-    starting with Open MPI v5.0.0.
+    starting with Open MPI v5.0.0.  Applications built in this
+    configuration must be rebuilt and relinked against Open MPI
+    |ompi_series|.
 
-- Open MPI v5.0.0 removed support for the MPI C++ bindings. If an application
-  was using the deprecated and now removed C++ bindings, it will not
-  be able to compile or execute with Open MPI v5.0.0.  For details on deprecated and
-  removed functions see :ref:`Removed MPI constructs
-  <label-removed-mpi-constructs>` and :ref:`Deprecation warnings
-  <label-deprecated-functions>`
+- Open MPI v5.0.0 removed support for the MPI C++ bindings. If an
+  application was using the deprecated and now removed C++ bindings,
+  it will not be able to compile or execute with Open MPI v5.0.0.  For
+  details on deprecated and removed functions see :ref:`Removed MPI
+  constructs <label-removed-mpi-constructs>` and :ref:`Deprecation
+  warnings <label-deprecated-functions>`

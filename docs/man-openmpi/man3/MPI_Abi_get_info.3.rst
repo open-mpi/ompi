@@ -22,6 +22,12 @@ DESCRIPTION
 :ref:`MPI_Abi_get_info` returns a new info object providing
 additional information related to the ABI.
 
+Open MPI currently returns the following info keys:
+
+* ``mpi_aint_size``: size, in bytes, of ``MPI_Aint``.
+* ``mpi_count_size``: size, in bytes, of ``MPI_Count``.
+* ``mpi_offset_size``: size, in bytes, of ``MPI_Offset``.
+
 NOTES
 -----
 

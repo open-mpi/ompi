@@ -951,7 +951,9 @@ OSHMEM_MAN3_INSTALL_FROM = $(OSHMEM_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 # distribution tarballs).  We'll decide later whether we install each
 # of these (e.g., if configure did not find a C++ compiler, we won't
 # install mpic++.1).
-OMPI_MAN1_C_REDIRECTS = man-openmpi/man1/mpicc.1
+OMPI_MAN1_C_REDIRECTS = \
+        man-openmpi/man1/mpicc.1 \
+        man-openmpi/man1/mpicc_abi.1
 OMPI_MAN1_CXX_REDIRECTS = \
         man-openmpi/man1/mpicxx.1 \
         man-openmpi/man1/mpic++.1
