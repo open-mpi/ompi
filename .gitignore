@@ -456,8 +456,12 @@ test/datatype/to_self
 test/datatype/checksum
 test/datatype/position
 test/datatype/ddt_raw
+test/datatype/ddt_raw2
+test/datatype/large_data
 test/datatype/opal_datatype_test
+test/datatype/partial
 test/datatype/position_noncontig
+test/datatype/reduce_local
 test/datatype/unpack_ooo
 test/datatype/unpack_hetero
 
@@ -471,6 +475,8 @@ test/monitoring/example_reduce_count
 test/monitoring/test_overhead
 test/monitoring/test_pvar_access
 
+test/mpool/mpool_memkind
+
 test/mpi/environment/chello
 
 test/runtime/parse_context
@@ -483,6 +489,7 @@ test/spc/spc_test
 
 test/threads/opal_condition
 test/threads/opal_thread
+test/threads/opal_atomic_thread_bench
 
 test/util/aaa
 test/util/test_session_dir_out
@@ -506,6 +513,7 @@ test/util/opal_path_nfs.out
 test/util/opal_bit_ops
 test/util/bipartite_graph
 test/util/opal_sha256
+test/util/opal_json
 
 opal/test/reachable/reachable_netlink
 opal/test/reachable/reachable_weighted
