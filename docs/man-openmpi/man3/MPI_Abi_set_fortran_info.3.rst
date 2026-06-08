@@ -11,9 +11,12 @@ MPI_Abi_set_fortran_info
 .. The following file was automatically generated
 .. include:: ./bindings/mpi_abi_set_fortran_info.rst
 
+INPUT PARAMETERS
+----------------
+* ``info``: Fortran ABI details info object
+
 OUTPUT PARAMETERS
 -----------------
-* ``info``: Fortran ABI details info object
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
@@ -27,7 +30,7 @@ using :ref:`MPI_Abi_get_fortran_info`.
 NOTES
 -----
 
-The user is responsible for freeing info_used via :ref:`MPI_Info_free`.
+The application retains ownership of ``info`` and is responsible for freeing it via :ref:`MPI_Info_free`.
 
 ERRORS
 ------
