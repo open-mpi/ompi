@@ -533,6 +533,9 @@ venv
 py??
 __pycache__/
 
+# MPI ABI test runner output
+test/mpi-abi/.mpi-abi/
+
 # Copies of PRRTE RST files (i.e., not source controlled in this tree)
 docs/prrte-rst-content
 docs/schizo-ompi-rst-content

@@ -15,6 +15,7 @@
 # Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 #                         All Rights reserved.
 # Copyright (c) 2020      IBM Corporation.  All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,9 +28,25 @@
 # be required.
 SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_SUBDIRS) test docs
 DIST_SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_DIST_SUBDIRS) test docs
-EXTRA_DIST = README.md VERSION Doxyfile LICENSE autogen.pl AUTHORS
+EXTRA_DIST = README.md VERSION Doxyfile LICENSE autogen.pl AUTHORS \
+        specs/mpi-abi-tests/spec.md \
+        specs/mpi-abi-tests/tasks.md
 
 include examples/Makefile.include
+
+if PROJECT_OMPI
+check-abi:
+	$(MAKE) $(AM_MAKEFLAGS) -C test/mpi-abi check-abi
+
+check-abi-cross:
+	$(MAKE) $(AM_MAKEFLAGS) -C test/mpi-abi check-abi-cross
+else
+check-abi:
+	@echo "SKIP: check-abi requires the OMPI project"
+
+check-abi-cross:
+	@echo "SKIP: check-abi-cross requires the OMPI project"
+endif
 
 dist-hook:
 	env LS_COLORS= sh "$(top_srcdir)/config/distscript.sh" "$(top_srcdir)" "$(distdir)" "$(OMPI_REPO_REV)"

@@ -84,8 +84,9 @@ machine-readable classification.
   include the feature required to test this API.
 * **`unsupported_by_open_mpi`**: Open MPI does not support the
   underlying MPI feature in this branch.
-* **`test_not_written_yet`**: the API is in scope, but no test case has
-  been implemented yet.
+Each entry must also have a stable machine-readable test status.
+`test_not_written_yet` means the entry is in scope, but no test case has
+been implemented yet.
 
 During phased development of this test suite, `test_not_written_yet` may
 be reported without failing the whole suite.  Before this branch is

@@ -1,0 +1,16 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "mpi.h"
+
+int main(int argc, char **argv)
+{
+    @BODY@
+    return 0;
+}

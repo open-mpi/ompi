@@ -16,100 +16,105 @@ the branch is not complete until all completion-gate tasks pass.
 
 ## Phase 1: Test Directory and Build Plumbing
 
-- [ ] Add `test/mpi-abi/` with Open MPI-style source headers.
-- [ ] Add `test/mpi-abi/Makefile.am`.
-- [ ] Add `test/mpi-abi/requirements.txt`.
-- [ ] Add `test/mpi-abi/README.md` documenting the test tiers and
+- [x] Add `test/mpi-abi/` with Open MPI-style source headers.
+- [x] Add `test/mpi-abi/Makefile.am`.
+- [x] Add `test/mpi-abi/requirements.txt`.
+- [x] Add `test/mpi-abi/README.md` documenting the test tiers and
       runner variables.
-- [ ] Add `test/mpi-abi/Makefile` to the Autoconf-generated file list.
-- [ ] Add `test/mpi-abi` to the appropriate `test/Makefile.am`
+- [x] Add `test/mpi-abi/Makefile` to the Autoconf-generated file list.
+- [x] Add `test/mpi-abi` to the appropriate `test/Makefile.am`
       `SUBDIRS` / `DIST_SUBDIRS` entries.
-- [ ] Gate `test/mpi-abi` build participation on OMPI project support
+- [x] Gate `test/mpi-abi` build participation on OMPI project support
       where appropriate.
-- [ ] Add a top-level convenience `check-abi` target that dispatches to
+- [x] Add a top-level convenience `check-abi` target that dispatches to
       `test/mpi-abi`.
-- [ ] Add a top-level convenience `check-abi-cross` target that
+- [x] Add a top-level convenience `check-abi-cross` target that
       dispatches to `test/mpi-abi`.
-- [ ] Ensure the ABI test files are included in `make dist`.
-- [ ] Ensure `specs/mpi-abi-tests/` is included in `make dist` if the
+- [x] Ensure the ABI test files are included in `make dist`.
+- [x] Ensure `specs/mpi-abi-tests/` is included in `make dist` if the
       repository does not already distribute `specs/`.
-- [ ] Ensure generated test sources are not checked into git and are not
+- [x] Ensure generated test sources are not checked into git and are not
       distributed as source artifacts.
-- [ ] Add `clean-local` / `distclean-local` coverage for generated
+- [x] Add `clean-local` / `distclean-local` coverage for generated
       sources, executables, logs, and reports.
-- [ ] Ensure targets skip with a stable machine-readable reason when
+- [x] Ensure targets skip with a stable machine-readable reason when
       Open MPI is configured without standard ABI support.
 
 ## Phase 2: Runner Skeleton
 
-- [ ] Add the Python runner entry point under `test/mpi-abi/`.
-- [ ] Add checked-in templates for generated C test cases.
-- [ ] Add checked-in templates for generated Fortran test cases.
-- [ ] Add checked-in hand-written test sources for cases that cannot be
-      generated cleanly.
-- [ ] Invoke the runner through `$(PYTHON)` from Makefile targets.
-- [ ] Implement command modes for:
+- [x] Add the Python runner entry point under `test/mpi-abi/`.
+- [x] Add checked-in templates for generated C test cases.
+- [x] Add checked-in templates for generated Fortran test cases.
+- [x] Add a checked-in location for hand-written test sources for cases
+      that cannot be generated cleanly.
+- [x] Invoke the runner through `$(PYTHON)` from Makefile targets.
+- [x] Implement command modes for:
       `manifest`, `coverage`, `check-fast`, `check-abi`, and
       `check-abi-cross`.
-- [ ] Implement tool discovery from `PATH`.
-- [ ] Implement Open MPI override variables:
+- [x] Implement tool discovery from `PATH`.
+- [x] Implement Open MPI override variables:
       `OMPI_ABI_TEST_MPICC_ABI` and `OMPI_ABI_TEST_MPIRUN`.
-- [ ] Implement MPICH override variables:
+- [x] Implement MPICH override variables:
       `MPICH_ABI_TEST_MPICC` and `MPICH_ABI_TEST_MPIRUN`.
-- [ ] Implement rank-count override variables for one-rank and two-rank
+- [x] Implement rank-count override variables for one-rank and two-rank
       tests.
-- [ ] Implement launcher argument override variables.
-- [ ] Implement include-path and library-path override variables.
-- [ ] Implement Linux and macOS runtime loader environment handling for
+- [x] Implement launcher argument override variables.
+- [x] Implement include-path and library-path override variables.
+- [x] Implement Linux and macOS runtime loader environment handling for
       cross-implementation library selection.
-- [ ] Implement temporary-directory selection and cleanup.
-- [ ] Implement a debug mode that preserves generated test sources and
+- [x] Implement temporary-directory selection and cleanup.
+- [x] Implement a debug mode that preserves generated test sources and
       build artifacts.
-- [ ] Make the runner collect failures and skips, then emit a final
+- [x] Make the runner collect failures and skips, then emit a final
       summary instead of failing fast.
 
 ## Phase 3: Metadata Loading and Manifest
 
-- [ ] Load `docs/mpi-standard-apis.json`.
-- [ ] Load `docs/mpi-standard-abi.json`.
-- [ ] Validate that the selected metadata files match the expected
+- [x] Load `docs/mpi-standard-apis.json`.
+- [x] Load `docs/mpi-standard-abi.json`.
+- [x] Validate that the selected metadata files match the expected
       branch-local MPI standard metadata version.
-- [ ] Validate the JSON shape expected by the runner.
-- [ ] Detect whether the configured build has standard ABI support
+- [x] Validate the JSON shape expected by the runner.
+- [x] Detect whether the configured build has standard ABI support
       enabled.
 - [ ] Detect configured optional MPI feature support needed for
       classification.
-- [ ] Generate a manifest entry for every API in the authority metadata.
-- [ ] Generate a manifest entry for every ABI constant in the authority
+      This remains open because this branch has no valid
+      `AM_CONDITIONAL` that maps an MPI API family to
+      `unsupported_by_build`.  Standard ABI support and Fortran binding
+      layers are detected separately.
+- [x] Generate a manifest entry for every API in the authority metadata.
+- [x] Generate a manifest entry for every ABI constant in the authority
       metadata.
-- [ ] Classify each entry with one of:
+- [x] Classify each entry with one of:
       `implemented`, `not_implemented`, `not_in_standard_abi`,
-      `unsupported_by_build`, `unsupported_by_open_mpi`, or
-      `test_not_written_yet`.
-- [ ] Record stable machine-readable skip reasons.
-- [ ] Record language coverage fields for C, `mpif.h`, `use mpi`, and
+      `unsupported_by_build`, or `unsupported_by_open_mpi`.
+- [x] Record `test_not_written_yet` as a separate test-status value
+      instead of a classification value.
+- [x] Record stable machine-readable skip reasons.
+- [x] Record language coverage fields for C, `mpif.h`, `use mpi`, and
       `use mpi_f08`.
-- [ ] Record API-family, rank-count, and optional-feature requirements.
-- [ ] Detect newly added metadata entries that have not been classified.
-- [ ] Add a manifest JSON output file in the build tree.
+- [x] Record API-family, rank-count, and optional-feature requirements.
+- [x] Detect newly added metadata entries that have not been classified.
+- [x] Add a manifest JSON output file in the build tree.
 
 ## Phase 4: Reporting and Coverage Policy
 
-- [ ] Emit a machine-readable JSON coverage and results report in the
+- [x] Emit a machine-readable JSON coverage and results report in the
       build tree.
-- [ ] Emit a human-readable text summary.
-- [ ] Report total API metadata entries.
-- [ ] Report implemented, skipped, unsupported, not implemented, and not
+- [x] Emit a human-readable text summary.
+- [x] Report total API metadata entries.
+- [x] Report implemented, skipped, unsupported, not implemented, and not
       yet tested APIs.
-- [ ] Report ABI constants covered and skipped.
-- [ ] Report C, `mpif.h`, `use mpi`, and `use mpi_f08` coverage.
-- [ ] Report compiler wrapper, launcher, rank-count, and temporary
+- [x] Report ABI constants covered and skipped.
+- [x] Report C, `mpif.h`, `use mpi`, and `use mpi_f08` coverage.
+- [x] Report compiler wrapper, launcher, rank-count, and temporary
       directory paths.
-- [ ] Report include paths, library paths, and launcher arguments.
-- [ ] Report optional symbol-table diagnostics when available.
-- [ ] During development, allow `test_not_written_yet` entries but
+- [x] Report include paths, library paths, and launcher arguments.
+- [x] Report optional symbol-table diagnostics when available.
+- [x] During development, allow `test_not_written_yet` entries but
       report them clearly.
-- [ ] Add a completion-gate mode where `test_not_written_yet` is a hard
+- [x] Add a completion-gate mode where `test_not_written_yet` is a hard
       failure for implemented ABI functionality.
 
 ## Phase 5: Fast `make check` Tests

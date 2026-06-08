@@ -26,6 +26,7 @@
 # Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
@@ -1553,7 +1554,12 @@ AC_CONFIG_FILES([
     test/util/Makefile
 ])
 
-m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile])])
+m4_ifdef([project_ompi],
+         [AC_CONFIG_FILES([
+             test/monitoring/Makefile
+             test/spc/Makefile
+             test/mpi-abi/Makefile
+         ])])
 
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])
