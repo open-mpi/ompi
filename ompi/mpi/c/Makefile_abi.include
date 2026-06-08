@@ -82,6 +82,12 @@ libmpi_c_abi_la_LIBADD += libmpi_c_abi_noprofile.la
 endif
 
 abi_interface_profile_sources = \
+        abi_get_fortran_info_abi_generated.c \
+        abi_set_fortran_info_abi_generated.c \
+        abi_get_fortran_booleans_abi_generated.c \
+        abi_set_fortran_booleans_abi_generated.c \
+        abi_get_info_abi_generated.c \
+        abi_get_version_abi_generated.c \
 	abort_abi_generated.c \
 	accumulate_abi_generated.c \
 	add_error_class_abi_generated.c \

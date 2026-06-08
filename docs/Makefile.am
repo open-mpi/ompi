@@ -100,6 +100,12 @@ OMPI_MAN1 = \
         opal_wrapper.1
 
 OMPI_MAN3 = \
+        MPI_Abi_get_fortran_booleans.3 \
+        MPI_Abi_get_fortran_info.3 \
+        MPI_Abi_get_info.3 \
+        MPI_Abi_get_version.3 \
+        MPI_Abi_set_fortran_booleans.3 \
+        MPI_Abi_set_fortran_info.3 \
         MPI_Abort.3 \
         MPI_Accumulate.3 \
         MPI_Add_error_class.3 \
