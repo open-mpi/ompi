@@ -16,7 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023, 2026 Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -453,7 +453,17 @@ int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *lo
         return MPI_ERR_ARG;
     }
 
-    logical_size_pow2 = opal_hibit(logical_size, 0);
+    /*
+     * logical_size is a power-of-two byte count (1, 2, 4, 8, 16); its single
+     * set bit gives the index (0..4) into user_logicals[].  Scan bits [0,7]
+     * so the shift inside opal_hibit() stays well-defined -- opal_hibit(x, 0)
+     * masks out every bit and always returns -1.  Any out-of-range size is
+     * rejected here before it can be used as an array index.
+     */
+    logical_size_pow2 = opal_hibit(logical_size, 8);
+    if (logical_size_pow2 < 0 || logical_size_pow2 > 4) {
+        return MPI_ERR_ARG;
+    }
 
     switch(logical_size_pow2) {
     case 0:
@@ -480,8 +490,9 @@ int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *lo
         break;
 #endif
     default:
-        ret = MPI_ERR_ARG;
-        break;
+        /* in-range index with no handler (e.g. size 16 without int128
+         * support): reject before the array write below */
+        return MPI_ERR_ARG;
     }
 
 #ifndef HAVE_INT128_T
