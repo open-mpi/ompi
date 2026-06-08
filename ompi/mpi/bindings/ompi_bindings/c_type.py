@@ -1,5 +1,6 @@
 # Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -678,9 +679,9 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         code.append(f'if (NULL != {self.tmpname})' + '{')
         code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
         code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
+        code.append('}')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
-        code.append('}')
         code.append('}')
         return code
 
@@ -755,9 +756,9 @@ class TypeNeighborDatatypeArrayAsyncStandard(TypeNeighborDatatypeArrayStandard):
         code.append(f'if (NULL != {self.tmpname})' + '{')
         code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
         code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
+        code.append('}')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
-        code.append('}')
         code.append('}')
         return code
 
@@ -2212,7 +2213,6 @@ class TypeWinCopyAttrFunctionStandard(StandardABIType):
         code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_standard(oldwin);')
         code.append('    int win_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(win_keyval);')
         code.append('    return helper->user_delete_fn((MPI_Win_ABI_INTERNAL)win_tmp, win_keyval_tmp, attribute_val, helper->user_extra_state);')
-        code.append('    free(helper);')
         code.append('}')
         return code
 

@@ -13,6 +13,7 @@ dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2025      Triad National Security, LLC. All rights
 dnl                         reserved.
+dnl Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -25,11 +26,16 @@ dnl
 # -------------------------------------------------------
 # Determine the value of .TRUE. of this Fortran compiler.
 AC_DEFUN([OMPI_FORTRAN_GET_VALUE_TRUE],[
-    # invalidate cache if result came from a run where FORTRAN was disabled
+    # Invalidate the cache if the result came from a run where Fortran was
+    # disabled.  The .TRUE. and .FALSE. values are computed together in a
+    # single AC_CACHE_CHECK keyed on the .TRUE. cache variable, so only the
+    # .TRUE. value can serve as the sentinel here: a valid .FALSE. is 0 on
+    # every Fortran compiler, and testing the .FALSE. cache against 0 would
+    # discard a perfectly good cached value -- leaving OMPI_FORTRAN_VALUE_FALSE
+    # empty on a cached reconfigure.  Invalidate both together so the two
+    # cache variables stay coherent.
     if test "$ompi_cv_fortran_true_value" = "0" ; then
         unset ompi_cv_fortran_true_value
-    fi
-    if test "$ompi_cv_fortran_false_value" = "0" ; then
         unset ompi_cv_fortran_false_value
     fi
 

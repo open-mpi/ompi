@@ -1,4 +1,5 @@
 # Copyright (c) 2025      Joe Downs. All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -76,9 +77,9 @@ DEPRECATED_FUNCTIONS = [
     "MPI_Errhandler_set",
     "MPI_Keyval_create",
     "MPI_Keyval_free",
-    "MPI_DUP_FN"
-    "MPI_NULL_COPY_FN"
-    "MPI_NULL_DELETE_FN"
+    "MPI_DUP_FN",
+    "MPI_NULL_COPY_FN",
+    "MPI_NULL_DELETE_FN",
     "MPI_Attr_delete",
     "MPI_Attr_get",
     "MPI_Attr_put",
