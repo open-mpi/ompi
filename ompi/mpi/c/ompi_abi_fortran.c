@@ -220,6 +220,19 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
 {
     int ret = MPI_SUCCESS;
 
+    /*
+     * logical_size is the size in bytes of a Fortran logical and must be a
+     * power of two.  Reject anything else with MPI_ERR_ARG up front so the
+     * documented contract holds in every build: the Fortran-enabled path
+     * below would otherwise fall through its switch to "unavailable" and
+     * return MPI_SUCCESS with *is_set == 0, which is inconsistent both with
+     * the documentation and with MPI_Abi_set_fortran_booleans (which rejects
+     * such sizes).
+     */
+    if (countbits32((unsigned int)logical_size) > 1) {
+        return MPI_ERR_ARG;
+    }
+
 #if  OMPI_HAVE_FORTRAN_LOGICAL
     bool unavailable = false;
     bool use_int8_t = false, use_int16_t = false, use_int32_t = false, use_int64_t = false;
@@ -372,12 +385,6 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
  * see if the user set something with MPI_ABI_set_fortran_boleans
  */
     int logical_size_pow2;
-
-    /* check logical size to be pow2 */
-    
-    if(countbits32((unsigned int)logical_size) > 1) {
-        return MPI_ERR_ARG;
-    }
 
     /*
      * logical_size is a power-of-two byte count (1, 2, 4, 8, 16); its single
