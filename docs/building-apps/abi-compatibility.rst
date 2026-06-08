@@ -3,6 +3,11 @@
 ABI compatibility to previous versions of Open MPI
 ==================================================
 
+.. note:: This section describes ABI compatibility between Open MPI
+          releases.  For information about the MPI standard ABI defined
+          by MPI-5.0, see :ref:`Building MPI applications using the MPI
+          ABI <label-building-with-mpi-abi>`.
+
 The Open MPI |ompi_series| series maintains Application Binary Interface (ABI)
 compatibility for the C MPI bindings to the last major Open MPI release. Specifically, an
 application compiled with Open MPI v4.x can be executed with Open MPI

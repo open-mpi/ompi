@@ -1,4 +1,5 @@
 .. _man1-mpicc:
+.. _man1-mpicc_abi:
 .. _man1-mpic++:
 .. _man1-mpicxx:
 .. _man1-mpifort:
@@ -9,12 +10,14 @@ Open MPI Wrapper Compilers
 
 .. include_body
 
-mpicc, mpic++, mpicxx, mpifort, mpijavac |mdash| Open MPI wrapper compilers
+mpicc, mpicc_abi, mpic++, mpicxx, mpifort, mpijavac |mdash| Open MPI wrapper compilers
 
 SYNTAX
 ------
 
 ``mpicc [--showme | --showme:compile | --showme:link] ...``
+
+``mpicc_abi [--showme | --showme:compile | --showme:link] ...``
 
 ``mpic++ [--showme | --showme:compile | --showme:link] ...``
 
@@ -110,6 +113,9 @@ Open MPI provides wrapper compilers for several languages:
 
 * ``mpicc``: C
 
+* ``mpicc_abi``: C, using the MPI standard ABI when Open MPI was built
+  with standard ABI support
+
 * ``mpic++``, ``mpicxx`` (and on systems with case-sensitive file
   systems, ``mpiCC``): C++
 
@@ -122,9 +128,14 @@ Open MPI provides wrapper compilers for several languages:
 
 * ``mpijavac``: Java
 
-The wrapper compilers for each of the languages are identical; they
-can be use interchangeably.  The different names are provided solely
-for backwards compatibility.
+The wrapper compilers for the normal Open MPI language bindings are
+identical; they can be used interchangeably.  The different names are
+provided solely for backwards compatibility.
+
+The ``mpicc_abi`` wrapper is different: it compiles and links C MPI
+applications against the MPI standard ABI ``mpi.h`` and ``libmpi_abi``.
+See :ref:`Building MPI applications using the MPI ABI
+<label-building-with-mpi-abi>` for more information.
 
 
 Fortran Notes

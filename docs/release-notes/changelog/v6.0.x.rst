@@ -49,6 +49,9 @@ Open MPI version v6.0.0
 
 - Added support for MPI-4.1 ``MPI_REQUEST_GET_STATUS_[ALL|ANY_SOME]`` functions.
 
+- Added support for building C MPI applications against the MPI-5.0
+  standard ABI via ``mpicc_abi`` and ``libmpi_abi``.
+
 - Improvements to collective operations:
   
   - Added new ``xhc`` collective component to optimize shared memory collective

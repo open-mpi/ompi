@@ -16,8 +16,9 @@ Open MPI "wrapper" compilers.
    building-static-apps
    mpi-abi
 
-.. warning:: Except when using the MPI ABI compiler wrapper (mpicc_abi),
-             Open MPI does not attempt to interoperate with other MPI
+.. warning:: Except when using the :ref:`MPI ABI compiler wrapper
+             <label-building-with-mpi-abi>` (``mpicc_abi``), Open MPI
+             does not attempt to interoperate with other MPI
              implementations, nor executables that were compiled for
              them.  MPI applications need to be compiled and linked
              with Open MPI in order to run under Open MPI.
