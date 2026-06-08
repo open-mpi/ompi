@@ -25,7 +25,7 @@ additional information related to the ABI.
 NOTES
 -----
 
-The user is responsible for freeing info_used via :ref:`MPI_Info_free`.
+The user is responsible for freeing ``info`` via :ref:`MPI_Info_free`.
 
 ERRORS
 ------

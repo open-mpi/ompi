@@ -1,6 +1,6 @@
 .. _mpi_abi_get_version:
 
-MPI_ABI_get_version
+MPI_Abi_get_version
 ===================
 
 .. include_body
@@ -21,7 +21,7 @@ DESCRIPTION
 -----------
 
 :ref:`MPI_Abi_get_version` returns the standard ABI version, if supported. Otherwise,
-the values of the major and minor version are set to −1. The ABI version is independent
+the values of the major and minor version are set to -1. The ABI version is independent
 of the MPI specification version. The major and minor version of the ABI associated
 with MPI-5.0 are 1 and 0.
 

@@ -25,9 +25,12 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-:ref:`MPI_Abi_get_fortran_booleans` returns a values of TRUE and FALSE for a given Fortran
-logical size.  *is_set* is set to true if the these values have been previously set either
+:ref:`MPI_Abi_get_fortran_booleans` returns the values of TRUE and FALSE for a given Fortran
+logical size.  *is_set* is set to true if these values have been previously set either
 by a call to :ref:`MPI_Abi_set_fortran_booleans` or internally by MPI.
+
+*logical_size* is the size in bytes of a Fortran logical and must be a power of two;
+otherwise ``MPI_ERR_ARG`` is returned.
 
 ERRORS
 ------
