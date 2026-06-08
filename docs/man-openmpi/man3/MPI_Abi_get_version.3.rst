@@ -29,6 +29,12 @@ The ABI version macros MPI_ABI_VERSION and MPI_ABI_SUBVERSION are present in the
 so that applications can check for consistency between the compilation
 environment and the properties of the implementation at runtime.
 
+When Open MPI is used through its standard ABI library, ``libmpi_abi``,
+this routine returns version 1.0.  When Open MPI is used through its
+normal ``libmpi`` library, this routine returns ``-1`` for both
+``abi_major`` and ``abi_minor`` because normal ``libmpi`` uses
+Open MPI's internal ABI, not the MPI standard ABI.
+
 NOTE
 ----
 
