@@ -10,11 +10,11 @@
 
 """MPI standard ABI test manifest and runner.
 
-This implementation provides the phase 1-7 infrastructure: metadata
+This implementation provides the phase 1-8 infrastructure: metadata
 loading, manifest generation, fast metadata checks, installed ABI smoke
-tests, installed C header/prototype/symbol checks, tool discovery, skip
-handling, and JSON/text reporting.  Later phases add exhaustive runtime
-tests on top of this runner.
+tests, installed C header/prototype/symbol checks, C converter probes,
+tool discovery, skip handling, and JSON/text reporting.  Later phases
+add exhaustive runtime tests on top of this runner.
 """
 
 import argparse
@@ -89,6 +89,23 @@ ABI_CONVERTER_HANDLES = (
     ("Type", "type"),
     ("Win", "win"),
 )
+
+ABI_CONVERTER_KIND_BY_C_TYPE = {
+    "MPI_Comm": "Comm",
+    "MPI_Datatype": "Type",
+    "MPI_Errhandler": "Errhandler",
+    "MPI_File": "File",
+    "MPI_Group": "Group",
+    "MPI_Info": "Info",
+    "MPI_Message": "Message",
+    "MPI_Op": "Op",
+    "MPI_Request": "Request",
+    "MPI_Session": "Session",
+    "MPI_Win": "Win",
+}
+
+ABI_CONVERTER_REQUIRED_KINDS = tuple(
+    kind for kind, _stem in ABI_CONVERTER_HANDLES)
 
 FORTRAN_ABI_HELPERS = (
     "abi_get_fortran_booleans",
@@ -204,6 +221,585 @@ INSTALLED_C_ABI_PROBES = (
     ret = MPI_Finalize();
     if (MPI_SUCCESS != ret) {
         return 8;
+    }
+""",
+    },
+    {
+        "name": "converter_predefined_handles",
+        "rank_count": 1,
+        "body": """
+#define ABI_CHECK_PREDEFINED_HANDLE(kind, value) do {                       \\
+        ++predefined_ ## kind ## _checks;                                   \\
+        int abi_value = MPI_ ## kind ## _toint(value);                      \\
+        if (abi_value != (int) (intptr_t) (value)) {                        \\
+            fprintf(stderr, "ABI_FAIL:predefined:%s:toint\\n", #value);     \\
+            return 20;                                                      \\
+        }                                                                   \\
+        if (value != MPI_ ## kind ## _fromint(abi_value)) {                 \\
+            fprintf(stderr, "ABI_FAIL:predefined:%s:fromint\\n", #value);   \\
+            return 20;                                                      \\
+        }                                                                   \\
+        if (abi_value != PMPI_ ## kind ## _toint(value)) {                  \\
+            fprintf(stderr, "ABI_FAIL:predefined:%s:ptoint\\n", #value);    \\
+            return 20;                                                      \\
+        }                                                                   \\
+        if (value != PMPI_ ## kind ## _fromint(abi_value)) {                \\
+            fprintf(stderr, "ABI_FAIL:predefined:%s:pfromint\\n", #value);  \\
+            return 20;                                                      \\
+        }                                                                   \\
+    } while (0)
+
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+@PREDEFINED_HANDLE_DECLS@
+
+@PREDEFINED_HANDLE_CHECKS@
+
+@PREDEFINED_HANDLE_GUARDS@
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+""",
+    },
+    {
+        "name": "converter_fortran_datatypes",
+        "rank_count": 1,
+        "requires_fortran": True,
+        "body": """
+#define ABI_EXPECTED_FORTRAN_TYPE_CHECKS @FORTRAN_TYPE_EXPECTED@
+#define ABI_CHECK_FORTRAN_TYPE(value) do {                                  \\
+        ++fortran_type_checks;                                              \\
+        int abi_value = MPI_Type_toint(value);                              \\
+        if (abi_value != (int) (intptr_t) (value)) {                        \\
+            fprintf(stderr, "ABI_FAIL:fortran_type:%s:toint\\n", #value);   \\
+            return 20;                                                      \\
+        }                                                                   \\
+        if (value != MPI_Type_fromint(abi_value)) {                         \\
+            fprintf(stderr, "ABI_FAIL:fortran_type:%s:fromint\\n", #value); \\
+            return 20;                                                      \\
+        }                                                                   \\
+        if (abi_value != PMPI_Type_toint(value)) {                          \\
+            fprintf(stderr, "ABI_FAIL:fortran_type:%s:ptoint\\n", #value);  \\
+            return 20;                                                      \\
+        }                                                                   \\
+        if (value != PMPI_Type_fromint(abi_value)) {                        \\
+            fprintf(stderr, "ABI_FAIL:fortran_type:%s:pfromint\\n", #value);\\
+            return 20;                                                      \\
+        }                                                                   \\
+    } while (0)
+
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int fortran_type_checks = 0;
+
+@FORTRAN_TYPE_CHECKS@
+
+    if (ABI_EXPECTED_FORTRAN_TYPE_CHECKS != fortran_type_checks) {
+        fprintf(stderr, "ABI_FAIL:fortran_type:count:%d:%d\\n",
+                ABI_EXPECTED_FORTRAN_TYPE_CHECKS, fortran_type_checks);
+        ret = MPI_Finalize();
+        if (MPI_SUCCESS != ret) {
+            return 21;
+        }
+        return 22;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 23;
+    }
+""",
+    },
+    {
+        "name": "converter_dynamic_handles",
+        "rank_count": 1,
+        "body": """
+#define ABI_CHECK_DYNAMIC_HANDLE(kind, type, value, code) do {              \\
+        int abi_value = MPI_ ## kind ## _toint(value);                      \\
+        type roundtrip = MPI_ ## kind ## _fromint(abi_value);               \\
+        if (roundtrip != (value)) {                                         \\
+            return (code);                                                  \\
+        }                                                                   \\
+        if (abi_value != PMPI_ ## kind ## _toint(value)) {                  \\
+            return (code) + 1;                                              \\
+        }                                                                   \\
+        if (value != PMPI_ ## kind ## _fromint(abi_value)) {                \\
+            return (code) + 2;                                              \\
+        }                                                                   \\
+    } while (0)
+
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    MPI_Comm comm = MPI_COMM_NULL;
+    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+    if (MPI_SUCCESS != ret) {
+        return 10;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(Comm, MPI_Comm, comm, 20);
+    ret = MPI_Comm_free(&comm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
+        return 30;
+    }
+
+    MPI_Group group = MPI_GROUP_NULL;
+    ret = MPI_Comm_group(MPI_COMM_WORLD, &group);
+    if (MPI_SUCCESS != ret) {
+        return 40;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(Group, MPI_Group, group, 50);
+    ret = MPI_Group_free(&group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != group) {
+        return 60;
+    }
+
+    MPI_Info info = MPI_INFO_NULL;
+    ret = MPI_Info_create(&info);
+    if (MPI_SUCCESS != ret) {
+        return 70;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(Info, MPI_Info, info, 80);
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 90;
+    }
+
+    MPI_Datatype datatype = MPI_DATATYPE_NULL;
+    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
+    if (MPI_SUCCESS != ret) {
+        return 100;
+    }
+    ret = MPI_Type_commit(&datatype);
+    if (MPI_SUCCESS != ret) {
+        return 110;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(Type, MPI_Datatype, datatype, 120);
+    ret = MPI_Type_free(&datatype);
+    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
+        return 130;
+    }
+
+    int win_storage = 0;
+    MPI_Win win = MPI_WIN_NULL;
+    ret = MPI_Win_create(&win_storage, sizeof(win_storage), sizeof(int),
+                         MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    if (MPI_SUCCESS != ret) {
+        return 140;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(Win, MPI_Win, win, 150);
+    ret = MPI_Win_free(&win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
+        return 160;
+    }
+
+    MPI_File file = MPI_FILE_NULL;
+    ret = MPI_File_open(MPI_COMM_WORLD, "ompi_abi_converter_file.tmp",
+                        MPI_MODE_CREATE | MPI_MODE_RDWR |
+                        MPI_MODE_DELETE_ON_CLOSE,
+                        MPI_INFO_NULL, &file);
+    if (MPI_SUCCESS != ret) {
+        return 170;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(File, MPI_File, file, 180);
+    ret = MPI_File_close(&file);
+    if (MPI_SUCCESS != ret || MPI_FILE_NULL != file) {
+        return 190;
+    }
+
+    MPI_Request request = MPI_REQUEST_NULL;
+    ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
+    if (MPI_SUCCESS != ret) {
+        return 200;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(Request, MPI_Request, request, 210);
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 220;
+    }
+
+    int send_value = 17;
+    int recv_value = -1;
+    MPI_Status status;
+    MPI_Message message = MPI_MESSAGE_NULL;
+    MPI_Request send_request = MPI_REQUEST_NULL;
+    ret = MPI_Isend(&send_value, 1, MPI_INT, 0, 77,
+                    MPI_COMM_WORLD, &send_request);
+    if (MPI_SUCCESS != ret) {
+        return 230;
+    }
+    ret = MPI_Mprobe(0, 77, MPI_COMM_WORLD, &message, &status);
+    if (MPI_SUCCESS != ret) {
+        return 240;
+    }
+    ABI_CHECK_DYNAMIC_HANDLE(Message, MPI_Message, message, 250);
+    ret = MPI_Mrecv(&recv_value, 1, MPI_INT, &message, &status);
+    if (MPI_SUCCESS != ret || 17 != recv_value ||
+        MPI_MESSAGE_NULL != message) {
+        return 241;
+    }
+    ret = MPI_Wait(&send_request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != send_request) {
+        return 242;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 243;
+    }
+""",
+    },
+    {
+        "name": "converter_status_sentinels",
+        "rank_count": 1,
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int send_value = 29;
+    int recv_value = -1;
+    MPI_Status status;
+    ret = MPI_Sendrecv(&send_value, 1, MPI_INT, 0, 81,
+                       &recv_value, 1, MPI_INT, 0, 81,
+                       MPI_COMM_WORLD, &status);
+    if (MPI_SUCCESS != ret) {
+        return 10;
+    }
+    if (29 != recv_value || 0 != status.MPI_SOURCE ||
+        81 != status.MPI_TAG) {
+        return 20;
+    }
+
+    int count = -1;
+    ret = MPI_Get_count(&status, MPI_INT, &count);
+    if (MPI_SUCCESS != ret || 1 != count) {
+        return 30;
+    }
+
+    recv_value = -1;
+    ret = MPI_Sendrecv(&send_value, 1, MPI_INT, 0, 82,
+                       &recv_value, 1, MPI_INT, 0, 82,
+                       MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || 29 != recv_value) {
+        return 40;
+    }
+
+    MPI_Request request = MPI_REQUEST_NULL;
+    ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
+    if (MPI_SUCCESS != ret) {
+        return 50;
+    }
+    ret = MPI_Waitall(1, &request, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 60;
+    }
+
+    int inplace_value = 5;
+    ret = MPI_Allreduce(MPI_IN_PLACE, &inplace_value, 1, MPI_INT,
+                        MPI_SUM, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret || 5 != inplace_value) {
+        return 70;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 80;
+    }
+""",
+    },
+    {
+        "name": "converter_error_keyvals",
+        "rank_count": 1,
+        "body": """
+#define ABI_EXPECTED_ERROR_CLASS_CHECKS @ERROR_CLASS_EXPECTED@
+#define ABI_CHECK_ERROR_CLASS(value) do {                                   \\
+        ++error_class_checks;                                               \\
+        ret = MPI_Error_class(value, &error_class);                         \\
+        if (MPI_SUCCESS != ret || value != error_class) {                   \\
+            fprintf(stderr, "ABI_FAIL:error_class:%s\\n", #value);          \\
+            return 20;                                                      \\
+        }                                                                   \\
+    } while (0)
+
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int error_class = MPI_ERR_UNKNOWN;
+    int error_class_checks = 0;
+
+@ERROR_CLASS_CHECKS@
+
+    if (ABI_EXPECTED_ERROR_CLASS_CHECKS != error_class_checks) {
+        fprintf(stderr, "ABI_FAIL:error_class:count:%d:%d\\n",
+                ABI_EXPECTED_ERROR_CLASS_CHECKS, error_class_checks);
+        ret = MPI_Finalize();
+        if (MPI_SUCCESS != ret) {
+            return 21;
+        }
+        return 22;
+    }
+
+    int dynamic_class = MPI_ERR_UNKNOWN;
+    ret = MPI_Add_error_class(&dynamic_class);
+    if (MPI_SUCCESS != ret) {
+        return 30;
+    }
+    int dynamic_code = MPI_ERR_UNKNOWN;
+    ret = MPI_Add_error_code(dynamic_class, &dynamic_code);
+    if (MPI_SUCCESS != ret) {
+        return 31;
+    }
+    ret = MPI_Error_class(dynamic_code, &error_class);
+    if (MPI_SUCCESS != ret || dynamic_class != error_class) {
+        return 32;
+    }
+
+    if (MPI_COMM_NULL_COPY_FN != (MPI_Comm_copy_attr_function *) 0 ||
+        MPI_COMM_NULL_DELETE_FN !=
+        (MPI_Comm_delete_attr_function *) 0 ||
+        MPI_COMM_DUP_FN != (MPI_Comm_copy_attr_function *) 1) {
+        return 40;
+    }
+    if (MPI_TYPE_NULL_COPY_FN != (MPI_Type_copy_attr_function *) 0 ||
+        MPI_TYPE_NULL_DELETE_FN !=
+        (MPI_Type_delete_attr_function *) 0 ||
+        MPI_TYPE_DUP_FN != (MPI_Type_copy_attr_function *) 1) {
+        return 41;
+    }
+    if (MPI_WIN_NULL_COPY_FN != (MPI_Win_copy_attr_function *) 0 ||
+        MPI_WIN_NULL_DELETE_FN != (MPI_Win_delete_attr_function *) 0 ||
+        MPI_WIN_DUP_FN != (MPI_Win_copy_attr_function *) 1) {
+        return 42;
+    }
+
+    int attr_value = 12345;
+    void *attr_out = NULL;
+    int flag = 0;
+    int comm_keyval = MPI_KEYVAL_INVALID;
+    ret = MPI_Comm_create_keyval(MPI_COMM_NULL_COPY_FN,
+                                 MPI_COMM_NULL_DELETE_FN,
+                                 &comm_keyval, NULL);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
+        return 50;
+    }
+    MPI_Comm comm = MPI_COMM_NULL;
+    MPI_Comm comm_dup = MPI_COMM_NULL;
+    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+    if (MPI_SUCCESS != ret) {
+        return 51;
+    }
+    ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
+    if (MPI_SUCCESS != ret) {
+        return 52;
+    }
+    ret = MPI_Comm_dup(comm, &comm_dup);
+    if (MPI_SUCCESS != ret) {
+        return 53;
+    }
+    ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
+    if (MPI_SUCCESS != ret || flag) {
+        return 54;
+    }
+    ret = MPI_Comm_free(&comm_dup);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
+        return 55;
+    }
+    ret = MPI_Comm_delete_attr(comm, comm_keyval);
+    if (MPI_SUCCESS != ret) {
+        return 56;
+    }
+    ret = MPI_Comm_free(&comm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
+        return 57;
+    }
+    ret = MPI_Comm_free_keyval(&comm_keyval);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
+        return 58;
+    }
+
+    ret = MPI_Comm_create_keyval(MPI_COMM_DUP_FN,
+                                 MPI_COMM_NULL_DELETE_FN,
+                                 &comm_keyval, NULL);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
+        return 60;
+    }
+    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+    if (MPI_SUCCESS != ret) {
+        return 61;
+    }
+    ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
+    if (MPI_SUCCESS != ret) {
+        return 62;
+    }
+    ret = MPI_Comm_dup(comm, &comm_dup);
+    if (MPI_SUCCESS != ret) {
+        return 63;
+    }
+    attr_out = NULL;
+    flag = 0;
+    ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
+    if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
+        return 64;
+    }
+    ret = MPI_Comm_free(&comm_dup);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
+        return 65;
+    }
+    ret = MPI_Comm_delete_attr(comm, comm_keyval);
+    if (MPI_SUCCESS != ret) {
+        return 66;
+    }
+    ret = MPI_Comm_free(&comm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
+        return 67;
+    }
+    ret = MPI_Comm_free_keyval(&comm_keyval);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
+        return 68;
+    }
+
+    int type_keyval = MPI_KEYVAL_INVALID;
+    ret = MPI_Type_create_keyval(MPI_TYPE_NULL_COPY_FN,
+                                 MPI_TYPE_NULL_DELETE_FN,
+                                 &type_keyval, NULL);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
+        return 80;
+    }
+    MPI_Datatype datatype = MPI_DATATYPE_NULL;
+    MPI_Datatype datatype_dup = MPI_DATATYPE_NULL;
+    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
+    if (MPI_SUCCESS != ret) {
+        return 81;
+    }
+    ret = MPI_Type_commit(&datatype);
+    if (MPI_SUCCESS != ret) {
+        return 82;
+    }
+    ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
+    if (MPI_SUCCESS != ret) {
+        return 83;
+    }
+    ret = MPI_Type_dup(datatype, &datatype_dup);
+    if (MPI_SUCCESS != ret) {
+        return 84;
+    }
+    attr_out = NULL;
+    flag = 0;
+    ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
+    if (MPI_SUCCESS != ret || flag) {
+        return 85;
+    }
+    ret = MPI_Type_free(&datatype_dup);
+    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
+        return 86;
+    }
+    ret = MPI_Type_delete_attr(datatype, type_keyval);
+    if (MPI_SUCCESS != ret) {
+        return 87;
+    }
+    ret = MPI_Type_free(&datatype);
+    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
+        return 88;
+    }
+    ret = MPI_Type_free_keyval(&type_keyval);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
+        return 89;
+    }
+
+    ret = MPI_Type_create_keyval(MPI_TYPE_DUP_FN,
+                                 MPI_TYPE_NULL_DELETE_FN,
+                                 &type_keyval, NULL);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
+        return 100;
+    }
+    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
+    if (MPI_SUCCESS != ret) {
+        return 101;
+    }
+    ret = MPI_Type_commit(&datatype);
+    if (MPI_SUCCESS != ret) {
+        return 102;
+    }
+    ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
+    if (MPI_SUCCESS != ret) {
+        return 103;
+    }
+    ret = MPI_Type_dup(datatype, &datatype_dup);
+    if (MPI_SUCCESS != ret) {
+        return 104;
+    }
+    attr_out = NULL;
+    flag = 0;
+    ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
+    if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
+        return 105;
+    }
+    ret = MPI_Type_free(&datatype_dup);
+    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
+        return 106;
+    }
+    ret = MPI_Type_delete_attr(datatype, type_keyval);
+    if (MPI_SUCCESS != ret) {
+        return 107;
+    }
+    ret = MPI_Type_free(&datatype);
+    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
+        return 108;
+    }
+    ret = MPI_Type_free_keyval(&type_keyval);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
+        return 109;
+    }
+
+    int win_storage = 0;
+    MPI_Win win = MPI_WIN_NULL;
+    ret = MPI_Win_create(&win_storage, sizeof(win_storage), sizeof(int),
+                         MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    if (MPI_SUCCESS != ret) {
+        return 130;
+    }
+
+    int win_keyval = MPI_KEYVAL_INVALID;
+    ret = MPI_Win_create_keyval(MPI_WIN_NULL_COPY_FN,
+                                MPI_WIN_NULL_DELETE_FN,
+                                &win_keyval, NULL);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == win_keyval) {
+        return 131;
+    }
+    ret = MPI_Win_set_attr(win, win_keyval, &attr_value);
+    if (MPI_SUCCESS != ret) {
+        return 132;
+    }
+    ret = MPI_Win_delete_attr(win, win_keyval);
+    if (MPI_SUCCESS != ret) {
+        return 133;
+    }
+    ret = MPI_Win_free_keyval(&win_keyval);
+    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != win_keyval) {
+        return 134;
+    }
+
+    ret = MPI_Win_free(&win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
+        return 140;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 141;
     }
 """,
     },
@@ -479,6 +1075,7 @@ def _classify_constant(key, constant):
         "category": constant.get("category"),
         "abi_value": constant.get("abi_value"),
         "c_type": c_handle.get("type"),
+        "datatypes": constant.get("datatypes", {}),
         "classification": CLASS_IMPLEMENTED,
         "test_status": TEST_NOT_WRITTEN,
         "skip_reason": None,
@@ -826,6 +1423,243 @@ def _parse_header_constants(path):
         else:
             unparsed[name] = value
     return constants, unparsed
+
+
+def _parse_header_constant_names(path):
+    names = set()
+    define_re = re.compile(r"^\s*#define\s+(MPI\w+)\b")
+    enum_re = re.compile(r"^\s*(MPI\w+)\b\s*(?:=|,)")
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        match = define_re.match(line)
+        if match is None:
+            match = enum_re.match(line)
+        if match is not None:
+            names.add(match.group(1))
+    return names
+
+
+def _constant_sort_key(entry):
+    abi_value = _metadata_integer_value(entry["abi_value"])
+    if abi_value is None:
+        abi_value = sys.maxsize
+    return (abi_value, entry["name"])
+
+
+def _metadata_constant_entries(manifest):
+    return [
+        entry for entry in manifest["constants"]
+        if entry["classification"] == CLASS_IMPLEMENTED
+    ]
+
+
+def _is_fortran_datatype_constant(entry):
+    if entry["c_type"] != "MPI_Datatype":
+        return False
+    if entry["category"] in (
+            "OPT_DATATYPES_FORTRAN",
+            "REDUCTION_FUNC_DATATYPES_FORTRAN"):
+        return True
+    datatypes = entry.get("datatypes", {})
+    return "c" not in datatypes and (
+        "f90" in datatypes or "f08" in datatypes
+    )
+
+
+def _is_c_predefined_handle_constant(entry):
+    if entry["c_type"] not in ABI_CONVERTER_KIND_BY_C_TYPE:
+        return False
+    if entry["c_type"] == "MPI_Datatype":
+        return not _is_fortran_datatype_constant(entry)
+    return True
+
+
+def _generated_check_lines(entries, template):
+    lines = []
+    for entry in sorted(entries, key=_constant_sort_key):
+        lines.append(template.format(
+            name=entry["name"],
+            kind=ABI_CONVERTER_KIND_BY_C_TYPE.get(entry["c_type"])))
+    if not lines:
+        return "    /* No metadata/header-declared constants to check. */"
+    return "\n".join(lines)
+
+
+def _predefined_handle_entries(manifest):
+    return [
+        entry for entry in _metadata_constant_entries(manifest)
+        if _is_c_predefined_handle_constant(entry)
+    ]
+
+
+def _fortran_datatype_entries(manifest):
+    return [
+        entry for entry in _metadata_constant_entries(manifest)
+        if _is_fortran_datatype_constant(entry)
+    ]
+
+
+def _declared_fortran_datatype_entries(manifest, declared_names):
+    """Return Fortran datatype constants declared by installed mpi.h.
+
+    Optional Fortran datatype availability is compiler/configuration
+    dependent.  Unlike C handle constants, the current Phase 8 probe
+    covers the subset the installed standard ABI header actually
+    declares; unavailable optional datatype behavior is tracked by a
+    later task.
+    """
+    return [
+        entry for entry in _fortran_datatype_entries(manifest)
+        if entry["name"] in declared_names
+    ]
+
+
+def _error_class_entries(manifest):
+    return [
+        entry for entry in _metadata_constant_entries(manifest)
+        if entry["category"] == "ERROR_CLASSES"
+        and entry["name"].startswith("MPI_ERR_")
+        and entry["name"] != "MPI_ERR_LASTCODE"
+    ]
+
+
+def _predefined_handle_counts_by_kind(entries):
+    counts = {}
+    for entry in entries:
+        kind = ABI_CONVERTER_KIND_BY_C_TYPE[entry["c_type"]]
+        counts[kind] = counts.get(kind, 0) + 1
+    return counts
+
+
+def _predefined_handle_decls(manifest):
+    counts = _predefined_handle_counts_by_kind(
+        _predefined_handle_entries(manifest))
+    lines = []
+    for kind in sorted(counts):
+        lines.append("    int predefined_{0}_checks = 0;".format(kind))
+    return "\n".join(lines)
+
+
+def _predefined_handle_guards(manifest):
+    counts = _predefined_handle_counts_by_kind(
+        _predefined_handle_entries(manifest))
+    lines = []
+    for kind in sorted(counts):
+        lines.extend([
+            "    if ({0} != predefined_{1}_checks) {{".format(
+                counts[kind], kind),
+            "        fprintf(stderr, "
+            "\"ABI_FAIL:predefined:{0}:count:%d:%d\\n\",".format(kind),
+            "                {0}, predefined_{1}_checks);".format(
+                counts[kind], kind),
+            "        ret = MPI_Finalize();",
+            "        if (MPI_SUCCESS != ret) {",
+            "            return 21;",
+            "        }",
+            "        return 22;",
+            "    }",
+        ])
+    return "\n".join(lines)
+
+
+def _predefined_handle_checks(manifest):
+    entries = [
+        entry for entry in _predefined_handle_entries(manifest)
+    ]
+    return _generated_check_lines(
+        entries,
+        "    ABI_CHECK_PREDEFINED_HANDLE({kind}, {name});")
+
+
+def _fortran_datatype_checks(manifest, declared_names):
+    """Generate Fortran datatype converter round-trip statements."""
+    entries = _declared_fortran_datatype_entries(manifest, declared_names)
+    return _generated_check_lines(
+        entries,
+        "    ABI_CHECK_FORTRAN_TYPE({name});")
+
+
+def _error_class_checks(manifest):
+    entries = _error_class_entries(manifest)
+    return _generated_check_lines(
+        entries,
+        "    ABI_CHECK_ERROR_CLASS({name});")
+
+
+def _runtime_probe_constant_names(manifest, include_fortran, declared_names):
+    """Return constants expected in installed mpi.h for runtime probes."""
+    entries = (
+        _predefined_handle_entries(manifest) +
+        _error_class_entries(manifest)
+    )
+    if include_fortran:
+        entries += _declared_fortran_datatype_entries(
+            manifest, declared_names)
+    return set(entry["name"] for entry in entries)
+
+
+def _runtime_probe_generation_check(manifest, include_fortran,
+                                    declared_names):
+    """Fail if metadata-derived runtime probe families would be empty.
+
+    The runtime probes are metadata-driven so future constants are picked
+    up automatically.  That same indirection can hide mistakes if a
+    classification rule starts returning an empty family; this preflight
+    fails before C generation so an empty generated block is never
+    accepted as an intentional zero-check probe.
+    """
+    predefined_entries = _predefined_handle_entries(manifest)
+    predefined_counts = _predefined_handle_counts_by_kind(predefined_entries)
+    missing_kinds = [
+        kind for kind in ABI_CONVERTER_REQUIRED_KINDS
+        if predefined_counts.get(kind, 0) == 0
+    ]
+    error_class_count = len(_error_class_entries(manifest))
+    fortran_type_count = (
+        len(_declared_fortran_datatype_entries(manifest, declared_names))
+        if include_fortran else None
+    )
+
+    if missing_kinds or error_class_count == 0 or (
+            include_fortran and fortran_type_count == 0):
+        return _fail(
+            "installed_c_probe_generation",
+            "metadata-derived converter probe family is empty",
+            missing_predefined_handle_kinds=missing_kinds,
+            predefined_handle_counts=predefined_counts,
+            error_class_count=error_class_count,
+            fortran_type_count=fortran_type_count)
+
+    return _pass(
+        "installed_c_probe_generation",
+        predefined_handle_counts=predefined_counts,
+        error_class_count=error_class_count,
+        fortran_type_count=fortran_type_count)
+
+
+def _prepare_installed_c_probe_body(case, manifest, declared_names):
+    """Expand generated C snippets inside one installed probe body.
+
+    The probe template strings stay readable by using placeholders for
+    generated constant lists and expected counts.  Substitution happens
+    immediately before writing the temporary source, after the manifest
+    has been built, configure-dependent Fortran gating is known, and the
+    installed ABI header's declared Fortran datatype set has been parsed.
+    """
+    body = case["body"]
+    replacements = {
+        "@PREDEFINED_HANDLE_DECLS@": _predefined_handle_decls(manifest),
+        "@PREDEFINED_HANDLE_CHECKS@": _predefined_handle_checks(manifest),
+        "@PREDEFINED_HANDLE_GUARDS@": _predefined_handle_guards(manifest),
+        "@FORTRAN_TYPE_CHECKS@": _fortran_datatype_checks(
+            manifest, declared_names),
+        "@ERROR_CLASS_CHECKS@": _error_class_checks(manifest),
+        "@FORTRAN_TYPE_EXPECTED@": str(len(
+            _declared_fortran_datatype_entries(manifest, declared_names))),
+        "@ERROR_CLASS_EXPECTED@": str(len(_error_class_entries(manifest))),
+    }
+    for placeholder, generated in replacements.items():
+        body = body.replace(placeholder, generated)
+    return body
 
 
 def _header_constant_checks(manifest, srcdir, builddir):
@@ -1235,6 +2069,13 @@ def _fortran_helper_checks(srcdir, manifest):
     checks.extend(_fortran_usempi_helper_checks(srcdir, manifest))
     checks.extend(_fortran_f08_helper_checks(srcdir, manifest))
     return checks
+
+
+def _fortran_bindings_enabled(manifest):
+    return any(
+        item.get("enabled") is True
+        for item in manifest["configuration"]["fortran"].values()
+    )
 
 
 def run_fast_checks(manifest, srcdir, builddir, progress=None):
@@ -1710,7 +2551,8 @@ def _prototype_pair_check(prototypes, excluded_names):
         name for name in prototypes
         if name.startswith("MPI_") and name not in excluded_names
     )
-    pmpi_names = sorted(name for name in prototypes if name.startswith("PMPI_"))
+    pmpi_names = sorted(
+        name for name in prototypes if name.startswith("PMPI_"))
     missing_pmpi = []
     for name in mpi_names:
         pmpi_name = "P" + name
@@ -2020,22 +2862,75 @@ def _c_probe_source(srcdir, body, rank_count):
     return template.replace("@BODY@", body.rstrip())
 
 
-def _installed_c_probe_checks(srcdir, tools, dirs, progress=None):
+def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
     checks = []
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
     mpirun = tools["open_mpi"]["mpirun"]
     env = _installed_test_env(tools)
     launcher_args = _launcher_args(tools)
     compile_overrides = _compile_overrides(tools)
+    header = _installed_standard_abi_header(tools, dirs, env)
+    include_fortran = _fortran_bindings_enabled(manifest)
+    if header is None:
+        if progress is not None:
+            progress.start("installed_c_probe_metadata_constants")
+        _append_check(checks, _skip(
+            "installed_c_probe_metadata_constants",
+            SKIP_HEADER_UNAVAILABLE), progress)
+        return checks
+
+    declared_names = (
+        _parse_header_constant_names(header)
+    )
+    if progress is not None:
+        progress.start("installed_c_probe_generation")
+    generation_check = _runtime_probe_generation_check(
+        manifest, include_fortran, declared_names)
+    _append_check(checks, generation_check, progress)
+    if generation_check["result"] != "PASS":
+        return checks
+
+    expected_names = _runtime_probe_constant_names(
+        manifest, include_fortran, declared_names)
+    missing_names = sorted(expected_names - declared_names)
+    if progress is not None:
+        progress.start("installed_c_probe_metadata_constants")
+    if missing_names:
+        _append_check(checks, _fail(
+            "installed_c_probe_metadata_constants",
+            "installed standard ABI header is missing probe constants",
+            header=str(header),
+            missing=missing_names[:20],
+            missing_count=len(missing_names),
+            expected_count=len(expected_names),
+            declared_count=len(declared_names)), progress)
+        return checks
+    else:
+        _append_check(checks, _pass(
+            "installed_c_probe_metadata_constants",
+            header=str(header),
+            checked=len(expected_names),
+            declared_count=len(declared_names)), progress)
 
     for case in INSTALLED_C_ABI_PROBES:
         name = case["name"]
         check_name = "installed_c_probe_" + name
+        if (case.get("requires_fortran")
+                and not _fortran_bindings_enabled(manifest)):
+            if progress is not None:
+                progress.start(check_name)
+            _append_check(checks, _skip(
+                check_name,
+                SKIP_FORTRAN_BINDINGS_DISABLED,
+                phase="configure"), progress)
+            continue
         rank_count = tools["rank_counts"]["np{0}".format(
             case["rank_count"])]
         source = dirs["src"] / (name + ".c")
         executable = dirs["bin"] / name
-        _write_text(source, _c_probe_source(srcdir, case["body"], rank_count))
+        body = _prepare_installed_c_probe_body(
+            case, manifest, declared_names)
+        _write_text(source, _c_probe_source(srcdir, body, rank_count))
 
         compile_command = (
             [mpicc_abi] + compile_overrides +
@@ -2137,7 +3032,8 @@ def run_installed_checks(manifest, mode, srcdir, outdir, tools,
     checks.extend(_installed_wrapper_checks(tools, dirs, progress))
     checks.extend(_installed_c_header_symbol_checks(
         manifest, tools, dirs, progress))
-    checks.extend(_installed_c_probe_checks(srcdir, tools, dirs, progress))
+    checks.extend(_installed_c_probe_checks(
+        srcdir, manifest, tools, dirs, progress))
     return checks
 
 

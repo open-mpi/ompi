@@ -222,23 +222,73 @@ the branch is not complete until all completion-gate tasks pass.
 
 ## Phase 8: C ABI Converter Tests
 
-- [ ] Test ABI-to-OMPI and OMPI-to-ABI conversion for predefined
+- [x] Drive predefined-handle and error-class probe coverage from ABI
+      metadata and the installed standard ABI header.
+      The runner derives the checked C handle constants, Fortran
+      datatype constants, predefined error handlers, and `MPI_ERR_*`
+      error classes from `docs/mpi-standard-abi.json`, verifies that
+      the installed standard ABI `mpi.h` declares them, and emits
+      metadata-driven C probe checks.  Each generated family has an
+      explicit nonempty-generation preflight and an exact expected-count
+      guard so metadata/header drift cannot silently become a vacuous or
+      eroded-coverage pass.
+- [x] Test ABI-to-OMPI and OMPI-to-ABI conversion for predefined
       communicators.
-- [ ] Test conversion for predefined datatypes.
-- [ ] Test conversion for optional Fortran datatypes and unavailable
-      datatype behavior.
-- [ ] Test conversion for predefined groups.
-- [ ] Test conversion for predefined requests and messages.
-- [ ] Test conversion for predefined windows.
-- [ ] Test conversion for predefined files.
-- [ ] Test conversion for predefined infos.
-- [ ] Test conversion for predefined error handlers.
-- [ ] Test conversion for error classes and error codes.
-- [ ] Test conversion for keyvals and attribute-related constants.
-- [ ] Test conversion for status fields.
-- [ ] Test `*_toint` and `*_fromint` ABI functions.
-- [ ] Test null handles, empty handles, ignore sentinels, and status
+      Installed C converter probes round-trip `MPI_COMM_NULL`,
+      `MPI_COMM_WORLD`, and `MPI_COMM_SELF` through `MPI_Comm_toint` /
+      `MPI_Comm_fromint` and their PMPI equivalents.
+- [x] Test conversion for predefined datatypes.
+      Installed C converter probes round-trip all predefined C datatypes
+      declared by the standard ABI header and `MPI_DATATYPE_NULL`
+      through `MPI_Type_toint` / `MPI_Type_fromint` and their PMPI
+      equivalents.
+- [x] Test conversion for configured optional Fortran datatypes.
+      The Fortran datatype probe is gated on configure-detected Fortran
+      bindings and round-trips every declared core, sized, and paired
+      Fortran datatype macro through `MPI_Type_toint` /
+      `MPI_Type_fromint` and their PMPI equivalents.
+- [ ] Test unavailable optional Fortran datatype behavior.
+- [x] Test conversion for predefined groups.
+      Installed C converter probes cover `MPI_GROUP_NULL` and
+      `MPI_GROUP_EMPTY`.
+- [x] Test conversion for predefined requests and messages.
+      Installed C converter probes cover `MPI_REQUEST_NULL`,
+      `MPI_MESSAGE_NULL`, `MPI_MESSAGE_NO_PROC`, plus dynamic request
+      and message handles.
+- [x] Test conversion for predefined windows.
+      Installed C converter probes cover `MPI_WIN_NULL` and a dynamic
+      window handle.
+- [x] Test conversion for predefined files.
+      Installed C converter probes cover `MPI_FILE_NULL` and a dynamic
+      MPI-IO file handle.
+- [x] Test conversion for predefined infos.
+      Installed C converter probes cover `MPI_INFO_NULL`, `MPI_INFO_ENV`,
+      and a dynamic info handle.
+- [x] Test conversion for predefined error handlers.
+      Installed C converter probes round-trip every metadata-defined
+      `MPI_Errhandler` constant declared by the standard ABI header.
+- [x] Test conversion for error classes and error codes.
+      Installed C converter probes check every metadata-defined
+      `MPI_ERR_*` error class declared by the standard ABI header,
+      excluding the `MPI_ERR_LASTCODE` sentinel, and a dynamic
+      error-code-to-error-class path.
+- [x] Test conversion for keyvals and attribute-related constants.
+      Installed C converter probes cover communicator, datatype, and
+      window keyval creation/free paths using the standard ABI callback
+      constants.  The probes attach attributes, duplicate communicators
+      and datatypes, verify null-copy and duplicate-copy behavior where
+      MPI provides duplicate operations, directly check window callback
+      sentinel values, and delete/free the attributes and objects.
+- [x] Test conversion for status fields.
+      Installed C converter probes check source/tag/count conversion
+      through a real `MPI_Sendrecv` status.
+- [x] Test `*_toint` and `*_fromint` ABI functions.
+      Installed C converter probes exercise all standard ABI public
+      handle `*_toint` / `*_fromint` families and PMPI equivalents.
+- [x] Test null handles, empty handles, ignore sentinels, and status
       ignore sentinels.
+      Installed C converter probes cover null handles, `MPI_GROUP_EMPTY`,
+      `MPI_STATUS_IGNORE`, `MPI_STATUSES_IGNORE`, and `MPI_IN_PLACE`.
 
 ## Phase 9: C ABI Runtime API Family Tests
 
