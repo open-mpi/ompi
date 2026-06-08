@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+# Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -97,11 +97,11 @@ class FortranType(ABC):
         return ''
 
     def post(self):
-        """Return post-processing code to be run after the call."""
+        """Return post-processing code to be run after the call to c interface."""
         return ''
 
     def pre_c_call(self):
-        """Return pre-processing code to be run before the call the c interface."""
+        """Return pre-processing code to be run before the call to c interface."""
         return ''
 
     @abstractmethod
@@ -390,6 +390,41 @@ class LogicalType(IntType):
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
 
+@FortranType.add('LOGICAL_PTR')
+class LogicalPtrType(LogicalType):
+    """Logical pointer type.
+    
+    This type is used for LOGICAL parameters that need to be passed directly
+    as memory addresses (void*) to the C layer, rather than going through
+    integer conversion. This is particularly useful for functions like
+    MPI_Abi_set_fortran_booleans where the C code needs to read the actual
+    bit pattern of the LOGICAL value, not an integer representation.
+    
+    Uses C_PTR and C_LOC from ISO_C_BINDING to pass the address of a
+    temporary LOGICAL variable to C.
+    """
+
+    def declare(self):
+        return f'LOGICAL, INTENT(IN) :: {self.name}'
+
+    def use(self):
+        return [('ISO_C_BINDING', 'C_PTR, C_LOC')]
+
+    def declare_tmp(self):
+        return f'LOGICAL, TARGET :: {self.tmp_name}'
+
+    def declare_cbinding_fortran(self):
+        return f'Type(C_PTR), VALUE :: {self.name}'
+
+    def argument(self):
+        return f'C_LOC({self.tmp_name})'
+
+    def pre_c_call(self):
+        return f'{self.tmp_name} = {self.name}'
+
+    def c_parameter(self):
+        return f'void *{self.tmp_name}'
+
 @FortranType.add('LOGICAL_ARRAY')
 class LogicalArrayType(IntType):
     """Logical array type.
@@ -444,6 +479,26 @@ class LogicalOutType(IntType):
 
     def c_parameter(self):
         return f'MPI_Fint *{self.name}'
+
+@FortranType.add('LOGICAL_PTR_OUT')
+class LogicalPtrOutType(LogicalPtrType):
+    """Logical pointer out type.
+    
+    Similar to LogicalPtrType, but for output parameters. The C layer writes
+    directly to the memory address, and the Fortran wrapper copies the result
+    back to the actual output variable. This is used for functions like
+    MPI_Abi_get_fortran_booleans where the C code needs to set the bit pattern
+    of LOGICAL values directly, not integer representations that need conversion.
+    """
+
+    def declare(self):
+        return f'LOGICAL, INTENT(OUT) :: {self.name}'
+
+    def pre_c_call(self):
+        return ''
+    
+    def post(self):
+        return f'{self.name} = {self.tmp_name}'
 
 @FortranType.add('LOGICAL_ARRAY_OUT')
 class LogicalArrayType(IntType):

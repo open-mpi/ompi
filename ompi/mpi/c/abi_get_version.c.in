@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2023-2025 Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,14 +17,19 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
-#ifdef OMPI_NO_MPI_PROTOTYPES
-#include "ompi/mpi/c/abi.h"
-#endif
 
-int MPI_Abi_version(int *abi_major, int *abi_minor)
+PROTOTYPE ERROR_CLASS abi_get_version(INT_OUT abi_major, INT_OUT abi_minor)
 {
-    /* 0.1 */
-    *abi_major = 0;
-    *abi_minor = 1;
+/*
+ * For the curious see Chapter 20 section 2 of the MPI 5 standard
+ */
+#if OMPI_ABI_SRC
+    /* 1.0 */
+    *abi_major = 1;
+    *abi_minor = 0;
+#else
+    *abi_major = -1;
+    *abi_minor = -1;
+#endif
     return MPI_SUCCESS;
 }

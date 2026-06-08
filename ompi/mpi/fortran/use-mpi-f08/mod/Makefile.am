@@ -124,6 +124,16 @@ check-local:
 
 mpi-f08-types.lo: $(config_h)
 mpi-f08-types.lo: mpi-f08-types.F90
+# mpi-f08-types.F90 #includes several headers that mpif-values.py
+# (re)generates at autogen time whenever an MPI constant value changes:
+# mpi-f08-constants.h supplies the handle constants and mpif-constants.h /
+# mpif-io-constants.h supply the integer constants (e.g. MPI_ERR_ABI).
+# Automake cannot see Fortran includes, so without these explicit
+# prerequisites an incremental build leaves the compiled module holding a
+# stale constant value.
+mpi-f08-types.lo: mpi-f08-constants.h
+mpi-f08-types.lo: $(top_srcdir)/ompi/include/mpif-constants.h
+mpi-f08-types.lo: $(top_srcdir)/ompi/include/mpif-io-constants.h
 mpi-f08-interfaces.lo: $(config_h)
 mpi-f08-interfaces.lo: mpi-f08-interfaces.F90
 mpi-f08-interfaces.lo: mpi-f08-interfaces-callbacks.lo

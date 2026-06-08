@@ -45,6 +45,12 @@ noinst_LTLIBRARIES += libmpi_mpifh_pmpi.la
 endif
 
 linked_files = \
+        pabi_get_fortran_booleans_f.c \
+        pabi_get_fortran_info_f.c \
+        pabi_get_info_f.c \
+        pabi_get_version_f.c \
+        pabi_set_fortran_booleans_f.c \
+        pabi_set_fortran_info_f.c \
         pabort_f.c \
         padd_error_class_f.c \
         padd_error_code_f.c \
