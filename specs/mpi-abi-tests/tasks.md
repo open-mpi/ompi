@@ -119,18 +119,28 @@ the branch is not complete until all completion-gate tasks pass.
 
 ## Phase 5: Fast `make check` Tests
 
-- [ ] Add fast ABI tests that can run without installed Open MPI,
+- [x] Add fast ABI tests that can run without installed Open MPI,
       `mpicc_abi`, or `mpirun`.
-- [ ] Add metadata validation tests.
-- [ ] Add manifest generation sanity tests.
-- [ ] Add semantic checks for generated standard ABI header constants
+- [x] Add metadata validation tests.
+- [x] Add manifest generation sanity tests.
+- [x] Add semantic checks for generated standard ABI header constants
       when available in-tree.
-- [ ] Add converter unit tests that do not launch MPI jobs.
-- [ ] Add in-tree Fortran ABI helper tests where possible and gated on
+      This is a fast subset that checks numeric C-header constants
+      against `docs/mpi-standard-abi.json`; exhaustive semantic
+      comparisons remain in Phase 7.
+- [x] Add converter source-contract checks that do not launch MPI jobs.
+      These are fast source-contract checks for the ABI converter
+      sources, generated converter header, and converter source file;
+      behavioral converter tests remain in Phase 8.
+- [x] Add in-tree Fortran ABI helper tests where possible and gated on
       configured Fortran support.
-- [ ] Ensure all fast tests skip cleanly when standard ABI support is
+      These validate `mpif.h` and `use mpi_f08` ABI helper source
+      coverage, skip `use mpi` with a stable shared-with-`mpif.h`
+      reason, and skip binding layers that `configure` explicitly
       disabled.
-- [ ] Wire fast tests into normal `make check` where practical.
+- [x] Ensure all fast tests skip cleanly when standard ABI support is
+      disabled.
+- [x] Wire fast tests into normal `make check` where practical.
 
 ## Phase 6: Installed `make check-abi` Framework
 
