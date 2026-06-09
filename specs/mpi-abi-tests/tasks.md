@@ -292,7 +292,16 @@ the branch is not complete until all completion-gate tasks pass.
 
 ## Phase 9: C ABI Runtime API Family Tests
 
-- [ ] Generate runtime tests for initialization and finalization APIs.
+- [x] Add a generated installed C runtime API probe framework.
+      Runtime API probes are generated from a checked-in case table,
+      validated against API metadata and the installed standard ABI
+      header, compiled as one executable per logical probe, and launched
+      independently so a failed MPI job cannot affect later probes.
+- [x] Generate runtime tests for initialization and finalization APIs.
+      Installed C runtime probes cover `MPI_Init`, `MPI_Init_thread`,
+      `MPI_Initialized`, `MPI_Finalized`, `MPI_Finalize`,
+      `MPI_Query_thread`, and `MPI_Is_thread_main` in separate
+      executables where required by MPI initialization semantics.
 - [ ] Generate runtime tests for sessions APIs.
 - [ ] Generate runtime tests for communicator and group APIs.
 - [ ] Generate runtime tests for topology APIs.

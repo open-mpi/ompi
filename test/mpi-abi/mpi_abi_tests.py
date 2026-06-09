@@ -10,11 +10,12 @@
 
 """MPI standard ABI test manifest and runner.
 
-This implementation provides the phase 1-8 infrastructure: metadata
+This implementation provides the phase 1-9 infrastructure: metadata
 loading, manifest generation, fast metadata checks, installed ABI smoke
 tests, installed C header/prototype/symbol checks, C converter probes,
-tool discovery, skip handling, and JSON/text reporting.  Later phases
-add exhaustive runtime tests on top of this runner.
+seed C runtime API-family probes, tool discovery, skip handling, and
+JSON/text reporting.  Later phases add exhaustive runtime tests on top
+of this runner.
 """
 
 import argparse
@@ -814,6 +815,358 @@ INSTALLED_C_ABI_PROBES = (
     ret = MPI_Finalize();
     if (MPI_SUCCESS != ret) {
         return 141;
+    }
+""",
+    },
+)
+
+
+# Phase 9 runtime API-family probes are intentionally separate from the
+# converter probes above.  Each logical API-family check is still one
+# generated source, one executable, and one mpirun launch: if an MPI API
+# call fails, MPI process state and communicator/request lifetime are not
+# portable enough to continue running unrelated checks in that process.
+#
+# The api_names field is a coverage contract against docs/ metadata.  It
+# records the primary APIs this probe is meant to exercise; helper calls
+# used for setup/teardown can be added to support_api_names when they are
+# useful diagnostics but should not count as the main family coverage.
+INSTALLED_C_RUNTIME_API_PROBES = (
+    {
+        "name": "runtime_init_state",
+        "family": "init",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Finalize",
+            "MPI_Finalized",
+            "MPI_Init",
+            "MPI_Initialized",
+        ),
+        "body": """
+    int initialized = -1;
+    int finalized = -1;
+    int ret = MPI_Initialized(&initialized);
+    if (MPI_SUCCESS != ret || initialized) {
+        return 1;
+    }
+    ret = MPI_Finalized(&finalized);
+    if (MPI_SUCCESS != ret || finalized) {
+        return 2;
+    }
+    ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    ret = MPI_Initialized(&initialized);
+    if (MPI_SUCCESS != ret || !initialized) {
+        return 4;
+    }
+    ret = MPI_Finalized(&finalized);
+    if (MPI_SUCCESS != ret || finalized) {
+        return 5;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+    ret = MPI_Finalized(&finalized);
+    if (MPI_SUCCESS != ret || !finalized) {
+        return 7;
+    }
+""",
+    },
+    {
+        "name": "runtime_init_thread",
+        "family": "init",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Init_thread",
+            "MPI_Is_thread_main",
+            "MPI_Query_thread",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+        ),
+        "body": """
+    int provided = -1;
+    int queried = -1;
+    int main_thread = 0;
+    int ret = MPI_Init_thread(&argc, &argv, MPI_THREAD_SINGLE, &provided);
+    if (MPI_SUCCESS != ret || provided < MPI_THREAD_SINGLE) {
+        return 1;
+    }
+    ret = MPI_Query_thread(&queried);
+    if (MPI_SUCCESS != ret || queried != provided) {
+        return 2;
+    }
+    ret = MPI_Is_thread_main(&main_thread);
+    if (MPI_SUCCESS != ret || !main_thread) {
+        return 3;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 4;
+    }
+""",
+    },
+    {
+        "name": "runtime_comm_group_basic",
+        "family": "comm_group",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Comm_compare",
+            "MPI_Comm_dup",
+            "MPI_Comm_free",
+            "MPI_Comm_group",
+            "MPI_Comm_rank",
+            "MPI_Comm_set_name",
+            "MPI_Comm_size",
+            "MPI_Group_compare",
+            "MPI_Group_free",
+            "MPI_Group_incl",
+            "MPI_Group_rank",
+            "MPI_Group_size",
+            "MPI_Group_translate_ranks",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret || size < 1) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret || rank < 0 || rank >= size) {
+        return 3;
+    }
+
+    MPI_Comm comm = MPI_COMM_NULL;
+    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == comm) {
+        return 4;
+    }
+    ret = MPI_Comm_set_name(comm, "abi-runtime-comm");
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }
+
+    int compare = MPI_UNEQUAL;
+    ret = MPI_Comm_compare(MPI_COMM_WORLD, comm, &compare);
+    if (MPI_SUCCESS != ret || MPI_CONGRUENT != compare) {
+        return 6;
+    }
+
+    MPI_Group world_group = MPI_GROUP_NULL;
+    MPI_Group subset_group = MPI_GROUP_NULL;
+    ret = MPI_Comm_group(comm, &world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
+        return 7;
+    }
+    ret = MPI_Group_size(world_group, &size);
+    if (MPI_SUCCESS != ret || size < 1) {
+        return 8;
+    }
+    ret = MPI_Group_rank(world_group, &rank);
+    if (MPI_SUCCESS != ret || rank < 0 || rank >= size) {
+        return 9;
+    }
+
+    int ranks[1] = {0};
+    ret = MPI_Group_incl(world_group, 1, ranks, &subset_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == subset_group) {
+        return 10;
+    }
+    int translated[1] = {-1};
+    ret = MPI_Group_translate_ranks(subset_group, 1, ranks,
+                                    world_group, translated);
+    if (MPI_SUCCESS != ret || 0 != translated[0]) {
+        return 11;
+    }
+    ret = MPI_Group_compare(subset_group, subset_group, &compare);
+    if (MPI_SUCCESS != ret || MPI_IDENT != compare) {
+        return 12;
+    }
+
+    ret = MPI_Group_free(&subset_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != subset_group) {
+        return 13;
+    }
+    ret = MPI_Group_free(&world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+        return 14;
+    }
+    ret = MPI_Comm_free(&comm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
+        return 15;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 16;
+    }
+""",
+    },
+    {
+        "name": "runtime_point_to_point_basic",
+        "family": "point_to_point",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Irecv",
+            "MPI_Isend",
+            "MPI_Recv",
+            "MPI_Send",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Get_count",
+            "MPI_Init",
+            "MPI_Wait",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    MPI_Status status;
+    MPI_Request request = MPI_REQUEST_NULL;
+    if (0 == rank) {
+        int send_value = 19;
+        ret = MPI_Send(&send_value, 1, MPI_INT, 1, 910,
+                       MPI_COMM_WORLD);
+        if (MPI_SUCCESS != ret) {
+            return 5;
+        }
+        send_value = 23;
+        ret = MPI_Isend(&send_value, 1, MPI_INT, 1, 911,
+                        MPI_COMM_WORLD, &request);
+        if (MPI_SUCCESS != ret) {
+            return 6;
+        }
+        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+            return 7;
+        }
+    } else if (1 == rank) {
+        int recv_value = -1;
+        ret = MPI_Recv(&recv_value, 1, MPI_INT, 0, 910,
+                       MPI_COMM_WORLD, &status);
+        if (MPI_SUCCESS != ret || 19 != recv_value) {
+            return 8;
+        }
+        int count = -1;
+        ret = MPI_Get_count(&status, MPI_INT, &count);
+        if (MPI_SUCCESS != ret || 1 != count) {
+            return 9;
+        }
+        ret = MPI_Irecv(&recv_value, 1, MPI_INT, 0, 911,
+                        MPI_COMM_WORLD, &request);
+        if (MPI_SUCCESS != ret) {
+            return 10;
+        }
+        ret = MPI_Wait(&request, &status);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
+            23 != recv_value) {
+            return 11;
+        }
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+""",
+    },
+    {
+        "name": "runtime_collective_basic",
+        "family": "collective",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Allreduce",
+            "MPI_Barrier",
+            "MPI_Bcast",
+            "MPI_Reduce",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    int value = 0;
+    if (0 == rank) {
+        value = 37;
+    }
+    ret = MPI_Bcast(&value, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret || 37 != value) {
+        return 5;
+    }
+
+    int reduced = -1;
+    ret = MPI_Allreduce(&rank, &reduced, 1, MPI_INT, MPI_SUM,
+                        MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret || 1 != reduced) {
+        return 6;
+    }
+    reduced = -1;
+    ret = MPI_Reduce(&rank, &reduced, 1, MPI_INT, MPI_SUM, 0,
+                     MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    if (0 == rank && 1 != reduced) {
+        return 8;
+    }
+
+    ret = MPI_Barrier(MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 9;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 10;
     }
 """,
     },
@@ -1752,6 +2105,116 @@ def _runtime_probe_generation_check(manifest, include_fortran,
         predefined_handle_counts=predefined_counts,
         error_class_count=error_class_count,
         fortran_type_count=fortran_type_count)
+
+
+def _runtime_api_probe_api_names(cases, include_support=False):
+    """Return API names referenced by installed runtime API probes.
+
+    api_names is the primary coverage set.  support_api_names records
+    setup/teardown calls such as MPI_Init or MPI_Comm_rank that should be
+    validated against metadata and the header but not counted as the
+    probe's advertised family coverage.
+    """
+    names = set()
+    for case in cases:
+        names.update(case.get("api_names", ()))
+        if include_support:
+            names.update(case.get("support_api_names", ()))
+    return names
+
+
+def _runtime_api_probe_family_counts(cases):
+    """Count primary runtime API probe coverage by declared family."""
+    counts = {}
+    for case in cases:
+        family = case["family"]
+        counts[family] = counts.get(family, 0) + len(case["api_names"])
+    return counts
+
+
+def _runtime_api_probe_body_calls(case):
+    """Return MPI API calls made by a runtime probe body.
+
+    The runtime probe table is declarative: api_names/support_api_names
+    tell reports what a C body is supposed to exercise.  Keep that
+    declaration tied to the generated source by checking for direct
+    MPI_* function calls in the body.  These Phase 9 seed probes use
+    direct calls only; if later probes need function pointers or macro
+    indirection, they should extend this guard instead of weakening the
+    coverage contract.
+    """
+    call_re = re.compile(r"(?<![A-Za-z0-9_])(MPI_[A-Za-z0-9_]+)\s*\(")
+    return set(call_re.findall(case["body"]))
+
+
+def _runtime_api_probe_generation_check(manifest, header, cases):
+    """Validate the runtime API probe table before compiling C sources.
+
+    Phase 9 starts with seed API-family probes, not exhaustive family
+    coverage.  Even so, each seed probe names its intended MPI API
+    coverage explicitly.  This preflight keeps that contract honest by
+    checking that every named API exists in docs/ metadata, is classified
+    as implemented in this tree, and is declared by the installed
+    standard ABI header that mpicc_abi will use for the generated source.
+    It also checks the declared coverage against the source body so a
+    stale api_names entry cannot claim coverage for a call that was
+    removed.
+    """
+    entries_by_name = {
+        entry["name"]: entry for entry in manifest["apis"]
+    }
+    primary_names = _runtime_api_probe_api_names(cases)
+    all_names = _runtime_api_probe_api_names(cases, include_support=True)
+    prototypes = _parse_c_header_prototypes(header)
+    declared_names = set(prototypes)
+
+    missing_metadata = sorted(
+        name for name in all_names if name not in entries_by_name)
+    not_implemented = sorted(
+        name for name in all_names
+        if name in entries_by_name and
+        entries_by_name[name]["classification"] != CLASS_IMPLEMENTED)
+    missing_header = sorted(name for name in all_names
+                            if name not in declared_names)
+
+    empty_cases = sorted(case["name"] for case in cases
+                         if not case.get("api_names"))
+
+    missing_body_calls = {}
+    undeclared_body_calls = {}
+    for case in cases:
+        advertised = (
+            set(case.get("api_names", ())) |
+            set(case.get("support_api_names", ()))
+        )
+        called = _runtime_api_probe_body_calls(case)
+        missing = sorted(advertised - called)
+        undeclared = sorted(called - advertised)
+        if missing:
+            missing_body_calls[case["name"]] = missing
+        if undeclared:
+            undeclared_body_calls[case["name"]] = undeclared
+
+    if (missing_metadata or not_implemented or missing_header or
+            empty_cases or missing_body_calls or undeclared_body_calls):
+        return _fail(
+            "installed_c_runtime_api_probe_generation",
+            "runtime API probe table does not match metadata/header",
+            missing_metadata=missing_metadata,
+            not_implemented=not_implemented,
+            missing_header=missing_header[:20],
+            missing_header_count=len(missing_header),
+            empty_cases=empty_cases,
+            missing_body_calls=missing_body_calls,
+            undeclared_body_calls=undeclared_body_calls,
+            probe_count=len(cases))
+
+    return _pass(
+        "installed_c_runtime_api_probe_generation",
+        probe_count=len(cases),
+        primary_api_count=len(primary_names),
+        support_api_count=len(all_names - primary_names),
+        family_counts=_runtime_api_probe_family_counts(cases))
 
 
 def _prepare_installed_c_probe_body(case, manifest, declared_names):
@@ -3102,14 +3565,14 @@ def _c_probe_source(srcdir, body, rank_count):
     return template.replace("@BODY@", body.rstrip())
 
 
-def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
-    """Compile, link-inspect, and run installed C ABI runtime probes.
+def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
+                                 cases, progress=None):
+    """Compile, link-inspect, and launch installed C probe cases.
 
-    Before compiling generated probes, this function verifies that probe
-    families are nonempty and that the installed ABI header declares the
-    metadata constants the probes will reference.  That makes metadata
-    drift a clear preflight failure instead of a smaller generated C
-    source that silently preserves PASS.
+    Keep this loop shared by the Phase 1-8 ABI/converter probes and the
+    Phase 9 runtime API probes.  The caller decides which generation
+    preflights must pass before a case group runs, which prevents a
+    Phase 9 table issue from suppressing older ABI coverage.
     """
     checks = []
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
@@ -3117,50 +3580,8 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
     env = _installed_test_env(tools)
     launcher_args = _launcher_args(tools)
     compile_overrides = _compile_overrides(tools)
-    header = _installed_standard_abi_header(tools, dirs, env)
-    include_fortran = _fortran_bindings_enabled(manifest)
-    if header is None:
-        if progress is not None:
-            progress.start("installed_c_probe_metadata_constants")
-        _append_check(checks, _skip(
-            "installed_c_probe_metadata_constants",
-            SKIP_HEADER_UNAVAILABLE), progress)
-        return checks
 
-    declared_names = (
-        _parse_header_constant_names(header)
-    )
-    if progress is not None:
-        progress.start("installed_c_probe_generation")
-    generation_check = _runtime_probe_generation_check(
-        manifest, include_fortran, declared_names)
-    _append_check(checks, generation_check, progress)
-    if generation_check["result"] != "PASS":
-        return checks
-
-    expected_names = _runtime_probe_constant_names(
-        manifest, include_fortran, declared_names)
-    missing_names = sorted(expected_names - declared_names)
-    if progress is not None:
-        progress.start("installed_c_probe_metadata_constants")
-    if missing_names:
-        _append_check(checks, _fail(
-            "installed_c_probe_metadata_constants",
-            "installed standard ABI header is missing probe constants",
-            header=str(header),
-            missing=missing_names[:20],
-            missing_count=len(missing_names),
-            expected_count=len(expected_names),
-            declared_count=len(declared_names)), progress)
-        return checks
-    else:
-        _append_check(checks, _pass(
-            "installed_c_probe_metadata_constants",
-            header=str(header),
-            checked=len(expected_names),
-            declared_count=len(declared_names)), progress)
-
-    for case in INSTALLED_C_ABI_PROBES:
+    for case in cases:
         name = case["name"]
         check_name = "installed_c_probe_" + name
         if (case.get("requires_fortran")
@@ -3177,7 +3598,7 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
         source = dirs["src"] / (name + ".c")
         executable = dirs["bin"] / name
         body = _prepare_installed_c_probe_body(
-            case, manifest, declared_names)
+            case, manifest, header_names)
         _write_text(source, _c_probe_source(srcdir, body, rank_count))
 
         compile_command = (
@@ -3261,12 +3682,88 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
             source=str(source),
             executable=str(executable),
             rank_count=rank_count,
+            family=case.get("family"),
+            api_names=list(case.get("api_names", ())),
+            support_api_names=list(case.get("support_api_names", ())),
             compile_command=compile_result["command"],
             run_command=run_result["command"],
             compile_log=compile_result["log"],
             linkage_command=linkage_result["command"],
             linkage_log=linkage_result["log"],
             run_log=run_result["log"]), progress)
+
+    return checks
+
+
+def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
+    """Compile, link-inspect, and run installed C ABI runtime probes.
+
+    Before compiling generated probes, this function verifies that probe
+    families are nonempty and that the installed ABI header declares the
+    metadata constants the probes will reference.  That makes metadata
+    drift a clear preflight failure instead of a smaller generated C
+    source that silently preserves PASS.
+    """
+    checks = []
+    env = _installed_test_env(tools)
+    header = _installed_standard_abi_header(tools, dirs, env)
+    include_fortran = _fortran_bindings_enabled(manifest)
+    if header is None:
+        if progress is not None:
+            progress.start("installed_c_probe_metadata_constants")
+        _append_check(checks, _skip(
+            "installed_c_probe_metadata_constants",
+            SKIP_HEADER_UNAVAILABLE), progress)
+        return checks
+
+    declared_names = (
+        _parse_header_constant_names(header)
+    )
+    if progress is not None:
+        progress.start("installed_c_probe_generation")
+    generation_check = _runtime_probe_generation_check(
+        manifest, include_fortran, declared_names)
+    _append_check(checks, generation_check, progress)
+    if generation_check["result"] != "PASS":
+        return checks
+
+    expected_names = _runtime_probe_constant_names(
+        manifest, include_fortran, declared_names)
+    missing_names = sorted(expected_names - declared_names)
+    if progress is not None:
+        progress.start("installed_c_probe_metadata_constants")
+    if missing_names:
+        _append_check(checks, _fail(
+            "installed_c_probe_metadata_constants",
+            "installed standard ABI header is missing probe constants",
+            header=str(header),
+            missing=missing_names[:20],
+            missing_count=len(missing_names),
+            expected_count=len(expected_names),
+            declared_count=len(declared_names)), progress)
+        return checks
+    else:
+        _append_check(checks, _pass(
+            "installed_c_probe_metadata_constants",
+            header=str(header),
+            checked=len(expected_names),
+            declared_count=len(declared_names)), progress)
+
+    checks.extend(_run_installed_c_probe_cases(
+        srcdir, manifest, tools, dirs, declared_names,
+        INSTALLED_C_ABI_PROBES, progress))
+
+    if progress is not None:
+        progress.start("installed_c_runtime_api_probe_generation")
+    runtime_api_generation_check = _runtime_api_probe_generation_check(
+        manifest, header, INSTALLED_C_RUNTIME_API_PROBES)
+    _append_check(checks, runtime_api_generation_check, progress)
+    if runtime_api_generation_check["result"] != "PASS":
+        return checks
+
+    checks.extend(_run_installed_c_probe_cases(
+        srcdir, manifest, tools, dirs, declared_names,
+        INSTALLED_C_RUNTIME_API_PROBES, progress))
 
     return checks
 
