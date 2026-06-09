@@ -1,0 +1,77 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise MPI_Op_create and MPI_Op_free with a callback that sees
+ *   standard ABI datatype handles and mutates the reduction output
+ *   buffer.  MPI_Reduce_local guarantees local callback execution; the
+ *   two-rank MPI_Allreduce path verifies the created operation is also
+ *   usable by MPI collective code.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int rank = -1;
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+int size = 0;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret || size < 1) {
+    return 3;
+}
+
+user_op_state.calls = 0;
+user_op_state.total_length = 0;
+user_op_state.failure_code = 0;
+
+MPI_Op op = MPI_OP_NULL;
+ret = MPI_Op_create(user_op_callback, 1, &op);
+if (MPI_SUCCESS != ret || MPI_OP_NULL == op) {
+    return 4;
+}
+
+int commute = 0;
+ret = MPI_Op_commutative(op, &commute);
+if (MPI_SUCCESS != ret || !commute) {
+    return 5;
+}
+
+int local_in[2] = {3, 5};
+int local_inout[2] = {7, 11};
+ret = MPI_Reduce_local(local_in, local_inout, 2, MPI_INT, op);
+if (MPI_SUCCESS != ret || 10 != local_inout[0] ||
+    16 != local_inout[1] || 0 != user_op_state.failure_code ||
+    user_op_state.calls < 1 || user_op_state.total_length < 2) {
+    return 6;
+}
+
+int send = rank + 1;
+int recv = 0;
+int expected = (size * (size + 1)) / 2;
+ret = MPI_Allreduce(&send, &recv, 1, MPI_INT, op, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || expected != recv ||
+    0 != user_op_state.failure_code) {
+    return 7;
+}
+
+ret = MPI_Op_free(&op);
+if (MPI_SUCCESS != ret || MPI_OP_NULL != op ||
+    0 != user_op_state.failure_code) {
+    return 8;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 9;
+}

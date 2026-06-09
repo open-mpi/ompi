@@ -1,0 +1,172 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise MPI_T event callback registration APIs when the
+ *   implementation has an allocatable event registration.  A build with
+ *   no event sources returns 77 so the runner records a stable
+ *   mpit_events_unavailable skip.  If a registration exists, this probe
+ *   validates info set/get, callback registration, dropped-handler
+ *   registration, and registration-free callback cleanup.
+ */
+int provided = 0;
+int ret = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+if (MPI_T_ERR_NOT_SUPPORTED == ret) {
+    return 77;
+}
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int num_events = 0;
+ret = MPI_T_event_get_num(&num_events);
+if (MPI_SUCCESS != ret || num_events < 1) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+mpit_event_state.registration = (MPI_T_event_registration) 0;
+mpit_event_state.event_calls = 0;
+mpit_event_state.dropped_calls = 0;
+mpit_event_state.free_calls = 0;
+mpit_event_state.failure_code = 0;
+
+for (int event_index = 0; event_index < num_events; ++event_index) {
+    char name[MPI_MAX_OBJECT_NAME];
+    int name_len = (int) sizeof(name);
+    int verbosity = 0;
+    MPI_Datatype datatypes[4];
+    MPI_Aint displacements[4];
+    int num_elements = 4;
+    MPI_T_enum enumtype = MPI_T_ENUM_NULL;
+    MPI_Info info = MPI_INFO_NULL;
+    char desc[MPI_MAX_INFO_VAL];
+    int desc_len = (int) sizeof(desc);
+    int bind = MPI_T_BIND_NO_OBJECT;
+
+    ret = MPI_T_event_get_info(event_index, name, &name_len, &verbosity,
+                               datatypes, displacements, &num_elements,
+                               &enumtype, &info, desc, &desc_len, &bind);
+    if (MPI_SUCCESS != ret) {
+        continue;
+    }
+    if (MPI_INFO_NULL != info) {
+        (void) MPI_Info_free(&info);
+    }
+    if (MPI_T_BIND_NO_OBJECT != bind) {
+        continue;
+    }
+
+    ret = MPI_T_event_handle_alloc(event_index, NULL, MPI_INFO_NULL,
+                                   &mpit_event_state.registration);
+    if (MPI_SUCCESS == ret &&
+        (MPI_T_event_registration) 0 != mpit_event_state.registration) {
+        break;
+    }
+}
+
+if ((MPI_T_event_registration) 0 == mpit_event_state.registration) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+MPI_Info info = MPI_INFO_NULL;
+ret = MPI_Info_create(&info);
+if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
+    (void) MPI_T_event_handle_free(mpit_event_state.registration,
+                                   &mpit_event_state,
+                                   mpit_free_callback);
+    (void) MPI_T_finalize();
+    return 2;
+}
+
+MPI_Info used = MPI_INFO_NULL;
+#define ABI_MPIT_CLEANUP_RETURN(code_)                                 \
+    do {                                                               \
+        if (MPI_INFO_NULL != used) {                                   \
+            (void) MPI_Info_free(&used);                               \
+        }                                                              \
+        if (MPI_INFO_NULL != info) {                                   \
+            (void) MPI_Info_free(&info);                               \
+        }                                                              \
+        if ((MPI_T_event_registration) 0 !=                            \
+            mpit_event_state.registration) {                           \
+            (void) MPI_T_event_handle_free(                            \
+                mpit_event_state.registration, &mpit_event_state,       \
+                mpit_free_callback);                                   \
+        }                                                              \
+        (void) MPI_T_finalize();                                       \
+        return (code_);                                                \
+    } while (0)
+
+ret = MPI_T_event_callback_set_info(mpit_event_state.registration,
+                                    MPI_T_CB_REQUIRE_NONE, info);
+if (MPI_SUCCESS != ret) {
+    ABI_MPIT_CLEANUP_RETURN(3);
+}
+
+ret = MPI_T_event_callback_get_info(mpit_event_state.registration,
+                                    MPI_T_CB_REQUIRE_NONE, &used);
+if (MPI_SUCCESS != ret || MPI_INFO_NULL == used) {
+    ABI_MPIT_CLEANUP_RETURN(4);
+}
+ret = MPI_Info_free(&used);
+if (MPI_SUCCESS != ret || MPI_INFO_NULL != used) {
+    if (MPI_SUCCESS == ret) {
+        used = MPI_INFO_NULL;
+    }
+    ABI_MPIT_CLEANUP_RETURN(5);
+}
+
+ret = MPI_T_event_register_callback(mpit_event_state.registration,
+                                    MPI_T_CB_REQUIRE_NONE, info,
+                                    &mpit_event_state,
+                                    mpit_event_callback);
+if (MPI_SUCCESS != ret) {
+    ABI_MPIT_CLEANUP_RETURN(6);
+}
+ret = MPI_T_event_set_dropped_handler(mpit_event_state.registration,
+                                      mpit_dropped_callback);
+if (MPI_SUCCESS != ret) {
+    ABI_MPIT_CLEANUP_RETURN(7);
+}
+
+ret = MPI_Info_free(&info);
+if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+    if (MPI_SUCCESS == ret) {
+        info = MPI_INFO_NULL;
+    }
+    ABI_MPIT_CLEANUP_RETURN(8);
+}
+
+ret = MPI_T_event_handle_free(mpit_event_state.registration,
+                              &mpit_event_state, mpit_free_callback);
+if (MPI_SUCCESS != ret || 0 != mpit_event_state.failure_code ||
+    1 != mpit_event_state.free_calls) {
+    (void) MPI_T_finalize();
+    return 9;
+}
+
+/*
+ * Open MPI currently has no event sources that can fire this callback
+ * in local CI.  Treat a registration-only run as unsupported callback
+ * invocation, not as completed MPI_T callback coverage.
+ */
+if (0 == mpit_event_state.event_calls) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+#undef ABI_MPIT_CLEANUP_RETURN
+
+ret = MPI_T_finalize();
+if (MPI_SUCCESS != ret) {
+    return 10;
+}

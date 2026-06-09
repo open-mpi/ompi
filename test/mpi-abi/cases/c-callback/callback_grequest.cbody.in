@@ -1,0 +1,100 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise MPI_Grequest_start and MPI_Grequest_complete through
+ *   normal wait and cancel-before-complete flows.  The callbacks must
+ *   see the original extra_state, set observable status values, and be
+ *   invoked exactly once at the points MPI defines.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+struct grequest_state complete_state = {
+    .id = 41,
+};
+MPI_Request request = MPI_REQUEST_NULL;
+ret = MPI_Grequest_start(grequest_query, grequest_free,
+                         grequest_cancel, &complete_state, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 2;
+}
+
+ret = MPI_Grequest_complete(request);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+
+MPI_Status status;
+ret = MPI_Wait(&request, &status);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+    return 4;
+}
+
+int source = -1;
+int tag = -1;
+ret = MPI_Status_get_source(&status, &source);
+if (MPI_SUCCESS != ret || 41 != source) {
+    return 5;
+}
+ret = MPI_Status_get_tag(&status, &tag);
+if (MPI_SUCCESS != ret || 7041 != tag) {
+    return 6;
+}
+if (0 != complete_state.failure_code ||
+    1 != complete_state.query_calls ||
+    1 != complete_state.free_calls ||
+    0 != complete_state.cancel_calls) {
+    return 7;
+}
+
+struct grequest_state cancel_state = {
+    .id = 43,
+    .cancel_complete_flag = -1,
+};
+request = MPI_REQUEST_NULL;
+ret = MPI_Grequest_start(grequest_query, grequest_free,
+                         grequest_cancel, &cancel_state, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 8;
+}
+
+ret = MPI_Cancel(&request);
+if (MPI_SUCCESS != ret || 1 != cancel_state.cancel_calls ||
+    0 != cancel_state.cancel_complete_flag) {
+    return 9;
+}
+ret = MPI_Grequest_complete(request);
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+ret = MPI_Wait(&request, &status);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+    return 11;
+}
+
+int cancelled = 0;
+ret = MPI_Test_cancelled(&status, &cancelled);
+if (MPI_SUCCESS != ret || !cancelled) {
+    return 12;
+}
+if (0 != cancel_state.failure_code ||
+    1 != cancel_state.query_calls ||
+    1 != cancel_state.free_calls ||
+    1 != cancel_state.cancel_calls) {
+    return 13;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 14;
+}

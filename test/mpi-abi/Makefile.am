@@ -59,12 +59,28 @@ C_RUNTIME_CASES = \
         cases/c-runtime/runtime_win_lifecycle.cbody.in
 
 C_CALLBACK_CASES = \
+        cases/c-callback/callback_comm_errhandler.cbody.in \
+        cases/c-callback/callback_comm_errhandler.prologue.in \
         cases/c-callback/callback_comm_attr.cbody.in \
         cases/c-callback/callback_comm_attr.prologue.in \
+        cases/c-callback/callback_datarep.cbody.in \
+        cases/c-callback/callback_datarep.prologue.in \
+        cases/c-callback/callback_file_errhandler.cbody.in \
+        cases/c-callback/callback_file_errhandler.prologue.in \
+        cases/c-callback/callback_grequest.cbody.in \
+        cases/c-callback/callback_grequest.prologue.in \
+        cases/c-callback/callback_mpit_events.cbody.in \
+        cases/c-callback/callback_mpit_events.prologue.in \
+        cases/c-callback/callback_session_errhandler.cbody.in \
+        cases/c-callback/callback_session_errhandler.prologue.in \
         cases/c-callback/callback_type_attr.cbody.in \
         cases/c-callback/callback_type_attr.prologue.in \
+        cases/c-callback/callback_user_op.cbody.in \
+        cases/c-callback/callback_user_op.prologue.in \
         cases/c-callback/callback_win_attr.cbody.in \
-        cases/c-callback/callback_win_attr.prologue.in
+        cases/c-callback/callback_win_attr.prologue.in \
+        cases/c-callback/callback_win_errhandler.cbody.in \
+        cases/c-callback/callback_win_errhandler.prologue.in
 
 EXTRA_DIST = \
         README.md \

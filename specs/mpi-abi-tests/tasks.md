@@ -100,6 +100,11 @@ chunk adds installed runtime probes.
       Cover callback argument ABI values, callback invocation,
       nonblocking/persistent retained state, cleanup, and stable skips
       for callback families Open MPI does not implement.
+      Error-handler, user-operation, generalized-request, datarep, and
+      MPI_T event callback registration probes are implemented.  This
+      chunk remains open until the nonblocking/persistent retained-state
+      work item below is implemented or explicitly split into a later
+      chunk.
 - [ ] Chunk 11A: Add Fortran binding detection, coverage audit, and
       compile-only conformance probes.
       Distinguish `mpif.h`, `use mpi`, and `use mpi_f08` regression
@@ -707,35 +712,35 @@ chunk adds installed runtime probes.
       callbacks on explicit delete and window free, callback extra
       state, and returned ABI window/keyval values.  Do not claim a
       duplicate-copy window path, because MPI has no `MPI_Win_dup`.
-- [ ] Test communicator error handler callback ABI values.
+- [x] Test communicator error handler callback ABI values.
       Cover create/set/get/call/free behavior, callback invocation,
       communicator handle conversion, error-code value conversion, and
       replacement/restoration of the predefined error handler.
-- [ ] Test file error handler callback ABI values.
+- [x] Test file error handler callback ABI values.
       Cover file create/set/get/call/free behavior where MPI-IO is
       configured, callback invocation, file handle conversion, and
       error-code value conversion.
-- [ ] Test session error handler callback ABI values.
+- [x] Test session error handler callback ABI values.
       Cover session create/set/get/call/free behavior where sessions
       are configured, callback invocation, session handle conversion,
       and error-code value conversion.
-- [ ] Test window error handler callback ABI values.
+- [x] Test window error handler callback ABI values.
       Cover window create/set/get/call/free behavior where RMA is
       configured, callback invocation, window handle conversion, and
       error-code value conversion.
-- [ ] Test user-defined reduction callback datatype conversion.
+- [x] Test user-defined reduction callback datatype conversion.
       Cover `MPI_Op_create`, collective invocation with a real callback,
       datatype argument conversion, input/output buffer semantics,
       commutativity flag behavior, and `MPI_Op_free` cleanup.
-- [ ] Test generalized request callback behavior.
+- [x] Test generalized request callback behavior.
       Cover `MPI_Grequest_start`, `MPI_Grequest_complete`,
       wait/test-triggered query callbacks, free callbacks, cancel
       callbacks, callback extra state, and request cleanup semantics.
-- [ ] Test datarep callback behavior where Open MPI support exists.
+- [x] Test datarep callback behavior where Open MPI support exists.
       Cover `MPI_Register_datarep` read, write, and extent callbacks
       with MPI-IO probes when the configured build supports the
       functionality; otherwise skip with a stable reason.
-- [ ] Test MPI_T event callback behavior where Open MPI support exists.
+- [x] Test MPI_T event callback behavior where Open MPI support exists.
       Cover MPI_T callback registration, callback invocation,
       callback-provided object values, and cleanup where Open MPI
       implements standard ABI MPI_T event support; otherwise skip with

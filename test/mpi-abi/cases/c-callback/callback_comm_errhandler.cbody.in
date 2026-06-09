@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise communicator errhandler callback creation, get/set/call,
+ *   callback invocation, predefined-handler restoration, and final
+ *   errhandler cleanup.  This verifies that the ABI layer wraps the
+ *   callback and converts the communicator argument back to the
+ *   standard ABI handle before invoking user code.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+comm_errhandler_state.comm = MPI_COMM_NULL;
+comm_errhandler_state.calls = 0;
+comm_errhandler_state.error_code = MPI_SUCCESS;
+comm_errhandler_state.failure_code = 0;
+
+ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm_errhandler_state.comm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == comm_errhandler_state.comm) {
+    return 2;
+}
+
+MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+ret = MPI_Comm_create_errhandler(comm_errhandler_callback, &errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == errhandler) {
+    return 3;
+}
+
+ret = MPI_Comm_set_errhandler(comm_errhandler_state.comm, errhandler);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+
+MPI_Errhandler queried = MPI_ERRHANDLER_NULL;
+ret = MPI_Comm_get_errhandler(comm_errhandler_state.comm, &queried);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == queried) {
+    return 5;
+}
+ret = MPI_Errhandler_free(&queried);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != queried) {
+    return 6;
+}
+
+ret = MPI_Comm_call_errhandler(comm_errhandler_state.comm, MPI_ERR_OTHER);
+if (MPI_SUCCESS != ret || 0 != comm_errhandler_state.failure_code ||
+    1 != comm_errhandler_state.calls ||
+    MPI_ERR_OTHER != comm_errhandler_state.error_code) {
+    return 7;
+}
+
+ret = MPI_Comm_set_errhandler(comm_errhandler_state.comm,
+                              MPI_ERRORS_RETURN);
+if (MPI_SUCCESS != ret) {
+    return 8;
+}
+ret = MPI_Errhandler_free(&errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler ||
+    0 != comm_errhandler_state.failure_code ||
+    1 != comm_errhandler_state.calls) {
+    return 9;
+}
+
+ret = MPI_Comm_free(&comm_errhandler_state.comm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_errhandler_state.comm) {
+    return 10;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 11;
+}

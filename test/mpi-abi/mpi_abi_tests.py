@@ -53,6 +53,9 @@ SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
 SKIP_RMA_SUPPORT_DISABLED = "rma_support_disabled"
 SKIP_MPI_IO_SUPPORT_DISABLED = "mpi_io_support_disabled"
 SKIP_DYNAMIC_PROCESS_DISABLED = "dynamic_process_disabled"
+SKIP_DATAREP_UNSUPPORTED = "datarep_unsupported"
+SKIP_MPIT_EVENTS_UNAVAILABLE = "mpit_events_unavailable"
+SKIP_MPIT_EVENTS_DISABLED = "mpit_events_disabled"
 SKIP_MPI_ABORT_TERMINATES_JOB = "mpi_abort_terminates_job"
 SKIP_COMM_JOIN_REQUIRES_CONNECTED_FD = "comm_join_requires_connected_fd"
 SKIP_PHASE10_CALLBACK_REQUIRED = "phase10_callback_required"
@@ -1253,6 +1256,183 @@ INSTALLED_C_CALLBACK_PROBES = (
         "prologue_file": "cases/c-callback/callback_win_attr.prologue.in",
         "body_file": "cases/c-callback/callback_win_attr.cbody.in",
     },
+    {
+        "name": "callback_comm_errhandler",
+        "family": "callback_errhandler",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Comm_create_errhandler",
+        ),
+        "support_api_names": (
+            "MPI_Comm_call_errhandler",
+            "MPI_Comm_dup",
+            "MPI_Comm_free",
+            "MPI_Comm_get_errhandler",
+            "MPI_Comm_set_errhandler",
+            "MPI_Errhandler_free",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "prologue_file": "cases/c-callback/callback_comm_errhandler.prologue.in",
+        "body_file": "cases/c-callback/callback_comm_errhandler.cbody.in",
+    },
+    {
+        "name": "callback_file_errhandler",
+        "family": "callback_errhandler",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_File_create_errhandler",
+        ),
+        "support_api_names": (
+            "MPI_Errhandler_free",
+            "MPI_File_call_errhandler",
+            "MPI_File_close",
+            "MPI_File_delete",
+            "MPI_File_get_errhandler",
+            "MPI_File_open",
+            "MPI_File_set_errhandler",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "requires_feature": "mpi_io",
+        "prologue_file": "cases/c-callback/callback_file_errhandler.prologue.in",
+        "body_file": "cases/c-callback/callback_file_errhandler.cbody.in",
+    },
+    {
+        "name": "callback_session_errhandler",
+        "family": "callback_errhandler",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Session_create_errhandler",
+        ),
+        "support_api_names": (
+            "MPI_Errhandler_free",
+            "MPI_Session_call_errhandler",
+            "MPI_Session_finalize",
+            "MPI_Session_get_errhandler",
+            "MPI_Session_init",
+            "MPI_Session_set_errhandler",
+        ),
+        "prologue_file": "cases/c-callback/callback_session_errhandler.prologue.in",
+        "body_file": "cases/c-callback/callback_session_errhandler.cbody.in",
+    },
+    {
+        "name": "callback_win_errhandler",
+        "family": "callback_errhandler",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Win_create_errhandler",
+        ),
+        "support_api_names": (
+            "MPI_Errhandler_free",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Win_call_errhandler",
+            "MPI_Win_create",
+            "MPI_Win_free",
+            "MPI_Win_get_errhandler",
+            "MPI_Win_set_errhandler",
+        ),
+        "requires_feature": "rma",
+        "prologue_file": "cases/c-callback/callback_win_errhandler.prologue.in",
+        "body_file": "cases/c-callback/callback_win_errhandler.cbody.in",
+    },
+    {
+        "name": "callback_user_op",
+        "family": "callback_op",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Op_create",
+            "MPI_Op_free",
+        ),
+        "support_api_names": (
+            "MPI_Allreduce",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Op_commutative",
+            "MPI_Reduce_local",
+        ),
+        "prologue_file": "cases/c-callback/callback_user_op.prologue.in",
+        "body_file": "cases/c-callback/callback_user_op.cbody.in",
+    },
+    {
+        "name": "callback_grequest",
+        "family": "callback_grequest",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Grequest_complete",
+            "MPI_Grequest_start",
+        ),
+        "support_api_names": (
+            "MPI_Cancel",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Status_get_source",
+            "MPI_Status_get_tag",
+            "MPI_Status_set_cancelled",
+            "MPI_Status_set_error",
+            "MPI_Status_set_source",
+            "MPI_Status_set_tag",
+            "MPI_Test_cancelled",
+            "MPI_Wait",
+        ),
+        "prologue_file": "cases/c-callback/callback_grequest.prologue.in",
+        "body_file": "cases/c-callback/callback_grequest.cbody.in",
+    },
+    {
+        "name": "callback_datarep",
+        "family": "callback_datarep",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Register_datarep",
+        ),
+        "support_api_names": (
+            "MPI_File_close",
+            "MPI_File_delete",
+            "MPI_File_open",
+            "MPI_File_read_at",
+            "MPI_File_set_view",
+            "MPI_File_write_at",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Type_size",
+        ),
+        "requires_feature": "mpi_io",
+        "skip_exit_codes": {
+            77: SKIP_DATAREP_UNSUPPORTED,
+        },
+        "prologue_file": "cases/c-callback/callback_datarep.prologue.in",
+        "body_file": "cases/c-callback/callback_datarep.cbody.in",
+    },
+    {
+        "name": "callback_mpit_events",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_T_event_callback_get_info",
+            "MPI_T_event_callback_set_info",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_register_callback",
+            "MPI_T_event_set_dropped_handler",
+        ),
+        "support_api_names": (
+            "MPI_Info_create",
+            "MPI_Info_free",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file": "cases/c-callback/callback_mpit_events.prologue.in",
+        "body_file": "cases/c-callback/callback_mpit_events.cbody.in",
+    },
 )
 
 
@@ -1291,6 +1471,12 @@ PHASE10B_CALLBACK_API_NAMES = frozenset((
     "MPI_Op_free",
     "MPI_Register_datarep",
     "MPI_Session_create_errhandler",
+    "MPI_T_event_callback_get_info",
+    "MPI_T_event_callback_set_info",
+    "MPI_T_event_handle_alloc",
+    "MPI_T_event_handle_free",
+    "MPI_T_event_register_callback",
+    "MPI_T_event_set_dropped_handler",
     "MPI_Win_create_errhandler",
 ))
 
@@ -1541,6 +1727,7 @@ def _detect_optional_features(builddir):
     return {
         "dynamic_process": _detect_dynamic_process_support(),
         "mpi_io": _detect_mpi_io_support(builddir),
+        "mpit_events": _detect_mpit_event_support(),
         "rma": _detect_rma_support(builddir),
     }
 
@@ -1579,6 +1766,28 @@ def _detect_mpi_io_support(builddir):
             "source": "OMPI_ABI_TEST_MPI_IO",
         }
     return _conditional_enabled(builddir, "OMPI_OMPIO_SUPPORT")
+
+
+def _detect_mpit_event_support():
+    """Detect whether MPI_T event callback probes should run.
+
+    The MPI_T event APIs may be present in the ABI header even when the
+    implementation has no registered event sources that can drive a
+    callback.  The C probe performs the definitive runtime check and
+    returns a stable skip code when no event registration can be
+    allocated.  This override lets sites that know MPI_T events are not
+    usable avoid the compile/run step entirely.
+    """
+    override = _env_bool("OMPI_ABI_TEST_MPIT_EVENTS")
+    if override is not None:
+        return {
+            "enabled": override,
+            "source": "OMPI_ABI_TEST_MPIT_EVENTS",
+        }
+    return {
+        "enabled": None,
+        "source": "unknown",
+    }
 
 
 def _detect_rma_support(builddir):
@@ -1653,6 +1862,13 @@ def _source_exists(srcdir, stem):
         tool_dir / (stem + ".c.in"),
         tool_dir / (stem + ".c"),
     )
+    if stem.startswith("t_"):
+        tool_stem = stem[2:]
+        candidates += (
+            tool_dir / (tool_stem + "_abi_generated.c"),
+            tool_dir / (tool_stem + ".c.in"),
+            tool_dir / (tool_stem + ".c"),
+        )
     return any(candidate.exists() for candidate in candidates)
 
 
@@ -2564,18 +2780,20 @@ def _runtime_api_coverage_audit(manifest, header, cases):
 
 
 def _runtime_api_probe_body_calls(srcdir, case):
-    """Return MPI API calls made by a runtime probe body.
+    """Return MPI API calls made by a runtime probe source.
 
     The runtime probe table is declarative: api_names/support_api_names
-    tell reports what a C body is supposed to exercise.  Keep that
-    declaration tied to the generated source by checking for direct
-    MPI_* function calls in the body.  These Phase 9 seed probes use
-    direct calls only; if later probes need function pointers or macro
-    indirection, they should extend this guard instead of weakening the
-    coverage contract.
+    tell reports what a C body and its optional file-scope prologue are
+    supposed to exercise.  Keep that declaration tied to the generated
+    source by checking for direct MPI_* function calls in both snippets.
+    If later probes need function pointers or macro indirection, they
+    should extend this guard instead of weakening the coverage contract.
     """
     call_re = re.compile(r"(?<![A-Za-z0-9_])(MPI_[A-Za-z0-9_]+)\s*\(")
-    return set(call_re.findall(_probe_body_text(srcdir, case)))
+    source = _probe_prologue_text(srcdir, case)
+    source += "\n"
+    source += _probe_body_text(srcdir, case)
+    return set(call_re.findall(source))
 
 
 def _runtime_api_probe_generation_check(
@@ -3272,6 +3490,7 @@ def _optional_feature_skip_reason(feature):
     reasons = {
         "dynamic_process": SKIP_DYNAMIC_PROCESS_DISABLED,
         "mpi_io": SKIP_MPI_IO_SUPPORT_DISABLED,
+        "mpit_events": SKIP_MPIT_EVENTS_DISABLED,
         "rma": SKIP_RMA_SUPPORT_DISABLED,
     }
     return reasons.get(feature, "optional_feature_disabled")
@@ -4291,6 +4510,21 @@ def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
             dirs["base"],
             env,
             dirs["logs"] / ("run_" + name + ".json"))
+        skip_reason = case.get("skip_exit_codes", {}).get(
+            run_result["returncode"])
+        if skip_reason is not None:
+            _append_check(checks, _skip(
+                check_name,
+                skip_reason,
+                phase="run",
+                source=str(source),
+                executable=str(executable),
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"]), progress)
+            continue
         if run_result["returncode"] != 0:
             _append_check(checks, _fail(
                 check_name,
