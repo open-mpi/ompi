@@ -1,0 +1,64 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise nonblocking sendrecv APIs in their own executable.
+     *   These APIs combine send and receive argument conversion in one
+     *   call and return a request whose completion must preserve the
+     *   converted status/result state.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int rank = -1;
+    int size = -1;
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret || 2 != size) {
+        return 3;
+    }
+
+    int peer = 1 - rank;
+    int send_value = 200 + rank;
+    int recv_value = -1;
+    MPI_Request req = MPI_REQUEST_NULL;
+    ret = MPI_Isendrecv(&send_value, 1, MPI_INT, peer, 1700,
+                        &recv_value, 1, MPI_INT, peer, 1700,
+                        MPI_COMM_WORLD, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 4;
+    }
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        recv_value != 200 + peer) {
+        return 5;
+    }
+
+    int replace_value = 300 + rank;
+    ret = MPI_Isendrecv_replace(&replace_value, 1, MPI_INT, peer, 1701,
+                                peer, 1701, MPI_COMM_WORLD, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 6;
+    }
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        replace_value != 300 + peer) {
+        return 7;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 8;
+    }

@@ -1,0 +1,200 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise window object creation/allocation, metadata, predefined
+     *   attributes, predefined error-handler paths, and teardown without
+     *   performing RMA operations.
+     *
+     *   User-created window keyvals and error handlers require callbacks;
+     *   those remain Phase 10 work.  This Phase 9 probe is limited to
+     *   predefined attributes and predefined errhandlers so every object
+     *   lifetime is deterministic in one process.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int storage = 17;
+    MPI_Win win = MPI_WIN_NULL;
+    ret = MPI_Win_create(&storage, sizeof(storage), sizeof(storage),
+                         MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL == win) {
+        return 2;
+    }
+
+    MPI_Group group = MPI_GROUP_NULL;
+    ret = MPI_Win_get_group(win, &group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == group) {
+        return 3;
+    }
+    ret = MPI_Group_free(&group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != group) {
+        return 4;
+    }
+
+    MPI_Info info = MPI_INFO_NULL;
+    ret = MPI_Info_create(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
+        return 5;
+    }
+    ret = MPI_Info_set(info, "same_size", "true");
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+    ret = MPI_Win_set_info(win, info);
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    MPI_Info got_info = MPI_INFO_NULL;
+    ret = MPI_Win_get_info(win, &got_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == got_info) {
+        return 8;
+    }
+    ret = MPI_Info_free(&got_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != got_info) {
+        return 9;
+    }
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 10;
+    }
+
+    ret = MPI_Win_set_name(win, "abi-runtime-win");
+    if (MPI_SUCCESS != ret) {
+        return 11;
+    }
+    char name[MPI_MAX_OBJECT_NAME];
+    int name_len = -1;
+    ret = MPI_Win_get_name(win, name, &name_len);
+    if (MPI_SUCCESS != ret || 15 != name_len ||
+        0 != strcmp(name, "abi-runtime-win")) {
+        return 12;
+    }
+
+    void *base = NULL;
+    int flag = 0;
+    ret = MPI_Win_get_attr(win, MPI_WIN_BASE, &base, &flag);
+    if (MPI_SUCCESS != ret || !flag || base != &storage) {
+        return 13;
+    }
+    MPI_Aint *size_attr = NULL;
+    ret = MPI_Win_get_attr(win, MPI_WIN_SIZE, &size_attr, &flag);
+    if (MPI_SUCCESS != ret || !flag ||
+        NULL == size_attr || *size_attr < (MPI_Aint) sizeof(storage)) {
+        return 14;
+    }
+    int *disp_unit_attr = NULL;
+    ret = MPI_Win_get_attr(win, MPI_WIN_DISP_UNIT, &disp_unit_attr,
+                           &flag);
+    if (MPI_SUCCESS != ret || !flag ||
+        NULL == disp_unit_attr || *disp_unit_attr != (int) sizeof(storage)) {
+        return 15;
+    }
+    int *flavor_attr = NULL;
+    ret = MPI_Win_get_attr(win, MPI_WIN_CREATE_FLAVOR, &flavor_attr,
+                           &flag);
+    if (MPI_SUCCESS != ret || !flag ||
+        NULL == flavor_attr || *flavor_attr != MPI_WIN_FLAVOR_CREATE) {
+        return 16;
+    }
+    int *model_attr = NULL;
+    ret = MPI_Win_get_attr(win, MPI_WIN_MODEL, &model_attr, &flag);
+    if (MPI_SUCCESS != ret || !flag ||
+        NULL == model_attr ||
+        (*model_attr != MPI_WIN_UNIFIED &&
+         *model_attr != MPI_WIN_SEPARATE)) {
+        return 17;
+    }
+
+    MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+    ret = MPI_Win_get_errhandler(win, &errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == errhandler) {
+        return 18;
+    }
+    ret = MPI_Errhandler_free(&errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
+        return 19;
+    }
+    ret = MPI_Win_set_errhandler(win, MPI_ERRORS_RETURN);
+    if (MPI_SUCCESS != ret) {
+        return 20;
+    }
+    ret = MPI_Win_call_errhandler(win, MPI_ERR_OTHER);
+    if (MPI_SUCCESS != ret) {
+        return 21;
+    }
+
+    ret = MPI_Win_free(&win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
+        return 22;
+    }
+
+    int *allocated = NULL;
+    MPI_Win allocated_win = MPI_WIN_NULL;
+    ret = MPI_Win_allocate(sizeof(int), sizeof(int), MPI_INFO_NULL,
+                           MPI_COMM_WORLD, &allocated, &allocated_win);
+    if (MPI_SUCCESS != ret || NULL == allocated ||
+        MPI_WIN_NULL == allocated_win) {
+        return 23;
+    }
+    *allocated = 23;
+    ret = MPI_Win_free(&allocated_win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL != allocated_win) {
+        return 24;
+    }
+
+    int *shared = NULL;
+    MPI_Win shared_win = MPI_WIN_NULL;
+    ret = MPI_Win_allocate_shared(sizeof(int), sizeof(int),
+                                  MPI_INFO_NULL, MPI_COMM_WORLD,
+                                  &shared, &shared_win);
+    if (MPI_SUCCESS != ret || NULL == shared ||
+        MPI_WIN_NULL == shared_win) {
+        return 25;
+    }
+    MPI_Aint shared_size = -1;
+    int shared_disp = -1;
+    void *shared_base = NULL;
+    ret = MPI_Win_shared_query(shared_win, 0, &shared_size,
+                               &shared_disp, &shared_base);
+    if (MPI_SUCCESS != ret || shared_size < (MPI_Aint) sizeof(int) ||
+        shared_disp != (int) sizeof(int) || NULL == shared_base) {
+        return 26;
+    }
+    ret = MPI_Win_free(&shared_win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL != shared_win) {
+        return 27;
+    }
+
+    MPI_Win dynamic_win = MPI_WIN_NULL;
+    ret = MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_WORLD,
+                                 &dynamic_win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL == dynamic_win) {
+        return 28;
+    }
+    ret = MPI_Win_attach(dynamic_win, &storage, sizeof(storage));
+    if (MPI_SUCCESS != ret) {
+        return 29;
+    }
+    ret = MPI_Win_detach(dynamic_win, &storage);
+    if (MPI_SUCCESS != ret) {
+        return 30;
+    }
+    ret = MPI_Win_free(&dynamic_win);
+    if (MPI_SUCCESS != ret || MPI_WIN_NULL != dynamic_win) {
+        return 31;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 32;
+    }

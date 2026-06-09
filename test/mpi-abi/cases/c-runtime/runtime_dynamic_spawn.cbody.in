@@ -1,0 +1,95 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise MPI_Comm_spawn, MPI_Comm_spawn_multiple, and
+     *   MPI_Comm_get_parent without needing a separate checked-in child
+     *   executable.  The parent spawns this same executable with a mode
+     *   argument; child modes validate their parent intercommunicator and
+     *   disconnect before finalizing.  The runner launches this probe from
+     *   an absolute generated-executable path, so argv[0] is suitable for
+     *   re-spawning the same test binary.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    if (argc > 1 &&
+        (0 == strcmp(argv[1], "spawn_child") ||
+         0 == strcmp(argv[1], "spawn_multiple_child"))) {
+        MPI_Comm parent = MPI_COMM_NULL;
+        ret = MPI_Comm_get_parent(&parent);
+        if (MPI_SUCCESS != ret || MPI_COMM_NULL == parent) {
+            return 2;
+        }
+        int remote_size = -1;
+        ret = MPI_Comm_remote_size(parent, &remote_size);
+        if (MPI_SUCCESS != ret || 1 != remote_size) {
+            return 3;
+        }
+        ret = MPI_Comm_disconnect(&parent);
+        if (MPI_SUCCESS != ret || MPI_COMM_NULL != parent) {
+            return 4;
+        }
+        ret = MPI_Finalize();
+        if (MPI_SUCCESS != ret) {
+            return 5;
+        }
+        return 0;
+    }
+
+    char *spawn_argv[] = {"spawn_child", NULL};
+    int spawn_errcodes[1] = {-1};
+    MPI_Comm spawn_intercomm = MPI_COMM_NULL;
+    ret = MPI_Comm_spawn(argv[0], spawn_argv, 1, MPI_INFO_NULL, 0,
+                         MPI_COMM_WORLD, &spawn_intercomm,
+                         spawn_errcodes);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == spawn_intercomm ||
+        MPI_SUCCESS != spawn_errcodes[0]) {
+        return 6;
+    }
+    int remote_size = -1;
+    ret = MPI_Comm_remote_size(spawn_intercomm, &remote_size);
+    if (MPI_SUCCESS != ret || 1 != remote_size) {
+        return 7;
+    }
+    ret = MPI_Comm_disconnect(&spawn_intercomm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != spawn_intercomm) {
+        return 8;
+    }
+
+    char *commands[] = {argv[0]};
+    char *multi_argv0[] = {"spawn_multiple_child", NULL};
+    char **multi_argv[] = {multi_argv0};
+    int maxprocs[] = {1};
+    MPI_Info infos[] = {MPI_INFO_NULL};
+    int multi_errcodes[1] = {-1};
+    MPI_Comm multi_intercomm = MPI_COMM_NULL;
+    ret = MPI_Comm_spawn_multiple(1, commands, multi_argv, maxprocs,
+                                  infos, 0, MPI_COMM_WORLD,
+                                  &multi_intercomm, multi_errcodes);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == multi_intercomm ||
+        MPI_SUCCESS != multi_errcodes[0]) {
+        return 9;
+    }
+    ret = MPI_Comm_remote_size(multi_intercomm, &remote_size);
+    if (MPI_SUCCESS != ret || 1 != remote_size) {
+        return 10;
+    }
+    ret = MPI_Comm_disconnect(&multi_intercomm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != multi_intercomm) {
+        return 11;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }

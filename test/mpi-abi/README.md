@@ -39,6 +39,9 @@ Useful variables:
 * `OMPI_ABI_TEST_MPIRUN`: Open MPI launcher.
 * `MPICH_ABI_TEST_MPICC`: MPICH C wrapper.
 * `MPICH_ABI_TEST_MPIRUN`: MPICH launcher.
+* `OMPI_ABI_TEST_DYNAMIC_PROCESS`: set to `0` to skip dynamic process
+  probes in launch environments that cannot service spawn, connect,
+  accept, or name-service operations.
 * `OMPI_ABI_TEST_NP1`: one-rank test size.
 * `OMPI_ABI_TEST_NP2`: two-rank test size.
 * `OMPI_ABI_TEST_TMPDIR`: temporary directory root.

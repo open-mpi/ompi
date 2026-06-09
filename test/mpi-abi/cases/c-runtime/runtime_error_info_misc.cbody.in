@@ -1,0 +1,205 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Cover small, non-callback utility APIs that do not justify their
+     *   own family-specific executable: info-object state, dynamic error
+     *   class/code/string state, address arithmetic, memory allocation, and
+     *   timing/version/name queries.
+     *
+     *   These calls are deliberately grouped because they do not leave
+     *   persistent MPI communication state behind.  Error-class removals are
+     *   still checked here because they are the observable cleanup half of
+     *   the dynamic error-code ABI path.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int version = -1;
+    int subversion = -1;
+    ret = MPI_Get_version(&version, &subversion);
+    if (MPI_SUCCESS != ret || version <= 0 || subversion < 0) {
+        return 2;
+    }
+
+    char library_version[MPI_MAX_LIBRARY_VERSION_STRING];
+    int library_version_len = -1;
+    ret = MPI_Get_library_version(library_version, &library_version_len);
+    if (MPI_SUCCESS != ret || library_version_len <= 0 ||
+        library_version_len >= MPI_MAX_LIBRARY_VERSION_STRING) {
+        return 3;
+    }
+
+    char processor_name[MPI_MAX_PROCESSOR_NAME];
+    int processor_name_len = -1;
+    ret = MPI_Get_processor_name(processor_name, &processor_name_len);
+    if (MPI_SUCCESS != ret || processor_name_len <= 0 ||
+        processor_name_len >= MPI_MAX_PROCESSOR_NAME) {
+        return 4;
+    }
+
+    double tick = MPI_Wtick();
+    double now = MPI_Wtime();
+    if (tick <= 0.0 || now < 0.0) {
+        return 5;
+    }
+
+    MPI_Info info = MPI_INFO_NULL;
+    ret = MPI_Info_create(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
+        return 6;
+    }
+    ret = MPI_Info_set(info, "abi_key", "abi_value");
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    int nkeys = -1;
+    ret = MPI_Info_get_nkeys(info, &nkeys);
+    if (MPI_SUCCESS != ret || 1 != nkeys) {
+        return 8;
+    }
+    char key[MPI_MAX_INFO_KEY];
+    ret = MPI_Info_get_nthkey(info, 0, key);
+    if (MPI_SUCCESS != ret || 0 != strcmp(key, "abi_key")) {
+        return 9;
+    }
+    int valuelen = -1;
+    int flag = 0;
+    ret = MPI_Info_get_valuelen(info, "abi_key", &valuelen, &flag);
+    if (MPI_SUCCESS != ret || !flag || 9 != valuelen) {
+        return 10;
+    }
+    char value[MPI_MAX_INFO_VAL];
+    ret = MPI_Info_get(info, "abi_key", MPI_MAX_INFO_VAL - 1, value,
+                       &flag);
+    if (MPI_SUCCESS != ret || !flag || 0 != strcmp(value, "abi_value")) {
+        return 11;
+    }
+    valuelen = MPI_MAX_INFO_VAL - 1;
+    ret = MPI_Info_get_string(info, "abi_key", &valuelen, value, &flag);
+    if (MPI_SUCCESS != ret || !flag || 0 != strcmp(value, "abi_value")) {
+        return 12;
+    }
+
+    MPI_Info dup_info = MPI_INFO_NULL;
+    ret = MPI_Info_dup(info, &dup_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == dup_info) {
+        return 13;
+    }
+    ret = MPI_Info_delete(dup_info, "abi_key");
+    if (MPI_SUCCESS != ret) {
+        return 14;
+    }
+    valuelen = -1;
+    flag = 1;
+    ret = MPI_Info_get_valuelen(dup_info, "abi_key", &valuelen, &flag);
+    if (MPI_SUCCESS != ret || flag) {
+        return 15;
+    }
+    ret = MPI_Info_free(&dup_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != dup_info) {
+        return 16;
+    }
+
+    int env_argc = argc;
+    char **env_argv = argv;
+    MPI_Info env_info = MPI_INFO_NULL;
+    ret = MPI_Info_create_env(env_argc, env_argv, &env_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == env_info) {
+        return 17;
+    }
+    ret = MPI_Info_free(&env_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != env_info) {
+        return 18;
+    }
+
+    MPI_Info hw_info = MPI_INFO_NULL;
+    ret = MPI_Get_hw_resource_info(&hw_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == hw_info) {
+        return 19;
+    }
+    ret = MPI_Info_free(&hw_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != hw_info) {
+        return 20;
+    }
+
+    void *mem = NULL;
+    ret = MPI_Alloc_mem(64, MPI_INFO_NULL, &mem);
+    if (MPI_SUCCESS != ret || NULL == mem) {
+        return 21;
+    }
+    MPI_Aint base = 0;
+    MPI_Aint next = 0;
+    ret = MPI_Get_address(mem, &base);
+    if (MPI_SUCCESS != ret) {
+        return 22;
+    }
+    ret = MPI_Get_address((char *) mem + 8, &next);
+    if (MPI_SUCCESS != ret) {
+        return 23;
+    }
+    if (MPI_Aint_add(base, 8) != next || 8 != MPI_Aint_diff(next, base)) {
+        return 24;
+    }
+    ret = MPI_Free_mem(mem);
+    if (MPI_SUCCESS != ret) {
+        return 25;
+    }
+
+    int error_class = MPI_SUCCESS;
+    ret = MPI_Add_error_class(&error_class);
+    if (MPI_SUCCESS != ret || MPI_SUCCESS == error_class) {
+        return 26;
+    }
+    int error_code = MPI_SUCCESS;
+    ret = MPI_Add_error_code(error_class, &error_code);
+    if (MPI_SUCCESS != ret || MPI_SUCCESS == error_code) {
+        return 27;
+    }
+    ret = MPI_Add_error_string(error_code, "abi dynamic error");
+    if (MPI_SUCCESS != ret) {
+        return 28;
+    }
+    int queried_class = MPI_SUCCESS;
+    ret = MPI_Error_class(error_code, &queried_class);
+    if (MPI_SUCCESS != ret || queried_class != error_class) {
+        return 29;
+    }
+    char error_string[MPI_MAX_ERROR_STRING];
+    int error_string_len = -1;
+    ret = MPI_Error_string(error_code, error_string, &error_string_len);
+    if (MPI_SUCCESS != ret || error_string_len <= 0 ||
+        0 != strcmp(error_string, "abi dynamic error")) {
+        return 30;
+    }
+    ret = MPI_Remove_error_string(error_code);
+    if (MPI_SUCCESS != ret) {
+        return 31;
+    }
+    ret = MPI_Remove_error_code(error_code);
+    if (MPI_SUCCESS != ret) {
+        return 32;
+    }
+    ret = MPI_Remove_error_class(error_class);
+    if (MPI_SUCCESS != ret) {
+        return 33;
+    }
+
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 34;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 35;
+    }

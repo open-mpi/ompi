@@ -1,0 +1,174 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise MPI-IO file handle lifecycle and metadata APIs with a
+     *   single local file.  This probe checks file info, view, size,
+     *   position, byte-offset, atomicity, sync, group, and predefined
+     *   errhandler paths without doing bulk data movement.
+     *
+     *   Datarep registration is callback-based and remains Phase 10 work.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    const char *filename = "abi-runtime-file-lifecycle.dat";
+    (void) MPI_File_delete(filename, MPI_INFO_NULL);
+
+    MPI_File file = MPI_FILE_NULL;
+    ret = MPI_File_open(MPI_COMM_WORLD, filename,
+                        MPI_MODE_CREATE | MPI_MODE_RDWR,
+                        MPI_INFO_NULL, &file);
+    if (MPI_SUCCESS != ret || MPI_FILE_NULL == file) {
+        return 2;
+    }
+
+    int amode = 0;
+    ret = MPI_File_get_amode(file, &amode);
+    if (MPI_SUCCESS != ret ||
+        0 == (amode & MPI_MODE_CREATE) || 0 == (amode & MPI_MODE_RDWR)) {
+        return 3;
+    }
+
+    MPI_Group group = MPI_GROUP_NULL;
+    ret = MPI_File_get_group(file, &group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == group) {
+        return 4;
+    }
+    ret = MPI_Group_free(&group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != group) {
+        return 5;
+    }
+
+    MPI_Info info = MPI_INFO_NULL;
+    ret = MPI_Info_create(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
+        return 6;
+    }
+    ret = MPI_Info_set(info, "access_style", "write_once,read_once");
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    ret = MPI_File_set_info(file, info);
+    if (MPI_SUCCESS != ret) {
+        return 8;
+    }
+    MPI_Info got_info = MPI_INFO_NULL;
+    ret = MPI_File_get_info(file, &got_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == got_info) {
+        return 9;
+    }
+    ret = MPI_Info_free(&got_info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != got_info) {
+        return 10;
+    }
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 11;
+    }
+
+    ret = MPI_File_set_size(file, 0);
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+    ret = MPI_File_preallocate(file, 64);
+    if (MPI_SUCCESS != ret) {
+        return 13;
+    }
+    MPI_Offset size = -1;
+    ret = MPI_File_get_size(file, &size);
+    if (MPI_SUCCESS != ret || size < 64) {
+        return 14;
+    }
+
+    ret = MPI_File_set_view(file, 0, MPI_INT, MPI_INT, "native",
+                            MPI_INFO_NULL);
+    if (MPI_SUCCESS != ret) {
+        return 15;
+    }
+    MPI_Offset disp = -1;
+    MPI_Datatype etype = MPI_DATATYPE_NULL;
+    MPI_Datatype filetype = MPI_DATATYPE_NULL;
+    char datarep[MPI_MAX_DATAREP_STRING];
+    ret = MPI_File_get_view(file, &disp, &etype, &filetype, datarep);
+    if (MPI_SUCCESS != ret || 0 != disp || MPI_INT != etype ||
+        MPI_INT != filetype || 0 != strcmp(datarep, "native")) {
+        return 16;
+    }
+
+    MPI_Aint type_extent = -1;
+    ret = MPI_File_get_type_extent(file, MPI_INT, &type_extent);
+    if (MPI_SUCCESS != ret || type_extent < (MPI_Aint) sizeof(int)) {
+        return 17;
+    }
+    MPI_Offset byte_offset = -1;
+    ret = MPI_File_get_byte_offset(file, 3, &byte_offset);
+    if (MPI_SUCCESS != ret ||
+        byte_offset < 3 * (MPI_Offset) sizeof(int)) {
+        return 18;
+    }
+
+    ret = MPI_File_seek(file, 2, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 19;
+    }
+    MPI_Offset position = -1;
+    ret = MPI_File_get_position(file, &position);
+    if (MPI_SUCCESS != ret || 2 != position) {
+        return 20;
+    }
+
+    ret = MPI_File_set_atomicity(file, 1);
+    if (MPI_SUCCESS != ret) {
+        return 21;
+    }
+    int atomicity = 0;
+    ret = MPI_File_get_atomicity(file, &atomicity);
+    if (MPI_SUCCESS != ret || !atomicity) {
+        return 22;
+    }
+
+    MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+    ret = MPI_File_get_errhandler(file, &errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == errhandler) {
+        return 23;
+    }
+    ret = MPI_Errhandler_free(&errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
+        return 24;
+    }
+    ret = MPI_File_set_errhandler(file, MPI_ERRORS_RETURN);
+    if (MPI_SUCCESS != ret) {
+        return 25;
+    }
+    ret = MPI_File_call_errhandler(file, MPI_ERR_OTHER);
+    if (MPI_SUCCESS != ret) {
+        return 26;
+    }
+
+    ret = MPI_File_sync(file);
+    if (MPI_SUCCESS != ret) {
+        return 27;
+    }
+    ret = MPI_File_close(&file);
+    if (MPI_SUCCESS != ret || MPI_FILE_NULL != file) {
+        return 28;
+    }
+    ret = MPI_File_delete(filename, MPI_INFO_NULL);
+    if (MPI_SUCCESS != ret) {
+        return 29;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 30;
+    }

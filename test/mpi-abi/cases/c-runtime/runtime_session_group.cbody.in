@@ -1,0 +1,68 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise MPI_Group_from_session_pset separately from the broader
+     *   session lifecycle probe.  A session pset name is implementation
+     *   owned, so the probe first queries the exact pset-name length and
+     *   then asks the session layer to materialize the corresponding
+     *   group.
+     */
+    MPI_Session session = MPI_SESSION_NULL;
+    int ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
+                               &session);
+    if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
+        return 1;
+    }
+
+    int npsets = -1;
+    ret = MPI_Session_get_num_psets(session, MPI_INFO_NULL, &npsets);
+    if (MPI_SUCCESS != ret || npsets < 1) {
+        return 2;
+    }
+
+    int pset_len = 0;
+    ret = MPI_Session_get_nth_pset(session, MPI_INFO_NULL, 0,
+                                   &pset_len, NULL);
+    if (MPI_SUCCESS != ret || pset_len < 2) {
+        return 3;
+    }
+    char *pset_name = malloc((size_t) pset_len);
+    if (NULL == pset_name) {
+        return 4;
+    }
+    ret = MPI_Session_get_nth_pset(session, MPI_INFO_NULL, 0,
+                                   &pset_len, pset_name);
+    if (MPI_SUCCESS != ret || '\0' == pset_name[0]) {
+        free(pset_name);
+        return 5;
+    }
+
+    MPI_Group group = MPI_GROUP_NULL;
+    ret = MPI_Group_from_session_pset(session, pset_name, &group);
+    free(pset_name);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == group) {
+        return 6;
+    }
+
+    int group_size = -1;
+    ret = MPI_Group_size(group, &group_size);
+    if (MPI_SUCCESS != ret || group_size < 1) {
+        return 7;
+    }
+    ret = MPI_Group_free(&group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != group) {
+        return 8;
+    }
+
+    ret = MPI_Session_finalize(&session);
+    if (MPI_SUCCESS != ret || MPI_SESSION_NULL != session) {
+        return 9;
+    }

@@ -1,0 +1,360 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise MPI-IO blocking, nonblocking, collective,
+     *   split-collective, shared-file-pointer, and ordered read/write
+     *   calls.  The probe uses one rank so the collective and ordered
+     *   routines still validate ABI signatures, request/status conversion,
+     *   offsets, and file-pointer state without introducing filesystem
+     *   ordering assumptions.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    const char *filename = "abi-runtime-file-io.dat";
+    (void) MPI_File_delete(filename, MPI_INFO_NULL);
+
+    MPI_File file = MPI_FILE_NULL;
+    ret = MPI_File_open(MPI_COMM_WORLD, filename,
+                        MPI_MODE_CREATE | MPI_MODE_RDWR,
+                        MPI_INFO_NULL, &file);
+    if (MPI_SUCCESS != ret || MPI_FILE_NULL == file) {
+        return 2;
+    }
+    ret = MPI_File_set_size(file, 0);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+
+    MPI_Status status;
+    int value = 101;
+    ret = MPI_File_write_at(file, 0, &value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret) {
+        return 4;
+    }
+    int count = -1;
+    ret = MPI_Get_count(&status, MPI_INT, &count);
+    if (MPI_SUCCESS != ret || 1 != count) {
+        return 5;
+    }
+    int read_value = -1;
+    ret = MPI_File_read_at(file, 0, &read_value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret || 101 != read_value) {
+        return 6;
+    }
+
+    MPI_Request req = MPI_REQUEST_NULL;
+    value = 102;
+    ret = MPI_File_iwrite_at(file, 1, &value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 7;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req) {
+        return 8;
+    }
+    read_value = -1;
+    ret = MPI_File_iread_at(file, 1, &read_value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 9;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        102 != read_value) {
+        return 10;
+    }
+
+    ret = MPI_File_seek(file, 2, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 11;
+    }
+    value = 103;
+    ret = MPI_File_write(file, &value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+    ret = MPI_File_seek(file, 2, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 13;
+    }
+    read_value = -1;
+    ret = MPI_File_read(file, &read_value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret || 103 != read_value) {
+        return 14;
+    }
+
+    ret = MPI_File_seek(file, 3, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 15;
+    }
+    value = 104;
+    ret = MPI_File_iwrite(file, &value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 16;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req) {
+        return 17;
+    }
+    ret = MPI_File_seek(file, 3, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 18;
+    }
+    read_value = -1;
+    ret = MPI_File_iread(file, &read_value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 19;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        104 != read_value) {
+        return 20;
+    }
+
+    value = 105;
+    ret = MPI_File_write_at_all(file, 4, &value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret) {
+        return 21;
+    }
+    read_value = -1;
+    ret = MPI_File_read_at_all(file, 4, &read_value, 1, MPI_INT,
+                               &status);
+    if (MPI_SUCCESS != ret || 105 != read_value) {
+        return 22;
+    }
+    value = 106;
+    ret = MPI_File_iwrite_at_all(file, 5, &value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 23;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req) {
+        return 24;
+    }
+    read_value = -1;
+    ret = MPI_File_iread_at_all(file, 5, &read_value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 25;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        106 != read_value) {
+        return 26;
+    }
+
+    ret = MPI_File_seek(file, 6, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 27;
+    }
+    value = 107;
+    ret = MPI_File_write_all(file, &value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret) {
+        return 28;
+    }
+    ret = MPI_File_seek(file, 6, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 29;
+    }
+    read_value = -1;
+    ret = MPI_File_read_all(file, &read_value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret || 107 != read_value) {
+        return 30;
+    }
+
+    ret = MPI_File_seek(file, 7, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 31;
+    }
+    value = 108;
+    ret = MPI_File_iwrite_all(file, &value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 32;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req) {
+        return 33;
+    }
+    ret = MPI_File_seek(file, 7, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 34;
+    }
+    read_value = -1;
+    ret = MPI_File_iread_all(file, &read_value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 35;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        108 != read_value) {
+        return 36;
+    }
+
+    value = 109;
+    ret = MPI_File_write_at_all_begin(file, 8, &value, 1, MPI_INT);
+    if (MPI_SUCCESS != ret) {
+        return 37;
+    }
+    ret = MPI_File_write_at_all_end(file, &value, &status);
+    if (MPI_SUCCESS != ret) {
+        return 38;
+    }
+    read_value = -1;
+    ret = MPI_File_read_at_all_begin(file, 8, &read_value, 1, MPI_INT);
+    if (MPI_SUCCESS != ret) {
+        return 39;
+    }
+    ret = MPI_File_read_at_all_end(file, &read_value, &status);
+    if (MPI_SUCCESS != ret || 109 != read_value) {
+        return 40;
+    }
+
+    ret = MPI_File_seek(file, 9, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 41;
+    }
+    value = 110;
+    ret = MPI_File_write_all_begin(file, &value, 1, MPI_INT);
+    if (MPI_SUCCESS != ret) {
+        return 42;
+    }
+    ret = MPI_File_write_all_end(file, &value, &status);
+    if (MPI_SUCCESS != ret) {
+        return 43;
+    }
+    ret = MPI_File_seek(file, 9, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 44;
+    }
+    read_value = -1;
+    ret = MPI_File_read_all_begin(file, &read_value, 1, MPI_INT);
+    if (MPI_SUCCESS != ret) {
+        return 45;
+    }
+    ret = MPI_File_read_all_end(file, &read_value, &status);
+    if (MPI_SUCCESS != ret || 110 != read_value) {
+        return 46;
+    }
+
+    ret = MPI_File_seek_shared(file, 10, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 47;
+    }
+    value = 111;
+    ret = MPI_File_write_shared(file, &value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret) {
+        return 48;
+    }
+    ret = MPI_File_seek_shared(file, 10, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 49;
+    }
+    read_value = -1;
+    ret = MPI_File_read_shared(file, &read_value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret || 111 != read_value) {
+        return 50;
+    }
+    MPI_Offset shared_position = -1;
+    ret = MPI_File_get_position_shared(file, &shared_position);
+    if (MPI_SUCCESS != ret ||
+        shared_position != 10 + (MPI_Offset) sizeof(int)) {
+        return 51;
+    }
+
+    ret = MPI_File_seek_shared(file, 12, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 52;
+    }
+    value = 112;
+    ret = MPI_File_iwrite_shared(file, &value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 53;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req) {
+        return 54;
+    }
+    ret = MPI_File_seek_shared(file, 12, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 55;
+    }
+    read_value = -1;
+    ret = MPI_File_iread_shared(file, &read_value, 1, MPI_INT, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 56;
+    }
+    ret = MPI_Wait(&req, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        112 != read_value) {
+        return 57;
+    }
+
+    ret = MPI_File_seek_shared(file, 13, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 58;
+    }
+    value = 113;
+    ret = MPI_File_write_ordered(file, &value, 1, MPI_INT, &status);
+    if (MPI_SUCCESS != ret) {
+        return 59;
+    }
+    ret = MPI_File_seek_shared(file, 13, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 60;
+    }
+    read_value = -1;
+    ret = MPI_File_read_ordered(file, &read_value, 1, MPI_INT,
+                                &status);
+    if (MPI_SUCCESS != ret || 113 != read_value) {
+        return 61;
+    }
+
+    ret = MPI_File_seek_shared(file, 14, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 62;
+    }
+    value = 114;
+    ret = MPI_File_write_ordered_begin(file, &value, 1, MPI_INT);
+    if (MPI_SUCCESS != ret) {
+        return 63;
+    }
+    ret = MPI_File_write_ordered_end(file, &value, &status);
+    if (MPI_SUCCESS != ret) {
+        return 64;
+    }
+    ret = MPI_File_seek_shared(file, 14, MPI_SEEK_SET);
+    if (MPI_SUCCESS != ret) {
+        return 65;
+    }
+    read_value = -1;
+    ret = MPI_File_read_ordered_begin(file, &read_value, 1, MPI_INT);
+    if (MPI_SUCCESS != ret) {
+        return 66;
+    }
+    ret = MPI_File_read_ordered_end(file, &read_value, &status);
+    if (MPI_SUCCESS != ret || 114 != read_value) {
+        return 67;
+    }
+
+    ret = MPI_File_close(&file);
+    if (MPI_SUCCESS != ret || MPI_FILE_NULL != file) {
+        return 68;
+    }
+    ret = MPI_File_delete(filename, MPI_INFO_NULL);
+    if (MPI_SUCCESS != ret) {
+        return 69;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 70;
+    }

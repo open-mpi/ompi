@@ -50,6 +50,12 @@ SKIP_LINKAGE_INSPECTION_UNAVAILABLE = "linkage_inspection_unavailable"
 SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE = "symbol_diagnostics_unavailable"
 SKIP_FORTRAN_BINDINGS_DISABLED = "fortran_bindings_disabled"
 SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
+SKIP_RMA_SUPPORT_DISABLED = "rma_support_disabled"
+SKIP_MPI_IO_SUPPORT_DISABLED = "mpi_io_support_disabled"
+SKIP_DYNAMIC_PROCESS_DISABLED = "dynamic_process_disabled"
+SKIP_MPI_ABORT_TERMINATES_JOB = "mpi_abort_terminates_job"
+SKIP_COMM_JOIN_REQUIRES_CONNECTED_FD = "comm_join_requires_connected_fd"
+SKIP_PHASE10_CALLBACK_REQUIRED = "phase10_callback_required"
 
 EXPECTED_METADATA_VERSION = "5.0"
 EXPECTED_API_COUNT = 567
@@ -259,6 +265,23 @@ INSTALLED_C_RUNTIME_API_PROBES = (
         "body_file": "cases/c-runtime/runtime_session_buffer.cbody.in",
     },
     {
+        "name": "runtime_session_group",
+        "family": "session",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Group_from_session_pset",
+        ),
+        "support_api_names": (
+            "MPI_Group_free",
+            "MPI_Group_size",
+            "MPI_Session_finalize",
+            "MPI_Session_get_nth_pset",
+            "MPI_Session_get_num_psets",
+            "MPI_Session_init",
+        ),
+        "body_file": "cases/c-runtime/runtime_session_group.cbody.in",
+    },
+    {
         "name": "runtime_comm_basic",
         "family": "comm",
         "rank_count": 1,
@@ -309,6 +332,33 @@ INSTALLED_C_RUNTIME_API_PROBES = (
         "body_file": "cases/c-runtime/runtime_comm_create_split.cbody.in",
     },
     {
+        "name": "runtime_intercomm_group",
+        "family": "comm",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Comm_create_from_group",
+            "MPI_Comm_remote_group",
+            "MPI_Comm_remote_size",
+            "MPI_Comm_test_inter",
+            "MPI_Intercomm_create",
+            "MPI_Intercomm_create_from_groups",
+            "MPI_Intercomm_merge",
+        ),
+        "support_api_names": (
+            "MPI_Comm_free",
+            "MPI_Comm_group",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Comm_split",
+            "MPI_Finalize",
+            "MPI_Group_free",
+            "MPI_Group_incl",
+            "MPI_Group_size",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_intercomm_group.cbody.in",
+    },
+    {
         "name": "runtime_comm_errhandler_basic",
         "family": "comm",
         "rank_count": 1,
@@ -323,6 +373,19 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Init",
         ),
         "body_file": "cases/c-runtime/runtime_comm_errhandler_basic.cbody.in",
+    },
+    {
+        "name": "runtime_comm_attr_predefined",
+        "family": "comm",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Comm_get_attr",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_comm_attr_predefined.cbody.in",
     },
     {
         "name": "runtime_comm_buffer",
@@ -486,6 +549,23 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Wait",
         ),
         "body_file": "cases/c-runtime/runtime_point_to_point_matched_message.cbody.in",
+    },
+    {
+        "name": "runtime_point_to_point_isendrecv",
+        "family": "point_to_point",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Isendrecv",
+            "MPI_Isendrecv_replace",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_point_to_point_isendrecv.cbody.in",
     },
     {
         "name": "runtime_point_to_point_partitioned",
@@ -767,6 +847,22 @@ INSTALLED_C_RUNTIME_API_PROBES = (
         "body_file": "cases/c-runtime/runtime_datatype_constructors.cbody.in",
     },
     {
+        "name": "runtime_datatype_contents",
+        "family": "type",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Type_get_contents",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Type_create_struct",
+            "MPI_Type_free",
+            "MPI_Type_get_envelope",
+        ),
+        "body_file": "cases/c-runtime/runtime_datatype_contents.cbody.in",
+    },
+    {
         "name": "runtime_pack_status",
         "family": "type",
         "rank_count": 1,
@@ -811,6 +907,285 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Reduce_local",
         ),
         "body_file": "cases/c-runtime/runtime_op_predefined.cbody.in",
+    },
+    {
+        "name": "runtime_win_lifecycle",
+        "family": "win",
+        "requires_feature": "rma",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Win_allocate",
+            "MPI_Win_allocate_shared",
+            "MPI_Win_attach",
+            "MPI_Win_call_errhandler",
+            "MPI_Win_create",
+            "MPI_Win_create_dynamic",
+            "MPI_Win_detach",
+            "MPI_Win_free",
+            "MPI_Win_get_attr",
+            "MPI_Win_get_errhandler",
+            "MPI_Win_get_group",
+            "MPI_Win_get_info",
+            "MPI_Win_get_name",
+            "MPI_Win_set_errhandler",
+            "MPI_Win_set_info",
+            "MPI_Win_set_name",
+            "MPI_Win_shared_query",
+        ),
+        "support_api_names": (
+            "MPI_Errhandler_free",
+            "MPI_Finalize",
+            "MPI_Group_free",
+            "MPI_Info_create",
+            "MPI_Info_free",
+            "MPI_Info_set",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_win_lifecycle.cbody.in",
+    },
+    {
+        "name": "runtime_rma_operations",
+        "family": "rma",
+        "requires_feature": "rma",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Accumulate",
+            "MPI_Compare_and_swap",
+            "MPI_Fetch_and_op",
+            "MPI_Get",
+            "MPI_Get_accumulate",
+            "MPI_Put",
+            "MPI_Raccumulate",
+            "MPI_Rget",
+            "MPI_Rget_accumulate",
+            "MPI_Rput",
+            "MPI_Win_complete",
+            "MPI_Win_fence",
+            "MPI_Win_flush",
+            "MPI_Win_flush_all",
+            "MPI_Win_flush_local",
+            "MPI_Win_flush_local_all",
+            "MPI_Win_lock",
+            "MPI_Win_lock_all",
+            "MPI_Win_post",
+            "MPI_Win_start",
+            "MPI_Win_sync",
+            "MPI_Win_test",
+            "MPI_Win_unlock",
+            "MPI_Win_unlock_all",
+            "MPI_Win_wait",
+        ),
+        "support_api_names": (
+            "MPI_Barrier",
+            "MPI_Comm_group",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Group_free",
+            "MPI_Group_incl",
+            "MPI_Init",
+            "MPI_Wait",
+            "MPI_Win_create",
+            "MPI_Win_free",
+        ),
+        "body_file": "cases/c-runtime/runtime_rma_operations.cbody.in",
+    },
+    {
+        "name": "runtime_file_lifecycle",
+        "family": "file",
+        "requires_feature": "mpi_io",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_File_call_errhandler",
+            "MPI_File_close",
+            "MPI_File_delete",
+            "MPI_File_get_amode",
+            "MPI_File_get_atomicity",
+            "MPI_File_get_byte_offset",
+            "MPI_File_get_errhandler",
+            "MPI_File_get_group",
+            "MPI_File_get_info",
+            "MPI_File_get_position",
+            "MPI_File_get_size",
+            "MPI_File_get_type_extent",
+            "MPI_File_get_view",
+            "MPI_File_open",
+            "MPI_File_preallocate",
+            "MPI_File_seek",
+            "MPI_File_set_atomicity",
+            "MPI_File_set_errhandler",
+            "MPI_File_set_info",
+            "MPI_File_set_size",
+            "MPI_File_set_view",
+            "MPI_File_sync",
+        ),
+        "support_api_names": (
+            "MPI_Errhandler_free",
+            "MPI_Finalize",
+            "MPI_Group_free",
+            "MPI_Info_create",
+            "MPI_Info_free",
+            "MPI_Info_set",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_file_lifecycle.cbody.in",
+    },
+    {
+        "name": "runtime_file_io",
+        "family": "file",
+        "requires_feature": "mpi_io",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_File_get_position_shared",
+            "MPI_File_iread",
+            "MPI_File_iread_all",
+            "MPI_File_iread_at",
+            "MPI_File_iread_at_all",
+            "MPI_File_iread_shared",
+            "MPI_File_iwrite",
+            "MPI_File_iwrite_all",
+            "MPI_File_iwrite_at",
+            "MPI_File_iwrite_at_all",
+            "MPI_File_iwrite_shared",
+            "MPI_File_read",
+            "MPI_File_read_all",
+            "MPI_File_read_all_begin",
+            "MPI_File_read_all_end",
+            "MPI_File_read_at",
+            "MPI_File_read_at_all",
+            "MPI_File_read_at_all_begin",
+            "MPI_File_read_at_all_end",
+            "MPI_File_read_ordered",
+            "MPI_File_read_ordered_begin",
+            "MPI_File_read_ordered_end",
+            "MPI_File_read_shared",
+            "MPI_File_seek_shared",
+            "MPI_File_write",
+            "MPI_File_write_all",
+            "MPI_File_write_all_begin",
+            "MPI_File_write_all_end",
+            "MPI_File_write_at",
+            "MPI_File_write_at_all",
+            "MPI_File_write_at_all_begin",
+            "MPI_File_write_at_all_end",
+            "MPI_File_write_ordered",
+            "MPI_File_write_ordered_begin",
+            "MPI_File_write_ordered_end",
+            "MPI_File_write_shared",
+        ),
+        "support_api_names": (
+            "MPI_File_close",
+            "MPI_File_delete",
+            "MPI_File_open",
+            "MPI_File_seek",
+            "MPI_File_set_size",
+            "MPI_Finalize",
+            "MPI_Get_count",
+            "MPI_Init",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_file_io.cbody.in",
+    },
+    {
+        "name": "runtime_dynamic_name_service",
+        "family": "dynamic_process",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Close_port",
+            "MPI_Lookup_name",
+            "MPI_Open_port",
+            "MPI_Publish_name",
+            "MPI_Unpublish_name",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "requires_feature": "dynamic_process",
+        "body_file": "cases/c-runtime/runtime_dynamic_name_service.cbody.in",
+    },
+    {
+        "name": "runtime_dynamic_connect",
+        "family": "dynamic_process",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Comm_accept",
+            "MPI_Comm_connect",
+            "MPI_Comm_disconnect",
+        ),
+        "support_api_names": (
+            "MPI_Bcast",
+            "MPI_Close_port",
+            "MPI_Comm_rank",
+            "MPI_Comm_remote_size",
+            "MPI_Comm_size",
+            "MPI_Comm_test_inter",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Open_port",
+        ),
+        "requires_feature": "dynamic_process",
+        "body_file": "cases/c-runtime/runtime_dynamic_connect.cbody.in",
+    },
+    {
+        "name": "runtime_dynamic_spawn",
+        "family": "dynamic_process",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Comm_get_parent",
+            "MPI_Comm_spawn",
+            "MPI_Comm_spawn_multiple",
+        ),
+        "support_api_names": (
+            "MPI_Comm_disconnect",
+            "MPI_Comm_remote_size",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "requires_feature": "dynamic_process",
+        "body_file": "cases/c-runtime/runtime_dynamic_spawn.cbody.in",
+    },
+    {
+        "name": "runtime_error_info_misc",
+        "family": "misc",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Add_error_class",
+            "MPI_Add_error_code",
+            "MPI_Add_error_string",
+            "MPI_Aint_add",
+            "MPI_Aint_diff",
+            "MPI_Alloc_mem",
+            "MPI_Error_class",
+            "MPI_Error_string",
+            "MPI_Free_mem",
+            "MPI_Get_address",
+            "MPI_Get_hw_resource_info",
+            "MPI_Get_library_version",
+            "MPI_Get_processor_name",
+            "MPI_Get_version",
+            "MPI_Info_create_env",
+            "MPI_Info_delete",
+            "MPI_Info_dup",
+            "MPI_Info_get",
+            "MPI_Info_get_nkeys",
+            "MPI_Info_get_nthkey",
+            "MPI_Info_get_string",
+            "MPI_Info_get_valuelen",
+            "MPI_Remove_error_class",
+            "MPI_Remove_error_code",
+            "MPI_Remove_error_string",
+            "MPI_Wtick",
+            "MPI_Wtime",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Info_create",
+            "MPI_Info_free",
+            "MPI_Info_set",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_error_info_misc.cbody.in",
     },
 )
 
@@ -1039,9 +1414,97 @@ def _detect_fortran_support(builddir):
 
 def _detect_optional_features(builddir):
     """Return configured optional MPI features that affect ABI coverage."""
-    # No configured optional MPI API-family feature currently maps
-    # cleanly to a standard ABI unsupported_by_build classification.
-    return {}
+    return {
+        "dynamic_process": _detect_dynamic_process_support(),
+        "mpi_io": _detect_mpi_io_support(builddir),
+        "rma": _detect_rma_support(builddir),
+    }
+
+
+def _detect_dynamic_process_support():
+    """Detect whether launch-sensitive dynamic process probes should run.
+
+    MPI_Comm_spawn, MPI_Comm_connect/accept, and the name-service calls
+    are standard MPI APIs, but many CI environments deliberately run with
+    launchers or container restrictions that cannot service dynamic
+    process management.  Open MPI does not expose a single configure
+    conditional that captures that site policy, so the test runner treats
+    dynamic process support as enabled unless the caller explicitly
+    disables it with OMPI_ABI_TEST_DYNAMIC_PROCESS=0.  That gives
+    restricted environments a stable SKIP instead of a hard FAIL while
+    still running the probes by default on ordinary local installations.
+    """
+    override = _env_bool("OMPI_ABI_TEST_DYNAMIC_PROCESS")
+    if override is not None:
+        return {
+            "enabled": override,
+            "source": "OMPI_ABI_TEST_DYNAMIC_PROCESS",
+        }
+    return {
+        "enabled": None,
+        "source": "unknown",
+    }
+
+
+def _detect_mpi_io_support(builddir):
+    """Detect whether the configured build includes MPI-IO support."""
+    override = _env_bool("OMPI_ABI_TEST_MPI_IO")
+    if override is not None:
+        return {
+            "enabled": override,
+            "source": "OMPI_ABI_TEST_MPI_IO",
+        }
+    return _conditional_enabled(builddir, "OMPI_OMPIO_SUPPORT")
+
+
+def _detect_rma_support(builddir):
+    """Detect whether the configured build includes an OSC component.
+
+    RMA/window APIs require at least one OSC component at run time.  Open
+    MPI's component Makefiles use DSO conditionals for install mode, so
+    a false *_DSO conditional alone does not mean the component is
+    disabled; a static build can still configure the component.  The
+    generated config.status file is a better authority because it lists
+    the component Makefiles that configure selected.
+    """
+    override = _env_bool("OMPI_ABI_TEST_RMA")
+    if override is not None:
+        return {
+            "enabled": override,
+            "source": "OMPI_ABI_TEST_RMA",
+        }
+
+    config_status = builddir / "config.status"
+    if not config_status.exists():
+        return {
+            "enabled": None,
+            "source": "unknown",
+        }
+
+    text = config_status.read_text(encoding="utf-8", errors="ignore")
+    configured = sorted(set(
+        match.group(1)
+        for match in re.finditer(r"ompi/mca/osc/([^/]+)/Makefile", text)
+        if match.group(1) != "base"
+    ))
+    if configured:
+        return {
+            "enabled": True,
+            "source": str(config_status),
+            "configured_components": configured,
+        }
+    if ("ompi/mca/osc/Makefile" not in text and
+            "ompi/mca/osc/base/Makefile" not in text):
+        return {
+            "enabled": None,
+            "source": str(config_status),
+            "configured_components": configured,
+        }
+    return {
+        "enabled": False,
+        "source": str(config_status),
+        "configured_components": configured,
+    }
 
 
 def _abi_metadata_version(abi):
@@ -1825,6 +2288,33 @@ def _runtime_audit_work_package(entry):
         return "phase8_abi_helper"
     if name.endswith("_toint") or name.endswith("_fromint"):
         return "phase8_converter"
+    if name in (
+        "MPI_Comm_delete_attr",
+        "MPI_Comm_free_keyval",
+        "MPI_Comm_set_attr",
+        "MPI_Grequest_complete",
+        "MPI_Op_free",
+        "MPI_Type_delete_attr",
+        "MPI_Type_free_keyval",
+        "MPI_Type_get_attr",
+        "MPI_Type_set_attr",
+        "MPI_Win_delete_attr",
+        "MPI_Win_free_keyval",
+        "MPI_Win_set_attr",
+    ):
+        return "phase10_callback"
+    if name in (
+        "MPI_Comm_accept",
+        "MPI_Comm_connect",
+        "MPI_Comm_disconnect",
+        "MPI_Comm_get_parent",
+        "MPI_Comm_join",
+        "MPI_Comm_spawn",
+        "MPI_Comm_spawn_multiple",
+    ):
+        return "chunk9h_dynamic_process"
+    if name == "MPI_Abort":
+        return "chunk9i_intentional_abort"
     if family in (
         "point_to_point", "bsend", "ibsend", "ssend", "issend",
         "rsend", "irsend", "sendrecv", "isendrecv", "mprobe",
@@ -1865,6 +2355,17 @@ def _runtime_audit_work_package(entry):
     return "chunk9i_misc"
 
 
+def _runtime_explicit_skip_reason(name, package):
+    """Return the stable reason for APIs intentionally not run in Phase 9."""
+    if package == "phase10_callback":
+        return SKIP_PHASE10_CALLBACK_REQUIRED
+    if name == "MPI_Abort":
+        return SKIP_MPI_ABORT_TERMINATES_JOB
+    if name == "MPI_Comm_join":
+        return SKIP_COMM_JOIN_REQUIRES_CONNECTED_FD
+    return None
+
+
 def _runtime_api_coverage_audit(manifest, header, cases):
     """Report implemented C APIs not yet covered by runtime probes.
 
@@ -1879,7 +2380,9 @@ def _runtime_api_coverage_audit(manifest, header, cases):
     runtime_names = _runtime_api_probe_api_names(
         cases, include_support=True)
     missing_by_package = {}
+    explicit_skips_by_package = {}
     covered = 0
+    explicitly_skipped = 0
     skipped_not_declared = 0
 
     for entry in manifest["apis"]:
@@ -1898,6 +2401,14 @@ def _runtime_api_coverage_audit(manifest, header, cases):
         if name in runtime_names:
             covered += 1
             continue
+        skip_reason = _runtime_explicit_skip_reason(name, package)
+        if skip_reason is not None:
+            explicitly_skipped += 1
+            explicit_skips_by_package.setdefault(package, []).append({
+                "name": name,
+                "skip_reason": skip_reason,
+            })
+            continue
         missing_by_package.setdefault(package, []).append(name)
 
     summarized = {
@@ -1908,9 +2419,20 @@ def _runtime_api_coverage_audit(manifest, header, cases):
         package: len(names)
         for package, names in sorted(missing_by_package.items())
     }
+    skip_counts = {
+        package: len(items)
+        for package, items in sorted(explicit_skips_by_package.items())
+    }
+    summarized_skips = {
+        package: items[:20]
+        for package, items in sorted(explicit_skips_by_package.items())
+    }
     return _pass(
         "installed_c_runtime_api_coverage_audit",
         covered=covered,
+        explicitly_skipped=explicitly_skipped,
+        explicit_skips_by_package=summarized_skips,
+        explicit_skips_by_package_counts=skip_counts,
         missing_count=sum(counts.values()),
         missing_by_package=summarized,
         missing_by_package_counts=counts,
@@ -2486,6 +3008,25 @@ def _fortran_bindings_enabled(manifest):
         item.get("enabled") is True
         for item in manifest["configuration"]["fortran"].values()
     )
+
+
+def _optional_feature_info(manifest, feature):
+    """Return configured optional feature state from the manifest."""
+    return manifest["configuration"].get("optional_features", {}).get(
+        feature, {
+            "enabled": None,
+            "source": "unknown",
+        })
+
+
+def _optional_feature_skip_reason(feature):
+    """Return the stable skip reason for a disabled optional feature."""
+    reasons = {
+        "dynamic_process": SKIP_DYNAMIC_PROCESS_DISABLED,
+        "mpi_io": SKIP_MPI_IO_SUPPORT_DISABLED,
+        "rma": SKIP_RMA_SUPPORT_DISABLED,
+    }
+    return reasons.get(feature, "optional_feature_disabled")
 
 
 def run_fast_checks(manifest, srcdir, builddir, progress=None):
@@ -3386,6 +3927,19 @@ def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
                 SKIP_FORTRAN_BINDINGS_DISABLED,
                 phase="configure"), progress)
             continue
+        feature = case.get("requires_feature")
+        if feature is not None:
+            feature_info = _optional_feature_info(manifest, feature)
+            if feature_info["enabled"] is False:
+                if progress is not None:
+                    progress.start(check_name)
+                _append_check(checks, _skip(
+                    check_name,
+                    _optional_feature_skip_reason(feature),
+                    phase="configure",
+                    feature=feature,
+                    feature_state=feature_info), progress)
+                continue
         rank_count = tools["rank_counts"]["np{0}".format(
             case["rank_count"])]
         source = dirs["src"] / (name + ".c")

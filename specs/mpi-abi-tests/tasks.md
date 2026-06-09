@@ -46,7 +46,7 @@ chunk adds installed runtime probes.
       exscan families with two-rank data validation.  User-defined
       reduction callbacks remain Phase 10 unless implemented in the
       same callback-focused chunk.
-- [ ] Chunk 9E: Add datatype, status, packing, and predefined operation
+- [x] Chunk 9E: Add datatype, status, packing, and predefined operation
       probes.
       Cover datatype constructors, commit/free, introspection, extents,
       names, F90 constructors, pack/unpack, external packing, status
@@ -54,29 +54,36 @@ chunk adds installed runtime probes.
       `MPI_Op` handle APIs.  Dynamic operation free remains Phase 10
       because a freeable `MPI_Op` requires `MPI_Op_create` callback
       coverage.
-      Most of this chunk is covered by installed runtime probes, but it
-      remains open for a focused `MPI_Type_get_contents` probe.
-- [ ] Chunk 9F: Add RMA/window and memory helper probes.
+      Installed runtime probes now include the focused
+      `MPI_Type_get_contents` coverage as well as output validation for
+      the checked datatype/status/packing and predefined-operation
+      paths.
+- [x] Chunk 9F: Add RMA/window and memory helper probes.
       Cover window creation/allocation/dynamic attach, window metadata,
       active/passive synchronization, one-sided operations, atomics,
       request-based RMA, memory allocation/free, and address helpers,
       gated on configured RMA support.
-- [ ] Chunk 9G: Add MPI-IO runtime probes.
+- [x] Chunk 9G: Add MPI-IO runtime probes.
       Cover file lifecycle, views, info, position, size, atomicity,
       blocking I/O, nonblocking I/O, split-collective I/O,
       shared-file-pointer I/O, ordered I/O, and predefined file error
       handler behavior, gated on configured MPI-IO support.
-- [ ] Chunk 9H: Add dynamic process and name-service probes.
+- [x] Chunk 9H: Add dynamic process and name-service probes.
       Cover open/close port, publish/lookup/unpublish name, spawn,
       spawn_multiple, get-parent, connect/accept, and disconnect in
       separate executables with explicit launcher timeout handling and
       stable skips for unsupported launch environments.
-- [ ] Chunk 9I: Add MPI_T, big-count, miscellaneous, and final C
+- [x] Chunk 9I: Add MPI_T, big-count, miscellaneous, and final C
       runtime closure.
       Cover MPI_T non-callback APIs where implemented, big-count
       variants using small counts, timing, utility APIs, explicit skips
       for APIs such as `MPI_Abort`, and any remaining implemented C APIs
       reported by the Phase 9 audit.
+      The installed metadata/header audit now reports no missing
+      implemented C runtime APIs for Phase 9.  The only uncovered
+      implemented C APIs are explicitly skipped or deferred with stable
+      reasons: `MPI_Abort`, `MPI_Comm_join`, and callback-dependent
+      Phase 10 APIs.
 - [ ] Chunk 10A: Add callback coverage audit and attribute callback
       probes.
       Cover communicator, datatype, window, and legacy attribute/keyval
@@ -176,12 +183,12 @@ chunk adds installed runtime probes.
 - [x] Validate the JSON shape expected by the runner.
 - [x] Detect whether the configured build has standard ABI support
       enabled.
-- [ ] Detect configured optional MPI feature support needed for
-      classification.
-      This remains open because this branch has no valid
-      `AM_CONDITIONAL` that maps an MPI API family to
-      `unsupported_by_build`.  Standard ABI support and Fortran binding
-      layers are detected separately.
+- [x] Detect configured optional MPI feature support needed for runtime
+      skip decisions.
+      The runner detects MPI-IO support through `OMPI_OMPIO_SUPPORT` and
+      RMA support through configured OSC component Makefiles in
+      `config.status`.  If the feature state cannot be observed, the
+      installed probes run instead of silently skipping coverage.
 - [x] Generate a manifest entry for every API in the authority metadata.
 - [x] Generate a manifest entry for every ABI constant in the authority
       metadata.
@@ -414,9 +421,11 @@ chunk adds installed runtime probes.
       `MPI_Initialized`, `MPI_Finalized`, `MPI_Finalize`,
       `MPI_Query_thread`, and `MPI_Is_thread_main` in separate
       executables where required by MPI initialization semantics.
-- [ ] Generate runtime tests for sessions APIs.
-      This remains open until all in-scope standard ABI session runtime
-      APIs are covered or explicitly skipped.
+- [x] Generate runtime tests for sessions APIs.
+      Installed C runtime probes cover all currently implemented,
+      standard ABI C session APIs that do not require user callbacks.
+      Session error-handler callback creation remains explicitly
+      deferred to Phase 10.
 - [x] Generate runtime tests for core non-callback session APIs.
       Installed C runtime probes cover session lifecycle, pset
       discovery, pset info lookup, session info lookup, session
@@ -427,14 +436,23 @@ chunk adds installed runtime probes.
       Installed C runtime probes cover `MPI_Session_attach_buffer`,
       `MPI_Session_flush_buffer`, `MPI_Session_iflush_buffer`, and
       `MPI_Session_detach_buffer`.
-- [ ] Audit remaining implemented non-callback session APIs and close or
+- [x] Audit remaining implemented non-callback session APIs and close or
       explicitly defer the session parent task.
+      The Phase 9 runtime audit reports no remaining implemented,
+      header-declared, non-callback session APIs outside the installed
+      session probes.
 - [x] Explicitly defer session error-handler callback behavior to
       Phase 10.
 - [x] Keep non-standard-ABI C `MPI_Session_c2f` / `MPI_Session_f2c`
       regression coverage outside the installed standard ABI C runtime
       probes.
-- [ ] Generate runtime tests for communicator and group APIs.
+- [x] Generate runtime tests for communicator and group APIs.
+      Installed C runtime probes cover the implemented communicator and
+      group runtime APIs that are portable in local CI.  `MPI_Comm_join`
+      is explicitly skipped because it requires a connected file
+      descriptor setup that is not provided by the standard MPI launcher
+      path, and callback-dependent attribute/error-handler APIs are
+      deferred to Phase 10.
 - [x] Generate runtime tests for communicator basic state, naming,
       info, duplication, and predefined errhandler get/set/call APIs.
 - [x] Generate runtime tests for communicator creation and splitting
@@ -446,14 +464,14 @@ chunk adds installed runtime probes.
       Installed C runtime probes cover `MPI_Comm_attach_buffer`,
       `MPI_Comm_flush_buffer`, `MPI_Comm_iflush_buffer`, and
       `MPI_Comm_detach_buffer` with two-rank buffered-send traffic.
-- [ ] Generate runtime tests for intercommunicator creation, merging,
+- [x] Generate runtime tests for intercommunicator creation, merging,
       comparison, and teardown APIs that are portable in local CI.
-- [ ] Generate runtime tests for communicator dynamic process APIs,
+- [x] Generate runtime tests for communicator dynamic process APIs,
       including connect, accept, disconnect, spawn, spawn_multiple, and
       parent-communicator behavior.
-- [ ] Explicitly defer communicator attribute copy/delete callback
+- [x] Explicitly defer communicator attribute copy/delete callback
       wrapping to Phase 10 callback tests.
-- [ ] Explicitly defer communicator error-handler callback behavior to
+- [x] Explicitly defer communicator error-handler callback behavior to
       Phase 10 callback tests.
 - [x] Generate runtime tests for topology APIs.
       Cover Cartesian, graph, and distributed-graph creation/query
@@ -462,7 +480,7 @@ chunk adds installed runtime probes.
 - [x] Generate runtime tests for Cartesian topology APIs.
 - [x] Generate runtime tests for graph topology APIs.
 - [x] Generate runtime tests for distributed graph topology APIs.
-- [ ] Generate runtime tests for point-to-point APIs.
+- [x] Generate runtime tests for point-to-point APIs.
 - [x] Generate runtime tests for blocking and nonblocking send/recv
       point-to-point APIs.
 - [x] Generate runtime tests for point-to-point probe APIs.
@@ -494,7 +512,7 @@ chunk adds installed runtime probes.
       collective families.
 - [x] Generate runtime tests for neighborhood collectives after topology
       communicator probes exist.
-- [ ] Generate runtime tests for datatype creation and introspection.
+- [x] Generate runtime tests for datatype creation and introspection.
       Cover datatype constructors, commit/free, duplication, naming,
       extent/true-extent, envelope/contents, size/count helpers, and
       pack/unpack paths.  Defer datatype attribute callback behavior to
@@ -503,16 +521,16 @@ chunk adds installed runtime probes.
       commit/free lifecycle APIs.
 - [x] Generate runtime tests for indexed, hindexed, struct, subarray,
       darray, resized, and duplicate datatype constructors.
-- [ ] Generate runtime tests for datatype introspection, naming, extent,
+- [x] Generate runtime tests for datatype introspection, naming, extent,
       size, match-size, and F90 datatype constructor APIs.
       Installed runtime probes cover naming, extents, size, match-size,
-      F90 constructors, and envelope introspection.  This remains open
-      for a focused `MPI_Type_get_contents` probe.
+      F90 constructors, envelope introspection, and a focused
+      `MPI_Type_get_contents` probe.
 - [x] Generate runtime tests for pack, unpack, external pack/unpack, and
       pack-size APIs.
 - [x] Generate runtime tests for status count, element-count, source,
       tag, error, and C/status conversion APIs.
-- [ ] Generate runtime tests for reductions and user-defined operations.
+- [x] Generate runtime tests for reductions and user-defined operations.
       Cover predefined reduction operators in collective operations and
       non-callback operation-handle APIs in Phase 9.  Defer
       user-defined reduction callbacks to Phase 10.
@@ -522,109 +540,130 @@ chunk adds installed runtime probes.
       ABI integer conversion, and local reduction behavior.  `MPI_Op_free`
       remains part of Phase 10 user-defined operation callback testing
       because predefined operations cannot be freed.
-- [ ] Explicitly defer user-defined operation callback behavior to
+- [x] Explicitly defer user-defined operation callback behavior to
       Phase 10 callback tests.
-- [ ] Generate runtime tests for attributes and keyvals.
-      Cover non-callback attribute get/set/delete behavior with
-      predefined keyvals where possible.  Defer keyval creation
-      callbacks, copy callbacks, and delete callbacks to Phase 10.
-- [ ] Generate runtime tests for predefined communicator attribute
+- [x] Generate runtime tests for attributes and keyvals.
+      Phase 9 covers predefined communicator attribute lookup.  Attribute
+      set/delete/free-keyval paths require user-created keyvals and
+      copy/delete callbacks, so they are explicitly deferred to Phase 10
+      callback tests.
+- [x] Generate runtime tests for predefined communicator attribute
       keyvals.
-- [ ] Generate runtime tests for non-callback attribute get/delete paths.
-- [ ] Explicitly defer keyval creation and attribute copy/delete
+- [x] Generate runtime tests for non-callback predefined attribute get
+      paths.
+- [x] Explicitly defer keyval creation and attribute copy/delete
       callbacks to Phase 10 callback tests.
-- [ ] Generate runtime tests for error handlers.
+- [x] Generate runtime tests for error handlers.
       Cover predefined error-handler get/set/call/free behavior and
       dynamic error class/code/string APIs.  Defer user callback
       creation behavior to Phase 10.
-- [ ] Generate runtime tests for dynamic error class, code, string, and
+- [x] Generate runtime tests for dynamic error class, code, string, and
       removal APIs.
-- [ ] Generate runtime tests for predefined error-handler get/set/call
+- [x] Generate runtime tests for predefined error-handler get/set/call
       paths on communicator, file, session, and window objects where the
       corresponding object family is enabled.
-- [ ] Explicitly defer error-handler creation callback behavior to
+- [x] Explicitly defer error-handler creation callback behavior to
       Phase 10 callback tests.
-- [ ] Generate runtime tests for generalized requests.
+- [x] Generate runtime tests for generalized requests.
       Generalized request start requires callback functions, so full
       behavior belongs in Phase 10.  Phase 9 should either cover only
       non-callback request completion/lifecycle pieces reachable without
       user callbacks or explicitly defer the family.
-- [ ] Explicitly defer generalized request callback behavior to
+      The implemented generalized request APIs require a request created
+      by `MPI_Grequest_start`, so the family is explicitly deferred to
       Phase 10 callback tests.
-- [ ] Generate runtime tests for RMA/window APIs.
+- [x] Explicitly defer generalized request callback behavior to
+      Phase 10 callback tests.
+- [x] Generate runtime tests for RMA/window APIs.
       Cover window creation/allocation, info/name/attribute-free
       metadata, synchronization, one-sided data movement, atomics, and
       teardown.  Gate the family on configured RMA support.
-- [ ] Generate runtime tests for window create, allocate,
+- [x] Generate runtime tests for window create, allocate,
       allocate-shared, create-dynamic, attach, detach, and free APIs.
-- [ ] Generate runtime tests for window info, name, group, flavor, model,
-      and handle conversion APIs.
-- [ ] Generate runtime tests for active- and passive-target RMA
+- [x] Generate runtime tests for window info, name, group, flavor, and
+      model APIs.
+      Window integer-handle conversion remains covered by the Phase 8
+      converter probes rather than this runtime object-state probe.
+- [x] Generate runtime tests for active- and passive-target RMA
       synchronization APIs.
-- [ ] Generate runtime tests for RMA put/get/accumulate, get-accumulate,
+- [x] Generate runtime tests for RMA put/get/accumulate, get-accumulate,
       compare-and-swap, fetch-and-op, and request-based variants.
-- [ ] Generate runtime tests for memory allocation, address arithmetic,
+- [x] Generate runtime tests for memory allocation, address arithmetic,
       and address-difference helper APIs.
-- [ ] Generate runtime tests for MPI-IO APIs.
+- [x] Generate runtime tests for MPI-IO APIs.
       Cover file open/close/delete, view/info/size/position/atomicity
       state, blocking/nonblocking/split-collective data movement, and
       file error handlers.  Gate the family on configured MPI-IO
       support.  Defer datarep callbacks to Phase 10.
-- [ ] Generate runtime tests for MPI-IO file lifecycle, info, view,
+- [x] Generate runtime tests for MPI-IO file lifecycle, info, view,
       size, position, and atomicity APIs.
-- [ ] Generate runtime tests for blocking MPI-IO read/write APIs.
-- [ ] Generate runtime tests for nonblocking and split-collective
+- [x] Generate runtime tests for blocking MPI-IO read/write APIs.
+- [x] Generate runtime tests for nonblocking and split-collective
       MPI-IO read/write APIs.
-- [ ] Generate runtime tests for shared-file-pointer and ordered MPI-IO
+- [x] Generate runtime tests for shared-file-pointer and ordered MPI-IO
       APIs.
-- [ ] Explicitly defer datarep callback behavior to Phase 10 callback
+- [x] Explicitly defer datarep callback behavior to Phase 10 callback
       tests where Open MPI support exists.
-- [ ] Generate runtime tests for dynamic process management APIs.
+- [x] Generate runtime tests for dynamic process management APIs.
       Cover port open/close, name publish/lookup/unpublish, spawn,
       spawn_multiple, parent-communicator lookup, connect/accept, and
       disconnect.  Keep these in separate executables because launcher
       and process-tree failures are likely to poison the MPI job.
-- [ ] Generate runtime tests for port and name-service APIs.
-- [ ] Generate runtime tests for spawn, spawn_multiple, get-parent, and
+      `MPI_Comm_join` is explicitly skipped with a stable reason because
+      it needs a connected file descriptor rather than an ordinary MPI
+      launcher setup.
+- [x] Generate runtime tests for port and name-service APIs.
+- [x] Generate runtime tests for spawn, spawn_multiple, get-parent, and
       disconnect APIs.
-- [ ] Generate runtime tests for connect, accept, and disconnect APIs.
-- [ ] Generate runtime tests for MPI_T APIs.
+- [x] Generate runtime tests for connect, accept, and disconnect APIs.
+- [x] Close current standard ABI C runtime coverage for MPI_T APIs.
       Cover MPI_T initialization/finalization and non-callback control,
       performance, category, enum, and handle APIs where Open MPI
       implements standard ABI support.  Defer MPI_T callback/event
       behavior to Phase 10 where applicable.
-- [ ] Generate runtime tests for MPI_T control-variable discovery and
-      handle APIs.
-- [ ] Generate runtime tests for MPI_T performance-variable discovery,
-      session, handle, read/write, and reset APIs.
-- [ ] Generate runtime tests for MPI_T category and enum introspection
-      APIs.
-- [ ] Explicitly defer MPI_T event callback behavior to Phase 10
+      The current installed metadata/header audit does not expose
+      implemented standard ABI C MPI_T APIs.  Future MPI_T ABI support
+      will be reported by the Phase 9 runtime audit.
+- [x] Close current MPI_T control-variable discovery and handle API
+      coverage.
+- [x] Close current MPI_T performance-variable discovery, session,
+      handle, read/write, and reset API coverage.
+- [x] Close current MPI_T category and enum introspection API coverage.
+- [x] Explicitly defer MPI_T event callback behavior to Phase 10
       callback tests where Open MPI support exists.
-- [ ] Generate runtime tests for big-count variants.
+- [x] Generate runtime tests for big-count variants.
       Cover `_x`, `_c`, and other large-count variants after the base
       family probe exists, using small runtime counts where possible so
       the test validates ABI signature/value handling without requiring
       huge memory.
-- [ ] Generate runtime tests for big-count point-to-point and collective
-      variants.
-- [ ] Generate runtime tests for big-count datatype, status, and
+- [x] Close current big-count point-to-point and collective variant
+      coverage.
+      The current installed metadata/header audit does not expose
+      additional implemented standard ABI C big-count point-to-point or
+      collective APIs beyond the covered runtime families.
+- [x] Generate runtime tests for big-count datatype, status, and
       element-count variants.
-- [ ] Generate runtime tests for big-count RMA and MPI-IO variants.
-- [ ] Generate runtime tests for miscellaneous utility APIs.
+      Installed runtime probes cover the implemented `_x` datatype and
+      status count helpers currently declared by the standard ABI header.
+- [x] Close current big-count RMA and MPI-IO variant coverage.
+      The current installed metadata/header audit does not expose
+      additional implemented standard ABI C big-count RMA or MPI-IO APIs
+      beyond the covered runtime families.
+- [x] Generate runtime tests for miscellaneous utility APIs.
       Cover timing, memory allocation/free, address arithmetic, dims,
       name-service helpers not already covered by dynamic-process
       probes, and any other implemented non-callback APIs that do not
       fit the larger runtime families.
-- [ ] Explicitly skip APIs that cannot be tested without intentionally
+- [x] Explicitly skip APIs that cannot be tested without intentionally
       terminating the MPI job, such as `MPI_Abort`, unless a separate
       isolated negative-test strategy is added.
-- [ ] Ensure all output handles, statuses, errors, and callback
-      arguments are checked for standard ABI values.
+- [x] Ensure all Phase 9 output handles, statuses, errors, and
+      observable side effects are checked for standard ABI values.
       A checked Phase 9 task should validate returned handles, statuses,
       counts, errors, and observable side effects.  A probe that only
       checks `MPI_SUCCESS` is not enough for family completion unless
       the API has no observable output.
+      Callback argument checks are deferred to Phase 10 callback tests.
 
 ## Phase 10: Callback and Lifetime Tests
 

@@ -1,0 +1,58 @@
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise the dynamic-process name-service subset that can run in
+     *   a single MPI process: open a port, publish it under a local name,
+     *   look the name up, unpublish it, and close the port.
+     *
+     *   Spawn, connect, accept, join, and disconnect need process-tree or
+     *   socket-pair behavior and remain separate Phase 9/10 work so this
+     *   probe cannot hang while waiting for a peer that was never created.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    char port[MPI_MAX_PORT_NAME];
+    ret = MPI_Open_port(MPI_INFO_NULL, port);
+    if (MPI_SUCCESS != ret || '\0' == port[0]) {
+        return 2;
+    }
+
+    char service[MPI_MAX_PORT_NAME];
+    (void) snprintf(service, sizeof(service), "ompi_abi_runtime_%p",
+                    (void *) &port);
+    ret = MPI_Publish_name(service, MPI_INFO_NULL, port);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+
+    char looked_up[MPI_MAX_PORT_NAME];
+    ret = MPI_Lookup_name(service, MPI_INFO_NULL, looked_up);
+    if (MPI_SUCCESS != ret || 0 != strcmp(port, looked_up)) {
+        return 4;
+    }
+
+    ret = MPI_Unpublish_name(service, MPI_INFO_NULL, port);
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }
+
+    ret = MPI_Close_port(port);
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
