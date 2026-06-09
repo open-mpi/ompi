@@ -76,6 +76,12 @@ VALID_TEST_STATUSES = {
     TEST_CALLBACK_DEFERRED,
 }
 
+# Static metadata expectations.  These are intentionally hard gates.  The
+# runner is generated against the current docs/ metadata shape, and a
+# metadata version/count change means the MPI Forum ABI/API authority has
+# changed underneath us.  Failing here is preferable to silently accepting
+# a new standard constant or API without reviewing the generated probes,
+# task list, skip policy, and completion gate.
 ABI_CONVERTER_HANDLES = (
     ("Comm", "comm"),
     ("Errhandler", "errhandler"),
@@ -116,6 +122,14 @@ FORTRAN_ABI_HELPERS = (
     "abi_set_fortran_info",
 )
 
+# Installed C probes are small source fragments inserted into
+# templates/c_probe.c.in, compiled with mpicc_abi, and run with mpirun.
+# Each case becomes its own executable because MPI process state after an
+# error is not generally reusable.  Generated failures use fixed nonzero
+# exit codes below 256 and print ABI_FAIL details to stderr; POSIX exit
+# status truncation would otherwise turn return 256 into a false PASS.
+# Keep the fragments self-contained.  Python fills only generated
+# constant lists, exact-count expectations, and rank-count placeholders.
 INSTALLED_C_ABI_PROBES = (
     {
         "name": "abi_version",
@@ -876,6 +890,7 @@ def _api_stem(api_key, api_name):
 
 
 def _api_family(name):
+    """Return a coarse MPI API family used for test planning metadata."""
     lower = name.lower()
     if lower.startswith("mpi_t_"):
         return "mpi_t"
@@ -904,12 +919,14 @@ def _api_family(name):
 
 
 def _rank_requirement(family):
+    """Return the default rank count needed for an API family."""
     if family in ("collective", "point_to_point"):
         return 2
     return 1
 
 
 def _feature_requirement(family):
+    """Return the optional Open MPI feature that gates an API family."""
     if family == "file":
         return "mpi_io"
     if family == "mpi_t":
@@ -922,6 +939,7 @@ def _feature_requirement(family):
 
 
 def _find_standard_abi_setting(srcdir, builddir):
+    """Detect whether this build configured Open MPI standard ABI support."""
     override = _env_bool("OMPI_ABI_TEST_STANDARD_ABI")
     if override is not None:
         return {
@@ -940,6 +958,14 @@ def _find_standard_abi_setting(srcdir, builddir):
 
 
 def _conditional_enabled(builddir, conditional):
+    """Read an Automake conditional value from top-level config.status.
+
+    The ABI runner is usually invoked from test/mpi-abi via recursive
+    make, but the conditionals we need live in the top build directory's
+    config.status.  Treat an unreadable conditional as unknown, not
+    disabled, so a VPATH or partial tree does not accidentally claim a
+    configured feature state it did not actually observe.
+    """
     config_status = builddir / "config.status"
     if not config_status.exists():
         return {
@@ -971,6 +997,7 @@ def _conditional_enabled(builddir, conditional):
 
 
 def _detect_fortran_support(builddir):
+    """Discover which Open MPI Fortran binding layers were configured."""
     conditionals = {
         "mpif.h": "OMPI_BUILD_FORTRAN_MPIFH_BINDINGS",
         "use mpi": "OMPI_BUILD_FORTRAN_USEMPI_BINDINGS",
@@ -983,12 +1010,14 @@ def _detect_fortran_support(builddir):
 
 
 def _detect_optional_features(builddir):
+    """Return configured optional MPI features that affect ABI coverage."""
     # No configured optional MPI API-family feature currently maps
     # cleanly to a standard ABI unsupported_by_build classification.
     return {}
 
 
 def _abi_metadata_version(abi):
+    """Return the MPI ABI metadata version as MAJOR.MINOR."""
     mpi = abi.get("metadata", {}).get("mpi", {})
     version = mpi.get("version")
     subversion = mpi.get("subversion")
@@ -998,6 +1027,7 @@ def _abi_metadata_version(abi):
 
 
 def _source_exists(srcdir, stem):
+    """Return whether an Open MPI C binding implementation exists."""
     c_dir = srcdir / "ompi" / "mpi" / "c"
     tool_dir = srcdir / "ompi" / "mpi" / "tool"
     candidates = (
@@ -1012,6 +1042,14 @@ def _source_exists(srcdir, stem):
 
 
 def _classify_api(srcdir, api_key, api):
+    """Classify one MPI API metadata entry for coverage accounting.
+
+    This phase is a manifest-level inventory, not the final executable
+    test suite.  Source existence is used as the conservative signal
+    that Open MPI currently implements the C ABI binding.  Callback APIs
+    are marked separately because many require caller-provided functions
+    and cannot be honestly covered by a simple one-shot smoke probe.
+    """
     attrs = api.get("attributes", {})
     name = api.get("name", api_key)
     stem = _api_stem(api_key, name)
@@ -1067,6 +1105,7 @@ def _classify_api(srcdir, api_key, api):
 
 
 def _classify_constant(key, constant):
+    """Classify one standard ABI constant metadata entry."""
     c_handle = constant.get("handle_types", {}).get("c", {})
     return {
         "kind": "constant",
@@ -1083,6 +1122,12 @@ def _classify_constant(key, constant):
 
 
 def load_metadata(srcdir):
+    """Load and validate the docs/ MPI API and ABI metadata files.
+
+    docs/ is the authority for this test suite.  Version and entry-count
+    checks are deliberately strict so a regenerated or repackaged
+    metadata file cannot silently change test coverage.
+    """
     api_path = srcdir / "docs" / "mpi-standard-apis.json"
     abi_path = srcdir / "docs" / "mpi-standard-abi.json"
     api_resolved = api_path.resolve()
@@ -1126,6 +1171,7 @@ def load_metadata(srcdir):
 
 
 def build_manifest(srcdir, builddir):
+    """Build the full test manifest from metadata and configure output."""
     metadata = load_metadata(srcdir)
     standard_abi = _find_standard_abi_setting(srcdir, builddir)
     fortran = _detect_fortran_support(builddir)
@@ -1169,6 +1215,7 @@ def build_manifest(srcdir, builddir):
 
 
 def _check_result(name, result, details=None, reason=None):
+    """Create the normalized check result object used in reports."""
     return {
         "name": name,
         "result": result,
@@ -1192,6 +1239,7 @@ def _skip(name, reason, **details):
 
 
 def _color_tests_enabled(setting):
+    """Resolve Automake-compatible color-test settings."""
     if setting in ("yes", "always"):
         return True
     if setting in ("no", "never"):
@@ -1211,6 +1259,8 @@ def _color_tests_enabled(setting):
 
 
 class _Colors:
+    """Apply Automake-style colors to progress lines when enabled."""
+
     def __init__(self, enabled):
         self.enabled = enabled
 
@@ -1229,6 +1279,8 @@ class _Colors:
 
 
 class _Progress:
+    """Emit make-check-style TEST/PASS/SKIP/FAIL progress lines."""
+
     def __init__(self, enabled, colors):
         self.enabled = enabled
         self.colors = colors
@@ -1260,6 +1312,7 @@ def _extend_checks(checks, new_checks, progress):
 
 
 def _manifest_sanity_checks(manifest):
+    """Validate internal manifest classifications before deeper checks run."""
     checks = []
     apis = manifest["apis"]
     constants = manifest["constants"]
@@ -1312,6 +1365,7 @@ def _manifest_sanity_checks(manifest):
 
 
 def _standard_abi_header_path(srcdir, builddir):
+    """Return the generated source-tree/build-tree standard ABI mpi.h."""
     candidates = (
         builddir / "ompi" / "mpi" / "c" / "standard_abi" / "mpi.h",
         srcdir / "ompi" / "mpi" / "c" / "standard_abi" / "mpi.h",
@@ -1339,6 +1393,13 @@ def _strip_c_casts(value):
 
 
 def _eval_integer_expression_node(node):
+    """Evaluate a restricted Python AST mirroring C integer expressions.
+
+    Header constants may be expressions such as shifts or bitwise ORs,
+    not just literal integers.  Using Python's AST gives us structured
+    parsing without eval(); only integer literals and arithmetic/bitwise
+    operators that can appear in ABI constants are accepted.
+    """
     if isinstance(node, ast.Expression):
         return _eval_integer_expression_node(node.body)
     if isinstance(node, ast.Constant) and type(node.value) is int:
@@ -1382,6 +1443,13 @@ def _eval_integer_expression_node(node):
 
 
 def _extract_integer_constant(value):
+    """Parse a C integer constant expression into an int when safe.
+
+    This intentionally rejects expressions with identifiers such as
+    MPI_VERSION because evaluating those would require a preprocessor
+    model.  Rejecting and reporting an unparsed constant is safer than a
+    regex that happens to pull one integer token out of the wrong place.
+    """
     value = _strip_c_integer_suffixes(_strip_c_casts(_strip_c_comments(value)))
     if re.search(r"\bMPI_VERSION\b", value):
         return None
@@ -1395,6 +1463,7 @@ def _extract_integer_constant(value):
 
 
 def _metadata_integer_value(value):
+    """Normalize an ABI metadata integer value into an int."""
     if isinstance(value, int):
         return value
     if isinstance(value, str):
@@ -1406,6 +1475,13 @@ def _metadata_integer_value(value):
 
 
 def _parse_header_constants(path):
+    """Parse numeric MPI constants from a standard ABI mpi.h.
+
+    This parser is for semantic value comparison, so it only records
+    constants whose expressions can be reduced to integers.  Constants
+    that are declared but not numerically parseable are tracked as
+    unparsed so the header check can fail with a concrete reason.
+    """
     constants = {}
     unparsed = {}
     define_re = re.compile(r"^\s*#define\s+(MPI\w+)\s+(.+?)\s*$")
@@ -1426,6 +1502,13 @@ def _parse_header_constants(path):
 
 
 def _parse_header_constant_names(path):
+    """Parse declared MPI constant names, including implicit enum members.
+
+    Runtime probes need to know whether mpi.h declares a constant, not
+    whether its value can be evaluated.  Keep this parser broader than
+    _parse_header_constants() so an implicit enum member is not silently
+    dropped from the installed-header declaration preflight.
+    """
     names = set()
     define_re = re.compile(r"^\s*#define\s+(MPI\w+)\b")
     enum_re = re.compile(r"^\s*(MPI\w+)\b\s*(?:=|,)")
@@ -1439,6 +1522,7 @@ def _parse_header_constant_names(path):
 
 
 def _constant_sort_key(entry):
+    """Sort constants by ABI value first, then by name."""
     abi_value = _metadata_integer_value(entry["abi_value"])
     if abi_value is None:
         abi_value = sys.maxsize
@@ -1446,6 +1530,7 @@ def _constant_sort_key(entry):
 
 
 def _metadata_constant_entries(manifest):
+    """Return implemented standard ABI constants from the manifest."""
     return [
         entry for entry in manifest["constants"]
         if entry["classification"] == CLASS_IMPLEMENTED
@@ -1453,6 +1538,13 @@ def _metadata_constant_entries(manifest):
 
 
 def _is_fortran_datatype_constant(entry):
+    """Return whether an MPI_Datatype metadata entry is Fortran-only.
+
+    C and Fortran predefined datatypes share the MPI_Datatype C handle
+    type, but they are not governed by the same availability rules.
+    Separating them lets C datatype probes stay exhaustive while the
+    Fortran datatype probe remains gated on configured Fortran support.
+    """
     if entry["c_type"] != "MPI_Datatype":
         return False
     if entry["category"] in (
@@ -1466,6 +1558,12 @@ def _is_fortran_datatype_constant(entry):
 
 
 def _is_c_predefined_handle_constant(entry):
+    """Return whether a constant can use a C handle converter.
+
+    The toint/fromint converters apply to MPI object handles, not every
+    ABI constant.  For MPI_Datatype, exclude Fortran-only datatypes here
+    so they are checked by the Fortran-specific probe and skip policy.
+    """
     if entry["c_type"] not in ABI_CONVERTER_KIND_BY_C_TYPE:
         return False
     if entry["c_type"] == "MPI_Datatype":
@@ -1474,6 +1572,13 @@ def _is_c_predefined_handle_constant(entry):
 
 
 def _generated_check_lines(entries, template):
+    """Render metadata-selected constants into C probe statements.
+
+    Empty output is allowed here because the caller may be assembling a
+    probe that is skipped in the current configuration.  Nonempty family
+    requirements are enforced by _runtime_probe_generation_check() before
+    installed probes are compiled, where the failure can name the family.
+    """
     lines = []
     for entry in sorted(entries, key=_constant_sort_key):
         lines.append(template.format(
@@ -1485,6 +1590,7 @@ def _generated_check_lines(entries, template):
 
 
 def _predefined_handle_entries(manifest):
+    """Return metadata constants tested by predefined handle probes."""
     return [
         entry for entry in _metadata_constant_entries(manifest)
         if _is_c_predefined_handle_constant(entry)
@@ -1492,6 +1598,7 @@ def _predefined_handle_entries(manifest):
 
 
 def _fortran_datatype_entries(manifest):
+    """Return metadata constants tested by Fortran datatype probes."""
     return [
         entry for entry in _metadata_constant_entries(manifest)
         if _is_fortran_datatype_constant(entry)
@@ -1514,6 +1621,7 @@ def _declared_fortran_datatype_entries(manifest, declared_names):
 
 
 def _error_class_entries(manifest):
+    """Return MPI_ERR_* classes that should round-trip via MPI_Error_class."""
     return [
         entry for entry in _metadata_constant_entries(manifest)
         if entry["category"] == "ERROR_CLASSES"
@@ -1523,6 +1631,7 @@ def _error_class_entries(manifest):
 
 
 def _predefined_handle_counts_by_kind(entries):
+    """Count generated predefined-handle checks per converter kind."""
     counts = {}
     for entry in entries:
         kind = ABI_CONVERTER_KIND_BY_C_TYPE[entry["c_type"]]
@@ -1531,6 +1640,7 @@ def _predefined_handle_counts_by_kind(entries):
 
 
 def _predefined_handle_decls(manifest):
+    """Generate C counters for each predefined-handle converter kind."""
     counts = _predefined_handle_counts_by_kind(
         _predefined_handle_entries(manifest))
     lines = []
@@ -1540,6 +1650,12 @@ def _predefined_handle_decls(manifest):
 
 
 def _predefined_handle_guards(manifest):
+    """Generate C guards that enforce exact per-kind check counts.
+
+    A single aggregate counter is not enough: if a parser or metadata
+    change dropped every MPI_Win constant, other handle kinds could keep
+    the aggregate nonzero.  Per-kind guards make that erosion visible.
+    """
     counts = _predefined_handle_counts_by_kind(
         _predefined_handle_entries(manifest))
     lines = []
@@ -1562,6 +1678,7 @@ def _predefined_handle_guards(manifest):
 
 
 def _predefined_handle_checks(manifest):
+    """Generate predefined-handle converter round-trip statements."""
     entries = [
         entry for entry in _predefined_handle_entries(manifest)
     ]
@@ -1579,6 +1696,7 @@ def _fortran_datatype_checks(manifest, declared_names):
 
 
 def _error_class_checks(manifest):
+    """Generate MPI_Error_class statements for predefined error classes."""
     entries = _error_class_entries(manifest)
     return _generated_check_lines(
         entries,
@@ -1663,6 +1781,12 @@ def _prepare_installed_c_probe_body(case, manifest, declared_names):
 
 
 def _header_constant_checks(manifest, srcdir, builddir):
+    """Compare generated standard ABI header constants to ABI metadata.
+
+    This is the fast, in-tree constant check.  It validates the generated
+    header against docs/ metadata without requiring an installed Open MPI
+    or mpirun, so it can run before the installed runtime probes.
+    """
     path = _standard_abi_header_path(srcdir, builddir)
     if path is None:
         return [_skip("standard_abi_header_constants",
@@ -1747,6 +1871,13 @@ def _contains_token(text, token):
 
 
 def _abi_converter_checks(srcdir):
+    """Check source contracts for ABI converter implementation files.
+
+    These are source-contract checks, not behavioral unit tests.  They
+    make sure each converter source is present, wired into the ABI
+    makefile, and contains the expected wrapper/conversion structure.
+    Runtime converter behavior is exercised later by installed C probes.
+    """
     c_dir = srcdir / "ompi" / "mpi" / "c"
     makefile = c_dir / "Makefile_abi.include"
     converter_header = c_dir / "abi_converters.h"
@@ -1881,10 +2012,18 @@ def _abi_converter_checks(srcdir):
 
 
 def _fortran_enabled(manifest, language):
+    """Return whether one Fortran binding layer was configured."""
     return manifest["configuration"]["fortran"][language]["enabled"]
 
 
 def _fortran_mpifh_helper_checks(srcdir, manifest):
+    """Check mpif.h ABI helper source contracts.
+
+    The helper entry points support legacy Fortran binding layers even
+    though the standard ABI is centered on mpi_f08.  This check verifies
+    the generated symbol names and PMPI forwarding contracts without
+    requiring a Fortran compiler or installed runtime.
+    """
     enabled = _fortran_enabled(manifest, "mpif.h")
     if enabled is False:
         return [_skip("fortran_mpifh_abi_helpers",
@@ -1963,6 +2102,13 @@ def _fortran_mpifh_helper_checks(srcdir, manifest):
 
 
 def _fortran_usempi_helper_checks(srcdir, manifest):
+    """Check the use mpi layer's shared-helper status.
+
+    use mpi shares the mpif.h helper entry points in this code base, so
+    there is no independent per-helper implementation to validate here.
+    Reporting a stable SKIP is more honest than a PASS with no specific
+    layer contract.
+    """
     enabled = _fortran_enabled(manifest, "use mpi")
     if enabled is False:
         return [_skip("fortran_usempi_abi_helpers",
@@ -1987,6 +2133,12 @@ def _fortran_usempi_helper_checks(srcdir, manifest):
 
 
 def _fortran_f08_helper_checks(srcdir, manifest):
+    """Check use mpi_f08 ABI helper templates and generated interfaces.
+
+    This layer is the ABI-relevant Fortran binding for MPI-5.x.  The
+    checks look for template inputs and generated interface renames so a
+    missing f08 helper is caught during fast source checks.
+    """
     enabled = _fortran_enabled(manifest, "use mpi_f08")
     if enabled is False:
         return [_skip("fortran_f08_abi_helpers",
@@ -2064,6 +2216,7 @@ def _fortran_f08_helper_checks(srcdir, manifest):
 
 
 def _fortran_helper_checks(srcdir, manifest):
+    """Run all configured Fortran ABI helper source checks."""
     checks = []
     checks.extend(_fortran_mpifh_helper_checks(srcdir, manifest))
     checks.extend(_fortran_usempi_helper_checks(srcdir, manifest))
@@ -2072,6 +2225,7 @@ def _fortran_helper_checks(srcdir, manifest):
 
 
 def _fortran_bindings_enabled(manifest):
+    """Return whether any Fortran binding layer is enabled."""
     return any(
         item.get("enabled") is True
         for item in manifest["configuration"]["fortran"].values()
@@ -2079,6 +2233,7 @@ def _fortran_bindings_enabled(manifest):
 
 
 def run_fast_checks(manifest, srcdir, builddir, progress=None):
+    """Run in-tree checks that do not require an installed Open MPI."""
     checks = []
     if progress is not None:
         progress.start("fast manifest sanity checks")
@@ -2126,11 +2281,19 @@ def _check_counts(checks):
 
 
 def _command_timeout():
+    """Return the timeout used for compile, launcher, and inspection jobs.
+
+    MPI launch failures often manifest as hangs rather than immediate
+    errors, especially around two-rank barriers or mismatched launcher
+    environments.  A timeout turns those hangs into ordinary FAIL records
+    with command logs instead of wedging make check-abi indefinitely.
+    """
     return int(os.environ.get("OMPI_ABI_TEST_TIMEOUT",
                               str(DEFAULT_COMMAND_TIMEOUT)))
 
 
 def _command_result(name, command, cwd, env, log_path):
+    """Run one subprocess, capture output, and write a JSON command log."""
     log_path.parent.mkdir(parents=True, exist_ok=True)
     timeout = _command_timeout()
     try:
@@ -2186,6 +2349,7 @@ def _command_result(name, command, cwd, env, log_path):
 
 
 def _installed_test_env(tools):
+    """Build the environment for installed wrapper/compiler/runtime checks."""
     env = os.environ.copy()
     library_path = tools["paths"]["library"]
     loader_var = tools["paths"]["runtime_loader"]
@@ -2199,6 +2363,7 @@ def _installed_test_env(tools):
 
 
 def _installed_test_dirs(outdir):
+    """Create and return the installed-test scratch directory layout."""
     base = outdir / "installed"
     dirs = {
         "base": base,
@@ -2212,11 +2377,13 @@ def _installed_test_dirs(outdir):
 
 
 def _launcher_args(tools):
+    """Return optional extra mpirun arguments from the tool configuration."""
     args = tools["paths"]["launcher_args"]
     return shlex.split(args) if args else []
 
 
 def _compile_overrides(tools):
+    """Return optional include/library overrides for installed C probes."""
     args = []
     include_path = tools["paths"]["include"]
     library_path = tools["paths"]["library"]
@@ -2228,6 +2395,13 @@ def _compile_overrides(tools):
 
 
 def _linkage_command(executable):
+    """Return the platform-specific command for linkage inspection.
+
+    Linkage inspection is a diagnostic check, not a portability
+    requirement.  Platforms without readelf/otool return None and are
+    reported as SKIP by the caller instead of making the ABI suite fail
+    just because the inspection tool is unavailable.
+    """
     system = platform.system()
     if system == "Darwin":
         tool = shutil.which("otool")
@@ -2241,6 +2415,14 @@ def _linkage_command(executable):
 
 
 def _verify_executable_libmpi_abi(executable, dirs, env, name):
+    """Verify an executable is actually linked against libmpi_abi.
+
+    The wrapper flag checks prove mpicc_abi advertises ABI linkage, but
+    the executable inspection catches cases where overrides, stale
+    paths, or wrapper bugs still produce a binary not linked to
+    libmpi_abi.  Missing inspection tools are SKIP; a runnable tool that
+    shows the wrong linkage is FAIL.
+    """
     command = _linkage_command(executable)
     if command is None:
         return {
@@ -2272,6 +2454,7 @@ def _verify_executable_libmpi_abi(executable, dirs, env, name):
 
 
 def _showme_words(mpicc_abi, option, dirs, env, name):
+    """Run an mpicc_abi --showme option and shell-split its output."""
     result = _command_result(
         name,
         [mpicc_abi, option],
@@ -2284,6 +2467,12 @@ def _showme_words(mpicc_abi, option, dirs, env, name):
 
 
 def _installed_standard_abi_header(tools, dirs, env):
+    """Find the installed standard ABI mpi.h used by mpicc_abi.
+
+    The MPI_H_ABI marker is required so an include path that happens to
+    contain another mpi.h cannot satisfy the check.  This matters because
+    installed probes intentionally compile outside the build tree.
+    """
     include_override = tools["paths"]["include"]
     candidates = []
     if include_override:
@@ -2309,6 +2498,13 @@ def _remove_c_comments(text):
 
 
 def _parse_c_header_prototypes(header):
+    """Parse MPI and PMPI C prototypes from an installed mpi.h.
+
+    This parser is intentionally simple because it targets the generated
+    ABI header format, not arbitrary C.  The caller enforces a high
+    minimum prototype count so a future formatting change cannot reduce
+    this to an empty or tiny parse that still passes downstream checks.
+    """
     text = _remove_c_comments(_read_text(header))
     prototypes = {}
     pattern = re.compile(
@@ -2335,6 +2531,7 @@ def _parse_c_header_prototypes(header):
 
 
 def _parse_c_header_deprecated_functions(srcdir):
+    """Read the generator's authoritative deprecated C function list."""
     c_header = srcdir / "ompi" / "mpi" / "bindings" / "c_header.py"
     tree = ast.parse(_read_text(c_header), filename=str(c_header))
     for node in tree.body:
@@ -2351,6 +2548,7 @@ def _parse_c_header_deprecated_functions(srcdir):
 
 
 def _normalize_c_signature_text(text):
+    """Normalize C signature spelling for stable comparisons."""
     text = text.strip().rstrip(";")
     text = text.replace("char argv[]", "char *argv[]")
     text = re.sub(r"\s+", " ", text)
@@ -2361,6 +2559,7 @@ def _normalize_c_signature_text(text):
 
 
 def _parse_c_signature(signature):
+    """Parse one normalized MPI C signature into comparable fields."""
     signature = _normalize_c_signature_text(signature)
     match = re.match(
         r"^(?P<return_type>.+?)\s+(?P<name>(?:P)?MPI_\w+)\("
@@ -2378,6 +2577,13 @@ def _parse_c_signature(signature):
 
 
 def _standard_abi_expected_signatures(srcdir):
+    """Build expected C/PMPI signatures from pympistandard metadata.
+
+    Comparing against pympistandard avoids a circular test where the
+    installed header is parsed and then used as its own authority.
+    Deprecated C APIs and Fortran-only entry points are excluded by the
+    same generator-side rules used to build the standard ABI header.
+    """
     sys.path.insert(
         0, str((srcdir / "3rd-party" / "pympistandard" / "src").resolve()))
     import pympistandard as std
@@ -2426,6 +2632,12 @@ def _probe_variable_name(name):
 
 
 def _header_probe_source(prototypes):
+    """Generate a C source that forces references to parsed prototypes.
+
+    Parsing a prototype is not enough; this source assigns every parsed
+    MPI/PMPI symbol to a function pointer so the compiler and linker must
+    accept the declarations and resolve the ABI entry points.
+    """
     lines = [
         "#include \"mpi.h\"",
         "",
@@ -2461,6 +2673,7 @@ def _header_probe_source(prototypes):
 
 
 def _metadata_c_api_header_check(manifest, mpi_prototypes, excluded_names):
+    """Ensure all implemented C ABI APIs are present in installed mpi.h."""
     expected = []
     missing = []
     non_abi_absent = []
@@ -2493,6 +2706,7 @@ def _metadata_c_api_header_check(manifest, mpi_prototypes, excluded_names):
 
 
 def _signature_comparison_check(prototypes, expected_signatures):
+    """Compare installed header prototypes against generated signatures."""
     missing = []
     mismatches = []
     for name, expected in sorted(expected_signatures.items()):
@@ -2531,6 +2745,7 @@ def _signature_comparison_check(prototypes, expected_signatures):
 
 
 def _non_abi_absence_check(prototypes, excluded_names):
+    """Ensure APIs excluded from the standard ABI are not exposed."""
     exposed = [
         name for name in sorted(prototypes)
         if (name.startswith("MPI_") or name.startswith("PMPI_"))
@@ -2547,6 +2762,7 @@ def _non_abi_absence_check(prototypes, excluded_names):
 
 
 def _prototype_pair_check(prototypes, excluded_names):
+    """Ensure each MPI prototype has its matching PMPI prototype."""
     mpi_names = sorted(
         name for name in prototypes
         if name.startswith("MPI_") and name not in excluded_names
@@ -2574,6 +2790,7 @@ def _prototype_pair_check(prototypes, excluded_names):
 
 
 def _libmpi_abi_search_names():
+    """Return likely libmpi_abi filenames for the current platform."""
     system = platform.system()
     if system == "Darwin":
         return ("libmpi_abi.dylib", "libmpi_abi.0.dylib")
@@ -2583,6 +2800,7 @@ def _libmpi_abi_search_names():
 
 
 def _installed_libmpi_abi_path(tools, dirs, env):
+    """Locate installed libmpi_abi using overrides and wrapper metadata."""
     library_override = tools["paths"]["library"]
     libdirs = []
     if library_override:
@@ -2602,6 +2820,13 @@ def _installed_libmpi_abi_path(tools, dirs, env):
 
 
 def _defined_nm_symbols(output):
+    """Extract defined symbol names from nm output.
+
+    Undefined symbols, including weak undefined symbols, are deliberately
+    excluded.  Counting a referenced-but-not-defined MPI symbol as an
+    export would make the libmpi_abi symbol check pass for a missing ABI
+    entry point.
+    """
     symbols = set()
     for line in output.splitlines():
         parts = line.split()
@@ -2618,6 +2843,7 @@ def _defined_nm_symbols(output):
 
 
 def _symbol_table_check(prototypes, excluded_names, tools, dirs, env):
+    """Optionally verify libmpi_abi exports all expected ABI symbols."""
     nm = shutil.which("nm")
     library = _installed_libmpi_abi_path(tools, dirs, env)
     if nm is None or library is None:
@@ -2671,6 +2897,13 @@ def _symbol_table_check(prototypes, excluded_names, tools, dirs, env):
 
 
 def _installed_c_header_symbol_checks(manifest, tools, dirs, progress=None):
+    """Run installed header, signature, compile/link, and symbol checks.
+
+    This combines several independent views of the installed C ABI:
+    metadata coverage, PMPI pairing, semantic signatures, absence of
+    non-ABI APIs, compile/link reachability, and optional library symbol
+    diagnostics.  Keeping them separate makes failures actionable.
+    """
     checks = []
     env = _installed_test_env(tools)
     if progress is not None:
@@ -2787,6 +3020,12 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs, progress=None):
 
 
 def _installed_wrapper_checks(tools, dirs, progress=None):
+    """Check mpicc_abi wrapper flags for ABI include and library linkage.
+
+    These are coarse wrapper sanity checks.  They are intentionally not
+    the only proof of correctness; later installed header and executable
+    linkage checks verify that the advertised paths actually work.
+    """
     checks = []
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
     env = _installed_test_env(tools)
@@ -2856,6 +3095,7 @@ def _installed_wrapper_checks(tools, dirs, progress=None):
 
 
 def _c_probe_source(srcdir, body, rank_count):
+    """Render one installed C probe source from the shared template."""
     template = _read_text(srcdir / "test" / "mpi-abi" /
                           "templates" / "c_probe.c.in")
     body = body.replace("@EXPECTED_RANKS@", str(rank_count))
@@ -2863,6 +3103,14 @@ def _c_probe_source(srcdir, body, rank_count):
 
 
 def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
+    """Compile, link-inspect, and run installed C ABI runtime probes.
+
+    Before compiling generated probes, this function verifies that probe
+    families are nonempty and that the installed ABI header declares the
+    metadata constants the probes will reference.  That makes metadata
+    drift a clear preflight failure instead of a smaller generated C
+    source that silently preserves PASS.
+    """
     checks = []
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
     mpirun = tools["open_mpi"]["mpirun"]
@@ -3025,6 +3273,13 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
 
 def run_installed_checks(manifest, mode, srcdir, outdir, tools,
                          progress=None):
+    """Run checks that require an installed Open MPI standard ABI build.
+
+    Installed checks intentionally live outside make check's normal
+    check_PROGRAMS flow: they need an installed mpicc_abi/mpirun pair and
+    create one short-lived executable per probe so MPI runtime failures
+    do not contaminate later probes in the same process.
+    """
     if mode != "check-abi":
         return []
     dirs = _installed_test_dirs(outdir)
@@ -3038,6 +3293,7 @@ def run_installed_checks(manifest, mode, srcdir, outdir, tools,
 
 
 def _tool_info(mode):
+    """Resolve tool paths, rank counts, and optional override paths."""
     tools = {
         "open_mpi": {
             "mpicc_abi": _which("OMPI_ABI_TEST_MPICC_ABI", "mpicc_abi"),
@@ -3064,6 +3320,7 @@ def _tool_info(mode):
 
 
 def _symbol_diagnostics():
+    """Report optional symbol/linkage diagnostic tools for the host."""
     system = platform.system()
     tools = {
         "nm": shutil.which("nm"),
@@ -3079,6 +3336,7 @@ def _symbol_diagnostics():
 
 
 def _runtime_loader_var():
+    """Return the runtime library-path environment variable for the host."""
     system = platform.system()
     if system == "Darwin":
         return "DYLD_LIBRARY_PATH"
@@ -3088,6 +3346,12 @@ def _runtime_loader_var():
 
 
 def build_report(manifest, mode, srcdir, builddir, outdir, progress=None):
+    """Run the requested mode and assemble the machine-readable report.
+
+    Mode-level SKIPs are decided before running subordinate checks so a
+    build without standard ABI support remains a spec-sanctioned skip
+    rather than failing completion gates or installed-tool discovery.
+    """
     api_entries = manifest["apis"]
     constant_entries = manifest["constants"]
     standard_abi = manifest["configuration"]["standard_abi"]
@@ -3158,6 +3422,7 @@ def build_report(manifest, mode, srcdir, builddir, outdir, progress=None):
 
 
 def _summary_text(report, colors=None):
+    """Render a human-readable summary from a report object."""
     if colors is None:
         colors = _Colors(False)
     lines = []
@@ -3226,6 +3491,7 @@ def _summary_text(report, colors=None):
 
 
 def write_outputs(manifest, report, outdir):
+    """Write manifest, JSON report, and plain-text summary files."""
     outdir.mkdir(parents=True, exist_ok=True)
     manifest_path = outdir / "abi-manifest.json"
     report_path = outdir / "abi-report.json"
@@ -3237,6 +3503,13 @@ def write_outputs(manifest, report, outdir):
 
 
 def command(args):
+    """Execute the parsed CLI command and return a shell exit status.
+
+    Reports are written for every mode, including failures, because the
+    JSON command logs are the primary diagnostic artifact for CI and for
+    reviewer investigations.  The completion gate is applied after the
+    report is built and deliberately ignored for skipped runs.
+    """
     srcdir = Path(args.srcdir).resolve()
     builddir = Path(args.builddir).resolve()
     outdir = (
@@ -3288,6 +3561,7 @@ def command(args):
 
 
 def main(argv):
+    """Parse command-line arguments and run the MPI ABI test runner."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--srcdir", default=Path(__file__).parents[2],
                         help="top source directory")
