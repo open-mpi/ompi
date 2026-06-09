@@ -6,8 +6,11 @@
 #
 # $HEADER$
 #
-# CodeQL configuration for Open MPI, referenced by both analysis jobs
-# in .github/workflows/codeql.yml via their `config-file:` input.
+# CodeQL configuration for Open MPI.  Push / PR scans load this file
+# locally from the checked-out branch.  The scheduled cross-branch scan
+# loads this same file from the default branch via CodeQL's remote
+# config-file syntax, so the release-branch scans do not require a local
+# copy of this file to already exist.
 
 name: "Open MPI CodeQL config"
 
