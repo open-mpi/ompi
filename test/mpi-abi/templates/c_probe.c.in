@@ -17,6 +17,8 @@
 #error "standard ABI mpi.h was not used"
 #endif
 
+@PROLOGUE@
+
 int main(int argc, char **argv)
 {
 @BODY@

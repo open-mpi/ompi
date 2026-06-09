@@ -56,6 +56,7 @@ SKIP_DYNAMIC_PROCESS_DISABLED = "dynamic_process_disabled"
 SKIP_MPI_ABORT_TERMINATES_JOB = "mpi_abort_terminates_job"
 SKIP_COMM_JOIN_REQUIRES_CONNECTED_FD = "comm_join_requires_connected_fd"
 SKIP_PHASE10_CALLBACK_REQUIRED = "phase10_callback_required"
+SKIP_PHASE10B_CALLBACK_DEFERRED = "phase10b_callback_deferred"
 
 EXPECTED_METADATA_VERSION = "5.0"
 EXPECTED_API_COUNT = 567
@@ -1190,6 +1191,110 @@ INSTALLED_C_RUNTIME_API_PROBES = (
 )
 
 
+INSTALLED_C_CALLBACK_PROBES = (
+    {
+        "name": "callback_comm_attr",
+        "family": "callback_attribute",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Comm_create_keyval",
+            "MPI_Comm_delete_attr",
+            "MPI_Comm_free_keyval",
+            "MPI_Comm_get_attr",
+            "MPI_Comm_set_attr",
+        ),
+        "support_api_names": (
+            "MPI_Comm_dup",
+            "MPI_Comm_free",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "prologue_file": "cases/c-callback/callback_comm_attr.prologue.in",
+        "body_file": "cases/c-callback/callback_comm_attr.cbody.in",
+    },
+    {
+        "name": "callback_type_attr",
+        "family": "callback_attribute",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Type_create_keyval",
+            "MPI_Type_delete_attr",
+            "MPI_Type_free_keyval",
+            "MPI_Type_get_attr",
+            "MPI_Type_set_attr",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Type_dup",
+            "MPI_Type_free",
+        ),
+        "prologue_file": "cases/c-callback/callback_type_attr.prologue.in",
+        "body_file": "cases/c-callback/callback_type_attr.cbody.in",
+    },
+    {
+        "name": "callback_win_attr",
+        "family": "callback_attribute",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Win_create_keyval",
+            "MPI_Win_delete_attr",
+            "MPI_Win_free_keyval",
+            "MPI_Win_get_attr",
+            "MPI_Win_set_attr",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Win_create",
+            "MPI_Win_free",
+        ),
+        "requires_feature": "rma",
+        "prologue_file": "cases/c-callback/callback_win_attr.prologue.in",
+        "body_file": "cases/c-callback/callback_win_attr.cbody.in",
+    },
+)
+
+
+CALLBACK_ATTRIBUTE_API_NAMES = frozenset((
+    "MPI_Comm_create_keyval",
+    "MPI_Comm_delete_attr",
+    "MPI_Comm_free_keyval",
+    "MPI_Comm_get_attr",
+    "MPI_Comm_set_attr",
+    "MPI_Type_create_keyval",
+    "MPI_Type_delete_attr",
+    "MPI_Type_free_keyval",
+    "MPI_Type_get_attr",
+    "MPI_Type_set_attr",
+    "MPI_Win_create_keyval",
+    "MPI_Win_delete_attr",
+    "MPI_Win_free_keyval",
+    "MPI_Win_get_attr",
+    "MPI_Win_set_attr",
+))
+
+LEGACY_ATTRIBUTE_API_NAMES = frozenset((
+    "MPI_Attr_delete",
+    "MPI_Attr_get",
+    "MPI_Attr_put",
+    "MPI_Keyval_create",
+    "MPI_Keyval_free",
+))
+
+PHASE10B_CALLBACK_API_NAMES = frozenset((
+    "MPI_Comm_create_errhandler",
+    "MPI_File_create_errhandler",
+    "MPI_Grequest_complete",
+    "MPI_Grequest_start",
+    "MPI_Op_create",
+    "MPI_Op_free",
+    "MPI_Register_datarep",
+    "MPI_Session_create_errhandler",
+    "MPI_Win_create_errhandler",
+))
+
+
 def _read_json(path):
     with path.open("r", encoding="utf-8") as stream:
         return json.load(stream)
@@ -1241,6 +1346,25 @@ def _probe_body_text(srcdir, case):
     if not path.exists():
         raise RuntimeError(
             "probe {0} body file is missing: {1}".format(
+                case.get("name", "<unknown>"), path))
+    return _read_text(path)
+
+
+def _probe_prologue_text(srcdir, case):
+    """Load optional top-level C helpers for one installed probe case.
+
+    Most checked-in snippets are straight-line code inserted inside
+    main().  Callback probes also need file-scope callback functions.
+    Keeping those helpers in a separate prologue file preserves the
+    body file as the readable description of the MPI runtime flow.
+    """
+    prologue_file = case.get("prologue_file")
+    if prologue_file is None:
+        return ""
+    path = srcdir / "test" / "mpi-abi" / prologue_file
+    if not path.exists():
+        raise RuntimeError(
+            "probe {0} prologue file is missing: {1}".format(
                 case.get("name", "<unknown>"), path))
     return _read_text(path)
 
@@ -2454,7 +2578,9 @@ def _runtime_api_probe_body_calls(srcdir, case):
     return set(call_re.findall(_probe_body_text(srcdir, case)))
 
 
-def _runtime_api_probe_generation_check(srcdir, manifest, header, cases):
+def _runtime_api_probe_generation_check(
+        srcdir, manifest, header, cases,
+        check_name="installed_c_runtime_api_probe_generation"):
     """Validate the runtime API probe table before compiling C sources.
 
     Phase 9 starts with seed API-family probes, not exhaustive family
@@ -2490,11 +2616,16 @@ def _runtime_api_probe_generation_check(srcdir, manifest, header, cases):
     missing_body_calls = {}
     undeclared_body_calls = {}
     body_file_errors = {}
+    prologue_file_errors = {}
     for case in cases:
         advertised = (
             set(case.get("api_names", ())) |
             set(case.get("support_api_names", ()))
         )
+        try:
+            _probe_prologue_text(srcdir, case)
+        except RuntimeError as exc:
+            prologue_file_errors[case["name"]] = str(exc)
         try:
             called = _runtime_api_probe_body_calls(srcdir, case)
         except RuntimeError as exc:
@@ -2509,9 +2640,9 @@ def _runtime_api_probe_generation_check(srcdir, manifest, header, cases):
 
     if (missing_metadata or not_implemented or missing_header or
             empty_cases or missing_body_calls or undeclared_body_calls or
-            body_file_errors):
+            body_file_errors or prologue_file_errors):
         return _fail(
-            "installed_c_runtime_api_probe_generation",
+            check_name,
             "runtime API probe table does not match metadata/header",
             missing_metadata=missing_metadata,
             not_implemented=not_implemented,
@@ -2521,14 +2652,131 @@ def _runtime_api_probe_generation_check(srcdir, manifest, header, cases):
             missing_body_calls=missing_body_calls,
             undeclared_body_calls=undeclared_body_calls,
             body_file_errors=body_file_errors,
+            prologue_file_errors=prologue_file_errors,
             probe_count=len(cases))
 
     return _pass(
-        "installed_c_runtime_api_probe_generation",
+        check_name,
         probe_count=len(cases),
         primary_api_count=len(primary_names),
         support_api_count=len(all_names - primary_names),
         family_counts=_runtime_api_probe_family_counts(cases))
+
+
+def _callback_api_work_package(name):
+    """Return which callback implementation chunk owns an API name."""
+    if name in CALLBACK_ATTRIBUTE_API_NAMES:
+        return "chunk10a_attribute_callbacks"
+    if name in LEGACY_ATTRIBUTE_API_NAMES:
+        return "chunk10a_legacy_attribute_callbacks"
+    if name in PHASE10B_CALLBACK_API_NAMES:
+        return "chunk10b_callback_lifetime"
+    return None
+
+
+def _callback_api_coverage_audit(manifest, header, cases):
+    """Report callback-owned C ABI APIs not covered by callback probes.
+
+    The ordinary runtime audit treats callback APIs as deferred because
+    callback failures can leave MPI objects or requests in undefined
+    states.  This audit is the Phase 10 counterpart: every implemented
+    callback-owned C API declared by the installed standard ABI header
+    must be covered by a callback probe or explicitly deferred with a
+    stable reason for a later callback chunk.
+    """
+    prototypes = _parse_c_header_prototypes(header)
+    declared_names = set(prototypes)
+    covered_names = _runtime_api_probe_api_names(cases)
+    entries_by_name = {
+        entry["name"]: entry for entry in manifest["apis"]
+    }
+    missing_by_package = {}
+    deferred_by_package = {}
+    legacy_not_declared = []
+    unclassified_callback_apis = []
+    covered = 0
+
+    for entry in manifest["apis"]:
+        if not entry["languages"]["c"]:
+            continue
+        name = entry["name"]
+        package = _callback_api_work_package(name)
+        if package is None:
+            # Hard-coded ownership lists are intentional for reviewable
+            # chunks, but they must not silently hide new callback APIs
+            # that appear in docs/ metadata or the installed ABI header.
+            # Treat any implemented, declared C API that metadata marks
+            # as callback-owned as an audit failure until the API is
+            # assigned to this chunk, a later callback chunk, or an
+            # explicit skip category.
+            if (entry["classification"] == CLASS_IMPLEMENTED and
+                    name in declared_names and
+                    (entry["callback"] or
+                     _runtime_audit_work_package(entry) ==
+                     "phase10_callback")):
+                unclassified_callback_apis.append(name)
+            continue
+        if entry["classification"] != CLASS_IMPLEMENTED:
+            if name in LEGACY_ATTRIBUTE_API_NAMES and name not in declared_names:
+                legacy_not_declared.append(name)
+            continue
+        if name not in declared_names:
+            if name in LEGACY_ATTRIBUTE_API_NAMES:
+                legacy_not_declared.append(name)
+            continue
+        if name in covered_names:
+            covered += 1
+            continue
+        if package == "chunk10b_callback_lifetime":
+            deferred_by_package.setdefault(package, []).append({
+                "name": name,
+                "skip_reason": SKIP_PHASE10B_CALLBACK_DEFERRED,
+            })
+            continue
+        missing_by_package.setdefault(package, []).append(name)
+
+    legacy_declared = sorted(
+        name for name in LEGACY_ATTRIBUTE_API_NAMES
+        if name in declared_names and
+        entries_by_name.get(name, {}).get("classification") ==
+        CLASS_IMPLEMENTED
+    )
+    if legacy_declared:
+        missing_by_package.setdefault(
+            "chunk10a_legacy_attribute_callbacks", []).extend(
+                legacy_declared)
+
+    counts = {
+        package: len(names)
+        for package, names in sorted(missing_by_package.items())
+    }
+    deferred_counts = {
+        package: len(items)
+        for package, items in sorted(deferred_by_package.items())
+    }
+    details = dict(
+        covered=covered,
+        deferred_by_package={
+            package: items[:20]
+            for package, items in sorted(deferred_by_package.items())
+        },
+        deferred_by_package_counts=deferred_counts,
+        legacy_not_declared=sorted(set(legacy_not_declared)),
+        missing_by_package={
+            package: names[:20]
+            for package, names in sorted(missing_by_package.items())
+        },
+        missing_by_package_counts=counts,
+        missing_count=sum(counts.values()),
+        unclassified_callback_apis=sorted(unclassified_callback_apis),
+        unclassified_callback_api_count=len(unclassified_callback_apis),
+    )
+    if missing_by_package or unclassified_callback_apis:
+        return _fail(
+            "installed_c_callback_api_coverage_audit",
+            "callback API coverage has undeferred gaps",
+            **details)
+    return _pass("installed_c_callback_api_coverage_audit", **details)
 
 
 def _prepare_installed_c_probe_body(srcdir, case, manifest, declared_names):
@@ -3891,11 +4139,12 @@ def _installed_wrapper_checks(tools, dirs, progress=None):
     return checks
 
 
-def _c_probe_source(srcdir, body, rank_count):
+def _c_probe_source(srcdir, case, body, rank_count):
     """Render one installed C probe source from the shared template."""
     template = _read_text(srcdir / "test" / "mpi-abi" /
                           "templates" / "c_probe.c.in")
     body = body.replace("@EXPECTED_RANKS@", str(rank_count))
+    prologue = _probe_prologue_text(srcdir, case).rstrip()
     # Keep checked-in *.cbody.in snippets at natural column-zero C
     # indentation.  The snippets are always inserted inside main(), so
     # the generated source owns the function-body indentation instead of
@@ -3903,7 +4152,11 @@ def _c_probe_source(srcdir, body, rank_count):
     body = "\n".join(
         "    " + line if line else line
         for line in body.rstrip().splitlines())
-    return template.replace("@BODY@", body.rstrip())
+    return (
+        template
+        .replace("@PROLOGUE@", prologue)
+        .replace("@BODY@", body.rstrip())
+    )
 
 
 def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
@@ -3963,7 +4216,18 @@ def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
                 phase="source",
                 error=str(exc)), progress)
             continue
-        _write_text(source, _c_probe_source(srcdir, body, rank_count))
+        try:
+            probe_source = _c_probe_source(srcdir, case, body, rank_count)
+        except RuntimeError as exc:
+            if progress is not None:
+                progress.start(check_name)
+            _append_check(checks, _fail(
+                check_name,
+                "installed C ABI probe prologue is unavailable",
+                phase="source",
+                error=str(exc)), progress)
+            continue
+        _write_text(source, probe_source)
 
         compile_command = (
             [mpicc_abi] + compile_overrides +
@@ -4133,6 +4397,24 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
     checks.extend(_run_installed_c_probe_cases(
         srcdir, manifest, tools, dirs, declared_names,
         INSTALLED_C_RUNTIME_API_PROBES, progress))
+
+    if progress is not None:
+        progress.start("installed_c_callback_api_probe_generation")
+    callback_api_generation_check = _runtime_api_probe_generation_check(
+        srcdir, manifest, header, INSTALLED_C_CALLBACK_PROBES,
+        "installed_c_callback_api_probe_generation")
+    _append_check(checks, callback_api_generation_check, progress)
+    if callback_api_generation_check["result"] != "PASS":
+        return checks
+
+    if progress is not None:
+        progress.start("installed_c_callback_api_coverage_audit")
+    _append_check(checks, _callback_api_coverage_audit(
+        manifest, header, INSTALLED_C_CALLBACK_PROBES), progress)
+
+    checks.extend(_run_installed_c_probe_cases(
+        srcdir, manifest, tools, dirs, declared_names,
+        INSTALLED_C_CALLBACK_PROBES, progress))
 
     return checks
 

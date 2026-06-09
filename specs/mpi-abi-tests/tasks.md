@@ -84,11 +84,17 @@ chunk adds installed runtime probes.
       implemented C APIs are explicitly skipped or deferred with stable
       reasons: `MPI_Abort`, `MPI_Comm_join`, and callback-dependent
       Phase 10 APIs.
-- [ ] Chunk 10A: Add callback coverage audit and attribute callback
+- [x] Chunk 10A: Add callback coverage audit and attribute callback
       probes.
       Cover communicator, datatype, window, and legacy attribute/keyval
       callback paths with copy/delete side-effect checks and cleanup
       validation.
+      Installed callback probes cover the declared communicator,
+      datatype, and window attribute/keyval APIs.  The callback audit
+      records the legacy `MPI_Keyval_*` / `MPI_Attr_*` APIs as outside
+      the installed standard ABI C header, and defers error-handler,
+      user-operation, generalized-request, datarep, and MPI_T callback
+      APIs to Chunk 10B with a stable reason.
 - [ ] Chunk 10B: Add error-handler, user operation, generalized
       request, datarep, MPI_T callback, and retained-lifetime probes.
       Cover callback argument ABI values, callback invocation,
@@ -667,33 +673,36 @@ chunk adds installed runtime probes.
 
 ## Phase 10: Callback and Lifetime Tests
 
-- [ ] Add a Phase 10 callback coverage audit.
+- [x] Add a Phase 10 callback coverage audit.
       Report every implemented metadata API whose entry or parameters
       require callbacks, and require each one to be covered by a
       callback probe, explicitly skipped because Open MPI lacks support,
       or deferred with a stable machine-readable reason.  The audit must
       catch callback APIs that Phase 9 deliberately did not cover.
-- [ ] Keep Phase 10 callback probes isolated by executable.
+- [x] Keep Phase 10 callback probes isolated by executable.
       Each callback behavior probe should run in its own executable, as
       in Phase 9, because a failing callback can leave the MPI object,
       request, or process state undefined.
-- [ ] Test communicator attribute copy/delete callback wrapping.
+- [x] Test communicator attribute copy/delete callback wrapping.
       Cover communicator keyval creation, attribute put/get/delete,
       duplicate-triggered copy callbacks, delete callbacks on explicit
       delete and communicator free, callback extra state, and returned
       ABI communicator/keyval values.
-- [ ] Test legacy communicator attribute callback APIs.
+- [x] Test legacy communicator attribute callback APIs.
       Cover standard ABI behavior for implemented legacy
       `MPI_Keyval_create`, `MPI_Keyval_free`, `MPI_Attr_put`,
       `MPI_Attr_get`, and `MPI_Attr_delete` paths, or explicitly mark
       them outside the standard ABI when metadata/header authority says
       they are not in scope.
-- [ ] Test datatype attribute copy/delete callback wrapping.
+      The installed standard ABI C header comments out these legacy
+      entry points, so the callback audit records them as not declared
+      rather than generating runtime probes for non-ABI APIs.
+- [x] Test datatype attribute copy/delete callback wrapping.
       Cover datatype keyval creation, attribute put/get/delete,
       duplicate-triggered copy callbacks, delete callbacks on explicit
       delete and datatype free, callback extra state, and returned ABI
       datatype/keyval values.
-- [ ] Test window attribute copy/delete callback wrapping.
+- [x] Test window attribute copy/delete callback wrapping.
       Cover window keyval creation, attribute put/get/delete, delete
       callbacks on explicit delete and window free, callback extra
       state, and returned ABI window/keyval values.  Do not claim a

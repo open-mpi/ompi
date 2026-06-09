@@ -58,6 +58,14 @@ C_RUNTIME_CASES = \
         cases/c-runtime/runtime_topology_dist_neighbor.cbody.in \
         cases/c-runtime/runtime_win_lifecycle.cbody.in
 
+C_CALLBACK_CASES = \
+        cases/c-callback/callback_comm_attr.cbody.in \
+        cases/c-callback/callback_comm_attr.prologue.in \
+        cases/c-callback/callback_type_attr.cbody.in \
+        cases/c-callback/callback_type_attr.prologue.in \
+        cases/c-callback/callback_win_attr.cbody.in \
+        cases/c-callback/callback_win_attr.prologue.in
+
 EXTRA_DIST = \
         README.md \
         requirements.txt \
@@ -67,7 +75,8 @@ EXTRA_DIST = \
         templates/fortran_probe.f90.in \
         templates/README.md \
         $(C_ABI_CASES) \
-        $(C_RUNTIME_CASES)
+        $(C_RUNTIME_CASES) \
+        $(C_CALLBACK_CASES)
 
 abi_test_runner = $(PYTHON) "$(srcdir)/mpi_abi_tests.py" \
         --srcdir "$(top_srcdir)" \
