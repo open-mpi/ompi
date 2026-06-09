@@ -321,6 +321,21 @@ the branch is not complete until all completion-gate tasks pass.
       regression coverage outside the installed standard ABI C runtime
       probes.
 - [ ] Generate runtime tests for communicator and group APIs.
+- [x] Generate runtime tests for communicator basic state, naming,
+      info, duplication, and predefined errhandler get/set/call APIs.
+- [x] Generate runtime tests for communicator creation and splitting
+      APIs that are portable in two-rank local CI jobs.
+- [x] Generate runtime tests for group construction, rank translation,
+      comparison, and set-operation APIs.
+- [ ] Generate runtime tests for communicator buffer attach, detach,
+      flush, and asynchronous flush APIs.
+- [ ] Generate runtime tests for communicator dynamic process APIs,
+      including connect, accept, disconnect, spawn, spawn_multiple, and
+      parent-communicator behavior.
+- [ ] Explicitly defer communicator attribute copy/delete callback
+      wrapping to Phase 10 callback tests.
+- [ ] Explicitly defer communicator error-handler callback behavior to
+      Phase 10 callback tests.
 - [ ] Generate runtime tests for topology APIs.
 - [ ] Generate runtime tests for point-to-point APIs.
 - [ ] Generate runtime tests for collectives.

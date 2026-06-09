@@ -1070,27 +1070,30 @@ INSTALLED_C_RUNTIME_API_PROBES = (
 """,
     },
     {
-        "name": "runtime_comm_group_basic",
-        "family": "comm_group",
+        "name": "runtime_comm_basic",
+        "family": "comm",
         "rank_count": 1,
         "api_names": (
             "MPI_Comm_compare",
             "MPI_Comm_dup",
+            "MPI_Comm_dup_with_info",
             "MPI_Comm_free",
-            "MPI_Comm_group",
+            "MPI_Comm_get_info",
+            "MPI_Comm_get_name",
+            "MPI_Comm_idup",
+            "MPI_Comm_idup_with_info",
             "MPI_Comm_rank",
+            "MPI_Comm_set_info",
             "MPI_Comm_set_name",
             "MPI_Comm_size",
-            "MPI_Group_compare",
-            "MPI_Group_free",
-            "MPI_Group_incl",
-            "MPI_Group_rank",
-            "MPI_Group_size",
-            "MPI_Group_translate_ranks",
         ),
         "support_api_names": (
             "MPI_Finalize",
+            "MPI_Info_create",
+            "MPI_Info_free",
+            "MPI_Info_set",
             "MPI_Init",
+            "MPI_Wait",
         ),
         "body": """
     int ret = MPI_Init(&argc, &argv);
@@ -1109,68 +1112,404 @@ INSTALLED_C_RUNTIME_API_PROBES = (
         return 3;
     }
 
-    MPI_Comm comm = MPI_COMM_NULL;
-    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == comm) {
+    MPI_Info info = MPI_INFO_NULL;
+    ret = MPI_Info_create(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
         return 4;
     }
-    ret = MPI_Comm_set_name(comm, "abi-runtime-comm");
+    ret = MPI_Info_set(info, "mpi_assert_no_any_tag", "true");
     if (MPI_SUCCESS != ret) {
         return 5;
+    }
+
+    MPI_Comm comm = MPI_COMM_NULL;
+    ret = MPI_Comm_dup_with_info(MPI_COMM_WORLD, info, &comm);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == comm) {
+        return 6;
+    }
+    ret = MPI_Comm_set_info(comm, info);
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 8;
+    }
+
+    ret = MPI_Comm_set_name(comm, "abi-runtime-comm");
+    if (MPI_SUCCESS != ret) {
+        return 9;
+    }
+    char name[MPI_MAX_OBJECT_NAME];
+    int name_len = -1;
+    ret = MPI_Comm_get_name(comm, name, &name_len);
+    if (MPI_SUCCESS != ret || 16 != name_len ||
+        0 != strcmp(name, "abi-runtime-comm")) {
+        return 10;
     }
 
     int compare = MPI_UNEQUAL;
     ret = MPI_Comm_compare(MPI_COMM_WORLD, comm, &compare);
     if (MPI_SUCCESS != ret || MPI_CONGRUENT != compare) {
-        return 6;
-    }
-
-    MPI_Group world_group = MPI_GROUP_NULL;
-    MPI_Group subset_group = MPI_GROUP_NULL;
-    ret = MPI_Comm_group(comm, &world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
-        return 7;
-    }
-    ret = MPI_Group_size(world_group, &size);
-    if (MPI_SUCCESS != ret || size < 1) {
-        return 8;
-    }
-    ret = MPI_Group_rank(world_group, &rank);
-    if (MPI_SUCCESS != ret || rank < 0 || rank >= size) {
-        return 9;
-    }
-
-    int ranks[1] = {0};
-    ret = MPI_Group_incl(world_group, 1, ranks, &subset_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == subset_group) {
-        return 10;
-    }
-    int translated[1] = {-1};
-    ret = MPI_Group_translate_ranks(subset_group, 1, ranks,
-                                    world_group, translated);
-    if (MPI_SUCCESS != ret || 0 != translated[0]) {
         return 11;
     }
-    ret = MPI_Group_compare(subset_group, subset_group, &compare);
-    if (MPI_SUCCESS != ret || MPI_IDENT != compare) {
+
+    MPI_Info used = MPI_INFO_NULL;
+    ret = MPI_Comm_get_info(comm, &used);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == used) {
         return 12;
     }
-
-    ret = MPI_Group_free(&subset_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != subset_group) {
+    ret = MPI_Info_free(&used);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != used) {
         return 13;
     }
-    ret = MPI_Group_free(&world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+
+    MPI_Comm dup = MPI_COMM_NULL;
+    MPI_Request request = MPI_REQUEST_NULL;
+    ret = MPI_Comm_idup(comm, &dup, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
         return 14;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup ||
+        MPI_REQUEST_NULL != request) {
+        return 15;
+    }
+    ret = MPI_Comm_free(&dup);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dup) {
+        return 16;
+    }
+
+    ret = MPI_Info_create(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
+        return 17;
+    }
+    ret = MPI_Comm_idup_with_info(comm, info, &dup, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 18;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup ||
+        MPI_REQUEST_NULL != request) {
+        return 19;
+    }
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 20;
+    }
+    ret = MPI_Comm_free(&dup);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dup) {
+        return 21;
+    }
+
+    ret = MPI_Comm_dup(comm, &dup);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup) {
+        return 22;
+    }
+    ret = MPI_Comm_free(&dup);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dup) {
+        return 23;
     }
     ret = MPI_Comm_free(&comm);
     if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
-        return 15;
+        return 24;
     }
     ret = MPI_Finalize();
     if (MPI_SUCCESS != ret) {
+        return 25;
+    }
+""",
+    },
+    {
+        "name": "runtime_comm_create_split",
+        "family": "comm",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Comm_create",
+            "MPI_Comm_create_group",
+            "MPI_Comm_free",
+            "MPI_Comm_group",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Comm_split",
+            "MPI_Comm_split_type",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Group_free",
+            "MPI_Group_incl",
+            "MPI_Init",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    MPI_Comm split = MPI_COMM_NULL;
+    ret = MPI_Comm_split(MPI_COMM_WORLD, 0, rank, &split);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == split) {
+        return 5;
+    }
+    ret = MPI_Comm_free(&split);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != split) {
+        return 6;
+    }
+
+    MPI_Comm shared = MPI_COMM_NULL;
+    ret = MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank,
+                              MPI_INFO_NULL, &shared);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == shared) {
+        return 7;
+    }
+    ret = MPI_Comm_free(&shared);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != shared) {
+        return 8;
+    }
+
+    MPI_Group world_group = MPI_GROUP_NULL;
+    MPI_Group first_group = MPI_GROUP_NULL;
+    int first_rank[1] = {0};
+    ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
+        return 9;
+    }
+    ret = MPI_Group_incl(world_group, 1, first_rank, &first_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == first_group) {
+        return 10;
+    }
+
+    MPI_Comm created = MPI_COMM_NULL;
+    ret = MPI_Comm_create(MPI_COMM_WORLD, first_group, &created);
+    if (MPI_SUCCESS != ret) {
+        return 11;
+    }
+    if (0 == rank) {
+        if (MPI_COMM_NULL == created) {
+            return 12;
+        }
+        ret = MPI_Comm_free(&created);
+        if (MPI_SUCCESS != ret || MPI_COMM_NULL != created) {
+            return 13;
+        }
+    } else if (MPI_COMM_NULL != created) {
+        return 14;
+    }
+
+    if (0 == rank) {
+        ret = MPI_Comm_create_group(MPI_COMM_WORLD, first_group, 83,
+                                    &created);
+        if (MPI_SUCCESS != ret || MPI_COMM_NULL == created) {
+            return 15;
+        }
+        ret = MPI_Comm_free(&created);
+        if (MPI_SUCCESS != ret || MPI_COMM_NULL != created) {
+            return 16;
+        }
+    }
+
+    ret = MPI_Group_free(&first_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != first_group) {
+        return 17;
+    }
+    ret = MPI_Group_free(&world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+        return 18;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 19;
+    }
+""",
+    },
+    {
+        "name": "runtime_comm_errhandler_basic",
+        "family": "comm",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Comm_call_errhandler",
+            "MPI_Comm_get_errhandler",
+            "MPI_Comm_set_errhandler",
+        ),
+        "support_api_names": (
+            "MPI_Errhandler_free",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    ret = MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+    ret = MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRORS_RETURN != errhandler) {
+        return 3;
+    }
+    ret = MPI_Errhandler_free(&errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
+        return 4;
+    }
+    ret = MPI_Comm_call_errhandler(MPI_COMM_WORLD, MPI_ERR_OTHER);
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+""",
+    },
+    {
+        "name": "runtime_group_setops",
+        "family": "group",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Group_compare",
+            "MPI_Group_difference",
+            "MPI_Group_excl",
+            "MPI_Group_free",
+            "MPI_Group_incl",
+            "MPI_Group_intersection",
+            "MPI_Group_range_excl",
+            "MPI_Group_range_incl",
+            "MPI_Group_rank",
+            "MPI_Group_size",
+            "MPI_Group_translate_ranks",
+            "MPI_Group_union",
+        ),
+        "support_api_names": (
+            "MPI_Comm_group",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    MPI_Group world_group = MPI_GROUP_NULL;
+    ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
+        return 2;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Group_size(world_group, &size);
+    if (MPI_SUCCESS != ret || 1 != size) {
+        return 3;
+    }
+    ret = MPI_Group_rank(world_group, &rank);
+    if (MPI_SUCCESS != ret || 0 != rank) {
+        return 4;
+    }
+
+    int ranks[1] = {0};
+    MPI_Group incl_group = MPI_GROUP_NULL;
+    ret = MPI_Group_incl(world_group, 1, ranks, &incl_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == incl_group) {
+        return 5;
+    }
+
+    MPI_Group empty_group = MPI_GROUP_NULL;
+    ret = MPI_Group_excl(world_group, 1, ranks, &empty_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_EMPTY != empty_group) {
+        return 6;
+    }
+
+    int ranges[1][3] = {{0, 0, 1}};
+    MPI_Group range_group = MPI_GROUP_NULL;
+    ret = MPI_Group_range_incl(world_group, 1, ranges, &range_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == range_group) {
+        return 7;
+    }
+
+    MPI_Group range_empty = MPI_GROUP_NULL;
+    ret = MPI_Group_range_excl(world_group, 1, ranges, &range_empty);
+    if (MPI_SUCCESS != ret || MPI_GROUP_EMPTY != range_empty) {
+        return 8;
+    }
+
+    MPI_Group union_group = MPI_GROUP_NULL;
+    ret = MPI_Group_union(empty_group, world_group, &union_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == union_group) {
+        return 9;
+    }
+
+    MPI_Group intersection_group = MPI_GROUP_NULL;
+    ret = MPI_Group_intersection(world_group, incl_group,
+                                 &intersection_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == intersection_group) {
+        return 10;
+    }
+
+    MPI_Group difference_group = MPI_GROUP_NULL;
+    ret = MPI_Group_difference(world_group, empty_group,
+                               &difference_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == difference_group) {
+        return 11;
+    }
+
+    int translated[1] = {-1};
+    ret = MPI_Group_translate_ranks(incl_group, 1, ranks,
+                                    world_group, translated);
+    if (MPI_SUCCESS != ret || 0 != translated[0]) {
+        return 12;
+    }
+
+    int compare = MPI_UNEQUAL;
+    ret = MPI_Group_compare(world_group, union_group, &compare);
+    if (MPI_SUCCESS != ret || MPI_IDENT != compare) {
+        return 13;
+    }
+
+    ret = MPI_Group_free(&difference_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != difference_group) {
+        return 14;
+    }
+    ret = MPI_Group_free(&intersection_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != intersection_group) {
+        return 15;
+    }
+    ret = MPI_Group_free(&union_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != union_group) {
         return 16;
+    }
+    ret = MPI_Group_free(&range_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != range_group) {
+        return 17;
+    }
+    ret = MPI_Group_free(&incl_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != incl_group) {
+        return 18;
+    }
+    ret = MPI_Group_free(&world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+        return 19;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 20;
     }
 """,
     },
