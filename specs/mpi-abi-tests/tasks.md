@@ -106,10 +106,16 @@ chunk adds installed runtime probes.
       persistent `MPI_Alltoallw` probes that overwrite the caller-side
       count, displacement, and datatype arrays after the wrapper call
       and then validate the completed data movement.
-- [ ] Chunk 11A: Add Fortran binding detection, coverage audit, and
+- [x] Chunk 11A: Add Fortran binding detection, coverage audit, and
       compile-only conformance probes.
       Distinguish `mpif.h`, `use mpi`, and `use mpi_f08` regression
       coverage from implemented `use mpi_f08` standard ABI coverage.
+      Installed `check-abi` now records configured Fortran binding
+      state, installed `mpifort` availability, an advisory per-binding
+      coverage audit, and one compile-only conformance probe per
+      configured binding layer.  Exhaustive per-API Fortran compile and
+      runtime coverage remains in Chunk 11B and the open Phase 11 tasks
+      below.
 - [ ] Chunk 11B: Add Fortran runtime and Fortran ABI probes.
       Cover configured Fortran runtime families, Fortran ABI helper
       routines, logical values, handles, statuses, optional datatypes,
@@ -785,24 +791,28 @@ chunk adds installed runtime probes.
 
 ## Phase 11: Fortran Regression and ABI Tests
 
-- [ ] Detect configured `mpif.h` support.
+- [x] Detect configured `mpif.h` support.
       Use configure output and installed wrapper behavior so disabled
       bindings skip with stable reasons rather than failing or silently
       disappearing.
-- [ ] Detect configured `use mpi` support.
+- [x] Detect configured `use mpi` support.
       Use configure output and installed wrapper behavior so disabled
       bindings skip with stable reasons rather than failing or silently
       disappearing.
-- [ ] Detect configured `use mpi_f08` support.
+- [x] Detect configured `use mpi_f08` support.
       Use configure output and installed wrapper behavior so disabled
       bindings skip with stable reasons rather than failing or silently
       disappearing.
-- [ ] Add a Phase 11 Fortran coverage audit.
+- [x] Add a Phase 11 Fortran coverage audit.
       Report every metadata API expressible in each configured Fortran
       binding layer, grouped by `mpif.h`, `use mpi`, and `use mpi_f08`,
-      and require each implemented entry to be covered, skipped because
-      the configured binding lacks support, or explicitly marked outside
-      the standard ABI.
+      with configured binding state, installed wrapper availability,
+      implemented counts, seed compile-probe coverage, and pending
+      Phase 11B counts.
+      Chunk 11A adds the grouped report as an advisory audit with
+      `pending_phase11b` counts.  It deliberately does not hard-fail on
+      missing exhaustive Fortran coverage until the Chunk 11B generated
+      compile/runtime probes exist.
 - [ ] Keep Phase 11 Fortran runtime probes isolated by executable.
       Generate one executable per logical Fortran test case so a failed
       MPI job or failed Fortran binding invocation does not affect later
@@ -824,11 +834,15 @@ chunk adds installed runtime probes.
       Generate compile and runtime probes for configured,
       metadata-supported `use mpi_f08` APIs.  This layer also owns
       standard Fortran ABI functionality that Open MPI implements.
-- [ ] Generate Fortran compile-only interface conformance probes.
+- [x] Add initial Fortran compile-only interface conformance probes.
       Verify subroutine/function names, argument ranks, optional
       arguments, kind parameters, derived types, and overload resolution
       for each configured Fortran binding without launching MPI where a
       compile-time check is sufficient.
+      Chunk 11A adds one installed compile-only probe per configured
+      binding layer.  The probes compile and link through `mpifort` but
+      do not launch MPI.  Exhaustive per-API compile conformance remains
+      open under the binding-specific generation tasks above.
 - [ ] Generate Fortran runtime probes for initialization, communicators,
       groups, datatypes, requests, statuses, collectives, and MPI-IO
       where the configured binding supports them.

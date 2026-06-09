@@ -49,7 +49,9 @@ SKIP_HEADER_UNAVAILABLE = "generated_standard_abi_header_unavailable"
 SKIP_LINKAGE_INSPECTION_UNAVAILABLE = "linkage_inspection_unavailable"
 SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE = "symbol_diagnostics_unavailable"
 SKIP_FORTRAN_BINDINGS_DISABLED = "fortran_bindings_disabled"
+SKIP_FORTRAN_BINDING_DISABLED = "fortran_binding_disabled"
 SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
+SKIP_FORTRAN_WRAPPER_UNAVAILABLE = "fortran_wrapper_unavailable"
 SKIP_RMA_SUPPORT_DISABLED = "rma_support_disabled"
 SKIP_MPI_IO_SUPPORT_DISABLED = "mpi_io_support_disabled"
 SKIP_DYNAMIC_PROCESS_DISABLED = "dynamic_process_disabled"
@@ -65,6 +67,12 @@ EXPECTED_API_COUNT = 567
 EXPECTED_CONSTANT_COUNT = 373
 DEFAULT_COMMAND_TIMEOUT = 120
 MIN_EXPECTED_C_HEADER_PROTOTYPES = 1000
+
+FORTRAN_BINDING_LANGUAGES = (
+    "mpif.h",
+    "use mpi",
+    "use mpi_f08",
+)
 
 ANSI_RED = "\033[0;31m"
 ANSI_GREEN = "\033[0;32m"
@@ -1471,6 +1479,68 @@ INSTALLED_C_CALLBACK_PROBES = (
             "cases/c-callback/"
             "lifetime_persistent_collective_arrays.cbody.in"
         ),
+    },
+)
+
+
+INSTALLED_FORTRAN_COMPILE_PROBES = (
+    {
+        "name": "fortran_mpifh_compile_conformance",
+        "language": "mpif.h",
+        "use_statement": "include 'mpif.h'",
+        "api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+        ),
+        "body": """
+integer :: ierr
+integer :: rank
+integer :: size
+
+call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
+""",
+    },
+    {
+        "name": "fortran_usempi_compile_conformance",
+        "language": "use mpi",
+        "use_statement": "use mpi",
+        "api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+        ),
+        "body": """
+implicit none
+integer :: ierr
+integer :: rank
+integer :: size
+
+call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
+""",
+    },
+    {
+        "name": "fortran_usempif08_compile_conformance",
+        "language": "use mpi_f08",
+        "use_statement": "use mpi_f08",
+        "api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Get_count",
+        ),
+        "body": """
+implicit none
+integer :: ierr
+integer :: rank
+integer :: size
+type(MPI_Comm) :: comm
+type(MPI_Status) :: status
+
+comm = MPI_COMM_WORLD
+call MPI_Comm_rank(comm, rank, ierr)
+call MPI_Comm_size(comm, size)
+call MPI_Get_count(status, MPI_INTEGER, size, ierr)
+""",
     },
 )
 
@@ -4403,6 +4473,169 @@ def _c_probe_source(srcdir, case, body, rank_count):
     )
 
 
+def _fortran_probe_source(srcdir, case):
+    """Render one compile-only Fortran probe from the shared template."""
+    template = _read_text(srcdir / "test" / "mpi-abi" /
+                          "templates" / "fortran_probe.f90.in")
+    body = case["body"].strip()
+    return (
+        template
+        .replace("@USE_STATEMENT@", case["use_statement"])
+        .replace("@BODY@", body)
+    )
+
+
+def _fortran_binding_skip(manifest, tools, language):
+    """Return a stable skip reason for unavailable Fortran checks."""
+    state = manifest["configuration"]["fortran"][language]
+    if state["enabled"] is False:
+        return SKIP_FORTRAN_BINDING_DISABLED
+    if not _tool_available(tools["open_mpi"].get("mpifort")):
+        return SKIP_FORTRAN_WRAPPER_UNAVAILABLE
+    return None
+
+
+def _fortran_compile_probe_api_names(cases):
+    """Return compile-probe API names grouped by Fortran binding layer."""
+    covered = {language: set() for language in FORTRAN_BINDING_LANGUAGES}
+    for case in cases:
+        covered[case["language"]].update(case.get("api_names", ()))
+    return covered
+
+
+def _fortran_coverage_audit(manifest, tools, cases):
+    """Report configured Fortran coverage populations for Phase 11.
+
+    Chunk 11A installs the guardrail and reporting structure before the
+    exhaustive runtime and ABI probes exist.  The audit is therefore
+    intentionally advisory: it records configured state, installed
+    wrapper availability, implemented metadata counts, and the small
+    compile-probe API set per binding.  Phase 11B can tighten the same
+    grouped data into hard coverage enforcement once the generated
+    Fortran runtime probes are present.
+    """
+    covered = _fortran_compile_probe_api_names(cases)
+    by_language = {}
+    for language in FORTRAN_BINDING_LANGUAGES:
+        state = manifest["configuration"]["fortran"][language]
+        expressible = [
+            entry for entry in manifest["apis"]
+            if entry["languages"].get(language)
+        ]
+        implemented = [
+            entry for entry in expressible
+            if entry["classification"] == CLASS_IMPLEMENTED
+        ]
+        covered_names = covered[language]
+        covered_implemented = sorted(
+            entry["name"] for entry in implemented
+            if entry["name"] in covered_names
+        )
+        pending = sorted(
+            entry["name"] for entry in implemented
+            if entry["name"] not in covered_names
+        )
+        by_language[language] = {
+            "configured": state,
+            "skip_reason": _fortran_binding_skip(manifest, tools, language),
+            "expressible_count": len(expressible),
+            "implemented_count": len(implemented),
+            "compile_probe_api_names": sorted(covered_names),
+            "compile_probe_implemented_count": len(covered_implemented),
+            "pending_phase11b_count": len(pending),
+            "pending_phase11b": pending[:20],
+            "coverage_kind": (
+                "standard_abi" if language == "use mpi_f08"
+                else "regression"
+            ),
+        }
+
+    return _pass(
+        "installed_fortran_coverage_audit",
+        enforcement="advisory_until_phase11b",
+        languages=by_language,
+        mpifort=tools["open_mpi"].get("mpifort"))
+
+
+def _run_installed_fortran_compile_probes(srcdir, manifest, tools, dirs,
+                                          progress=None):
+    """Compile one installed Fortran probe per configured binding layer."""
+    checks = []
+    mpifort = tools["open_mpi"].get("mpifort")
+    env = _installed_test_env(tools)
+    compile_overrides = _compile_overrides(tools)
+
+    for case in INSTALLED_FORTRAN_COMPILE_PROBES:
+        name = case["name"]
+        language = case["language"]
+        check_name = "installed_" + name
+        skip_reason = _fortran_binding_skip(manifest, tools, language)
+        if skip_reason is not None:
+            if progress is not None:
+                progress.start(check_name)
+            _append_check(checks, _skip(
+                check_name,
+                skip_reason,
+                phase="configure",
+                language=language,
+                configured=manifest["configuration"]["fortran"][language],
+                mpifort=mpifort), progress)
+            continue
+
+        source = dirs["src"] / (name + ".f90")
+        executable = dirs["bin"] / name
+        _write_text(source, _fortran_probe_source(srcdir, case))
+        compile_command = (
+            [mpifort] + compile_overrides +
+            [str(source), "-o", str(executable)]
+        )
+        if progress is not None:
+            progress.start(check_name)
+        compile_result = _command_result(
+            "compile_" + name,
+            compile_command,
+            dirs["base"],
+            env,
+            dirs["logs"] / ("compile_" + name + ".json"))
+        if compile_result["returncode"] != 0:
+            _append_check(checks, _fail(
+                check_name,
+                "installed Fortran binding compile probe failed",
+                phase="compile",
+                language=language,
+                configured=manifest["configuration"]["fortran"][language],
+                source=str(source),
+                executable=str(executable),
+                command=compile_result["command"],
+                returncode=compile_result["returncode"],
+                log=compile_result["log"]), progress)
+            continue
+
+        _append_check(checks, _pass(
+            check_name,
+            language=language,
+            configured=manifest["configuration"]["fortran"][language],
+            source=str(source),
+            executable=str(executable),
+            api_names=list(case.get("api_names", ())),
+            compile_command=compile_result["command"],
+            compile_log=compile_result["log"]), progress)
+
+    return checks
+
+
+def _installed_fortran_checks(srcdir, manifest, tools, dirs, progress=None):
+    """Run Phase 11A installed Fortran detection and compile checks."""
+    checks = []
+    if progress is not None:
+        progress.start("installed_fortran_coverage_audit")
+    _append_check(checks, _fortran_coverage_audit(
+        manifest, tools, INSTALLED_FORTRAN_COMPILE_PROBES), progress)
+    checks.extend(_run_installed_fortran_compile_probes(
+        srcdir, manifest, tools, dirs, progress))
+    return checks
+
+
 def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
                                  cases, progress=None):
     """Compile, link-inspect, and launch installed C probe cases.
@@ -4696,6 +4929,8 @@ def run_installed_checks(manifest, mode, srcdir, outdir, tools,
         manifest, tools, dirs, progress))
     checks.extend(_installed_c_probe_checks(
         srcdir, manifest, tools, dirs, progress))
+    checks.extend(_installed_fortran_checks(
+        srcdir, manifest, tools, dirs, progress))
     return checks
 
 
@@ -4704,6 +4939,7 @@ def _tool_info(mode):
     tools = {
         "open_mpi": {
             "mpicc_abi": _which("OMPI_ABI_TEST_MPICC_ABI", "mpicc_abi"),
+            "mpifort": _which("OMPI_ABI_TEST_MPIFORT", "mpifort"),
             "mpirun": _which("OMPI_ABI_TEST_MPIRUN", "mpirun"),
         },
         "mpich": {
