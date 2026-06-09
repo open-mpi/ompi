@@ -59,7 +59,6 @@ SKIP_MPIT_EVENTS_DISABLED = "mpit_events_disabled"
 SKIP_MPI_ABORT_TERMINATES_JOB = "mpi_abort_terminates_job"
 SKIP_COMM_JOIN_REQUIRES_CONNECTED_FD = "comm_join_requires_connected_fd"
 SKIP_PHASE10_CALLBACK_REQUIRED = "phase10_callback_required"
-SKIP_PHASE10B_CALLBACK_DEFERRED = "phase10b_callback_deferred"
 
 EXPECTED_METADATA_VERSION = "5.0"
 EXPECTED_API_COUNT = 567
@@ -2939,8 +2938,10 @@ def _callback_api_coverage_audit(manifest, header, cases):
     callback failures can leave MPI objects or requests in undefined
     states.  This audit is the Phase 10 counterpart: every implemented
     callback-owned C API declared by the installed standard ABI header
-    must be covered by a callback probe or explicitly deferred with a
-    stable reason for a later callback chunk.
+    must be covered by a callback probe.  Unsupported optional callback
+    families are still represented by probes, but those probes skip at
+    run time with stable reasons when the installed implementation lacks
+    the underlying feature.
     """
     prototypes = _parse_c_header_prototypes(header)
     declared_names = set(prototypes)
@@ -2949,7 +2950,6 @@ def _callback_api_coverage_audit(manifest, header, cases):
         entry["name"]: entry for entry in manifest["apis"]
     }
     missing_by_package = {}
-    deferred_by_package = {}
     legacy_not_declared = []
     unclassified_callback_apis = []
     covered = 0
@@ -2985,12 +2985,6 @@ def _callback_api_coverage_audit(manifest, header, cases):
         if name in covered_names:
             covered += 1
             continue
-        if package == "chunk10b_callback_lifetime":
-            deferred_by_package.setdefault(package, []).append({
-                "name": name,
-                "skip_reason": SKIP_PHASE10B_CALLBACK_DEFERRED,
-            })
-            continue
         missing_by_package.setdefault(package, []).append(name)
 
     legacy_declared = sorted(
@@ -3008,17 +3002,8 @@ def _callback_api_coverage_audit(manifest, header, cases):
         package: len(names)
         for package, names in sorted(missing_by_package.items())
     }
-    deferred_counts = {
-        package: len(items)
-        for package, items in sorted(deferred_by_package.items())
-    }
     details = dict(
         covered=covered,
-        deferred_by_package={
-            package: items[:20]
-            for package, items in sorted(deferred_by_package.items())
-        },
-        deferred_by_package_counts=deferred_counts,
         legacy_not_declared=sorted(set(legacy_not_declared)),
         missing_by_package={
             package: names[:20]
