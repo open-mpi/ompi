@@ -47,15 +47,18 @@
 #     release branches (it never fires there); only the copy on main
 #     drives the weekly scans.
 #
-# Why inline (and not a composite action or reusable workflow): the two
-# jobs below intentionally duplicate the init / build / analyze steps.
+# Why mostly inline (and not a composite action or reusable workflow):
+# the two jobs below intentionally duplicate the init / build / analyze
+# steps.
 # Because per-branch CI requires this file to be cherry-picked onto each
-# release branch anyway, a single self-contained file (one file per
-# branch, with nothing else to keep in sync) is simpler than factoring
-# the shared steps out. Sharing them would not buy a cross-branch single
-# source of truth, and a local composite action would actually break the
-# weekly scan, since `uses: ./...` resolves from the checked-out branch
-# rather than from main.
+# release branch anyway, keeping the workflow logic here is simpler than
+# factoring the shared steps out. Sharing them would not buy a
+# cross-branch single source of truth, and local workflow/action paths
+# would actually break the weekly scan, since they resolve from the
+# checked-out branch rather than from main. The CodeQL config sidecar is
+# the exception: the scheduled job uses CodeQL's remote config-file
+# syntax to load the sidecar file from main, so the config stays
+# single-sourced while the analyzed worktree is a release branch.
 #
 # We started running CodeQL on the main, v5.0.x, and v6.0.x branches in
 # June 2026.  Subsequent release branches are matched by the branch
@@ -200,7 +203,8 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-          config-file: ./.github/codeql/codeql-config.yml
+          config-file: >-
+            ${{ github.repository }}/.github/codeql/codeql-config.yml@${{ github.event.repository.default_branch }}
 
       - name: Run manual build steps
         if: matrix.build-mode == 'manual'
