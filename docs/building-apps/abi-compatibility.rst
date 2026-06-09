@@ -8,12 +8,24 @@ ABI compatibility to previous versions of Open MPI
           by MPI-5.0, see :ref:`Building MPI applications using the MPI
           ABI <label-building-with-mpi-abi>`.
 
-The Open MPI |ompi_series| series maintains Application Binary Interface (ABI)
-compatibility for the C MPI bindings to the last major Open MPI release. Specifically, an
-application compiled with Open MPI v4.x can be executed with Open MPI
-|ompi_series| without having to recompile the application.
+The Open MPI |ompi_series| series maintains Application Binary
+Interface (ABI) compatibility for the C MPI bindings to the last major
+Open MPI release. Specifically, an application compiled with Open MPI
+v4.x can be executed with Open MPI |ompi_series| without having to
+recompile the application.
 
-.. important:: ABI is maintained for *most* of the Fortran MPI bindings, too |mdash| see below for additional information.
+.. important:: This section describes Open MPI's own release-to-release
+               ABI compatibility.  It does not describe the MPI-5.0
+               standard ABI.
+
+               In particular, Open MPI |ompi_series| does not provide
+               the MPI-5.0 Fortran standard ABI.  There is no
+               ``mpifort_abi`` compiler wrapper, ABI Fortran MPI
+               module, or ABI Fortran MPI library in this release.
+               Open MPI may provide the ``MPI_Abi_*`` query/helper
+               routines in its normal Fortran bindings, but those
+               routines do not make the normal Open MPI Fortran
+               bindings MPI-5.0 standard ABI bindings.
 
 There are however a few scenarios where an application compiled with
 Open MPI v4.x might not execute correctly with Open MPI |ompi_series|.
@@ -62,3 +74,37 @@ Open MPI v4.x might not execute correctly with Open MPI |ompi_series|.
   removed functions see :ref:`Removed MPI constructs
   <label-removed-mpi-constructs>` and :ref:`Deprecation warnings
   <label-deprecated-functions>`
+
+Mixing Open MPI's ABI and the MPI standard ABI
+----------------------------------------------
+
+Open MPI's normal ABI and the MPI-5.0 standard ABI are separate binary
+interfaces.  Do not mix object files or libraries that use both MPI
+ABIs in a single executable.
+
+For example, the following cases are not supported:
+
+* Compiling some C source files that call MPI with ``mpicc_abi`` and
+  compiling other C source files that call MPI with ``mpicc``, then
+  linking them into one executable.
+* Compiling C source files that call MPI with ``mpicc_abi`` and
+  compiling Fortran source files that call MPI with ``mpifort``, then
+  linking them into one executable.
+* Linking a library whose MPI-using object files were built with
+  ``mpicc_abi`` into an application whose MPI-using object files were
+  built with ``mpicc`` or ``mpifort``.
+
+These combinations are unsafe because the process-wide ``MPI_*``
+symbols must resolve to one MPI library ABI, while the object files were
+compiled with different binary representations for MPI handles,
+constants, callback arguments, and status objects.  The result is
+undefined behavior; the executable may fail to link, crash, report MPI
+errors, or appear to work until an MPI object crosses the ABI boundary.
+
+Use one MPI ABI consistently for every object file that calls MPI:
+
+* For a C MPI application using the MPI-5.0 standard ABI, compile and
+  link all MPI-using C objects with ``mpicc_abi``.
+* For a normal Open MPI application, including mixed C and Fortran
+  applications, compile C objects with ``mpicc`` and Fortran objects
+  with ``mpifort``.
