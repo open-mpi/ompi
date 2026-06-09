@@ -66,6 +66,7 @@ EXTRA_DIST         = \
         no-prrte-content.rst.txt \
         generate-code-of-conduct-rst.py \
         generate-mpi-man3-bindings.py \
+        mpi-standard-abi.json \
         mpi-standard-apis.json \
         html \
         man \
