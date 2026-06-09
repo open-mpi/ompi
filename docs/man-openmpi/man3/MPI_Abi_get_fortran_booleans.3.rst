@@ -32,6 +32,19 @@ by a call to :ref:`MPI_Abi_set_fortran_booleans` or internally by MPI.
 *logical_size* is the size in bytes of a Fortran logical and must be a power of two;
 otherwise ``MPI_ERR_ARG`` is returned.
 
+When Open MPI is built with Fortran logical support, this routine
+returns Open MPI's configured Fortran ``.TRUE.`` and ``.FALSE.`` values
+for recognized logical sizes and sets ``is_set`` to true.  For a
+power-of-two logical size that Open MPI cannot map to a configured
+Fortran logical representation, the routine returns ``MPI_SUCCESS`` and
+sets ``is_set`` to false.
+
+When Open MPI is built without Fortran logical support, this routine
+returns values previously supplied with
+:ref:`MPI_Abi_set_fortran_booleans`, if any.  If no values have been
+supplied for ``logical_size``, the routine returns ``MPI_SUCCESS`` and
+sets ``is_set`` to false.
+
 ERRORS
 ------
 
