@@ -1,0 +1,123 @@
+
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise group construction, set operations, comparison, rank
+     *   translation, and cleanup using MPI_COMM_WORLD as authority.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    MPI_Group world_group = MPI_GROUP_NULL;
+    ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
+        return 2;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Group_size(world_group, &size);
+    if (MPI_SUCCESS != ret || 1 != size) {
+        return 3;
+    }
+    ret = MPI_Group_rank(world_group, &rank);
+    if (MPI_SUCCESS != ret || 0 != rank) {
+        return 4;
+    }
+
+    int ranks[1] = {0};
+    MPI_Group incl_group = MPI_GROUP_NULL;
+    ret = MPI_Group_incl(world_group, 1, ranks, &incl_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == incl_group) {
+        return 5;
+    }
+
+    MPI_Group empty_group = MPI_GROUP_NULL;
+    ret = MPI_Group_excl(world_group, 1, ranks, &empty_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_EMPTY != empty_group) {
+        return 6;
+    }
+
+    int ranges[1][3] = {{0, 0, 1}};
+    MPI_Group range_group = MPI_GROUP_NULL;
+    ret = MPI_Group_range_incl(world_group, 1, ranges, &range_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == range_group) {
+        return 7;
+    }
+
+    MPI_Group range_empty = MPI_GROUP_NULL;
+    ret = MPI_Group_range_excl(world_group, 1, ranges, &range_empty);
+    if (MPI_SUCCESS != ret || MPI_GROUP_EMPTY != range_empty) {
+        return 8;
+    }
+
+    MPI_Group union_group = MPI_GROUP_NULL;
+    ret = MPI_Group_union(empty_group, world_group, &union_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == union_group) {
+        return 9;
+    }
+
+    MPI_Group intersection_group = MPI_GROUP_NULL;
+    ret = MPI_Group_intersection(world_group, incl_group,
+                                 &intersection_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == intersection_group) {
+        return 10;
+    }
+
+    MPI_Group difference_group = MPI_GROUP_NULL;
+    ret = MPI_Group_difference(world_group, empty_group,
+                               &difference_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == difference_group) {
+        return 11;
+    }
+
+    int translated[1] = {-1};
+    ret = MPI_Group_translate_ranks(incl_group, 1, ranks,
+                                    world_group, translated);
+    if (MPI_SUCCESS != ret || 0 != translated[0]) {
+        return 12;
+    }
+
+    int compare = MPI_UNEQUAL;
+    ret = MPI_Group_compare(world_group, union_group, &compare);
+    if (MPI_SUCCESS != ret || MPI_IDENT != compare) {
+        return 13;
+    }
+
+    ret = MPI_Group_free(&difference_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != difference_group) {
+        return 14;
+    }
+    ret = MPI_Group_free(&intersection_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != intersection_group) {
+        return 15;
+    }
+    ret = MPI_Group_free(&union_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != union_group) {
+        return 16;
+    }
+    ret = MPI_Group_free(&range_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != range_group) {
+        return 17;
+    }
+    ret = MPI_Group_free(&incl_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != incl_group) {
+        return 18;
+    }
+    ret = MPI_Group_free(&world_group);
+    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+        return 19;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 20;
+    }

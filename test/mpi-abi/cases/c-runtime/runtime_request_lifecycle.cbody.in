@@ -1,0 +1,251 @@
+
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise request wait/test/status/cancel/free APIs with isolated
+     *   two-rank traffic so each request state transition is observable.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    if (0 == rank) {
+        for (int tag = 990; tag < 1000; ++tag) {
+            int value = tag;
+            MPI_Request request = MPI_REQUEST_NULL;
+            ret = MPI_Isend(&value, 1, MPI_INT, 1, tag,
+                            MPI_COMM_WORLD, &request);
+            if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+                return 5;
+            }
+            int abi_value = MPI_Request_toint(request);
+            if (MPI_Request_fromint(abi_value) != request) {
+                return 6;
+            }
+            ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+                return 7;
+            }
+        }
+    } else {
+        int values[2] = {-1, -1};
+        MPI_Request requests[2] = {
+            MPI_REQUEST_NULL, MPI_REQUEST_NULL
+        };
+        ret = MPI_Irecv(&values[0], 1, MPI_INT, 0, 990,
+                        MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 8;
+        }
+        ret = MPI_Irecv(&values[1], 1, MPI_INT, 0, 991,
+                        MPI_COMM_WORLD, &requests[1]);
+        if (MPI_SUCCESS != ret) {
+            return 9;
+        }
+        ret = MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != ret || 990 != values[0] || 991 != values[1]) {
+            return 10;
+        }
+
+        values[0] = -1;
+        values[1] = -1;
+        ret = MPI_Irecv(&values[0], 1, MPI_INT, 0, 992,
+                        MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 11;
+        }
+        ret = MPI_Irecv(&values[1], 1, MPI_INT, 0, 993,
+                        MPI_COMM_WORLD, &requests[1]);
+        if (MPI_SUCCESS != ret) {
+            return 12;
+        }
+        int index = -1;
+        MPI_Status status;
+        ret = MPI_Waitany(2, requests, &index, &status);
+        if (MPI_SUCCESS != ret || index < 0 || index > 1) {
+            return 13;
+        }
+        ret = MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != ret || 992 != values[0] || 993 != values[1]) {
+            return 14;
+        }
+
+        values[0] = -1;
+        values[1] = -1;
+        ret = MPI_Irecv(&values[0], 1, MPI_INT, 0, 994,
+                        MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 15;
+        }
+        ret = MPI_Irecv(&values[1], 1, MPI_INT, 0, 995,
+                        MPI_COMM_WORLD, &requests[1]);
+        if (MPI_SUCCESS != ret) {
+            return 16;
+        }
+        int outcount = 0;
+        int indices[2] = {-1, -1};
+        MPI_Status statuses[2];
+        ret = MPI_Waitsome(2, requests, &outcount, indices, statuses);
+        if (MPI_SUCCESS != ret || outcount < 1) {
+            return 17;
+        }
+        ret = MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != ret || 994 != values[0] || 995 != values[1]) {
+            return 18;
+        }
+
+        values[0] = -1;
+        ret = MPI_Irecv(&values[0], 1, MPI_INT, 0, 996,
+                        MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 19;
+        }
+        int flag = 0;
+        for (int i = 0; i < 1000 && !flag; ++i) {
+            ret = MPI_Test(&requests[0], &flag, &status);
+            if (MPI_SUCCESS != ret) {
+                return 20;
+            }
+        }
+        if (!flag || MPI_REQUEST_NULL != requests[0] || 996 != values[0]) {
+            return 21;
+        }
+
+        values[0] = -1;
+        values[1] = -1;
+        ret = MPI_Irecv(&values[0], 1, MPI_INT, 0, 997,
+                        MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 22;
+        }
+        ret = MPI_Irecv(&values[1], 1, MPI_INT, 0, 998,
+                        MPI_COMM_WORLD, &requests[1]);
+        if (MPI_SUCCESS != ret) {
+            return 23;
+        }
+        flag = 0;
+        for (int i = 0; i < 1000 && !flag; ++i) {
+            ret = MPI_Testany(2, requests, &index, &flag, &status);
+            if (MPI_SUCCESS != ret) {
+                return 24;
+            }
+        }
+        if (!flag || index < 0 || index > 1) {
+            return 25;
+        }
+        ret = MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != ret || 997 != values[0] || 998 != values[1]) {
+            return 26;
+        }
+
+        values[0] = -1;
+        ret = MPI_Irecv(&values[0], 1, MPI_INT, 0, 999,
+                        MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 27;
+        }
+        flag = 0;
+        for (int i = 0; i < 1000 && !flag; ++i) {
+            ret = MPI_Testall(1, requests, &flag, statuses);
+            if (MPI_SUCCESS != ret) {
+                return 28;
+            }
+        }
+        if (!flag || MPI_REQUEST_NULL != requests[0] || 999 != values[0]) {
+            return 29;
+        }
+
+        /*
+         * The request-status APIs have special all-null request behavior.
+         * Validate those sentinel paths separately from real traffic so
+         * they cannot be hidden by normal receive completion.
+         */
+        requests[0] = MPI_REQUEST_NULL;
+        requests[1] = MPI_REQUEST_NULL;
+        flag = 0;
+        ret = MPI_Request_get_status(MPI_REQUEST_NULL, &flag, &status);
+        if (MPI_SUCCESS != ret || !flag) {
+            return 30;
+        }
+        ret = MPI_Request_get_status_all(2, requests, &flag, statuses);
+        if (MPI_SUCCESS != ret || !flag) {
+            return 31;
+        }
+        ret = MPI_Request_get_status_any(2, requests, &index, &flag,
+                                         &status);
+        if (MPI_SUCCESS != ret || !flag || MPI_UNDEFINED != index) {
+            return 32;
+        }
+        outcount = -1;
+        ret = MPI_Request_get_status_some(2, requests, &outcount,
+                                          indices, statuses);
+        if (MPI_SUCCESS != ret || MPI_UNDEFINED != outcount) {
+            return 33;
+        }
+        ret = MPI_Testsome(2, requests, &outcount, indices, statuses);
+        if (MPI_SUCCESS != ret || MPI_UNDEFINED != outcount) {
+            return 34;
+        }
+
+        ret = MPI_Irecv(&values[0], 1, MPI_INT, 0, 2000,
+                        MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 35;
+        }
+        ret = MPI_Cancel(&requests[0]);
+        if (MPI_SUCCESS != ret) {
+            return 36;
+        }
+        ret = MPI_Wait(&requests[0], &status);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != requests[0]) {
+            return 37;
+        }
+        int cancelled = 0;
+        ret = MPI_Test_cancelled(&status, &cancelled);
+        if (MPI_SUCCESS != ret || !cancelled) {
+            return 38;
+        }
+
+        /*
+         * MPI_Request_free is safe for an inactive persistent request:
+         * it releases the request object without leaving communication
+         * pending at MPI_Finalize.  Do not free an active unmatched
+         * receive here; that receive would stay pending forever.
+         */
+        ret = MPI_Recv_init(&values[0], 1, MPI_INT, 0, 2001,
+                            MPI_COMM_WORLD, &requests[0]);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == requests[0]) {
+            return 39;
+        }
+        ret = MPI_Request_free(&requests[0]);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != requests[0]) {
+            return 40;
+        }
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 41;
+    }

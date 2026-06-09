@@ -23,25 +23,25 @@ one executable per runtime test case, and include at least syntax checks,
 `git diff --check`, `check-fast`, and installed `check-abi` when the
 chunk adds installed runtime probes.
 
-- [ ] Chunk 9A: Add runtime coverage audit and close current
+- [x] Chunk 9A: Add runtime coverage audit and close current
       point-to-point seed coverage.
       Add a runner audit that reports implemented standard ABI C APIs
       not covered by compile/link, converter, runtime, callback, or
       explicit skip/defer logic.  Include the current blocking,
       nonblocking, probe, and persistent point-to-point seed probes in
       the committed task state.
-- [ ] Chunk 9B: Complete remaining point-to-point and request lifecycle
+- [x] Chunk 9B: Complete remaining point-to-point and request lifecycle
       probes.
       Cover buffered, synchronous, ready, sendrecv, matched-probe,
       message receive, partitioned communication, request wait/test
       variants, request status, request free, and cancellation where it
       can be tested without intentionally corrupting later MPI state.
-- [ ] Chunk 9C: Add topology and neighborhood-collective probes.
+- [x] Chunk 9C: Add topology and neighborhood-collective probes.
       Cover Cartesian, graph, distributed-graph, topology query/helper
       APIs, and then neighborhood collectives that need topology
       communicators.  Reviewers should be able to verify real topology
       metadata and data movement, not just successful return codes.
-- [ ] Chunk 9D: Add ordinary and persistent collective probes.
+- [x] Chunk 9D: Add ordinary and persistent collective probes.
       Cover blocking, nonblocking, persistent, reduce-scatter, scan, and
       exscan families with two-rank data validation.  User-defined
       reduction callbacks remain Phase 10 unless implemented in the
@@ -50,8 +50,12 @@ chunk adds installed runtime probes.
       probes.
       Cover datatype constructors, commit/free, introspection, extents,
       names, F90 constructors, pack/unpack, external packing, status
-      helpers, predefined reduction operation behavior, and non-callback
-      `MPI_Op` handle APIs.
+      helpers, predefined reduction operation behavior, and predefined
+      `MPI_Op` handle APIs.  Dynamic operation free remains Phase 10
+      because a freeable `MPI_Op` requires `MPI_Op_create` callback
+      coverage.
+      Most of this chunk is covered by installed runtime probes, but it
+      remains open for a focused `MPI_Type_get_contents` probe.
 - [ ] Chunk 9F: Add RMA/window and memory helper probes.
       Cover window creation/allocation/dynamic attach, window metadata,
       active/passive synchronization, one-sided operations, atomics,
@@ -398,7 +402,7 @@ chunk adds installed runtime probes.
       successful MPI lifetime, but independent cases must not share an
       executable because MPI process state after a runtime failure is
       undefined.
-- [ ] Add a Phase 9 runtime coverage audit.
+- [x] Add a Phase 9 runtime coverage audit.
       Report implemented standard ABI C APIs that are not covered by any
       runtime probe, not already covered by earlier compile/converter
       checks, and not explicitly deferred to Phase 10 or a later phase.
@@ -451,13 +455,13 @@ chunk adds installed runtime probes.
       wrapping to Phase 10 callback tests.
 - [ ] Explicitly defer communicator error-handler callback behavior to
       Phase 10 callback tests.
-- [ ] Generate runtime tests for topology APIs.
+- [x] Generate runtime tests for topology APIs.
       Cover Cartesian, graph, and distributed-graph creation/query
       paths, plus topology helpers such as `MPI_Dims_create` and
       `MPI_Topo_test`.
-- [ ] Generate runtime tests for Cartesian topology APIs.
-- [ ] Generate runtime tests for graph topology APIs.
-- [ ] Generate runtime tests for distributed graph topology APIs.
+- [x] Generate runtime tests for Cartesian topology APIs.
+- [x] Generate runtime tests for graph topology APIs.
+- [x] Generate runtime tests for distributed graph topology APIs.
 - [ ] Generate runtime tests for point-to-point APIs.
 - [x] Generate runtime tests for blocking and nonblocking send/recv
       point-to-point APIs.
@@ -468,49 +472,56 @@ chunk adds installed runtime probes.
       metadata `point_to_point` family: `MPI_Send`, `MPI_Recv`,
       `MPI_Isend`, `MPI_Irecv`, `MPI_Probe`, `MPI_Iprobe`,
       `MPI_Send_init`, and `MPI_Recv_init`.
-- [ ] Generate runtime tests for buffered, synchronous, and ready send
+- [x] Generate runtime tests for buffered, synchronous, and ready send
       APIs and their persistent initialization variants.
-- [ ] Generate runtime tests for sendrecv and nonblocking sendrecv APIs.
-- [ ] Generate runtime tests for matched-probe and message receive APIs.
-- [ ] Generate runtime tests for partitioned point-to-point APIs.
-- [ ] Generate runtime tests for request lifecycle, wait/test, and
+- [x] Generate runtime tests for sendrecv and nonblocking sendrecv APIs.
+- [x] Generate runtime tests for matched-probe and message receive APIs.
+- [x] Generate runtime tests for partitioned point-to-point APIs.
+- [x] Generate runtime tests for request lifecycle, wait/test, and
       cancellation APIs used by point-to-point and persistent operations.
-- [ ] Generate runtime tests for collectives.
+- [x] Generate runtime tests for collectives.
       Cover blocking and nonblocking collective APIs with real data
       movement and result validation, using two ranks unless the API
       requires a larger or feature-gated setup.
-- [ ] Generate runtime tests for persistent collectives.
+- [x] Generate runtime tests for persistent collectives.
       Cover persistent collective initialization, start, completion,
       and request-free paths as separate executables from the blocking
       and nonblocking collective probes.
-- [ ] Generate runtime tests for blocking intracommunicator collectives.
-- [ ] Generate runtime tests for nonblocking intracommunicator
+- [x] Generate runtime tests for blocking intracommunicator collectives.
+- [x] Generate runtime tests for nonblocking intracommunicator
       collectives.
-- [ ] Generate runtime tests for reduce-scatter, scan, and exscan
+- [x] Generate runtime tests for reduce-scatter, scan, and exscan
       collective families.
-- [ ] Generate runtime tests for neighborhood collectives after topology
+- [x] Generate runtime tests for neighborhood collectives after topology
       communicator probes exist.
 - [ ] Generate runtime tests for datatype creation and introspection.
       Cover datatype constructors, commit/free, duplication, naming,
       extent/true-extent, envelope/contents, size/count helpers, and
       pack/unpack paths.  Defer datatype attribute callback behavior to
       Phase 10.
-- [ ] Generate runtime tests for basic datatype constructors and
+- [x] Generate runtime tests for basic datatype constructors and
       commit/free lifecycle APIs.
-- [ ] Generate runtime tests for indexed, hindexed, struct, subarray,
+- [x] Generate runtime tests for indexed, hindexed, struct, subarray,
       darray, resized, and duplicate datatype constructors.
 - [ ] Generate runtime tests for datatype introspection, naming, extent,
       size, match-size, and F90 datatype constructor APIs.
-- [ ] Generate runtime tests for pack, unpack, external pack/unpack, and
+      Installed runtime probes cover naming, extents, size, match-size,
+      F90 constructors, and envelope introspection.  This remains open
+      for a focused `MPI_Type_get_contents` probe.
+- [x] Generate runtime tests for pack, unpack, external pack/unpack, and
       pack-size APIs.
-- [ ] Generate runtime tests for status count, element-count, source,
+- [x] Generate runtime tests for status count, element-count, source,
       tag, error, and C/status conversion APIs.
 - [ ] Generate runtime tests for reductions and user-defined operations.
       Cover predefined reduction operators in collective operations and
       non-callback operation-handle APIs in Phase 9.  Defer
       user-defined reduction callbacks to Phase 10.
-- [ ] Generate runtime tests for predefined reduction operations.
-- [ ] Generate runtime tests for non-callback `MPI_Op` handle APIs.
+- [x] Generate runtime tests for predefined reduction operations.
+- [x] Generate runtime tests for predefined `MPI_Op` handle APIs.
+      Installed runtime probes cover predefined operation commutativity,
+      ABI integer conversion, and local reduction behavior.  `MPI_Op_free`
+      remains part of Phase 10 user-defined operation callback testing
+      because predefined operations cannot be freed.
 - [ ] Explicitly defer user-defined operation callback behavior to
       Phase 10 callback tests.
 - [ ] Generate runtime tests for attributes and keyvals.

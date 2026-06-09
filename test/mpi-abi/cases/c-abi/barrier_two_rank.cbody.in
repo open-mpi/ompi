@@ -1,0 +1,40 @@
+
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Launch a two-rank ABI executable and verify a collective runtime
+     *   call can cross the installed mpirun/libmpi_abi boundary.
+     */
+    int size = 0;
+    int rank = -1;
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+    ret = MPI_Barrier(MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }

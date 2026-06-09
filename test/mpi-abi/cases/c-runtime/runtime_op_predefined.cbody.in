@@ -1,0 +1,40 @@
+
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Validate predefined operation handle conversion, commutativity, and
+     *   actual local reduction behavior without user-defined callbacks.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+
+    int commute = 0;
+    ret = MPI_Op_commutative(MPI_SUM, &commute);
+    if (MPI_SUCCESS != ret || !commute) {
+        return 2;
+    }
+    int abi_value = MPI_Op_toint(MPI_SUM);
+    if (MPI_Op_fromint(abi_value) != MPI_SUM) {
+        return 3;
+    }
+    int input[2] = {2, 3};
+    int inout[2] = {5, 7};
+    ret = MPI_Reduce_local(input, inout, 2, MPI_INT, MPI_SUM);
+    if (MPI_SUCCESS != ret || 7 != inout[0] || 10 != inout[1]) {
+        return 4;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }

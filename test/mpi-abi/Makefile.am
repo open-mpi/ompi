@@ -7,6 +7,44 @@
 # $HEADER$
 #
 
+C_ABI_CASES = \
+        cases/c-abi/abi_version.cbody.in \
+        cases/c-abi/barrier_two_rank.cbody.in \
+        cases/c-abi/converter_dynamic_handles.cbody.in \
+        cases/c-abi/converter_error_keyvals.cbody.in \
+        cases/c-abi/converter_fortran_datatypes.cbody.in \
+        cases/c-abi/converter_predefined_handles.cbody.in \
+        cases/c-abi/converter_status_sentinels.cbody.in \
+        cases/c-abi/init_finalize.cbody.in \
+        cases/c-abi/sendrecv_two_rank.cbody.in
+
+C_RUNTIME_CASES = \
+        cases/c-runtime/runtime_collective_basic.cbody.in \
+        cases/c-runtime/runtime_collective_blocking.cbody.in \
+        cases/c-runtime/runtime_collective_nonblocking.cbody.in \
+        cases/c-runtime/runtime_collective_persistent.cbody.in \
+        cases/c-runtime/runtime_comm_basic.cbody.in \
+        cases/c-runtime/runtime_comm_buffer.cbody.in \
+        cases/c-runtime/runtime_comm_create_split.cbody.in \
+        cases/c-runtime/runtime_comm_errhandler_basic.cbody.in \
+        cases/c-runtime/runtime_datatype_constructors.cbody.in \
+        cases/c-runtime/runtime_group_setops.cbody.in \
+        cases/c-runtime/runtime_init_state.cbody.in \
+        cases/c-runtime/runtime_init_thread.cbody.in \
+        cases/c-runtime/runtime_op_predefined.cbody.in \
+        cases/c-runtime/runtime_pack_status.cbody.in \
+        cases/c-runtime/runtime_point_to_point_basic.cbody.in \
+        cases/c-runtime/runtime_point_to_point_matched_message.cbody.in \
+        cases/c-runtime/runtime_point_to_point_partitioned.cbody.in \
+        cases/c-runtime/runtime_point_to_point_persistent.cbody.in \
+        cases/c-runtime/runtime_point_to_point_probe.cbody.in \
+        cases/c-runtime/runtime_point_to_point_send_modes.cbody.in \
+        cases/c-runtime/runtime_request_lifecycle.cbody.in \
+        cases/c-runtime/runtime_session_buffer.cbody.in \
+        cases/c-runtime/runtime_session_core.cbody.in \
+        cases/c-runtime/runtime_topology_cart_graph.cbody.in \
+        cases/c-runtime/runtime_topology_dist_neighbor.cbody.in
+
 EXTRA_DIST = \
         README.md \
         requirements.txt \
@@ -14,7 +52,9 @@ EXTRA_DIST = \
         manual/README.md \
         templates/c_probe.c.in \
         templates/fortran_probe.f90.in \
-        templates/README.md
+        templates/README.md \
+        $(C_ABI_CASES) \
+        $(C_RUNTIME_CASES)
 
 abi_test_runner = $(PYTHON) "$(srcdir)/mpi_abi_tests.py" \
         --srcdir "$(top_srcdir)" \

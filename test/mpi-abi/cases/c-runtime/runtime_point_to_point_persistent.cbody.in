@@ -1,0 +1,94 @@
+
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Validate persistent send and receive initialization, both Start
+     *   and Startall activation paths, completion, and request cleanup.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    int send_value = 41;
+    int recv_value = -1;
+    MPI_Request request = MPI_REQUEST_NULL;
+    if (0 == rank) {
+        ret = MPI_Send_init(&send_value, 1, MPI_INT, 1, 940,
+                            MPI_COMM_WORLD, &request);
+    } else if (1 == rank) {
+        ret = MPI_Recv_init(&recv_value, 1, MPI_INT, 0, 940,
+                            MPI_COMM_WORLD, &request);
+    }
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 5;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    if (1 == rank && 41 != recv_value) {
+        return 8;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 9;
+    }
+
+    send_value = 43;
+    recv_value = -1;
+    if (0 == rank) {
+        ret = MPI_Send_init(&send_value, 1, MPI_INT, 1, 941,
+                            MPI_COMM_WORLD, &request);
+    } else if (1 == rank) {
+        ret = MPI_Recv_init(&recv_value, 1, MPI_INT, 0, 941,
+                            MPI_COMM_WORLD, &request);
+    }
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 10;
+    }
+    ret = MPI_Startall(1, &request);
+    if (MPI_SUCCESS != ret) {
+        return 11;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+    if (1 == rank && 43 != recv_value) {
+        return 13;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 14;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 15;
+    }

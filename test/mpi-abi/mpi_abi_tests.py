@@ -135,688 +135,48 @@ INSTALLED_C_ABI_PROBES = (
     {
         "name": "abi_version",
         "rank_count": 1,
-        "body": """
-    int major = -1;
-    int minor = -1;
-    int ret = MPI_Abi_get_version(&major, &minor);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    if (MPI_ABI_VERSION != major) {
-        return 2;
-    }
-    if (MPI_ABI_SUBVERSION != minor) {
-        return 3;
-    }
-""",
+        "body_file": "cases/c-abi/abi_version.cbody.in",
     },
     {
         "name": "init_finalize",
         "rank_count": 1,
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-""",
+        "body_file": "cases/c-abi/init_finalize.cbody.in",
     },
     {
         "name": "barrier_two_rank",
         "rank_count": 2,
-        "body": """
-    int size = 0;
-    int rank = -1;
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-    ret = MPI_Barrier(MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret) {
-        return 5;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 6;
-    }
-""",
+        "body_file": "cases/c-abi/barrier_two_rank.cbody.in",
     },
     {
         "name": "sendrecv_two_rank",
         "rank_count": 2,
-        "body": """
-    int size = 0;
-    int rank = -1;
-    int value = -1;
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-    if (0 == rank) {
-        value = 1234;
-        ret = MPI_Send(&value, 1, MPI_INT, 1, 99, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 5;
-        }
-    } else if (1 == rank) {
-        ret = MPI_Recv(&value, 1, MPI_INT, 0, 99,
-                       MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret) {
-            return 6;
-        }
-        if (1234 != value) {
-            return 7;
-        }
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 8;
-    }
-""",
+        "body_file": "cases/c-abi/sendrecv_two_rank.cbody.in",
     },
     {
         "name": "converter_predefined_handles",
         "rank_count": 1,
-        "body": """
-#define ABI_CHECK_PREDEFINED_HANDLE(kind, value) do {                       \\
-        ++predefined_ ## kind ## _checks;                                   \\
-        int abi_value = MPI_ ## kind ## _toint(value);                      \\
-        if (abi_value != (int) (intptr_t) (value)) {                        \\
-            fprintf(stderr, "ABI_FAIL:predefined:%s:toint\\n", #value);     \\
-            return 20;                                                      \\
-        }                                                                   \\
-        if (value != MPI_ ## kind ## _fromint(abi_value)) {                 \\
-            fprintf(stderr, "ABI_FAIL:predefined:%s:fromint\\n", #value);   \\
-            return 20;                                                      \\
-        }                                                                   \\
-        if (abi_value != PMPI_ ## kind ## _toint(value)) {                  \\
-            fprintf(stderr, "ABI_FAIL:predefined:%s:ptoint\\n", #value);    \\
-            return 20;                                                      \\
-        }                                                                   \\
-        if (value != PMPI_ ## kind ## _fromint(abi_value)) {                \\
-            fprintf(stderr, "ABI_FAIL:predefined:%s:pfromint\\n", #value);  \\
-            return 20;                                                      \\
-        }                                                                   \\
-    } while (0)
-
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-@PREDEFINED_HANDLE_DECLS@
-
-@PREDEFINED_HANDLE_CHECKS@
-
-@PREDEFINED_HANDLE_GUARDS@
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 12;
-    }
-""",
+        "body_file": "cases/c-abi/converter_predefined_handles.cbody.in",
     },
     {
         "name": "converter_fortran_datatypes",
         "rank_count": 1,
         "requires_fortran": True,
-        "body": """
-#define ABI_EXPECTED_FORTRAN_TYPE_CHECKS @FORTRAN_TYPE_EXPECTED@
-#define ABI_CHECK_FORTRAN_TYPE(value) do {                                  \\
-        ++fortran_type_checks;                                              \\
-        int abi_value = MPI_Type_toint(value);                              \\
-        if (abi_value != (int) (intptr_t) (value)) {                        \\
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:toint\\n", #value);   \\
-            return 20;                                                      \\
-        }                                                                   \\
-        if (value != MPI_Type_fromint(abi_value)) {                         \\
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:fromint\\n", #value); \\
-            return 20;                                                      \\
-        }                                                                   \\
-        if (abi_value != PMPI_Type_toint(value)) {                          \\
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:ptoint\\n", #value);  \\
-            return 20;                                                      \\
-        }                                                                   \\
-        if (value != PMPI_Type_fromint(abi_value)) {                        \\
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:pfromint\\n", #value);\\
-            return 20;                                                      \\
-        }                                                                   \\
-    } while (0)
-
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-    int fortran_type_checks = 0;
-
-@FORTRAN_TYPE_CHECKS@
-
-    if (ABI_EXPECTED_FORTRAN_TYPE_CHECKS != fortran_type_checks) {
-        fprintf(stderr, "ABI_FAIL:fortran_type:count:%d:%d\\n",
-                ABI_EXPECTED_FORTRAN_TYPE_CHECKS, fortran_type_checks);
-        ret = MPI_Finalize();
-        if (MPI_SUCCESS != ret) {
-            return 21;
-        }
-        return 22;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 23;
-    }
-""",
+        "body_file": "cases/c-abi/converter_fortran_datatypes.cbody.in",
     },
     {
         "name": "converter_dynamic_handles",
         "rank_count": 1,
-        "body": """
-#define ABI_CHECK_DYNAMIC_HANDLE(kind, type, value, code) do {              \\
-        int abi_value = MPI_ ## kind ## _toint(value);                      \\
-        type roundtrip = MPI_ ## kind ## _fromint(abi_value);               \\
-        if (roundtrip != (value)) {                                         \\
-            return (code);                                                  \\
-        }                                                                   \\
-        if (abi_value != PMPI_ ## kind ## _toint(value)) {                  \\
-            return (code) + 1;                                              \\
-        }                                                                   \\
-        if (value != PMPI_ ## kind ## _fromint(abi_value)) {                \\
-            return (code) + 2;                                              \\
-        }                                                                   \\
-    } while (0)
-
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-    MPI_Comm comm = MPI_COMM_NULL;
-    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
-    if (MPI_SUCCESS != ret) {
-        return 10;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(Comm, MPI_Comm, comm, 20);
-    ret = MPI_Comm_free(&comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
-        return 30;
-    }
-
-    MPI_Group group = MPI_GROUP_NULL;
-    ret = MPI_Comm_group(MPI_COMM_WORLD, &group);
-    if (MPI_SUCCESS != ret) {
-        return 40;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(Group, MPI_Group, group, 50);
-    ret = MPI_Group_free(&group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != group) {
-        return 60;
-    }
-
-    MPI_Info info = MPI_INFO_NULL;
-    ret = MPI_Info_create(&info);
-    if (MPI_SUCCESS != ret) {
-        return 70;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(Info, MPI_Info, info, 80);
-    ret = MPI_Info_free(&info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
-        return 90;
-    }
-
-    MPI_Datatype datatype = MPI_DATATYPE_NULL;
-    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
-    if (MPI_SUCCESS != ret) {
-        return 100;
-    }
-    ret = MPI_Type_commit(&datatype);
-    if (MPI_SUCCESS != ret) {
-        return 110;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(Type, MPI_Datatype, datatype, 120);
-    ret = MPI_Type_free(&datatype);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
-        return 130;
-    }
-
-    int win_storage = 0;
-    MPI_Win win = MPI_WIN_NULL;
-    ret = MPI_Win_create(&win_storage, sizeof(win_storage), sizeof(int),
-                         MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    if (MPI_SUCCESS != ret) {
-        return 140;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(Win, MPI_Win, win, 150);
-    ret = MPI_Win_free(&win);
-    if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
-        return 160;
-    }
-
-    MPI_File file = MPI_FILE_NULL;
-    ret = MPI_File_open(MPI_COMM_WORLD, "ompi_abi_converter_file.tmp",
-                        MPI_MODE_CREATE | MPI_MODE_RDWR |
-                        MPI_MODE_DELETE_ON_CLOSE,
-                        MPI_INFO_NULL, &file);
-    if (MPI_SUCCESS != ret) {
-        return 170;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(File, MPI_File, file, 180);
-    ret = MPI_File_close(&file);
-    if (MPI_SUCCESS != ret || MPI_FILE_NULL != file) {
-        return 190;
-    }
-
-    MPI_Request request = MPI_REQUEST_NULL;
-    ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret) {
-        return 200;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(Request, MPI_Request, request, 210);
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-        return 220;
-    }
-
-    int send_value = 17;
-    int recv_value = -1;
-    MPI_Status status;
-    MPI_Message message = MPI_MESSAGE_NULL;
-    MPI_Request send_request = MPI_REQUEST_NULL;
-    ret = MPI_Isend(&send_value, 1, MPI_INT, 0, 77,
-                    MPI_COMM_WORLD, &send_request);
-    if (MPI_SUCCESS != ret) {
-        return 230;
-    }
-    ret = MPI_Mprobe(0, 77, MPI_COMM_WORLD, &message, &status);
-    if (MPI_SUCCESS != ret) {
-        return 240;
-    }
-    ABI_CHECK_DYNAMIC_HANDLE(Message, MPI_Message, message, 250);
-    ret = MPI_Mrecv(&recv_value, 1, MPI_INT, &message, &status);
-    if (MPI_SUCCESS != ret || 17 != recv_value ||
-        MPI_MESSAGE_NULL != message) {
-        return 241;
-    }
-    ret = MPI_Wait(&send_request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != send_request) {
-        return 242;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 243;
-    }
-""",
+        "body_file": "cases/c-abi/converter_dynamic_handles.cbody.in",
     },
     {
         "name": "converter_status_sentinels",
         "rank_count": 1,
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-    int send_value = 29;
-    int recv_value = -1;
-    MPI_Status status;
-    ret = MPI_Sendrecv(&send_value, 1, MPI_INT, 0, 81,
-                       &recv_value, 1, MPI_INT, 0, 81,
-                       MPI_COMM_WORLD, &status);
-    if (MPI_SUCCESS != ret) {
-        return 10;
-    }
-    if (29 != recv_value || 0 != status.MPI_SOURCE ||
-        81 != status.MPI_TAG) {
-        return 20;
-    }
-
-    int count = -1;
-    ret = MPI_Get_count(&status, MPI_INT, &count);
-    if (MPI_SUCCESS != ret || 1 != count) {
-        return 30;
-    }
-
-    recv_value = -1;
-    ret = MPI_Sendrecv(&send_value, 1, MPI_INT, 0, 82,
-                       &recv_value, 1, MPI_INT, 0, 82,
-                       MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || 29 != recv_value) {
-        return 40;
-    }
-
-    MPI_Request request = MPI_REQUEST_NULL;
-    ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret) {
-        return 50;
-    }
-    ret = MPI_Waitall(1, &request, MPI_STATUSES_IGNORE);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-        return 60;
-    }
-
-    int inplace_value = 5;
-    ret = MPI_Allreduce(MPI_IN_PLACE, &inplace_value, 1, MPI_INT,
-                        MPI_SUM, MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret || 5 != inplace_value) {
-        return 70;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 80;
-    }
-""",
+        "body_file": "cases/c-abi/converter_status_sentinels.cbody.in",
     },
     {
         "name": "converter_error_keyvals",
         "rank_count": 1,
-        "body": """
-#define ABI_EXPECTED_ERROR_CLASS_CHECKS @ERROR_CLASS_EXPECTED@
-#define ABI_CHECK_ERROR_CLASS(value) do {                                   \\
-        ++error_class_checks;                                               \\
-        ret = MPI_Error_class(value, &error_class);                         \\
-        if (MPI_SUCCESS != ret || value != error_class) {                   \\
-            fprintf(stderr, "ABI_FAIL:error_class:%s\\n", #value);          \\
-            return 20;                                                      \\
-        }                                                                   \\
-    } while (0)
-
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-    int error_class = MPI_ERR_UNKNOWN;
-    int error_class_checks = 0;
-
-@ERROR_CLASS_CHECKS@
-
-    if (ABI_EXPECTED_ERROR_CLASS_CHECKS != error_class_checks) {
-        fprintf(stderr, "ABI_FAIL:error_class:count:%d:%d\\n",
-                ABI_EXPECTED_ERROR_CLASS_CHECKS, error_class_checks);
-        ret = MPI_Finalize();
-        if (MPI_SUCCESS != ret) {
-            return 21;
-        }
-        return 22;
-    }
-
-    int dynamic_class = MPI_ERR_UNKNOWN;
-    ret = MPI_Add_error_class(&dynamic_class);
-    if (MPI_SUCCESS != ret) {
-        return 30;
-    }
-    int dynamic_code = MPI_ERR_UNKNOWN;
-    ret = MPI_Add_error_code(dynamic_class, &dynamic_code);
-    if (MPI_SUCCESS != ret) {
-        return 31;
-    }
-    ret = MPI_Error_class(dynamic_code, &error_class);
-    if (MPI_SUCCESS != ret || dynamic_class != error_class) {
-        return 32;
-    }
-
-    if (MPI_COMM_NULL_COPY_FN != (MPI_Comm_copy_attr_function *) 0 ||
-        MPI_COMM_NULL_DELETE_FN !=
-        (MPI_Comm_delete_attr_function *) 0 ||
-        MPI_COMM_DUP_FN != (MPI_Comm_copy_attr_function *) 1) {
-        return 40;
-    }
-    if (MPI_TYPE_NULL_COPY_FN != (MPI_Type_copy_attr_function *) 0 ||
-        MPI_TYPE_NULL_DELETE_FN !=
-        (MPI_Type_delete_attr_function *) 0 ||
-        MPI_TYPE_DUP_FN != (MPI_Type_copy_attr_function *) 1) {
-        return 41;
-    }
-    if (MPI_WIN_NULL_COPY_FN != (MPI_Win_copy_attr_function *) 0 ||
-        MPI_WIN_NULL_DELETE_FN != (MPI_Win_delete_attr_function *) 0 ||
-        MPI_WIN_DUP_FN != (MPI_Win_copy_attr_function *) 1) {
-        return 42;
-    }
-
-    int attr_value = 12345;
-    void *attr_out = NULL;
-    int flag = 0;
-    int comm_keyval = MPI_KEYVAL_INVALID;
-    ret = MPI_Comm_create_keyval(MPI_COMM_NULL_COPY_FN,
-                                 MPI_COMM_NULL_DELETE_FN,
-                                 &comm_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
-        return 50;
-    }
-    MPI_Comm comm = MPI_COMM_NULL;
-    MPI_Comm comm_dup = MPI_COMM_NULL;
-    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
-    if (MPI_SUCCESS != ret) {
-        return 51;
-    }
-    ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 52;
-    }
-    ret = MPI_Comm_dup(comm, &comm_dup);
-    if (MPI_SUCCESS != ret) {
-        return 53;
-    }
-    ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || flag) {
-        return 54;
-    }
-    ret = MPI_Comm_free(&comm_dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
-        return 55;
-    }
-    ret = MPI_Comm_delete_attr(comm, comm_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 56;
-    }
-    ret = MPI_Comm_free(&comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
-        return 57;
-    }
-    ret = MPI_Comm_free_keyval(&comm_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
-        return 58;
-    }
-
-    ret = MPI_Comm_create_keyval(MPI_COMM_DUP_FN,
-                                 MPI_COMM_NULL_DELETE_FN,
-                                 &comm_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
-        return 60;
-    }
-    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
-    if (MPI_SUCCESS != ret) {
-        return 61;
-    }
-    ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 62;
-    }
-    ret = MPI_Comm_dup(comm, &comm_dup);
-    if (MPI_SUCCESS != ret) {
-        return 63;
-    }
-    attr_out = NULL;
-    flag = 0;
-    ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
-        return 64;
-    }
-    ret = MPI_Comm_free(&comm_dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
-        return 65;
-    }
-    ret = MPI_Comm_delete_attr(comm, comm_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 66;
-    }
-    ret = MPI_Comm_free(&comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
-        return 67;
-    }
-    ret = MPI_Comm_free_keyval(&comm_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
-        return 68;
-    }
-
-    int type_keyval = MPI_KEYVAL_INVALID;
-    ret = MPI_Type_create_keyval(MPI_TYPE_NULL_COPY_FN,
-                                 MPI_TYPE_NULL_DELETE_FN,
-                                 &type_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
-        return 80;
-    }
-    MPI_Datatype datatype = MPI_DATATYPE_NULL;
-    MPI_Datatype datatype_dup = MPI_DATATYPE_NULL;
-    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
-    if (MPI_SUCCESS != ret) {
-        return 81;
-    }
-    ret = MPI_Type_commit(&datatype);
-    if (MPI_SUCCESS != ret) {
-        return 82;
-    }
-    ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 83;
-    }
-    ret = MPI_Type_dup(datatype, &datatype_dup);
-    if (MPI_SUCCESS != ret) {
-        return 84;
-    }
-    attr_out = NULL;
-    flag = 0;
-    ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || flag) {
-        return 85;
-    }
-    ret = MPI_Type_free(&datatype_dup);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
-        return 86;
-    }
-    ret = MPI_Type_delete_attr(datatype, type_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 87;
-    }
-    ret = MPI_Type_free(&datatype);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
-        return 88;
-    }
-    ret = MPI_Type_free_keyval(&type_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
-        return 89;
-    }
-
-    ret = MPI_Type_create_keyval(MPI_TYPE_DUP_FN,
-                                 MPI_TYPE_NULL_DELETE_FN,
-                                 &type_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
-        return 100;
-    }
-    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
-    if (MPI_SUCCESS != ret) {
-        return 101;
-    }
-    ret = MPI_Type_commit(&datatype);
-    if (MPI_SUCCESS != ret) {
-        return 102;
-    }
-    ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 103;
-    }
-    ret = MPI_Type_dup(datatype, &datatype_dup);
-    if (MPI_SUCCESS != ret) {
-        return 104;
-    }
-    attr_out = NULL;
-    flag = 0;
-    ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
-        return 105;
-    }
-    ret = MPI_Type_free(&datatype_dup);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
-        return 106;
-    }
-    ret = MPI_Type_delete_attr(datatype, type_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 107;
-    }
-    ret = MPI_Type_free(&datatype);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
-        return 108;
-    }
-    ret = MPI_Type_free_keyval(&type_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
-        return 109;
-    }
-
-    int win_storage = 0;
-    MPI_Win win = MPI_WIN_NULL;
-    ret = MPI_Win_create(&win_storage, sizeof(win_storage), sizeof(int),
-                         MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    if (MPI_SUCCESS != ret) {
-        return 130;
-    }
-
-    int win_keyval = MPI_KEYVAL_INVALID;
-    ret = MPI_Win_create_keyval(MPI_WIN_NULL_COPY_FN,
-                                MPI_WIN_NULL_DELETE_FN,
-                                &win_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == win_keyval) {
-        return 131;
-    }
-    ret = MPI_Win_set_attr(win, win_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 132;
-    }
-    ret = MPI_Win_delete_attr(win, win_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 133;
-    }
-    ret = MPI_Win_free_keyval(&win_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != win_keyval) {
-        return 134;
-    }
-
-    ret = MPI_Win_free(&win);
-    if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
-        return 140;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 141;
-    }
-""",
+        "body_file": "cases/c-abi/converter_error_keyvals.cbody.in",
     },
 )
 
@@ -842,38 +202,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Init",
             "MPI_Initialized",
         ),
-        "body": """
-    int initialized = -1;
-    int finalized = -1;
-    int ret = MPI_Initialized(&initialized);
-    if (MPI_SUCCESS != ret || initialized) {
-        return 1;
-    }
-    ret = MPI_Finalized(&finalized);
-    if (MPI_SUCCESS != ret || finalized) {
-        return 2;
-    }
-    ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    ret = MPI_Initialized(&initialized);
-    if (MPI_SUCCESS != ret || !initialized) {
-        return 4;
-    }
-    ret = MPI_Finalized(&finalized);
-    if (MPI_SUCCESS != ret || finalized) {
-        return 5;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 6;
-    }
-    ret = MPI_Finalized(&finalized);
-    if (MPI_SUCCESS != ret || !finalized) {
-        return 7;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_init_state.cbody.in",
     },
     {
         "name": "runtime_init_thread",
@@ -887,27 +216,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
         "support_api_names": (
             "MPI_Finalize",
         ),
-        "body": """
-    int provided = -1;
-    int queried = -1;
-    int main_thread = 0;
-    int ret = MPI_Init_thread(&argc, &argv, MPI_THREAD_SINGLE, &provided);
-    if (MPI_SUCCESS != ret || provided < MPI_THREAD_SINGLE) {
-        return 1;
-    }
-    ret = MPI_Query_thread(&queried);
-    if (MPI_SUCCESS != ret || queried != provided) {
-        return 2;
-    }
-    ret = MPI_Is_thread_main(&main_thread);
-    if (MPI_SUCCESS != ret || !main_thread) {
-        return 3;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 4;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_init_thread.cbody.in",
     },
     {
         "name": "runtime_session_core",
@@ -930,85 +239,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Errhandler_free",
             "MPI_Info_free",
         ),
-        "body": """
-    MPI_Session session = MPI_SESSION_NULL;
-    int ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
-                               &session);
-    if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
-        return 1;
-    }
-
-    int abi_value = MPI_Session_toint(session);
-    if (MPI_Session_fromint(abi_value) != session) {
-        return 2;
-    }
-
-    MPI_Info info = MPI_INFO_NULL;
-    ret = MPI_Session_get_info(session, &info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
-        return 3;
-    }
-    ret = MPI_Info_free(&info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
-        return 4;
-    }
-
-    int npsets = -1;
-    ret = MPI_Session_get_num_psets(session, MPI_INFO_NULL, &npsets);
-    if (MPI_SUCCESS != ret || npsets < 1) {
-        return 5;
-    }
-
-    int pset_len = 0;
-    ret = MPI_Session_get_nth_pset(session, MPI_INFO_NULL, 0,
-                                   &pset_len, NULL);
-    if (MPI_SUCCESS != ret || pset_len < 2) {
-        return 6;
-    }
-    char *pset_name = malloc((size_t) pset_len);
-    if (NULL == pset_name) {
-        return 7;
-    }
-    ret = MPI_Session_get_nth_pset(session, MPI_INFO_NULL, 0,
-                                   &pset_len, pset_name);
-    if (MPI_SUCCESS != ret || '\\0' == pset_name[0]) {
-        free(pset_name);
-        return 8;
-    }
-
-    ret = MPI_Session_get_pset_info(session, pset_name, &info);
-    free(pset_name);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
-        return 9;
-    }
-    ret = MPI_Info_free(&info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
-        return 10;
-    }
-
-    ret = MPI_Session_set_errhandler(session, MPI_ERRORS_RETURN);
-    if (MPI_SUCCESS != ret) {
-        return 11;
-    }
-    MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
-    ret = MPI_Session_get_errhandler(session, &errhandler);
-    if (MPI_SUCCESS != ret || MPI_ERRORS_RETURN != errhandler) {
-        return 12;
-    }
-    ret = MPI_Errhandler_free(&errhandler);
-    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
-        return 13;
-    }
-    ret = MPI_Session_call_errhandler(session, MPI_ERR_OTHER);
-    if (MPI_SUCCESS != ret) {
-        return 14;
-    }
-
-    ret = MPI_Session_finalize(&session);
-    if (MPI_SUCCESS != ret || MPI_SESSION_NULL != session) {
-        return 15;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_session_core.cbody.in",
     },
     {
         "name": "runtime_session_buffer",
@@ -1025,49 +256,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
         "support_api_names": (
             "MPI_Wait",
         ),
-        "body": """
-    MPI_Session session = MPI_SESSION_NULL;
-    int ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
-                               &session);
-    if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
-        return 1;
-    }
-
-    char buffer[8192];
-    ret = MPI_Session_attach_buffer(session, buffer, sizeof(buffer));
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Session_flush_buffer(session);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-
-    MPI_Request request = MPI_REQUEST_NULL;
-    ret = MPI_Session_iflush_buffer(session, &request);
-    if (MPI_SUCCESS != ret) {
-        return 4;
-    }
-    if (MPI_REQUEST_NULL != request) {
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 5;
-        }
-    }
-
-    void *detached = NULL;
-    int size = 0;
-    ret = MPI_Session_detach_buffer(session, &detached, &size);
-    if (MPI_SUCCESS != ret || detached != buffer ||
-        size != (int) sizeof(buffer)) {
-        return 6;
-    }
-
-    ret = MPI_Session_finalize(&session);
-    if (MPI_SUCCESS != ret || MPI_SESSION_NULL != session) {
-        return 7;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_session_buffer.cbody.in",
     },
     {
         "name": "runtime_comm_basic",
@@ -1095,130 +284,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Init",
             "MPI_Wait",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret || size < 1) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret || rank < 0 || rank >= size) {
-        return 3;
-    }
-
-    MPI_Info info = MPI_INFO_NULL;
-    ret = MPI_Info_create(&info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
-        return 4;
-    }
-    ret = MPI_Info_set(info, "mpi_assert_no_any_tag", "true");
-    if (MPI_SUCCESS != ret) {
-        return 5;
-    }
-
-    MPI_Comm comm = MPI_COMM_NULL;
-    ret = MPI_Comm_dup_with_info(MPI_COMM_WORLD, info, &comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == comm) {
-        return 6;
-    }
-    ret = MPI_Comm_set_info(comm, info);
-    if (MPI_SUCCESS != ret) {
-        return 7;
-    }
-    ret = MPI_Info_free(&info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
-        return 8;
-    }
-
-    ret = MPI_Comm_set_name(comm, "abi-runtime-comm");
-    if (MPI_SUCCESS != ret) {
-        return 9;
-    }
-    char name[MPI_MAX_OBJECT_NAME];
-    int name_len = -1;
-    ret = MPI_Comm_get_name(comm, name, &name_len);
-    if (MPI_SUCCESS != ret || 16 != name_len ||
-        0 != strcmp(name, "abi-runtime-comm")) {
-        return 10;
-    }
-
-    int compare = MPI_UNEQUAL;
-    ret = MPI_Comm_compare(MPI_COMM_WORLD, comm, &compare);
-    if (MPI_SUCCESS != ret || MPI_CONGRUENT != compare) {
-        return 11;
-    }
-
-    MPI_Info used = MPI_INFO_NULL;
-    ret = MPI_Comm_get_info(comm, &used);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL == used) {
-        return 12;
-    }
-    ret = MPI_Info_free(&used);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL != used) {
-        return 13;
-    }
-
-    MPI_Comm dup = MPI_COMM_NULL;
-    MPI_Request request = MPI_REQUEST_NULL;
-    ret = MPI_Comm_idup(comm, &dup, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 14;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup ||
-        MPI_REQUEST_NULL != request) {
-        return 15;
-    }
-    ret = MPI_Comm_free(&dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dup) {
-        return 16;
-    }
-
-    ret = MPI_Info_create(&info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
-        return 17;
-    }
-    ret = MPI_Comm_idup_with_info(comm, info, &dup, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 18;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup ||
-        MPI_REQUEST_NULL != request) {
-        return 19;
-    }
-    ret = MPI_Info_free(&info);
-    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
-        return 20;
-    }
-    ret = MPI_Comm_free(&dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dup) {
-        return 21;
-    }
-
-    ret = MPI_Comm_dup(comm, &dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup) {
-        return 22;
-    }
-    ret = MPI_Comm_free(&dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dup) {
-        return 23;
-    }
-    ret = MPI_Comm_free(&comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
-        return 24;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 25;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_comm_basic.cbody.in",
     },
     {
         "name": "runtime_comm_create_split",
@@ -1240,100 +306,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Group_incl",
             "MPI_Init",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    MPI_Comm split = MPI_COMM_NULL;
-    ret = MPI_Comm_split(MPI_COMM_WORLD, 0, rank, &split);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == split) {
-        return 5;
-    }
-    ret = MPI_Comm_free(&split);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != split) {
-        return 6;
-    }
-
-    MPI_Comm shared = MPI_COMM_NULL;
-    ret = MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank,
-                              MPI_INFO_NULL, &shared);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == shared) {
-        return 7;
-    }
-    ret = MPI_Comm_free(&shared);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != shared) {
-        return 8;
-    }
-
-    MPI_Group world_group = MPI_GROUP_NULL;
-    MPI_Group first_group = MPI_GROUP_NULL;
-    int first_rank[1] = {0};
-    ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
-        return 9;
-    }
-    ret = MPI_Group_incl(world_group, 1, first_rank, &first_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == first_group) {
-        return 10;
-    }
-
-    MPI_Comm created = MPI_COMM_NULL;
-    ret = MPI_Comm_create(MPI_COMM_WORLD, first_group, &created);
-    if (MPI_SUCCESS != ret) {
-        return 11;
-    }
-    if (0 == rank) {
-        if (MPI_COMM_NULL == created) {
-            return 12;
-        }
-        ret = MPI_Comm_free(&created);
-        if (MPI_SUCCESS != ret || MPI_COMM_NULL != created) {
-            return 13;
-        }
-    } else if (MPI_COMM_NULL != created) {
-        return 14;
-    }
-
-    if (0 == rank) {
-        ret = MPI_Comm_create_group(MPI_COMM_WORLD, first_group, 83,
-                                    &created);
-        if (MPI_SUCCESS != ret || MPI_COMM_NULL == created) {
-            return 15;
-        }
-        ret = MPI_Comm_free(&created);
-        if (MPI_SUCCESS != ret || MPI_COMM_NULL != created) {
-            return 16;
-        }
-    }
-
-    ret = MPI_Group_free(&first_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != first_group) {
-        return 17;
-    }
-    ret = MPI_Group_free(&world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
-        return 18;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 19;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_comm_create_split.cbody.in",
     },
     {
         "name": "runtime_comm_errhandler_basic",
@@ -1349,35 +322,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Finalize",
             "MPI_Init",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-    ret = MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
-    ret = MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
-    if (MPI_SUCCESS != ret || MPI_ERRORS_RETURN != errhandler) {
-        return 3;
-    }
-    ret = MPI_Errhandler_free(&errhandler);
-    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
-        return 4;
-    }
-    ret = MPI_Comm_call_errhandler(MPI_COMM_WORLD, MPI_ERR_OTHER);
-    if (MPI_SUCCESS != ret) {
-        return 5;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 6;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_comm_errhandler_basic.cbody.in",
     },
     {
         "name": "runtime_comm_buffer",
@@ -1398,87 +343,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Recv",
             "MPI_Wait",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    if (0 == rank) {
-        char buffer[8192];
-        ret = MPI_Comm_attach_buffer(MPI_COMM_WORLD, buffer,
-                                     sizeof(buffer));
-        if (MPI_SUCCESS != ret) {
-            return 5;
-        }
-        int value = 101;
-        ret = MPI_Bsend(&value, 1, MPI_INT, 1, 920, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 6;
-        }
-        ret = MPI_Comm_flush_buffer(MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 7;
-        }
-
-        value = 103;
-        ret = MPI_Bsend(&value, 1, MPI_INT, 1, 921, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 8;
-        }
-        MPI_Request request = MPI_REQUEST_NULL;
-        ret = MPI_Comm_iflush_buffer(MPI_COMM_WORLD, &request);
-        if (MPI_SUCCESS != ret) {
-            return 9;
-        }
-        if (MPI_REQUEST_NULL != request) {
-            ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-            if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-                return 10;
-            }
-        }
-
-        void *detached = NULL;
-        int detached_size = 0;
-        ret = MPI_Comm_detach_buffer(MPI_COMM_WORLD, &detached,
-                                     &detached_size);
-        if (MPI_SUCCESS != ret || detached != buffer ||
-            detached_size != (int) sizeof(buffer)) {
-            return 11;
-        }
-    } else if (1 == rank) {
-        int value = -1;
-        ret = MPI_Recv(&value, 1, MPI_INT, 0, 920, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 101 != value) {
-            return 12;
-        }
-        value = -1;
-        ret = MPI_Recv(&value, 1, MPI_INT, 0, 921, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 103 != value) {
-            return 13;
-        }
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 14;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_comm_buffer.cbody.in",
     },
     {
         "name": "runtime_group_setops",
@@ -1503,116 +368,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Finalize",
             "MPI_Init",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-
-    MPI_Group world_group = MPI_GROUP_NULL;
-    ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
-        return 2;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Group_size(world_group, &size);
-    if (MPI_SUCCESS != ret || 1 != size) {
-        return 3;
-    }
-    ret = MPI_Group_rank(world_group, &rank);
-    if (MPI_SUCCESS != ret || 0 != rank) {
-        return 4;
-    }
-
-    int ranks[1] = {0};
-    MPI_Group incl_group = MPI_GROUP_NULL;
-    ret = MPI_Group_incl(world_group, 1, ranks, &incl_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == incl_group) {
-        return 5;
-    }
-
-    MPI_Group empty_group = MPI_GROUP_NULL;
-    ret = MPI_Group_excl(world_group, 1, ranks, &empty_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_EMPTY != empty_group) {
-        return 6;
-    }
-
-    int ranges[1][3] = {{0, 0, 1}};
-    MPI_Group range_group = MPI_GROUP_NULL;
-    ret = MPI_Group_range_incl(world_group, 1, ranges, &range_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == range_group) {
-        return 7;
-    }
-
-    MPI_Group range_empty = MPI_GROUP_NULL;
-    ret = MPI_Group_range_excl(world_group, 1, ranges, &range_empty);
-    if (MPI_SUCCESS != ret || MPI_GROUP_EMPTY != range_empty) {
-        return 8;
-    }
-
-    MPI_Group union_group = MPI_GROUP_NULL;
-    ret = MPI_Group_union(empty_group, world_group, &union_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == union_group) {
-        return 9;
-    }
-
-    MPI_Group intersection_group = MPI_GROUP_NULL;
-    ret = MPI_Group_intersection(world_group, incl_group,
-                                 &intersection_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == intersection_group) {
-        return 10;
-    }
-
-    MPI_Group difference_group = MPI_GROUP_NULL;
-    ret = MPI_Group_difference(world_group, empty_group,
-                               &difference_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == difference_group) {
-        return 11;
-    }
-
-    int translated[1] = {-1};
-    ret = MPI_Group_translate_ranks(incl_group, 1, ranks,
-                                    world_group, translated);
-    if (MPI_SUCCESS != ret || 0 != translated[0]) {
-        return 12;
-    }
-
-    int compare = MPI_UNEQUAL;
-    ret = MPI_Group_compare(world_group, union_group, &compare);
-    if (MPI_SUCCESS != ret || MPI_IDENT != compare) {
-        return 13;
-    }
-
-    ret = MPI_Group_free(&difference_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != difference_group) {
-        return 14;
-    }
-    ret = MPI_Group_free(&intersection_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != intersection_group) {
-        return 15;
-    }
-    ret = MPI_Group_free(&union_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != union_group) {
-        return 16;
-    }
-    ret = MPI_Group_free(&range_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != range_group) {
-        return 17;
-    }
-    ret = MPI_Group_free(&incl_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != incl_group) {
-        return 18;
-    }
-    ret = MPI_Group_free(&world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
-        return 19;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 20;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_group_setops.cbody.in",
     },
     {
         "name": "runtime_point_to_point_basic",
@@ -1632,73 +388,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Init",
             "MPI_Wait",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    MPI_Status status;
-    MPI_Request request = MPI_REQUEST_NULL;
-    if (0 == rank) {
-        int send_value = 19;
-        ret = MPI_Send(&send_value, 1, MPI_INT, 1, 910,
-                       MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 5;
-        }
-        send_value = 23;
-        ret = MPI_Isend(&send_value, 1, MPI_INT, 1, 911,
-                        MPI_COMM_WORLD, &request);
-        if (MPI_SUCCESS != ret) {
-            return 6;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 7;
-        }
-    } else if (1 == rank) {
-        int recv_value = -1;
-        ret = MPI_Recv(&recv_value, 1, MPI_INT, 0, 910,
-                       MPI_COMM_WORLD, &status);
-        if (MPI_SUCCESS != ret || 19 != recv_value) {
-            return 8;
-        }
-        int count = -1;
-        ret = MPI_Get_count(&status, MPI_INT, &count);
-        if (MPI_SUCCESS != ret || 1 != count) {
-            return 9;
-        }
-        ret = MPI_Irecv(&recv_value, 1, MPI_INT, 0, 911,
-                        MPI_COMM_WORLD, &request);
-        if (MPI_SUCCESS != ret) {
-            return 10;
-        }
-        ret = MPI_Wait(&request, &status);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
-            23 != recv_value) {
-            return 11;
-        }
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 12;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_point_to_point_basic.cbody.in",
     },
     {
         "name": "runtime_point_to_point_probe",
@@ -1717,62 +407,7 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Recv",
             "MPI_Send",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    if (0 == rank) {
-        int value = 31;
-        ret = MPI_Send(&value, 1, MPI_INT, 1, 930, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 5;
-        }
-    } else if (1 == rank) {
-        MPI_Status status;
-        ret = MPI_Probe(0, 930, MPI_COMM_WORLD, &status);
-        if (MPI_SUCCESS != ret || 0 != status.MPI_SOURCE ||
-            930 != status.MPI_TAG) {
-            return 6;
-        }
-        int count = -1;
-        ret = MPI_Get_count(&status, MPI_INT, &count);
-        if (MPI_SUCCESS != ret || 1 != count) {
-            return 7;
-        }
-        int flag = 0;
-        ret = MPI_Iprobe(0, 930, MPI_COMM_WORLD, &flag, &status);
-        if (MPI_SUCCESS != ret || !flag || 0 != status.MPI_SOURCE ||
-            930 != status.MPI_TAG) {
-            return 8;
-        }
-        int value = -1;
-        ret = MPI_Recv(&value, 1, MPI_INT, 0, 930, MPI_COMM_WORLD,
-                       &status);
-        if (MPI_SUCCESS != ret || 31 != value) {
-            return 9;
-        }
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 10;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_point_to_point_probe.cbody.in",
     },
     {
         "name": "runtime_point_to_point_persistent",
@@ -1792,87 +427,192 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Startall",
             "MPI_Wait",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    int send_value = 41;
-    int recv_value = -1;
-    MPI_Request request = MPI_REQUEST_NULL;
-    if (0 == rank) {
-        ret = MPI_Send_init(&send_value, 1, MPI_INT, 1, 940,
-                            MPI_COMM_WORLD, &request);
-    } else if (1 == rank) {
-        ret = MPI_Recv_init(&recv_value, 1, MPI_INT, 0, 940,
-                            MPI_COMM_WORLD, &request);
-    }
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 5;
-    }
-    ret = MPI_Start(&request);
-    if (MPI_SUCCESS != ret) {
-        return 6;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret) {
-        return 7;
-    }
-    if (1 == rank && 41 != recv_value) {
-        return 8;
-    }
-    ret = MPI_Request_free(&request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-        return 9;
-    }
-
-    send_value = 43;
-    recv_value = -1;
-    if (0 == rank) {
-        ret = MPI_Send_init(&send_value, 1, MPI_INT, 1, 941,
-                            MPI_COMM_WORLD, &request);
-    } else if (1 == rank) {
-        ret = MPI_Recv_init(&recv_value, 1, MPI_INT, 0, 941,
-                            MPI_COMM_WORLD, &request);
-    }
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 10;
-    }
-    ret = MPI_Startall(1, &request);
-    if (MPI_SUCCESS != ret) {
-        return 11;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret) {
-        return 12;
-    }
-    if (1 == rank && 43 != recv_value) {
-        return 13;
-    }
-    ret = MPI_Request_free(&request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-        return 14;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 15;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_point_to_point_persistent.cbody.in",
+    },
+    {
+        "name": "runtime_point_to_point_send_modes",
+        "family": "point_to_point",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Bsend",
+            "MPI_Bsend_init",
+            "MPI_Buffer_attach",
+            "MPI_Buffer_detach",
+            "MPI_Buffer_flush",
+            "MPI_Buffer_iflush",
+            "MPI_Ibsend",
+            "MPI_Irsend",
+            "MPI_Issend",
+            "MPI_Rsend",
+            "MPI_Rsend_init",
+            "MPI_Ssend",
+            "MPI_Ssend_init",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Irecv",
+            "MPI_Recv",
+            "MPI_Request_free",
+            "MPI_Send",
+            "MPI_Start",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_point_to_point_send_modes.cbody.in",
+    },
+    {
+        "name": "runtime_point_to_point_matched_message",
+        "family": "point_to_point",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Improbe",
+            "MPI_Imrecv",
+            "MPI_Message_fromint",
+            "MPI_Message_toint",
+            "MPI_Mprobe",
+            "MPI_Mrecv",
+            "MPI_Sendrecv",
+            "MPI_Sendrecv_replace",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Get_count",
+            "MPI_Init",
+            "MPI_Send",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_point_to_point_matched_message.cbody.in",
+    },
+    {
+        "name": "runtime_point_to_point_partitioned",
+        "family": "point_to_point",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Parrived",
+            "MPI_Pready",
+            "MPI_Pready_list",
+            "MPI_Pready_range",
+            "MPI_Precv_init",
+            "MPI_Psend_init",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Recv",
+            "MPI_Request_free",
+            "MPI_Send",
+            "MPI_Start",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_point_to_point_partitioned.cbody.in",
+    },
+    {
+        "name": "runtime_request_lifecycle",
+        "family": "request",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Cancel",
+            "MPI_Request_free",
+            "MPI_Request_fromint",
+            "MPI_Request_get_status",
+            "MPI_Request_get_status_all",
+            "MPI_Request_get_status_any",
+            "MPI_Request_get_status_some",
+            "MPI_Request_toint",
+            "MPI_Test",
+            "MPI_Test_cancelled",
+            "MPI_Testall",
+            "MPI_Testany",
+            "MPI_Testsome",
+            "MPI_Wait",
+            "MPI_Waitall",
+            "MPI_Waitany",
+            "MPI_Waitsome",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Irecv",
+            "MPI_Isend",
+            "MPI_Recv_init",
+        ),
+        "body_file": "cases/c-runtime/runtime_request_lifecycle.cbody.in",
+    },
+    {
+        "name": "runtime_topology_cart_graph",
+        "family": "topology",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Cart_coords",
+            "MPI_Cart_create",
+            "MPI_Cart_get",
+            "MPI_Cart_map",
+            "MPI_Cart_rank",
+            "MPI_Cart_shift",
+            "MPI_Cart_sub",
+            "MPI_Cartdim_get",
+            "MPI_Dims_create",
+            "MPI_Graph_create",
+            "MPI_Graph_get",
+            "MPI_Graph_map",
+            "MPI_Graph_neighbors",
+            "MPI_Graph_neighbors_count",
+            "MPI_Graphdims_get",
+            "MPI_Topo_test",
+        ),
+        "support_api_names": (
+            "MPI_Comm_free",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_topology_cart_graph.cbody.in",
+    },
+    {
+        "name": "runtime_topology_dist_neighbor",
+        "family": "topology",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Dist_graph_create",
+            "MPI_Dist_graph_create_adjacent",
+            "MPI_Dist_graph_neighbors",
+            "MPI_Dist_graph_neighbors_count",
+            "MPI_Ineighbor_allgather",
+            "MPI_Ineighbor_allgatherv",
+            "MPI_Ineighbor_alltoall",
+            "MPI_Ineighbor_alltoallv",
+            "MPI_Ineighbor_alltoallw",
+            "MPI_Neighbor_allgather",
+            "MPI_Neighbor_allgather_init",
+            "MPI_Neighbor_allgatherv",
+            "MPI_Neighbor_allgatherv_init",
+            "MPI_Neighbor_alltoall",
+            "MPI_Neighbor_alltoall_init",
+            "MPI_Neighbor_alltoallv",
+            "MPI_Neighbor_alltoallv_init",
+            "MPI_Neighbor_alltoallw",
+            "MPI_Neighbor_alltoallw_init",
+        ),
+        "support_api_names": (
+            "MPI_Comm_free",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Request_free",
+            "MPI_Start",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_topology_dist_neighbor.cbody.in",
     },
     {
         "name": "runtime_collective_basic",
@@ -1890,59 +630,187 @@ INSTALLED_C_RUNTIME_API_PROBES = (
             "MPI_Finalize",
             "MPI_Init",
         ),
-        "body": """
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    int value = 0;
-    if (0 == rank) {
-        value = 37;
-    }
-    ret = MPI_Bcast(&value, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret || 37 != value) {
-        return 5;
-    }
-
-    int reduced = -1;
-    ret = MPI_Allreduce(&rank, &reduced, 1, MPI_INT, MPI_SUM,
-                        MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret || 1 != reduced) {
-        return 6;
-    }
-    reduced = -1;
-    ret = MPI_Reduce(&rank, &reduced, 1, MPI_INT, MPI_SUM, 0,
-                     MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret) {
-        return 7;
-    }
-    if (0 == rank && 1 != reduced) {
-        return 8;
-    }
-
-    ret = MPI_Barrier(MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret) {
-        return 9;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 10;
-    }
-""",
+        "body_file": "cases/c-runtime/runtime_collective_basic.cbody.in",
+    },
+    {
+        "name": "runtime_collective_blocking",
+        "family": "collective",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Allgather",
+            "MPI_Allgatherv",
+            "MPI_Alltoall",
+            "MPI_Alltoallv",
+            "MPI_Alltoallw",
+            "MPI_Exscan",
+            "MPI_Gather",
+            "MPI_Gatherv",
+            "MPI_Reduce_local",
+            "MPI_Reduce_scatter",
+            "MPI_Reduce_scatter_block",
+            "MPI_Scan",
+            "MPI_Scatter",
+            "MPI_Scatterv",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_collective_blocking.cbody.in",
+    },
+    {
+        "name": "runtime_collective_nonblocking",
+        "family": "collective",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Iallgather",
+            "MPI_Iallgatherv",
+            "MPI_Iallreduce",
+            "MPI_Ialltoall",
+            "MPI_Ialltoallv",
+            "MPI_Ialltoallw",
+            "MPI_Ibarrier",
+            "MPI_Ibcast",
+            "MPI_Iexscan",
+            "MPI_Igather",
+            "MPI_Igatherv",
+            "MPI_Ireduce",
+            "MPI_Ireduce_scatter",
+            "MPI_Ireduce_scatter_block",
+            "MPI_Iscan",
+            "MPI_Iscatter",
+            "MPI_Iscatterv",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_collective_nonblocking.cbody.in",
+    },
+    {
+        "name": "runtime_collective_persistent",
+        "family": "collective",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Allgather_init",
+            "MPI_Allgatherv_init",
+            "MPI_Allreduce_init",
+            "MPI_Alltoall_init",
+            "MPI_Alltoallv_init",
+            "MPI_Alltoallw_init",
+            "MPI_Barrier_init",
+            "MPI_Bcast_init",
+            "MPI_Exscan_init",
+            "MPI_Gather_init",
+            "MPI_Gatherv_init",
+            "MPI_Reduce_init",
+            "MPI_Reduce_scatter_block_init",
+            "MPI_Reduce_scatter_init",
+            "MPI_Scan_init",
+            "MPI_Scatter_init",
+            "MPI_Scatterv_init",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Request_free",
+            "MPI_Start",
+            "MPI_Wait",
+        ),
+        "body_file": "cases/c-runtime/runtime_collective_persistent.cbody.in",
+    },
+    {
+        "name": "runtime_datatype_constructors",
+        "family": "type",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Type_commit",
+            "MPI_Type_contiguous",
+            "MPI_Type_create_darray",
+            "MPI_Type_create_f90_complex",
+            "MPI_Type_create_f90_integer",
+            "MPI_Type_create_f90_real",
+            "MPI_Type_create_hindexed",
+            "MPI_Type_create_hindexed_block",
+            "MPI_Type_create_hvector",
+            "MPI_Type_create_indexed_block",
+            "MPI_Type_create_resized",
+            "MPI_Type_create_struct",
+            "MPI_Type_create_subarray",
+            "MPI_Type_dup",
+            "MPI_Type_free",
+            "MPI_Type_get_envelope",
+            "MPI_Type_get_extent",
+            "MPI_Type_get_extent_x",
+            "MPI_Type_get_name",
+            "MPI_Type_get_true_extent",
+            "MPI_Type_get_true_extent_x",
+            "MPI_Type_get_value_index",
+            "MPI_Type_indexed",
+            "MPI_Type_match_size",
+            "MPI_Type_set_name",
+            "MPI_Type_size",
+            "MPI_Type_size_x",
+            "MPI_Type_vector",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+        ),
+        "body_file": "cases/c-runtime/runtime_datatype_constructors.cbody.in",
+    },
+    {
+        "name": "runtime_pack_status",
+        "family": "type",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Pack",
+            "MPI_Pack_external",
+            "MPI_Pack_external_size",
+            "MPI_Pack_size",
+            "MPI_Status_get_error",
+            "MPI_Status_get_source",
+            "MPI_Status_get_tag",
+            "MPI_Status_set_cancelled",
+            "MPI_Status_set_elements",
+            "MPI_Status_set_elements_x",
+            "MPI_Status_set_error",
+            "MPI_Status_set_source",
+            "MPI_Status_set_tag",
+            "MPI_Unpack",
+            "MPI_Unpack_external",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Get_elements",
+            "MPI_Get_elements_x",
+            "MPI_Init",
+            "MPI_Test_cancelled",
+        ),
+        "body_file": "cases/c-runtime/runtime_pack_status.cbody.in",
+    },
+    {
+        "name": "runtime_op_predefined",
+        "family": "op",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Op_commutative",
+            "MPI_Op_fromint",
+            "MPI_Op_toint",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Reduce_local",
+        ),
+        "body_file": "cases/c-runtime/runtime_op_predefined.cbody.in",
     },
 )
 
@@ -1967,6 +835,39 @@ def _write_text(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as stream:
         stream.write(text)
+
+
+def _probe_body_path(srcdir, case):
+    """Return the checked-in C body snippet path for one probe case."""
+    body_file = case.get("body_file")
+    if body_file is None:
+        return None
+    return srcdir / "test" / "mpi-abi" / body_file
+
+
+def _probe_body_text(srcdir, case):
+    """Load the C body for one installed probe case.
+
+    Long C snippets live in checked-in *.cbody.in files so the Python
+    tables remain readable metadata contracts.  Keep a temporary inline
+    fallback for older cases while preserving a one-body-source rule:
+    exactly one of body or body_file may be present.
+    """
+    has_body = "body" in case
+    has_body_file = "body_file" in case
+    if has_body == has_body_file:
+        raise RuntimeError(
+            "probe {0} must define exactly one of body or body_file".
+            format(case.get("name", "<unknown>")))
+    if has_body:
+        return case["body"]
+
+    path = _probe_body_path(srcdir, case)
+    if not path.exists():
+        raise RuntimeError(
+            "probe {0} body file is missing: {1}".format(
+                case.get("name", "<unknown>"), path))
+    return _read_text(path)
 
 
 def _env_bool(name):
@@ -2906,7 +1807,117 @@ def _runtime_api_probe_family_counts(cases):
     return counts
 
 
-def _runtime_api_probe_body_calls(case):
+def _runtime_audit_work_package(entry):
+    """Return the Phase 9/10 work package that owns an uncovered API.
+
+    This audit is deliberately advisory until the completion gate is
+    enabled.  It gives future implementation chunks a metadata-derived
+    missing list without pretending that every implemented C API needs a
+    runtime probe: ABI helpers and integer handle converters are covered
+    by earlier phases, callback APIs belong to Phase 10, and some APIs
+    need explicit skip/defer policy rather than local CI execution.
+    """
+    name = entry["name"]
+    family = entry["family"]
+    if entry["callback"]:
+        return "phase10_callback"
+    if name.startswith("MPI_Abi_"):
+        return "phase8_abi_helper"
+    if name.endswith("_toint") or name.endswith("_fromint"):
+        return "phase8_converter"
+    if family in (
+        "point_to_point", "bsend", "ibsend", "ssend", "issend",
+        "rsend", "irsend", "sendrecv", "isendrecv", "mprobe",
+        "improbe", "mrecv", "imrecv", "message", "psend", "precv",
+        "pready", "parrived", "request", "wait", "waitall",
+        "waitany", "waitsome", "test", "testall", "testany",
+        "testsome", "start", "startall", "cancel", "buffer",
+    ):
+        return "chunk9b_point_to_point_request"
+    if family in (
+        "cart", "cartdim", "graph", "graphdims", "dist", "dims",
+        "topo", "neighbor", "ineighbor",
+    ):
+        return "chunk9c_topology_neighbor"
+    if family in (
+        "collective", "alltoallv", "alltoallw", "iallgather",
+        "iallgatherv", "iallreduce", "ialltoall", "ialltoallv",
+        "ialltoallw", "ibarrier", "ibcast", "iexscan", "igather",
+        "igatherv", "ireduce", "iscan", "iscatter", "iscatterv",
+        "scatter", "scatterv",
+    ):
+        return "chunk9d_collective"
+    if family in ("type", "status", "pack", "unpack", "op"):
+        return "chunk9e_datatype_status_pack_op"
+    if family in ("comm", "group", "intercomm"):
+        return "chunk9_comm_group_remaining"
+    if family in ("win", "rma", "compare", "fetch", "raccumulate"):
+        return "chunk9f_rma_window"
+    if family == "file":
+        return "chunk9g_mpi_io"
+    if family in (
+        "open", "close", "publish", "lookup", "unpublish",
+        "spawn", "connect", "accept",
+    ):
+        return "chunk9h_dynamic_process"
+    if family == "mpi_t":
+        return "chunk9i_mpi_t"
+    return "chunk9i_misc"
+
+
+def _runtime_api_coverage_audit(manifest, header, cases):
+    """Report implemented C APIs not yet covered by runtime probes.
+
+    The check result is PASS during phased development.  The completion
+    gate is the place that eventually turns any remaining
+    test_not_written_yet coverage into a hard failure.  Keeping this as
+    an installed check means it audits against the same standard ABI
+    header that runtime probes compile against.
+    """
+    prototypes = _parse_c_header_prototypes(header)
+    declared_names = set(prototypes)
+    runtime_names = _runtime_api_probe_api_names(
+        cases, include_support=True)
+    missing_by_package = {}
+    covered = 0
+    skipped_not_declared = 0
+
+    for entry in manifest["apis"]:
+        if entry["classification"] != CLASS_IMPLEMENTED:
+            continue
+        if not entry["languages"]["c"]:
+            continue
+        name = entry["name"]
+        if name not in declared_names:
+            skipped_not_declared += 1
+            continue
+        package = _runtime_audit_work_package(entry)
+        if package in ("phase8_abi_helper", "phase8_converter"):
+            covered += 1
+            continue
+        if name in runtime_names:
+            covered += 1
+            continue
+        missing_by_package.setdefault(package, []).append(name)
+
+    summarized = {
+        package: names[:20]
+        for package, names in sorted(missing_by_package.items())
+    }
+    counts = {
+        package: len(names)
+        for package, names in sorted(missing_by_package.items())
+    }
+    return _pass(
+        "installed_c_runtime_api_coverage_audit",
+        covered=covered,
+        missing_count=sum(counts.values()),
+        missing_by_package=summarized,
+        missing_by_package_counts=counts,
+        skipped_not_declared=skipped_not_declared)
+
+
+def _runtime_api_probe_body_calls(srcdir, case):
     """Return MPI API calls made by a runtime probe body.
 
     The runtime probe table is declarative: api_names/support_api_names
@@ -2918,10 +1929,10 @@ def _runtime_api_probe_body_calls(case):
     coverage contract.
     """
     call_re = re.compile(r"(?<![A-Za-z0-9_])(MPI_[A-Za-z0-9_]+)\s*\(")
-    return set(call_re.findall(case["body"]))
+    return set(call_re.findall(_probe_body_text(srcdir, case)))
 
 
-def _runtime_api_probe_generation_check(manifest, header, cases):
+def _runtime_api_probe_generation_check(srcdir, manifest, header, cases):
     """Validate the runtime API probe table before compiling C sources.
 
     Phase 9 starts with seed API-family probes, not exhaustive family
@@ -2956,12 +1967,17 @@ def _runtime_api_probe_generation_check(manifest, header, cases):
 
     missing_body_calls = {}
     undeclared_body_calls = {}
+    body_file_errors = {}
     for case in cases:
         advertised = (
             set(case.get("api_names", ())) |
             set(case.get("support_api_names", ()))
         )
-        called = _runtime_api_probe_body_calls(case)
+        try:
+            called = _runtime_api_probe_body_calls(srcdir, case)
+        except RuntimeError as exc:
+            body_file_errors[case["name"]] = str(exc)
+            continue
         missing = sorted(advertised - called)
         undeclared = sorted(called - advertised)
         if missing:
@@ -2970,7 +1986,8 @@ def _runtime_api_probe_generation_check(manifest, header, cases):
             undeclared_body_calls[case["name"]] = undeclared
 
     if (missing_metadata or not_implemented or missing_header or
-            empty_cases or missing_body_calls or undeclared_body_calls):
+            empty_cases or missing_body_calls or undeclared_body_calls or
+            body_file_errors):
         return _fail(
             "installed_c_runtime_api_probe_generation",
             "runtime API probe table does not match metadata/header",
@@ -2981,6 +1998,7 @@ def _runtime_api_probe_generation_check(manifest, header, cases):
             empty_cases=empty_cases,
             missing_body_calls=missing_body_calls,
             undeclared_body_calls=undeclared_body_calls,
+            body_file_errors=body_file_errors,
             probe_count=len(cases))
 
     return _pass(
@@ -2991,16 +2009,17 @@ def _runtime_api_probe_generation_check(manifest, header, cases):
         family_counts=_runtime_api_probe_family_counts(cases))
 
 
-def _prepare_installed_c_probe_body(case, manifest, declared_names):
+def _prepare_installed_c_probe_body(srcdir, case, manifest, declared_names):
     """Expand generated C snippets inside one installed probe body.
 
-    The probe template strings stay readable by using placeholders for
-    generated constant lists and expected counts.  Substitution happens
-    immediately before writing the temporary source, after the manifest
-    has been built, configure-dependent Fortran gating is known, and the
-    installed ABI header's declared Fortran datatype set has been parsed.
+    Long checked-in body snippets stay readable by using placeholders
+    for generated constant lists and expected counts.  Substitution
+    happens immediately before writing the temporary source, after the
+    manifest has been built, configure-dependent Fortran gating is
+    known, and the installed ABI header's declared Fortran datatype set
+    has been parsed.
     """
-    body = case["body"]
+    body = _probe_body_text(srcdir, case)
     replacements = {
         "@PREDEFINED_HANDLE_DECLS@": _predefined_handle_decls(manifest),
         "@PREDEFINED_HANDLE_CHECKS@": _predefined_handle_checks(manifest),
@@ -4371,8 +3390,18 @@ def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
             case["rank_count"])]
         source = dirs["src"] / (name + ".c")
         executable = dirs["bin"] / name
-        body = _prepare_installed_c_probe_body(
-            case, manifest, header_names)
+        try:
+            body = _prepare_installed_c_probe_body(
+                srcdir, case, manifest, header_names)
+        except RuntimeError as exc:
+            if progress is not None:
+                progress.start(check_name)
+            _append_check(checks, _fail(
+                check_name,
+                "installed C ABI probe body is unavailable",
+                phase="source",
+                error=str(exc)), progress)
+            continue
         _write_text(source, _c_probe_source(srcdir, body, rank_count))
 
         compile_command = (
@@ -4530,10 +3559,15 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
     if progress is not None:
         progress.start("installed_c_runtime_api_probe_generation")
     runtime_api_generation_check = _runtime_api_probe_generation_check(
-        manifest, header, INSTALLED_C_RUNTIME_API_PROBES)
+        srcdir, manifest, header, INSTALLED_C_RUNTIME_API_PROBES)
     _append_check(checks, runtime_api_generation_check, progress)
     if runtime_api_generation_check["result"] != "PASS":
         return checks
+
+    if progress is not None:
+        progress.start("installed_c_runtime_api_coverage_audit")
+    _append_check(checks, _runtime_api_coverage_audit(
+        manifest, header, INSTALLED_C_RUNTIME_API_PROBES), progress)
 
     checks.extend(_run_installed_c_probe_cases(
         srcdir, manifest, tools, dirs, declared_names,

@@ -1,0 +1,279 @@
+
+    /*
+     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+     * $COPYRIGHT$
+     *
+     * Additional copyrights may follow
+     *
+     * $HEADER$
+     */
+
+    /*
+     * Test intent:
+     *   Exercise distributed-graph topology APIs and all neighborhood
+     *   collective families using one incoming and one outgoing neighbor.
+     */
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    int source = 1 - rank;
+    int dest = 1 - rank;
+    MPI_Comm dist = MPI_COMM_NULL;
+    ret = MPI_Dist_graph_create_adjacent(MPI_COMM_WORLD, 1, &source,
+                                         MPI_UNWEIGHTED, 1, &dest,
+                                         MPI_UNWEIGHTED, MPI_INFO_NULL,
+                                         0, &dist);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dist) {
+        return 5;
+    }
+    int indegree = -1;
+    int outdegree = -1;
+    int weighted = -1;
+    ret = MPI_Dist_graph_neighbors_count(dist, &indegree, &outdegree,
+                                         &weighted);
+    if (MPI_SUCCESS != ret || 1 != indegree || 1 != outdegree) {
+        return 6;
+    }
+    int sources[1] = {-1};
+    int dests[1] = {-1};
+    ret = MPI_Dist_graph_neighbors(dist, 1, sources, MPI_UNWEIGHTED,
+                                   1, dests, MPI_UNWEIGHTED);
+    if (MPI_SUCCESS != ret || sources[0] != 1 - rank ||
+        dests[0] != 1 - rank) {
+        return 7;
+    }
+
+    int send = rank + 1;
+    int recv[2] = {-1, -1};
+    int counts[1] = {1};
+    int displs[1] = {0};
+    /*
+     * Neighborhood alltoallw uses MPI_Aint byte displacements in the ABI
+     * header.  Keep this distinct from ordinary Alltoallw below, whose
+     * current standard ABI C prototype uses int byte displacements.
+     */
+    MPI_Aint aint_displs[1] = {0};
+    MPI_Datatype types[1] = {MPI_INT};
+    ret = MPI_Neighbor_allgather(&send, 1, MPI_INT, recv, 1, MPI_INT,
+                                 dist);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 8;
+    }
+    recv[0] = -1;
+    ret = MPI_Neighbor_allgatherv(&send, 1, MPI_INT, recv, counts,
+                                  displs, MPI_INT, dist);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 9;
+    }
+    recv[0] = -1;
+    ret = MPI_Neighbor_alltoall(&send, 1, MPI_INT, recv, 1, MPI_INT,
+                                dist);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 10;
+    }
+    recv[0] = -1;
+    ret = MPI_Neighbor_alltoallv(&send, counts, displs, MPI_INT, recv,
+                                 counts, displs, MPI_INT, dist);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 11;
+    }
+    recv[0] = -1;
+    ret = MPI_Neighbor_alltoallw(&send, counts, aint_displs, types,
+                                 recv, counts, aint_displs, types,
+                                 dist);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 12;
+    }
+
+    MPI_Request request = MPI_REQUEST_NULL;
+    recv[0] = -1;
+    ret = MPI_Ineighbor_allgather(&send, 1, MPI_INT, recv, 1, MPI_INT,
+                                  dist, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 13;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
+        recv[0] != 2 - rank) {
+        return 14;
+    }
+    recv[0] = -1;
+    ret = MPI_Ineighbor_allgatherv(&send, 1, MPI_INT, recv, counts,
+                                   displs, MPI_INT, dist, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 15;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 16;
+    }
+    recv[0] = -1;
+    ret = MPI_Ineighbor_alltoall(&send, 1, MPI_INT, recv, 1, MPI_INT,
+                                 dist, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 17;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 18;
+    }
+    recv[0] = -1;
+    ret = MPI_Ineighbor_alltoallv(&send, counts, displs, MPI_INT, recv,
+                                  counts, displs, MPI_INT, dist,
+                                  &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 19;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 20;
+    }
+    recv[0] = -1;
+    ret = MPI_Ineighbor_alltoallw(&send, counts, aint_displs, types,
+                                  recv, counts, aint_displs, types, dist,
+                                  &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 21;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 22;
+    }
+
+    recv[0] = -1;
+    ret = MPI_Neighbor_allgather_init(&send, 1, MPI_INT, recv, 1,
+                                      MPI_INT, dist, MPI_INFO_NULL,
+                                      &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 23;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 24;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 25;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 26;
+    }
+
+    recv[0] = -1;
+    ret = MPI_Neighbor_allgatherv_init(&send, 1, MPI_INT, recv, counts,
+                                       displs, MPI_INT, dist,
+                                       MPI_INFO_NULL, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 27;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 28;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 29;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 30;
+    }
+
+    recv[0] = -1;
+    ret = MPI_Neighbor_alltoall_init(&send, 1, MPI_INT, recv, 1,
+                                     MPI_INT, dist, MPI_INFO_NULL,
+                                     &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 31;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 32;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 33;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 34;
+    }
+
+    recv[0] = -1;
+    ret = MPI_Neighbor_alltoallv_init(&send, counts, displs, MPI_INT,
+                                      recv, counts, displs, MPI_INT,
+                                      dist, MPI_INFO_NULL, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 35;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 36;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 37;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 38;
+    }
+
+    recv[0] = -1;
+    ret = MPI_Neighbor_alltoallw_init(&send, counts, aint_displs, types,
+                                      recv, counts, aint_displs, types,
+                                      dist, MPI_INFO_NULL, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 39;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 40;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || recv[0] != 2 - rank) {
+        return 41;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 42;
+    }
+
+    ret = MPI_Comm_free(&dist);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dist) {
+        return 43;
+    }
+
+    int degrees[1] = {1};
+    int dests2[1] = {dest};
+    ret = MPI_Dist_graph_create(MPI_COMM_WORLD, 1, &rank, degrees,
+                                dests2, MPI_UNWEIGHTED, MPI_INFO_NULL,
+                                0, &dist);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == dist) {
+        return 44;
+    }
+    ret = MPI_Comm_free(&dist);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != dist) {
+        return 45;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 46;
+    }
