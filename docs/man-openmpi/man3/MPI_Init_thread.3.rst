@@ -94,7 +94,7 @@ neither modifies, interprets, nor distributes them:
    int main(int argv, char *argv[]) {
        int provided;
        MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-       /* ...body of main MPI pogram... */
+       /* ...body of main MPI program... */
        MPI_Finalize();
        return 0;
    }
@@ -178,7 +178,7 @@ of the values listed below.
           environment variable.
 
           Starting with Open MPI v5.0.9, the Open MPI community
-          recomends using one of the string name variants.
+          recommends using one of the string name variants.
 
 NOTES
 -----

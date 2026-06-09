@@ -117,7 +117,7 @@ Open MPI provides wrapper compilers for several languages:
             underlying C++ compiler with the same options. All are
             provided as compatibility with other MPI implementations.
 
-* ``mpifort`` (and its legacy/deprecated aliaes ``mpif77`` and
+* ``mpifort`` (and its legacy/deprecated aliases ``mpif77`` and
   ``mpif90``): Fortran
 
 * ``mpijavac``: Java

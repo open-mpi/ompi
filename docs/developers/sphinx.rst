@@ -131,7 +131,7 @@ under ``$HOME/Library/Python/PYTHON_VERSION/bin/sphinx-build``).
 Running Sphinx
 --------------
 
-Open MPI's build environment is setup to invoke Sphinx automatically;
+Open MPI's build environment is set up to invoke Sphinx automatically;
 you should not need to invoke Sphinx manually.
 
 .. important:: You will need to ensure that Sphinx is in your ``PATH``

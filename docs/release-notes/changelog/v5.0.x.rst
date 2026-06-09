@@ -219,7 +219,7 @@ Open MPI version v5.0.4
   - pml/ucx: propagate MPI serialized thread mode for all worker creations
   - pml/ob1: make no. of events an mca parameter
   - oshmem/shmem: fix warnings regarding types and unused variables in shmem
-  - Add an AARCH64 OP component for for NEON and SVE ISA
+  - Add an AARCH64 OP component for NEON and SVE ISA
   - Fix MPI function names in error output
   - Fix MPI_Neighbor_alltoall{v,w}_init to handle NULL parameters
   - Fix a bug in intercomm creation

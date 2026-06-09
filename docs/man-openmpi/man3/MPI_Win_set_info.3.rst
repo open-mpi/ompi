@@ -61,7 +61,7 @@ DESCRIPTION
 :ref:`MPI_WIN_SET_INFO` sets new values for the hints of the window associated
 with *win.* :ref:`MPI_WIN_SET_INFO` is a collective routine. The info object
 may be different on each process, but any info entries that an
-implementation requires to be the same on all processes must appear with
+implementation requires to have identical values on all processes must appear with
 the same value in each process's *info* object.
 
 

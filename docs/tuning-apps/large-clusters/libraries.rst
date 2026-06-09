@@ -24,7 +24,7 @@ place the Open MPI libraries on networked file systems:
   cluster!  Doing so will lead to significant network traffic and
   delayed start times, especially on clusters with a large number of
   nodes.  Instead, be sure to :ref:`configure your build
-  <building-ompi-cli-options-diable-dlopen-label>` with
+  <building-ompi-cli-options-disable-dlopen-label>` with
   ``--disable-dlopen``.  This will include the DSO's in the main
   libraries, resulting in much faster startup times.
 

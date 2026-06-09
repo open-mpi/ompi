@@ -59,7 +59,7 @@ communications:
 
 See each Lifabric provider man page (e.g., fi_sockets(7)) to understand which
 provider will work for each of the above-listed Open MPI components. Some
-providers may require to be used with one of the Libfabric utility providers;
+providers may require use with one of the Libfabric utility providers;
 for example, the verbs provider needs to be paired with utility provider
 ``ofi_rxm`` to provide reliable datagram endpoint support (``verbs;ofi_rxm``).
 

@@ -78,7 +78,7 @@ Open MPI version 3.1.5
 - Add support for unwinding info to all files that are present in the
   stack starting from MPI_Init, which is helpful with parallel
   debuggers.  Thanks to James Clark for the report and initial fix.
-- Fixed inadvertant use of bitwise operators in the MPI C++ bindings
+- Fixed inadvertent use of bitwise operators in the MPI C++ bindings
   header files.  Thanks to Bert Wesarg for the report and the fix.
 
 
@@ -93,7 +93,7 @@ Open MPI version 3.1.4
   Easterday for the fix.
 - Fix possible floating point rounding and division issues in OMPIO
   which led to crashes and/or data corruption with very large data.
-  Thanks to Axel Huebl and René Widera for identifing the issue,
+  Thanks to Axel Huebl and René Widera for identifying the issue,
   supplying and testing the fix (** also appeared: v3.0.4).
 - Use ``static_cast<>`` in ``mpi.h`` where appropriate.  Thanks to @shadow-fx
   for identifying the issue (** also appeared: v3.0.4).
@@ -193,7 +193,7 @@ Open MPI version 3.1.1
 - Revamp Java detection to properly handle new Java versions which do
   not provide a javah wrapper.
 - Fix RMA function signatures for use-mpi-f08 bindings to have the
-  asynchonous property on all buffers.
+  asynchronous property on all buffers.
 - Improved configure logic for finding the UCX library.
 
 

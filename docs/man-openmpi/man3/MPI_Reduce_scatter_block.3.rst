@@ -100,7 +100,7 @@ Fortran 2008 Syntax
 INPUT PARAMETERS
 ----------------
 * ``sendbuf``: Starting address of send buffer (choice).
-* ``recvcount``: lement count per block (non-negative integer).
+* ``recvcount``: Element count per block (non-negative integer).
 * ``datatype``: Datatype of elements of input buffer (handle).
 * ``op``: Operation (handle).
 * ``comm``: Communicator (handle).
