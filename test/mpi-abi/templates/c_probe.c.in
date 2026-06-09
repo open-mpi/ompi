@@ -10,6 +10,7 @@
 #include "mpi.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef MPI_H_ABI
 #error "standard ABI mpi.h was not used"

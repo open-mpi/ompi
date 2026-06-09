@@ -303,6 +303,23 @@ the branch is not complete until all completion-gate tasks pass.
       `MPI_Query_thread`, and `MPI_Is_thread_main` in separate
       executables where required by MPI initialization semantics.
 - [ ] Generate runtime tests for sessions APIs.
+      This remains open until all in-scope standard ABI session runtime
+      APIs are covered or explicitly skipped.
+- [x] Generate runtime tests for core non-callback session APIs.
+      Installed C runtime probes cover session lifecycle, pset
+      discovery, pset info lookup, session info lookup, session
+      errhandler get/set/call with predefined handlers, and dynamic
+      session `toint` / `fromint` round trips.
+- [x] Generate runtime tests for session buffer attach, detach, and
+      flush APIs.
+      Installed C runtime probes cover `MPI_Session_attach_buffer`,
+      `MPI_Session_flush_buffer`, `MPI_Session_iflush_buffer`, and
+      `MPI_Session_detach_buffer`.
+- [x] Explicitly defer session error-handler callback behavior to
+      Phase 10.
+- [x] Keep non-standard-ABI C `MPI_Session_c2f` / `MPI_Session_f2c`
+      regression coverage outside the installed standard ABI C runtime
+      probes.
 - [ ] Generate runtime tests for communicator and group APIs.
 - [ ] Generate runtime tests for topology APIs.
 - [ ] Generate runtime tests for point-to-point APIs.
@@ -393,8 +410,13 @@ the branch is not complete until all completion-gate tasks pass.
       skipped.
 - [ ] Verify `make check` passes with ABI support enabled.
 - [ ] Verify `make check` skips cleanly with ABI support disabled.
+- [ ] Verify `make distcheck` passes with MPI ABI test files included.
 - [ ] Verify `make check-abi` passes against an installed Open MPI.
 - [ ] Verify `make check-abi-cross` passes when MPICH is available or
       skips cleanly when MPICH is unavailable.
+- [ ] Verify a distribution tarball can configure, build, install, and
+      run `make check-abi` against the installed tarball build.
+- [ ] Verify a distribution tarball can run `make check-abi-cross` when
+      MPICH is available or skip cleanly when MPICH is unavailable.
 - [ ] Verify JSON and text reports are emitted and suitable for CI
       tracking.

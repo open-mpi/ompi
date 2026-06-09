@@ -910,6 +910,166 @@ INSTALLED_C_RUNTIME_API_PROBES = (
 """,
     },
     {
+        "name": "runtime_session_core",
+        "family": "session",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Session_call_errhandler",
+            "MPI_Session_finalize",
+            "MPI_Session_fromint",
+            "MPI_Session_get_errhandler",
+            "MPI_Session_get_info",
+            "MPI_Session_get_nth_pset",
+            "MPI_Session_get_num_psets",
+            "MPI_Session_get_pset_info",
+            "MPI_Session_init",
+            "MPI_Session_set_errhandler",
+            "MPI_Session_toint",
+        ),
+        "support_api_names": (
+            "MPI_Errhandler_free",
+            "MPI_Info_free",
+        ),
+        "body": """
+    MPI_Session session = MPI_SESSION_NULL;
+    int ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
+                               &session);
+    if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
+        return 1;
+    }
+
+    int abi_value = MPI_Session_toint(session);
+    if (MPI_Session_fromint(abi_value) != session) {
+        return 2;
+    }
+
+    MPI_Info info = MPI_INFO_NULL;
+    ret = MPI_Session_get_info(session, &info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
+        return 3;
+    }
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 4;
+    }
+
+    int npsets = -1;
+    ret = MPI_Session_get_num_psets(session, MPI_INFO_NULL, &npsets);
+    if (MPI_SUCCESS != ret || npsets < 1) {
+        return 5;
+    }
+
+    int pset_len = 0;
+    ret = MPI_Session_get_nth_pset(session, MPI_INFO_NULL, 0,
+                                   &pset_len, NULL);
+    if (MPI_SUCCESS != ret || pset_len < 2) {
+        return 6;
+    }
+    char *pset_name = malloc((size_t) pset_len);
+    if (NULL == pset_name) {
+        return 7;
+    }
+    ret = MPI_Session_get_nth_pset(session, MPI_INFO_NULL, 0,
+                                   &pset_len, pset_name);
+    if (MPI_SUCCESS != ret || '\\0' == pset_name[0]) {
+        free(pset_name);
+        return 8;
+    }
+
+    ret = MPI_Session_get_pset_info(session, pset_name, &info);
+    free(pset_name);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL == info) {
+        return 9;
+    }
+    ret = MPI_Info_free(&info);
+    if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+        return 10;
+    }
+
+    ret = MPI_Session_set_errhandler(session, MPI_ERRORS_RETURN);
+    if (MPI_SUCCESS != ret) {
+        return 11;
+    }
+    MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+    ret = MPI_Session_get_errhandler(session, &errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRORS_RETURN != errhandler) {
+        return 12;
+    }
+    ret = MPI_Errhandler_free(&errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
+        return 13;
+    }
+    ret = MPI_Session_call_errhandler(session, MPI_ERR_OTHER);
+    if (MPI_SUCCESS != ret) {
+        return 14;
+    }
+
+    ret = MPI_Session_finalize(&session);
+    if (MPI_SUCCESS != ret || MPI_SESSION_NULL != session) {
+        return 15;
+    }
+""",
+    },
+    {
+        "name": "runtime_session_buffer",
+        "family": "session",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Session_attach_buffer",
+            "MPI_Session_detach_buffer",
+            "MPI_Session_finalize",
+            "MPI_Session_flush_buffer",
+            "MPI_Session_iflush_buffer",
+            "MPI_Session_init",
+        ),
+        "support_api_names": (
+            "MPI_Wait",
+        ),
+        "body": """
+    MPI_Session session = MPI_SESSION_NULL;
+    int ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
+                               &session);
+    if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
+        return 1;
+    }
+
+    char buffer[8192];
+    ret = MPI_Session_attach_buffer(session, buffer, sizeof(buffer));
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Session_flush_buffer(session);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+
+    MPI_Request request = MPI_REQUEST_NULL;
+    ret = MPI_Session_iflush_buffer(session, &request);
+    if (MPI_SUCCESS != ret) {
+        return 4;
+    }
+    if (MPI_REQUEST_NULL != request) {
+        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+            return 5;
+        }
+    }
+
+    void *detached = NULL;
+    int size = 0;
+    ret = MPI_Session_detach_buffer(session, &detached, &size);
+    if (MPI_SUCCESS != ret || detached != buffer ||
+        size != (int) sizeof(buffer)) {
+        return 6;
+    }
+
+    ret = MPI_Session_finalize(&session);
+    if (MPI_SUCCESS != ret || MPI_SESSION_NULL != session) {
+        return 7;
+    }
+""",
+    },
+    {
         "name": "runtime_comm_group_basic",
         "family": "comm_group",
         "rank_count": 1,
