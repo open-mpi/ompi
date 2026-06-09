@@ -1,6 +1,6 @@
 /**
   Copyright (c) 2021      Mellanox Technologies. All rights reserved.
-  Copyright (c) 2022 NVIDIA Corporation.  All rights reserved.
+  Copyright (c) 2022-2026 NVIDIA Corporation.  All rights reserved.
   Copyright (c) 2025      Fujitsu Limited. All rights reserved.
   $COPYRIGHT$
 
@@ -57,13 +57,28 @@ struct mca_coll_ucc_component_t {
     char                           *cts;
     const char                     *compiletime_version;
     const char                     *runtime_version;
-    bool                            libucc_initialized;
     ucc_lib_h                       ucc_lib;
     ucc_lib_attr_t                  ucc_lib_attr;
     ucc_coll_type_t                 cts_requested;
     ucc_coll_type_t                 nb_cts_requested;
     ucc_coll_type_t                 ps_cts_requested;
+    /* The single, process-wide UCC context shared by every UCC
+       communicator.  It is created *without* a context-level OOB: each team
+       carries its own OOB bound to its communicator (see
+       mca_coll_ucc_module_enable), so the context never holds a borrowed
+       communicator and both context and team teardown are independent of
+       any one communicator's lifetime.  The context (and the shared
+       ucc_lib) are created lazily with the first UCC communicator and torn
+       down when the last one is freed; @context_refcount counts the UCC
+       modules currently keeping them alive.  The progress callback drives
+       this one context. */
     ucc_context_h                   ucc_context;
+    int                             context_refcount;
+    /* The UCC library and the per-communicator attribute keyval are created
+       lazily with the first UCC communicator and persist across context
+       churn. */
+    bool                            keyval_created;
+    bool                            requests_initialized;
     opal_free_list_t                requests;
 };
 typedef struct mca_coll_ucc_component_t mca_coll_ucc_component_t;

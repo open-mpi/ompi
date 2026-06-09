@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
- * Copyright (c) 2024 NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
@@ -248,7 +248,10 @@ static int mca_coll_ucc_open(void)
 {
     mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
     mca_coll_ucc_output          = opal_output_open(NULL);
-    cm->libucc_initialized       = false;
+    cm->ucc_context              = NULL;
+    cm->context_refcount         = 0;
+    cm->keyval_created           = false;
+    cm->requests_initialized     = false;
     opal_output_set_verbosity(mca_coll_ucc_output, cm->ucc_verbose);
     mca_coll_ucc_init_default_cts();
     return OMPI_SUCCESS;
@@ -256,5 +259,13 @@ static int mca_coll_ucc_open(void)
 
 static int mca_coll_ucc_close(void)
 {
+    /* The shared context, the UCC library and the request free list are all
+       torn down when the last UCC communicator is freed (see
+       mca_coll_ucc_context_unref): the request free list holds requests
+       built on the shared context, so it must not be destructed while that
+       context is still valid.  Nothing context-scoped remains to release
+       here.  (If a UCC communicator somehow outlived framework close, the
+       context is still in use and we deliberately leave its resources alone
+       rather than tear them down under live requests.) */
     return OMPI_SUCCESS;
 }
