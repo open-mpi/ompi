@@ -91,8 +91,6 @@ ftagree_close(void)
 static int
 ftagree_register(void)
 {
-    int value;
-
     /* Use a low priority, but allow other components to be lower */
     mca_coll_ftagree_priority = 30;
     (void) mca_base_component_var_register(&mca_coll_ftagree_component.collm_version,
@@ -102,17 +100,15 @@ ftagree_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_coll_ftagree_priority);
 
-    if( ompi_ftmpi_enabled ) value = 1;
-    else value = 0; /* NOFT: do not initialize ERA */
-    (void) mca_base_component_var_register(&mca_coll_ftagree_component.collm_version,
-                                           "agreement", "Agreement algorithm 0: Allreduce (NOT FAULT TOLERANT); 1: Early Returning Consensus (era); 2: Early Terminating Consensus (eta)",
-                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                           OPAL_INFO_LVL_6,
-                                           MCA_BASE_VAR_SCOPE_READONLY,
-                                           &value);
-    switch(value) {
-    case 0:
-        mca_coll_ftagree_algorithm = COLL_FTAGREE_NOFT;
+    mca_coll_ftagree_algorithm = ompi_ftmpi_enabled;
+    (void) mca_base_component_var_register(
+        &mca_coll_ftagree_component.collm_version, "agreement",
+        "Agreement algorithm 0: Allreduce (NOT FAULT TOLERANT); 1: Early Returning Consensus "
+        "(era); 2: Early Terminating Consensus (eta)",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_ftagree_algorithm);
+    switch (mca_coll_ftagree_algorithm) {
+    case COLL_FTAGREE_NOFT:
         opal_output_verbose(6, ompi_ftmpi_output_handle,
                             "%s ftagree:register) Agreement Algorithm - Allreduce (NOT FAULT TOLERANT)",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) );
@@ -123,8 +119,7 @@ ftagree_register(void)
                             "%s ftagree:register) Agreement Algorithm - Early Returning Consensus Algorithm",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) );
         break;
-    case 2:
-        mca_coll_ftagree_algorithm = COLL_FTAGREE_EARLY_TERMINATION;
+    case COLL_FTAGREE_EARLY_TERMINATION:
         opal_output_verbose(6, ompi_ftmpi_output_handle,
                             "%s ftagree:register) Agreement Algorithm - Early Terminating Consensus Algorithm",
                             OMPI_NAME_PRINT(OMPI_PROC_MY_NAME) );
