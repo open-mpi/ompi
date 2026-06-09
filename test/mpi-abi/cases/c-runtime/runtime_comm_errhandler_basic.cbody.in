@@ -1,42 +1,41 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Test intent:
+ *   Validate predefined communicator errhandler get/set/call behavior
+ *   without creating user callbacks, which are Phase 10 work.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
 
-    /*
-     * Test intent:
-     *   Validate predefined communicator errhandler get/set/call behavior
-     *   without creating user callbacks, which are Phase 10 work.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
+ret = MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+ret = MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRORS_RETURN != errhandler) {
+    return 3;
+}
+ret = MPI_Errhandler_free(&errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
+    return 4;
+}
+ret = MPI_Comm_call_errhandler(MPI_COMM_WORLD, MPI_ERR_OTHER);
+if (MPI_SUCCESS != ret) {
+    return 5;
+}
 
-    ret = MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
-    ret = MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhandler);
-    if (MPI_SUCCESS != ret || MPI_ERRORS_RETURN != errhandler) {
-        return 3;
-    }
-    ret = MPI_Errhandler_free(&errhandler);
-    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler) {
-        return 4;
-    }
-    ret = MPI_Comm_call_errhandler(MPI_COMM_WORLD, MPI_ERR_OTHER);
-    if (MPI_SUCCESS != ret) {
-        return 5;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 6;
-    }
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 6;
+}

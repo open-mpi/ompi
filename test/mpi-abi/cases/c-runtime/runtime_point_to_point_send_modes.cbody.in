@@ -1,267 +1,266 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Validate buffered, synchronous, ready, and persistent send modes.
+ *   Ready-send paths explicitly handshake so receives are posted first.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
+
+if (0 == rank) {
+    char buffer[8192];
+    ret = MPI_Buffer_attach(buffer, sizeof(buffer));
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }
+
+    int value = 51;
+    ret = MPI_Bsend(&value, 1, MPI_INT, 1, 950, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+    value = 53;
+    MPI_Request request = MPI_REQUEST_NULL;
+    ret = MPI_Ibsend(&value, 1, MPI_INT, 1, 951, MPI_COMM_WORLD,
+                     &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 7;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 8;
+    }
+    ret = MPI_Buffer_flush();
+    if (MPI_SUCCESS != ret) {
+        return 9;
+    }
+    ret = MPI_Buffer_iflush(&request);
+    if (MPI_SUCCESS != ret) {
+        return 10;
+    }
+    if (MPI_REQUEST_NULL != request) {
+        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+            return 11;
+        }
+    }
+
+    value = 55;
+    ret = MPI_Ssend(&value, 1, MPI_INT, 1, 952, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+    value = 57;
+    ret = MPI_Issend(&value, 1, MPI_INT, 1, 953, MPI_COMM_WORLD,
+                     &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 13;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 14;
+    }
 
     /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
+     * Ready sends are only valid after the matching receive is
+     * posted.  The receiver sends a small control message after
+     * posting each Irecv so this probe tests Rsend/Irsend/Rsend_init
+     * semantics without relying on timing.
      */
-
-    /*
-     * Test intent:
-     *   Validate buffered, synchronous, ready, and persistent send modes.
-     *   Ready-send paths explicitly handshake so receives are posted first.
-     */
-    int ret = MPI_Init(&argc, &argv);
+    int ready = 0;
+    ret = MPI_Recv(&ready, 1, MPI_INT, 1, 949, MPI_COMM_WORLD,
+                   MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || 1 != ready) {
+        return 15;
+    }
+    value = 59;
+    ret = MPI_Rsend(&value, 1, MPI_INT, 1, 954, MPI_COMM_WORLD);
     if (MPI_SUCCESS != ret) {
-        return 1;
+        return 16;
     }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    ret = MPI_Recv(&ready, 1, MPI_INT, 1, 948, MPI_COMM_WORLD,
+                   MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || 2 != ready) {
+        return 17;
+    }
+    value = 61;
+    ret = MPI_Irsend(&value, 1, MPI_INT, 1, 955, MPI_COMM_WORLD,
+                     &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 18;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 19;
+    }
+
+    value = 63;
+    ret = MPI_Bsend_init(&value, 1, MPI_INT, 1, 956,
+                         MPI_COMM_WORLD, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 20;
+    }
+    ret = MPI_Start(&request);
     if (MPI_SUCCESS != ret) {
-        return 2;
+        return 21;
     }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
     if (MPI_SUCCESS != ret) {
-        return 3;
+        return 22;
     }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    if (0 == rank) {
-        char buffer[8192];
-        ret = MPI_Buffer_attach(buffer, sizeof(buffer));
-        if (MPI_SUCCESS != ret) {
-            return 5;
-        }
-
-        int value = 51;
-        ret = MPI_Bsend(&value, 1, MPI_INT, 1, 950, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 6;
-        }
-        value = 53;
-        MPI_Request request = MPI_REQUEST_NULL;
-        ret = MPI_Ibsend(&value, 1, MPI_INT, 1, 951, MPI_COMM_WORLD,
-                         &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 7;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 8;
-        }
-        ret = MPI_Buffer_flush();
-        if (MPI_SUCCESS != ret) {
-            return 9;
-        }
-        ret = MPI_Buffer_iflush(&request);
-        if (MPI_SUCCESS != ret) {
-            return 10;
-        }
-        if (MPI_REQUEST_NULL != request) {
-            ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-            if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-                return 11;
-            }
-        }
-
-        value = 55;
-        ret = MPI_Ssend(&value, 1, MPI_INT, 1, 952, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 12;
-        }
-        value = 57;
-        ret = MPI_Issend(&value, 1, MPI_INT, 1, 953, MPI_COMM_WORLD,
-                         &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 13;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 14;
-        }
-
-        /*
-         * Ready sends are only valid after the matching receive is
-         * posted.  The receiver sends a small control message after
-         * posting each Irecv so this probe tests Rsend/Irsend/Rsend_init
-         * semantics without relying on timing.
-         */
-        int ready = 0;
-        ret = MPI_Recv(&ready, 1, MPI_INT, 1, 949, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 1 != ready) {
-            return 15;
-        }
-        value = 59;
-        ret = MPI_Rsend(&value, 1, MPI_INT, 1, 954, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 16;
-        }
-        ret = MPI_Recv(&ready, 1, MPI_INT, 1, 948, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 2 != ready) {
-            return 17;
-        }
-        value = 61;
-        ret = MPI_Irsend(&value, 1, MPI_INT, 1, 955, MPI_COMM_WORLD,
-                         &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 18;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 19;
-        }
-
-        value = 63;
-        ret = MPI_Bsend_init(&value, 1, MPI_INT, 1, 956,
-                             MPI_COMM_WORLD, &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 20;
-        }
-        ret = MPI_Start(&request);
-        if (MPI_SUCCESS != ret) {
-            return 21;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret) {
-            return 22;
-        }
-        ret = MPI_Request_free(&request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 23;
-        }
-
-        value = 65;
-        ret = MPI_Ssend_init(&value, 1, MPI_INT, 1, 957,
-                             MPI_COMM_WORLD, &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 24;
-        }
-        ret = MPI_Start(&request);
-        if (MPI_SUCCESS != ret) {
-            return 25;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret) {
-            return 26;
-        }
-        ret = MPI_Request_free(&request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 27;
-        }
-
-        ret = MPI_Recv(&ready, 1, MPI_INT, 1, 947, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 3 != ready) {
-            return 28;
-        }
-        value = 67;
-        ret = MPI_Rsend_init(&value, 1, MPI_INT, 1, 958,
-                             MPI_COMM_WORLD, &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 29;
-        }
-        ret = MPI_Start(&request);
-        if (MPI_SUCCESS != ret) {
-            return 30;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret) {
-            return 31;
-        }
-        ret = MPI_Request_free(&request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 32;
-        }
-
-        void *detached = NULL;
-        int detached_size = 0;
-        ret = MPI_Buffer_detach(&detached, &detached_size);
-        if (MPI_SUCCESS != ret || detached != buffer ||
-            detached_size != (int) sizeof(buffer)) {
-            return 33;
-        }
-    } else if (1 == rank) {
-        int value = -1;
-        int expected[] = {51, 53, 55, 57};
-        int tags[] = {950, 951, 952, 953};
-        for (int i = 0; i < 4; ++i) {
-            ret = MPI_Recv(&value, 1, MPI_INT, 0, tags[i],
-                           MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            if (MPI_SUCCESS != ret || expected[i] != value) {
-                return 40 + i;
-            }
-        }
-
-        MPI_Request request = MPI_REQUEST_NULL;
-        ret = MPI_Irecv(&value, 1, MPI_INT, 0, 954, MPI_COMM_WORLD,
-                        &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 45;
-        }
-        int ready = 1;
-        ret = MPI_Send(&ready, 1, MPI_INT, 0, 949, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 46;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
-            59 != value) {
-            return 47;
-        }
-
-        ret = MPI_Irecv(&value, 1, MPI_INT, 0, 955, MPI_COMM_WORLD,
-                        &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 48;
-        }
-        ready = 2;
-        ret = MPI_Send(&ready, 1, MPI_INT, 0, 948, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 49;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
-            61 != value) {
-            return 50;
-        }
-
-        expected[0] = 63;
-        expected[1] = 65;
-        tags[0] = 956;
-        tags[1] = 957;
-        for (int i = 0; i < 2; ++i) {
-            ret = MPI_Recv(&value, 1, MPI_INT, 0, tags[i],
-                           MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            if (MPI_SUCCESS != ret || expected[i] != value) {
-                return 51 + i;
-            }
-        }
-
-        ret = MPI_Irecv(&value, 1, MPI_INT, 0, 958, MPI_COMM_WORLD,
-                        &request);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-            return 53;
-        }
-        ready = 3;
-        ret = MPI_Send(&ready, 1, MPI_INT, 0, 947, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 54;
-        }
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
-            67 != value) {
-            return 55;
-        }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 23;
     }
 
-    ret = MPI_Finalize();
+    value = 65;
+    ret = MPI_Ssend_init(&value, 1, MPI_INT, 1, 957,
+                         MPI_COMM_WORLD, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 24;
+    }
+    ret = MPI_Start(&request);
     if (MPI_SUCCESS != ret) {
-        return 60;
+        return 25;
     }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return 26;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 27;
+    }
+
+    ret = MPI_Recv(&ready, 1, MPI_INT, 1, 947, MPI_COMM_WORLD,
+                   MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || 3 != ready) {
+        return 28;
+    }
+    value = 67;
+    ret = MPI_Rsend_init(&value, 1, MPI_INT, 1, 958,
+                         MPI_COMM_WORLD, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 29;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 30;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return 31;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 32;
+    }
+
+    void *detached = NULL;
+    int detached_size = 0;
+    ret = MPI_Buffer_detach(&detached, &detached_size);
+    if (MPI_SUCCESS != ret || detached != buffer ||
+        detached_size != (int) sizeof(buffer)) {
+        return 33;
+    }
+} else if (1 == rank) {
+    int value = -1;
+    int expected[] = {51, 53, 55, 57};
+    int tags[] = {950, 951, 952, 953};
+    for (int i = 0; i < 4; ++i) {
+        ret = MPI_Recv(&value, 1, MPI_INT, 0, tags[i],
+                       MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || expected[i] != value) {
+            return 40 + i;
+        }
+    }
+
+    MPI_Request request = MPI_REQUEST_NULL;
+    ret = MPI_Irecv(&value, 1, MPI_INT, 0, 954, MPI_COMM_WORLD,
+                    &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 45;
+    }
+    int ready = 1;
+    ret = MPI_Send(&ready, 1, MPI_INT, 0, 949, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 46;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
+        59 != value) {
+        return 47;
+    }
+
+    ret = MPI_Irecv(&value, 1, MPI_INT, 0, 955, MPI_COMM_WORLD,
+                    &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 48;
+    }
+    ready = 2;
+    ret = MPI_Send(&ready, 1, MPI_INT, 0, 948, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 49;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
+        61 != value) {
+        return 50;
+    }
+
+    expected[0] = 63;
+    expected[1] = 65;
+    tags[0] = 956;
+    tags[1] = 957;
+    for (int i = 0; i < 2; ++i) {
+        ret = MPI_Recv(&value, 1, MPI_INT, 0, tags[i],
+                       MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || expected[i] != value) {
+            return 51 + i;
+        }
+    }
+
+    ret = MPI_Irecv(&value, 1, MPI_INT, 0, 958, MPI_COMM_WORLD,
+                    &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 53;
+    }
+    ready = 3;
+    ret = MPI_Send(&ready, 1, MPI_INT, 0, 947, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 54;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
+        67 != value) {
+        return 55;
+    }
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 60;
+}

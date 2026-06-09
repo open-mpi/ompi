@@ -1,241 +1,240 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Test intent:
+ *   Exercise nonblocking collective families and verify both request
+ *   completion and collective results.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
 
-    /*
-     * Test intent:
-     *   Exercise nonblocking collective families and verify both request
-     *   completion and collective results.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
+MPI_Request request = MPI_REQUEST_NULL;
+ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 5;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+    return 6;
+}
 
-    MPI_Request request = MPI_REQUEST_NULL;
-    ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 5;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-        return 6;
-    }
+int value = 0;
+if (0 == rank) {
+    value = 31;
+}
+ret = MPI_Ibcast(&value, 1, MPI_INT, 0, MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 7;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || 31 != value) {
+    return 8;
+}
 
-    int value = 0;
-    if (0 == rank) {
-        value = 31;
-    }
-    ret = MPI_Ibcast(&value, 1, MPI_INT, 0, MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 7;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || 31 != value) {
-        return 8;
-    }
+int send = rank + 1;
+int recv = -1;
+ret = MPI_Iallreduce(&send, &recv, 1, MPI_INT, MPI_SUM,
+                     MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 9;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || 3 != recv) {
+    return 10;
+}
 
-    int send = rank + 1;
-    int recv = -1;
-    ret = MPI_Iallreduce(&send, &recv, 1, MPI_INT, MPI_SUM,
-                         MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 9;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || 3 != recv) {
-        return 10;
-    }
+recv = -1;
+ret = MPI_Ireduce(&send, &recv, 1, MPI_INT, MPI_SUM, 0,
+                  MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 11;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || (0 == rank && 3 != recv)) {
+    return 12;
+}
 
-    recv = -1;
-    ret = MPI_Ireduce(&send, &recv, 1, MPI_INT, MPI_SUM, 0,
-                      MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 11;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || (0 == rank && 3 != recv)) {
-        return 12;
-    }
+int counts[2] = {1, 1};
+int displs[2] = {0, 1};
+int recvbuf[2] = {-1, -1};
+ret = MPI_Iallgather(&send, 1, MPI_INT, recvbuf, 1, MPI_INT,
+                     MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 13;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || 1 != recvbuf[0] || 2 != recvbuf[1]) {
+    return 14;
+}
+recvbuf[0] = -1;
+recvbuf[1] = -1;
+ret = MPI_Iallgatherv(&send, 1, MPI_INT, recvbuf, counts, displs,
+                      MPI_INT, MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 15;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || 1 != recvbuf[0] || 2 != recvbuf[1]) {
+    return 16;
+}
 
-    int counts[2] = {1, 1};
-    int displs[2] = {0, 1};
-    int recvbuf[2] = {-1, -1};
-    ret = MPI_Iallgather(&send, 1, MPI_INT, recvbuf, 1, MPI_INT,
-                         MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 13;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || 1 != recvbuf[0] || 2 != recvbuf[1]) {
-        return 14;
-    }
-    recvbuf[0] = -1;
-    recvbuf[1] = -1;
-    ret = MPI_Iallgatherv(&send, 1, MPI_INT, recvbuf, counts, displs,
-                          MPI_INT, MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 15;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || 1 != recvbuf[0] || 2 != recvbuf[1]) {
-        return 16;
-    }
+int alltoall_send[2] = {rank * 10, rank * 10 + 1};
+int alltoall_recv[2] = {-1, -1};
+ret = MPI_Ialltoall(alltoall_send, 1, MPI_INT, alltoall_recv, 1,
+                    MPI_INT, MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 17;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || alltoall_recv[0] != rank ||
+    alltoall_recv[1] != 10 + rank) {
+    return 18;
+}
+alltoall_recv[0] = -1;
+alltoall_recv[1] = -1;
+ret = MPI_Ialltoallv(alltoall_send, counts, displs, MPI_INT,
+                     alltoall_recv, counts, displs, MPI_INT,
+                     MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 19;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || alltoall_recv[0] != rank ||
+    alltoall_recv[1] != 10 + rank) {
+    return 20;
+}
+MPI_Datatype types[2] = {MPI_INT, MPI_INT};
+/*
+ * Ialltoallw follows the ordinary Alltoallw displacement convention
+ * in this ABI header: int byte offsets, not MPI_Aint offsets.
+ */
+int byte_displs[2] = {0, (int) sizeof(int)};
+alltoall_recv[0] = -1;
+alltoall_recv[1] = -1;
+ret = MPI_Ialltoallw(alltoall_send, counts, byte_displs, types,
+                     alltoall_recv, counts, byte_displs, types,
+                     MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 21;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || alltoall_recv[0] != rank ||
+    alltoall_recv[1] != 10 + rank) {
+    return 22;
+}
 
-    int alltoall_send[2] = {rank * 10, rank * 10 + 1};
-    int alltoall_recv[2] = {-1, -1};
-    ret = MPI_Ialltoall(alltoall_send, 1, MPI_INT, alltoall_recv, 1,
-                        MPI_INT, MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 17;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || alltoall_recv[0] != rank ||
-        alltoall_recv[1] != 10 + rank) {
-        return 18;
-    }
-    alltoall_recv[0] = -1;
-    alltoall_recv[1] = -1;
-    ret = MPI_Ialltoallv(alltoall_send, counts, displs, MPI_INT,
-                         alltoall_recv, counts, displs, MPI_INT,
-                         MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 19;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || alltoall_recv[0] != rank ||
-        alltoall_recv[1] != 10 + rank) {
-        return 20;
-    }
-    MPI_Datatype types[2] = {MPI_INT, MPI_INT};
-    /*
-     * Ialltoallw follows the ordinary Alltoallw displacement convention
-     * in this ABI header: int byte offsets, not MPI_Aint offsets.
-     */
-    int byte_displs[2] = {0, (int) sizeof(int)};
-    alltoall_recv[0] = -1;
-    alltoall_recv[1] = -1;
-    ret = MPI_Ialltoallw(alltoall_send, counts, byte_displs, types,
-                         alltoall_recv, counts, byte_displs, types,
-                         MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 21;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || alltoall_recv[0] != rank ||
-        alltoall_recv[1] != 10 + rank) {
-        return 22;
-    }
+int root_recv[2] = {-1, -1};
+ret = MPI_Igather(&send, 1, MPI_INT, root_recv, 1, MPI_INT, 0,
+                  MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 23;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret ||
+    (0 == rank && (1 != root_recv[0] || 2 != root_recv[1]))) {
+    return 24;
+}
+root_recv[0] = -1;
+root_recv[1] = -1;
+ret = MPI_Igatherv(&send, 1, MPI_INT, root_recv, counts, displs,
+                   MPI_INT, 0, MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 25;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret ||
+    (0 == rank && (1 != root_recv[0] || 2 != root_recv[1]))) {
+    return 26;
+}
 
-    int root_recv[2] = {-1, -1};
-    ret = MPI_Igather(&send, 1, MPI_INT, root_recv, 1, MPI_INT, 0,
-                      MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 23;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret ||
-        (0 == rank && (1 != root_recv[0] || 2 != root_recv[1]))) {
-        return 24;
-    }
-    root_recv[0] = -1;
-    root_recv[1] = -1;
-    ret = MPI_Igatherv(&send, 1, MPI_INT, root_recv, counts, displs,
-                       MPI_INT, 0, MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 25;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret ||
-        (0 == rank && (1 != root_recv[0] || 2 != root_recv[1]))) {
-        return 26;
-    }
+int scatter_send[2] = {41, 43};
+recv = -1;
+ret = MPI_Iscatter(scatter_send, 1, MPI_INT, &recv, 1, MPI_INT, 0,
+                   MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 27;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || recv != 41 + 2 * rank) {
+    return 28;
+}
+recv = -1;
+ret = MPI_Iscatterv(scatter_send, counts, displs, MPI_INT, &recv,
+                    1, MPI_INT, 0, MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 29;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || recv != 41 + 2 * rank) {
+    return 30;
+}
 
-    int scatter_send[2] = {41, 43};
-    recv = -1;
-    ret = MPI_Iscatter(scatter_send, 1, MPI_INT, &recv, 1, MPI_INT, 0,
-                       MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 27;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || recv != 41 + 2 * rank) {
-        return 28;
-    }
-    recv = -1;
-    ret = MPI_Iscatterv(scatter_send, counts, displs, MPI_INT, &recv,
-                        1, MPI_INT, 0, MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 29;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || recv != 41 + 2 * rank) {
-        return 30;
-    }
+int reduce_send[2] = {rank + 1, rank + 3};
+recv = -1;
+ret = MPI_Ireduce_scatter_block(reduce_send, &recv, 1, MPI_INT,
+                                MPI_SUM, MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 31;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || recv != (0 == rank ? 3 : 7)) {
+    return 32;
+}
+recv = -1;
+ret = MPI_Ireduce_scatter(reduce_send, &recv, counts, MPI_INT,
+                          MPI_SUM, MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 33;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || recv != (0 == rank ? 3 : 7)) {
+    return 34;
+}
 
-    int reduce_send[2] = {rank + 1, rank + 3};
-    recv = -1;
-    ret = MPI_Ireduce_scatter_block(reduce_send, &recv, 1, MPI_INT,
-                                    MPI_SUM, MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 31;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || recv != (0 == rank ? 3 : 7)) {
-        return 32;
-    }
-    recv = -1;
-    ret = MPI_Ireduce_scatter(reduce_send, &recv, counts, MPI_INT,
-                              MPI_SUM, MPI_COMM_WORLD, &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 33;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || recv != (0 == rank ? 3 : 7)) {
-        return 34;
-    }
+recv = -1;
+ret = MPI_Iscan(&send, &recv, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD,
+                &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 35;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || recv != (0 == rank ? 1 : 3)) {
+    return 36;
+}
+recv = -1;
+ret = MPI_Iexscan(&send, &recv, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD,
+                  &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 37;
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || (1 == rank && 1 != recv)) {
+    return 38;
+}
 
-    recv = -1;
-    ret = MPI_Iscan(&send, &recv, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD,
-                    &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 35;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || recv != (0 == rank ? 1 : 3)) {
-        return 36;
-    }
-    recv = -1;
-    ret = MPI_Iexscan(&send, &recv, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD,
-                      &request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 37;
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret || (1 == rank && 1 != recv)) {
-        return 38;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 39;
-    }
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 39;
+}

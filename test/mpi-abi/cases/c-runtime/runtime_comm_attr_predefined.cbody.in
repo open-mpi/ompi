@@ -1,34 +1,34 @@
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Test intent:
-     *   Exercise communicator attribute lookup without creating a user
-     *   keyval.  Attribute set/delete/free paths require keyvals created
-     *   with callback functions, so those paths are deliberately deferred
-     *   to Phase 10 callback lifetime tests.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
+/*
+ * Test intent:
+ *   Exercise communicator attribute lookup without creating a user
+ *   keyval.  Attribute set/delete/free paths require keyvals created
+ *   with callback functions, so those paths are deliberately deferred
+ *   to Phase 10 callback lifetime tests.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
 
-    void *attribute = NULL;
-    int flag = 0;
-    ret = MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &attribute,
-                            &flag);
-    if (MPI_SUCCESS != ret || !flag || NULL == attribute ||
-        *((int *) attribute) <= 0) {
-        return 2;
-    }
+void *attribute = NULL;
+int flag = 0;
+ret = MPI_Comm_get_attr(MPI_COMM_WORLD, MPI_TAG_UB, &attribute,
+                        &flag);
+if (MPI_SUCCESS != ret || !flag || NULL == attribute ||
+    *((int *) attribute) <= 0) {
+    return 2;
+}
 
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 3;
+}

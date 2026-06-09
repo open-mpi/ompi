@@ -1,61 +1,60 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
-
-    /*
-     * Test intent:
-     *   Round-trip configured Fortran datatype constants through the C ABI
-     *   converter helpers when this Open MPI build has Fortran bindings.
-     *   The generated count guard prevents an empty optional set passing.
-     */
+/*
+ * Test intent:
+ *   Round-trip configured Fortran datatype constants through the C ABI
+ *   converter helpers when this Open MPI build has Fortran bindings.
+ *   The generated count guard prevents an empty optional set passing.
+ */
 #define ABI_EXPECTED_FORTRAN_TYPE_CHECKS @FORTRAN_TYPE_EXPECTED@
 #define ABI_CHECK_FORTRAN_TYPE(value) do {                                  \
-        ++fortran_type_checks;                                              \
-        int abi_value = MPI_Type_toint(value);                              \
-        if (abi_value != (int) (intptr_t) (value)) {                        \
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:toint\n", #value);   \
-            return 20;                                                      \
-        }                                                                   \
-        if (value != MPI_Type_fromint(abi_value)) {                         \
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:fromint\n", #value); \
-            return 20;                                                      \
-        }                                                                   \
-        if (abi_value != PMPI_Type_toint(value)) {                          \
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:ptoint\n", #value);  \
-            return 20;                                                      \
-        }                                                                   \
-        if (value != PMPI_Type_fromint(abi_value)) {                        \
-            fprintf(stderr, "ABI_FAIL:fortran_type:%s:pfromint\n", #value);\
-            return 20;                                                      \
-        }                                                                   \
-    } while (0)
+    ++fortran_type_checks;                                              \
+    int abi_value = MPI_Type_toint(value);                              \
+    if (abi_value != (int) (intptr_t) (value)) {                        \
+        fprintf(stderr, "ABI_FAIL:fortran_type:%s:toint\n", #value);   \
+        return 20;                                                      \
+    }                                                                   \
+    if (value != MPI_Type_fromint(abi_value)) {                         \
+        fprintf(stderr, "ABI_FAIL:fortran_type:%s:fromint\n", #value); \
+        return 20;                                                      \
+    }                                                                   \
+    if (abi_value != PMPI_Type_toint(value)) {                          \
+        fprintf(stderr, "ABI_FAIL:fortran_type:%s:ptoint\n", #value);  \
+        return 20;                                                      \
+    }                                                                   \
+    if (value != PMPI_Type_fromint(abi_value)) {                        \
+        fprintf(stderr, "ABI_FAIL:fortran_type:%s:pfromint\n", #value);\
+        return 20;                                                      \
+    }                                                                   \
+} while (0)
 
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
 
-    int fortran_type_checks = 0;
+int fortran_type_checks = 0;
 
 @FORTRAN_TYPE_CHECKS@
 
-    if (ABI_EXPECTED_FORTRAN_TYPE_CHECKS != fortran_type_checks) {
-        fprintf(stderr, "ABI_FAIL:fortran_type:count:%d:%d\n",
-                ABI_EXPECTED_FORTRAN_TYPE_CHECKS, fortran_type_checks);
-        ret = MPI_Finalize();
-        if (MPI_SUCCESS != ret) {
-            return 21;
-        }
-        return 22;
-    }
-
+if (ABI_EXPECTED_FORTRAN_TYPE_CHECKS != fortran_type_checks) {
+    fprintf(stderr, "ABI_FAIL:fortran_type:count:%d:%d\n",
+            ABI_EXPECTED_FORTRAN_TYPE_CHECKS, fortran_type_checks);
     ret = MPI_Finalize();
     if (MPI_SUCCESS != ret) {
-        return 23;
+        return 21;
     }
+    return 22;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 23;
+}

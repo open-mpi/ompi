@@ -1,34 +1,33 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
-
-    /*
-     * Test intent:
-     *   Validate thread initialization query APIs in their own executable
-     *   because MPI_Init_thread cannot share a process with MPI_Init.
-     */
-    int provided = -1;
-    int queried = -1;
-    int main_thread = 0;
-    int ret = MPI_Init_thread(&argc, &argv, MPI_THREAD_SINGLE, &provided);
-    if (MPI_SUCCESS != ret || provided < MPI_THREAD_SINGLE) {
-        return 1;
-    }
-    ret = MPI_Query_thread(&queried);
-    if (MPI_SUCCESS != ret || queried != provided) {
-        return 2;
-    }
-    ret = MPI_Is_thread_main(&main_thread);
-    if (MPI_SUCCESS != ret || !main_thread) {
-        return 3;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 4;
-    }
+/*
+ * Test intent:
+ *   Validate thread initialization query APIs in their own executable
+ *   because MPI_Init_thread cannot share a process with MPI_Init.
+ */
+int provided = -1;
+int queried = -1;
+int main_thread = 0;
+int ret = MPI_Init_thread(&argc, &argv, MPI_THREAD_SINGLE, &provided);
+if (MPI_SUCCESS != ret || provided < MPI_THREAD_SINGLE) {
+    return 1;
+}
+ret = MPI_Query_thread(&queried);
+if (MPI_SUCCESS != ret || queried != provided) {
+    return 2;
+}
+ret = MPI_Is_thread_main(&main_thread);
+if (MPI_SUCCESS != ret || !main_thread) {
+    return 3;
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 4;
+}

@@ -3896,6 +3896,13 @@ def _c_probe_source(srcdir, body, rank_count):
     template = _read_text(srcdir / "test" / "mpi-abi" /
                           "templates" / "c_probe.c.in")
     body = body.replace("@EXPECTED_RANKS@", str(rank_count))
+    # Keep checked-in *.cbody.in snippets at natural column-zero C
+    # indentation.  The snippets are always inserted inside main(), so
+    # the generated source owns the function-body indentation instead of
+    # baking an extraction artifact into every snippet file.
+    body = "\n".join(
+        "    " + line if line else line
+        for line in body.rstrip().splitlines())
     return template.replace("@BODY@", body.rstrip())
 
 

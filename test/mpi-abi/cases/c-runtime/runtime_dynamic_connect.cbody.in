@@ -1,85 +1,85 @@
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Test intent:
-     *   Exercise dynamic-process connect/accept/disconnect in a
-     *   two-rank local job.  Rank 0 opens and broadcasts a port, rank 0
-     *   accepts, rank 1 connects, and both sides validate that the
-     *   resulting communicator is an intercommunicator before
-     *   disconnecting it.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
+/*
+ * Test intent:
+ *   Exercise dynamic-process connect/accept/disconnect in a
+ *   two-rank local job.  Rank 0 opens and broadcasts a port, rank 0
+ *   accepts, rank 1 connects, and both sides validate that the
+ *   resulting communicator is an intercommunicator before
+ *   disconnecting it.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
 
-    int rank = -1;
-    int size = -1;
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret || 2 != size) {
-        return 3;
-    }
+int rank = -1;
+int size = -1;
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret || 2 != size) {
+    return 3;
+}
 
-    char port[MPI_MAX_PORT_NAME];
-    memset(port, 0, sizeof(port));
-    if (0 == rank) {
-        ret = MPI_Open_port(MPI_INFO_NULL, port);
-        if (MPI_SUCCESS != ret || '\0' == port[0]) {
-            return 4;
-        }
-    }
-    ret = MPI_Bcast(port, MPI_MAX_PORT_NAME, MPI_CHAR, 0,
-                    MPI_COMM_WORLD);
+char port[MPI_MAX_PORT_NAME];
+memset(port, 0, sizeof(port));
+if (0 == rank) {
+    ret = MPI_Open_port(MPI_INFO_NULL, port);
     if (MPI_SUCCESS != ret || '\0' == port[0]) {
-        return 5;
+        return 4;
     }
+}
+ret = MPI_Bcast(port, MPI_MAX_PORT_NAME, MPI_CHAR, 0,
+                MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || '\0' == port[0]) {
+    return 5;
+}
 
-    MPI_Comm intercomm = MPI_COMM_NULL;
-    if (0 == rank) {
-        ret = MPI_Comm_accept(port, MPI_INFO_NULL, 0, MPI_COMM_SELF,
-                              &intercomm);
-    } else {
-        ret = MPI_Comm_connect(port, MPI_INFO_NULL, 0, MPI_COMM_SELF,
-                               &intercomm);
-    }
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == intercomm) {
-        return 6;
-    }
+MPI_Comm intercomm = MPI_COMM_NULL;
+if (0 == rank) {
+    ret = MPI_Comm_accept(port, MPI_INFO_NULL, 0, MPI_COMM_SELF,
+                          &intercomm);
+} else {
+    ret = MPI_Comm_connect(port, MPI_INFO_NULL, 0, MPI_COMM_SELF,
+                           &intercomm);
+}
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == intercomm) {
+    return 6;
+}
 
-    int is_inter = 0;
-    ret = MPI_Comm_test_inter(intercomm, &is_inter);
-    if (MPI_SUCCESS != ret || !is_inter) {
-        return 7;
-    }
-    int remote_size = -1;
-    ret = MPI_Comm_remote_size(intercomm, &remote_size);
-    if (MPI_SUCCESS != ret || 1 != remote_size) {
-        return 8;
-    }
-    ret = MPI_Comm_disconnect(&intercomm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != intercomm) {
-        return 9;
-    }
+int is_inter = 0;
+ret = MPI_Comm_test_inter(intercomm, &is_inter);
+if (MPI_SUCCESS != ret || !is_inter) {
+    return 7;
+}
+int remote_size = -1;
+ret = MPI_Comm_remote_size(intercomm, &remote_size);
+if (MPI_SUCCESS != ret || 1 != remote_size) {
+    return 8;
+}
+ret = MPI_Comm_disconnect(&intercomm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != intercomm) {
+    return 9;
+}
 
-    if (0 == rank) {
-        ret = MPI_Close_port(port);
-        if (MPI_SUCCESS != ret) {
-            return 10;
-        }
-    }
-
-    ret = MPI_Finalize();
+if (0 == rank) {
+    ret = MPI_Close_port(port);
     if (MPI_SUCCESS != ret) {
-        return 11;
+        return 10;
     }
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 11;
+}

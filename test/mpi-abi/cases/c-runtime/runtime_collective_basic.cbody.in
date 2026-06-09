@@ -1,66 +1,65 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Test intent:
+ *   Validate the seed blocking collective APIs with two-rank data
+ *   movement and a barrier synchronization.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
 
-    /*
-     * Test intent:
-     *   Validate the seed blocking collective APIs with two-rank data
-     *   movement and a barrier synchronization.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
+int value = 0;
+if (0 == rank) {
+    value = 37;
+}
+ret = MPI_Bcast(&value, 1, MPI_INT, 0, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || 37 != value) {
+    return 5;
+}
 
-    int value = 0;
-    if (0 == rank) {
-        value = 37;
-    }
-    ret = MPI_Bcast(&value, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret || 37 != value) {
-        return 5;
-    }
+int reduced = -1;
+ret = MPI_Allreduce(&rank, &reduced, 1, MPI_INT, MPI_SUM,
+                    MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || 1 != reduced) {
+    return 6;
+}
+reduced = -1;
+ret = MPI_Reduce(&rank, &reduced, 1, MPI_INT, MPI_SUM, 0,
+                 MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret) {
+    return 7;
+}
+if (0 == rank && 1 != reduced) {
+    return 8;
+}
 
-    int reduced = -1;
-    ret = MPI_Allreduce(&rank, &reduced, 1, MPI_INT, MPI_SUM,
-                        MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret || 1 != reduced) {
-        return 6;
-    }
-    reduced = -1;
-    ret = MPI_Reduce(&rank, &reduced, 1, MPI_INT, MPI_SUM, 0,
-                     MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret) {
-        return 7;
-    }
-    if (0 == rank && 1 != reduced) {
-        return 8;
-    }
-
-    ret = MPI_Barrier(MPI_COMM_WORLD);
-    if (MPI_SUCCESS != ret) {
-        return 9;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 10;
-    }
+ret = MPI_Barrier(MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret) {
+    return 9;
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 10;
+}

@@ -1,53 +1,52 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
-
-    /*
-     * Test intent:
-     *   Verify basic two-rank point-to-point data movement through the
-     *   standard ABI using MPI_Sendrecv and a checked received value.
-     */
-    int size = 0;
-    int rank = -1;
-    int value = -1;
-    int ret = MPI_Init(&argc, &argv);
+/*
+ * Test intent:
+ *   Verify basic two-rank point-to-point data movement through the
+ *   standard ABI using MPI_Sendrecv and a checked received value.
+ */
+int size = 0;
+int rank = -1;
+int value = -1;
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
+if (0 == rank) {
+    value = 1234;
+    ret = MPI_Send(&value, 1, MPI_INT, 1, 99, MPI_COMM_WORLD);
     if (MPI_SUCCESS != ret) {
-        return 1;
+        return 5;
     }
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+} else if (1 == rank) {
+    ret = MPI_Recv(&value, 1, MPI_INT, 0, 99,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     if (MPI_SUCCESS != ret) {
-        return 2;
+        return 6;
     }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
+    if (1234 != value) {
+        return 7;
     }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-    if (0 == rank) {
-        value = 1234;
-        ret = MPI_Send(&value, 1, MPI_INT, 1, 99, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 5;
-        }
-    } else if (1 == rank) {
-        ret = MPI_Recv(&value, 1, MPI_INT, 0, 99,
-                       MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret) {
-            return 6;
-        }
-        if (1234 != value) {
-            return 7;
-        }
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 8;
-    }
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 8;
+}

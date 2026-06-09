@@ -1,94 +1,93 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Test intent:
+ *   Exercise communicator-specific buffered-send buffer management with
+ *   real two-rank traffic before detach validates the buffer identity.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
 
-    /*
-     * Test intent:
-     *   Exercise communicator-specific buffered-send buffer management with
-     *   real two-rank traffic before detach validates the buffer identity.
-     */
-    int ret = MPI_Init(&argc, &argv);
+if (0 == rank) {
+    char buffer[8192];
+    ret = MPI_Comm_attach_buffer(MPI_COMM_WORLD, buffer,
+                                 sizeof(buffer));
     if (MPI_SUCCESS != ret) {
-        return 1;
+        return 5;
     }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    int value = 101;
+    ret = MPI_Bsend(&value, 1, MPI_INT, 1, 920, MPI_COMM_WORLD);
     if (MPI_SUCCESS != ret) {
-        return 2;
+        return 6;
     }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    ret = MPI_Comm_flush_buffer(MPI_COMM_WORLD);
     if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
+        return 7;
     }
 
-    if (0 == rank) {
-        char buffer[8192];
-        ret = MPI_Comm_attach_buffer(MPI_COMM_WORLD, buffer,
-                                     sizeof(buffer));
-        if (MPI_SUCCESS != ret) {
-            return 5;
-        }
-        int value = 101;
-        ret = MPI_Bsend(&value, 1, MPI_INT, 1, 920, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 6;
-        }
-        ret = MPI_Comm_flush_buffer(MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 7;
-        }
-
-        value = 103;
-        ret = MPI_Bsend(&value, 1, MPI_INT, 1, 921, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 8;
-        }
-        MPI_Request request = MPI_REQUEST_NULL;
-        ret = MPI_Comm_iflush_buffer(MPI_COMM_WORLD, &request);
-        if (MPI_SUCCESS != ret) {
-            return 9;
-        }
-        if (MPI_REQUEST_NULL != request) {
-            ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-            if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-                return 10;
-            }
-        }
-
-        void *detached = NULL;
-        int detached_size = 0;
-        ret = MPI_Comm_detach_buffer(MPI_COMM_WORLD, &detached,
-                                     &detached_size);
-        if (MPI_SUCCESS != ret || detached != buffer ||
-            detached_size != (int) sizeof(buffer)) {
-            return 11;
-        }
-    } else if (1 == rank) {
-        int value = -1;
-        ret = MPI_Recv(&value, 1, MPI_INT, 0, 920, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 101 != value) {
-            return 12;
-        }
-        value = -1;
-        ret = MPI_Recv(&value, 1, MPI_INT, 0, 921, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 103 != value) {
-            return 13;
-        }
-    }
-
-    ret = MPI_Finalize();
+    value = 103;
+    ret = MPI_Bsend(&value, 1, MPI_INT, 1, 921, MPI_COMM_WORLD);
     if (MPI_SUCCESS != ret) {
-        return 14;
+        return 8;
     }
+    MPI_Request request = MPI_REQUEST_NULL;
+    ret = MPI_Comm_iflush_buffer(MPI_COMM_WORLD, &request);
+    if (MPI_SUCCESS != ret) {
+        return 9;
+    }
+    if (MPI_REQUEST_NULL != request) {
+        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+            return 10;
+        }
+    }
+
+    void *detached = NULL;
+    int detached_size = 0;
+    ret = MPI_Comm_detach_buffer(MPI_COMM_WORLD, &detached,
+                                 &detached_size);
+    if (MPI_SUCCESS != ret || detached != buffer ||
+        detached_size != (int) sizeof(buffer)) {
+        return 11;
+    }
+} else if (1 == rank) {
+    int value = -1;
+    ret = MPI_Recv(&value, 1, MPI_INT, 0, 920, MPI_COMM_WORLD,
+                   MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || 101 != value) {
+        return 12;
+    }
+    value = -1;
+    ret = MPI_Recv(&value, 1, MPI_INT, 0, 921, MPI_COMM_WORLD,
+                   MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || 103 != value) {
+        return 13;
+    }
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 14;
+}

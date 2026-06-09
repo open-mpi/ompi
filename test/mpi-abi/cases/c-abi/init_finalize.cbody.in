@@ -1,23 +1,22 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
-
-    /*
-     * Test intent:
-     *   Exercise the smallest standard ABI MPI lifetime: initialize once,
-     *   finalize once, and verify the calls return through libmpi_abi.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
+/*
+ * Test intent:
+ *   Exercise the smallest standard ABI MPI lifetime: initialize once,
+ *   finalize once, and verify the calls return through libmpi_abi.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 2;
+}

@@ -1,106 +1,105 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
+/*
+ * Test intent:
+ *   Validate partitioned send/receive initialization and Pready variants
+ *   using a small three-partition transfer with checked payloads.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
+
+int values[3] = {101, 103, 107};
+MPI_Request request = MPI_REQUEST_NULL;
+if (0 == rank) {
+    ret = MPI_Psend_init(values, 3, 1, MPI_INT, 1, 980,
+                         MPI_COMM_WORLD, MPI_INFO_NULL, &request);
+} else {
+    values[0] = -1;
+    values[1] = -1;
+    values[2] = -1;
+    ret = MPI_Precv_init(values, 3, 1, MPI_INT, 0, 980,
+                         MPI_COMM_WORLD, MPI_INFO_NULL, &request);
+}
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    return 5;
+}
+ret = MPI_Start(&request);
+if (MPI_SUCCESS != ret) {
+    return 6;
+}
+if (0 == rank) {
     /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
+     * Exercise all three readiness APIs in one persistent partitioned
+     * transfer.  The payload has one integer per partition so the
+     * receiver can verify that every announced partition arrived.
      */
+    ret = MPI_Pready(0, request);
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    ret = MPI_Pready_range(1, 1, request);
+    if (MPI_SUCCESS != ret) {
+        return 8;
+    }
+    int parts[1] = {2};
+    ret = MPI_Pready_list(1, parts, request);
+    if (MPI_SUCCESS != ret) {
+        return 9;
+    }
+    int ready = 1;
+    ret = MPI_Send(&ready, 1, MPI_INT, 1, 979, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 10;
+    }
+} else {
+    int ready = 0;
+    ret = MPI_Recv(&ready, 1, MPI_INT, 0, 979, MPI_COMM_WORLD,
+                   MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || 1 != ready) {
+        return 11;
+    }
+    int arrived = 0;
+    ret = MPI_Parrived(request, 0, &arrived);
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+}
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret) {
+    return 13;
+}
+if (1 == rank && (101 != values[0] || 103 != values[1] ||
+                  107 != values[2])) {
+    return 14;
+}
+ret = MPI_Request_free(&request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+    return 15;
+}
 
-    /*
-     * Test intent:
-     *   Validate partitioned send/receive initialization and Pready variants
-     *   using a small three-partition transfer with checked payloads.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
-
-    int values[3] = {101, 103, 107};
-    MPI_Request request = MPI_REQUEST_NULL;
-    if (0 == rank) {
-        ret = MPI_Psend_init(values, 3, 1, MPI_INT, 1, 980,
-                             MPI_COMM_WORLD, MPI_INFO_NULL, &request);
-    } else {
-        values[0] = -1;
-        values[1] = -1;
-        values[2] = -1;
-        ret = MPI_Precv_init(values, 3, 1, MPI_INT, 0, 980,
-                             MPI_COMM_WORLD, MPI_INFO_NULL, &request);
-    }
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
-        return 5;
-    }
-    ret = MPI_Start(&request);
-    if (MPI_SUCCESS != ret) {
-        return 6;
-    }
-    if (0 == rank) {
-        /*
-         * Exercise all three readiness APIs in one persistent partitioned
-         * transfer.  The payload has one integer per partition so the
-         * receiver can verify that every announced partition arrived.
-         */
-        ret = MPI_Pready(0, request);
-        if (MPI_SUCCESS != ret) {
-            return 7;
-        }
-        ret = MPI_Pready_range(1, 1, request);
-        if (MPI_SUCCESS != ret) {
-            return 8;
-        }
-        int parts[1] = {2};
-        ret = MPI_Pready_list(1, parts, request);
-        if (MPI_SUCCESS != ret) {
-            return 9;
-        }
-        int ready = 1;
-        ret = MPI_Send(&ready, 1, MPI_INT, 1, 979, MPI_COMM_WORLD);
-        if (MPI_SUCCESS != ret) {
-            return 10;
-        }
-    } else {
-        int ready = 0;
-        ret = MPI_Recv(&ready, 1, MPI_INT, 0, 979, MPI_COMM_WORLD,
-                       MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || 1 != ready) {
-            return 11;
-        }
-        int arrived = 0;
-        ret = MPI_Parrived(request, 0, &arrived);
-        if (MPI_SUCCESS != ret) {
-            return 12;
-        }
-    }
-    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    if (MPI_SUCCESS != ret) {
-        return 13;
-    }
-    if (1 == rank && (101 != values[0] || 103 != values[1] ||
-                      107 != values[2])) {
-        return 14;
-    }
-    ret = MPI_Request_free(&request);
-    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-        return 15;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 16;
-    }
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 16;
+}

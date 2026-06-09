@@ -1,294 +1,293 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
-
-    /*
-     * Test intent:
-     *   Verify error class/code, predefined error handler, and keyval
-     *   conversion paths using real dynamic objects and callback sentinels.
-     */
+/*
+ * Test intent:
+ *   Verify error class/code, predefined error handler, and keyval
+ *   conversion paths using real dynamic objects and callback sentinels.
+ */
 #define ABI_EXPECTED_ERROR_CLASS_CHECKS @ERROR_CLASS_EXPECTED@
 #define ABI_CHECK_ERROR_CLASS(value) do {                                   \
-        ++error_class_checks;                                               \
-        ret = MPI_Error_class(value, &error_class);                         \
-        if (MPI_SUCCESS != ret || value != error_class) {                   \
-            fprintf(stderr, "ABI_FAIL:error_class:%s\n", #value);          \
-            return 20;                                                      \
-        }                                                                   \
-    } while (0)
+    ++error_class_checks;                                               \
+    ret = MPI_Error_class(value, &error_class);                         \
+    if (MPI_SUCCESS != ret || value != error_class) {                   \
+        fprintf(stderr, "ABI_FAIL:error_class:%s\n", #value);          \
+        return 20;                                                      \
+    }                                                                   \
+} while (0)
 
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
 
-    int error_class = MPI_ERR_UNKNOWN;
-    int error_class_checks = 0;
+int error_class = MPI_ERR_UNKNOWN;
+int error_class_checks = 0;
 
 @ERROR_CLASS_CHECKS@
 
-    if (ABI_EXPECTED_ERROR_CLASS_CHECKS != error_class_checks) {
-        fprintf(stderr, "ABI_FAIL:error_class:count:%d:%d\n",
-                ABI_EXPECTED_ERROR_CLASS_CHECKS, error_class_checks);
-        ret = MPI_Finalize();
-        if (MPI_SUCCESS != ret) {
-            return 21;
-        }
-        return 22;
-    }
-
-    int dynamic_class = MPI_ERR_UNKNOWN;
-    ret = MPI_Add_error_class(&dynamic_class);
-    if (MPI_SUCCESS != ret) {
-        return 30;
-    }
-    int dynamic_code = MPI_ERR_UNKNOWN;
-    ret = MPI_Add_error_code(dynamic_class, &dynamic_code);
-    if (MPI_SUCCESS != ret) {
-        return 31;
-    }
-    ret = MPI_Error_class(dynamic_code, &error_class);
-    if (MPI_SUCCESS != ret || dynamic_class != error_class) {
-        return 32;
-    }
-
-    if (MPI_COMM_NULL_COPY_FN != (MPI_Comm_copy_attr_function *) 0 ||
-        MPI_COMM_NULL_DELETE_FN !=
-        (MPI_Comm_delete_attr_function *) 0 ||
-        MPI_COMM_DUP_FN != (MPI_Comm_copy_attr_function *) 1) {
-        return 40;
-    }
-    if (MPI_TYPE_NULL_COPY_FN != (MPI_Type_copy_attr_function *) 0 ||
-        MPI_TYPE_NULL_DELETE_FN !=
-        (MPI_Type_delete_attr_function *) 0 ||
-        MPI_TYPE_DUP_FN != (MPI_Type_copy_attr_function *) 1) {
-        return 41;
-    }
-    if (MPI_WIN_NULL_COPY_FN != (MPI_Win_copy_attr_function *) 0 ||
-        MPI_WIN_NULL_DELETE_FN != (MPI_Win_delete_attr_function *) 0 ||
-        MPI_WIN_DUP_FN != (MPI_Win_copy_attr_function *) 1) {
-        return 42;
-    }
-
-    int attr_value = 12345;
-    void *attr_out = NULL;
-    int flag = 0;
-    int comm_keyval = MPI_KEYVAL_INVALID;
-    ret = MPI_Comm_create_keyval(MPI_COMM_NULL_COPY_FN,
-                                 MPI_COMM_NULL_DELETE_FN,
-                                 &comm_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
-        return 50;
-    }
-    MPI_Comm comm = MPI_COMM_NULL;
-    MPI_Comm comm_dup = MPI_COMM_NULL;
-    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
-    if (MPI_SUCCESS != ret) {
-        return 51;
-    }
-    ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 52;
-    }
-    ret = MPI_Comm_dup(comm, &comm_dup);
-    if (MPI_SUCCESS != ret) {
-        return 53;
-    }
-    ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || flag) {
-        return 54;
-    }
-    ret = MPI_Comm_free(&comm_dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
-        return 55;
-    }
-    ret = MPI_Comm_delete_attr(comm, comm_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 56;
-    }
-    ret = MPI_Comm_free(&comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
-        return 57;
-    }
-    ret = MPI_Comm_free_keyval(&comm_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
-        return 58;
-    }
-
-    ret = MPI_Comm_create_keyval(MPI_COMM_DUP_FN,
-                                 MPI_COMM_NULL_DELETE_FN,
-                                 &comm_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
-        return 60;
-    }
-    ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
-    if (MPI_SUCCESS != ret) {
-        return 61;
-    }
-    ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 62;
-    }
-    ret = MPI_Comm_dup(comm, &comm_dup);
-    if (MPI_SUCCESS != ret) {
-        return 63;
-    }
-    attr_out = NULL;
-    flag = 0;
-    ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
-        return 64;
-    }
-    ret = MPI_Comm_free(&comm_dup);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
-        return 65;
-    }
-    ret = MPI_Comm_delete_attr(comm, comm_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 66;
-    }
-    ret = MPI_Comm_free(&comm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
-        return 67;
-    }
-    ret = MPI_Comm_free_keyval(&comm_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
-        return 68;
-    }
-
-    int type_keyval = MPI_KEYVAL_INVALID;
-    ret = MPI_Type_create_keyval(MPI_TYPE_NULL_COPY_FN,
-                                 MPI_TYPE_NULL_DELETE_FN,
-                                 &type_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
-        return 80;
-    }
-    MPI_Datatype datatype = MPI_DATATYPE_NULL;
-    MPI_Datatype datatype_dup = MPI_DATATYPE_NULL;
-    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
-    if (MPI_SUCCESS != ret) {
-        return 81;
-    }
-    ret = MPI_Type_commit(&datatype);
-    if (MPI_SUCCESS != ret) {
-        return 82;
-    }
-    ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 83;
-    }
-    ret = MPI_Type_dup(datatype, &datatype_dup);
-    if (MPI_SUCCESS != ret) {
-        return 84;
-    }
-    attr_out = NULL;
-    flag = 0;
-    ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || flag) {
-        return 85;
-    }
-    ret = MPI_Type_free(&datatype_dup);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
-        return 86;
-    }
-    ret = MPI_Type_delete_attr(datatype, type_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 87;
-    }
-    ret = MPI_Type_free(&datatype);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
-        return 88;
-    }
-    ret = MPI_Type_free_keyval(&type_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
-        return 89;
-    }
-
-    ret = MPI_Type_create_keyval(MPI_TYPE_DUP_FN,
-                                 MPI_TYPE_NULL_DELETE_FN,
-                                 &type_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
-        return 100;
-    }
-    ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
-    if (MPI_SUCCESS != ret) {
-        return 101;
-    }
-    ret = MPI_Type_commit(&datatype);
-    if (MPI_SUCCESS != ret) {
-        return 102;
-    }
-    ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 103;
-    }
-    ret = MPI_Type_dup(datatype, &datatype_dup);
-    if (MPI_SUCCESS != ret) {
-        return 104;
-    }
-    attr_out = NULL;
-    flag = 0;
-    ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
-    if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
-        return 105;
-    }
-    ret = MPI_Type_free(&datatype_dup);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
-        return 106;
-    }
-    ret = MPI_Type_delete_attr(datatype, type_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 107;
-    }
-    ret = MPI_Type_free(&datatype);
-    if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
-        return 108;
-    }
-    ret = MPI_Type_free_keyval(&type_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
-        return 109;
-    }
-
-    int win_storage = 0;
-    MPI_Win win = MPI_WIN_NULL;
-    ret = MPI_Win_create(&win_storage, sizeof(win_storage), sizeof(int),
-                         MPI_INFO_NULL, MPI_COMM_WORLD, &win);
-    if (MPI_SUCCESS != ret) {
-        return 130;
-    }
-
-    int win_keyval = MPI_KEYVAL_INVALID;
-    ret = MPI_Win_create_keyval(MPI_WIN_NULL_COPY_FN,
-                                MPI_WIN_NULL_DELETE_FN,
-                                &win_keyval, NULL);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == win_keyval) {
-        return 131;
-    }
-    ret = MPI_Win_set_attr(win, win_keyval, &attr_value);
-    if (MPI_SUCCESS != ret) {
-        return 132;
-    }
-    ret = MPI_Win_delete_attr(win, win_keyval);
-    if (MPI_SUCCESS != ret) {
-        return 133;
-    }
-    ret = MPI_Win_free_keyval(&win_keyval);
-    if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != win_keyval) {
-        return 134;
-    }
-
-    ret = MPI_Win_free(&win);
-    if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
-        return 140;
-    }
-
+if (ABI_EXPECTED_ERROR_CLASS_CHECKS != error_class_checks) {
+    fprintf(stderr, "ABI_FAIL:error_class:count:%d:%d\n",
+            ABI_EXPECTED_ERROR_CLASS_CHECKS, error_class_checks);
     ret = MPI_Finalize();
     if (MPI_SUCCESS != ret) {
-        return 141;
+        return 21;
     }
+    return 22;
+}
+
+int dynamic_class = MPI_ERR_UNKNOWN;
+ret = MPI_Add_error_class(&dynamic_class);
+if (MPI_SUCCESS != ret) {
+    return 30;
+}
+int dynamic_code = MPI_ERR_UNKNOWN;
+ret = MPI_Add_error_code(dynamic_class, &dynamic_code);
+if (MPI_SUCCESS != ret) {
+    return 31;
+}
+ret = MPI_Error_class(dynamic_code, &error_class);
+if (MPI_SUCCESS != ret || dynamic_class != error_class) {
+    return 32;
+}
+
+if (MPI_COMM_NULL_COPY_FN != (MPI_Comm_copy_attr_function *) 0 ||
+    MPI_COMM_NULL_DELETE_FN !=
+    (MPI_Comm_delete_attr_function *) 0 ||
+    MPI_COMM_DUP_FN != (MPI_Comm_copy_attr_function *) 1) {
+    return 40;
+}
+if (MPI_TYPE_NULL_COPY_FN != (MPI_Type_copy_attr_function *) 0 ||
+    MPI_TYPE_NULL_DELETE_FN !=
+    (MPI_Type_delete_attr_function *) 0 ||
+    MPI_TYPE_DUP_FN != (MPI_Type_copy_attr_function *) 1) {
+    return 41;
+}
+if (MPI_WIN_NULL_COPY_FN != (MPI_Win_copy_attr_function *) 0 ||
+    MPI_WIN_NULL_DELETE_FN != (MPI_Win_delete_attr_function *) 0 ||
+    MPI_WIN_DUP_FN != (MPI_Win_copy_attr_function *) 1) {
+    return 42;
+}
+
+int attr_value = 12345;
+void *attr_out = NULL;
+int flag = 0;
+int comm_keyval = MPI_KEYVAL_INVALID;
+ret = MPI_Comm_create_keyval(MPI_COMM_NULL_COPY_FN,
+                             MPI_COMM_NULL_DELETE_FN,
+                             &comm_keyval, NULL);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
+    return 50;
+}
+MPI_Comm comm = MPI_COMM_NULL;
+MPI_Comm comm_dup = MPI_COMM_NULL;
+ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+if (MPI_SUCCESS != ret) {
+    return 51;
+}
+ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
+if (MPI_SUCCESS != ret) {
+    return 52;
+}
+ret = MPI_Comm_dup(comm, &comm_dup);
+if (MPI_SUCCESS != ret) {
+    return 53;
+}
+ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
+if (MPI_SUCCESS != ret || flag) {
+    return 54;
+}
+ret = MPI_Comm_free(&comm_dup);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
+    return 55;
+}
+ret = MPI_Comm_delete_attr(comm, comm_keyval);
+if (MPI_SUCCESS != ret) {
+    return 56;
+}
+ret = MPI_Comm_free(&comm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
+    return 57;
+}
+ret = MPI_Comm_free_keyval(&comm_keyval);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
+    return 58;
+}
+
+ret = MPI_Comm_create_keyval(MPI_COMM_DUP_FN,
+                             MPI_COMM_NULL_DELETE_FN,
+                             &comm_keyval, NULL);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == comm_keyval) {
+    return 60;
+}
+ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+if (MPI_SUCCESS != ret) {
+    return 61;
+}
+ret = MPI_Comm_set_attr(comm, comm_keyval, &attr_value);
+if (MPI_SUCCESS != ret) {
+    return 62;
+}
+ret = MPI_Comm_dup(comm, &comm_dup);
+if (MPI_SUCCESS != ret) {
+    return 63;
+}
+attr_out = NULL;
+flag = 0;
+ret = MPI_Comm_get_attr(comm_dup, comm_keyval, &attr_out, &flag);
+if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
+    return 64;
+}
+ret = MPI_Comm_free(&comm_dup);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm_dup) {
+    return 65;
+}
+ret = MPI_Comm_delete_attr(comm, comm_keyval);
+if (MPI_SUCCESS != ret) {
+    return 66;
+}
+ret = MPI_Comm_free(&comm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
+    return 67;
+}
+ret = MPI_Comm_free_keyval(&comm_keyval);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != comm_keyval) {
+    return 68;
+}
+
+int type_keyval = MPI_KEYVAL_INVALID;
+ret = MPI_Type_create_keyval(MPI_TYPE_NULL_COPY_FN,
+                             MPI_TYPE_NULL_DELETE_FN,
+                             &type_keyval, NULL);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
+    return 80;
+}
+MPI_Datatype datatype = MPI_DATATYPE_NULL;
+MPI_Datatype datatype_dup = MPI_DATATYPE_NULL;
+ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
+if (MPI_SUCCESS != ret) {
+    return 81;
+}
+ret = MPI_Type_commit(&datatype);
+if (MPI_SUCCESS != ret) {
+    return 82;
+}
+ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
+if (MPI_SUCCESS != ret) {
+    return 83;
+}
+ret = MPI_Type_dup(datatype, &datatype_dup);
+if (MPI_SUCCESS != ret) {
+    return 84;
+}
+attr_out = NULL;
+flag = 0;
+ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
+if (MPI_SUCCESS != ret || flag) {
+    return 85;
+}
+ret = MPI_Type_free(&datatype_dup);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
+    return 86;
+}
+ret = MPI_Type_delete_attr(datatype, type_keyval);
+if (MPI_SUCCESS != ret) {
+    return 87;
+}
+ret = MPI_Type_free(&datatype);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
+    return 88;
+}
+ret = MPI_Type_free_keyval(&type_keyval);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
+    return 89;
+}
+
+ret = MPI_Type_create_keyval(MPI_TYPE_DUP_FN,
+                             MPI_TYPE_NULL_DELETE_FN,
+                             &type_keyval, NULL);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_keyval) {
+    return 100;
+}
+ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
+if (MPI_SUCCESS != ret) {
+    return 101;
+}
+ret = MPI_Type_commit(&datatype);
+if (MPI_SUCCESS != ret) {
+    return 102;
+}
+ret = MPI_Type_set_attr(datatype, type_keyval, &attr_value);
+if (MPI_SUCCESS != ret) {
+    return 103;
+}
+ret = MPI_Type_dup(datatype, &datatype_dup);
+if (MPI_SUCCESS != ret) {
+    return 104;
+}
+attr_out = NULL;
+flag = 0;
+ret = MPI_Type_get_attr(datatype_dup, type_keyval, &attr_out, &flag);
+if (MPI_SUCCESS != ret || !flag || attr_out != &attr_value) {
+    return 105;
+}
+ret = MPI_Type_free(&datatype_dup);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype_dup) {
+    return 106;
+}
+ret = MPI_Type_delete_attr(datatype, type_keyval);
+if (MPI_SUCCESS != ret) {
+    return 107;
+}
+ret = MPI_Type_free(&datatype);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
+    return 108;
+}
+ret = MPI_Type_free_keyval(&type_keyval);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_keyval) {
+    return 109;
+}
+
+int win_storage = 0;
+MPI_Win win = MPI_WIN_NULL;
+ret = MPI_Win_create(&win_storage, sizeof(win_storage), sizeof(int),
+                     MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+if (MPI_SUCCESS != ret) {
+    return 130;
+}
+
+int win_keyval = MPI_KEYVAL_INVALID;
+ret = MPI_Win_create_keyval(MPI_WIN_NULL_COPY_FN,
+                            MPI_WIN_NULL_DELETE_FN,
+                            &win_keyval, NULL);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == win_keyval) {
+    return 131;
+}
+ret = MPI_Win_set_attr(win, win_keyval, &attr_value);
+if (MPI_SUCCESS != ret) {
+    return 132;
+}
+ret = MPI_Win_delete_attr(win, win_keyval);
+if (MPI_SUCCESS != ret) {
+    return 133;
+}
+ret = MPI_Win_free_keyval(&win_keyval);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != win_keyval) {
+    return 134;
+}
+
+ret = MPI_Win_free(&win);
+if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
+    return 140;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 141;
+}

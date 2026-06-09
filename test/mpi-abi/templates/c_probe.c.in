@@ -19,6 +19,6 @@
 
 int main(int argc, char **argv)
 {
-    @BODY@
+@BODY@
     return 0;
 }

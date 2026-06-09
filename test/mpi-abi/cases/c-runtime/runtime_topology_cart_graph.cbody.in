@@ -1,147 +1,146 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Test intent:
+ *   Exercise Cartesian and graph topology construction, query, mapping,
+ *   neighbor lookup, and topology-type detection APIs.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
 
-    /*
-     * Test intent:
-     *   Exercise Cartesian and graph topology construction, query, mapping,
-     *   neighbor lookup, and topology-type detection APIs.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
-    int size = 0;
-    int rank = -1;
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
-    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
-        return 4;
-    }
+int dims[1] = {0};
+ret = MPI_Dims_create(size, 1, dims);
+if (MPI_SUCCESS != ret || dims[0] != size) {
+    return 5;
+}
+int periods[1] = {0};
+MPI_Comm cart = MPI_COMM_NULL;
+ret = MPI_Cart_create(MPI_COMM_WORLD, 1, dims, periods, 0, &cart);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == cart) {
+    return 6;
+}
+int topo = MPI_UNDEFINED;
+ret = MPI_Topo_test(cart, &topo);
+if (MPI_SUCCESS != ret || MPI_CART != topo) {
+    return 7;
+}
+int ndims = -1;
+ret = MPI_Cartdim_get(cart, &ndims);
+if (MPI_SUCCESS != ret || 1 != ndims) {
+    return 8;
+}
+int got_dims[1] = {-1};
+int got_periods[1] = {-1};
+int coords[1] = {-1};
+ret = MPI_Cart_get(cart, 1, got_dims, got_periods, coords);
+if (MPI_SUCCESS != ret || got_dims[0] != size ||
+    got_periods[0] != 0 || coords[0] != rank) {
+    return 9;
+}
+coords[0] = rank;
+int mapped_rank = -1;
+ret = MPI_Cart_rank(cart, coords, &mapped_rank);
+if (MPI_SUCCESS != ret || mapped_rank != rank) {
+    return 10;
+}
+ret = MPI_Cart_coords(cart, rank, 1, coords);
+if (MPI_SUCCESS != ret || coords[0] != rank) {
+    return 11;
+}
+int source = -2;
+int dest = -2;
+ret = MPI_Cart_shift(cart, 0, 1, &source, &dest);
+if (MPI_SUCCESS != ret ||
+    source != (0 == rank ? MPI_PROC_NULL : 0) ||
+    dest != (0 == rank ? 1 : MPI_PROC_NULL)) {
+    return 12;
+}
+int remain[1] = {0};
+MPI_Comm sub = MPI_COMM_NULL;
+ret = MPI_Cart_sub(cart, remain, &sub);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == sub) {
+    return 13;
+}
+ret = MPI_Comm_free(&sub);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != sub) {
+    return 14;
+}
+int newrank = -1;
+ret = MPI_Cart_map(MPI_COMM_WORLD, 1, dims, periods, &newrank);
+if (MPI_SUCCESS != ret || newrank < 0 || newrank >= size) {
+    return 15;
+}
+ret = MPI_Comm_free(&cart);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != cart) {
+    return 16;
+}
 
-    int dims[1] = {0};
-    ret = MPI_Dims_create(size, 1, dims);
-    if (MPI_SUCCESS != ret || dims[0] != size) {
-        return 5;
-    }
-    int periods[1] = {0};
-    MPI_Comm cart = MPI_COMM_NULL;
-    ret = MPI_Cart_create(MPI_COMM_WORLD, 1, dims, periods, 0, &cart);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == cart) {
-        return 6;
-    }
-    int topo = MPI_UNDEFINED;
-    ret = MPI_Topo_test(cart, &topo);
-    if (MPI_SUCCESS != ret || MPI_CART != topo) {
-        return 7;
-    }
-    int ndims = -1;
-    ret = MPI_Cartdim_get(cart, &ndims);
-    if (MPI_SUCCESS != ret || 1 != ndims) {
-        return 8;
-    }
-    int got_dims[1] = {-1};
-    int got_periods[1] = {-1};
-    int coords[1] = {-1};
-    ret = MPI_Cart_get(cart, 1, got_dims, got_periods, coords);
-    if (MPI_SUCCESS != ret || got_dims[0] != size ||
-        got_periods[0] != 0 || coords[0] != rank) {
-        return 9;
-    }
-    coords[0] = rank;
-    int mapped_rank = -1;
-    ret = MPI_Cart_rank(cart, coords, &mapped_rank);
-    if (MPI_SUCCESS != ret || mapped_rank != rank) {
-        return 10;
-    }
-    ret = MPI_Cart_coords(cart, rank, 1, coords);
-    if (MPI_SUCCESS != ret || coords[0] != rank) {
-        return 11;
-    }
-    int source = -2;
-    int dest = -2;
-    ret = MPI_Cart_shift(cart, 0, 1, &source, &dest);
-    if (MPI_SUCCESS != ret ||
-        source != (0 == rank ? MPI_PROC_NULL : 0) ||
-        dest != (0 == rank ? 1 : MPI_PROC_NULL)) {
-        return 12;
-    }
-    int remain[1] = {0};
-    MPI_Comm sub = MPI_COMM_NULL;
-    ret = MPI_Cart_sub(cart, remain, &sub);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == sub) {
-        return 13;
-    }
-    ret = MPI_Comm_free(&sub);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != sub) {
-        return 14;
-    }
-    int newrank = -1;
-    ret = MPI_Cart_map(MPI_COMM_WORLD, 1, dims, periods, &newrank);
-    if (MPI_SUCCESS != ret || newrank < 0 || newrank >= size) {
-        return 15;
-    }
-    ret = MPI_Comm_free(&cart);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != cart) {
-        return 16;
-    }
+int index[2] = {1, 2};
+int edges[2] = {1, 0};
+MPI_Comm graph = MPI_COMM_NULL;
+ret = MPI_Graph_create(MPI_COMM_WORLD, 2, index, edges, 0, &graph);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == graph) {
+    return 17;
+}
+ret = MPI_Topo_test(graph, &topo);
+if (MPI_SUCCESS != ret || MPI_GRAPH != topo) {
+    return 18;
+}
+int nodes = -1;
+int edge_count = -1;
+ret = MPI_Graphdims_get(graph, &nodes, &edge_count);
+if (MPI_SUCCESS != ret || 2 != nodes || 2 != edge_count) {
+    return 19;
+}
+int got_index[2] = {-1, -1};
+int got_edges[2] = {-1, -1};
+ret = MPI_Graph_get(graph, 2, 2, got_index, got_edges);
+if (MPI_SUCCESS != ret || 1 != got_index[0] ||
+    2 != got_index[1]) {
+    return 20;
+}
+int nneighbors = -1;
+ret = MPI_Graph_neighbors_count(graph, rank, &nneighbors);
+if (MPI_SUCCESS != ret || 1 != nneighbors) {
+    return 21;
+}
+int neighbor = -1;
+ret = MPI_Graph_neighbors(graph, rank, 1, &neighbor);
+if (MPI_SUCCESS != ret || neighbor != 1 - rank) {
+    return 22;
+}
+ret = MPI_Graph_map(MPI_COMM_WORLD, 2, index, edges, &newrank);
+if (MPI_SUCCESS != ret || newrank < 0 || newrank >= size) {
+    return 23;
+}
+ret = MPI_Comm_free(&graph);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != graph) {
+    return 24;
+}
 
-    int index[2] = {1, 2};
-    int edges[2] = {1, 0};
-    MPI_Comm graph = MPI_COMM_NULL;
-    ret = MPI_Graph_create(MPI_COMM_WORLD, 2, index, edges, 0, &graph);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == graph) {
-        return 17;
-    }
-    ret = MPI_Topo_test(graph, &topo);
-    if (MPI_SUCCESS != ret || MPI_GRAPH != topo) {
-        return 18;
-    }
-    int nodes = -1;
-    int edge_count = -1;
-    ret = MPI_Graphdims_get(graph, &nodes, &edge_count);
-    if (MPI_SUCCESS != ret || 2 != nodes || 2 != edge_count) {
-        return 19;
-    }
-    int got_index[2] = {-1, -1};
-    int got_edges[2] = {-1, -1};
-    ret = MPI_Graph_get(graph, 2, 2, got_index, got_edges);
-    if (MPI_SUCCESS != ret || 1 != got_index[0] ||
-        2 != got_index[1]) {
-        return 20;
-    }
-    int nneighbors = -1;
-    ret = MPI_Graph_neighbors_count(graph, rank, &nneighbors);
-    if (MPI_SUCCESS != ret || 1 != nneighbors) {
-        return 21;
-    }
-    int neighbor = -1;
-    ret = MPI_Graph_neighbors(graph, rank, 1, &neighbor);
-    if (MPI_SUCCESS != ret || neighbor != 1 - rank) {
-        return 22;
-    }
-    ret = MPI_Graph_map(MPI_COMM_WORLD, 2, index, edges, &newrank);
-    if (MPI_SUCCESS != ret || newrank < 0 || newrank >= size) {
-        return 23;
-    }
-    ret = MPI_Comm_free(&graph);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != graph) {
-        return 24;
-    }
-
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 25;
-    }
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 25;
+}

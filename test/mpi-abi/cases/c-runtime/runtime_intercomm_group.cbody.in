@@ -1,173 +1,173 @@
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Test intent:
-     *   Exercise local-CI intercommunicator creation paths without using
-     *   dynamic process management.  The probe splits a two-rank job into
-     *   two singleton local communicators, creates intercommunicators
-     *   through both the communicator and group constructors, validates
-     *   remote group/size state, and merges each intercommunicator back
-     *   into an intracommunicator.
-     */
-    int ret = MPI_Init(&argc, &argv);
-    if (MPI_SUCCESS != ret) {
-        return 1;
-    }
+/*
+ * Test intent:
+ *   Exercise local-CI intercommunicator creation paths without using
+ *   dynamic process management.  The probe splits a two-rank job into
+ *   two singleton local communicators, creates intercommunicators
+ *   through both the communicator and group constructors, validates
+ *   remote group/size state, and merges each intercommunicator back
+ *   into an intracommunicator.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
 
-    int rank = -1;
-    int size = -1;
-    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (MPI_SUCCESS != ret) {
-        return 2;
-    }
-    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
-    if (MPI_SUCCESS != ret || 2 != size) {
-        return 3;
-    }
+int rank = -1;
+int size = -1;
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret || 2 != size) {
+    return 3;
+}
 
-    MPI_Comm from_group = MPI_COMM_NULL;
-    MPI_Group world_group = MPI_GROUP_NULL;
-    ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
-        return 4;
-    }
-    ret = MPI_Comm_create_from_group(world_group, "abi-create-group",
-                                     MPI_INFO_NULL, MPI_ERRORS_RETURN,
-                                     &from_group);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == from_group) {
-        return 5;
-    }
-    int from_group_size = -1;
-    ret = MPI_Comm_size(from_group, &from_group_size);
-    if (MPI_SUCCESS != ret || 2 != from_group_size) {
-        return 6;
-    }
-    ret = MPI_Comm_free(&from_group);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != from_group) {
-        return 7;
-    }
+MPI_Comm from_group = MPI_COMM_NULL;
+MPI_Group world_group = MPI_GROUP_NULL;
+ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
+    return 4;
+}
+ret = MPI_Comm_create_from_group(world_group, "abi-create-group",
+                                 MPI_INFO_NULL, MPI_ERRORS_RETURN,
+                                 &from_group);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == from_group) {
+    return 5;
+}
+int from_group_size = -1;
+ret = MPI_Comm_size(from_group, &from_group_size);
+if (MPI_SUCCESS != ret || 2 != from_group_size) {
+    return 6;
+}
+ret = MPI_Comm_free(&from_group);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != from_group) {
+    return 7;
+}
 
-    MPI_Comm local = MPI_COMM_NULL;
-    ret = MPI_Comm_split(MPI_COMM_WORLD, rank, 0, &local);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == local) {
-        return 8;
-    }
+MPI_Comm local = MPI_COMM_NULL;
+ret = MPI_Comm_split(MPI_COMM_WORLD, rank, 0, &local);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == local) {
+    return 8;
+}
 
-    MPI_Comm intercomm = MPI_COMM_NULL;
-    ret = MPI_Intercomm_create(local, 0, MPI_COMM_WORLD, 1 - rank,
-                               2700, &intercomm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == intercomm) {
-        return 9;
-    }
-    int is_inter = 0;
-    ret = MPI_Comm_test_inter(intercomm, &is_inter);
-    if (MPI_SUCCESS != ret || !is_inter) {
-        return 10;
-    }
-    int remote_size = -1;
-    ret = MPI_Comm_remote_size(intercomm, &remote_size);
-    if (MPI_SUCCESS != ret || 1 != remote_size) {
-        return 11;
-    }
-    MPI_Group remote_group = MPI_GROUP_NULL;
-    ret = MPI_Comm_remote_group(intercomm, &remote_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == remote_group) {
-        return 12;
-    }
-    int remote_group_size = -1;
-    ret = MPI_Group_size(remote_group, &remote_group_size);
-    if (MPI_SUCCESS != ret || 1 != remote_group_size) {
-        return 13;
-    }
-    ret = MPI_Group_free(&remote_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != remote_group) {
-        return 14;
-    }
+MPI_Comm intercomm = MPI_COMM_NULL;
+ret = MPI_Intercomm_create(local, 0, MPI_COMM_WORLD, 1 - rank,
+                           2700, &intercomm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == intercomm) {
+    return 9;
+}
+int is_inter = 0;
+ret = MPI_Comm_test_inter(intercomm, &is_inter);
+if (MPI_SUCCESS != ret || !is_inter) {
+    return 10;
+}
+int remote_size = -1;
+ret = MPI_Comm_remote_size(intercomm, &remote_size);
+if (MPI_SUCCESS != ret || 1 != remote_size) {
+    return 11;
+}
+MPI_Group remote_group = MPI_GROUP_NULL;
+ret = MPI_Comm_remote_group(intercomm, &remote_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == remote_group) {
+    return 12;
+}
+int remote_group_size = -1;
+ret = MPI_Group_size(remote_group, &remote_group_size);
+if (MPI_SUCCESS != ret || 1 != remote_group_size) {
+    return 13;
+}
+ret = MPI_Group_free(&remote_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != remote_group) {
+    return 14;
+}
 
-    MPI_Comm merged = MPI_COMM_NULL;
-    ret = MPI_Intercomm_merge(intercomm, rank, &merged);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == merged) {
-        return 15;
-    }
-    int merged_size = -1;
-    ret = MPI_Comm_size(merged, &merged_size);
-    if (MPI_SUCCESS != ret || 2 != merged_size) {
-        return 16;
-    }
-    ret = MPI_Comm_free(&merged);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != merged) {
-        return 17;
-    }
-    ret = MPI_Comm_free(&intercomm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != intercomm) {
-        return 18;
-    }
+MPI_Comm merged = MPI_COMM_NULL;
+ret = MPI_Intercomm_merge(intercomm, rank, &merged);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == merged) {
+    return 15;
+}
+int merged_size = -1;
+ret = MPI_Comm_size(merged, &merged_size);
+if (MPI_SUCCESS != ret || 2 != merged_size) {
+    return 16;
+}
+ret = MPI_Comm_free(&merged);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != merged) {
+    return 17;
+}
+ret = MPI_Comm_free(&intercomm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != intercomm) {
+    return 18;
+}
 
-    int local_rank_list[1] = {rank};
-    int remote_rank_list[1] = {1 - rank};
-    MPI_Group local_group = MPI_GROUP_NULL;
-    ret = MPI_Group_incl(world_group, 1, local_rank_list, &local_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == local_group) {
-        return 19;
-    }
-    ret = MPI_Group_incl(world_group, 1, remote_rank_list, &remote_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL == remote_group) {
-        return 20;
-    }
+int local_rank_list[1] = {rank};
+int remote_rank_list[1] = {1 - rank};
+MPI_Group local_group = MPI_GROUP_NULL;
+ret = MPI_Group_incl(world_group, 1, local_rank_list, &local_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == local_group) {
+    return 19;
+}
+ret = MPI_Group_incl(world_group, 1, remote_rank_list, &remote_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == remote_group) {
+    return 20;
+}
 
-    ret = MPI_Intercomm_create_from_groups(local_group, 0, remote_group,
-                                           0, "abi-create-from-groups",
-                                           MPI_INFO_NULL,
-                                           MPI_ERRORS_RETURN,
-                                           &intercomm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == intercomm) {
-        return 21;
-    }
-    ret = MPI_Comm_remote_size(intercomm, &remote_size);
-    if (MPI_SUCCESS != ret || 1 != remote_size) {
-        return 22;
-    }
-    ret = MPI_Intercomm_merge(intercomm, rank, &merged);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL == merged) {
-        return 23;
-    }
-    ret = MPI_Comm_size(merged, &merged_size);
-    if (MPI_SUCCESS != ret || 2 != merged_size) {
-        return 24;
-    }
-    ret = MPI_Comm_free(&merged);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != merged) {
-        return 25;
-    }
-    ret = MPI_Comm_free(&intercomm);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != intercomm) {
-        return 26;
-    }
-    ret = MPI_Group_free(&remote_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != remote_group) {
-        return 27;
-    }
-    ret = MPI_Group_free(&local_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != local_group) {
-        return 28;
-    }
-    ret = MPI_Comm_free(&local);
-    if (MPI_SUCCESS != ret || MPI_COMM_NULL != local) {
-        return 29;
-    }
-    ret = MPI_Group_free(&world_group);
-    if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
-        return 30;
-    }
+ret = MPI_Intercomm_create_from_groups(local_group, 0, remote_group,
+                                       0, "abi-create-from-groups",
+                                       MPI_INFO_NULL,
+                                       MPI_ERRORS_RETURN,
+                                       &intercomm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == intercomm) {
+    return 21;
+}
+ret = MPI_Comm_remote_size(intercomm, &remote_size);
+if (MPI_SUCCESS != ret || 1 != remote_size) {
+    return 22;
+}
+ret = MPI_Intercomm_merge(intercomm, rank, &merged);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == merged) {
+    return 23;
+}
+ret = MPI_Comm_size(merged, &merged_size);
+if (MPI_SUCCESS != ret || 2 != merged_size) {
+    return 24;
+}
+ret = MPI_Comm_free(&merged);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != merged) {
+    return 25;
+}
+ret = MPI_Comm_free(&intercomm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != intercomm) {
+    return 26;
+}
+ret = MPI_Group_free(&remote_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != remote_group) {
+    return 27;
+}
+ret = MPI_Group_free(&local_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != local_group) {
+    return 28;
+}
+ret = MPI_Comm_free(&local);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != local) {
+    return 29;
+}
+ret = MPI_Group_free(&world_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+    return 30;
+}
 
-    ret = MPI_Finalize();
-    if (MPI_SUCCESS != ret) {
-        return 31;
-    }
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 31;
+}

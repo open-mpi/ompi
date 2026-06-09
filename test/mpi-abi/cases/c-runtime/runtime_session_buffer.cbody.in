@@ -1,56 +1,55 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
 
-    /*
-     * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-     * $COPYRIGHT$
-     *
-     * Additional copyrights may follow
-     *
-     * $HEADER$
-     */
+/*
+ * Test intent:
+ *   Exercise session buffer attach, flush, asynchronous flush, detach,
+ *   and finalization with checked buffer pointer/size round-trip.
+ */
+MPI_Session session = MPI_SESSION_NULL;
+int ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
+                           &session);
+if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
+    return 1;
+}
 
-    /*
-     * Test intent:
-     *   Exercise session buffer attach, flush, asynchronous flush, detach,
-     *   and finalization with checked buffer pointer/size round-trip.
-     */
-    MPI_Session session = MPI_SESSION_NULL;
-    int ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
-                               &session);
-    if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
-        return 1;
-    }
+char buffer[8192];
+ret = MPI_Session_attach_buffer(session, buffer, sizeof(buffer));
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Session_flush_buffer(session);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
 
-    char buffer[8192];
-    ret = MPI_Session_attach_buffer(session, buffer, sizeof(buffer));
-    if (MPI_SUCCESS != ret) {
-        return 2;
+MPI_Request request = MPI_REQUEST_NULL;
+ret = MPI_Session_iflush_buffer(session, &request);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+if (MPI_REQUEST_NULL != request) {
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 5;
     }
-    ret = MPI_Session_flush_buffer(session);
-    if (MPI_SUCCESS != ret) {
-        return 3;
-    }
+}
 
-    MPI_Request request = MPI_REQUEST_NULL;
-    ret = MPI_Session_iflush_buffer(session, &request);
-    if (MPI_SUCCESS != ret) {
-        return 4;
-    }
-    if (MPI_REQUEST_NULL != request) {
-        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-        if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
-            return 5;
-        }
-    }
+void *detached = NULL;
+int size = 0;
+ret = MPI_Session_detach_buffer(session, &detached, &size);
+if (MPI_SUCCESS != ret || detached != buffer ||
+    size != (int) sizeof(buffer)) {
+    return 6;
+}
 
-    void *detached = NULL;
-    int size = 0;
-    ret = MPI_Session_detach_buffer(session, &detached, &size);
-    if (MPI_SUCCESS != ret || detached != buffer ||
-        size != (int) sizeof(buffer)) {
-        return 6;
-    }
-
-    ret = MPI_Session_finalize(&session);
-    if (MPI_SUCCESS != ret || MPI_SESSION_NULL != session) {
-        return 7;
-    }
+ret = MPI_Session_finalize(&session);
+if (MPI_SUCCESS != ret || MPI_SESSION_NULL != session) {
+    return 7;
+}
