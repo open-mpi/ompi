@@ -29,6 +29,7 @@
 SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_SUBDIRS) test docs
 DIST_SUBDIRS = config contrib 3rd-party $(MCA_PROJECT_DIST_SUBDIRS) test docs
 EXTRA_DIST = README.md VERSION Doxyfile LICENSE autogen.pl AUTHORS \
+        requirements.txt \
         specs/mpi-abi-tests/spec.md \
         specs/mpi-abi-tests/tasks.md
 
