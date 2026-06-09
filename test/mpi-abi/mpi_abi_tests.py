@@ -1701,6 +1701,180 @@ INSTALLED_C_RUNTIME_API_PROBES = (
 """,
     },
     {
+        "name": "runtime_point_to_point_probe",
+        "family": "point_to_point",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Iprobe",
+            "MPI_Probe",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Get_count",
+            "MPI_Init",
+            "MPI_Recv",
+            "MPI_Send",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    if (0 == rank) {
+        int value = 31;
+        ret = MPI_Send(&value, 1, MPI_INT, 1, 930, MPI_COMM_WORLD);
+        if (MPI_SUCCESS != ret) {
+            return 5;
+        }
+    } else if (1 == rank) {
+        MPI_Status status;
+        ret = MPI_Probe(0, 930, MPI_COMM_WORLD, &status);
+        if (MPI_SUCCESS != ret || 0 != status.MPI_SOURCE ||
+            930 != status.MPI_TAG) {
+            return 6;
+        }
+        int count = -1;
+        ret = MPI_Get_count(&status, MPI_INT, &count);
+        if (MPI_SUCCESS != ret || 1 != count) {
+            return 7;
+        }
+        int flag = 0;
+        ret = MPI_Iprobe(0, 930, MPI_COMM_WORLD, &flag, &status);
+        if (MPI_SUCCESS != ret || !flag || 0 != status.MPI_SOURCE ||
+            930 != status.MPI_TAG) {
+            return 8;
+        }
+        int value = -1;
+        ret = MPI_Recv(&value, 1, MPI_INT, 0, 930, MPI_COMM_WORLD,
+                       &status);
+        if (MPI_SUCCESS != ret || 31 != value) {
+            return 9;
+        }
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 10;
+    }
+""",
+    },
+    {
+        "name": "runtime_point_to_point_persistent",
+        "family": "point_to_point",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Recv_init",
+            "MPI_Send_init",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Request_free",
+            "MPI_Start",
+            "MPI_Startall",
+            "MPI_Wait",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    int send_value = 41;
+    int recv_value = -1;
+    MPI_Request request = MPI_REQUEST_NULL;
+    if (0 == rank) {
+        ret = MPI_Send_init(&send_value, 1, MPI_INT, 1, 940,
+                            MPI_COMM_WORLD, &request);
+    } else if (1 == rank) {
+        ret = MPI_Recv_init(&recv_value, 1, MPI_INT, 0, 940,
+                            MPI_COMM_WORLD, &request);
+    }
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 5;
+    }
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    if (1 == rank && 41 != recv_value) {
+        return 8;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 9;
+    }
+
+    send_value = 43;
+    recv_value = -1;
+    if (0 == rank) {
+        ret = MPI_Send_init(&send_value, 1, MPI_INT, 1, 941,
+                            MPI_COMM_WORLD, &request);
+    } else if (1 == rank) {
+        ret = MPI_Recv_init(&recv_value, 1, MPI_INT, 0, 941,
+                            MPI_COMM_WORLD, &request);
+    }
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+        return 10;
+    }
+    ret = MPI_Startall(1, &request);
+    if (MPI_SUCCESS != ret) {
+        return 11;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        return 12;
+    }
+    if (1 == rank && 43 != recv_value) {
+        return 13;
+    }
+    ret = MPI_Request_free(&request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+        return 14;
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 15;
+    }
+""",
+    },
+    {
         "name": "runtime_collective_basic",
         "family": "collective",
         "rank_count": 2,
