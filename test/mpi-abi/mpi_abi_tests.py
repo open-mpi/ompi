@@ -51,6 +51,10 @@ SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE = "symbol_diagnostics_unavailable"
 SKIP_FORTRAN_BINDINGS_DISABLED = "fortran_bindings_disabled"
 SKIP_FORTRAN_BINDING_DISABLED = "fortran_binding_disabled"
 SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
+SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE = "fortran_abi_helpers_unavailable"
+SKIP_FORTRAN_OPTIONAL_DATATYPES_DEFERRED = (
+    "fortran_optional_datatypes_deferred"
+)
 SKIP_FORTRAN_WRAPPER_UNAVAILABLE = "fortran_wrapper_unavailable"
 SKIP_RMA_SUPPORT_DISABLED = "rma_support_disabled"
 SKIP_MPI_IO_SUPPORT_DISABLED = "mpi_io_support_disabled"
@@ -1540,6 +1544,367 @@ comm = MPI_COMM_WORLD
 call MPI_Comm_rank(comm, rank, ierr)
 call MPI_Comm_size(comm, size)
 call MPI_Get_count(status, MPI_INTEGER, size, ierr)
+""",
+    },
+)
+
+
+INSTALLED_FORTRAN_RUNTIME_PROBES = (
+    {
+        "name": "fortran_mpifh_runtime_core",
+        "language": "mpif.h",
+        "rank_count": 2,
+        "use_statement": "include 'mpif.h'",
+        "api_names": (
+            "MPI_Barrier",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Get_count",
+            "MPI_Init",
+            "MPI_Sendrecv",
+        ),
+        "body": """
+integer :: ierr
+integer :: rank
+integer :: size
+integer :: peer
+integer :: sendbuf
+integer :: recvbuf
+integer :: count
+integer :: status(MPI_STATUS_SIZE)
+
+call MPI_Init(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 1
+call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 2
+call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
+if (ierr .ne. MPI_SUCCESS .or. size .ne. 2) stop 3
+peer = 1 - rank
+sendbuf = rank + 10
+recvbuf = -1
+call MPI_Sendrecv(sendbuf, 1, MPI_INTEGER, peer, 1101, &
+                  recvbuf, 1, MPI_INTEGER, peer, 1101, &
+                  MPI_COMM_WORLD, status, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 4
+call MPI_Get_count(status, MPI_INTEGER, count, ierr)
+if (ierr .ne. MPI_SUCCESS .or. count .ne. 1) stop 5
+if (status(MPI_SOURCE) .ne. peer) stop 6
+if (status(MPI_TAG) .ne. 1101) stop 7
+if (recvbuf .ne. peer + 10) stop 8
+call MPI_Barrier(MPI_COMM_WORLD, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 9
+call MPI_Finalize(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 10
+""",
+    },
+    {
+        "name": "fortran_usempi_runtime_core",
+        "language": "use mpi",
+        "rank_count": 2,
+        "use_statement": "use mpi",
+        "api_names": (
+            "MPI_Barrier",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Get_count",
+            "MPI_Init",
+            "MPI_Sendrecv",
+        ),
+        "body": """
+implicit none
+integer :: ierr
+integer :: rank
+integer :: size
+integer :: peer
+integer :: sendbuf
+integer :: recvbuf
+integer :: count
+integer :: status(MPI_STATUS_SIZE)
+
+call MPI_Init(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 1
+call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 2
+call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
+if (ierr .ne. MPI_SUCCESS .or. size .ne. 2) stop 3
+peer = 1 - rank
+sendbuf = rank + 20
+recvbuf = -1
+call MPI_Sendrecv(sendbuf, 1, MPI_INTEGER, peer, 1102, &
+                  recvbuf, 1, MPI_INTEGER, peer, 1102, &
+                  MPI_COMM_WORLD, status, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 4
+call MPI_Get_count(status, MPI_INTEGER, count, ierr)
+if (ierr .ne. MPI_SUCCESS .or. count .ne. 1) stop 5
+if (status(MPI_SOURCE) .ne. peer) stop 6
+if (status(MPI_TAG) .ne. 1102) stop 7
+if (recvbuf .ne. peer + 20) stop 8
+call MPI_Barrier(MPI_COMM_WORLD, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 9
+call MPI_Finalize(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 10
+""",
+    },
+    {
+        "name": "fortran_usempif08_runtime_core",
+        "language": "use mpi_f08",
+        "rank_count": 2,
+        "use_statement": "use mpi_f08",
+        "api_names": (
+            "MPI_Barrier",
+            "MPI_Comm_dup",
+            "MPI_Comm_free",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Get_count",
+            "MPI_Init",
+            "MPI_Sendrecv",
+            "MPI_Type_size",
+        ),
+        "body": """
+implicit none
+integer :: ierr
+integer :: rank
+integer :: size
+integer :: peer
+integer :: sendbuf
+integer :: recvbuf
+integer :: count
+integer :: type_size
+type(MPI_Comm) :: comm
+type(MPI_Status) :: status
+
+call MPI_Init(ierr)
+if (ierr /= MPI_SUCCESS) stop 1
+call MPI_Comm_dup(MPI_COMM_WORLD, comm, ierr)
+if (ierr /= MPI_SUCCESS) stop 2
+call MPI_Comm_rank(comm, rank, ierr)
+if (ierr /= MPI_SUCCESS) stop 3
+call MPI_Comm_size(comm, size, ierr)
+if (ierr /= MPI_SUCCESS .or. size /= 2) stop 4
+call MPI_Type_size(MPI_INTEGER, type_size, ierr)
+if (ierr /= MPI_SUCCESS .or. type_size <= 0) stop 5
+peer = 1 - rank
+sendbuf = rank + 30
+recvbuf = -1
+call MPI_Sendrecv(sendbuf, 1, MPI_INTEGER, peer, 1103, &
+                  recvbuf, 1, MPI_INTEGER, peer, 1103, &
+                  comm, status, ierr)
+if (ierr /= MPI_SUCCESS) stop 6
+call MPI_Get_count(status, MPI_INTEGER, count, ierr)
+if (ierr /= MPI_SUCCESS .or. count /= 1) stop 7
+if (status%MPI_SOURCE /= peer) stop 8
+if (status%MPI_TAG /= 1103) stop 9
+if (recvbuf /= peer + 30) stop 10
+call MPI_Barrier(comm, ierr)
+if (ierr /= MPI_SUCCESS) stop 11
+call MPI_Comm_free(comm, ierr)
+if (ierr /= MPI_SUCCESS) stop 12
+call MPI_Finalize(ierr)
+if (ierr /= MPI_SUCCESS) stop 13
+""",
+    },
+    {
+        "name": "fortran_mpifh_abi_helpers",
+        "language": "mpif.h",
+        "rank_count": 1,
+        "skip_exit_codes": {
+            77: SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE,
+        },
+        "use_statement": "include 'mpif.h'",
+        "api_names": (
+            "MPI_Abi_get_fortran_booleans",
+            "MPI_Abi_get_fortran_info",
+            "MPI_Abi_get_info",
+            "MPI_Abi_get_version",
+            "MPI_Abi_set_fortran_booleans",
+            "MPI_Abi_set_fortran_info",
+            "MPI_Info_free",
+            "MPI_Init",
+            "MPI_Finalize",
+        ),
+        "body": """
+integer :: ierr
+integer :: major
+integer :: minor
+integer :: info
+integer :: finfo
+integer :: logical_size
+logical :: logical_true
+logical :: logical_false
+logical :: is_set
+
+call MPI_Init(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 1
+call MPI_Abi_get_version(major, minor, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 2
+if (major .eq. -1 .and. minor .eq. -1) stop 77
+if (major .ne. 1 .or. minor .ne. 0) stop 11
+call MPI_Abi_get_info(info, ierr)
+if (ierr .ne. MPI_SUCCESS .or. info .eq. MPI_INFO_NULL) stop 3
+call MPI_Info_free(info, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 4
+call MPI_Abi_get_fortran_info(finfo, ierr)
+if (ierr .ne. MPI_SUCCESS .or. finfo .eq. MPI_INFO_NULL) stop 5
+call MPI_Abi_set_fortran_info(finfo, ierr)
+! The normal Open MPI Fortran runtime may already have established this
+! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
+! which is expected here because this probe validates callable bindings,
+! not a writable Fortran standard ABI runtime.
+if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 6
+call MPI_Info_free(finfo, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 7
+logical_size = storage_size(logical_true) / 8
+call MPI_Abi_get_fortran_booleans(logical_size, logical_true, &
+                                  logical_false, is_set, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 8
+if (.not. is_set) stop 12
+if (.not. logical_true) stop 13
+if (logical_false) stop 14
+call MPI_Abi_set_fortran_booleans(logical_size, .true., .false., ierr)
+! See the MPI_Abi_set_fortran_info comment above; after MPI_Init,
+! accepting MPI_ERR_ABI avoids turning expected read-only runtime state
+! into a false failure.
+if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 9
+call MPI_Finalize(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 10
+""",
+    },
+    {
+        "name": "fortran_usempi_abi_helpers",
+        "language": "use mpi",
+        "rank_count": 1,
+        "skip_exit_codes": {
+            77: SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE,
+        },
+        "use_statement": "use mpi",
+        "api_names": (
+            "MPI_Abi_get_fortran_booleans",
+            "MPI_Abi_get_fortran_info",
+            "MPI_Abi_get_info",
+            "MPI_Abi_get_version",
+            "MPI_Abi_set_fortran_booleans",
+            "MPI_Abi_set_fortran_info",
+            "MPI_Info_free",
+            "MPI_Init",
+            "MPI_Finalize",
+        ),
+        "body": """
+implicit none
+integer :: ierr
+integer :: major
+integer :: minor
+integer :: info
+integer :: finfo
+integer :: logical_size
+logical :: logical_true
+logical :: logical_false
+logical :: is_set
+
+call MPI_Init(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 1
+call MPI_Abi_get_version(major, minor, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 2
+if (major .eq. -1 .and. minor .eq. -1) stop 77
+if (major .ne. 1 .or. minor .ne. 0) stop 11
+call MPI_Abi_get_info(info, ierr)
+if (ierr .ne. MPI_SUCCESS .or. info .eq. MPI_INFO_NULL) stop 3
+call MPI_Info_free(info, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 4
+call MPI_Abi_get_fortran_info(finfo, ierr)
+if (ierr .ne. MPI_SUCCESS .or. finfo .eq. MPI_INFO_NULL) stop 5
+call MPI_Abi_set_fortran_info(finfo, ierr)
+! The normal Open MPI Fortran runtime may already have established this
+! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
+! which is expected here because this probe validates callable bindings,
+! not a writable Fortran standard ABI runtime.
+if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 6
+call MPI_Info_free(finfo, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 7
+logical_size = storage_size(logical_true) / 8
+call MPI_Abi_get_fortran_booleans(logical_size, logical_true, &
+                                  logical_false, is_set, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 8
+if (.not. is_set) stop 12
+if (.not. logical_true) stop 13
+if (logical_false) stop 14
+call MPI_Abi_set_fortran_booleans(logical_size, .true., .false., ierr)
+! See the MPI_Abi_set_fortran_info comment above; after MPI_Init,
+! accepting MPI_ERR_ABI avoids turning expected read-only runtime state
+! into a false failure.
+if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 9
+call MPI_Finalize(ierr)
+if (ierr .ne. MPI_SUCCESS) stop 10
+""",
+    },
+    {
+        "name": "fortran_usempif08_abi_helpers",
+        "language": "use mpi_f08",
+        "rank_count": 1,
+        "skip_exit_codes": {
+            77: SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE,
+        },
+        "use_statement": "use mpi_f08",
+        "api_names": (
+            "MPI_Abi_get_fortran_booleans",
+            "MPI_Abi_get_fortran_info",
+            "MPI_Abi_get_info",
+            "MPI_Abi_get_version",
+            "MPI_Abi_set_fortran_booleans",
+            "MPI_Abi_set_fortran_info",
+            "MPI_Info_free",
+            "MPI_Init",
+            "MPI_Finalize",
+        ),
+        "body": """
+implicit none
+integer :: ierr
+integer :: major
+integer :: minor
+type(MPI_Info) :: info
+type(MPI_Info) :: finfo
+integer :: logical_size
+logical :: logical_true
+logical :: logical_false
+logical :: is_set
+
+call MPI_Init(ierr)
+if (ierr /= MPI_SUCCESS) stop 1
+call MPI_Abi_get_version(major, minor, ierr)
+if (ierr /= MPI_SUCCESS) stop 2
+if (major == -1 .and. minor == -1) stop 77
+if (major /= 1 .or. minor /= 0) stop 11
+call MPI_Abi_get_info(info, ierr)
+if (ierr /= MPI_SUCCESS .or. info == MPI_INFO_NULL) stop 3
+call MPI_Info_free(info, ierr)
+if (ierr /= MPI_SUCCESS) stop 4
+call MPI_Abi_get_fortran_info(finfo, ierr)
+if (ierr /= MPI_SUCCESS .or. finfo == MPI_INFO_NULL) stop 5
+call MPI_Abi_set_fortran_info(finfo, ierr)
+! The normal Open MPI Fortran runtime may already have established this
+! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
+! which is expected here because this probe validates callable bindings,
+! not a writable Fortran standard ABI runtime.
+if (ierr /= MPI_SUCCESS .and. ierr /= MPI_ERR_ABI) stop 6
+call MPI_Info_free(finfo, ierr)
+if (ierr /= MPI_SUCCESS) stop 7
+logical_size = storage_size(logical_true) / 8
+call MPI_Abi_get_fortran_booleans(logical_size, logical_true, &
+                                  logical_false, is_set, ierr)
+if (ierr /= MPI_SUCCESS) stop 8
+if (.not. is_set) stop 12
+if (.not. logical_true) stop 13
+if (logical_false) stop 14
+call MPI_Abi_set_fortran_booleans(logical_size, .true., .false., ierr)
+! See the MPI_Abi_set_fortran_info comment above; after MPI_Init,
+! accepting MPI_ERR_ABI avoids turning expected read-only runtime state
+! into a false failure.
+if (ierr /= MPI_SUCCESS .and. ierr /= MPI_ERR_ABI) stop 9
+call MPI_Finalize(ierr)
+if (ierr /= MPI_SUCCESS) stop 10
 """,
     },
 )
@@ -4495,26 +4860,25 @@ def _fortran_binding_skip(manifest, tools, language):
     return None
 
 
-def _fortran_compile_probe_api_names(cases):
-    """Return compile-probe API names grouped by Fortran binding layer."""
+def _fortran_probe_api_names(cases):
+    """Return probe API names grouped by Fortran binding layer."""
     covered = {language: set() for language in FORTRAN_BINDING_LANGUAGES}
     for case in cases:
         covered[case["language"]].update(case.get("api_names", ()))
     return covered
 
 
-def _fortran_coverage_audit(manifest, tools, cases):
+def _fortran_coverage_audit(manifest, tools, compile_cases, runtime_cases):
     """Report configured Fortran coverage populations for Phase 11.
 
-    Chunk 11A installs the guardrail and reporting structure before the
-    exhaustive runtime and ABI probes exist.  The audit is therefore
-    intentionally advisory: it records configured state, installed
-    wrapper availability, implemented metadata counts, and the small
-    compile-probe API set per binding.  Phase 11B can tighten the same
-    grouped data into hard coverage enforcement once the generated
-    Fortran runtime probes are present.
+    Phase 11 grows in layers.  The audit is intentionally grouped by
+    binding because mpif.h/use mpi are regression coverage, while
+    use mpi_f08 is the standard Fortran ABI-relevant layer.  Until the
+    exhaustive generated Fortran probes exist, the audit reports pending
+    APIs instead of treating them as hidden PASSes.
     """
-    covered = _fortran_compile_probe_api_names(cases)
+    compile_covered = _fortran_probe_api_names(compile_cases)
+    runtime_covered = _fortran_probe_api_names(runtime_cases)
     by_language = {}
     for language in FORTRAN_BINDING_LANGUAGES:
         state = manifest["configuration"]["fortran"][language]
@@ -4526,7 +4890,7 @@ def _fortran_coverage_audit(manifest, tools, cases):
             entry for entry in expressible
             if entry["classification"] == CLASS_IMPLEMENTED
         ]
-        covered_names = covered[language]
+        covered_names = compile_covered[language] | runtime_covered[language]
         covered_implemented = sorted(
             entry["name"] for entry in implemented
             if entry["name"] in covered_names
@@ -4540,8 +4904,9 @@ def _fortran_coverage_audit(manifest, tools, cases):
             "skip_reason": _fortran_binding_skip(manifest, tools, language),
             "expressible_count": len(expressible),
             "implemented_count": len(implemented),
-            "compile_probe_api_names": sorted(covered_names),
-            "compile_probe_implemented_count": len(covered_implemented),
+            "compile_probe_api_names": sorted(compile_covered[language]),
+            "runtime_probe_api_names": sorted(runtime_covered[language]),
+            "covered_implemented_count": len(covered_implemented),
             "pending_phase11b_count": len(pending),
             "pending_phase11b": pending[:20],
             "coverage_kind": (
@@ -4552,7 +4917,7 @@ def _fortran_coverage_audit(manifest, tools, cases):
 
     return _pass(
         "installed_fortran_coverage_audit",
-        enforcement="advisory_until_phase11b",
+        enforcement="advisory_until_exhaustive_fortran_generation",
         languages=by_language,
         mpifort=tools["open_mpi"].get("mpifort"))
 
@@ -4624,15 +4989,160 @@ def _run_installed_fortran_compile_probes(srcdir, manifest, tools, dirs,
     return checks
 
 
+def _run_installed_fortran_runtime_probes(srcdir, manifest, tools, dirs,
+                                          progress=None):
+    """Compile and launch one installed Fortran runtime probe per case."""
+    checks = []
+    mpifort = tools["open_mpi"].get("mpifort")
+    mpirun = tools["open_mpi"]["mpirun"]
+    env = _installed_test_env(tools)
+    launcher_args = _launcher_args(tools)
+    compile_overrides = _compile_overrides(tools)
+
+    for case in INSTALLED_FORTRAN_RUNTIME_PROBES:
+        name = case["name"]
+        language = case["language"]
+        check_name = "installed_" + name
+        skip_reason = _fortran_binding_skip(manifest, tools, language)
+        if skip_reason is not None:
+            if progress is not None:
+                progress.start(check_name)
+            _append_check(checks, _skip(
+                check_name,
+                skip_reason,
+                phase="configure",
+                language=language,
+                configured=manifest["configuration"]["fortran"][language],
+                mpifort=mpifort), progress)
+            continue
+
+        rank_count = tools["rank_counts"]["np{0}".format(
+            case["rank_count"])]
+        source = dirs["src"] / (name + ".f90")
+        executable = dirs["bin"] / name
+        _write_text(source, _fortran_probe_source(srcdir, case))
+        compile_command = (
+            [mpifort] + compile_overrides +
+            [str(source), "-o", str(executable)]
+        )
+        if progress is not None:
+            progress.start(check_name)
+        compile_result = _command_result(
+            "compile_" + name,
+            compile_command,
+            dirs["base"],
+            env,
+            dirs["logs"] / ("compile_" + name + ".json"))
+        if compile_result["returncode"] != 0:
+            _append_check(checks, _fail(
+                check_name,
+                "installed Fortran runtime probe compile failed",
+                phase="compile",
+                language=language,
+                configured=manifest["configuration"]["fortran"][language],
+                source=str(source),
+                executable=str(executable),
+                command=compile_result["command"],
+                returncode=compile_result["returncode"],
+                log=compile_result["log"]), progress)
+            continue
+
+        run_command = (
+            [mpirun] + launcher_args +
+            ["--np", str(rank_count), str(executable)]
+        )
+        run_result = _command_result(
+            "run_" + name,
+            run_command,
+            dirs["base"],
+            env,
+            dirs["logs"] / ("run_" + name + ".json"))
+        if run_result["returncode"] != 0:
+            skip_reason = case.get("skip_exit_codes", {}).get(
+                run_result["returncode"])
+            if skip_reason is not None:
+                _append_check(checks, _skip(
+                    check_name,
+                    skip_reason,
+                    phase="run",
+                    language=language,
+                    configured=manifest["configuration"]["fortran"][
+                        language],
+                    source=str(source),
+                    executable=str(executable),
+                    rank_count=rank_count,
+                    command=run_result["command"],
+                    returncode=run_result["returncode"],
+                    compile_log=compile_result["log"],
+                    run_log=run_result["log"]), progress)
+                continue
+
+            _append_check(checks, _fail(
+                check_name,
+                "installed Fortran runtime probe failed",
+                phase="run",
+                language=language,
+                configured=manifest["configuration"]["fortran"][language],
+                source=str(source),
+                executable=str(executable),
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"]), progress)
+            continue
+
+        _append_check(checks, _pass(
+            check_name,
+            language=language,
+            configured=manifest["configuration"]["fortran"][language],
+            source=str(source),
+            executable=str(executable),
+            rank_count=rank_count,
+            api_names=list(case.get("api_names", ())),
+            compile_command=compile_result["command"],
+            run_command=run_result["command"],
+            compile_log=compile_result["log"],
+            run_log=run_result["log"]), progress)
+
+    return checks
+
+
+def _fortran_optional_datatype_skip(manifest, tools, progress=None):
+    """Record the still-deferred optional Fortran datatype work item.
+
+    The C ABI converter tests already guard optional Fortran datatype
+    declarations against the installed standard ABI header.  Exhaustive
+    Fortran binding probes need generated source driven by the installed
+    module declarations, which is intentionally left as a distinct open
+    task so unavailable optional types become precise SKIPs instead of
+    compile failures.
+    """
+    check_name = "installed_fortran_optional_datatype_generation"
+    if progress is not None:
+        progress.start(check_name)
+    return _skip(
+        check_name,
+        SKIP_FORTRAN_OPTIONAL_DATATYPES_DEFERRED,
+        phase="generation",
+        mpifort=tools["open_mpi"].get("mpifort"),
+        fortran=manifest["configuration"]["fortran"])
+
+
 def _installed_fortran_checks(srcdir, manifest, tools, dirs, progress=None):
-    """Run Phase 11A installed Fortran detection and compile checks."""
+    """Run installed Fortran detection, compile, and runtime checks."""
     checks = []
     if progress is not None:
         progress.start("installed_fortran_coverage_audit")
     _append_check(checks, _fortran_coverage_audit(
-        manifest, tools, INSTALLED_FORTRAN_COMPILE_PROBES), progress)
+        manifest, tools, INSTALLED_FORTRAN_COMPILE_PROBES,
+        INSTALLED_FORTRAN_RUNTIME_PROBES), progress)
     checks.extend(_run_installed_fortran_compile_probes(
         srcdir, manifest, tools, dirs, progress))
+    checks.extend(_run_installed_fortran_runtime_probes(
+        srcdir, manifest, tools, dirs, progress))
+    _append_check(checks, _fortran_optional_datatype_skip(
+        manifest, tools, progress), progress)
     return checks
 
 

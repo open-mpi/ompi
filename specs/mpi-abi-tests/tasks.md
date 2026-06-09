@@ -116,11 +116,19 @@ chunk adds installed runtime probes.
       configured binding layer.  Exhaustive per-API Fortran compile and
       runtime coverage remains in Chunk 11B and the open Phase 11 tasks
       below.
-- [ ] Chunk 11B: Add Fortran runtime and Fortran ABI probes.
+- [x] Chunk 11B: Add Fortran runtime and Fortran ABI probes.
       Cover configured Fortran runtime families, Fortran ABI helper
       routines, logical values, handles, statuses, optional datatypes,
       and explicit skips for unimplemented standard Fortran ABI
       functionality.
+      Installed `check-abi` now compiles and launches isolated
+      `mpif.h`, `use mpi`, and `use mpi_f08` runtime probes plus ABI
+      helper probes for the six Fortran `MPI_Abi_*` routines.  The
+      `use mpi_f08` runtime probe validates typed communicator,
+      datatype, and status behavior.  Optional Fortran datatype
+      generation is reported with a stable skip and remains open below
+      until generated module-driven probes can distinguish unavailable
+      optional types from true ABI divergences.
 - [ ] Chunk 12A: Add MPICH cross-test infrastructure and environment
       reporting.
       Implement `check-abi-cross` discovery, overrides, loader
@@ -813,7 +821,7 @@ chunk adds installed runtime probes.
       `pending_phase11b` counts.  It deliberately does not hard-fail on
       missing exhaustive Fortran coverage until the Chunk 11B generated
       compile/runtime probes exist.
-- [ ] Keep Phase 11 Fortran runtime probes isolated by executable.
+- [x] Keep Phase 11 Fortran runtime probes isolated by executable.
       Generate one executable per logical Fortran test case so a failed
       MPI job or failed Fortran binding invocation does not affect later
       Fortran probes.
@@ -849,12 +857,17 @@ chunk adds installed runtime probes.
       Use the Phase 9 C runtime families as the coverage model, but
       keep each Fortran binding's probes separately classified so a
       missing `mpif.h` path cannot be hidden by `use mpi_f08` coverage.
-- [ ] Test Fortran `MPI_Abi_get_version`.
-- [ ] Test Fortran `MPI_Abi_get_info`.
-- [ ] Test Fortran `MPI_Abi_get_fortran_info`.
-- [ ] Test Fortran `MPI_Abi_set_fortran_info`.
-- [ ] Test Fortran `MPI_Abi_get_fortran_booleans`.
-- [ ] Test Fortran `MPI_Abi_set_fortran_booleans`.
+      Chunk 11B adds core runtime probes for initialization,
+      communicators, point-to-point status handling, datatypes, and
+      barriers in each binding layer.  Broader generated runtime
+      families for groups, requests, collectives beyond barrier, MPI-IO,
+      and the rest of the Phase 9 model remain open here.
+- [x] Test Fortran `MPI_Abi_get_version`.
+- [x] Test Fortran `MPI_Abi_get_info`.
+- [x] Test Fortran `MPI_Abi_get_fortran_info`.
+- [x] Test Fortran `MPI_Abi_set_fortran_info`.
+- [x] Test Fortran `MPI_Abi_get_fortran_booleans`.
+- [x] Test Fortran `MPI_Abi_set_fortran_booleans`.
 - [ ] Test `use mpi_f08` ABI functionality implemented by Open MPI.
       Cover implemented `use mpi_f08` ABI entry points and helpers with
       compile and runtime probes.  Unimplemented standard Fortran ABI
@@ -863,15 +876,21 @@ chunk adds installed runtime probes.
       Verify that `use mpi_f08` handles, statuses, ignore sentinels,
       status arrays, and optional output arguments agree with the
       standard ABI behavior Open MPI implements.
+      Chunk 11B validates `use mpi_f08` typed communicator duplication
+      and free, typed datatype use through `MPI_Type_size`, typed status
+      values through `MPI_Sendrecv`/`MPI_Get_count`, and optional
+      `ierror` omission on a compile-only call.  Broader ignore-sentinel
+      and status-array coverage remains part of the open exhaustive
+      `use mpi_f08` ABI task above.
 - [ ] Explicitly skip unimplemented standard Fortran ABI functionality
       with stable machine-readable reasons.
-- [ ] Test Fortran logical size and true/false value reporting.
+- [x] Test Fortran logical size and true/false value reporting.
 - [ ] Test optional Fortran datatype size and unavailable-type behavior.
       Optional Fortran datatype probes must be driven by the configured
       compiler/build and the installed standard ABI header, so an
       unavailable optional type is a documented skip and an incorrectly
       declared available type is a hard failure.
-- [ ] Verify Fortran reports distinguish regression coverage from
+- [x] Verify Fortran reports distinguish regression coverage from
       standard ABI coverage.
       Reports must separately show `mpif.h`, `use mpi`, `use mpi_f08`
       regression coverage and implemented `use mpi_f08` ABI coverage so
