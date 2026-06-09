@@ -1380,6 +1380,107 @@ INSTALLED_C_RUNTIME_API_PROBES = (
 """,
     },
     {
+        "name": "runtime_comm_buffer",
+        "family": "comm",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Comm_attach_buffer",
+            "MPI_Comm_detach_buffer",
+            "MPI_Comm_flush_buffer",
+            "MPI_Comm_iflush_buffer",
+        ),
+        "support_api_names": (
+            "MPI_Bsend",
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Recv",
+            "MPI_Wait",
+        ),
+        "body": """
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    int size = 0;
+    int rank = -1;
+    ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (MPI_SUCCESS != ret) {
+        return 3;
+    }
+    if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+        return 4;
+    }
+
+    if (0 == rank) {
+        char buffer[8192];
+        ret = MPI_Comm_attach_buffer(MPI_COMM_WORLD, buffer,
+                                     sizeof(buffer));
+        if (MPI_SUCCESS != ret) {
+            return 5;
+        }
+        int value = 101;
+        ret = MPI_Bsend(&value, 1, MPI_INT, 1, 920, MPI_COMM_WORLD);
+        if (MPI_SUCCESS != ret) {
+            return 6;
+        }
+        ret = MPI_Comm_flush_buffer(MPI_COMM_WORLD);
+        if (MPI_SUCCESS != ret) {
+            return 7;
+        }
+
+        value = 103;
+        ret = MPI_Bsend(&value, 1, MPI_INT, 1, 921, MPI_COMM_WORLD);
+        if (MPI_SUCCESS != ret) {
+            return 8;
+        }
+        MPI_Request request = MPI_REQUEST_NULL;
+        ret = MPI_Comm_iflush_buffer(MPI_COMM_WORLD, &request);
+        if (MPI_SUCCESS != ret) {
+            return 9;
+        }
+        if (MPI_REQUEST_NULL != request) {
+            ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+                return 10;
+            }
+        }
+
+        void *detached = NULL;
+        int detached_size = 0;
+        ret = MPI_Comm_detach_buffer(MPI_COMM_WORLD, &detached,
+                                     &detached_size);
+        if (MPI_SUCCESS != ret || detached != buffer ||
+            detached_size != (int) sizeof(buffer)) {
+            return 11;
+        }
+    } else if (1 == rank) {
+        int value = -1;
+        ret = MPI_Recv(&value, 1, MPI_INT, 0, 920, MPI_COMM_WORLD,
+                       MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || 101 != value) {
+            return 12;
+        }
+        value = -1;
+        ret = MPI_Recv(&value, 1, MPI_INT, 0, 921, MPI_COMM_WORLD,
+                       MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != ret || 103 != value) {
+            return 13;
+        }
+    }
+
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 14;
+    }
+""",
+    },
+    {
         "name": "runtime_group_setops",
         "family": "group",
         "rank_count": 1,

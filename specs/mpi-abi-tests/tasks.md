@@ -327,8 +327,11 @@ the branch is not complete until all completion-gate tasks pass.
       APIs that are portable in two-rank local CI jobs.
 - [x] Generate runtime tests for group construction, rank translation,
       comparison, and set-operation APIs.
-- [ ] Generate runtime tests for communicator buffer attach, detach,
+- [x] Generate runtime tests for communicator buffer attach, detach,
       flush, and asynchronous flush APIs.
+      Installed C runtime probes cover `MPI_Comm_attach_buffer`,
+      `MPI_Comm_flush_buffer`, `MPI_Comm_iflush_buffer`, and
+      `MPI_Comm_detach_buffer` with two-rank buffered-send traffic.
 - [ ] Generate runtime tests for communicator dynamic process APIs,
       including connect, accept, disconnect, spawn, spawn_multiple, and
       parent-communicator behavior.
