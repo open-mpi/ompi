@@ -145,8 +145,54 @@ jobs:
           make -j $(nproc)
 
       - name: Perform CodeQL Analysis
+        if: matrix.language != 'c-cpp'
         uses: github/codeql-action/analyze@v4
         with:
+          category: "/language:${{ matrix.language }}"
+
+      # CodeQL's paths-ignore setting does not filter C/C++ code that is
+      # compiled by a manual build.  Open MPI's normal build compiles
+      # bundled third-party projects, which gives CodeQL complete build
+      # context but can also produce alerts in code we do not maintain.
+      # For C/C++ only, write SARIF locally, remove alerts whose primary
+      # locations are under 3rd-party/, and then upload the filtered SARIF.
+      - name: Perform CodeQL Analysis
+        if: matrix.language == 'c-cpp'
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+          output: c-cpp-sarif-results
+          upload: failure-only
+
+      - name: Locate C/C++ SARIF
+        if: matrix.language == 'c-cpp'
+        id: cpp_sarif
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          sarif_files=(c-cpp-sarif-results/*.sarif)
+          if test ${#sarif_files[@]} -ne 1; then
+              echo "::error::Expected one C/C++ SARIF file, found ${#sarif_files[@]}"
+              exit 1
+          fi
+          echo "file=${sarif_files[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Filter third-party C/C++ SARIF results
+        if: matrix.language == 'c-cpp'
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -3rd-party/**
+            -**/3rd-party/**
+          input: ${{ steps.cpp_sarif.outputs.file }}
+          output: ${{ steps.cpp_sarif.outputs.file }}
+
+      - name: Upload filtered C/C++ SARIF
+        if: matrix.language == 'c-cpp'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.cpp_sarif.outputs.file }}
           category: "/language:${{ matrix.language }}"
 
   # -------------------------------------------------------------------
@@ -215,6 +261,7 @@ jobs:
           make -j $(nproc)
 
       - name: Perform CodeQL Analysis
+        if: matrix.language != 'c-cpp'
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
@@ -223,6 +270,62 @@ jobs:
           # against).  The category is keyed on language only -- NOT on
           # branch -- so each branch's results update in place and the
           # weekly main scan stays consistent with its push/PR scans.
+          ref: refs/heads/${{ matrix.branch }}
+          sha: ${{ steps.commit.outputs.sha }}
+
+      # CodeQL's paths-ignore setting does not filter C/C++ code that is
+      # compiled by a manual build.  Open MPI's normal build compiles
+      # bundled third-party projects, which gives CodeQL complete build
+      # context but can also produce alerts in code we do not maintain.
+      # For C/C++ only, write SARIF locally, remove alerts whose primary
+      # locations are under 3rd-party/, and then upload the filtered SARIF.
+      - name: Perform CodeQL Analysis
+        if: matrix.language == 'c-cpp'
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+          output: c-cpp-sarif-results
+          upload: failure-only
+          # Attribute results to the checked-out branch rather than to
+          # main (which is what a schedule event would otherwise report
+          # against).  The category is keyed on language only -- NOT on
+          # branch -- so each branch's results update in place and the
+          # weekly main scan stays consistent with its push/PR scans.
+          ref: refs/heads/${{ matrix.branch }}
+          sha: ${{ steps.commit.outputs.sha }}
+
+      - name: Locate C/C++ SARIF
+        if: matrix.language == 'c-cpp'
+        id: cpp_sarif
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          sarif_files=(c-cpp-sarif-results/*.sarif)
+          if test ${#sarif_files[@]} -ne 1; then
+              echo "::error::Expected one C/C++ SARIF file, found ${#sarif_files[@]}"
+              exit 1
+          fi
+          echo "file=${sarif_files[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Filter third-party C/C++ SARIF results
+        if: matrix.language == 'c-cpp'
+        uses: advanced-security/filter-sarif@v1
+        with:
+          patterns: |
+            -3rd-party/**
+            -**/3rd-party/**
+          input: ${{ steps.cpp_sarif.outputs.file }}
+          output: ${{ steps.cpp_sarif.outputs.file }}
+
+      - name: Upload filtered C/C++ SARIF
+        if: matrix.language == 'c-cpp'
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ steps.cpp_sarif.outputs.file }}
+          category: "/language:${{ matrix.language }}"
+          # Match the scheduled analyze attribution above when uploading
+          # the filtered SARIF.
           ref: refs/heads/${{ matrix.branch }}
           sha: ${{ steps.commit.outputs.sha }}
 
