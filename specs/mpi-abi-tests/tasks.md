@@ -95,16 +95,17 @@ chunk adds installed runtime probes.
       the installed standard ABI C header, and defers error-handler,
       user-operation, generalized-request, datarep, and MPI_T callback
       APIs to Chunk 10B with a stable reason.
-- [ ] Chunk 10B: Add error-handler, user operation, generalized
+- [x] Chunk 10B: Add error-handler, user operation, generalized
       request, datarep, MPI_T callback, and retained-lifetime probes.
       Cover callback argument ABI values, callback invocation,
       nonblocking/persistent retained state, cleanup, and stable skips
       for callback families Open MPI does not implement.
       Error-handler, user-operation, generalized-request, datarep, and
-      MPI_T event callback registration probes are implemented.  This
-      chunk remains open until the nonblocking/persistent retained-state
-      work item below is implemented or explicitly split into a later
-      chunk.
+      MPI_T event callback registration probes are implemented.
+      Retained converted-array lifetime is covered by nonblocking and
+      persistent `MPI_Alltoallw` probes that overwrite the caller-side
+      count, displacement, and datatype arrays after the wrapper call
+      and then validate the completed data movement.
 - [ ] Chunk 11A: Add Fortran binding detection, coverage audit, and
       compile-only conformance probes.
       Distinguish `mpif.h`, `use mpi`, and `use mpi_f08` regression
@@ -745,21 +746,42 @@ chunk adds installed runtime probes.
       callback-provided object values, and cleanup where Open MPI
       implements standard ABI MPI_T event support; otherwise skip with
       a stable reason.
-- [ ] Test nonblocking and persistent operations that retain converted
+- [x] Test nonblocking and persistent operations that retain converted
       arrays until completion or request release.
-      Cover APIs whose converted arrays or callback wrappers must remain
-      alive after the initial call returns, including representative
-      nonblocking, persistent, partitioned, collective, RMA, and MPI-IO
-      operations that retain user-provided arrays or callback state.
-- [ ] Test cleanup paths for callback wrappers and retained converted
+      Cover APIs whose converted arrays must remain alive after the
+      initial wrapper call returns.  Use the nonblocking and persistent
+      `MPI_Alltoallw` forms as the representative cases because their
+      standard ABI wrappers must convert count, displacement, and
+      datatype arrays and those arrays must remain valid through
+      completion or persistent request release.
+      `MPI_Ialltoallw` covers the nonblocking collective completion
+      boundary.  `MPI_Alltoallw_init` covers persistent collective
+      request lifetime through repeated `MPI_Start`/`MPI_Wait` cycles and
+      `MPI_Request_free`.  Phase 9 runtime probes cover the broader
+      request, partitioned, RMA, and MPI-IO API families for ordinary ABI
+      invocation and output semantics; this Phase 10 item is specifically
+      about ABI-owned retained conversion state.
+- [x] Test cleanup paths for callback wrappers and retained converted
       arrays.
-      Exercise success paths, explicit free paths, cancellation paths
-      where meaningful, object-free paths, and error paths that should
-      release wrapper state without leaking or double-freeing.
-- [ ] Verify callback probes check observable side effects.
+      Exercise cleanup paths that are observable from portable MPI
+      programs: success paths, explicit free paths, cancellation paths
+      where meaningful, and object-free paths.  Do not force arbitrary
+      MPI operation failures after which the MPI runtime state is
+      undefined; those branches are not useful functional ABI tests.
+      Attribute, errhandler, generalized-request, datarep, and MPI_T
+      probes validate callback cleanup through object free, explicit
+      free, request free, or unregister paths as applicable.  Retained
+      array probes release requests and heap storage through common
+      cleanup paths after success and local failure branches.
+- [x] Verify callback probes check observable side effects.
       A callback probe must validate that the callback actually ran,
       that it saw standard ABI argument values, that output arguments
       were consumed by MPI, and that cleanup happened exactly once.
+      The callback probes check invocation counters, callback argument
+      values, copied/deleted attributes, callback-produced data, and
+      cleanup counters.  The retained-array probes check the observable
+      data movement after caller-side ABI arrays have been overwritten,
+      which verifies that MPI did not depend on stale caller storage.
 
 ## Phase 11: Fortran Regression and ABI Tests
 

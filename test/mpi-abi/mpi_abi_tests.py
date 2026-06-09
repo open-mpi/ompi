@@ -1433,6 +1433,46 @@ INSTALLED_C_CALLBACK_PROBES = (
         "prologue_file": "cases/c-callback/callback_mpit_events.prologue.in",
         "body_file": "cases/c-callback/callback_mpit_events.cbody.in",
     },
+    {
+        "name": "lifetime_nonblocking_collective_arrays",
+        "family": "callback_lifetime",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Ialltoallw",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Wait",
+        ),
+        "body_file": (
+            "cases/c-callback/"
+            "lifetime_nonblocking_collective_arrays.cbody.in"
+        ),
+    },
+    {
+        "name": "lifetime_persistent_collective_arrays",
+        "family": "callback_lifetime",
+        "rank_count": 2,
+        "api_names": (
+            "MPI_Alltoallw_init",
+        ),
+        "support_api_names": (
+            "MPI_Comm_rank",
+            "MPI_Comm_size",
+            "MPI_Finalize",
+            "MPI_Init",
+            "MPI_Request_free",
+            "MPI_Start",
+            "MPI_Wait",
+        ),
+        "body_file": (
+            "cases/c-callback/"
+            "lifetime_persistent_collective_arrays.cbody.in"
+        ),
+    },
 )
 
 

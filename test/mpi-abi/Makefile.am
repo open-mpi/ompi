@@ -80,7 +80,9 @@ C_CALLBACK_CASES = \
         cases/c-callback/callback_win_attr.cbody.in \
         cases/c-callback/callback_win_attr.prologue.in \
         cases/c-callback/callback_win_errhandler.cbody.in \
-        cases/c-callback/callback_win_errhandler.prologue.in
+        cases/c-callback/callback_win_errhandler.prologue.in \
+        cases/c-callback/lifetime_nonblocking_collective_arrays.cbody.in \
+        cases/c-callback/lifetime_persistent_collective_arrays.cbody.in
 
 EXTRA_DIST = \
         README.md \
