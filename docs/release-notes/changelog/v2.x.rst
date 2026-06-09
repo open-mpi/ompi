@@ -220,8 +220,8 @@ Open MPI version 2.1.0
 .. attention:: Removed legacy support:
 
    - The ptmalloc2 hooks have been removed from the Open MPI code base.
-     This is not really a user-noticable change; it is only mentioned
-     here because there was much rejoycing in the Open MPI developer
+     This is not really a user-noticeable change; it is only mentioned
+     here because there was much rejoicing in the Open MPI developer
      community.
 
 - New MCA parameters:
@@ -240,7 +240,7 @@ Open MPI version 2.1.0
     libfabric progress model to be used for control and data.
 
 - Fix MPI_WTICK regression where the time reported may be inaccurate
-  on systems with processor frequency scalaing enabled.
+  on systems with processor frequency scaling enabled.
 - Fix regression that lowered the memory maximum message bandwidth for
   large messages on some BTL network transports, such as openib, sm,
   and vader.
@@ -305,7 +305,7 @@ Open MPI version 2.1.0
   "test".  Thanks to Kevin Buckley for pointing out the issue.
 - Fix bug when using darrays with lib and extent of darray datatypes.
 - Updates to make Open MPI binary builds more bit-for-bit
-  reproducable.  Thanks to Alastair McKinstry for the suggestion.
+  reproducible.  Thanks to Alastair McKinstry for the suggestion.
 - Fix issues regarding persistent request handling.
 - Ensure that shmemx.h is a standalone OpenSHMEM header file.  Thanks
   to Nick Park (@nspark) for the report.
@@ -527,11 +527,11 @@ Open MPI version 2.0.1
   all transports.
 - Fix shared memory performance when using RDMA-capable networks.
   Thanks to Tetsuya Mishima and Christoph Niethammer for reporting.
-- Fix bandwith performance degredation in the yalla (MXM) PML.  Thanks
+- Fix bandwidth performance degradation in the yalla (MXM) PML.  Thanks
   to Andreas Kempf for reporting the issue.
 - Fix OpenSHMEM crash when running on non-Mellanox MXM-based networks.
   Thanks to Debendra Das for reporting the issue.
-- Fix a crash occuring after repeated calls to MPI_FILE_SET_VIEW with
+- Fix a crash occurring after repeated calls to MPI_FILE_SET_VIEW with
   predefined datatypes.  Thanks to Eric Chamberland and Matthew
   Knepley for reporting and helping chase down this issue.
 - Fix stdin propagation to MPI processes.  Thanks to Jingchao Zhang
@@ -540,7 +540,7 @@ Open MPI version 2.0.1
   internal component to v1.1.5.
 - Fix process startup failures on Intel MIC platforms due to very
   large entries in ``/proc/mounts``.
-- Fix a problem with use of relative path for specifing executables to
+- Fix a problem with use of relative path for specifying executables to
   mpirun / oshrun.  Thanks to David Schneider for reporting.
 - Various improvements when running over portals-based networks.
 - Fix thread-based race conditions with GNI-based networks.
@@ -641,7 +641,7 @@ Open MPI version 2.0.0
    - ompi-release#1081: Support MPI_IN_PLACE in MPI_(I)ALLTOALLW and MPI_(I)EXSCAN
    - ompi-release#1107: Allow future PMIx support for RM spawn limits
    - ompi-release#1108: Fix sparse group process reference counting
-   - ompi-release#1109: If specified to be oversubcribed, disable binding
+   - ompi-release#1109: If specified to be oversubscribed, disable binding
    - ompi-release#1122: Allow NULL arrays for empty datatypes
    - ompi-release#1123: Fix signed vs. unsigned compiler warnings
    - ompi-release#1123: Make max hostname length uniform across code base
@@ -748,7 +748,7 @@ Open MPI version 2.0.0
 - Allow NULL arrays when creating empty MPI datatypes.
 - Replace use of alloca with malloc for certain datatype creation
   functions.  Thanks to Bogdan Sataric for reporting this.
-- Fix use of MPI_LB and MPI_UB in creation of of certain MPI datatypes.
+- Fix use of MPI_LB and MPI_UB in creation of certain MPI datatypes.
   Thanks to Gus Correa for helping to fix this.
 - Implement a workaround for a GNU Libtool problem.  Thanks to Eric
   Schnetter for reporting and fixing.

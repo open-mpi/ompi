@@ -139,7 +139,7 @@ cmp
 
 cmp_value
    cmp_value must be of type integer. If you are using C/C++, the type
-   of cmp_value should match thatimplied in the SYNOPSIS section. If you
+   of cmp_value should match that implied in the SYNOPSIS section. If you
    are using Fortran, cmp_value must be an integer of the same size and
    kind as ivar. The :ref:`shmem_wait` routines return when ivar is no longer
    equal to cmp_value. The :ref:`shmem_wait_until` routines return when the

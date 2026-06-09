@@ -46,7 +46,7 @@ the associative function f(a, b) =b; that is, the current value in the
 target memory is replaced by the value supplied by the origin.
 
 A new predefined operation, MPI_NO_OP, is defined. It corresponds to the
-assiciative function f(a, b) = a; that is the current value in the
+associative function f(a, b) = a; that is the current value in the
 target memory is returned in the result buffer at the origin and no
 operation is performed on the target buffer.
 

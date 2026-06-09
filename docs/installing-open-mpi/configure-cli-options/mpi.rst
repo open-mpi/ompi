@@ -67,7 +67,7 @@ MPI API behaviors that can be used with ``configure``:
 
 * ``--enable-mpi-ext[=LIST]``:
   Enable Open MPI's non-portable API extensions.  ``LIST`` is a
-  comma-delmited list of extensions.  If no ``LIST`` is specified, all
+  comma-delimited list of extensions.  If no ``LIST`` is specified, all
   of the extensions are enabled.
 
   See the "Open MPI API Extensions" section for more details.

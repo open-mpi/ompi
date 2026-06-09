@@ -152,7 +152,7 @@ Multi-line code/fixed-width font
     case, the example code block will be rendered in the bulleted
     item.
 
-Whereas this parargraph and code block will be outside of the
+Whereas this paragraph and code block will be outside of the
 above bulleted list:
 
 .. code-block:: sh

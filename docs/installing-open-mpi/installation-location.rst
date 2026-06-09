@@ -322,14 +322,14 @@ the end):
 
         #. The C constants ``MPI_F_STATUS_IGNORE`` and ``MPI_F_STATUSES_IGNORE``
              will only compare properly to Fortran applications that were
-             created with Fortran compilers that that use the same
+             created with Fortran compilers that use the same
              name-mangling scheme as the Fortran compiler with which Open MPI was
              configured.
 
         #. Fortran compilers may have different values for the logical
              ``.TRUE.`` constant.  As such, any MPI function that uses the
              Fortran ``LOGICAL`` type may only get ``.TRUE.`` values back that
-             correspond to the the ``.TRUE.`` value of the Fortran compiler with which
+             correspond to the ``.TRUE.`` value of the Fortran compiler with which
              Open MPI was configured.
 
     #. Similar to C++, linking object files that Fortran language features such

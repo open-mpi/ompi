@@ -66,7 +66,7 @@ For example:
 
 Additionally, Open MPI requires that jobs can be started on remote
 nodes without any input from the keyboard.  For example, if using
-``ssh`` as the remote agent, you must have your environment setup to
+``ssh`` as the remote agent, you must have your environment set up to
 allow execution on remote nodes without entering a password or
 passphrase.
 

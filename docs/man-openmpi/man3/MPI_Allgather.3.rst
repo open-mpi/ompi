@@ -112,7 +112,7 @@ first group and received by all the members of the second group. Then
 the data is gathered from all the members of the second group and
 received by all the members of the first. The operation, however, need
 not be symmetric. The number of items sent by the processes in first
-group need not be equal to the number of items sent by the the processes
+group need not be equal to the number of items sent by the processes
 in the second group. You can move data in only one direction by giving
 *sendcount* a value of 0 for communication in the reverse direction.
 

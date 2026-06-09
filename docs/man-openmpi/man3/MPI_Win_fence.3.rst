@@ -60,7 +60,7 @@ MPI_MODE_NOSTORE
 
 MPI_MODE_NOPUT
    Informs that the local window will not be updated by any put or
-   accummulate calls in the ensuing epoch (until next fence call).
+   accumulate calls in the ensuing epoch (until next fence call).
 
 MPI_MODE_NOSUCCEED
    No local RMA calls will be issued after this fence. This assertion

@@ -2,7 +2,7 @@ Available Collective Components
 ===============================
 
 Open MPI's ``coll`` framework provides a number of components
-implementing collective communication, each of which target a
+implementing collective communication, each of which targets a
 different environment or scenario.  Some of these components may not
 be available depending on how Open MPI was compiled and what hardware
 is available on the system.  A run-time decision based on each
@@ -36,13 +36,13 @@ The following provides a list of components and their primary target scenario:
  - ``accelerator``: component providing host-proxy algorithms for some
    collective operations using device buffers.
  - ``ftagree``: component providing fault-tolerant collective operations.
- - ``inter``: component providing collective operaitons for inter-communicators.
+ - ``inter``: component providing collective operations for inter-communicators.
  - ``basic``: component providing basic algorithms, used as a fall-back component.
  - ``sync``: component used in scenarios where some nodes can be
    overrun with messages. This component can be used to insert
    synchronization points every *n-th* execution of a collective
    operations.
- - ``portals4``: component targetting portals4 networks.
+ - ``portals4``: component targeting portals4 networks.
 
 Different component can and will be used for different collective
 operations, since no component is providing implementations for all

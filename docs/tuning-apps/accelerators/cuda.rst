@@ -198,7 +198,7 @@ Libfabric's API.
 Can I get additional CUDA debug-level information at run-time?
 --------------------------------------------------------------
 
-Yes, by enabling some vebosity flags.
+Yes, by enabling some verbosity flags.
 
 * The ``opal_cuda_verbose`` parameter has only one level of verbosity:
 
