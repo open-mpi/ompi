@@ -78,6 +78,7 @@ on:
     # Monday morning (UTC).  The off-the-hour minute avoids GitHub's
     # top-of-the-hour scheduling congestion.
     - cron: '32 5 * * 1'
+  workflow_dispatch:
 
 permissions:
   # required for all workflows
@@ -102,7 +103,10 @@ jobs:
   # Event-driven analysis: scans the ref that triggered the push / PR.
   # -------------------------------------------------------------------
   analyze:
-    if: github.event_name != 'schedule' && github.repository == 'open-mpi/ompi'
+    if: >-
+      github.event_name != 'schedule' &&
+      github.event_name != 'workflow_dispatch' &&
+      github.repository == 'open-mpi/ompi'
     name: Analyze ${{ matrix.language }} (${{ github.ref_name }})
     runs-on: ubuntu-latest
     strategy:
@@ -143,11 +147,17 @@ jobs:
           category: "/language:${{ matrix.language }}"
 
   # -------------------------------------------------------------------
-  # Scheduled analysis: explicitly scans main and each release branch.
-  # Only fires from the default branch (main); see the header comment.
+  # Scheduled/manual analysis: explicitly scans main and each release
+  # branch. The schedule only fires from the default branch (main); see
+  # the header comment. workflow_dispatch intentionally runs this same
+  # matrix so the scheduled path can be tested without waiting for the
+  # next cron event.
   # -------------------------------------------------------------------
   analyze-scheduled:
-    if: github.event_name == 'schedule' && github.repository == 'open-mpi/ompi'
+    if: >-
+      (github.event_name == 'schedule' ||
+       github.event_name == 'workflow_dispatch') &&
+      github.repository == 'open-mpi/ompi'
     name: Analyze ${{ matrix.language }} (${{ matrix.branch }})
     runs-on: ubuntu-latest
     strategy:
@@ -224,7 +234,7 @@ jobs:
   # -------------------------------------------------------------------
   check-scheduled-coverage:
     if: >-
-      github.event_name != 'schedule' &&
+      github.event_name == 'push' &&
       github.ref_name == github.event.repository.default_branch &&
       github.repository == 'open-mpi/ompi'
     runs-on: ubuntu-latest
