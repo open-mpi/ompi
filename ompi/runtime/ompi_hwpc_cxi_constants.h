@@ -10,23 +10,43 @@
  * $HEADER$
  */
 
-#ifndef __OMPI_HWPC_CXI_CONSTANTS_H__
-#define __OMPI_HWPC_CXI_CONSTANTS_H__
+#ifdef HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE
+
+#ifndef OMPI_HWPC_CXI_CONSTANTS_H
+#define OMPI_HWPC_CXI_CONSTANTS_H
 
 #include "ompi_config.h"
-
 #include <stdio.h>
+#include <stddef.h>
+#include <stdbool.h>
 
-#define MAX_DEVS 8
-#define MAX_HOSTNAME_SIZE 64
-#define MAX_COUNTER_NAME_SIZE 64
-#define MAX_COUNTER_GROUP_NAME_SIZE MAX_COUNTER_NAME_SIZE
-#define MAX_FILEPATH_LENGTH 256
-#define MAX_OUTPUT_REPORT_PREFIX_LENGTH 256
-#define MAX_LINE_LENGTH 512
+#define HWPC_CXI_MAX_DEVS_PER_NODE 16
+#define HWPC_CXI_MAX_HOSTNAME_LENGTH 64
+#define HWPC_CXI_MAX_OUTPUT_REPORT_PREFIX_LENGTH 64
+#define HWPC_CXI_MAX_COUNTER_NAME_LENGTH 64
+#define HWPC_CXI_COUNTER_TRACKING_LIST_ALLOC_SIZE 64
+#define HWPC_CXI_MAX_FULLPATH_LENGTH 512  /* Absolute path + HWPC_CXI_MAX_OUTPUT_REPORT_PREFIX_LENGTH + HWPC_CXI_MAX_HOSTNAME_LENGTH */
+#define HWPC_CXI_MAX_LINE_LENGTH 512
+
+typedef enum ompi_hwpc_cxi_error_code_t {
+    HWPC_CXI_SUCCESS                        =  0,
+    HWPC_CXI_ERROR                          = -1,   /* general error */
+    HWPC_CXI_ERROR_INVALID_ARGUMENTS        = -2,   /* invalid arguments */
+    HWPC_CXI_ERROR_OUT_OF_MEMORY            = -3,   /* out of memory */
+    HWPC_CXI_COUNTER_GROUP_NOT_FOUND        = -4,   /* counter group not found */
+    HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND     = -5    /* counter mnemonic not found */
+} ompi_hwpc_cxi_error_code_t;
+
+typedef enum ompi_hwpc_cxi_counter_type_t {
+    HWPC_CXI_COUNTER_UNKNOWN_TYPE           = 0,    /* Unknown counter type */
+    HWPC_CXI_COUNTER_LOWLEVEL_TYPE          = 1,    /* A low-level counter represents a hardware-specific performance metric */
+    HWPC_CXI_COUNTER_MNEMONIC_TYPE          = 2,    /* A counter mnemonic represents a specific performance metric within a counter group */
+    HWPC_CXI_COUNTER_GROUP_TYPE             = 3,    /* A counter group is a collection of related counter mnemonics that represent a higher-level performance metric */
+    HWPC_CXI_NUM_COUNTER_TYPES                      /* number of counter types */
+} ompi_hwpc_cxi_counter_type_t;
 
 /* This enumeration serves as a list of predefined cxi hardware performance counter group mnemonic name ids */
-typedef enum ompi_hwpc_cxi_predefined_counter_group_mnemonics {
+typedef enum ompi_hwpc_cxi_predefined_counter_group_id_t {
     CXI_PERFSTATS,
     CXI_ERRSTATS,
     CXI_OPCOMMANDS,
@@ -40,11 +60,11 @@ typedef enum ompi_hwpc_cxi_predefined_counter_group_mnemonics {
     CXI_LINKRELIABILITY,
     CXI_CONGESTION,
     /* This serves as the number of counter groups. It must be last. */
-    OMPI_HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUP_MNEMONICS
-} ompi_hwpc_cxi_predefined_counter_group_mnemonic_t;
+    OMPI_HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS
+} ompi_hwpc_cxi_predefined_counter_group_id_t;
 
 /* This enumeration serves as a list of predefined cxi hardware performance counter mnemonic name ids */
-typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
+typedef enum ompi_hwpc_cxi_predefined_counter_mnemonic_id_t {
     /* Address Translation Unit Performance Counters */
     ATU_ATS_PRS_ODP_LATENCY,
     ATU_ATS_TRANS_LATENCY,
@@ -246,57 +266,65 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     TCT_TIMEOUTS,
     /* This serves as the number of counters. It must be last. */
     OMPI_HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS
-} ompi_hwpc_cxi_predefined_counter_mnemonic_t;
+} ompi_hwpc_cxi_predefined_counter_mnemonic_id_t;
 
-
-typedef struct ompi_hwpc_cxi_counter_desc_t {
+typedef struct ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t {
     const char* counter_name;
     const char* counter_description;
-    bool is_per_cxi_device;
-    bool is_retry_handler_counter;
-    bool is_per_category;
-    /* Number of categories, if is_per_category is true */
-    int num_categories;
-    /* Name of category, if is_per_category is true */
+    const bool is_per_cxi_device;
+    const bool is_retry_handler_counter;
+    const bool is_per_category;
+    /* Number of categories, if is_per_category is true, else 1 */
+    const size_t num_categories;
+    /* Name of category, if is_per_category is true, else NULL */
     const char* category_name;      /* e.g. traffic-class, command-type, etc. */
-    
-} ompi_hwpc_cxi_counter_desc_t;
+} ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t;
 
-typedef struct ompi_hwpc_cxi_counter_group_desc_t {
+typedef struct ompi_hwpc_cxi_predefined_counter_group_obj_t {
     const char* counter_group_name;
-    const char* counter_group_string_name;
+    const char* counter_group_pretty_name;
     const char* counter_group_description;
-    const ompi_hwpc_cxi_predefined_counter_mnemonic_t* counter_mnemonic_list;
+    const ompi_hwpc_cxi_predefined_counter_mnemonic_id_t* counter_mnemonic_list;
     const size_t counter_mnemonic_list_size;
-} ompi_hwpc_cxi_counter_group_desc_t;
+} ompi_hwpc_cxi_predefined_counter_group_obj_t;
 
+/* Simple helper for sanity-checking when processing a counter group object */
+extern bool ompi_hwpc_cxi_counter_mnemonic_id_is_valid(const ompi_hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id);
 
-/* Contains the predefined Cassini (CXI) hardware performance counters. */
-extern const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[];
+/* Function that, given a counter group name, returns the corresponding counter group object */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_counter_group_obj_by_name(const ompi_hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const char *counter_group_name);
 
-/* Contains the predefined Cassini (CXI) hardware performance counter groups. */
-extern const ompi_hwpc_cxi_counter_group_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[];
+/* Function that, given a counter group name, returns the number of counters in the group */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_num_counters_in_counter_group_by_name(int *total_num_counters, const char *counter_group_name);
 
-/* All of these list sizes are in terms of HPE's Cassini (CXI) hardware counter mnemonics, thus the true number of counter registers is much larger. */
-extern const size_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST_SIZE;
-extern const size_t OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST_SIZE;
-extern const size_t OMPI_HWPC_CXI_DEFAULT_COUNTERS_LIST_SIZE;
+/* Function that, given a counter mnemonic id, returns the corresponding counter mnemonic object */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_counter_mnemonic_obj_by_id(const ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const ompi_hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id);
 
-extern const size_t CXI_PERFSTATS_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_ERRSTATS_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_OPCOMMANDS_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_OPPACKETS_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_DMAENGINE_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_WRITESTOHOST_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_MESSAGEMATCHINGPOOLED_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_TRANSLATIONUNIT_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_LATENCYHIST_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_PCTREQRESPTRACKING_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_LINKRELIABILITY_COUNTER_GROUP_LIST_SIZE;
-extern const size_t CXI_CONGESTION_COUNTER_GROUP_LIST_SIZE;
+/* Function that, given a counter mnemonic name, returns the corresponding counter mnemonic object */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_counter_mnemonic_obj_by_name(const ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *countermnemonic_name);
 
-#define GET_PREDEF_COUNTER_DESC(COUNTER_MNEMONIC_NAME) &OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[COUNTER_MNEMONIC_NAME]
+/* Function that, given a counter mnemonic name, returns the number of counters in the mnemonic */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(int *total_num_counters, const char *counter_mnemonic_name);
 
-int ompi_hwpc_cxi_get_counters_in_group(const char *group_name, char ***counter_names, size_t *num_counters);
+/*
+ * Prints out a description of a counter group, but only the top-level information.
+ * Call ompi_hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group
+ * including all of its nested counter mnemonics.
+ */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_print_counter_group_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
+
+/* Prints out a detailed description of a counter mnemonic */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_print_counter_mnemonic_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
+
+/* Prints out a detailed description of a counter group plus all of its nested counter mnemonics */
+extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_print_full_counter_group_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
+
+/* Returns a string representation of the given error code */
+extern const char* ompi_hwpc_cxi_error_to_string(ompi_hwpc_cxi_error_code_t error_code);
+
+/* Returns a string representation of the given counter type*/
+extern const char* ompi_hwpc_cxi_counter_type_to_string(ompi_hwpc_cxi_counter_type_t counter_type);
 
 #endif /* OMPI_HWPC_CXI_CONSTANTS_H */
+
+#endif /* HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE */
