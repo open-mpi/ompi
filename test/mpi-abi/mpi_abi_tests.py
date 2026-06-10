@@ -1741,6 +1741,8 @@ logical :: flag
 character(len=32) :: value
 integer :: numeric_value
 integer :: read_status
+real :: real_value
+double precision :: double_value
 
 call MPI_Init(ierr)
 if (ierr .ne. MPI_SUCCESS) stop 1
@@ -1756,6 +1758,14 @@ call MPI_Info_get(info, 'mpi_aint_size', len(value), value, flag, ierr)
 if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 15
 read(value, *, iostat=read_status) numeric_value
 if (read_status .ne. 0 .or. numeric_value .le. 0) stop 16
+call MPI_Info_get(info, 'mpi_count_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 26
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 27
+call MPI_Info_get(info, 'mpi_offset_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 28
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 29
 call MPI_Info_free(info, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 4
 call MPI_Abi_get_fortran_info(finfo, ierr)
@@ -1763,17 +1773,32 @@ if (ierr .ne. MPI_SUCCESS .or. finfo .eq. MPI_INFO_NULL) stop 5
 call MPI_Info_get(finfo, 'mpi_logical_size', len(value), value, flag, ierr)
 if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 17
 read(value, *, iostat=read_status) numeric_value
-if (read_status .ne. 0 .or. numeric_value .le. 0) stop 18
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(logical_true) / 8) stop 18
+call MPI_Info_get(finfo, 'mpi_integer_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 30
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(numeric_value) / 8) stop 31
+call MPI_Info_get(finfo, 'mpi_real_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 32
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(real_value) / 8) stop 33
+call MPI_Info_get(finfo, 'mpi_double_precision_size', len(value), value, &
+                  flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 34
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(double_value) / 8) stop 35
 call MPI_Info_get(finfo, 'mpi_integer4_supported', len(value), value, &
                   flag, ierr)
 if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 19
 if (trim(value) .ne. 'true' .and. trim(value) .ne. 'false') stop 20
 call MPI_Abi_set_fortran_info(finfo, ierr)
-! The normal Open MPI Fortran runtime may already have established this
-! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
-! which is expected here because this probe validates callable bindings,
-! not a writable Fortran standard ABI runtime.
-if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 6
+! Open MPI's configured Fortran runtime owns this state after MPI_Init,
+! so the setter must reject attempts to replace it.
+if (ierr .ne. MPI_ERR_ABI) stop 6
 call MPI_Info_free(finfo, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 7
 logical_size = storage_size(logical_true) / 8
@@ -1838,6 +1863,8 @@ logical :: flag
 character(len=32) :: value
 integer :: numeric_value
 integer :: read_status
+real :: real_value
+double precision :: double_value
 
 call MPI_Init(ierr)
 if (ierr .ne. MPI_SUCCESS) stop 1
@@ -1853,6 +1880,14 @@ call MPI_Info_get(info, 'mpi_aint_size', len(value), value, flag, ierr)
 if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 15
 read(value, *, iostat=read_status) numeric_value
 if (read_status .ne. 0 .or. numeric_value .le. 0) stop 16
+call MPI_Info_get(info, 'mpi_count_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 26
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 27
+call MPI_Info_get(info, 'mpi_offset_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 28
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 29
 call MPI_Info_free(info, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 4
 call MPI_Abi_get_fortran_info(finfo, ierr)
@@ -1860,17 +1895,32 @@ if (ierr .ne. MPI_SUCCESS .or. finfo .eq. MPI_INFO_NULL) stop 5
 call MPI_Info_get(finfo, 'mpi_logical_size', len(value), value, flag, ierr)
 if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 17
 read(value, *, iostat=read_status) numeric_value
-if (read_status .ne. 0 .or. numeric_value .le. 0) stop 18
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(logical_true) / 8) stop 18
+call MPI_Info_get(finfo, 'mpi_integer_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 30
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(numeric_value) / 8) stop 31
+call MPI_Info_get(finfo, 'mpi_real_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 32
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(real_value) / 8) stop 33
+call MPI_Info_get(finfo, 'mpi_double_precision_size', len(value), value, &
+                  flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 34
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. &
+    numeric_value .ne. storage_size(double_value) / 8) stop 35
 call MPI_Info_get(finfo, 'mpi_integer4_supported', len(value), value, &
                   flag, ierr)
 if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 19
 if (trim(value) .ne. 'true' .and. trim(value) .ne. 'false') stop 20
 call MPI_Abi_set_fortran_info(finfo, ierr)
-! The normal Open MPI Fortran runtime may already have established this
-! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
-! which is expected here because this probe validates callable bindings,
-! not a writable Fortran standard ABI runtime.
-if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 6
+! Open MPI's configured Fortran runtime owns this state after MPI_Init,
+! so the setter must reject attempts to replace it.
+if (ierr .ne. MPI_ERR_ABI) stop 6
 call MPI_Info_free(finfo, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 7
 logical_size = storage_size(logical_true) / 8
@@ -1935,6 +1985,8 @@ logical :: flag
 character(len=32) :: value
 integer :: numeric_value
 integer :: read_status
+real :: real_value
+double precision :: double_value
 
 call MPI_Init(ierr)
 if (ierr /= MPI_SUCCESS) stop 1
@@ -1950,6 +2002,14 @@ call MPI_Info_get(info, 'mpi_aint_size', len(value), value, flag, ierr)
 if (ierr /= MPI_SUCCESS .or. .not. flag) stop 15
 read(value, *, iostat=read_status) numeric_value
 if (read_status /= 0 .or. numeric_value <= 0) stop 16
+call MPI_Info_get(info, 'mpi_count_size', len(value), value, flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 26
+read(value, *, iostat=read_status) numeric_value
+if (read_status /= 0 .or. numeric_value <= 0) stop 27
+call MPI_Info_get(info, 'mpi_offset_size', len(value), value, flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 28
+read(value, *, iostat=read_status) numeric_value
+if (read_status /= 0 .or. numeric_value <= 0) stop 29
 call MPI_Info_free(info, ierr)
 if (ierr /= MPI_SUCCESS) stop 4
 call MPI_Abi_get_fortran_info(finfo, ierr)
@@ -1957,17 +2017,32 @@ if (ierr /= MPI_SUCCESS .or. finfo == MPI_INFO_NULL) stop 5
 call MPI_Info_get(finfo, 'mpi_logical_size', len(value), value, flag, ierr)
 if (ierr /= MPI_SUCCESS .or. .not. flag) stop 17
 read(value, *, iostat=read_status) numeric_value
-if (read_status /= 0 .or. numeric_value <= 0) stop 18
+if (read_status /= 0 .or. &
+    numeric_value /= storage_size(logical_true) / 8) stop 18
+call MPI_Info_get(finfo, 'mpi_integer_size', len(value), value, flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 30
+read(value, *, iostat=read_status) numeric_value
+if (read_status /= 0 .or. &
+    numeric_value /= storage_size(numeric_value) / 8) stop 31
+call MPI_Info_get(finfo, 'mpi_real_size', len(value), value, flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 32
+read(value, *, iostat=read_status) numeric_value
+if (read_status /= 0 .or. &
+    numeric_value /= storage_size(real_value) / 8) stop 33
+call MPI_Info_get(finfo, 'mpi_double_precision_size', len(value), value, &
+                  flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 34
+read(value, *, iostat=read_status) numeric_value
+if (read_status /= 0 .or. &
+    numeric_value /= storage_size(double_value) / 8) stop 35
 call MPI_Info_get(finfo, 'mpi_integer4_supported', len(value), value, &
                   flag, ierr)
 if (ierr /= MPI_SUCCESS .or. .not. flag) stop 19
 if (trim(value) /= 'true' .and. trim(value) /= 'false') stop 20
 call MPI_Abi_set_fortran_info(finfo, ierr)
-! The normal Open MPI Fortran runtime may already have established this
-! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
-! which is expected here because this probe validates callable bindings,
-! not a writable Fortran standard ABI runtime.
-if (ierr /= MPI_SUCCESS .and. ierr /= MPI_ERR_ABI) stop 6
+! Open MPI's configured Fortran runtime owns this state after MPI_Init,
+! so the setter must reject attempts to replace it.
+if (ierr /= MPI_ERR_ABI) stop 6
 call MPI_Info_free(finfo, ierr)
 if (ierr /= MPI_SUCCESS) stop 7
 logical_size = storage_size(logical_true) / 8
