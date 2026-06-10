@@ -69,13 +69,33 @@ SKIP_COMM_JOIN_REQUIRES_CONNECTED_FD = "comm_join_requires_connected_fd"
 SKIP_PHASE10_CALLBACK_REQUIRED = "phase10_callback_required"
 SKIP_CROSS_UNSUPPORTED_PLATFORM = "cross_unsupported_platform"
 SKIP_MPICH_DIRECTIONS_INVALID = "mpich_directions_invalid"
-SKIP_PHASE12B_CROSS_PROBES_DEFERRED = "phase12b_cross_probes_deferred"
+SKIP_CROSS_PROBES_NOT_PASSED = "cross_probes_not_passed"
+FAIL_CROSS_PROBES_NOT_EXECUTED = "cross_probes_not_executed"
 
 EXPECTED_METADATA_VERSION = "5.0"
 EXPECTED_API_COUNT = 567
 EXPECTED_CONSTANT_COUNT = 373
-DEFAULT_COMMAND_TIMEOUT = 120
+DEFAULT_COMMAND_TIMEOUT = 30
 MIN_EXPECTED_C_HEADER_PROTOTYPES = 1000
+
+MPI_REMOVED_LEGACY_C_NAMES = {
+    "MPI_Attr_delete",
+    "MPI_Attr_get",
+    "MPI_Attr_put",
+    "MPI_Keyval_create",
+    "MPI_Keyval_free",
+    "PMPI_Attr_delete",
+    "PMPI_Attr_get",
+    "PMPI_Attr_put",
+    "PMPI_Keyval_create",
+    "PMPI_Keyval_free",
+}
+
+MPI_REMOVED_LEGACY_CONSTANT_NAMES = {
+    "MPI_DUP_FN",
+    "MPI_NULL_COPY_FN",
+    "MPI_NULL_DELETE_FN",
+}
 
 FORTRAN_BINDING_LANGUAGES = (
     "mpif.h",
@@ -2677,8 +2697,9 @@ def _open_mpi_candidate(mpicc_abi, mpirun=None, mpirun_override=False,
     if mpirun_override:
         mpirun = _executable_path(mpirun)
     else:
-        mpirun = _executable_path(mpirun) or _path_executable(bin_dir,
-                                                              "mpirun")
+        mpirun = (_executable_path(mpirun) or
+                  _path_executable(bin_dir, "mpirun") or
+                  _path_executable(bin_dir, "mpiexec"))
     ompi_info = _path_executable(bin_dir, "ompi_info")
     outputs = {
         "mpicc_abi_showme_version": _quick_command_output(
@@ -2797,6 +2818,12 @@ def _mpich_identity(explicit_override, mentions_open_mpi, mentions_mpich,
     return "unknown"
 
 
+def _mpich_device_from_version(output):
+    """Return the MPICH device reported by mpichversion, if available."""
+    match = re.search(r"^MPICH Device:\s*(\S+)", output, re.MULTILINE)
+    return match.group(1) if match else None
+
+
 def _mpich_candidate(mpicc, mpirun=None, mpirun_override=False,
                      explicit_override=False, include_override=None,
                      library_override=None):
@@ -2844,6 +2871,7 @@ def _mpich_candidate(mpicc, mpirun=None, mpirun_override=False,
                                   combined, re.IGNORECASE) is not None
     mentions_mpich = re.search(r"\bMPICH\b", combined,
                                re.IGNORECASE) is not None
+    mpich_device = _mpich_device_from_version(outputs["mpichversion"])
     has_mpich_header = _has_header_marker(headers, "mpich")
     identity = _mpich_identity(
         explicit_override, mentions_open_mpi, mentions_mpich, has_mpich_header)
@@ -2852,7 +2880,7 @@ def _mpich_candidate(mpicc, mpirun=None, mpirun_override=False,
         {
             "identity_reason": "wrapper_not_identified_as_mpich",
             "header_reason": "missing_mpi_forum_abi_header",
-            "required_libraries": ("mpi_abi", "pmpi_abi"),
+            "required_libraries": ("mpi_abi",),
             "required_macros": ("MPI_ABI",),
         },
         explicit_override,
@@ -2893,17 +2921,14 @@ def _mpich_candidate(mpicc, mpirun=None, mpirun_override=False,
             },
             "mentions_mpich": mentions_mpich,
             "mentions_open_mpi": mentions_open_mpi,
+            "mpich_device": mpich_device,
             "has_mpich_header": has_mpich_header,
             "explicit_override": explicit_override,
             "defines_mpi_abi": suitability["macros"]["MPI_ABI"],
             "links_mpi_abi": suitability["link_libraries"]["mpi_abi"],
-            "links_pmpi_abi": suitability["link_libraries"]["pmpi_abi"],
             "has_mpi_forum_abi_header": has_mpi_forum_abi_header,
             "has_mpi_abi_library": (
                 suitability["installed_libraries"]["mpi_abi"]
-            ),
-            "has_pmpi_abi_library": (
-                suitability["installed_libraries"]["pmpi_abi"]
             ),
             "mpi_forum_abi_available": mpi_forum_abi_available,
             "unsuitable_reasons": suitability["unsuitable_reasons"],
@@ -3832,20 +3857,57 @@ def _parse_header_constants(path):
     """
     constants = {}
     unparsed = {}
+    aliases = {}
     define_re = re.compile(r"^\s*#define\s+(MPI\w+)\s+(.+?)\s*$")
-    enum_re = re.compile(r"^\s*(MPI\w+)\s*=\s*([^,]+),")
+    enum_re = re.compile(r"^\s*(MPI\w+)\s*=\s*([^,}]+),?\s*(?:/\*.*)?$")
+    implicit_enum_re = re.compile(r"^\s*(MPI\w+)\s*,")
+    next_enum_value = None
     for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
         match = define_re.match(line)
-        if match is None:
-            match = enum_re.match(line)
-        if match is None:
+        if match is not None:
+            name, value = match.groups()
+            integer = _extract_integer_constant(value)
+            if integer is not None:
+                constants[name] = integer
+            elif re.match(r"^MPI\w+$", value.strip()):
+                aliases[name] = value.strip()
+            else:
+                unparsed[name] = value
             continue
-        name, value = match.groups()
-        integer = _extract_integer_constant(value)
-        if integer is not None:
-            constants[name] = integer
-        else:
-            unparsed[name] = value
+
+        match = enum_re.match(line)
+        if match is not None:
+            name, value = match.groups()
+            integer = _extract_integer_constant(value)
+            if integer is not None:
+                constants[name] = integer
+                next_enum_value = integer + 1
+            else:
+                unparsed[name] = value
+                next_enum_value = None
+            continue
+
+        match = implicit_enum_re.match(line)
+        if match is not None and next_enum_value is not None:
+            constants[match.group(1)] = next_enum_value
+            next_enum_value += 1
+            continue
+
+        if "}" in line:
+            next_enum_value = None
+
+    unresolved = True
+    while unresolved:
+        unresolved = False
+        for name, target in list(aliases.items()):
+            if name in constants:
+                aliases.pop(name, None)
+                continue
+            if target in constants:
+                constants[name] = constants[target]
+                aliases.pop(name, None)
+                unresolved = True
+    unparsed.update(aliases)
     return constants, unparsed
 
 
@@ -4064,7 +4126,8 @@ def _runtime_probe_constant_names(manifest, include_fortran, declared_names):
 
 
 def _runtime_probe_generation_check(manifest, include_fortran,
-                                    declared_names):
+                                    declared_names,
+                                    check_name="installed_c_probe_generation"):
     """Fail if metadata-derived runtime probe families would be empty.
 
     The runtime probes are metadata-driven so future constants are picked
@@ -4088,7 +4151,7 @@ def _runtime_probe_generation_check(manifest, include_fortran,
     if missing_kinds or error_class_count == 0 or (
             include_fortran and fortran_type_count == 0):
         return _fail(
-            "installed_c_probe_generation",
+            check_name,
             "metadata-derived converter probe family is empty",
             missing_predefined_handle_kinds=missing_kinds,
             predefined_handle_counts=predefined_counts,
@@ -4096,7 +4159,7 @@ def _runtime_probe_generation_check(manifest, include_fortran,
             fortran_type_count=fortran_type_count)
 
     return _pass(
-        "installed_c_probe_generation",
+        check_name,
         predefined_handle_counts=predefined_counts,
         error_class_count=error_class_count,
         fortran_type_count=fortran_type_count)
@@ -4409,7 +4472,10 @@ def _callback_api_work_package(name):
     return None
 
 
-def _callback_api_coverage_audit(manifest, header, cases):
+def _callback_api_coverage_audit(
+        manifest, header, cases,
+        check_name="installed_c_callback_api_coverage_audit",
+        tolerated_legacy_names=None):
     """Report callback-owned C ABI APIs not covered by callback probes.
 
     The ordinary runtime audit treats callback APIs as deferred because
@@ -4421,6 +4487,8 @@ def _callback_api_coverage_audit(manifest, header, cases):
     run time with stable reasons when the installed implementation lacks
     the underlying feature.
     """
+    if tolerated_legacy_names is None:
+        tolerated_legacy_names = set()
     prototypes = _parse_c_header_prototypes(header)
     declared_names = set(prototypes)
     covered_names = _runtime_api_probe_api_names(cases)
@@ -4463,6 +4531,8 @@ def _callback_api_coverage_audit(manifest, header, cases):
         if name in covered_names:
             covered += 1
             continue
+        if name in tolerated_legacy_names:
+            continue
         missing_by_package.setdefault(package, []).append(name)
 
     legacy_declared = sorted(
@@ -4472,9 +4542,14 @@ def _callback_api_coverage_audit(manifest, header, cases):
         CLASS_IMPLEMENTED
     )
     if legacy_declared:
-        missing_by_package.setdefault(
-            "chunk10a_legacy_attribute_callbacks", []).extend(
-                legacy_declared)
+        untolerated = sorted(
+            name for name in legacy_declared
+            if name not in tolerated_legacy_names
+        )
+        if untolerated:
+            missing_by_package.setdefault(
+                "chunk10a_legacy_attribute_callbacks", []).extend(
+                    untolerated)
 
     counts = {
         package: len(names)
@@ -4489,15 +4564,201 @@ def _callback_api_coverage_audit(manifest, header, cases):
         },
         missing_by_package_counts=counts,
         missing_count=sum(counts.values()),
+        tolerated_legacy_declared=sorted(
+            name for name in legacy_declared
+            if name in tolerated_legacy_names
+        ),
+        tolerated_legacy_declared_count=len([
+            name for name in legacy_declared
+            if name in tolerated_legacy_names
+        ]),
         unclassified_callback_apis=sorted(unclassified_callback_apis),
         unclassified_callback_api_count=len(unclassified_callback_apis),
     )
     if missing_by_package or unclassified_callback_apis:
         return _fail(
-            "installed_c_callback_api_coverage_audit",
+            check_name,
             "callback API coverage has undeferred gaps",
             **details)
-    return _pass("installed_c_callback_api_coverage_audit", **details)
+    return _pass(check_name, **details)
+
+
+def _legacy_tolerance_unit_checks():
+    """Validate MPICH-only tolerance for removed MPI-1 C names.
+
+    MPICH currently exposes a few names that MPI-5 removed from the
+    standard C binding surface.  The cross runner tolerates those names
+    only as extra MPICH declarations so the compatibility report can
+    focus on the MPI Forum ABI surface.  The asymmetry is important:
+    Open MPI exposing the same removed names, or either implementation
+    missing a non-legacy standard name, must still fail.
+    """
+    check_name = "fast_legacy_tolerance_unit_checks"
+    expected_signatures = {
+        "MPI_Init": {
+            "name": "MPI_Init",
+            "return_type": "int",
+            "args": "void",
+            "signature": "int MPI_Init(void)",
+        },
+        "MPI_Attr_put": {
+            "name": "MPI_Attr_put",
+            "return_type": "int",
+            "args": "MPI_Comm comm, int keyval, void *attribute_val",
+            "signature": (
+                "int MPI_Attr_put(MPI_Comm comm, int keyval, "
+                "void *attribute_val)"
+            ),
+        },
+    }
+    open_mpi_header_text = """
+int MPI_Init(void);
+"""
+    mpich_header_text = """
+#define MPI_DUP_FN 1
+int MPI_Init(void);
+int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val);
+"""
+    reverse_open_mpi_header_text = mpich_header_text
+    reverse_mpich_header_text = open_mpi_header_text
+    manifest = {
+        "apis": [
+            {
+                "name": "MPI_Attr_put",
+                "classification": CLASS_IMPLEMENTED,
+                "callback": True,
+                "languages": {"c": True},
+            },
+        ],
+        "constants": [
+            {
+                "name": "MPI_DUP_FN",
+                "c_type": "int",
+            },
+        ],
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+        open_mpi_header = tmp / "open_mpi_mpi.h"
+        mpich_header = tmp / "mpich_mpi.h"
+        reverse_open_mpi_header = tmp / "reverse_open_mpi_mpi.h"
+        reverse_mpich_header = tmp / "reverse_mpich_mpi.h"
+        open_mpi_header.write_text(open_mpi_header_text)
+        mpich_header.write_text(mpich_header_text)
+        reverse_open_mpi_header.write_text(reverse_open_mpi_header_text)
+        reverse_mpich_header.write_text(reverse_mpich_header_text)
+
+        prototypes = _parse_c_header_prototypes(mpich_header)
+        signature = _signature_comparison_check(
+            prototypes,
+            {"MPI_Init": expected_signatures["MPI_Init"]},
+            check_name=check_name + "_signature",
+            tolerated_extra_names=MPI_REMOVED_LEGACY_C_NAMES)
+        if signature["result"] != "PASS":
+            return _fail(
+                check_name,
+                "Removed legacy names must be tolerated as MPICH-only "
+                "extra prototypes",
+                check="signature_tolerates_mpich_legacy",
+                result=signature)
+
+        signature = _signature_comparison_check(
+            prototypes,
+            {"MPI_Init": expected_signatures["MPI_Init"]},
+            check_name=check_name + "_signature_no_tolerance")
+        if signature["result"] != "FAIL":
+            return _fail(
+                check_name,
+                "Removed legacy names must still fail without an "
+                "explicit tolerance set",
+                check="signature_fails_without_tolerance",
+                result=signature)
+
+        absence = _non_abi_absence_check(
+            prototypes,
+            {"MPI_Attr_put"},
+            check_name=check_name + "_absence",
+            tolerated_exposed_names=MPI_REMOVED_LEGACY_C_NAMES)
+        if absence["result"] != "PASS":
+            return _fail(
+                check_name,
+                "Removed legacy names must be tolerated as MPICH-only "
+                "excluded API declarations",
+                check="absence_tolerates_mpich_legacy",
+                result=absence)
+
+        absence = _non_abi_absence_check(
+            prototypes,
+            {"MPI_Attr_put"},
+            check_name=check_name + "_absence_no_tolerance")
+        if absence["result"] != "FAIL":
+            return _fail(
+                check_name,
+                "Removed legacy names must still fail the non-ABI "
+                "absence check without tolerance",
+                check="absence_fails_without_tolerance",
+                result=absence)
+
+        callback = _callback_api_coverage_audit(
+            manifest,
+            mpich_header,
+            [],
+            check_name=check_name + "_callback",
+            tolerated_legacy_names=MPI_REMOVED_LEGACY_C_NAMES)
+        if callback["result"] != "PASS":
+            return _fail(
+                check_name,
+                "Removed legacy callback APIs must be tolerated as "
+                "MPICH-only declarations",
+                check="callback_tolerates_mpich_legacy",
+                result=callback)
+
+        callback = _callback_api_coverage_audit(
+            manifest,
+            mpich_header,
+            [],
+            check_name=check_name + "_callback_no_tolerance")
+        if callback["result"] != "FAIL":
+            return _fail(
+                check_name,
+                "Removed legacy callback APIs must still fail the "
+                "callback audit without tolerance",
+                check="callback_fails_without_tolerance",
+                result=callback)
+
+        feature = _cross_header_feature_set_check(
+            {"open_mpi": open_mpi_header, "mpich": mpich_header},
+            manifest,
+            expected_signatures)
+        if (feature["result"] != "PASS" or
+                feature["details"].get("tolerated_api_only_mpich_count") !=
+                1 or
+                feature["details"].get(
+                    "tolerated_constants_only_mpich_count") != 1):
+            return _fail(
+                check_name,
+                "MPICH-only removed legacy declarations must be "
+                "partitioned as tolerated cross-header extras",
+                check="cross_header_tolerates_mpich_legacy",
+                result=feature)
+
+        feature = _cross_header_feature_set_check(
+            {
+                "open_mpi": reverse_open_mpi_header,
+                "mpich": reverse_mpich_header,
+            },
+            manifest,
+            expected_signatures)
+        if feature["result"] != "FAIL":
+            return _fail(
+                check_name,
+                "Open-MPI-only removed legacy declarations must not be "
+                "tolerated by cross-header comparison",
+                check="cross_header_rejects_open_mpi_legacy",
+                result=feature)
+
+    return _pass(check_name)
 
 
 def _prepare_installed_c_probe_body(srcdir, case, manifest, declared_names):
@@ -5010,6 +5271,196 @@ def _fortran_helper_checks(srcdir, builddir, manifest):
     return checks
 
 
+def _fortran_probe_table_unit_check(srcdir):
+    """Validate Fortran probe-table contracts in the fast suite.
+
+    Installed Fortran probes are only compiled and run in check-abi, but
+    their declarative api_names fields feed the coverage audit.  Keep the
+    table honest in make check by verifying that advertised APIs appear
+    in the body, stop codes are unique within each executable, source
+    rendering consumes all template tokens, and the coverage audit keeps
+    PASS/SKIP results partitioned by binding layer.
+    """
+    checks = []
+    for case in (INSTALLED_FORTRAN_COMPILE_PROBES +
+                 INSTALLED_FORTRAN_RUNTIME_PROBES):
+        body = case.get("body", "")
+        missing = sorted(
+            name for name in case.get("api_names", ())
+            if not _contains_token(body, name)
+        )
+        if missing:
+            checks.append(_fail(
+                "fast_fortran_probe_table_unit_checks",
+                "Fortran probe api_names entries must appear in the body",
+                check="fortran_probe_api_names_in_body",
+                probe=case["name"],
+                missing=missing))
+            return checks
+
+        stop_codes = re.findall(r"(?<![A-Za-z0-9_])stop\s+([0-9]+)",
+                                body, re.IGNORECASE)
+        duplicates = sorted(
+            code for code in set(stop_codes) if stop_codes.count(code) > 1
+        )
+        if duplicates:
+            checks.append(_fail(
+                "fast_fortran_probe_table_unit_checks",
+                "Fortran probe stop codes must be unique per executable",
+                check="fortran_probe_stop_code_uniqueness",
+                probe=case["name"],
+                duplicates=duplicates))
+            return checks
+
+        rendered = _fortran_probe_source(srcdir, case)
+        dangling_tokens = sorted(set(re.findall(r"@[A-Z_]+@", rendered)))
+        if dangling_tokens:
+            checks.append(_fail(
+                "fast_fortran_probe_table_unit_checks",
+                "Fortran probe rendering left template tokens",
+                check="fortran_probe_source_rendering",
+                probe=case["name"],
+                dangling_tokens=dangling_tokens))
+            return checks
+
+    audit_check = _fortran_coverage_audit_unit_check()
+    if audit_check["result"] != "PASS":
+        checks.append(audit_check)
+        return checks
+
+    checks.append(_pass(
+        "fast_fortran_probe_table_unit_checks",
+        compile_probe_count=len(INSTALLED_FORTRAN_COMPILE_PROBES),
+        runtime_probe_count=len(INSTALLED_FORTRAN_RUNTIME_PROBES)))
+    return checks
+
+
+def _fortran_coverage_audit_unit_check():
+    """Validate Fortran coverage audit PASS/SKIP accounting."""
+    manifest = {
+        "configuration": {
+            "fortran": {
+                "mpif.h": {"enabled": True, "source": "unit"},
+                "use mpi": {"enabled": True, "source": "unit"},
+                "use mpi_f08": {"enabled": True, "source": "unit"},
+            },
+        },
+        "apis": [
+            {
+                "name": "MPI_Unit_mpifh_covered",
+                "classification": CLASS_IMPLEMENTED,
+                "languages": {
+                    "mpif.h": True,
+                    "use mpi": False,
+                    "use mpi_f08": False,
+                },
+            },
+            {
+                "name": "MPI_Unit_usempi_skipped",
+                "classification": CLASS_IMPLEMENTED,
+                "languages": {
+                    "mpif.h": False,
+                    "use mpi": True,
+                    "use mpi_f08": False,
+                },
+            },
+            {
+                "name": "MPI_Unit_f08_covered",
+                "classification": CLASS_IMPLEMENTED,
+                "languages": {
+                    "mpif.h": False,
+                    "use mpi": False,
+                    "use mpi_f08": True,
+                },
+            },
+            {
+                "name": "MPI_Unit_f08_pending",
+                "classification": CLASS_IMPLEMENTED,
+                "languages": {
+                    "mpif.h": False,
+                    "use mpi": False,
+                    "use mpi_f08": True,
+                },
+            },
+        ],
+    }
+    tools = {"open_mpi": {"mpifort": sys.executable}}
+    compile_checks = [
+        {
+            "name": "compile_mpifh",
+            "result": "PASS",
+            "language": "mpif.h",
+            "api_names": ["MPI_Unit_mpifh_covered"],
+            "details": {},
+            "skip_reason": None,
+        },
+        {
+            "name": "compile_usempi",
+            "result": "SKIP",
+            "language": "use mpi",
+            "api_names": ["MPI_Unit_usempi_skipped"],
+            "details": {},
+            "skip_reason": SKIP_FORTRAN_WRAPPER_UNAVAILABLE,
+        },
+    ]
+    runtime_checks = [
+        {
+            "name": "runtime_f08",
+            "result": "PASS",
+            "language": "use mpi_f08",
+            "api_names": ["MPI_Unit_f08_covered"],
+            "details": {},
+            "skip_reason": None,
+        },
+    ]
+    audit = _fortran_coverage_audit(
+        manifest, tools, compile_checks, runtime_checks)
+    languages = audit["details"]["languages"]
+    expected = {
+        "mpif.h": {
+            "covered_implemented_count": 1,
+            "pending_phase11b_count": 0,
+            "coverage_kind": "regression",
+        },
+        "use mpi": {
+            "covered_implemented_count": 0,
+            "pending_phase11b_count": 1,
+            "coverage_kind": "regression",
+        },
+        "use mpi_f08": {
+            "covered_implemented_count": 1,
+            "pending_phase11b_count": 1,
+            "coverage_kind": "standard_abi",
+        },
+    }
+    mismatches = {}
+    for language, language_expected in expected.items():
+        actual = languages[language]
+        for key, value in language_expected.items():
+            if actual[key] != value:
+                mismatches.setdefault(language, {})[key] = {
+                    "expected": value,
+                    "actual": actual[key],
+                }
+
+    non_f08_standard = [
+        language for language, actual in languages.items()
+        if language != "use mpi_f08" and
+        actual["coverage_kind"] == "standard_abi"
+    ]
+    if mismatches or non_f08_standard:
+        return _fail(
+            "fast_fortran_probe_table_unit_checks",
+            "Fortran coverage audit synthetic accounting failed",
+            check="fortran_coverage_audit",
+            mismatches=mismatches,
+            non_f08_standard_abi_languages=non_f08_standard,
+            audit=audit)
+    return _pass(
+        "fast_fortran_probe_table_unit_checks",
+        check="fortran_coverage_audit")
+
+
 def _fortran_bindings_enabled(manifest):
     """Return whether any Fortran binding layer is enabled."""
     return any(
@@ -5108,25 +5559,18 @@ def _discovery_helper_unit_checks():
             "MPI_ABI",
             check="mpich_abi_define_separated"))
         return checks
-    if not _words_link_library(["-lmpi_abi", "-lpmpi_abi"], "mpi_abi"):
+    if not _words_link_library(["-lmpi_abi"], "mpi_abi"):
         checks.append(_fail(
             "fast_discovery_helper_unit_checks",
             "MPICH ABI wrapper detection must recognize libmpi_abi "
             "linkage",
             check="mpich_links_mpi_abi"))
         return checks
-    if not _words_link_library(["/tmp/libpmpi_abi.dylib"], "pmpi_abi"):
-        checks.append(_fail(
-            "fast_discovery_helper_unit_checks",
-            "MPICH ABI wrapper detection must recognize absolute "
-            "libpmpi_abi linkage",
-            check="mpich_links_pmpi_abi_absolute"))
-        return checks
     reasons = _abi_suitability(
         {
             "identity_reason": "wrapper_not_identified_as_mpich",
             "header_reason": "missing_mpi_forum_abi_header",
-            "required_libraries": ("mpi_abi", "pmpi_abi"),
+            "required_libraries": ("mpi_abi",),
             "required_macros": ("MPI_ABI",),
         },
         False,
@@ -5145,18 +5589,17 @@ def _discovery_helper_unit_checks():
     with tempfile.TemporaryDirectory() as tmpdir:
         libdir = Path(tmpdir)
         (libdir / "libmpi_abi.a").touch()
-        (libdir / "libpmpi_abi.a").touch()
         complete_suitability = _abi_suitability(
             {
                 "identity_reason": "wrapper_not_identified_as_mpich",
                 "header_reason": "missing_mpi_forum_abi_header",
-                "required_libraries": ("mpi_abi", "pmpi_abi"),
+                "required_libraries": ("mpi_abi",),
                 "required_macros": ("MPI_ABI",),
             },
             False,
             True,
             True,
-            ["-DMPI_ABI", "-lmpi_abi", "-lpmpi_abi"],
+            ["-DMPI_ABI", "-lmpi_abi"],
             None,
             [str(libdir)])
         if complete_suitability["unsuitable_reasons"]:
@@ -5305,8 +5748,268 @@ def _discovery_helper_unit_checks():
                 check="launcher_override_same_directory_pairing"))
             return checks
 
+    for helper in (
+            _fast_mpich_transport_env_check,
+            _fast_cross_result_unit_check,
+            _fast_linux_resolved_library_check):
+        helper_check = helper()
+        if helper_check["result"] != "PASS":
+            checks.append(helper_check)
+            return checks
+
     checks.append(_pass("fast_discovery_helper_unit_checks"))
     return checks
+
+
+def _fast_mpich_transport_env_check():
+    """Validate documented MPICH transport environment policy."""
+    saved = {
+        name: os.environ.get(name) for name in (
+            "MPICH_ABI_TEST_OFI_PROVIDER",
+            "MPICH_ABI_TEST_OFI_IFACE",
+            "FI_TCP_IFACE",
+            "FI_SOCKETS_IFACE",
+            "MPICH_ABI_TEST_UCX_TLS",
+            "MPICH_ABI_TEST_UCX_NET_DEVICES",
+        )
+    }
+    try:
+        for name in saved:
+            os.environ.pop(name, None)
+
+        os.environ["MPICH_ABI_TEST_OFI_IFACE"] = "eth-test0"
+        env = _mpich_transport_runtime_env("ch4:ofi")
+        if env != {"FI_PROVIDER": "tcp", "FI_TCP_IFACE": "eth-test0"}:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "CH4:OFI transport defaults must use tcp and the "
+                "selected interface",
+                check="mpich_ofi_transport_default",
+                env=env)
+
+        os.environ["MPICH_ABI_TEST_OFI_PROVIDER"] = "sockets"
+        env = _mpich_transport_runtime_env("ch4:ofi")
+        if env != {
+                "FI_PROVIDER": "sockets",
+                "FI_SOCKETS_IFACE": "eth-test0"}:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "CH4:OFI sockets override must set FI_SOCKETS_IFACE",
+                check="mpich_ofi_sockets_override",
+                env=env)
+
+        os.environ["MPICH_ABI_TEST_OFI_PROVIDER"] = "system"
+        env = _mpich_transport_runtime_env("ch4:ofi")
+        if env:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "CH4:OFI system override must leave FI_* unchanged",
+                check="mpich_ofi_system_override",
+                env=env)
+
+        os.environ.pop("MPICH_ABI_TEST_OFI_PROVIDER", None)
+        os.environ.pop("MPICH_ABI_TEST_OFI_IFACE", None)
+        env = _mpich_transport_runtime_env("ch4:ucx")
+        if env != {"UCX_TLS": "self,sm"}:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "CH4:UCX transport defaults must use local transports",
+                check="mpich_ucx_transport_default",
+                env=env)
+
+        os.environ["MPICH_ABI_TEST_UCX_TLS"] = "system"
+        env = _mpich_transport_runtime_env("ch4:ucx")
+        if env:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "CH4:UCX system override must leave UCX_* unchanged",
+                check="mpich_ucx_system_override",
+                env=env)
+
+        os.environ["MPICH_ABI_TEST_UCX_TLS"] = "self,sm,tcp"
+        os.environ["MPICH_ABI_TEST_UCX_NET_DEVICES"] = "en0"
+        env = _mpich_transport_runtime_env("ch4:ucx")
+        if env != {"UCX_TLS": "self,sm,tcp", "UCX_NET_DEVICES": "en0"}:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "CH4:UCX overrides must be honored",
+                check="mpich_ucx_override",
+                env=env)
+
+        if _mpich_transport_runtime_env("ch3:nemesis"):
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "Non-CH4 OFI/UCX devices must not receive transport "
+                "environment overrides",
+                check="mpich_transport_device_gating")
+    finally:
+        for name, value in saved.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
+
+    return _pass(
+        "fast_discovery_helper_unit_checks",
+        check="mpich_transport_env")
+
+
+def _fast_cross_result_unit_check():
+    """Validate cross-direction PASS/SKIP/FAIL aggregation rules."""
+    details = {
+        "compile_implementation": "mpich",
+        "run_implementation": "open_mpi",
+    }
+    preflight_pass = [_pass("preflight")]
+    probe_pass = [_pass("probe")]
+    probe_skip = [_skip("probe", SKIP_LINKAGE_INSPECTION_UNAVAILABLE)]
+    probe_fail = [_fail("probe", "probe failed")]
+
+    result = _cross_direction_result(
+        "mpich_compile_open_mpi_run", details, preflight_pass, probe_skip)
+    if result["result"] != "SKIP":
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "A direction with no passing cross probes must aggregate to "
+            "SKIP even when preflight checks passed",
+            check="cross_direction_skip_without_probe_pass",
+            result=result)
+
+    result = _cross_direction_result(
+        "mpich_compile_open_mpi_run", details, preflight_pass, probe_fail)
+    if result["result"] != "FAIL":
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "A failing cross probe must make the direction fail",
+            check="cross_direction_probe_fail",
+            result=result)
+
+    result = _cross_direction_result(
+        "mpich_compile_open_mpi_run", details,
+        [_fail("preflight", "preflight failed")], probe_pass)
+    if result["result"] != "FAIL":
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "A failing preflight check must make the direction fail",
+            check="cross_direction_preflight_fail",
+            result=result)
+
+    result = _cross_direction_result(
+        "mpich_compile_open_mpi_run", details, preflight_pass, probe_pass)
+    if result["result"] != "PASS":
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "A direction with at least one passing cross probe and no "
+            "failures must pass",
+            check="cross_direction_probe_pass",
+            result=result)
+
+    summary = _cross_summary_result(
+        [_skip("direction1", SKIP_CROSS_PROBES_NOT_PASSED)],
+        {"direction1": details})
+    if (summary["result"] != "SKIP" or
+            summary["skip_reason"] != SKIP_CROSS_PROBES_NOT_PASSED):
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "An all-skip cross-direction set must aggregate to SKIP",
+            check="cross_summary_all_skip",
+            result=summary)
+
+    summary = _cross_summary_result(
+        [_skip("direction1", SKIP_CROSS_PROBES_NOT_PASSED),
+         _pass("direction2")],
+        {"direction1": details, "direction2": details})
+    if summary["result"] != "PASS":
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "A cross-direction set with a passing direction and no "
+            "failures must pass",
+            check="cross_summary_pass",
+            result=summary)
+
+    summary = _cross_summary_result(
+        [_pass("direction1"), _fail("direction2", "direction failed")],
+        {"direction1": details, "direction2": details})
+    if summary["result"] != "FAIL":
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "Any failing direction must make the cross summary fail",
+            check="cross_summary_fail",
+            result=summary)
+
+    return _pass(
+        "fast_discovery_helper_unit_checks",
+        check="cross_result_aggregation")
+
+
+def _fast_linux_resolved_library_check():
+    """Validate linkage parsing used by cross-linkage checks."""
+    output = """
+        libmpi_abi.so.example => /run/My MPI/lib/libmpi_abi.so.example (0x1)
+        libmissing_abi.so => not found
+    """
+    if (_linux_resolved_library(output, "libmpi_abi") !=
+            "/run/My MPI/lib/libmpi_abi.so.example"):
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "Linux ldd parsing must recognize spaced, suffixed ABI "
+            "library resolutions",
+            check="linux_resolved_library_suffix")
+    if _linux_resolved_library(output, "libmissing_abi") is not None:
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "Linux ldd parsing must report unresolved libraries as None",
+            check="linux_resolved_library_not_found")
+    if _linux_resolved_library(output, "libmissing_abi") is not None:
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "Linux ldd parsing must report absent libraries as None",
+            check="linux_resolved_library_absent")
+    if not _path_is_run_side_abi_library(
+            "/run/My MPI/lib/libmpi_abi.so.anything",
+            "/run/My MPI/lib",
+            "mpi_abi"):
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "Linux runtime-library validation must accept arbitrary ABI "
+            "shared-library suffixes in the run-side library directory",
+            check="linux_run_side_library_suffix")
+    if _path_is_run_side_abi_library(
+            "/compile/mpi/lib/libmpi_abi.so.anything",
+            "/run/mpi/lib",
+            "mpi_abi"):
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "Linux runtime-library validation must reject ABI libraries "
+            "from the compile-side directory",
+            check="linux_run_side_library_directory")
+    if (_darwin_otool_install_name(
+            "  /run/My MPI/lib/libmpi_abi.dylib "
+            "(compatibility version 1.0.0, current version 1.0.0)") !=
+            "/run/My MPI/lib/libmpi_abi.dylib"):
+        return _fail(
+            "fast_discovery_helper_unit_checks",
+            "Darwin otool parsing must preserve spaces in install names",
+            check="darwin_otool_install_name_spaces")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        libdir = Path(tmpdir)
+        (libdir / "libmpi_abi.a").touch()
+        if _cross_runtime_library_target(str(libdir), "mpi_abi") is not None:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "Cross runtime library target lookup must reject static "
+                "archives",
+                check="cross_runtime_target_static_archive")
+        (libdir / "libmpi_abi.so.custom").touch()
+        if _cross_runtime_library_target(str(libdir), "mpi_abi") is None:
+            return _fail(
+                "fast_discovery_helper_unit_checks",
+                "Cross runtime library target lookup must accept arbitrary "
+                "shared-library suffixes",
+                check="cross_runtime_target_shared_suffix")
+    return _pass(
+        "fast_discovery_helper_unit_checks",
+        check="cross_linkage_parsing")
 
 
 def run_fast_checks(manifest, srcdir, builddir, progress=None):
@@ -5331,8 +6034,17 @@ def run_fast_checks(manifest, srcdir, builddir, progress=None):
         checks, _fortran_helper_checks(srcdir, builddir, manifest), progress)
 
     if progress is not None:
+        progress.start("fast Fortran probe table unit checks")
+    _extend_checks(
+        checks, _fortran_probe_table_unit_check(srcdir), progress)
+
+    if progress is not None:
         progress.start("fast discovery helper unit checks")
     _extend_checks(checks, _discovery_helper_unit_checks(), progress)
+
+    if progress is not None:
+        progress.start("fast legacy tolerance unit checks")
+    _append_check(checks, _legacy_tolerance_unit_checks(), progress)
     return checks
 
 
@@ -5412,6 +6124,7 @@ def _command_result(name, command, cwd, env, log_path):
         "name": name,
         "command": command,
         "cwd": str(cwd),
+        "environment": _logged_environment(env),
         "returncode": return_code,
         "timeout": timeout,
         "timed_out": timed_out,
@@ -5427,6 +6140,16 @@ def _command_result(name, command, cwd, env, log_path):
         "stdout": stdout,
         "stderr": stderr,
         "log": str(log_path),
+    }
+
+
+def _logged_environment(env):
+    """Return the diagnostic environment subset recorded in command logs."""
+    prefixes = ("FI_", "UCX_", "OMPI_ABI_TEST_", "MPICH_ABI_TEST_")
+    names = {"LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"}
+    return {
+        key: value for key, value in sorted(env.items())
+        if key in names or key.startswith(prefixes)
     }
 
 
@@ -5465,6 +6188,135 @@ def _runtime_loader_env(library_path, loader_var, replace=False):
     return env
 
 
+def _host_ipv4_interfaces():
+    """Return active host IPv4 interface names.
+
+    The MPICH CH4:OFI sockets/tcp providers can select macOS tunnel
+    interfaces such as utun*, which then fail in MPI_Finalize when OFI
+    tries to flush self messages.  Keep interface discovery deliberately
+    small and diagnostic: it is only used to pick a safer default for the
+    local MPICH compatibility tests, and explicit environment variables
+    remain available for unusual hosts.
+    """
+    try:
+        result = subprocess.run(
+            ["ifconfig"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+            timeout=_command_timeout())
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    if result.returncode != 0:
+        return []
+
+    interfaces = []
+    current = None
+    for line in result.stdout.splitlines():
+        if line and not line[0].isspace() and ":" in line:
+            current = line.split(":", 1)[0]
+        elif current and line.lstrip().startswith("inet "):
+            interfaces.append(current)
+    return interfaces
+
+
+def _preferred_mpich_ofi_interface():
+    """Return a likely usable interface for local MPICH OFI tests."""
+    explicit = os.environ.get("MPICH_ABI_TEST_OFI_IFACE")
+    if explicit:
+        return explicit
+
+    provider = _mpich_ofi_provider()
+    provider_iface_env = {
+        "tcp": "FI_TCP_IFACE",
+        "sockets": "FI_SOCKETS_IFACE",
+    }.get(provider)
+    if provider_iface_env and os.environ.get(provider_iface_env):
+        return os.environ[provider_iface_env]
+
+    interfaces = _host_ipv4_interfaces()
+    excluded_prefixes = ("lo", "utun", "awdl", "llw", "bridge", "gif",
+                         "stf", "anpi")
+    preferred = [
+        iface for iface in interfaces
+        if not iface.startswith(excluded_prefixes)
+    ]
+    for iface in preferred:
+        if iface.startswith("en"):
+            return iface
+    return preferred[0] if preferred else None
+
+
+def _mpich_ofi_provider():
+    """Return the OFI provider selected for MPICH compatibility runs."""
+    provider = os.environ.get("MPICH_ABI_TEST_OFI_PROVIDER")
+    if provider is not None:
+        return provider
+    return "tcp"
+
+
+def _mpich_ofi_runtime_env(mpich_device):
+    """Return MPICH-specific OFI environment overrides.
+
+    MPICH 5.0.x configured as ch4:ofi still uses libfabric even for
+    one- and two-rank local tests.  On macOS libfabric may choose utun*
+    tunnel interfaces by default; forcing tcp/sockets to a real local
+    interface avoids turning local launcher setup into unrelated ABI
+    test failures.  FI_PROVIDER=shm is not a safe default here because
+    this MPICH/libfabric combination rejects it for the stream endpoint
+    requested by CH4:OFI.
+    """
+    if mpich_device != "ch4:ofi":
+        return {}
+
+    provider = _mpich_ofi_provider()
+    if provider in ("", "none", "system"):
+        return {}
+
+    env = {"FI_PROVIDER": provider}
+    iface = _preferred_mpich_ofi_interface()
+    if iface:
+        if provider == "tcp":
+            env["FI_TCP_IFACE"] = iface
+        elif provider == "sockets":
+            env["FI_SOCKETS_IFACE"] = iface
+    return env
+
+
+def _mpich_ucx_runtime_env(mpich_device):
+    """Return MPICH-specific UCX environment overrides."""
+    if mpich_device != "ch4:ucx":
+        return {}
+
+    tls = os.environ.get("MPICH_ABI_TEST_UCX_TLS", "self,sm")
+    if tls in ("", "system"):
+        return {}
+
+    env = {"UCX_TLS": tls}
+    net_devices = os.environ.get("MPICH_ABI_TEST_UCX_NET_DEVICES")
+    if net_devices:
+        env["UCX_NET_DEVICES"] = net_devices
+    return env
+
+
+def _mpich_transport_runtime_env(mpich_device):
+    """Return MPICH-device-specific runtime environment overrides."""
+    env = {}
+    env.update(_mpich_ofi_runtime_env(mpich_device))
+    env.update(_mpich_ucx_runtime_env(mpich_device))
+    return env
+
+
+def _runtime_env_for_implementation(tools, implementation, library_path,
+                                    loader_var, replace=False):
+    """Return a launch environment for one selected implementation."""
+    env = _runtime_loader_env(library_path, loader_var, replace=replace)
+    if implementation == "mpich":
+        env.update(tools.get("cross", {}).get("mpich_transport_env", {}))
+    return env
+
+
 def _cross_runtime_loader_policy(library_path, loader_var):
     """Describe the MPICH compatibility runtime-loader policy."""
     return {
@@ -5494,6 +6346,8 @@ def _cross_test_dirs(outdir):
     base = outdir / "cross"
     dirs = {
         "base": base,
+        "src": base / "src",
+        "bin": base / "bin",
         "logs": base / "logs",
     }
     for path in dirs.values():
@@ -5517,6 +6371,458 @@ def _compile_overrides(tools):
     if library_path:
         args.append("-L" + library_path)
     return args
+
+
+def _cross_paths_for_implementation(tools, implementation):
+    """Return cross include/library/launcher paths for one implementation."""
+    key = implementation + "_paths"
+    return tools["cross"][key]
+
+
+def _cross_compile_overrides(tools, implementation):
+    """Return include/library overrides for the compile-side wrapper."""
+    paths = _cross_paths_for_implementation(tools, implementation)
+    args = []
+    if paths.get("include"):
+        args.append("-I" + paths["include"])
+    if paths.get("library"):
+        args.append("-L" + paths["library"])
+    return args
+
+
+def _cross_compile_extra_flags(details):
+    """Return direction-specific extra compile/link flags.
+
+    Do not add --as-needed, -dead_strip_dylibs, or equivalent flags for
+    non-standard MPI ABI libraries.  MPI-5.0 section 21.2.1 says ABI
+    application binaries must not require more than mpi_abi as the sole
+    direct MPI ABI dependency, and section 16.2.1 still requires PMPI
+    alternate entry points for MPI routines.  The harness should only
+    reason about the standard ABI library, libmpi_abi; non-standard
+    extra libraries are not part of the MPI ABI test contract.  See Open
+    MPI issue #13955.
+    """
+    return []
+
+
+def _cross_launcher_args(details):
+    """Return launcher arguments for one cross-test direction."""
+    args = details.get("launcher_args")
+    return shlex.split(args) if args else []
+
+
+def _cross_compile_header(tools, implementation):
+    """Return the ABI header used to generate one cross direction.
+
+    Open MPI installs its MPI Forum ABI declarations as mpi.h under the
+    standard_abi include directory.  MPICH installs a normal mpi.h that
+    includes mpi_abi.h only when MPI_ABI is defined, so source parsing
+    must use mpi_abi.h directly for MPICH compile-side generation.
+    """
+    include = _cross_paths_for_implementation(tools, implementation).get(
+        "include")
+    if not include:
+        return None
+    include_path = Path(include)
+    if implementation == "mpich":
+        candidates = (
+            include_path / "mpi_abi.h",
+            include_path / "standard_abi" / "mpi.h",
+            include_path / "mpi.h",
+        )
+    else:
+        candidates = (
+            include_path / "mpi.h",
+            include_path / "standard_abi" / "mpi.h",
+            include_path / "mpi_abi.h",
+        )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def _cross_header_constant_semantics_check(manifest, header, implementation):
+    """Compare one cross implementation's ABI constants to metadata."""
+    check_name = "cross_header_" + implementation + "_constant_semantics"
+    header_constants, unparsed_header_constants = _parse_header_constants(
+        header)
+    missing = []
+    mismatches = []
+    unparsed = []
+    checked = 0
+    skipped = []
+    for entry in manifest["constants"]:
+        expected = _metadata_integer_value(entry["abi_value"])
+        if expected is None:
+            skipped.append(entry["name"])
+            continue
+        if entry["c_type"] is None:
+            skipped.append(entry["name"])
+            continue
+        if entry["category"] == "DEPRECATED_FUNCS":
+            skipped.append(entry["name"])
+            continue
+        checked += 1
+        name = entry["name"]
+        if name not in header_constants:
+            if name in unparsed_header_constants:
+                unparsed.append(name)
+            else:
+                missing.append(name)
+        elif header_constants[name] != expected:
+            mismatches.append({
+                "name": name,
+                "expected": expected,
+                "actual": header_constants[name],
+            })
+
+    if checked == 0:
+        return _fail(
+            check_name,
+            "no cross ABI header constants were validated",
+            header=str(header),
+            implementation=implementation,
+            checked=checked,
+            skipped_count=len(skipped),
+            parsed_header_count=len(header_constants),
+            unparsed_header_count=len(unparsed_header_constants))
+
+    if missing or mismatches or unparsed:
+        return _fail(
+            check_name,
+            "cross ABI header constants differ from metadata",
+            header=str(header),
+            implementation=implementation,
+            checked=checked,
+            skipped_count=len(skipped),
+            missing=missing[:20],
+            missing_count=len(missing),
+            unparsed=unparsed[:20],
+            unparsed_count=len(unparsed),
+            mismatches=mismatches[:20],
+            mismatch_count=len(mismatches))
+
+    return _pass(
+        check_name,
+        header=str(header),
+        implementation=implementation,
+        checked=checked,
+        skipped_count=len(skipped))
+
+
+def _cross_header_typedef_semantics_check(manifest, header, implementation):
+    """Check that standard ABI typedef names used by metadata are declared."""
+    check_name = "cross_header_" + implementation + "_typedef_semantics"
+    typedefs = _parse_c_header_typedef_names(header)
+    expected = {
+        _normalize_c_typedef_reference(entry["c_type"])
+        for entry in manifest["constants"]
+        if isinstance(entry.get("c_type"), str) and
+        entry["c_type"].startswith("MPI_")
+    }
+    expected.update({
+        "MPI_Aint",
+        "MPI_Count",
+        "MPI_Offset",
+    })
+    missing = sorted(expected - typedefs)
+    if missing:
+        return _fail(
+            check_name,
+            "cross ABI header is missing expected MPI typedefs",
+            header=str(header),
+            implementation=implementation,
+            missing=missing,
+            typedef_count=len(typedefs),
+            expected_count=len(expected))
+    return _pass(
+        check_name,
+        header=str(header),
+        implementation=implementation,
+        checked=len(expected),
+        typedef_count=len(typedefs))
+
+
+def _cross_header_feature_set_check(headers, manifest, expected_signatures):
+    """Compare Open MPI and MPICH ABI header API/constant availability."""
+    check_name = "cross_header_feature_availability"
+    expected_apis = set(expected_signatures)
+    expected_constants = {
+        entry["name"] for entry in manifest["constants"]
+    }
+    expected_typedefs = {
+        _normalize_c_typedef_reference(entry["c_type"])
+        for entry in manifest["constants"]
+        if isinstance(entry.get("c_type"), str) and
+        entry["c_type"].startswith("MPI_")
+    }
+    expected_typedefs.update({
+        "MPI_Aint",
+        "MPI_Count",
+        "MPI_Offset",
+    })
+    prototypes = {
+        implementation: set(_parse_c_header_prototypes(header)) &
+        expected_apis
+        for implementation, header in headers.items()
+    }
+    constants = {
+        implementation: _parse_header_constant_names(header) &
+        expected_constants
+        for implementation, header in headers.items()
+    }
+    typedefs = {
+        implementation: _parse_c_header_typedef_names(header) &
+        expected_typedefs
+        for implementation, header in headers.items()
+    }
+    open_mpi = "open_mpi"
+    mpich = "mpich"
+    # This is a declared MPI Forum ABI surface comparison, not a runtime
+    # optional-feature probe.  The ABI header should expose the standard
+    # ABI prototypes, typedefs, and constants that the metadata says are
+    # in scope.  Runtime families such as MPI-IO, RMA, dynamic process,
+    # and MPI_T events get stable configure/runtime skips in the actual
+    # probe loop when a selected implementation cannot execute them.  If
+    # one implementation's ABI header omits a standard declaration that
+    # the other exposes, that is a header-level divergence.
+    api_only_open_mpi = sorted(prototypes[open_mpi] - prototypes[mpich])
+    api_only_mpich = sorted(
+        (prototypes[mpich] - prototypes[open_mpi]) -
+        MPI_REMOVED_LEGACY_C_NAMES
+    )
+    tolerated_api_only_mpich = sorted(
+        (prototypes[mpich] - prototypes[open_mpi]) &
+        MPI_REMOVED_LEGACY_C_NAMES
+    )
+    constants_only_open_mpi = sorted(constants[open_mpi] - constants[mpich])
+    constants_only_mpich = sorted(
+        (constants[mpich] - constants[open_mpi]) -
+        MPI_REMOVED_LEGACY_CONSTANT_NAMES
+    )
+    tolerated_constants_only_mpich = sorted(
+        (constants[mpich] - constants[open_mpi]) &
+        MPI_REMOVED_LEGACY_CONSTANT_NAMES
+    )
+    typedefs_only_open_mpi = sorted(typedefs[open_mpi] - typedefs[mpich])
+    typedefs_only_mpich = sorted(typedefs[mpich] - typedefs[open_mpi])
+    if (api_only_open_mpi or api_only_mpich or
+            constants_only_open_mpi or constants_only_mpich or
+            typedefs_only_open_mpi or typedefs_only_mpich):
+        return _fail(
+            check_name,
+            "Open MPI and MPICH ABI headers expose different features",
+            api_only_open_mpi=api_only_open_mpi[:20],
+            api_only_open_mpi_count=len(api_only_open_mpi),
+            api_only_mpich=api_only_mpich[:20],
+            api_only_mpich_count=len(api_only_mpich),
+            tolerated_api_only_mpich=tolerated_api_only_mpich,
+            tolerated_api_only_mpich_count=len(tolerated_api_only_mpich),
+            constants_only_open_mpi=constants_only_open_mpi[:20],
+            constants_only_open_mpi_count=len(constants_only_open_mpi),
+            constants_only_mpich=constants_only_mpich[:20],
+            constants_only_mpich_count=len(constants_only_mpich),
+            tolerated_constants_only_mpich=tolerated_constants_only_mpich,
+            tolerated_constants_only_mpich_count=len(
+                tolerated_constants_only_mpich),
+            typedefs_only_open_mpi=typedefs_only_open_mpi[:20],
+            typedefs_only_open_mpi_count=len(typedefs_only_open_mpi),
+            typedefs_only_mpich=typedefs_only_mpich[:20],
+            typedefs_only_mpich_count=len(typedefs_only_mpich))
+    return _pass(
+        check_name,
+        api_count=len(prototypes[open_mpi]),
+        constant_count=len(constants[open_mpi]),
+        typedef_count=len(typedefs[open_mpi]),
+        tolerated_api_only_mpich=tolerated_api_only_mpich,
+        tolerated_api_only_mpich_count=len(tolerated_api_only_mpich),
+        tolerated_constants_only_mpich=tolerated_constants_only_mpich,
+        tolerated_constants_only_mpich_count=len(
+            tolerated_constants_only_mpich))
+
+
+def _cross_header_semantic_checks(srcdir, manifest, tools, progress=None):
+    """Run parsed semantic checks on both selected cross ABI headers."""
+    checks = []
+    headers = {}
+    expected_signatures, excluded_names = _standard_abi_expected_signatures(
+        srcdir)
+    for implementation in ("open_mpi", "mpich"):
+        tolerated_legacy_names = (
+            MPI_REMOVED_LEGACY_C_NAMES if implementation == "mpich"
+            else set()
+        )
+        check_prefix = "cross_header_" + implementation
+        header = _cross_compile_header(tools, implementation)
+        if progress is not None:
+            progress.start(check_prefix + "_available")
+        if header is None:
+            _append_check(checks, _fail(
+                check_prefix + "_available",
+                "cross ABI header is unavailable",
+                implementation=implementation), progress)
+            continue
+        headers[implementation] = header
+        _append_check(checks, _pass(
+            check_prefix + "_available",
+            implementation=implementation,
+            header=str(header)), progress)
+
+        prototypes = _parse_c_header_prototypes(header)
+        if progress is not None:
+            progress.start(check_prefix + "_prototype_parse")
+        if len(prototypes) < MIN_EXPECTED_C_HEADER_PROTOTYPES:
+            _append_check(checks, _fail(
+                check_prefix + "_prototype_parse",
+                "cross ABI header prototype parser found too few entries",
+                implementation=implementation,
+                header=str(header),
+                prototype_count=len(prototypes),
+                minimum_expected=MIN_EXPECTED_C_HEADER_PROTOTYPES),
+                progress)
+            continue
+        _append_check(checks, _pass(
+            check_prefix + "_prototype_parse",
+            implementation=implementation,
+            header=str(header),
+            prototype_count=len(prototypes)), progress)
+
+        if progress is not None:
+            progress.start(check_prefix + "_signature_semantics")
+        _append_check(checks, _signature_comparison_check(
+            prototypes, expected_signatures,
+            check_prefix + "_signature_semantics",
+            compare_parameter_names=False,
+            tolerated_extra_names=tolerated_legacy_names), progress)
+
+        if progress is not None:
+            progress.start(check_prefix + "_non_abi_absence")
+        _append_check(checks, _non_abi_absence_check(
+            prototypes, excluded_names,
+            check_prefix + "_non_abi_absence",
+            tolerated_exposed_names=tolerated_legacy_names), progress)
+
+        if progress is not None:
+            progress.start(check_prefix + "_constant_semantics")
+        _append_check(checks, _cross_header_constant_semantics_check(
+            manifest, header, implementation), progress)
+
+        if progress is not None:
+            progress.start(check_prefix + "_typedef_semantics")
+        _append_check(checks, _cross_header_typedef_semantics_check(
+            manifest, header, implementation), progress)
+
+    if len(headers) == 2:
+        if progress is not None:
+            progress.start("cross_header_feature_availability")
+        _append_check(checks, _cross_header_feature_set_check(
+            headers, manifest, expected_signatures), progress)
+
+    return checks
+
+
+def _cross_wrapper_command(details, implementation):
+    """Return wrapper query commands for one cross implementation."""
+    if implementation == "open_mpi":
+        return (
+            ("compile", [details["compile_wrapper"], "--showme:compile"]),
+            ("link", [details["compile_wrapper"], "--showme:link"]),
+        )
+    return (("show", [details["compile_wrapper"], "-show"]),)
+
+
+def _cross_wrapper_intent_check(tools, dirs, implementation, details):
+    """Verify wrapper ABI compile/link intent using parsed shell words."""
+    check_name = "cross_wrapper_" + implementation + "_intent"
+    commands = _cross_wrapper_command(details, implementation)
+    outputs = {}
+    words = []
+    for label, command in commands:
+        result = _command_result(
+            check_name + "_" + label,
+            command,
+            dirs["base"],
+            os.environ.copy(),
+            dirs["logs"] / (check_name + "_" + label + ".json"))
+        outputs[label] = result["log"]
+        if result["returncode"] != 0:
+            return _fail(
+                check_name,
+                "cross ABI wrapper query failed",
+                implementation=implementation,
+                command=result["command"],
+                returncode=result["returncode"],
+                log=result["log"])
+        words.extend(shlex.split(result["stdout"]))
+
+    words.extend(_cross_compile_overrides(tools, implementation))
+    include_dirs = _flag_dirs_from_words(words, "-I")
+    library_dirs = _flag_dirs_from_words(words, "-L")
+    header = _cross_compile_header(tools, implementation)
+    missing = []
+    if header is None:
+        missing.append("standard_abi_header")
+    elif not any(Path(directory).resolve() == header.parent.resolve()
+                 for directory in include_dirs):
+        missing.append("standard_abi_include_path")
+    if not _words_link_library(words, "mpi_abi"):
+        missing.append("libmpi_abi_link")
+    if implementation == "mpich":
+        if not _words_define_macro(words, "MPI_ABI"):
+            missing.append("MPI_ABI_define")
+
+    if missing:
+        return _fail(
+            check_name,
+            "cross ABI wrapper does not advertise required ABI intent",
+            implementation=implementation,
+            missing=missing,
+            include_dirs=include_dirs,
+            library_dirs=library_dirs,
+            header=str(header) if header else None,
+            logs=outputs)
+    return _pass(
+        check_name,
+        implementation=implementation,
+        include_dirs=include_dirs,
+        library_dirs=library_dirs,
+        header=str(header),
+        logs=outputs)
+
+
+def _cross_linkage_diagnostic_check():
+    """Report whether cross executable linkage diagnostics are available."""
+    system = platform.system()
+    check_name = "cross_linkage_diagnostics_available"
+    if system == "Linux":
+        tool = shutil.which("ldd")
+        if tool is None:
+            return _skip(
+                check_name,
+                SKIP_LINKAGE_INSPECTION_UNAVAILABLE,
+                platform=system,
+                tool="ldd")
+        return _pass(check_name, platform=system, tool=tool)
+    if system == "Darwin":
+        otool = shutil.which("otool")
+        install_name_tool = shutil.which("install_name_tool")
+        if otool is None or install_name_tool is None:
+            return _skip(
+                check_name,
+                SKIP_LINKAGE_INSPECTION_UNAVAILABLE,
+                platform=system,
+                otool=otool,
+                install_name_tool=install_name_tool)
+        return _pass(
+            check_name,
+            platform=system,
+            otool=otool,
+            install_name_tool=install_name_tool)
+    return _skip(
+        check_name,
+        SKIP_LINKAGE_INSPECTION_UNAVAILABLE,
+        platform=system)
 
 
 def _linkage_command(executable):
@@ -5576,6 +6882,305 @@ def _verify_executable_libmpi_abi(executable, dirs, env, name):
         result["result"] = "PASS"
         result["message"] = None
     return result
+
+
+def _cross_runtime_library_target(library_dir, library):
+    """Return a concrete runtime ABI library path for a run side.
+
+    The exact ABI shared-library suffix is platform and libtool
+    dependent.  For Darwin rewrite operations we need one concrete file
+    name for install_name_tool, but we must not assume a specific ABI
+    library version number such as .0.
+    """
+    if not library_dir:
+        return None
+    directory = Path(library_dir)
+    if not directory.exists():
+        return None
+    candidates = _abi_library_candidates(
+        directory, library, include_static=False)
+    if candidates:
+        return str(candidates[0])
+    return None
+
+
+def _abi_library_candidates(directory, library, include_static=True):
+    """Return matching ABI library files in a stable preference order."""
+    candidates = [
+        candidate for candidate in directory.iterdir()
+        if _abi_library_basename_matches(
+            candidate.name, library, include_static=include_static)
+    ]
+    return sorted(candidates, key=_abi_library_preference_key)
+
+
+def _abi_library_preference_key(candidate):
+    """Prefer dynamic ABI libraries before static archives."""
+    name = candidate.name
+    if ".dylib" in name:
+        kind = 0
+    elif ".so" in name:
+        kind = 1
+    elif name.endswith(".a"):
+        kind = 2
+    else:
+        kind = 3
+    return (kind, name)
+
+
+def _abi_library_basename_matches(basename, library, include_static=True):
+    """Return True when a basename is an ABI library for library."""
+    prefix = "lib" + library
+    patterns = [
+        r"^{0}(?:[.][A-Za-z0-9_+-]+)*[.]dylib(?:[.].+)?$",
+        r"^{0}[.]so(?:[.].+)?$",
+    ]
+    if include_static:
+        patterns.append(r"^{0}[.]a$")
+    return any(re.match(pattern.format(re.escape(prefix)), basename)
+               for pattern in patterns)
+
+
+def _path_is_run_side_abi_library(path, library_dir, library):
+    """Return True when path names the selected run-side ABI library.
+
+    Linux cross validation should prove that the dynamic loader resolved
+    the ABI library from the run-side library directory.  It should not
+    encode a particular libtool or distro shared-library version suffix.
+    """
+    if not path or not library_dir:
+        return False
+    resolved_path = Path(path).resolve()
+    resolved_dir = Path(library_dir).resolve()
+    return (resolved_path.parent == resolved_dir and
+            _abi_library_basename_matches(
+                resolved_path.name, library, include_static=False))
+
+
+def _cross_verify_or_rewrite_abi_libraries(executable, dirs, env, name,
+                                           runtime_library_path):
+    """Verify or rewrite ABI library resolution to the selected run side.
+
+    DYLD_LIBRARY_PATH cannot override absolute install names embedded by
+    local Open MPI and MPICH builds.  Cross-direction execution therefore
+    has to edit the generated test executable after compile and before
+    launch.
+
+    Important: the MPI ABI library is libmpi_abi.  Do not synthesize,
+    shim, retarget, inspect, or require any other PMPI-specific library
+    here.  MPI-5.0 section 21.2.1 says ABI application binaries must not
+    require more than mpi_abi as the sole direct MPI ABI dependency, and
+    section 16.2.1 still requires PMPI alternate entry points.  PMPI ABI
+    symbols are therefore tested as symbols and calls through libmpi_abi,
+    not through a separate library.  See Open MPI issue #13955.
+
+    Linux does not need an equivalent rewrite, but it still needs a real
+    cross-linkage check.  LD_LIBRARY_PATH can be defeated by RPATH/RUNPATH
+    or other loader state, so use ldd to verify that retained ABI
+    libraries resolve from the selected run-side directory before the
+    probe is launched.
+    """
+    system = platform.system()
+    if system == "Linux":
+        return _cross_verify_linux_abi_libraries(
+            executable, dirs, env, name, runtime_library_path)
+    if system != "Darwin":
+        return _skip("cross_runtime_linkage_" + name,
+                     SKIP_LINKAGE_INSPECTION_UNAVAILABLE,
+                     platform=system,
+                     rewritten=False)
+
+    # WARNING: macOS-specific test-harness workaround.
+    #
+    # This is the one known cross-runner compatibility adjustment that
+    # is allowed for now.  Do not generalize it into "creative" ABI
+    # compatibility behavior.  The intended MPI Forum ABI model is that
+    # selecting the run-side library directory should be enough.  Local
+    # Open MPI and MPICH macOS installs currently embed absolute
+    # libmpi_abi install names, and dyld will keep using those absolute
+    # compile-side paths even when DYLD_LIBRARY_PATH points at the run
+    # side.  For temporary generated test executables only, rewrite
+    # those absolute libmpi_abi load commands so the test actually
+    # exercises the selected run-side ABI runtime.
+    #
+    # We have explicitly agreed to leave this exception in place for now.
+    # Track removing it, or replacing it with normal @rpath behavior, in:
+    #   https://github.com/open-mpi/ompi/issues/13956
+    #
+    otool = shutil.which("otool")
+    install_name_tool = shutil.which("install_name_tool")
+    if otool is None or install_name_tool is None:
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "macOS cross runtime linkage rewrite tools are unavailable",
+            platform=platform.system(),
+            otool=otool,
+            install_name_tool=install_name_tool)
+
+    mpi_target = _cross_runtime_library_target(
+        runtime_library_path, "mpi_abi")
+    if mpi_target is None:
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "run-side libmpi_abi is unavailable",
+            runtime_library_path=runtime_library_path)
+
+    inspect = _command_result(
+        "otool_cross_" + name,
+        [otool, "-L", str(executable)],
+        dirs["base"],
+        env,
+        dirs["logs"] / ("otool_cross_" + name + ".json"))
+    if inspect["returncode"] != 0:
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "failed to inspect cross executable linkage",
+            command=inspect["command"],
+            returncode=inspect["returncode"],
+            log=inspect["log"])
+
+    changes = []
+    saw_mpi_abi = False
+    for line in inspect["stdout"].splitlines()[1:]:
+        dependency = _darwin_otool_install_name(line)
+        basename = Path(dependency).name
+        target = None
+        if basename.startswith("libmpi_abi."):
+            saw_mpi_abi = True
+            target = mpi_target
+        if target is not None and dependency != target:
+            changes.append((dependency, target))
+
+    if not saw_mpi_abi:
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "cross executable does not retain libmpi_abi",
+            runtime_library_path=runtime_library_path,
+            inspect_log=inspect["log"])
+
+    change_logs = []
+    for index, (old, new) in enumerate(changes):
+        result = _command_result(
+            "install_name_tool_cross_{0}_{1}".format(name, index),
+            [install_name_tool, "-change", old, new, str(executable)],
+            dirs["base"],
+            env,
+            dirs["logs"] / (
+                "install_name_tool_cross_{0}_{1}.json".format(name, index)))
+        change_logs.append(result["log"])
+        if result["returncode"] != 0:
+            return _fail(
+                "cross_runtime_linkage_" + name,
+                "failed to rewrite cross executable linkage",
+                old=old,
+                new=new,
+                command=result["command"],
+                returncode=result["returncode"],
+                inspect_log=inspect["log"],
+                change_logs=change_logs)
+
+    return _pass(
+        "cross_runtime_linkage_" + name,
+        platform=platform.system(),
+        rewritten=bool(changes),
+        changes=[{"old": old, "new": new} for old, new in changes],
+        inspect_log=inspect["log"],
+        change_logs=change_logs)
+
+
+def _cross_verify_linux_abi_libraries(executable, dirs, env, name,
+                                      runtime_library_path):
+    """Verify Linux cross probes resolve retained ABI libs from the run side."""
+    ldd = shutil.which("ldd")
+    if ldd is None:
+        return _skip(
+            "cross_runtime_linkage_" + name,
+            SKIP_LINKAGE_INSPECTION_UNAVAILABLE,
+            platform=platform.system(),
+            tool="ldd")
+
+    if _cross_runtime_library_target(runtime_library_path, "mpi_abi") is None:
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "run-side libmpi_abi is unavailable",
+            runtime_library_path=runtime_library_path)
+
+    inspect = _command_result(
+        "ldd_cross_" + name,
+        [ldd, str(executable)],
+        dirs["base"],
+        env,
+        dirs["logs"] / ("ldd_cross_" + name + ".json"))
+    if inspect["returncode"] != 0:
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "failed to inspect cross executable linkage",
+            command=inspect["command"],
+            returncode=inspect["returncode"],
+            log=inspect["log"])
+
+    output = inspect["stdout"]
+    resolved = _linux_resolved_library(output, "libmpi_abi")
+    if resolved is None:
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "cross executable does not resolve libmpi_abi",
+            runtime_library_path=runtime_library_path,
+            inspect_log=inspect["log"])
+    if not _path_is_run_side_abi_library(
+            resolved, runtime_library_path, "mpi_abi"):
+        return _fail(
+            "cross_runtime_linkage_" + name,
+            "cross executable resolves libmpi_abi from the wrong directory",
+            resolved=resolved,
+            runtime_library_path=runtime_library_path,
+            inspect_log=inspect["log"])
+
+    return _pass(
+        "cross_runtime_linkage_" + name,
+        platform=platform.system(),
+        rewritten=False,
+        resolved=resolved,
+        runtime_library_path=runtime_library_path,
+        inspect_log=inspect["log"])
+
+
+def _darwin_otool_install_name(line):
+    """Extract an install name from one otool -L dependency line.
+
+    otool prints dependency lines as:
+
+        <install name> (compatibility version ..., current version ...)
+
+    The install name itself may contain spaces, so splitting on the
+    first whitespace would silently skip rewrites for perfectly valid
+    installation prefixes.
+    """
+    match = re.match(r"^\s*(.*?)\s+\(compatibility version\b", line)
+    if match:
+        return match.group(1)
+    return line.strip()
+
+
+def _linux_library_line(output, library):
+    """Return the ldd match for a library name, if present."""
+    pattern = re.compile(
+        r"^\s*{0}(?:[.][^\s]*)?\s+=>\s+(.*?)"
+        r"(?:\s+\(0x[0-9A-Fa-f]+\)|\s*$)".format(re.escape(library)))
+    for line in output.splitlines():
+        match = pattern.search(line)
+        if match:
+            return match
+    return None
+
+
+def _linux_resolved_library(output, library):
+    """Return the resolved path for a library from ldd output."""
+    match = _linux_library_line(output, library)
+    if match:
+        value = match.group(1)
+        return None if value == "not found" else value
+    return None
 
 
 def _showme_words(mpicc_abi, option, dirs, env, name):
@@ -5655,6 +7260,20 @@ def _parse_c_header_prototypes(header):
     return prototypes
 
 
+def _parse_c_header_typedef_names(header):
+    """Parse public MPI typedef names from a generated ABI header."""
+    text = _remove_c_comments(_read_text(header))
+    names = set()
+    simple_re = re.compile(r"\btypedef\b[^;]*?\b(MPI_[A-Za-z0-9_]+)\s*;")
+    function_re = re.compile(
+        r"\btypedef\b[^;]*?\(\s*(MPI_[A-Za-z0-9_]+)\s*\)\s*\(")
+    struct_alias_re = re.compile(r"(?m)^\s*}\s*(MPI_[A-Za-z0-9_]+)\s*;")
+    names.update(simple_re.findall(text))
+    names.update(function_re.findall(text))
+    names.update(struct_alias_re.findall(text))
+    return names
+
+
 def _parse_c_header_deprecated_functions(srcdir):
     """Read the generator's authoritative deprecated C function list."""
     c_header = srcdir / "ompi" / "mpi" / "bindings" / "c_header.py"
@@ -5699,6 +7318,46 @@ def _parse_c_signature(signature):
         "args": _normalize_c_signature_text(match.group("args")),
         "signature": signature,
     }
+
+
+def _split_c_parameter_list(args):
+    """Split a simple C parameter list into individual parameters."""
+    args = _normalize_c_signature_text(args)
+    if args == "void":
+        return []
+    return [item.strip() for item in args.split(",")]
+
+
+def _normalize_c_parameter_type(parameter):
+    """Return a parameter type spelling without its non-ABI name.
+
+    Cross-implementation header checks must compare ABI-relevant C
+    types, not parameter names.  They also need to treat equivalent
+    prototype spellings such as int values[] and int *values as the
+    same pointer type.
+    """
+    parameter = _normalize_c_signature_text(parameter)
+    parameter = re.sub(
+        r"\s+[A-Za-z_][A-Za-z0-9_]*\s*\[\]$", "*", parameter)
+    parameter = re.sub(
+        r"\s*\*\s*[A-Za-z_][A-Za-z0-9_]*$", "*", parameter)
+    parameter = re.sub(
+        r"\s+[A-Za-z_][A-Za-z0-9_]*$", "", parameter)
+    return _normalize_c_signature_text(parameter)
+
+
+def _normalized_c_parameter_types(args):
+    """Return ABI-relevant parameter types for a C prototype."""
+    return tuple(
+        _normalize_c_parameter_type(parameter)
+        for parameter in _split_c_parameter_list(args)
+    )
+
+
+def _normalize_c_typedef_reference(type_name):
+    """Return the typedef name referenced by a metadata C type string."""
+    type_name = _normalize_c_parameter_type(type_name)
+    return type_name.rstrip("*").strip()
 
 
 def _standard_abi_expected_signatures(srcdir):
@@ -5830,8 +7489,14 @@ def _metadata_c_api_header_check(manifest, mpi_prototypes, excluded_names):
         non_abi_absent_count=len(non_abi_absent))
 
 
-def _signature_comparison_check(prototypes, expected_signatures):
+def _signature_comparison_check(
+        prototypes, expected_signatures,
+        check_name="installed_c_header_signature_semantics",
+        compare_parameter_names=True,
+        tolerated_extra_names=None):
     """Compare installed header prototypes against generated signatures."""
+    if tolerated_extra_names is None:
+        tolerated_extra_names = set()
     missing = []
     mismatches = []
     for name, expected in sorted(expected_signatures.items()):
@@ -5839,8 +7504,14 @@ def _signature_comparison_check(prototypes, expected_signatures):
         if actual is None:
             missing.append(name)
             continue
-        if (actual["return_type"] != expected["return_type"]
-                or actual["args"] != expected["args"]):
+        if compare_parameter_names:
+            args_match = actual["args"] == expected["args"]
+        else:
+            args_match = (
+                _normalized_c_parameter_types(actual["args"]) ==
+                _normalized_c_parameter_types(expected["args"])
+            )
+        if actual["return_type"] != expected["return_type"] or not args_match:
             mismatches.append({
                 "name": name,
                 "expected": expected["signature"],
@@ -5851,11 +7522,16 @@ def _signature_comparison_check(prototypes, expected_signatures):
         name for name in prototypes
         if name not in expected_signatures and
         (name.startswith("MPI_") or name.startswith("PMPI_"))
+        and name not in tolerated_extra_names
+    )
+    tolerated_extra = sorted(
+        name for name in prototypes
+        if name not in expected_signatures and name in tolerated_extra_names
     )
 
     if missing or mismatches or extra:
         return _fail(
-            "installed_c_header_signature_semantics",
+            check_name,
             "standard ABI header signatures differ from MPI C signatures",
             checked=len(expected_signatures),
             missing=missing[:20],
@@ -5863,27 +7539,47 @@ def _signature_comparison_check(prototypes, expected_signatures):
             mismatches=mismatches[:20],
             mismatch_count=len(mismatches),
             extra=extra[:20],
-            extra_count=len(extra))
+            extra_count=len(extra),
+            tolerated_extra=tolerated_extra,
+            tolerated_extra_count=len(tolerated_extra))
 
-    return _pass("installed_c_header_signature_semantics",
-                 checked=len(expected_signatures))
+    return _pass(
+        check_name,
+        checked=len(expected_signatures),
+        tolerated_extra=tolerated_extra,
+        tolerated_extra_count=len(tolerated_extra))
 
 
-def _non_abi_absence_check(prototypes, excluded_names):
+def _non_abi_absence_check(
+        prototypes, excluded_names,
+        check_name="installed_c_header_non_abi_absence",
+        tolerated_exposed_names=None):
     """Ensure APIs excluded from the standard ABI are not exposed."""
+    if tolerated_exposed_names is None:
+        tolerated_exposed_names = set()
     exposed = [
         name for name in sorted(prototypes)
         if (name.startswith("MPI_") or name.startswith("PMPI_"))
-        and name in excluded_names
+        and name in excluded_names and name not in tolerated_exposed_names
+    ]
+    tolerated_exposed = [
+        name for name in sorted(prototypes)
+        if (name.startswith("MPI_") or name.startswith("PMPI_"))
+        and name in excluded_names and name in tolerated_exposed_names
     ]
     if exposed:
         return _fail(
-            "installed_c_header_non_abi_absence",
+            check_name,
             "non-ABI C APIs are exposed by the standard ABI header",
             exposed=exposed[:20],
-            exposed_count=len(exposed))
-    return _pass("installed_c_header_non_abi_absence",
-                 checked=len(excluded_names))
+            exposed_count=len(exposed),
+            tolerated_exposed=tolerated_exposed,
+            tolerated_exposed_count=len(tolerated_exposed))
+    return _pass(
+        check_name,
+        checked=len(excluded_names),
+        tolerated_exposed=tolerated_exposed,
+        tolerated_exposed_count=len(tolerated_exposed))
 
 
 def _prototype_pair_check(prototypes, excluded_names):
@@ -5914,16 +7610,6 @@ def _prototype_pair_check(prototypes, excluded_names):
                  pmpi_count=len(pmpi_names))
 
 
-def _libmpi_abi_search_names():
-    """Return likely libmpi_abi filenames for the current platform."""
-    system = platform.system()
-    if system == "Darwin":
-        return ("libmpi_abi.dylib", "libmpi_abi.0.dylib")
-    if system == "Linux":
-        return ("libmpi_abi.so", "libmpi_abi.so.0")
-    return ("libmpi_abi.so", "libmpi_abi.dylib", "libmpi_abi.a")
-
-
 def _installed_libmpi_abi_path(tools, dirs, env):
     """Locate installed libmpi_abi using overrides and wrapper metadata."""
     library_override = tools["paths"]["library"]
@@ -5937,10 +7623,12 @@ def _installed_libmpi_abi_path(tools, dirs, env):
     libdirs.extend(showme_libdirs)
 
     for libdir in libdirs:
-        for name in _libmpi_abi_search_names():
-            candidate = Path(libdir) / name
-            if candidate.exists():
-                return candidate
+        directory = Path(libdir)
+        if not directory.exists():
+            continue
+        candidates = _abi_library_candidates(directory, "mpi_abi")
+        if candidates:
+            return candidates[0]
     return None
 
 
@@ -6458,7 +8146,7 @@ def _run_installed_fortran_runtime_probes(srcdir, manifest, tools, dirs,
 
         run_command = (
             [mpirun] + launcher_args +
-            ["--np", str(rank_count), str(executable)]
+            ["-n", str(rank_count), str(executable)]
         )
         run_result = _command_result(
             "run_" + name,
@@ -6467,6 +8155,24 @@ def _run_installed_fortran_runtime_probes(srcdir, manifest, tools, dirs,
             env,
             dirs["logs"] / ("run_" + name + ".json"))
         if run_result["returncode"] != 0:
+            if run_result["timed_out"]:
+                _append_check(checks, _fail(
+                    check_name,
+                    "installed Fortran runtime probe timed out",
+                    phase="run",
+                    language=language,
+                    configured=manifest["configuration"]["fortran"][
+                        language],
+                    source=str(source),
+                    executable=str(executable),
+                    rank_count=rank_count,
+                    command=run_result["command"],
+                    returncode=run_result["returncode"],
+                    timeout=run_result["timeout"],
+                    timed_out=run_result["timed_out"],
+                    compile_log=compile_result["log"],
+                    run_log=run_result["log"]), progress)
+                continue
             skip_reason = case.get("skip_exit_codes", {}).get(
                 run_result["returncode"])
             if skip_reason is not None:
@@ -6680,7 +8386,7 @@ def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
 
         run_command = (
             [mpirun] + launcher_args +
-            ["--np", str(rank_count), str(executable)]
+            ["-n", str(rank_count), str(executable)]
         )
         run_result = _command_result(
             "run_" + name,
@@ -6688,6 +8394,21 @@ def _run_installed_c_probe_cases(srcdir, manifest, tools, dirs, header_names,
             dirs["base"],
             env,
             dirs["logs"] / ("run_" + name + ".json"))
+        if run_result["timed_out"]:
+            _append_check(checks, _fail(
+                check_name,
+                "installed C ABI probe runtime timed out",
+                phase="run",
+                source=str(source),
+                executable=str(executable),
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                timeout=run_result["timeout"],
+                timed_out=run_result["timed_out"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"]), progress)
+            continue
         skip_reason = case.get("skip_exit_codes", {}).get(
             run_result["returncode"])
         if skip_reason is not None:
@@ -6883,6 +8604,10 @@ def _tool_info(mode):
         mpich_install.get("paths", {}).get("library_dirs", [])
         if mpich_install is not None else []
     )
+    mpich_device = (
+        mpich_install.get("evidence", {}).get("mpich_device")
+        if mpich_install is not None else None
+    )
     open_mpi_paths = {
         "include": (
             os.environ.get("OMPI_ABI_TEST_INCLUDE_PATH") or
@@ -6942,6 +8667,7 @@ def _tool_info(mode):
                     "mpi_forum_abi_available")
                 if mpich_install is not None else None
             ),
+            "device": mpich_device,
             "unsuitable_reasons": (
                 mpich_install.get("evidence", {}).get("unsuitable_reasons")
                 if mpich_install is not None else None
@@ -6968,6 +8694,8 @@ def _tool_info(mode):
             "direction_raw_value": cross_directions["raw_value"],
             "open_mpi_paths": open_mpi_paths,
             "mpich_paths": mpich_paths,
+            "mpich_transport_env": _mpich_transport_runtime_env(
+                mpich_device),
         }
     if mode != "check-abi-mpich":
         tools.pop("mpich")
@@ -7090,13 +8818,17 @@ def _cross_environment_report(tools, dirs):
     open_mpi = tools["open_mpi"]
     mpich = tools["mpich"]
     cross = tools["cross"]
+    directions = _cross_direction_summary(tools)
     report = {
         "platform": cross["platform"],
         "runtime_loader": cross["runtime_loader"],
         "directions": cross["directions"],
         "direction_raw_value": cross["direction_raw_value"],
         "direction_invalid_values": cross["direction_invalid_values"],
+        "direction_details": directions,
         "discovery": tools.get("discovery", {}),
+        "mpich_device": mpich.get("device"),
+        "mpich_transport_env": cross["mpich_transport_env"],
         "paths": {
             "open_mpi": cross["open_mpi_paths"],
             "mpich": cross["mpich_paths"],
@@ -7186,13 +8918,476 @@ def _cross_direction_summary(tools):
     return directions
 
 
-def run_cross_checks(tools, outdir, progress=None):
-    """Run 12A cross-test discovery checks.
+def _cross_native_sanity_details(tools):
+    """Describe native ABI compile/run checks for both implementations."""
+    return {
+        "open_mpi": {
+            "implementation": "open_mpi",
+            "compile_wrapper": tools["open_mpi"]["mpicc_abi"],
+            "launcher": tools["open_mpi"]["mpirun"],
+            "library_path": tools["cross"]["open_mpi_paths"]["library"],
+            "runtime_loader": tools["cross"]["runtime_loader"],
+            "launcher_args": tools["cross"]["open_mpi_paths"][
+                "launcher_args"],
+        },
+        "mpich": {
+            "implementation": "mpich",
+            "compile_wrapper": tools["mpich"]["mpicc"],
+            "launcher": tools["mpich"]["mpirun"],
+            "library_path": tools["cross"]["mpich_paths"]["library"],
+            "runtime_loader": tools["cross"]["runtime_loader"],
+            "launcher_args": tools["cross"]["mpich_paths"]["launcher_args"],
+        },
+    }
 
-    Actual cross-implementation MPI probes are deliberately left to
-    Chunk 12B.  These checks make `check-abi-mpich` useful now by
-    validating tool discovery and recording a complete environment
-    description without pretending that cross runtime coverage exists.
+
+def _cross_native_sanity_source():
+    """Return the C source for native ABI runtime sanity checks."""
+    return """\
+#include "mpi.h"
+
+#ifndef MPI_H_ABI
+#error "standard ABI mpi.h was not used"
+#endif
+
+int main(int argc, char **argv)
+{
+    int ret = MPI_Init(&argc, &argv);
+    if (MPI_SUCCESS != ret) {
+        return 1;
+    }
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret) {
+        return 2;
+    }
+    return 0;
+}
+"""
+
+
+def _cross_native_sanity_check(tools, dirs, implementation, details,
+                               progress=None):
+    """Compile and run one implementation against its own ABI runtime.
+
+    Cross-implementation failures are only meaningful if each selected
+    MPI implementation can first run the smallest ABI program with its
+    own wrapper, launcher, and library path.  This preflight turns a
+    broken local MPICH/Open MPI install or launcher environment into a
+    single prerequisite failure instead of many timeout-looking cross
+    failures.
+    """
+    check_name = "cross_native_" + implementation + "_init_finalize"
+    if progress is not None:
+        progress.start(check_name)
+
+    source = dirs["src"] / (check_name + ".c")
+    executable = dirs["bin"] / check_name
+    _write_text(source, _cross_native_sanity_source())
+
+    compile_command = (
+        [details["compile_wrapper"]] +
+        _cross_compile_overrides(tools, implementation) +
+        [str(source), "-o", str(executable)]
+    )
+    compile_result = _command_result(
+        "compile_" + check_name,
+        compile_command,
+        dirs["base"],
+        os.environ.copy(),
+        dirs["logs"] / ("compile_" + check_name + ".json"))
+    if compile_result["returncode"] != 0:
+        return _fail(
+            check_name,
+            "native MPI ABI Init/Finalize sanity compile failed",
+            phase="compile",
+            implementation=implementation,
+            source=str(source),
+            executable=str(executable),
+            command=compile_result["command"],
+            returncode=compile_result["returncode"],
+            log=compile_result["log"])
+
+    run_env = _runtime_env_for_implementation(
+        tools, implementation, details["library_path"],
+        details["runtime_loader"], replace=True)
+    run_command = (
+        [details["launcher"]] +
+        _cross_launcher_args(details) +
+        ["-n", "1", str(executable)]
+    )
+    run_result = _command_result(
+        "run_" + check_name,
+        run_command,
+        dirs["base"],
+        run_env,
+        dirs["logs"] / ("run_" + check_name + ".json"))
+    if run_result["returncode"] != 0:
+        return _fail(
+            check_name,
+            "native MPI ABI Init/Finalize sanity run failed",
+            phase="run",
+            implementation=implementation,
+            source=str(source),
+            executable=str(executable),
+            command=run_result["command"],
+            returncode=run_result["returncode"],
+            timed_out=run_result["timed_out"],
+            timeout=run_result["timeout"],
+            compile_log=compile_result["log"],
+            run_log=run_result["log"])
+
+    return _pass(
+        check_name,
+        phase="run",
+        implementation=implementation,
+        source=str(source),
+        executable=str(executable),
+        compile_command=compile_result["command"],
+        run_command=run_result["command"],
+        compile_log=compile_result["log"],
+        run_log=run_result["log"])
+
+
+def _cross_required_native_sanity_implementations(directions):
+    """Return implementations that participate in selected directions."""
+    required = set()
+    for details in directions.values():
+        required.add(details["compile_implementation"])
+        required.add(details["run_implementation"])
+    return sorted(required)
+
+
+def _cross_native_sanity_checks(tools, dirs, directions, progress=None):
+    """Run native ABI launcher sanity checks for selected implementations.
+
+    Direction filtering is meant to let operators test one cross path at
+    a time, so do not require implementations that are absent from the
+    selected directions.  For every implementation that does participate,
+    check its own wrapper, launcher, and ABI runtime together before
+    cross-launching anything.  This keeps a broken local Open MPI or
+    MPICH install from being misdiagnosed as a cross-ABI failure.
+    """
+    checks = []
+    required = set(_cross_required_native_sanity_implementations(directions))
+    for implementation, details in _cross_native_sanity_details(
+            tools).items():
+        if implementation not in required:
+            continue
+        _append_check(checks, _cross_native_sanity_check(
+            tools, dirs, implementation, details, progress), progress)
+    return checks
+
+
+def _cross_direction_header_check(manifest, tools, direction, details,
+                                  progress=None):
+    """Return compile-side ABI header declarations for one direction."""
+    check_name = "cross_direction_" + direction + "_probe_generation"
+    header = _cross_compile_header(tools, details["compile_implementation"])
+    if header is None:
+        if progress is not None:
+            progress.start(check_name)
+        return None, None, [_fail(
+            check_name,
+            "cross compile-side ABI header is unavailable",
+            compile_implementation=details["compile_implementation"],
+            compile_wrapper=details["compile_wrapper"])]
+
+    declared_names = _parse_header_constant_names(header)
+    include_fortran = _fortran_bindings_enabled(manifest)
+    if progress is not None:
+        progress.start(check_name)
+    generation_check = _runtime_probe_generation_check(
+        manifest, include_fortran, declared_names, check_name)
+    checks = [generation_check]
+    if generation_check["result"] != "PASS":
+        return header, None, checks
+
+    expected_names = _runtime_probe_constant_names(
+        manifest, include_fortran, declared_names)
+    missing_names = sorted(expected_names - declared_names)
+    constants_check_name = (
+        "cross_direction_" + direction + "_metadata_constants"
+    )
+    if progress is not None:
+        progress.start(constants_check_name)
+    if missing_names:
+        checks.append(_fail(
+            constants_check_name,
+            "cross compile-side ABI header is missing probe constants",
+            header=str(header),
+            compile_implementation=details["compile_implementation"],
+            missing=missing_names[:20],
+            missing_count=len(missing_names),
+            expected_count=len(expected_names),
+            declared_count=len(declared_names)))
+        return header, None, checks
+
+    checks.append(_pass(
+        constants_check_name,
+        header=str(header),
+        compile_implementation=details["compile_implementation"],
+        checked=len(expected_names),
+        declared_count=len(declared_names)))
+    return header, declared_names, checks
+
+
+def _run_cross_direction_probe_cases(srcdir, manifest, tools, dirs,
+                                     direction, details, declared_names,
+                                     cases, progress=None):
+    """Compile and launch ABI probes for one cross-implementation direction."""
+    checks = []
+    compile_wrapper = details["compile_wrapper"]
+    launcher = details["launcher"]
+    compile_implementation = details["compile_implementation"]
+    run_implementation = details["run_implementation"]
+    runtime_library_path = details["runtime_library_path"]
+    runtime_loader = details["runtime_loader"]
+    compile_env = os.environ.copy()
+    run_env = _runtime_env_for_implementation(
+        tools, run_implementation, runtime_library_path, runtime_loader,
+        replace=True)
+    launcher_args = _cross_launcher_args(details)
+    compile_overrides = _cross_compile_overrides(
+        tools, compile_implementation)
+    compile_extra_flags = _cross_compile_extra_flags(details)
+
+    for case in cases:
+        name = direction + "_" + case["name"]
+        check_name = "cross_probe_" + name
+        if (case.get("requires_fortran")
+                and not _fortran_bindings_enabled(manifest)):
+            if progress is not None:
+                progress.start(check_name)
+            _append_check(checks, _skip(
+                check_name,
+                SKIP_FORTRAN_BINDINGS_DISABLED,
+                phase="configure",
+                direction=direction), progress)
+            continue
+        feature = case.get("requires_feature")
+        if feature is not None:
+            feature_info = _optional_feature_info(manifest, feature)
+            if feature_info["enabled"] is False:
+                if progress is not None:
+                    progress.start(check_name)
+                _append_check(checks, _skip(
+                    check_name,
+                    _optional_feature_skip_reason(feature),
+                    phase="configure",
+                    direction=direction,
+                    feature=feature,
+                    feature_state=feature_info), progress)
+                continue
+
+        rank_count = tools["rank_counts"]["np{0}".format(
+            case["rank_count"])]
+        source = dirs["src"] / (name + ".c")
+        executable = dirs["bin"] / name
+        try:
+            body = _prepare_installed_c_probe_body(
+                srcdir, case, manifest, declared_names)
+            probe_source = _c_probe_source(srcdir, case, body, rank_count)
+        except RuntimeError as exc:
+            if progress is not None:
+                progress.start(check_name)
+            _append_check(checks, _fail(
+                check_name,
+                "cross C ABI probe source is unavailable",
+                phase="source",
+                direction=direction,
+                error=str(exc)), progress)
+            continue
+        _write_text(source, probe_source)
+
+        compile_command = (
+            [compile_wrapper] + compile_overrides + compile_extra_flags +
+            [str(source), "-o", str(executable)]
+        )
+        if progress is not None:
+            progress.start(check_name)
+        compile_result = _command_result(
+            "compile_cross_" + name,
+            compile_command,
+            dirs["base"],
+            compile_env,
+            dirs["logs"] / ("compile_cross_" + name + ".json"))
+        if compile_result["returncode"] != 0:
+            _append_check(checks, _fail(
+                check_name,
+                "cross C ABI probe compile failed",
+                phase="compile",
+                direction=direction,
+                compile_implementation=compile_implementation,
+                run_implementation=run_implementation,
+                source=str(source),
+                executable=str(executable),
+                command=compile_result["command"],
+                returncode=compile_result["returncode"],
+                log=compile_result["log"]), progress)
+            continue
+
+        rewrite_result = _cross_verify_or_rewrite_abi_libraries(
+            executable, dirs, run_env, name, runtime_library_path)
+        if rewrite_result["result"] != "PASS":
+            detail = {
+                "phase": "runtime_linkage",
+                "direction": direction,
+                "compile_implementation": compile_implementation,
+                "run_implementation": run_implementation,
+                "source": str(source),
+                "executable": str(executable),
+                "compile_log": compile_result["log"],
+                "runtime_linkage": rewrite_result["details"],
+            }
+            if rewrite_result["result"] == "SKIP":
+                _append_check(checks, _skip(
+                    check_name,
+                    rewrite_result["skip_reason"],
+                    **detail), progress)
+            else:
+                _append_check(checks, _fail(
+                    check_name,
+                    rewrite_result["details"]["message"],
+                    **detail), progress)
+            continue
+
+        run_command = (
+            [launcher] + launcher_args +
+            ["-n", str(rank_count), str(executable)]
+        )
+        run_result = _command_result(
+            "run_cross_" + name,
+            run_command,
+            dirs["base"],
+            run_env,
+            dirs["logs"] / ("run_cross_" + name + ".json"))
+        if run_result["timed_out"]:
+            _append_check(checks, _fail(
+                check_name,
+                "cross C ABI probe runtime timed out",
+                phase="run",
+                direction=direction,
+                compile_implementation=compile_implementation,
+                run_implementation=run_implementation,
+                source=str(source),
+                executable=str(executable),
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                timeout=run_result["timeout"],
+                timed_out=run_result["timed_out"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"],
+                runtime_linkage=rewrite_result["details"]), progress)
+            continue
+        skip_reason = case.get("skip_exit_codes", {}).get(
+            run_result["returncode"])
+        if skip_reason is not None:
+            _append_check(checks, _skip(
+                check_name,
+                skip_reason,
+                phase="run",
+                direction=direction,
+                compile_implementation=compile_implementation,
+                run_implementation=run_implementation,
+                source=str(source),
+                executable=str(executable),
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"]), progress)
+            continue
+        if run_result["returncode"] != 0:
+            _append_check(checks, _fail(
+                check_name,
+                "cross C ABI probe runtime failed",
+                phase="run",
+                direction=direction,
+                compile_implementation=compile_implementation,
+                run_implementation=run_implementation,
+                source=str(source),
+                executable=str(executable),
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"],
+                runtime_linkage=rewrite_result["details"]), progress)
+            continue
+
+        _append_check(checks, _pass(
+            check_name,
+            phase="run",
+            direction=direction,
+            compile_implementation=compile_implementation,
+            run_implementation=run_implementation,
+            source=str(source),
+            executable=str(executable),
+            rank_count=rank_count,
+            compile_command=compile_result["command"],
+            run_command=run_result["command"],
+            compile_log=compile_result["log"],
+            run_log=run_result["log"],
+            runtime_linkage=rewrite_result["details"]), progress)
+
+    return checks
+
+
+def _cross_direction_result(direction, details, preflight_checks,
+                            probe_checks):
+    """Return one aggregate per-direction cross probe result."""
+    probe_counts = _check_counts(probe_checks)
+    preflight_counts = _check_counts(preflight_checks)
+    result = "PASS"
+    if probe_counts.get("FAIL", 0) or preflight_counts.get("FAIL", 0):
+        result = "FAIL"
+    elif probe_counts.get("PASS", 0) == 0:
+        result = "SKIP"
+    payload = {
+        "direction": direction,
+        "details": details,
+        "preflight_status": preflight_counts,
+        "probe_status": probe_counts,
+        "preflight_count": len(preflight_checks),
+        "probe_count": len(probe_checks),
+    }
+    name = "cross_direction_" + direction + "_summary"
+    if result == "FAIL":
+        return _fail(name, "cross direction probes failed", **payload)
+    if result == "SKIP":
+        return _skip(name, SKIP_CROSS_PROBES_NOT_PASSED, **payload)
+    return _pass(name, **payload)
+
+
+def _cross_summary_result(direction_results, directions):
+    """Return the aggregate cross-direction execution result."""
+    counts = _check_counts(direction_results)
+    payload = {
+        "directions": directions,
+        "direction_status": counts,
+    }
+    if counts.get("FAIL", 0):
+        return _fail(
+            "cross_direction_summary",
+            "one or more cross directions failed",
+            **payload)
+    if counts.get("PASS", 0):
+        return _pass("cross_direction_summary", **payload)
+    return _skip(
+        "cross_direction_summary",
+        SKIP_CROSS_PROBES_NOT_PASSED,
+        **payload)
+
+
+def run_cross_checks(manifest, srcdir, tools, outdir, progress=None):
+    """Run cross-implementation ABI checks.
+
+    The MPICH mode reuses the same generated executable-per-case model
+    as check-abi, but compiles with one implementation's MPI Forum ABI
+    wrapper and launches against the other implementation's ABI runtime.
+    Preflight checks keep header, wrapper, optional-feature, and probe
+    table drift separate from genuine cross-runtime ABI failures.
     """
     dirs = _cross_test_dirs(outdir)
     checks = []
@@ -7206,16 +9401,114 @@ def run_cross_checks(tools, outdir, progress=None):
         environment=environment,
         direction_count=len(directions)), progress)
 
-    for direction, details in directions.items():
-        _append_check(checks, _skip(
-            "cross_direction_" + direction,
-            SKIP_PHASE12B_CROSS_PROBES_DEFERRED,
-            **details), progress)
+    native_checks = _cross_native_sanity_checks(
+        tools, dirs, directions, progress)
+    checks.extend(native_checks)
+    if any(check["result"] == "FAIL" for check in native_checks):
+        _append_check(checks, _fail(
+            "cross_native_sanity_summary",
+            "native MPI ABI Init/Finalize sanity checks failed",
+            check_status=_check_counts(native_checks)), progress)
+        return checks, environment
 
-    _append_check(checks, _pass(
-        "cross_direction_summary",
-        directions=directions,
-        deferred_direction_count=len(directions)), progress)
+    if progress is not None:
+        progress.start("cross_linkage_diagnostics_available")
+    _append_check(checks, _cross_linkage_diagnostic_check(), progress)
+
+    header_checks = _cross_header_semantic_checks(
+        srcdir, manifest, tools, progress)
+    checks.extend(header_checks)
+
+    wrapper_checks = {}
+    for implementation in ("open_mpi", "mpich"):
+        if progress is not None:
+            progress.start("cross_wrapper_" + implementation + "_intent")
+        wrapper_check = _cross_wrapper_intent_check(
+            tools, dirs, implementation, {
+                "compile_wrapper": (
+                    tools["open_mpi"]["mpicc_abi"]
+                    if implementation == "open_mpi"
+                    else tools["mpich"]["mpicc"]
+                )
+            })
+        wrapper_checks[implementation] = wrapper_check
+        _append_check(checks, wrapper_check, progress)
+
+    direction_results = []
+    for direction, details in directions.items():
+        preflight_checks = [
+            wrapper_checks[details["compile_implementation"]],
+            wrapper_checks[details["run_implementation"]],
+        ]
+        header, declared_names, header_preflight = _cross_direction_header_check(
+            manifest, tools, direction, details, progress)
+        preflight_checks.extend(header_preflight)
+        _extend_checks(checks, header_preflight, progress)
+        probe_checks = []
+        if declared_names is not None:
+            abi_probe_checks = _run_cross_direction_probe_cases(
+                srcdir, manifest, tools, dirs, direction, details,
+                declared_names, INSTALLED_C_ABI_PROBES, progress)
+            probe_checks.extend(abi_probe_checks)
+
+            runtime_check_name = (
+                "cross_direction_" + direction +
+                "_runtime_api_probe_generation"
+            )
+            if progress is not None:
+                progress.start(runtime_check_name)
+            runtime_generation = _runtime_api_probe_generation_check(
+                srcdir, manifest, header, INSTALLED_C_RUNTIME_API_PROBES,
+                runtime_check_name)
+            _append_check(checks, runtime_generation, progress)
+            preflight_checks.append(runtime_generation)
+            if runtime_generation["result"] == "PASS":
+                runtime_probe_checks = _run_cross_direction_probe_cases(
+                    srcdir, manifest, tools, dirs, direction, details,
+                    declared_names, INSTALLED_C_RUNTIME_API_PROBES, progress)
+                probe_checks.extend(runtime_probe_checks)
+
+            callback_check_name = (
+                "cross_direction_" + direction +
+                "_callback_api_probe_generation"
+            )
+            if progress is not None:
+                progress.start(callback_check_name)
+            callback_generation = _runtime_api_probe_generation_check(
+                srcdir, manifest, header, INSTALLED_C_CALLBACK_PROBES,
+                callback_check_name)
+            _append_check(checks, callback_generation, progress)
+            preflight_checks.append(callback_generation)
+            callback_audit_name = (
+                "cross_direction_" + direction +
+                "_callback_api_coverage_audit"
+            )
+            if progress is not None:
+                progress.start(callback_audit_name)
+            callback_audit = _callback_api_coverage_audit(
+                manifest, header, INSTALLED_C_CALLBACK_PROBES,
+                callback_audit_name,
+                tolerated_legacy_names=(
+                    MPI_REMOVED_LEGACY_C_NAMES
+                    if details["compile_implementation"] == "mpich"
+                    else set()
+                ))
+            _append_check(checks, callback_audit, progress)
+            preflight_checks.append(callback_audit)
+            if callback_generation["result"] == "PASS":
+                callback_probe_checks = _run_cross_direction_probe_cases(
+                    srcdir, manifest, tools, dirs, direction, details,
+                    declared_names, INSTALLED_C_CALLBACK_PROBES, progress)
+                probe_checks.extend(callback_probe_checks)
+
+            checks.extend(probe_checks)
+        direction_result = _cross_direction_result(
+            direction, details, preflight_checks, probe_checks)
+        direction_results.append(direction_result)
+        _append_check(checks, direction_result, progress)
+
+    _append_check(checks, _cross_summary_result(
+        direction_results, directions), progress)
     return checks, environment
 
 
@@ -7226,8 +9519,8 @@ def _mode_skip_guidance(mode, skip_reason):
             return (
                 "MPICH MPI Forum ABI tools were not found.  Build MPICH "
                 "with MPI Forum ABI support, ensure mpicc_abi, mpi_abi.h, "
-                "libmpi_abi, and libpmpi_abi are installed, put MPICH on "
-                "PATH, or set MPICH_ABI_TEST_MPICC and "
+                "and libmpi_abi are installed, put MPICH on PATH, or set "
+                "MPICH_ABI_TEST_MPICC and "
                 "MPICH_ABI_TEST_MPIRUN.  See test/mpi-abi/README.md for "
                 "check-abi-mpich setup."
             )
@@ -7267,8 +9560,8 @@ def _mode_failure_guidance(mode, failure_reason):
             return (
                 "MPICH MPI Forum ABI tools were not found.  Build MPICH "
                 "with MPI Forum ABI support, ensure mpicc_abi, mpi_abi.h, "
-                "libmpi_abi, and libpmpi_abi are installed, put MPICH on "
-                "PATH, or set MPICH_ABI_TEST_MPICC and "
+                "and libmpi_abi are installed, put MPICH on PATH, or set "
+                "MPICH_ABI_TEST_MPICC and "
                 "MPICH_ABI_TEST_MPIRUN.  See test/mpi-abi/README.md for "
                 "check-abi-mpich setup."
             )
@@ -7298,6 +9591,12 @@ def _mode_failure_guidance(mode, failure_reason):
                 "Use both, mpich-to-ompi, ompi-to-mpich, "
                 "mpich_compile_open_mpi_run, or "
                 "open_mpi_compile_mpich_run."
+            )
+        if failure_reason == FAIL_CROSS_PROBES_NOT_EXECUTED:
+            return (
+                "No MPICH compatibility cross probes executed successfully.  "
+                "Inspect the per-probe SKIP reasons and command logs under "
+                "the ABI test output directory."
             )
     return None
 
@@ -7433,9 +9732,25 @@ def build_report(manifest, mode, srcdir, builddir, outdir, progress=None):
                 mpich_tools=tools["mpich"])
         else:
             cross_checks, cross_environment = run_cross_checks(
-                tools, outdir, progress)
+                manifest, srcdir, tools, outdir, progress)
             if any(check["result"] == "FAIL" for check in cross_checks):
                 result = "FAIL"
+            else:
+                cross_summary = next(
+                    (check for check in cross_checks
+                     if check["name"] == "cross_direction_summary"),
+                    None)
+                if (cross_summary is not None and
+                        cross_summary["result"] == "SKIP"):
+                    result = "FAIL"
+                    failure_guidance = _append_mode_failure(
+                        cross_checks,
+                        progress,
+                        "mpich_cross_probes_executed",
+                        FAIL_CROSS_PROBES_NOT_EXECUTED,
+                        "no MPICH compatibility cross probes executed "
+                        "successfully",
+                        cross_direction_summary=cross_summary)
 
     return {
         "mode": mode,
@@ -7578,6 +9893,17 @@ def write_outputs(manifest, report, outdir):
     return manifest_path, report_path, summary_path
 
 
+def _default_outdir(mode, builddir):
+    """Return the default generated-output directory for one mode."""
+    if mode in ("check-fast", "coverage"):
+        return builddir / "check-results"
+    if mode == "check-abi":
+        return builddir / "check-abi-results"
+    if mode == "check-abi-mpich":
+        return builddir / "check-abi-mpich-results"
+    return builddir / "check-results"
+
+
 def command(args):
     """Execute the parsed CLI command and return a shell exit status.
 
@@ -7588,11 +9914,12 @@ def command(args):
     """
     srcdir = Path(args.srcdir).resolve()
     builddir = Path(args.builddir).resolve()
+    mode = args.mode
     outdir = (
-        Path(args.outdir).resolve() if args.outdir else builddir / ".mpi-abi"
+        Path(args.outdir).resolve() if args.outdir
+        else _default_outdir(mode, builddir)
     )
     manifest = build_manifest(srcdir, builddir)
-    mode = args.mode
 
     if mode == "manifest":
         outdir.mkdir(parents=True, exist_ok=True)

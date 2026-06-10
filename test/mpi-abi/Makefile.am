@@ -98,46 +98,54 @@ EXTRA_DIST = \
 
 abi_test_runner = $(PYTHON) "$(srcdir)/mpi_abi_tests.py" \
         --srcdir "$(top_srcdir)" \
-        --builddir "$(abs_top_builddir)" \
-        --outdir "$(abs_builddir)/.mpi-abi"
+        --builddir "$(abs_top_builddir)"
+
+abi_fast_runner = $(abi_test_runner) \
+        --outdir "$(abs_builddir)/check-results"
+
+abi_check_runner = $(abi_test_runner) \
+        --outdir "$(abs_builddir)/check-abi-results"
+
+abi_mpich_runner = $(abi_test_runner) \
+        --outdir "$(abs_builddir)/check-abi-mpich-results"
 
 check-local:
 	@if test "$(PYTHON)" = ":"; then \
 	    echo "SKIP: Python is not available"; \
 	else \
-	    $(abi_test_runner) check-fast; \
+	    $(abi_fast_runner) check-fast; \
 	fi
 
 check-abi:
 	@if test "$(PYTHON)" = ":"; then \
 	    echo "SKIP: Python is not available"; \
 	else \
-	    $(abi_test_runner) check-abi; \
+	    $(abi_check_runner) check-abi; \
 	fi
 
 check-abi-mpich:
 	@if test "$(PYTHON)" = ":"; then \
 	    echo "SKIP: Python is not available"; \
 	else \
-	    $(abi_test_runner) check-abi-mpich; \
+	    $(abi_mpich_runner) check-abi-mpich; \
 	fi
 
 manifest:
 	@if test "$(PYTHON)" = ":"; then \
 	    echo "SKIP: Python is not available"; \
 	else \
-	    $(abi_test_runner) manifest; \
+	    $(abi_fast_runner) manifest; \
 	fi
 
 coverage:
 	@if test "$(PYTHON)" = ":"; then \
 	    echo "SKIP: Python is not available"; \
 	else \
-	    $(abi_test_runner) coverage; \
+	    $(abi_fast_runner) coverage; \
 	fi
 
 clean-local:
-	rm -rf .mpi-abi
+	rm -rf check-results check-abi-results check-abi-mpich-results
 
 distclean-local:
-	rm -rf .mpi-abi
+	rm -rf check-results check-abi-results check-abi-mpich-results

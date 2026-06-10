@@ -144,7 +144,7 @@ ABI support and an installed MPICH with MPI Forum ABI support.  MPICH's
 normal internal ABI is not the MPI Forum ABI.  For MPICH 5.0.x, this
 requires configuring MPICH with `--enable-mpi-abi` so that it installs
 the MPI Forum ABI wrapper (`mpicc_abi`), header (`mpi_abi.h`), and ABI
-libraries (`libmpi_abi` and `libpmpi_abi`).
+library (`libmpi_abi`).
 
 By default, put both installations' `bin` directories on `PATH`; the
 order does not matter because the runner classifies the discovered tools
@@ -175,18 +175,46 @@ The MPICH target records both standard ABI directions:
 * compile with MPICH and run against Open MPI's standard ABI runtime;
 * compile with Open MPI's `mpicc_abi` and run against MPICH.
 
-When the cross-direction runtime probes are enabled, the runner will
-sanitize the platform runtime library path for each launched executable.
-On Linux this means replacing `LD_LIBRARY_PATH`; on macOS it means
-replacing `DYLD_LIBRARY_PATH`.  The replacement contains only the
-selected run-side MPI library directory unless an explicit library-path
-override is supplied.  This avoids accidentally compiling with one MPI
-implementation and then loading a stale `libmpi` from the user's shell
-environment at run time.
+Before running those cross-direction probes, the runner compiles and
+launches a one-rank `MPI_Init` / `MPI_Finalize` program with each
+implementation's own MPI Forum ABI wrapper, launcher, and ABI library
+path.  These native sanity checks catch broken local launchers or
+MPI Forum ABI installations before their failures are reported as
+cross-implementation ABI mismatches.  For MPICH `ch4:ofi` builds, the
+runner defaults local MPICH launch jobs to `FI_PROVIDER=tcp` and selects
+a non-loopback, non-tunnel IPv4 interface when one is available.  This
+avoids libfabric selecting macOS `utun*` tunnel interfaces for one- and
+two-rank local jobs.  The shared-memory OFI provider is not the default
+because MPICH CH4:OFI may request endpoint capabilities that the local
+`shm` provider does not satisfy.  For MPICH `ch4:ucx` builds, the
+runner defaults local MPICH launch jobs to `UCX_TLS=self,sm` so local
+one- and two-rank tests do not require selecting an Ethernet interface.
 
-Until the MPICH probe execution work is complete, `make check-abi-mpich`
-reports the discovered environment and marks the per-direction runtime
-probes as deferred with a stable skip reason.
+For each launched cross-direction executable, the runner sanitizes the
+platform runtime library path.  On Linux this means replacing
+`LD_LIBRARY_PATH`; on macOS it means replacing `DYLD_LIBRARY_PATH` and
+rewriting the generated executable's ABI dylib load commands when the
+compile-side wrapper embedded absolute install names.  The replacement
+contains only the selected run-side MPI library directory unless an
+explicit library-path override is supplied.  This avoids accidentally
+compiling with one MPI implementation and then loading a stale `libmpi`
+from the user's shell environment at run time.
+
+The cross runner treats `libmpi_abi` as the MPI Forum ABI library.
+MPI-5.0 section 21.2.1 says ABI application binaries must not require
+more than `mpi_abi` as the sole direct MPI ABI dependency, while section
+16.2.1 still requires PMPI alternate entry points.  The tests therefore
+validate PMPI entry points as symbols and calls through `libmpi_abi`;
+they do not search for, require, rewrite, or otherwise reason about any
+other PMPI-specific runtime artifact.
+
+`make check-abi-mpich` runs parsed header semantic checks, wrapper
+compile/link intent checks, native MPI ABI sanity checks, and the C ABI
+converter, runtime API, and callback probe families in both cross
+directions.  It is expected to fail when either implementation's MPI
+Forum ABI header, wrapper, library layout, handle conversion, callback
+conversion, or runtime behavior diverges from the MPI standard ABI
+contract.
 
 Useful variables:
 
@@ -201,6 +229,16 @@ Useful variables:
 * `MPICH_ABI_TEST_INCLUDE_PATH`: MPICH include path override.
 * `MPICH_ABI_TEST_LIBRARY_PATH`: MPICH library path override.
 * `MPICH_ABI_TEST_LAUNCHER_ARGS`: extra MPICH launcher arguments.
+* `MPICH_ABI_TEST_OFI_PROVIDER`: MPICH OFI provider for MPICH-run jobs.
+  The default is `tcp`; `sockets` is also useful on local macOS hosts.
+  Set to `system` to leave `FI_PROVIDER` unchanged.
+* `MPICH_ABI_TEST_OFI_IFACE`: interface name for MPICH OFI `tcp` or
+  `sockets` provider runs.  If unset, the runner tries to select a
+  non-loopback, non-tunnel IPv4 interface.
+* `MPICH_ABI_TEST_UCX_TLS`: UCX transports for MPICH UCX runs.  The
+  default is `self,sm`; set to `system` to leave `UCX_TLS` unchanged.
+* `MPICH_ABI_TEST_UCX_NET_DEVICES`: optional UCX network-device
+  selection for MPICH UCX runs.
 * `OMPI_ABI_TEST_MPICH_DIRECTIONS`: comma-separated MPICH direction
   selection.  Valid values are `both`, `mpich-to-ompi`, and
   `ompi-to-mpich`.  Invalid values are setup failures because they
@@ -208,12 +246,16 @@ Useful variables:
 * `OMPI_ABI_TEST_DYNAMIC_PROCESS`: set to `0` to skip dynamic process
   probes in launch environments that cannot service spawn, connect,
   accept, or name-service operations.
+* `OMPI_ABI_TEST_TIMEOUT`: per-command timeout, in seconds, for compile,
+  inspection, and launcher jobs.  The default is 30 seconds.
 * `OMPI_ABI_TEST_NP1`: one-rank test size.
 * `OMPI_ABI_TEST_NP2`: two-rank test size.
 * `OMPI_ABI_TEST_TMPDIR`: temporary directory root.
 * `OMPI_ABI_TEST_KEEP`: preserve generated files and logs.
 
-The runner emits JSON and text reports under `.mpi-abi/` in the build
-tree.  Generated sources, executables, logs, and reports are removed by
-the local clean targets unless preservation is requested for a runner
-invocation.
+The runner emits JSON and text reports in mode-specific build-tree
+directories.  `make check` uses `check-results/`, `make check-abi` uses
+`check-abi-results/`, and `make check-abi-mpich` uses
+`check-abi-mpich-results/`.  Generated sources, executables, logs, and
+reports are removed by the local clean targets unless preservation is
+requested for a runner invocation.

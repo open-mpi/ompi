@@ -155,11 +155,18 @@ chunk adds installed runtime probes.
       with guidance pointing to `test/mpi-abi/README.md`.
       The fast suite includes helper self-checks for direction parsing,
       launcher override handling, and MPICH identity classification.
-- [ ] Chunk 12B: Add MPICH cross-direction probe reuse and semantic
+- [x] Chunk 12B: Add MPICH cross-direction probe reuse and semantic
       comparisons.
       Run converter, runtime, and supported callback probes in both
       compile/run directions; add parsed header comparisons, wrapper
       compile/link intent checks, and optional linkage diagnostics.
+      The runner now executes the Phase 8 converter probes, Phase 9 C
+      runtime probes, and Phase 10 C callback/lifetime probes in both
+      MPICH/Open MPI ABI directions after native ABI sanity checks.  It
+      also performs parsed semantic checks for the selected Open MPI and
+      MPICH ABI headers, parsed wrapper intent checks, platform linkage
+      diagnostics, optional-feature skips, and per-direction aggregate
+      summaries.
 - [ ] Chunk 13A: Add completion-gate audits and CI/distribution
       validation.
       Enforce completed-suite coverage for APIs and constants, callback
@@ -955,10 +962,12 @@ chunk adds installed runtime probes.
 - [x] Require MPICH MPI Forum ABI artifacts before selecting MPICH for
       ABI testing.
       MPICH candidates must provide an MPI Forum ABI C wrapper, normally
-      `mpicc_abi`, that defines `MPI_ABI` and links `libmpi_abi` and
-      `libpmpi_abi`; the install must also provide `mpi_abi.h` with ABI
-      version markers and installed ABI libraries.  A normal MPICH
-      `mpicc` and MPICH's internal ABI are not sufficient.
+      `mpicc_abi`, that defines `MPI_ABI` and links `libmpi_abi`; the
+      install must also provide `mpi_abi.h` with ABI version markers and
+      an installed ABI library.  A normal MPICH `mpicc` and MPICH's
+      internal ABI are not sufficient.  PMPI entry points are validated
+      through `libmpi_abi`; no separate PMPI-specific runtime artifact
+      is part of discovery, suitability, or linkage handling.
 - [x] Report why an MPI install is not suitable for ABI testing.
       Failed discovery must record stable, machine-readable evidence
       such as missing ABI wrapper flags, missing `mpi_abi.h`, missing
@@ -988,39 +997,54 @@ chunk adds installed runtime probes.
       Record Open MPI and MPICH compiler wrappers, launchers, versions,
       include paths, link paths, loader environment, temporary paths,
       and selected cross-test direction in the JSON and text reports.
-- [ ] Compile with MPICH and run with Open MPI's `libmpi_abi`.
+- [x] Add native ABI runtime sanity checks before cross probes.
+      Compile and launch a one-rank `MPI_Init` / `MPI_Finalize` program
+      with each implementation's own MPI Forum ABI wrapper, launcher,
+      and ABI library path.  If either native run fails, report a clear
+      prerequisite failure instead of producing many misleading
+      cross-direction timeout failures.
+- [x] Force stable MPICH transport defaults for local runs.
+      MPICH CH4:OFI may select tunnel interfaces such as macOS `utun*`
+      by default and then fail during `MPI_Finalize`; default OFI runs
+      to `FI_PROVIDER=tcp` and auto-select a non-loopback/non-tunnel IPv4
+      interface when possible.  For CH4:UCX, default local runs to
+      `UCX_TLS=self,sm`.  Provide explicit override variables for
+      provider, interface, and UCX transport selection.
+- [x] Compile with MPICH and run with Open MPI's `libmpi_abi`.
       Compile standard ABI source with MPICH's wrapper, force the
       runtime library path to Open MPI's installed `libmpi_abi`, launch
       with the selected launcher under a sanitized loader environment,
       and verify that handles, constants, and runtime results match
       standard ABI expectations.
-- [ ] Compile with Open MPI's `mpicc_abi` and run with MPICH.
+- [x] Compile with Open MPI's `mpicc_abi` and run with MPICH.
       Compile standard ABI source with Open MPI's ABI wrapper, force the
       runtime library path to MPICH's standard ABI library, launch with
       the selected launcher under a sanitized loader environment, and
       verify that handles, constants, and runtime results match standard
       ABI expectations.
-- [ ] Reuse Phase 8 converter probes in both cross directions.
+- [x] Reuse Phase 8 converter probes in both cross directions.
       Cross-run the converter probes before larger runtime probes so
       handle and constant mapping mismatches are detected with small,
       easy-to-triage executables.
-- [ ] Reuse Phase 9 runtime API probes in both cross directions.
+- [x] Reuse Phase 9 runtime API probes in both cross directions.
       Cross-run the C runtime API family probes that are portable across
       both implementations, with explicit skips for features disabled or
       not implemented by either side.
-- [ ] Reuse Phase 10 callback probes in both cross directions where
+- [x] Reuse Phase 10 callback probes in both cross directions where
       both implementations support the callback functionality.
-- [ ] Semantically compare Open MPI and MPICH standard ABI headers when
+- [x] Semantically compare Open MPI and MPICH standard ABI headers when
       MPICH mode is enabled.
       Compare constants, typedefs, prototypes, ABI helper declarations,
       and feature availability using parsed header data, not substring
       checks.  Differences from MPI standard ABI authority are hard
-      failures; unavailable optional features are stable skips.
-- [ ] Compare Open MPI and MPICH wrapper compile/link intent.
+      failures.  Optional runtime feature availability is handled by
+      stable skips in the probe execution path, not by tolerating
+      one-sided omissions from a standard ABI header.
+- [x] Compare Open MPI and MPICH wrapper compile/link intent.
       Verify that each wrapper exposes the expected standard ABI include
       path and ABI library link intent without treating a substring in
       an unrelated path as sufficient evidence.
-- [ ] Add optional cross-direction linkage diagnostics.
+- [x] Add optional cross-direction linkage diagnostics.
       Use platform tools when available to show which ABI library the
       generated executable will load; missing diagnostic tools should be
       skips, while a proven wrong linked library is a failure.
@@ -1028,10 +1052,11 @@ chunk adds installed runtime probes.
 - [x] Fail MPICH compatibility tests with stable machine-readable
       reasons when MPICH MPI Forum ABI tools are unavailable or the
       discovered MPICH install exposes only MPICH's internal ABI.
-- [~] Collect cross-test failures and emit a combined summary.
+- [x] Collect cross-test failures and emit a combined summary.
       Chunk 12A adds the cross-check result list and per-direction
-      infrastructure summary.  This remains partial until Chunk 12B adds
-      actual cross-compiled probe execution and failure collection.
+      infrastructure summary.  Chunk 12B adds actual cross-compiled
+      Phase 8 ABI/converter, Phase 9 runtime, and Phase 10 callback
+      probe execution with per-direction summaries.
       Do not stop at the first failed direction or first failed probe;
       record per-direction PASS/FAIL/SKIP status and emit aggregate
       counts suitable for CI tracking.
