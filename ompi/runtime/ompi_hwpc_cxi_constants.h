@@ -22,10 +22,10 @@
 #define MAX_COUNTER_NAME_SIZE 64
 #define MAX_COUNTER_GROUP_NAME_SIZE MAX_COUNTER_NAME_SIZE
 #define MAX_FILEPATH_LENGTH 256
-#define MAX_OUTPUT_REPORT_PREFIX_LENGTH 128
+#define MAX_OUTPUT_REPORT_PREFIX_LENGTH 256
 #define MAX_LINE_LENGTH 512
 
-// This enumeration serves as a list of predefined cxi hardware performance counter group mnemonic name ids
+/* This enumeration serves as a list of predefined cxi hardware performance counter group mnemonic name ids */
 typedef enum ompi_hwpc_cxi_predefined_counter_group_mnemonics {
     CXI_PERFSTATS,
     CXI_ERRSTATS,
@@ -39,13 +39,13 @@ typedef enum ompi_hwpc_cxi_predefined_counter_group_mnemonics {
     CXI_PCTREQRESPTRACKING,
     CXI_LINKRELIABILITY,
     CXI_CONGESTION,
-    // This serves as the number of counter groups. It must be last.
+    /* This serves as the number of counter groups. It must be last. */
     OMPI_HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUP_MNEMONICS
 } ompi_hwpc_cxi_predefined_counter_group_mnemonic_t;
 
-// This enumeration serves as a list of predefined cxi hardware performance counter mnemonic name ids
+/* This enumeration serves as a list of predefined cxi hardware performance counter mnemonic name ids */
 typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
-    // Address Translation Unit Performance Counters
+    /* Address Translation Unit Performance Counters */
     ATU_ATS_PRS_ODP_LATENCY,
     ATU_ATS_TRANS_LATENCY,
     ATU_CACHE_HIT_BASE_PAGE_SIZE,
@@ -63,7 +63,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     ATU_NIC_PRI_ODP_LATENCY,
     ATU_NTA_TRANS_LATENCY,
     ATU_ODP_REQUESTS,
-    // Command Queue Performance Counters
+    /* Command Queue Performance Counters */
     CQ_CQ_CMD_COUNTS,
     CQ_DMA_CMD_COUNTS,
     CQ_CYCLES_BLOCKED,
@@ -81,7 +81,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     CQ_NUM_TXQ_CMD_READS,
     CQ_TGT_WAITING_ON_READ,
     CQ_TX_WAITING_ON_READ,
-    // Event Engine Performance Counters
+    /* Event Engine Performance Counters */
     EE_ADDR_TRANS_PREFETCH_CNTR,
     EE_CBS_WRITTEN_CNTR,
     EE_DEFERRED_EQ_SWITCH_CNTR,
@@ -94,7 +94,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     EE_EVENTS_ENQUEUED_CNTR,
     EE_EXPIRED_CBS_WRITTEN_CNTR,
     EE_PARTIAL_CBS_WRITTEN_CNTR,
-    // HNI Performance Counters
+    /* HNI Performance Counters */
     HNI_DISCARD_CNTR,
     HNI_LLR_TX_REPLAY_EVENT,
     HNI_LLR_RX_REPLAY_EVENT,
@@ -109,7 +109,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     HNI_PFC_FIFO_OFLW_CNTR,
     HNI_PKTS_RECV_BY_TC,
     HNI_PKTS_SENT_BY_TC,
-    // High-Speed Network Interface Receive Performance Counters
+    /* High-Speed Network Interface Receive Performance Counters */
     HNI_RX_OK_27,
     HNI_RX_OK_35,
     HNI_RX_OK_64,
@@ -125,7 +125,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     HNI_RX_PAUSED,
     HNI_RX_PAUSED_STD,
     HNI_RX_STALL_IXE_PKTBUF,
-    // High-Speed Network Interface Transmit Performance Counters
+    /* High-Speed Network Interface Transmit Performance Counters */
     HNI_TX_OK_27,
     HNI_TX_OK_35,
     HNI_TX_OK_64,
@@ -139,7 +139,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     HNI_TX_OK_4096_to_8191,
     HNI_TX_OK_8192_to_max,
     HNI_TX_PAUSED,
-    // Inbound Transfer Engine Performance Counters
+    /* Inbound Transfer Engine Performance Counters */
     IXE_DISP_DMAWR_REQS,
     IXE_DMAWR_STALL_NP_CDT,
     IXE_DMAWR_STALL_P_CDT,
@@ -151,7 +151,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     IXE_TC_REQ_NO_ECN_PKTS,
     IXE_TC_RSP_ECN_PKTS,
     IXE_TC_RSP_NO_ECN_PKTS,
-    // List Processing Engine Performance Counters
+    /* List Processing Engine Performance Counters */
     LPE_APPEND_CMDS,
     LPE_APPEND_SUCCESS,
     LPE_CYC_RRQ_BLOCKED,
@@ -177,7 +177,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     LPE_STS_APP_MAX_ATTEMPTS,
     LPE_AMO_CMDS,
     LPE_FAMO_CMDS,
-    // Management Block Performance Counters
+    /* Management Block Performance Counters */
     MB_CMC_AXI_RD_REQUESTS,
     MB_CMC_AXI_WR_REQUESTS,
     MB_CRMC_AXI_RD_REQUESTS,
@@ -188,7 +188,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     MB_CRMC_RING_SBE,
     MB_CRMC_RING_WR_REQUESTS,
     MB_CRMC_WR_ERROR,
-    // Outbound Transfer Engine Performance Counters
+    /* Outbound Transfer Engine Performance Counters */
     OXE_CHANNEL_IDLE,
     OXE_MCU_MEAS,
     OXE_PTL_TX_GET_MSGS_TSC,
@@ -204,12 +204,12 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     OXE_STALL_TS_NO_IN_CRD_TSC,
     OXE_STALL_TS_NO_OUT_CRD_TSC,
     OXE_STALL_WR_CONFLICT_PKT_BUFF_BNK,
-    // Processor Interface Arbiters Performance Counters
+    /* Processor Interface Arbiters Performance Counters */
     PARBS_TARB_PI_POSTED_PKTS,
     PARBS_TARB_PI_POSTED_BLOCKED_CNT,
     PARBS_TARB_PI_NON_POSTED_PKTS,
     PARBS_TARB_PI_NON_POSTED_BLOCKED_CNT,
-    // Packet Connection and Tracking Performance Counters
+    /* Packet Connection and Tracking Performance Counters */
     PCT_CONN_SCT_OPEN,
     PCT_HOST_ACCESS_LATENCY,
     PCT_MST_HIT_ON_SOM,
@@ -224,11 +224,11 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     PCT_SCT_TIMEOUTS,
     PCT_SPT_TIMEOUTS,
     PCT_TRS_RSP_NACK_DROPS,
-    // Triggered Operations Performance Counters
+    /* Triggered Operations Performance Counters */
     TOU_CT_CMD_COUNTS,
     TOU_NUM_LIST_REBUILDS,
     TOU_NUM_TRIG_CMDS,
-    // Retry-Handler Performance Counters
+    /* Retry-Handler Performance Counters */
     SCT_TIMEOUTS,
     SPT_TIMEOUTS,
     SPT_TIMEOUTS_U,
@@ -244,7 +244,7 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonics {
     PKTS_CANCELLED_U,
     SCT_IN_USE,
     TCT_TIMEOUTS,
-    // This serves as the number of counters. It must be last.
+    /* This serves as the number of counters. It must be last. */
     OMPI_HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS
 } ompi_hwpc_cxi_predefined_counter_mnemonic_t;
 
@@ -255,10 +255,10 @@ typedef struct ompi_hwpc_cxi_counter_desc_t {
     bool is_per_cxi_device;
     bool is_retry_handler_counter;
     bool is_per_category;
-    // number of categories, if is_per_category is true
+    /* Number of categories, if is_per_category is true */
     int num_categories;
-    // name of category, if is_per_category is true
-    const char* category_name;      // e.g. traffic-class, command-type, etc.
+    /* Name of category, if is_per_category is true */
+    const char* category_name;      /* e.g. traffic-class, command-type, etc. */
     
 } ompi_hwpc_cxi_counter_desc_t;
 
@@ -271,13 +271,13 @@ typedef struct ompi_hwpc_cxi_counter_group_desc_t {
 } ompi_hwpc_cxi_counter_group_desc_t;
 
 
-// Contains the predefined Cassini (CXI) hardware performance counters.
+/* Contains the predefined Cassini (CXI) hardware performance counters. */
 extern const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[];
 
-// Contains the predefined Cassini (CXI) hardware performance counter groups.
+/* Contains the predefined Cassini (CXI) hardware performance counter groups. */
 extern const ompi_hwpc_cxi_counter_group_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[];
 
-// All of these list sizes are in terms of HPE's Cassini (CXI) hardware counter mnemonics, thus the true number of counter registers is much larger.
+/* All of these list sizes are in terms of HPE's Cassini (CXI) hardware counter mnemonics, thus the true number of counter registers is much larger. */
 extern const size_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST_SIZE;
 extern const size_t OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST_SIZE;
 extern const size_t OMPI_HWPC_CXI_DEFAULT_COUNTERS_LIST_SIZE;
@@ -299,5 +299,4 @@ extern const size_t CXI_CONGESTION_COUNTER_GROUP_LIST_SIZE;
 
 int ompi_hwpc_cxi_get_counters_in_group(const char *group_name, char ***counter_names, size_t *num_counters);
 
-
-#endif // OMPI_HWPC_CXI_CONSTANTS_H
+#endif /* OMPI_HWPC_CXI_CONSTANTS_H */
