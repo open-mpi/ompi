@@ -463,6 +463,7 @@ test/datatype/opal_datatype_test
 test/datatype/partial
 test/datatype/position_noncontig
 test/datatype/reduce_local
+test/datatype/sizedtypes
 test/datatype/unpack_ooo
 test/datatype/unpack_hetero
 
