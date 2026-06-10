@@ -73,7 +73,5 @@ PROTOTYPE INT init(INT_OUT argc, ARGV argv)
 
     SPC_INIT();
 
-    HWPC_CXI_INIT();
-
     return MPI_SUCCESS;
 }

@@ -9,7 +9,6 @@
  *
  * $HEADER$
  */
-#ifdef HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE
 
 #include "ompi_config.h"
 
@@ -24,15 +23,14 @@
 
 #include <pmix.h>
 
-#if defined(HWPC_CXI_ENABLE) && (HWPC_CXI_ENABLE == 1) /* HWPCs for HPE's Cassini (CXI) devices are enabled */
-
-#include "ompi/runtime/ompi_hwpc_cxi_constants.h"
-#include "ompi/runtime/ompi_hwpc_cxi_counters.h"
-#include "ompi/runtime/params.h"
+//#if defined(HWPC_CXI_ENABLE) && (HWPC_CXI_ENABLE == 1) /* HWPCs for HPE's Cassini (CXI) devices are enabled */
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
+
+#include "hook_hwpc_cxi.h"
+#include "hook_hwpc_cxi_constants.h"
 
 /*
  * This is a basic enumeration of the different verbosity levels for CXI counter reporting
@@ -43,7 +41,7 @@ typedef enum cxi_counter_report_verbosity_level_t {
     CXI_REPORT_SUMMARY = 2,         /* 2 - option 1 + CXI counters summary report displayed */
     CXI_REPORT_ON_ERROR = 3,        /* 3 - option 2 + display counter data for any NIC that hit a network timeout */
     CXI_REPORT_ALL_ON_ERROR = 4,    /* 4 - option 2 + display counter data for all NICs, if any network timeout occurred */
-    CXI_REPORT_ALL = 5              /* 5 - option 2 + display counter data for all NICs */
+    CXI_REPORT_ALL = 5             /* 5 - option 2 + display counter data for all NICs */
 } cxi_counter_report_verbosity_level_t;
 
 /*
@@ -140,19 +138,23 @@ static ompi_communicator_t* ompi_hwpc_cxi_comm = NULL;
 static int ompi_hwpc_cxi_stdout_id = -1;
 static int ompi_hwpc_cxi_stderr_id = -1;
 
+/* External Entry */
+void ompi_hwpc_cxi_init(void);
+void ompi_hwpc_cxi_fini(void);
+
 /* File Access */
 static int  get_fullpath_to_counter(char *fullpath_to_counter, const char *counter_name, const int dev);
 static bool cxi_counter_name_is_valid(const char *counter_name);
 
-/* Counter Meta Initialization */
+/* Counter Initialization */
 static cxi_job_data_t* cxi_global_job_data_init(void);
 static cxi_job_data_t* cxi_global_job_data_comm_init(cxi_job_data_t *job_data);
 static cxi_counter_collection_t* cxi_global_counter_collection_init(cxi_job_data_t *job_data);
-
-/* Helper Functions - For counter data allocation, initialization, and user-input processing */
 static int  cxi_counter_tracking_list_init(cxi_counter_collection_t *counter_collection, const char *file);
 static int  cxi_counter_collection_data_init(cxi_counter_collection_t *counter_collection);
 static int  cxi_single_counter_init(cxi_counter_data_t **counter, const char *name);
+
+/* Helper Functions */
 static int  cxi_realloc_string_list(char **string_list[], const size_t string_list_new_size, const size_t string_list_old_size, const size_t string_list_count);
 static bool cxi_sanitize_counter_token(char **token);
 static int  cxi_sanitize_counter_token_list(char **sanitized_token_list[], size_t *sanitized_token_list_size, size_t *sanitized_token_list_count, char *token_list[], size_t token_list_size);
@@ -189,6 +191,17 @@ static char *default_cxi_counters_to_track[] = { "rh:sct_timeouts", "rh:spt_time
                                 "rh:nack_no_target_conn", "rh:nack_no_target_mst", "rh:nack_no_target_trs", "rh:nack_resource_busy", "rh:nacks", \
                                 "rh:nack_sequence_error", "rh:pkts_cancelled_o", "rh:pkts_cancelled_u", "rh:sct_in_use", NULL };
 static int default_cxi_counters_to_track_list_size = (sizeof(default_cxi_counters_to_track) / sizeof(char *)) - 1; /* Subtract 1 for the NULL terminator */
+
+
+void ompi_hook_hwpc_cxi_mpi_init_bottom(int argc, char **argv, int requested, int *provided)
+{
+    ompi_hwpc_cxi_init();
+}
+
+void ompi_hook_hwpc_cxi_mpi_finalize_top(void)
+{
+    ompi_hwpc_cxi_fini();
+}
 
 
 /*
@@ -569,7 +582,7 @@ void ompi_hwpc_cxi_init(void)
     bool stderr_opened_here = false;
 
     /* Get the MCA params string for Cassini (CXI) hardware performance counter reporting level */
-    if (CXI_REPORT_QUIET == ompi_mpi_hwpc_cxi_counter_report) {
+    if (CXI_REPORT_QUIET == mca_hook_hwpc_cxi_counter_report) {
         /* CXI counter reporting explicitly disabled */
         return;
     }
@@ -665,7 +678,7 @@ cleanup:
 void ompi_hwpc_cxi_fini(void)
 {
     /* Get the MCA params string for Cassini (CXI) hardware performance counter reporting level */
-    if (CXI_REPORT_QUIET == ompi_mpi_hwpc_cxi_counter_report) {
+    if (CXI_REPORT_QUIET == mca_hook_hwpc_cxi_counter_report) {
         /* CXI hardware counter reporting explicitly disabled. Collect no data. */
         return;
     }
@@ -730,14 +743,14 @@ static cxi_job_data_t* cxi_global_job_data_init(void)
     }
 
     /* Configuration variables control internal debugging and reporting behavior */
-    job_data->verbose                   = ompi_mpi_hwpc_cxi_counter_verbose;
-    job_data->reporting_level           = ompi_mpi_hwpc_cxi_counter_report;
-    job_data->filter_zeros              = ompi_mpi_hwpc_cxi_counter_summary_filter_zeros;
+    job_data->verbose                   = mca_hook_hwpc_cxi_counter_verbose;
+    job_data->reporting_level           = mca_hook_hwpc_cxi_counter_report;
+    job_data->filter_zeros              = mca_hook_hwpc_cxi_counter_summary_filter_zeros;
     job_data->counter_inputfile_name    = NULL;
     job_data->report_file_prefix        = NULL;
 
-    if (NULL != ompi_mpi_hwpc_cxi_counter_file) {
-        dup_name = strndup(ompi_mpi_hwpc_cxi_counter_file, HWPC_CXI_MAX_FULLPATH_LENGTH);
+    if (NULL != mca_hook_hwpc_cxi_counter_file) {
+        dup_name = strndup(mca_hook_hwpc_cxi_counter_file, HWPC_CXI_MAX_FULLPATH_LENGTH);
         if (NULL == dup_name) {
             cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter file name\n", __func__);
             goto cleanup;
@@ -745,8 +758,8 @@ static cxi_job_data_t* cxi_global_job_data_init(void)
         job_data->counter_inputfile_name = dup_name;
     }
 
-    if (NULL != ompi_mpi_hwpc_cxi_counter_report_file) {
-        dup_name = strndup(ompi_mpi_hwpc_cxi_counter_report_file, HWPC_CXI_MAX_FULLPATH_LENGTH);
+    if (NULL != mca_hook_hwpc_cxi_counter_report_file) {
+        dup_name = strndup(mca_hook_hwpc_cxi_counter_report_file, HWPC_CXI_MAX_FULLPATH_LENGTH);
         if (NULL == dup_name) {
             cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for report file prefix\n", __func__);
             goto cleanup;
@@ -2255,9 +2268,7 @@ static int cxi_counter_report(FILE *ofp, cxi_counter_collection_t *counter_colle
                 double delta_t = counter_data->delta_timestamps[dev];
                 double rate = ((double)delta) / (delta_t > 0.0 ? delta_t : 1.0);
 
-                if (!global_job_data->filter_zeros || delta) {
-                    fprintf(ofp,"CXI_COUNTER_DATA %s %d %s %ld %.0f\n", global_job_data->hostname, dev, counter_data->name, delta, rate);
-                }
+                fprintf(ofp,"CXI_COUNTER_DATA %s %d %s %ld %.0f\n", global_job_data->hostname, dev, counter_data->name, delta, rate);
             }
         }
     }
@@ -2368,6 +2379,4 @@ static void cxi_job_data_free(cxi_job_data_t *job_data)
     }
 }
 
-#endif /* HWPC_CXI_ENABLE */
-
-#endif /* HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE */
+//#endif /* HWPC_CXI_ENABLE */

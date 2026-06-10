@@ -98,8 +98,6 @@ PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, INT required,
 
     SPC_INIT();
 
-    HWPC_CXI_INIT();
-
     ompi_hook_base_mpi_init_thread_bottom(argc, argv, required, provided);
 
     return MPI_SUCCESS;

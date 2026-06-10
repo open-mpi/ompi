@@ -9,20 +9,19 @@
  *
  * $HEADER$
  */
+#ifdef HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE
 
 #ifndef OMPI_HWPC_CXI_COUNTERS_H
 #define OMPI_HWPC_CXI_COUNTERS_H
 
 #include "ompi_config.h"
-
 #include "mpi.h"
-#include <stdio.h>
 
 /* OMPI HWPC CXI Public API Utility Functions */
 void ompi_hwpc_cxi_init(void);
 void ompi_hwpc_cxi_fini(void);
 
-#if HWPC_CXI_ENABLE == 1 /* HWPCs for HPE's Cassini (CXI) devices are enabled */
+#if defined(HWPC_CXI_ENABLE) && (HWPC_CXI_ENABLE == 1) /* HWPCs for HPE's Cassini (CXI) devices are enabled */
 
 #define HWPC_CXI_INIT()  \
     ompi_hwpc_cxi_init()
@@ -38,4 +37,6 @@ void ompi_hwpc_cxi_fini(void);
     ((void)0)
 #endif
 
-#endif /* HWPC_CXI_COUNTERS_H */
+#endif /* OMPI_HWPC_CXI_COUNTERS_H */
+
+#endif /* HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE */

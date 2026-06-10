@@ -28,4 +28,4 @@ endif # HWPC_CXI_ENABLE
 endif # PROJECT_OMPI
 
 distclean-local:
-    rm -rf *.dSYM .deps .libs *.la *.lo hwpc_cxi_sendrecv_test prof *.log *.o *.trs Makefile
+	rm -rf *.dSYM .deps .libs *.la *.lo hwpc_cxi_sendrecv_test prof *.log *.o *.trs Makefile

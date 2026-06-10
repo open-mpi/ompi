@@ -9,7 +9,6 @@
  *
  * $HEADER$
  */
-#ifdef HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE
 
 #include "ompi_config.h"
 
@@ -18,9 +17,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#if defined(HWPC_CXI_ENABLE) && (HWPC_CXI_ENABLE == 1) /* HWPCs for HPE's Cassini (CXI) devices are enabled */
+//#if defined(HWPC_CXI_ENABLE) && (HWPC_CXI_ENABLE == 1) /* HWPCs for HPE's Cassini (CXI) devices are enabled */
 
-#include "ompi/runtime/ompi_hwpc_cxi_constants.h"
+#include "hook_hwpc_cxi_constants.h"
 
 #define GET_PREDEF_COUNTER_GROUP_OBJ(COUNTER_GROUP_ID) (&OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[(COUNTER_GROUP_ID)])
 #define GET_PREDEF_COUNTER_MNEMONIC_OBJ(COUNTER_MNEMONIC_ID) (&OMPI_HWPC_CXI_PREDEFINED_COUNTER_MNEMONICS_LIST[(COUNTER_MNEMONIC_ID)])
@@ -81,9 +80,9 @@ ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_num_counters_in_counter_mnemonic_by
     return cxi_get_num_counters_in_counter_mnemonic_by_name(total_num_counters, counter_mnemonic_name);
 }
 
-/* 
+/*
  * Prints out a description of a counter group, but only the top-level information.
- * Call ompi_hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group 
+ * Call ompi_hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group
  * including all of its nested counter mnemonics.
  */
 ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_print_counter_group_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
@@ -789,9 +788,9 @@ ompi_hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_mnemonic_by_name(int 
     return cxi_get_num_counters_in_counter_mnemonic_obj(total_num_counters, counter_mnemonic_obj);
 }
 
-/*
+/* 
  * Prints out a helpful description of a counter group, but only the top-level information.
- * Call ompi_hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group,
+ * Call ompi_hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group, 
  * including all of its nested counter mnemonics.
  */
 ompi_hwpc_cxi_error_code_t cxi_print_counter_group_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
@@ -804,10 +803,12 @@ ompi_hwpc_cxi_error_code_t cxi_print_counter_group_description(FILE *ofp, const 
     const char *group_pretty_name = counter_group_obj->counter_group_pretty_name ? counter_group_obj->counter_group_pretty_name : "Unknown";
     const char *group_description = counter_group_obj->counter_group_description ? counter_group_obj->counter_group_description : "Unknown";
 
+    fflush(ofp);
     fprintf(ofp, "Counter Group Name: %s\n", group_name);
     fprintf(ofp, "Counter Group Pretty Name: %s\n", group_pretty_name);
     fprintf(ofp, "Counter Group Description: %s\n", group_description);
     fprintf(ofp, "Number of Counter Mnemonics in Group: %zu\n", counter_group_obj->counter_mnemonic_list_size);
+    fflush(ofp);
 
     return HWPC_CXI_SUCCESS; /* Found */
 }
@@ -822,6 +823,7 @@ ompi_hwpc_cxi_error_code_t cxi_print_counter_mnemonic_description(FILE *ofp, con
     const char *mnemonic_name = counter_mnemonic_obj->counter_name ? counter_mnemonic_obj->counter_name : "Unknown";
     const char *mnemonic_description = counter_mnemonic_obj->counter_description ? counter_mnemonic_obj->counter_description : "Unknown";
 
+    fflush(ofp);
     fprintf(ofp, "Counter Name: %s\n", mnemonic_name);
     fprintf(ofp, "Description: %s\n", mnemonic_description);
     fprintf(ofp, "Is Per Cassini Device: %s\n", counter_mnemonic_obj->is_per_cxi_device ? "Yes" : "No");
@@ -834,6 +836,7 @@ ompi_hwpc_cxi_error_code_t cxi_print_counter_mnemonic_description(FILE *ofp, con
         }
     }
     fprintf(ofp, "\n");
+    fflush(ofp);
 
     return HWPC_CXI_SUCCESS;
 }
@@ -872,6 +875,5 @@ ompi_hwpc_cxi_error_code_t cxi_print_full_counter_group_description(FILE *ofp, c
 #undef GET_PREDEF_COUNTER_GROUP_OBJ
 #undef GET_PREDEF_COUNTER_MNEMONIC_OBJ
 
-#endif /* HWPC_CXI_ENABLE */
+//#endif /* HWPC_CXI_ENABLE */
 
-#endif /* HWPC_CXI_FEATURE_MOVED_TO_MCA_HOOK_MODULE */

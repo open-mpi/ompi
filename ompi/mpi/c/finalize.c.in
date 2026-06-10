@@ -36,12 +36,6 @@ PROTOTYPE ERROR_CLASS finalize()
      */
     SPC_FINI();
 
-    /* If --enable-hwpc-cxi and ompi_mpi_hwpc_cxi_counter_report > 0 were specified, print
-     * all of the final cxi hardware counter values aggregated across the whole MPI run.
-     * Also, free all HWPC_CXI memory.
-     */
-    HWPC_CXI_FINI();
-
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
