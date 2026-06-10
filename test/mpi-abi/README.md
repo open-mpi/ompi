@@ -85,6 +85,25 @@ The suite has several complementary groups of checks:
   probes so the test runner can keep each risky callback scenario
   isolated.
 
+* Fortran binding regression checks.
+
+  Open MPI does not currently implement the MPI-5 Fortran standard ABI
+  as an ABI-capable `mpi_f08` module and wrapper path analogous to the
+  C `mpicc_abi` path.  In particular, there is no `mpifort_abi`
+  wrapper in this implementation.  The Fortran checks in this suite
+  therefore do not claim exhaustive MPI Fortran ABI coverage.  They
+  compile and run selected `mpif.h`, `use mpi`, and `use mpi_f08`
+  programs through Open MPI's normal `mpifort` wrapper to catch
+  regressions in the existing Fortran bindings, and they exercise the
+  Fortran `MPI_Abi_*` helper interfaces that Open MPI exposes.  Those
+  helper probes intentionally report Open MPI's current behavior: a
+  normal Fortran build path is not ABI-capable, so
+  `MPI_Abi_get_version` can report `-1, -1` while the other helper
+  routines remain callable and are validated for their documented
+  Open MPI behavior.  Missing MPI-5 Fortran ABI functionality should be
+  recorded as explicitly unimplemented or skipped rather than treated as
+  covered by these regression checks.
+
 * Cross-implementation checks.
 
   When enabled, the cross path compares Open MPI's standard ABI behavior

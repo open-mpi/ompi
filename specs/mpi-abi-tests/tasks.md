@@ -106,17 +106,23 @@ chunk adds installed runtime probes.
       persistent `MPI_Alltoallw` probes that overwrite the caller-side
       count, displacement, and datatype arrays after the wrapper call
       and then validate the completed data movement.
-- [x] Chunk 11A: Add Fortran binding detection, coverage audit, and
+- [~] Chunk 11A: Add Fortran binding detection, coverage audit, and
       compile-only conformance probes.
       Distinguish `mpif.h`, `use mpi`, and `use mpi_f08` regression
-      coverage from implemented `use mpi_f08` standard ABI coverage.
+      coverage from any implemented `use mpi_f08` standard ABI
+      coverage.
       Installed `check-abi` now records configured Fortran binding
       state, installed `mpifort` availability, an advisory per-binding
       coverage audit, and one compile-only conformance probe per
-      configured binding layer.  Exhaustive per-API Fortran compile and
-      runtime coverage remains in Chunk 11B and the open Phase 11 tasks
-      below.
-- [x] Chunk 11B: Add Fortran runtime and Fortran ABI probes.
+      configured binding layer.  Because Open MPI does not currently
+      provide an ABI-capable Fortran wrapper/module path such as
+      `mpifort_abi`, this chunk is partial: it provides regression and
+      reporting infrastructure, not exhaustive MPI-5 Fortran ABI
+      coverage.  Exhaustive per-API Fortran regression coverage and
+      explicit skips for unimplemented Fortran ABI functionality remain
+      in the open Phase 11 tasks below.
+- [~] Chunk 11B: Add Fortran runtime and Fortran `MPI_Abi_*` helper
+      probes.
       Cover configured Fortran runtime families, Fortran ABI helper
       routines, logical values, handles, statuses, optional datatypes,
       and explicit skips for unimplemented standard Fortran ABI
@@ -125,7 +131,12 @@ chunk adds installed runtime probes.
       `mpif.h`, `use mpi`, and `use mpi_f08` runtime probes plus ABI
       helper probes for the six Fortran `MPI_Abi_*` routines.  The
       `use mpi_f08` runtime probe validates typed communicator,
-      datatype, and status behavior.  Optional Fortran datatype
+      datatype, and status behavior as normal Open MPI Fortran binding
+      regression coverage.  The Fortran `MPI_Abi_*` helper probes
+      validate Open MPI's current callable-helper behavior, including
+      `MPI_Abi_get_version` returning `-1,-1` on the normal non-ABI
+      Fortran path.  This chunk is partial because it does not provide
+      exhaustive MPI-5 Fortran ABI coverage.  Optional Fortran datatype
       generation is reported with a stable skip and remains open below
       until generated module-driven probes can distinguish unavailable
       optional types from true ABI divergences.
