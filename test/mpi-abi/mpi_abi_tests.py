@@ -51,7 +51,8 @@ SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE = "symbol_diagnostics_unavailable"
 SKIP_FORTRAN_BINDINGS_DISABLED = "fortran_bindings_disabled"
 SKIP_FORTRAN_BINDING_DISABLED = "fortran_binding_disabled"
 SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
-SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE = "fortran_abi_helpers_unavailable"
+SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE = (
+    "fortran_standard_abi_runtime_unavailable")
 SKIP_FORTRAN_OPTIONAL_DATATYPES_DEFERRED = (
     "fortran_optional_datatypes_deferred"
 )
@@ -1712,7 +1713,7 @@ if (ierr /= MPI_SUCCESS) stop 13
         "language": "mpif.h",
         "rank_count": 1,
         "skip_exit_codes": {
-            77: SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE,
+            77: SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE,
         },
         "use_statement": "include 'mpif.h'",
         "api_names": (
@@ -1778,7 +1779,7 @@ if (ierr .ne. MPI_SUCCESS) stop 10
         "language": "use mpi",
         "rank_count": 1,
         "skip_exit_codes": {
-            77: SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE,
+            77: SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE,
         },
         "use_statement": "use mpi",
         "api_names": (
@@ -1845,7 +1846,7 @@ if (ierr .ne. MPI_SUCCESS) stop 10
         "language": "use mpi_f08",
         "rank_count": 1,
         "skip_exit_codes": {
-            77: SKIP_FORTRAN_ABI_HELPERS_UNAVAILABLE,
+            77: SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE,
         },
         "use_statement": "use mpi_f08",
         "api_names": (
