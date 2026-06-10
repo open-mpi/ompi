@@ -22,7 +22,7 @@
 void ompi_hwpc_cxi_init(void);
 void ompi_hwpc_cxi_fini(void);
 
-#if HWPC_CXI_ENABLE == 1 // HWPCs for HPE's Cassini (CXI) devices are enabled 
+#if HWPC_CXI_ENABLE == 1 /* HWPCs for HPE's Cassini (CXI) devices are enabled */
 
 #define HWPC_CXI_INIT()  \
     ompi_hwpc_cxi_init()
