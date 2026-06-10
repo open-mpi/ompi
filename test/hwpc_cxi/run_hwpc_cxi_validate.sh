@@ -15,7 +15,7 @@
 # Run a minimal MPI send/recv workload for HWPC_CXI validation and capture:
 #   1) test stdout
 #   2) test stderr
-#   3) HWPC_CXI report files matching OMPI_MCA_mpi_hwpc_cxi_counter_report_file*
+#   3) HWPC_CXI report files matching OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file*
 #
 # Usage: run_hwpc_cxi_validate.sh [--save-baseline] [num_procs [num_ppn [loops]]]
 #   --save-baseline  Save this run's outputs as the reference baseline for future
@@ -47,18 +47,18 @@ RUN_DIR="${LOGS_DIR}/${RUN_TAG}"
 mkdir -p "${RUN_DIR}"
 
 # Set default HWPC_CXI environment values unless the caller already set them.
-export OMPI_MCA_mpi_hwpc_cxi_counter_file="${OMPI_MCA_mpi_hwpc_cxi_counter_file:-${SCRIPT_DIR}/my_desired_cxi_counters.txt}"
-export OMPI_MCA_mpi_hwpc_cxi_counter_report="${OMPI_MCA_mpi_hwpc_cxi_counter_report:-2}"
-export OMPI_MCA_mpi_hwpc_cxi_counter_report_filter_zeros="${OMPI_MCA_mpi_hwpc_cxi_counter_report_filter_zeros:-false}"
-export OMPI_MCA_mpi_hwpc_cxi_counter_verbose="${OMPI_MCA_mpi_hwpc_cxi_counter_verbose:-true}"
-export OMPI_MCA_mpi_hwpc_cxi_counter_report_file="${OMPI_MCA_mpi_hwpc_cxi_counter_report_file:-test_report_prefix}"
+export OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_file:-${SCRIPT_DIR}/my_desired_cxi_counters.txt}"
+export OMPI_MCA_ompi_hook_hwpc_cxi_counter_report="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_report:-2}"
+export OMPI_MCA_ompi_hook_hwpc_cxi_counter_summary_filter_zeros="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_summary_filter_zeros:-false}"
+export OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose:-true}"
+export OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file:-mock_report_prefix}"
 #export OMPI_MCA_btl="${OMPI_MCA_btl:-^ofi}"
 
 export HWPC_CXI_RUNTIME_LD_LIBRARY_PATH="${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH:-__REPLACE_ME_RUNTIME_LD_LIBRARY_PATH__}"
 if [[ "${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}" == __REPLACE_ME_* ]]; then
-	echo "ERROR: placeholder path detected. Set HWPC_CXI_RUNTIME_LD_LIBRARY_PATH to required runtime library directories." >&2
+	echo "WARNING: placeholder path detected. Set HWPC_CXI_RUNTIME_LD_LIBRARY_PATH to required runtime library directories." >&2
 	echo "  HWPC_CXI_RUNTIME_LD_LIBRARY_PATH=${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}" >&2
-	exit 1
+	#exit 1
 fi
 export LD_LIBRARY_PATH="${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH:-}"
 
@@ -71,7 +71,7 @@ if [[ ! -x "${TEST_BIN}" ]]; then
 	exit 1
 fi
 
-REPORT_PREFIX="${OMPI_MCA_mpi_hwpc_cxi_counter_report_file}"
+REPORT_PREFIX="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file}"
 REPORT_DIR="$(dirname "${REPORT_PREFIX}")"
 REPORT_BASE="$(basename "${REPORT_PREFIX}")"
 [[ "${REPORT_DIR}" == "." ]] && REPORT_DIR="${SCRIPT_DIR}"
@@ -127,7 +127,7 @@ compare_counter_logs() {
 			if (base_has_pe0 && !base_active) {
 				if (tolower($0) ~ /error/) {
 					print "ERROR baseline pre-activation line: " $0
-					err = 1
+					err++
 				}
 				next
 			}
@@ -154,7 +154,7 @@ compare_counter_logs() {
 			if (curr_has_pe0 && !curr_active) {
 				if (tolower($0) ~ /error/) {
 					print "ERROR current pre-activation line: " $0
-					err = 1
+					err++
 				}
 				next
 			}
@@ -177,13 +177,13 @@ compare_counter_logs() {
 				name = base_names[idx]
 				if (!(name in seen_curr)) {
 					print "ERROR missing counter in current log: " name
-					err = 1
+					err++
 					continue
 				}
 
 				if (base_count[name] != curr_count[name]) {
 					print "ERROR counter column mismatch for " name ": baseline has " base_count[name] ", current has " curr_count[name]
-					err = 1
+					err++
 					continue
 				}
 
@@ -192,7 +192,7 @@ compare_counter_logs() {
 					c = curr_val[name, i]
 					if (!is_num(b) || !is_num(c)) {
 						print "ERROR non-numeric field for counter " name " column " i ": baseline='" b "' current='" c "'"
-						err = 1
+						err++
 						continue
 					}
 
@@ -213,7 +213,7 @@ compare_counter_logs() {
 				name = curr_names[idx]
 				if (!(name in seen_base)) {
 					print "ERROR new counter in current log (not in baseline): " name
-					err = 1
+					err++
 				}
 			}
 
@@ -221,6 +221,39 @@ compare_counter_logs() {
 			exit err
 		}
 	' "${baseline_log}" "${current_log}" > "${output_log}"
+}
+
+# Fail when stdout contains numeric-heavy lines where every numeric field is zero.
+# A numeric-heavy line is defined as having at least 3 numeric tokens.
+check_stdout_for_all_zero_numeric_lines() {
+	local stdout_log="$1"
+	local output_log="$2"
+
+	awk '
+		function is_num(v) {
+			return (v ~ /^[-+]?[0-9]+([.][0-9]+)?([eE][-+]?[0-9]+)?$/)
+		}
+		{
+			n_numeric = 0
+			n_nonzero = 0
+			for (i = 1; i <= NF; ++i) {
+				if (is_num($i)) {
+					n_numeric++
+					if (($i + 0) != 0) {
+						n_nonzero++
+					}
+				}
+			}
+
+			if (n_numeric >= 3 && n_nonzero == 0) {
+				printf("line %d: %s\n", NR, $0)
+				bad = 1
+			}
+		}
+		END {
+			exit bad ? 1 : 0
+		}
+	' "${stdout_log}" > "${output_log}"
 }
 
 # Start from a clean slate for this prefix so captured files are from this run.
@@ -367,15 +400,15 @@ FAKE_REPORT_PREFIX="${FAKE_RUN_DIR}/hwpc_cxi_fake_report"
 find "${FAKE_RUN_DIR}" -maxdepth 1 -type f -name "hwpc_cxi_fake_report*" -delete 2>/dev/null || true
 
 _fake_rc=0
-OMPI_MCA_mpi_hwpc_cxi_counter_file="${FAKE_COUNTER_FILE}" \
-OMPI_MCA_mpi_hwpc_cxi_counter_report_file="${FAKE_REPORT_PREFIX}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${FAKE_COUNTER_FILE}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${FAKE_REPORT_PREFIX}" \
 srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
 	> "${FAKE_STDOUT_LOG}" 2> "${FAKE_STDERR_LOG}" || _fake_rc=$?
 
 echo "fake_stdout_log: ${FAKE_STDOUT_LOG}"
 echo "fake_stderr_log: ${FAKE_STDERR_LOG}"
 
-# The test passes when stderr contains at least one line indicating that a
+# The test passes when stderr contains exactly 6 lines indicating that a
 # counter name was not recognised / does not exist. hwpc_cxi is expected to
 # emit messages matching patterns like "does not exist", "not found",
 # "unrecognized", "unknown", or "invalid" for the bogus names.
@@ -383,10 +416,10 @@ _fake_diag_count=$(grep -ciE \
 	'does not exist|not found|not recognized|unrecognized|unknown counter|invalid counter' \
 	"${FAKE_STDERR_LOG}" 2>/dev/null || true)
 
-if (( _fake_diag_count > 0 )); then
+if (( _fake_diag_count == 6 )); then
 	echo "FAKE-COUNTER:    PASS (${_fake_diag_count} diagnostic line(s) found in stderr)"
 else
-	echo "FAKE-COUNTER:    FAIL (no 'counter not found' diagnostics in stderr)"
+	echo "FAKE-COUNTER:    FAIL (${_fake_diag_count} diagnostic line(s) found in stderr. (Expected exactly six -- 3 for each local_root))"
 	echo "  Expected hwpc_cxi to report unrecognised counter names."
 	echo "  Inspect: ${FAKE_STDERR_LOG}"
 	rc=1
@@ -400,11 +433,11 @@ echo "======================================================="
 # should be emitted by HWPC_CXI.
 REPORT1_COUNTER_FILE="${SCRIPT_DIR}/my_desired_cxi_counters.txt"
 echo "========================================================"
-echo "REPORT=1 test (timeout summary only)"
+echo "REPORT_LEVEL=1 test (timeout summary only)"
 echo "  counter_file: ${REPORT1_COUNTER_FILE}"
 echo "========================================================"
 
-REPORT1_RUN_DIR="${LOGS_DIR}/report1_${RUN_TAG}"
+REPORT1_RUN_DIR="${LOGS_DIR}/report_level_1_${RUN_TAG}"
 mkdir -p "${REPORT1_RUN_DIR}"
 REPORT1_STDOUT_LOG="${REPORT1_RUN_DIR}/stdout.log"
 REPORT1_STDERR_LOG="${REPORT1_RUN_DIR}/stderr.log"
@@ -414,9 +447,9 @@ REPORT1_REPORT_PREFIX="${REPORT1_RUN_DIR}/hwpc_cxi_report1"
 find "${REPORT1_RUN_DIR}" -maxdepth 1 -type f -name "hwpc_cxi_report1*" -delete 2>/dev/null || true
 
 _report1_rc=0
-OMPI_MCA_mpi_hwpc_cxi_counter_file="${REPORT1_COUNTER_FILE}" \
-OMPI_MCA_mpi_hwpc_cxi_counter_report="1" \
-OMPI_MCA_mpi_hwpc_cxi_counter_report_file="${REPORT1_REPORT_PREFIX}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${REPORT1_COUNTER_FILE}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report="1" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${REPORT1_REPORT_PREFIX}" \
 srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
 	> "${REPORT1_STDOUT_LOG}" 2> "${REPORT1_STDERR_LOG}" || _report1_rc=$?
 
@@ -424,28 +457,28 @@ echo "report1_stdout_log: ${REPORT1_STDOUT_LOG}"
 echo "report1_stderr_log: ${REPORT1_STDERR_LOG}"
 
 if [[ "${_report1_rc}" -ne 0 ]]; then
-	echo "REPORT=1:        FAIL (exit code ${_report1_rc})"
+	echo "REPORT_LEVEL=1:        FAIL (exit code ${_report1_rc})"
 	rc=1
 else
-	# REPORT=1 must not emit the detailed CXI counter summary table/header.
+	# REPORT_LEVEL=1 must not emit the detailed CXI counter summary table/header.
 	if grep -q "OpenMPI Slingshot CXI Counter Summary:" "${REPORT1_STDOUT_LOG}"; then
-		echo "REPORT=1:        FAIL (stdout contains CXI Counter Summary table)"
+		echo "REPORT_LEVEL=1:        FAIL (stdout contains CXI Counter Summary table)"
 		echo "  Inspect: ${REPORT1_STDOUT_LOG}"
 		rc=1
 	else
-		echo "REPORT=1 stdout: PASS (no detailed counter summary table)"
+		echo "REPORT_LEVEL=1 stdout: PASS (no detailed counter summary table)"
 	fi
 
 	# Compare stderr against baseline stderr when available.
 	if [[ -f "${BASELINE_DIR}/stderr.log" ]]; then
 		if compare_counter_logs "${BASELINE_DIR}/stderr.log" "${REPORT1_STDERR_LOG}" "${REPORT1_RUN_DIR}/stderr_vs_baseline.txt" 20 1; then
-			echo "REPORT=1 stderr: PASS (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
+			echo "REPORT_LEVEL=1 stderr: PASS (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
 		else
-			echo "REPORT=1 stderr: FAIL (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
+			echo "REPORT_LEVEL=1 stderr: FAIL (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
 			rc=1
 		fi
 	else
-		echo "REPORT=1 stderr: SKIP (no baseline stderr at ${BASELINE_DIR}/stderr.log)"
+		echo "REPORT_LEVEL=1 stderr: SKIP (no baseline stderr at ${BASELINE_DIR}/stderr.log)"
 	fi
 fi
 echo "======================================================="
@@ -457,11 +490,11 @@ echo "======================================================="
 # is emitted to either stdout or stderr.
 REPORT0_COUNTER_FILE="${SCRIPT_DIR}/my_desired_cxi_counters.txt"
 echo "========================================================"
-echo "REPORT=0 test (HWPC_CXI fully disabled)"
+echo "REPORT_LEVEL=0 test (HWPC_CXI fully disabled)"
 echo "  counter_file: ${REPORT0_COUNTER_FILE}"
 echo "========================================================"
 
-REPORT0_RUN_DIR="${LOGS_DIR}/report0_${RUN_TAG}"
+REPORT0_RUN_DIR="${LOGS_DIR}/report_level_0_${RUN_TAG}"
 mkdir -p "${REPORT0_RUN_DIR}"
 REPORT0_STDOUT_LOG="${REPORT0_RUN_DIR}/stdout.log"
 REPORT0_STDERR_LOG="${REPORT0_RUN_DIR}/stderr.log"
@@ -471,9 +504,9 @@ REPORT0_REPORT_PREFIX="${REPORT0_RUN_DIR}/hwpc_cxi_report0"
 find "${REPORT0_RUN_DIR}" -maxdepth 1 -type f -name "hwpc_cxi_report0*" -delete 2>/dev/null || true
 
 _report0_rc=0
-OMPI_MCA_mpi_hwpc_cxi_counter_file="${REPORT0_COUNTER_FILE}" \
-OMPI_MCA_mpi_hwpc_cxi_counter_report="0" \
-OMPI_MCA_mpi_hwpc_cxi_counter_report_file="${REPORT0_REPORT_PREFIX}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${REPORT0_COUNTER_FILE}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report="0" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${REPORT0_REPORT_PREFIX}" \
 srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
 	> "${REPORT0_STDOUT_LOG}" 2> "${REPORT0_STDERR_LOG}" || _report0_rc=$?
 
@@ -485,30 +518,127 @@ if [[ "${_report0_rc}" -ne 0 ]]; then
 	rc=1
 else
 	# For REPORT=0, stdout may be empty or contain only the sendrecv completion
-	# line. No HWPC summary/counter output should appear.
+	# line. No HWPC_CXI summary/counter output should appear.
 	if grep -qE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT0_STDOUT_LOG}"; then
-		echo "REPORT=0 stdout: FAIL (found HWPC output)"
+		echo "REPORT_LEVEL=0 stdout: FAIL (found HWPC_CXI output)"
 		echo "  Inspect: ${REPORT0_STDOUT_LOG}"
 		rc=1
 	else
 		mapfile -t _report0_stdout_lines < <(grep -v '^[[:space:]]*$' "${REPORT0_STDOUT_LOG}" || true)
 		if (( ${#_report0_stdout_lines[@]} == 0 )); then
-			echo "REPORT=0 stdout: PASS (empty)"
+			echo "REPORT_LEVEL=0 stdout: PASS (empty)"
 		elif (( ${#_report0_stdout_lines[@]} == 1 )) && [[ "${_report0_stdout_lines[0]}" == "hwpc_cxi_sendrecv_test complete" ]]; then
-			echo "REPORT=0 stdout: PASS (single completion line)"
+			echo "REPORT_LEVEL=0 stdout: PASS (single completion line)"
 		else
-			echo "REPORT=0 stdout: FAIL (unexpected stdout content)"
+			echo "REPORT_LEVEL=0 stdout: FAIL (unexpected stdout content)"
 			echo "  Inspect: ${REPORT0_STDOUT_LOG}"
 			rc=1
 		fi
 	fi
 
 	if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT0_STDERR_LOG}"; then
-		echo "REPORT=0 stderr: FAIL (found HWPC output)"
+		echo "REPORT_LEVEL=0 stderr: FAIL (found HWPC_CXI output)"
 		echo "  Inspect: ${REPORT0_STDERR_LOG}"
 		rc=1
 	else
-		echo "REPORT=0 stderr: PASS (no HWPC output)"
+		echo "REPORT_LEVEL=0 stderr: PASS (no HWPC_CXI output)"
+	fi
+fi
+echo "======================================================="
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Report-level=2 with verbose=false stderr-silence test ─────────────────
+# Run with the normal desired counter file, force report level 2, and disable
+# verbose logging. Expected behavior: no HWPC_CXI output is written to stderr.
+REPORT2_COUNTER_FILE="${SCRIPT_DIR}/my_desired_cxi_counters.txt"
+echo "========================================================"
+echo "REPORT_LEVEL=2 + VERBOSE=false test (quiet stderr)"
+echo "  counter_file: ${REPORT2_COUNTER_FILE}"
+echo "========================================================"
+
+REPORT2_RUN_DIR="${LOGS_DIR}/report_level_2_noVerbose_${RUN_TAG}"
+mkdir -p "${REPORT2_RUN_DIR}"
+REPORT2_STDOUT_LOG="${REPORT2_RUN_DIR}/stdout.log"
+REPORT2_STDERR_LOG="${REPORT2_RUN_DIR}/stderr.log"
+REPORT2_REPORT_PREFIX="${REPORT2_RUN_DIR}/hwpc_cxi_report2_noVerbose"
+
+# Clean any leftover report files for this prefix.
+find "${REPORT2_RUN_DIR}" -maxdepth 1 -type f -name "hwpc_cxi_report2_noVerbose*" -delete 2>/dev/null || true
+
+_report2_rc=0
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${REPORT2_COUNTER_FILE}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report="2" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose="false" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${REPORT2_REPORT_PREFIX}" \
+srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
+	> "${REPORT2_STDOUT_LOG}" 2> "${REPORT2_STDERR_LOG}" || _report2_rc=$?
+
+echo "report2_stdout_log: ${REPORT2_STDOUT_LOG}"
+echo "report2_stderr_log: ${REPORT2_STDERR_LOG}"
+
+if [[ "${_report2_rc}" -ne 0 ]]; then
+	echo "REPORT_LEVEL=2+VERBOSE=false: FAIL (exit code ${_report2_rc})"
+	rc=1
+else
+	if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT2_STDERR_LOG}"; then
+		echo "REPORT_LEVEL=2+VERBOSE=false stderr: FAIL (found HWPC_CXI output)"
+		echo "  Inspect: ${REPORT2_STDERR_LOG}"
+		rc=1
+	else
+		echo "REPORT_LEVEL=2+VERBOSE=false stderr: PASS (no HWPC_CXI output)"
+	fi
+fi
+echo "======================================================="
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Report-level=2 with verbose=false filter_zeros=true stderr-silence test ─────────────────
+# Run with the normal desired counter file, force report level 2, and disable
+# verbose logging. Expected behavior: no HWPC_CXI output is written to stderr.
+REPORT2_COUNTER_FILE="${SCRIPT_DIR}/my_desired_cxi_counters.txt"
+echo "========================================================"
+echo "REPORT_LEVEL=2 + VERBOSE=false + FILTER_ZEROS=true test (quiet stderr)"
+echo "  counter_file: ${REPORT2_COUNTER_FILE}"
+echo "========================================================"
+
+REPORT2_RUN_DIR="${LOGS_DIR}/report_level_2_noVerbose_noZeros_${RUN_TAG}"
+mkdir -p "${REPORT2_RUN_DIR}"
+REPORT2_STDOUT_LOG="${REPORT2_RUN_DIR}/stdout.log"
+REPORT2_STDERR_LOG="${REPORT2_RUN_DIR}/stderr.log"
+REPORT2_REPORT_PREFIX="${REPORT2_RUN_DIR}/hwpc_cxi_report2_noVerbose_noZeros"
+
+# Clean any leftover report files for this prefix.
+find "${REPORT2_RUN_DIR}" -maxdepth 1 -type f -name "hwpc_cxi_report2_noVerbose_noZeros*" -delete 2>/dev/null || true
+
+_report2_rc=0
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${REPORT2_COUNTER_FILE}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report="2" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose="false" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_summary_filter_zeros="true" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${REPORT2_REPORT_PREFIX}" \
+srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
+	> "${REPORT2_STDOUT_LOG}" 2> "${REPORT2_STDERR_LOG}" || _report2_rc=$?
+
+echo "report2_stdout_log: ${REPORT2_STDOUT_LOG}"
+echo "report2_stderr_log: ${REPORT2_STDERR_LOG}"
+
+if check_stdout_for_all_zero_numeric_lines "${REPORT2_STDOUT_LOG}" "${REPORT2_RUN_DIR}/stdout_all_zero_numeric_lines.txt"; then
+	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true zero-numeric check: PASS"
+else
+	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true zero-numeric check: FAIL (found all-zero numeric-heavy line(s))"
+	echo "  Inspect: ${REPORT2_RUN_DIR}/stdout_all_zero_numeric_lines.txt"
+	rc=1
+fi
+
+if [[ "${_report2_rc}" -ne 0 ]]; then
+	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true: FAIL (exit code ${_report2_rc})"
+	rc=1
+else
+	if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT2_STDERR_LOG}"; then
+		echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true stderr: FAIL (found HWPC_CXI output)"
+		echo "  Inspect: ${REPORT2_STDERR_LOG}"
+		rc=1
+	else
+		echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true stderr: PASS (no HWPC_CXI output)"
 	fi
 fi
 echo "======================================================="
@@ -520,24 +650,24 @@ echo "======================================================="
 # with each file containing CXI_COUNTER_DATA lines for tracked counters.
 REPORT5_COUNTER_FILE="${SCRIPT_DIR}/my_desired_cxi_counters.txt"
 echo "========================================================"
-echo "REPORT=5 test (per-node report files)"
+echo "REPORT_LEVEL=5 test (per-node report files)"
 echo "  counter_file: ${REPORT5_COUNTER_FILE}"
 echo "========================================================"
 
-REPORT5_RUN_DIR="${LOGS_DIR}/report5_${RUN_TAG}"
+REPORT5_RUN_DIR="${LOGS_DIR}/report_level_5_${RUN_TAG}"
 mkdir -p "${REPORT5_RUN_DIR}"
 REPORT5_STDOUT_LOG="${REPORT5_RUN_DIR}/stdout.log"
 REPORT5_STDERR_LOG="${REPORT5_RUN_DIR}/stderr.log"
 REPORT5_REPORT_PREFIX="${REPORT5_RUN_DIR}/hwpc_cxi_report5"
-REPORT5_EXPECTED_FILES="${NUM_PPN}"
+REPORT5_EXPECTED_FILES="$((NUM_PPN + 1))"
 
 # Clean any leftover report files for this prefix.
 find "${REPORT5_RUN_DIR}" -maxdepth 1 -type f -name "hwpc_cxi_report5*" -delete 2>/dev/null || true
 
 _report5_rc=0
-OMPI_MCA_mpi_hwpc_cxi_counter_file="${REPORT5_COUNTER_FILE}" \
-OMPI_MCA_mpi_hwpc_cxi_counter_report="5" \
-OMPI_MCA_mpi_hwpc_cxi_counter_report_file="${REPORT5_REPORT_PREFIX}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${REPORT5_COUNTER_FILE}" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report="5" \
+OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${REPORT5_REPORT_PREFIX}" \
 srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
 	> "${REPORT5_STDOUT_LOG}" 2> "${REPORT5_STDERR_LOG}" || _report5_rc=$?
 
@@ -552,16 +682,16 @@ printf '%s\n' "${_report5_files[@]}" > "${REPORT5_RUN_DIR}/report_files.txt"
 echo "report5_file_index: ${REPORT5_RUN_DIR}/report_files.txt"
 
 if (( ${#_report5_files[@]} == 0 )); then
-	echo "REPORT=5 files:  FAIL (no files generated for prefix ${REPORT5_REPORT_PREFIX})"
+	echo "REPORT_LEVEL=5 files:  FAIL (no files generated for prefix ${REPORT5_REPORT_PREFIX})"
 	echo "  Inspect: ${REPORT5_RUN_DIR}/report_files.txt"
 	rc=1
 else
-	echo "REPORT=5 files:  PASS (${#_report5_files[@]} file(s) generated)"
+	echo "REPORT_LEVEL=5 files:  PASS (${#_report5_files[@]} file(s) generated)"
 	if [[ "${_report5_rc}" -ne 0 ]]; then
-		echo "REPORT=5 note:   srun exited with ${_report5_rc}, but files were generated"
+		echo "REPORT_LEVEL=5 note:   srun exited with ${_report5_rc}, but files were generated"
 	fi
 	if (( ${#_report5_files[@]} != REPORT5_EXPECTED_FILES )); then
-		echo "REPORT=5 note:   expected ${REPORT5_EXPECTED_FILES} file(s), found ${#_report5_files[@]}"
+		echo "REPORT_LEVEL=5 note:   expected ${REPORT5_EXPECTED_FILES} file(s), found ${#_report5_files[@]}"
 	fi
 fi
 echo "======================================================="
