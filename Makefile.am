@@ -39,14 +39,14 @@ if PROJECT_OMPI
 check-abi:
 	$(MAKE) $(AM_MAKEFLAGS) -C test/mpi-abi check-abi
 
-check-abi-cross:
-	$(MAKE) $(AM_MAKEFLAGS) -C test/mpi-abi check-abi-cross
+check-abi-mpich:
+	$(MAKE) $(AM_MAKEFLAGS) -C test/mpi-abi check-abi-mpich
 else
 check-abi:
 	@echo "SKIP: check-abi requires the OMPI project"
 
-check-abi-cross:
-	@echo "SKIP: check-abi-cross requires the OMPI project"
+check-abi-mpich:
+	@echo "SKIP: check-abi-mpich requires the OMPI project"
 endif
 
 dist-hook:

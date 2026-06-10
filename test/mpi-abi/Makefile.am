@@ -115,11 +115,11 @@ check-abi:
 	    $(abi_test_runner) check-abi; \
 	fi
 
-check-abi-cross:
+check-abi-mpich:
 	@if test "$(PYTHON)" = ":"; then \
 	    echo "SKIP: Python is not available"; \
 	else \
-	    $(abi_test_runner) check-abi-cross; \
+	    $(abi_test_runner) check-abi-mpich; \
 	fi
 
 manifest:

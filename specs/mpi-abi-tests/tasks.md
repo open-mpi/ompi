@@ -140,11 +140,21 @@ chunk adds installed runtime probes.
       generation is reported with a stable skip and remains open below
       until generated module-driven probes can distinguish unavailable
       optional types from true ABI divergences.
-- [ ] Chunk 12A: Add MPICH cross-test infrastructure and environment
+- [x] Chunk 12A: Add MPICH cross-test infrastructure and environment
       reporting.
-      Implement `check-abi-cross` discovery, overrides, loader
-      selection, platform skips, tool/version reports, and combined
+      Implement `check-abi-mpich` discovery, overrides, loader
+      selection, prerequisite failures, tool/version reports, and combined
       per-direction summaries.
+      `check-abi-mpich` now distinguishes real MPICH discovery from an
+      Open MPI `mpicc` found on `PATH`, honors Open MPI and MPICH tool
+      and path overrides, records platform/runtime-loader state, emits
+      Open MPI and MPICH wrapper/launcher version and command-intent
+      logs, and reports both cross directions as explicitly deferred
+      until Chunk 12B adds probe execution.
+      Missing MPICH or Open MPI tools are reported as setup failures
+      with guidance pointing to `test/mpi-abi/README.md`.
+      The fast suite includes helper self-checks for direction parsing,
+      launcher override handling, and MPICH identity classification.
 - [ ] Chunk 12B: Add MPICH cross-direction probe reuse and semantic
       comparisons.
       Run converter, runtime, and supported callback probes in both
@@ -171,7 +181,7 @@ chunk adds installed runtime probes.
       where appropriate.
 - [x] Add a top-level convenience `check-abi` target that dispatches to
       `test/mpi-abi`.
-- [x] Add a top-level convenience `check-abi-cross` target that
+- [x] Add a top-level convenience `check-abi-mpich` target that
       dispatches to `test/mpi-abi`.
 - [x] Ensure the ABI test files are included in `make dist`.
 - [x] Ensure `specs/mpi-abi-tests/` is included in `make dist` if the
@@ -193,7 +203,7 @@ chunk adds installed runtime probes.
 - [x] Invoke the runner through `$(PYTHON)` from Makefile targets.
 - [x] Implement command modes for:
       `manifest`, `coverage`, `check-fast`, `check-abi`, and
-      `check-abi-cross`.
+      `check-abi-mpich`.
 - [x] Implement tool discovery from `PATH`.
 - [x] Implement Open MPI override variables:
       `OMPI_ABI_TEST_MPICC_ABI` and `OMPI_ABI_TEST_MPIRUN`.
@@ -915,34 +925,81 @@ chunk adds installed runtime probes.
 
 ## Phase 12: MPICH Cross-Implementation Tests
 
-- [ ] Add optional `make check-abi-cross` runner mode.
-      This target should be separate from `make check-abi`, skip cleanly
-      when MPICH tools are unavailable, and reuse the same generated
-      source/reporting infrastructure where practical.
-- [ ] Discover MPICH compiler wrapper and launcher from `PATH`.
-- [ ] Honor MPICH override variables.
-- [ ] Honor library path and launcher environment overrides for Open MPI
+- [x] Add optional `make check-abi-mpich` runner mode.
+      This target should be separate from `make check-abi`, fail with
+      setup guidance when MPICH MPI Forum ABI tools are unavailable, and
+      reuse the same generated source/reporting infrastructure where
+      practical.
+- [x] Discover MPICH compiler wrapper and launcher from `PATH`.
+      PATH discovery now rejects Open MPI wrappers when looking for
+      MPICH unless explicit MPICH overrides are supplied, and MPICH
+      classification requires explicit MPICH evidence rather than Hydra
+      launcher output alone.
+- [x] Discover all relevant MPI compiler-wrapper candidates before
+      selecting an implementation.
+      Search `PATH` and explicit override directories for Open MPI and
+      MPICH wrapper candidates, classify them by implementation, and
+      keep enough invalid-candidate evidence to explain why no usable
+      install was selected.
+- [x] Classify Open MPI and MPICH identity separately from MPI Forum ABI
+      suitability.
+      An install may be a real Open MPI or MPICH install and still be
+      unsuitable for these tests if it exposes only that implementation's
+      internal ABI instead of the MPI Forum ABI.
+- [x] Require Open MPI MPI Forum ABI artifacts before selecting Open MPI
+      for ABI testing.
+      Open MPI candidates must use the ABI wrapper path, advertise
+      `libmpi_abi` linkage, and provide a matching launcher.  A normal
+      Open MPI `mpicc` from an ABI-enabled prefix is not a valid
+      substitute for `mpicc_abi`.
+- [x] Require MPICH MPI Forum ABI artifacts before selecting MPICH for
+      ABI testing.
+      MPICH candidates must provide an MPI Forum ABI C wrapper, normally
+      `mpicc_abi`, that defines `MPI_ABI` and links `libmpi_abi` and
+      `libpmpi_abi`; the install must also provide `mpi_abi.h` with ABI
+      version markers and installed ABI libraries.  A normal MPICH
+      `mpicc` and MPICH's internal ABI are not sufficient.
+- [x] Report why an MPI install is not suitable for ABI testing.
+      Failed discovery must record stable, machine-readable evidence
+      such as missing ABI wrapper flags, missing `mpi_abi.h`, missing
+      ABI libraries, Open MPI evidence in an MPICH candidate, or missing
+      launchers.
+- [x] Honor MPICH override variables.
+- [x] Honor library path and launcher environment overrides for Open MPI
       and MPICH.
-- [ ] Select Linux or macOS runtime loader variables as appropriate.
-- [ ] Detect unsupported cross-test platforms or loader configurations
-      with stable skip reasons.
+      The cross-direction runtime policy replaces, rather than prepends
+      to, the selected platform loader variable so stale `libmpi` paths
+      from the caller's environment cannot leak between implementations.
+- [x] Select Linux or macOS runtime loader variables as appropriate.
+- [x] Detect unsupported cross-test platforms or loader configurations
+      with stable setup failures.
       Missing runtime-loader controls, unsupported library naming, or
       unavailable inspection tools should not be reported as ABI
       failures unless a compile/run test proves an ABI mismatch.
-- [ ] Build a cross-test environment report.
+- [x] Document `make check-abi-mpich` setup and run instructions in
+      `test/mpi-abi/README.md`.
+      Include MPICH discovery behavior, override variables, direction
+      selection, and the fact that missing prerequisites are failures
+      for this explicit target.
+- [x] Fail invalid `OMPI_ABI_TEST_MPICH_DIRECTIONS` values.
+      Typos or empty values must not be silently converted into a
+      passing run with zero selected directions.
+- [x] Build a cross-test environment report.
       Record Open MPI and MPICH compiler wrappers, launchers, versions,
       include paths, link paths, loader environment, temporary paths,
       and selected cross-test direction in the JSON and text reports.
 - [ ] Compile with MPICH and run with Open MPI's `libmpi_abi`.
       Compile standard ABI source with MPICH's wrapper, force the
       runtime library path to Open MPI's installed `libmpi_abi`, launch
-      with the selected launcher, and verify that handles, constants,
-      and runtime results match standard ABI expectations.
+      with the selected launcher under a sanitized loader environment,
+      and verify that handles, constants, and runtime results match
+      standard ABI expectations.
 - [ ] Compile with Open MPI's `mpicc_abi` and run with MPICH.
       Compile standard ABI source with Open MPI's ABI wrapper, force the
       runtime library path to MPICH's standard ABI library, launch with
-      the selected launcher, and verify that handles, constants, and
-      runtime results match standard ABI expectations.
+      the selected launcher under a sanitized loader environment, and
+      verify that handles, constants, and runtime results match standard
+      ABI expectations.
 - [ ] Reuse Phase 8 converter probes in both cross directions.
       Cross-run the converter probes before larger runtime probes so
       handle and constant mapping mismatches are detected with small,
@@ -967,10 +1024,14 @@ chunk adds installed runtime probes.
       Use platform tools when available to show which ABI library the
       generated executable will load; missing diagnostic tools should be
       skips, while a proven wrong linked library is a failure.
-- [ ] Report MPICH tool paths and versions.
-- [ ] Skip cross tests with stable machine-readable reasons when MPICH
-      tools are unavailable.
-- [ ] Collect cross-test failures and emit a combined summary.
+- [x] Report MPICH tool paths and versions.
+- [x] Fail MPICH compatibility tests with stable machine-readable
+      reasons when MPICH MPI Forum ABI tools are unavailable or the
+      discovered MPICH install exposes only MPICH's internal ABI.
+- [~] Collect cross-test failures and emit a combined summary.
+      Chunk 12A adds the cross-check result list and per-direction
+      infrastructure summary.  This remains partial until Chunk 12B adds
+      actual cross-compiled probe execution and failure collection.
       Do not stop at the first failed direction or first failed probe;
       record per-direction PASS/FAIL/SKIP status and emit aggregate
       counts suitable for CI tracking.
@@ -1005,12 +1066,13 @@ chunk adds installed runtime probes.
 - [ ] Verify `make check` skips cleanly with ABI support disabled.
 - [ ] Verify `make distcheck` passes with MPI ABI test files included.
 - [ ] Verify `make check-abi` passes against an installed Open MPI.
-- [ ] Verify `make check-abi-cross` passes when MPICH is available or
-      skips cleanly when MPICH is unavailable.
+- [ ] Verify `make check-abi-mpich` passes when MPICH is available or
+      fails with setup guidance when MPICH is unavailable.
 - [ ] Verify a distribution tarball can configure, build, install, and
       run `make check-abi` against the installed tarball build.
-- [ ] Verify a distribution tarball can run `make check-abi-cross` when
-      MPICH is available or skip cleanly when MPICH is unavailable.
+- [ ] Verify a distribution tarball can run `make check-abi-mpich` when
+      MPICH is available or fail with setup guidance when MPICH is
+      unavailable.
 - [ ] Verify distribution tarballs include ABI specs, templates,
       scripts, requirements, and runner inputs.
       `make dist` and `make distcheck` must include the source files
@@ -1019,15 +1081,16 @@ chunk adds installed runtime probes.
 - [ ] Verify VPATH builds run ABI tests from source and distribution
       trees.
       Run representative `check-fast`, `check-abi`, and optional
-      `check-abi-cross` targets from an out-of-tree build so source-tree
+      `check-abi-mpich` targets from an out-of-tree build so source-tree
       path assumptions do not pass only in non-VPATH builds.
 - [ ] Verify JSON and text reports are emitted and suitable for CI
       tracking.
 - [ ] Verify complete-gate behavior for PASS, FAIL, and SKIP runs.
       A legitimate skip, such as standard ABI support disabled or
-      missing optional cross tools, must not be converted into a
-      completion-gate failure; missing implemented coverage must remain
-      a hard failure when the suite is complete.
+      missing optional tools in non-explicit modes, must not be
+      converted into a completion-gate failure.  Explicit
+      `check-abi-mpich` prerequisite failures and missing implemented
+      coverage must remain hard failures when the suite is complete.
 - [ ] Verify command timeouts and failure summaries cover launcher
       hangs.
       Runtime probes that call `mpirun` must have configurable timeouts

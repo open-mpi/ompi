@@ -104,17 +104,17 @@ The suite has several complementary groups of checks:
   recorded as explicitly unimplemented or skipped rather than treated as
   covered by these regression checks.
 
-* Cross-implementation checks.
+* MPICH compatibility checks.
 
-  When enabled, the cross path compares Open MPI's standard ABI behavior
-  against another implementation, initially MPICH.  This is useful for
-  identifying places where Open MPI diverges from the MPI standard ABI
-  contract rather than merely being internally self-consistent.
+  When enabled, the MPICH path compares Open MPI's standard ABI behavior
+  against MPICH.  This is useful for identifying places where Open MPI
+  diverges from the MPI standard ABI contract rather than merely being
+  internally self-consistent.
 
 Together, these groups test the ABI layer from several directions:
 metadata authority, installed artifacts, symbol reachability, handle
 translation, complete public API call paths, callback conversion, and
-cross-implementation behavior.  Passing these tests does not prove that
+MPICH compatibility behavior.  Passing these tests does not prove that
 every underlying MPI algorithm is correct; it proves that the ABI-facing
 surface is consistent with the standard ABI metadata and can successfully
 drive the already-tested Open MPI implementation through the ABI layer.
@@ -133,20 +133,78 @@ make check-abi
 `make check-abi` expects the installed Open MPI tools to be available on
 `PATH`, unless overridden with environment or make variables.
 
-The optional cross-implementation path is:
+The optional MPICH compatibility path is:
 
 ```sh
-make check-abi-cross
+make check-abi-mpich
 ```
 
-The initial cross-implementation target is MPICH.
+`make check-abi-mpich` expects both an installed Open MPI with standard
+ABI support and an installed MPICH with MPI Forum ABI support.  MPICH's
+normal internal ABI is not the MPI Forum ABI.  For MPICH 5.0.x, this
+requires configuring MPICH with `--enable-mpi-abi` so that it installs
+the MPI Forum ABI wrapper (`mpicc_abi`), header (`mpi_abi.h`), and ABI
+libraries (`libmpi_abi` and `libpmpi_abi`).
+
+By default, put both installations' `bin` directories on `PATH`; the
+order does not matter because the runner classifies the discovered tools
+before selecting them.  The Open MPI install must provide the standard
+ABI C wrapper (`mpicc_abi`) and launcher (`mpirun`); the normal Open MPI
+`mpicc` wrapper is not a substitute because it links Open MPI's internal
+ABI, not `libmpi_abi`.
+
+MPICH is discovered from a real MPICH-looking MPI Forum ABI wrapper and
+launcher.  A generic `mpicc` on `PATH` is not sufficient: it may be Open
+MPI's wrapper, and even MPICH's normal `mpicc` links MPICH's internal ABI
+rather than the MPI Forum ABI.  If MPICH uses site-specific wrapper
+names or is installed outside `PATH`, set `MPICH_ABI_TEST_MPICC` to the
+MPICH MPI Forum ABI C wrapper, normally `mpicc_abi`, and set
+`MPICH_ABI_TEST_MPIRUN` to the matching launcher.
+
+Explicit tool overrides are treated as operator intent.  If an override
+is set, the runner validates that tool instead of silently falling back
+to another executable from `PATH`.  A launcher-only override is paired
+only with compiler wrappers discovered in the same installation
+directory; if the compiler wrapper is outside `PATH`, set the matching
+compiler override as well.  Missing or invalid Open MPI or MPICH
+prerequisites are reported as failures, not skips, because invoking this
+target is an explicit request for MPICH compatibility results.
+
+The MPICH target records both standard ABI directions:
+
+* compile with MPICH and run against Open MPI's standard ABI runtime;
+* compile with Open MPI's `mpicc_abi` and run against MPICH.
+
+When the cross-direction runtime probes are enabled, the runner will
+sanitize the platform runtime library path for each launched executable.
+On Linux this means replacing `LD_LIBRARY_PATH`; on macOS it means
+replacing `DYLD_LIBRARY_PATH`.  The replacement contains only the
+selected run-side MPI library directory unless an explicit library-path
+override is supplied.  This avoids accidentally compiling with one MPI
+implementation and then loading a stale `libmpi` from the user's shell
+environment at run time.
+
+Until the MPICH probe execution work is complete, `make check-abi-mpich`
+reports the discovered environment and marks the per-direction runtime
+probes as deferred with a stable skip reason.
 
 Useful variables:
 
 * `OMPI_ABI_TEST_MPICC_ABI`: Open MPI standard ABI C wrapper.
 * `OMPI_ABI_TEST_MPIRUN`: Open MPI launcher.
-* `MPICH_ABI_TEST_MPICC`: MPICH C wrapper.
+* `OMPI_ABI_TEST_INCLUDE_PATH`: Open MPI standard ABI include override.
+* `OMPI_ABI_TEST_LIBRARY_PATH`: Open MPI ABI library path override.
+* `OMPI_ABI_TEST_LAUNCHER_ARGS`: extra Open MPI launcher arguments.
+* `MPICH_ABI_TEST_MPICC`: MPICH MPI Forum ABI C wrapper, normally
+  `mpicc_abi`.
 * `MPICH_ABI_TEST_MPIRUN`: MPICH launcher.
+* `MPICH_ABI_TEST_INCLUDE_PATH`: MPICH include path override.
+* `MPICH_ABI_TEST_LIBRARY_PATH`: MPICH library path override.
+* `MPICH_ABI_TEST_LAUNCHER_ARGS`: extra MPICH launcher arguments.
+* `OMPI_ABI_TEST_MPICH_DIRECTIONS`: comma-separated MPICH direction
+  selection.  Valid values are `both`, `mpich-to-ompi`, and
+  `ompi-to-mpich`.  Invalid values are setup failures because they
+  would otherwise hide a CI configuration mistake.
 * `OMPI_ABI_TEST_DYNAMIC_PROCESS`: set to `0` to skip dynamic process
   probes in launch environments that cannot service spawn, connect,
   accept, or name-service operations.

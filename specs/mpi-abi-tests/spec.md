@@ -139,10 +139,9 @@ CI-friendly runtime tests should use one or two ranks by default.
 Tests requiring larger scale, unusual launch support, or specialized
 resources must be optional or separately classified.
 
-### make check-abi-cross
+### make check-abi-mpich
 
-`make check-abi-cross` is an optional cross-implementation ABI target.
-The initial external implementation is MPICH.
+`make check-abi-mpich` is an optional MPICH compatibility ABI target.
 
 The target must support both directions:
 
@@ -154,6 +153,12 @@ variables for both Open MPI and MPICH compiler wrappers and launchers.
 It must also allow library path and launcher environment overrides,
 because cross-implementation tests need to control which implementation
 provides `libmpi_abi` at runtime.
+
+Cross-direction runtime launches must sanitize the platform runtime
+library path.  The runner should replace the selected loader variable
+(`LD_LIBRARY_PATH` on Linux, `DYLD_LIBRARY_PATH` on macOS) with the
+run-side implementation's library directory instead of preserving stale
+entries from the invoking shell.
 
 When MPICH mode is enabled, the suite should also compare Open MPI's
 standard ABI header against MPICH's ABI header semantically where
@@ -177,7 +182,7 @@ appropriate Automake clean targets unless debug-preservation mode is
 enabled.
 
 The test runner may operate outside Automake `check_PROGRAMS` / `TESTS`
-for `make check-abi` and `make check-abi-cross`.  Normal fast tests
+for `make check-abi` and `make check-abi-mpich`.  Normal fast tests
 included in `make check` should use existing Open MPI test conventions
 where practical.
 
@@ -273,13 +278,19 @@ Hard failures:
 * new metadata entries are not classified;
 * completed-suite coverage contains `test_not_written_yet`.
 
-Skips:
+Skips and setup failures:
 
 * standard ABI support is disabled in this build;
 * the relevant Open MPI language binding is not configured;
 * the configured build lacks a required optional feature;
 * Open MPI explicitly does not implement the ABI functionality yet;
-* optional cross-implementation tools are not available.
+* optional MPICH compatibility prerequisites are not available.
+
+`make check-abi-mpich` is an explicit request for MPICH compatibility
+results.  Missing Open MPI or MPICH tools are setup failures for that
+target rather than skips; the runner should report the missing
+prerequisite and point users at the MPI ABI test README for setup
+instructions.
 
 ## Completion Criteria
 
@@ -294,7 +305,7 @@ This branch is complete when:
 * `make check-abi` includes Fortran ABI functionality checks for
   implemented `use mpi_f08` ABI behavior and skips unimplemented
   standard ABI functionality explicitly;
-* `make check-abi-cross` supports optional MPICH cross-implementation
+* `make check-abi-mpich` supports optional MPICH compatibility
   testing in both compile/run directions;
 * every API and ABI constant from the authority metadata is classified;
 * no implemented ABI functionality diverges from the MPI standard ABI
