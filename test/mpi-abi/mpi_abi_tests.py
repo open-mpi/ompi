@@ -2143,6 +2143,38 @@ def _write_text(path, text):
         stream.write(text)
 
 
+def _build_source_candidates(srcdir, builddir, relative_path):
+    """Return build-tree/source-tree candidates for one repository path.
+
+    VPATH builds keep generated files under the build tree while checked-in
+    templates remain in the source tree.  Fast source-contract checks need to
+    see both layouts: builddir first catches generated VPATH outputs, and
+    srcdir preserves normal in-tree and dist-tarball behavior.
+    """
+    candidates = []
+    for root in (builddir, srcdir):
+        path = root / relative_path
+        if path not in candidates:
+            candidates.append(path)
+    return candidates
+
+
+def _first_existing_build_source_path(srcdir, builddir, relative_path):
+    """Return the first existing build/source candidate for relative_path."""
+    for path in _build_source_candidates(srcdir, builddir, relative_path):
+        if path.exists():
+            return path
+    return None
+
+
+def _missing_build_source_path(srcdir, builddir, relative_path):
+    """Describe all searched candidates for a missing build/source path."""
+    return " or ".join(
+        str(path)
+        for path in _build_source_candidates(srcdir, builddir, relative_path)
+    )
+
+
 def _probe_body_path(srcdir, case):
     """Return the checked-in C body snippet path for one probe case."""
     body_file = case.get("body_file")
@@ -3744,7 +3776,7 @@ def _contains_token(text, token):
     return re.search(_token_pattern(token), text) is not None
 
 
-def _abi_converter_checks(srcdir):
+def _abi_converter_checks(srcdir, builddir):
     """Check source contracts for ABI converter implementation files.
 
     These are source-contract checks, not behavioral unit tests.  They
@@ -3752,16 +3784,25 @@ def _abi_converter_checks(srcdir):
     makefile, and contains the expected wrapper/conversion structure.
     Runtime converter behavior is exercised later by installed C probes.
     """
-    c_dir = srcdir / "ompi" / "mpi" / "c"
-    makefile = c_dir / "Makefile_abi.include"
-    converter_header = c_dir / "abi_converters.h"
-    converter_source = c_dir / "abi_converters.c"
+    c_relative = Path("ompi") / "mpi" / "c"
+    makefile = _first_existing_build_source_path(
+        srcdir, builddir, c_relative / "Makefile_abi.include")
+    converter_header = _first_existing_build_source_path(
+        srcdir, builddir, c_relative / "abi_converters.h")
+    converter_source = _first_existing_build_source_path(
+        srcdir, builddir, c_relative / "abi_converters.c")
     missing_files = []
     missing_patterns = []
 
-    for path in (makefile, converter_header, converter_source):
-        if not path.exists():
-            missing_files.append(str(path))
+    required_files = (
+        (makefile, c_relative / "Makefile_abi.include"),
+        (converter_header, c_relative / "abi_converters.h"),
+        (converter_source, c_relative / "abi_converters.c"),
+    )
+    for path, relative_path in required_files:
+        if path is None:
+            missing_files.append(
+                _missing_build_source_path(srcdir, builddir, relative_path))
 
     if missing_files:
         return [_fail(
@@ -3805,18 +3846,25 @@ def _abi_converter_checks(srcdir):
 
     checked_sources = 0
     for symbol, stem in ABI_CONVERTER_HANDLES:
-        to_file = c_dir / (stem + "_toint_abi.c")
-        from_file = c_dir / (stem + "_fromint_abi.c")
-        to_source_name = to_file.name
-        from_source_name = from_file.name
+        to_relative = c_relative / (stem + "_toint_abi.c")
+        from_relative = c_relative / (stem + "_fromint_abi.c")
+        to_file = _first_existing_build_source_path(
+            srcdir, builddir, to_relative)
+        from_file = _first_existing_build_source_path(
+            srcdir, builddir, from_relative)
+        to_source_name = to_relative.name
+        from_source_name = from_relative.name
         to_symbol = "MPI_" + symbol + "_toint"
         from_symbol = "MPI_" + symbol + "_fromint"
         pto_symbol = "PMPI_" + symbol + "_toint"
         pfrom_symbol = "PMPI_" + symbol + "_fromint"
 
-        for path in (to_file, from_file):
-            if not path.exists():
-                missing_files.append(str(path))
+        for path, relative_path in ((to_file, to_relative),
+                                    (from_file, from_relative)):
+            if path is None:
+                missing_files.append(
+                    _missing_build_source_path(srcdir, builddir,
+                                               relative_path))
 
         for source_name in (to_source_name, from_source_name):
             if source_name not in makefile_text:
@@ -3825,7 +3873,7 @@ def _abi_converter_checks(srcdir):
                     "pattern": source_name,
                 })
 
-        if to_file.exists():
+        if to_file is not None:
             to_text = _read_text(to_file)
             to_requirements = [
                 ("abi.h include", '#include "ompi/mpi/c/abi.h"'),
@@ -3847,7 +3895,7 @@ def _abi_converter_checks(srcdir):
                 })
             checked_sources += 1
 
-        if from_file.exists():
+        if from_file is not None:
             from_text = _read_text(from_file)
             from_requirements = [
                 ("abi.h include", '#include "ompi/mpi/c/abi.h"'),
@@ -3890,7 +3938,7 @@ def _fortran_enabled(manifest, language):
     return manifest["configuration"]["fortran"][language]["enabled"]
 
 
-def _fortran_mpifh_helper_checks(srcdir, manifest):
+def _fortran_mpifh_helper_checks(srcdir, builddir, manifest):
     """Check mpif.h ABI helper source contracts.
 
     The helper entry points support legacy Fortran binding layers even
@@ -3904,23 +3952,30 @@ def _fortran_mpifh_helper_checks(srcdir, manifest):
                       SKIP_FORTRAN_BINDINGS_DISABLED,
                       language="mpif.h")]
 
-    base = srcdir / "ompi" / "mpi" / "fortran" / "mpif-h"
-    makefile = base / "Makefile.am"
-    prototypes = base / "prototypes_mpi.h"
+    base_relative = Path("ompi") / "mpi" / "fortran" / "mpif-h"
+    makefile = _first_existing_build_source_path(
+        srcdir, builddir, base_relative / "Makefile.am")
+    prototypes = _first_existing_build_source_path(
+        srcdir, builddir, base_relative / "prototypes_mpi.h")
     missing_files = []
     missing_patterns = []
 
-    for path in (makefile, prototypes):
-        if not path.exists():
-            missing_files.append(str(path))
+    for path, relative_path in (
+            (makefile, base_relative / "Makefile.am"),
+            (prototypes, base_relative / "prototypes_mpi.h")):
+        if path is None:
+            missing_files.append(
+                _missing_build_source_path(srcdir, builddir, relative_path))
 
-    makefile_text = _read_text(makefile) if makefile.exists() else ""
-    prototypes_text = _read_text(prototypes) if prototypes.exists() else ""
+    makefile_text = _read_text(makefile) if makefile is not None else ""
+    prototypes_text = _read_text(prototypes) if prototypes is not None else ""
     checked_sources = 0
 
     for helper in FORTRAN_ABI_HELPERS:
         c_name = helper + "_f.c"
-        c_path = base / c_name
+        c_relative = base_relative / c_name
+        c_path = _first_existing_build_source_path(
+            srcdir, builddir, c_relative)
         helper_suffix = helper[4:]
         mixed_name = "MPI_Abi_" + helper_suffix
         lower_name = "mpi_abi_" + helper_suffix
@@ -3928,8 +3983,9 @@ def _fortran_mpifh_helper_checks(srcdir, manifest):
         internal_name = "ompi_" + helper + "_f"
         pmpi_name = "PMPI_Abi_" + helper_suffix
 
-        if not c_path.exists():
-            missing_files.append(str(c_path))
+        if c_path is None:
+            missing_files.append(
+                _missing_build_source_path(srcdir, builddir, c_relative))
             continue
 
         checked_sources += 1
@@ -3975,7 +4031,7 @@ def _fortran_mpifh_helper_checks(srcdir, manifest):
                   checked_sources=checked_sources)]
 
 
-def _fortran_usempi_helper_checks(srcdir, manifest):
+def _fortran_usempi_helper_checks(srcdir, builddir, manifest):
     """Check the use mpi layer's shared-helper status.
 
     use mpi shares the mpif.h helper entry points in this code base, so
@@ -3989,14 +4045,18 @@ def _fortran_usempi_helper_checks(srcdir, manifest):
                       SKIP_FORTRAN_BINDINGS_DISABLED,
                       language="use mpi")]
 
-    makefile = (srcdir / "ompi" / "mpi" / "fortran" / "use-mpi" /
-                "Makefile.am")
-    if not makefile.exists():
+    relative_path = (Path("ompi") / "mpi" / "fortran" / "use-mpi" /
+                     "Makefile.am")
+    makefile = _first_existing_build_source_path(
+        srcdir, builddir, relative_path)
+    if makefile is None:
         return [_fail(
             "fortran_usempi_abi_helpers",
             "use mpi Makefile is missing",
             configured=enabled,
-            missing_files=[str(makefile)])]
+            missing_files=[
+                _missing_build_source_path(srcdir, builddir, relative_path)
+            ])]
 
     return [_skip(
         "fortran_usempi_abi_helpers",
@@ -4006,7 +4066,7 @@ def _fortran_usempi_helper_checks(srcdir, manifest):
         note="use mpi ABI helpers share the mpif.h helper entry points")]
 
 
-def _fortran_f08_helper_checks(srcdir, manifest):
+def _fortran_f08_helper_checks(srcdir, builddir, manifest):
     """Check use mpi_f08 ABI helper templates and generated interfaces.
 
     This layer is the ABI-relevant Fortran binding for MPI-5.x.  The
@@ -4019,32 +4079,43 @@ def _fortran_f08_helper_checks(srcdir, manifest):
                       SKIP_FORTRAN_BINDINGS_DISABLED,
                       language="use mpi_f08")]
 
-    base = srcdir / "ompi" / "mpi" / "fortran" / "use-mpi-f08"
-    prototype_file = base / "Makefile.prototype_files"
-    interface_file = base / "mod" / "mpi-f08-interfaces-generated.h"
+    base_relative = Path("ompi") / "mpi" / "fortran" / "use-mpi-f08"
+    prototype_file = _first_existing_build_source_path(
+        srcdir, builddir, base_relative / "Makefile.prototype_files")
+    interface_file = _first_existing_build_source_path(
+        srcdir, builddir,
+        base_relative / "mod" / "mpi-f08-interfaces-generated.h")
     missing_files = []
     missing_patterns = []
 
-    for path in (prototype_file, interface_file):
-        if not path.exists():
-            missing_files.append(str(path))
+    for path, relative_path in (
+            (prototype_file, base_relative / "Makefile.prototype_files"),
+            (interface_file,
+             base_relative / "mod" / "mpi-f08-interfaces-generated.h")):
+        if path is None:
+            missing_files.append(
+                _missing_build_source_path(srcdir, builddir, relative_path))
 
     prototype_text = (
-        _read_text(prototype_file) if prototype_file.exists() else ""
+        _read_text(prototype_file) if prototype_file is not None else ""
     )
     interface_text = (
-        _read_text(interface_file) if interface_file.exists() else ""
+        _read_text(interface_file) if interface_file is not None else ""
     )
     checked_templates = 0
 
     for helper in FORTRAN_ABI_HELPERS:
         template_name = helper + ".c.in"
-        template_path = base / template_name
+        template_relative = base_relative / template_name
+        template_path = _first_existing_build_source_path(
+            srcdir, builddir, template_relative)
         mpi_name = "MPI_Abi_" + helper[4:]
         pmpi_name = "PMPI_Abi_" + helper[4:]
 
-        if not template_path.exists():
-            missing_files.append(str(template_path))
+        if template_path is None:
+            missing_files.append(
+                _missing_build_source_path(srcdir, builddir,
+                                           template_relative))
             continue
 
         checked_templates += 1
@@ -4089,12 +4160,12 @@ def _fortran_f08_helper_checks(srcdir, manifest):
                   checked_templates=checked_templates)]
 
 
-def _fortran_helper_checks(srcdir, manifest):
+def _fortran_helper_checks(srcdir, builddir, manifest):
     """Run all configured Fortran ABI helper source checks."""
     checks = []
-    checks.extend(_fortran_mpifh_helper_checks(srcdir, manifest))
-    checks.extend(_fortran_usempi_helper_checks(srcdir, manifest))
-    checks.extend(_fortran_f08_helper_checks(srcdir, manifest))
+    checks.extend(_fortran_mpifh_helper_checks(srcdir, builddir, manifest))
+    checks.extend(_fortran_usempi_helper_checks(srcdir, builddir, manifest))
+    checks.extend(_fortran_f08_helper_checks(srcdir, builddir, manifest))
     return checks
 
 
@@ -4140,11 +4211,12 @@ def run_fast_checks(manifest, srcdir, builddir, progress=None):
 
     if progress is not None:
         progress.start("fast ABI converter source checks")
-    _extend_checks(checks, _abi_converter_checks(srcdir), progress)
+    _extend_checks(checks, _abi_converter_checks(srcdir, builddir), progress)
 
     if progress is not None:
         progress.start("fast Fortran ABI helper source checks")
-    _extend_checks(checks, _fortran_helper_checks(srcdir, manifest), progress)
+    _extend_checks(
+        checks, _fortran_helper_checks(srcdir, builddir, manifest), progress)
     return checks
 
 
