@@ -11,10 +11,10 @@ Open MPI "wrapper" compilers.
    customizing-wrappers
    extracting-wrapper-flags
    abi-compatibility
+   mpi-forum-abi
    removed-mpi-constructs
    deprecation-warnings
    building-static-apps
-   mpi-abi
 
 .. warning:: Except when using the :ref:`MPI ABI compiler wrapper
              <label-building-with-mpi-abi>` (``mpicc_abi``), Open MPI

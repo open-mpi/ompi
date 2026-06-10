@@ -1,10 +1,27 @@
 .. _label-building-with-mpi-abi:
 
-Building MPI applications using the MPI ABI
-===========================================
+Building MPI applications using the MPI Forum ABI
+=================================================
 
-What is the MPI ABI?
---------------------
+.. note:: Open MPI supports two ABIs:
+
+          * **The Open MPI ABI:** this is the ABI that Open MPI has
+            supported for multiple releases over many years.
+
+          * **The MPI Forum ABI:** this is the official ABI as defined
+            by the MPI standard.  It was not supported in Open MPI
+            until v6.0.0.
+
+          These two ABIs are different and not interchangeable.
+
+This section describes the **MPI Forum ABI** support in Open MPI.
+
+For information about the Open MPI ABI, see
+:ref:`ABI compatibility to previous versions of Open MPI
+<label-binary-compatibility>`.
+
+What is the MPI Forum ABI?
+--------------------------
 
 Starting with MPI-5.0, the MPI standard defines an Application Binary
 Interface (ABI) for MPI applications.  In principle, an application can
@@ -82,13 +99,47 @@ uses Open MPI's own ABI, not the MPI standard ABI.
 Fortran support
 ---------------
 
-This release does not provide a ``mpifort_abi`` compiler wrapper.
-Fortran MPI applications, including mixed C and Fortran applications
-that use MPI from Fortran code, cannot currently be built against Open
-MPI as a standard MPI ABI target.
+This release does not provide a ``mpifort_abi`` compiler wrapper, and
+does not provide ``libmpifort_abi``.
 
-Open MPI may still provide the MPI ABI query/helper routines documented
-in the MPI API man pages, including their Fortran bindings where the
+Open MPI does provide the MPI ABI query/helper routines documented in
+the MPI API man pages, including their Fortran bindings where the
 normal Open MPI Fortran bindings are available.  Those routines do not
 imply that this release provides a complete Fortran standard ABI build
 path.
+
+Mixing Open MPI's ABI and the MPI standard ABI
+----------------------------------------------
+
+The Open MPI ABI and the MPI Forum ABI are separate binary interfaces.
+
+.. danger:: Do not mix object files or libraries that use both MPI
+            ABIs in a single executable.
+
+For example, the following cases are **not** supported:
+
+* Compiling some C source files that call MPI with ``mpicc_abi`` and
+  compiling other C source files that call MPI with ``mpicc``, then
+  linking them into one executable.
+* Compiling C source files that call MPI with ``mpicc_abi`` and
+  compiling Fortran source files that call MPI with ``mpifort``, then
+  linking them into one executable.
+* Linking a library whose MPI-using object files were built with
+  ``mpicc_abi`` into an application whose MPI-using object files were
+  built with ``mpicc`` or ``mpifort``.
+
+These combinations are unsafe because the process-wide ``MPI_*``
+symbols must resolve to one MPI library ABI, while the object files were
+compiled with different binary representations for MPI handles,
+constants, callback arguments, and status objects.  The result is
+undefined behavior; the executable may fail to link, crash, report MPI
+errors, or appear to work until an MPI object crosses the ABI boundary.
+
+Use *one* MPI ABI consistently for every object file that calls MPI:
+
+* For a C MPI application using the MPI-5.0 standard ABI, you can
+  compile and link all MPI-using C objects with ``mpicc`` *or*
+  ``mpicc_abi``.
+* For other MPI applications, including mixed C and Fortran
+  applications, compile C objects with ``mpicc`` and Fortran objects
+  with ``mpifort``.
