@@ -868,6 +868,12 @@ chunk adds installed runtime probes.
 - [x] Test Fortran `MPI_Abi_set_fortran_info`.
 - [x] Test Fortran `MPI_Abi_get_fortran_booleans`.
 - [x] Test Fortran `MPI_Abi_set_fortran_booleans`.
+      The Chunk 11B runtime probes accept `MPI_Abi_get_version`
+      reporting `-1,-1` from Open MPI's normal Fortran bindings, but
+      they continue past that result and exercise the other helper
+      routines.  They validate representative documented info keys,
+      Fortran logical true/false values, and the read-only behavior of
+      the configured Fortran boolean state after `MPI_Init`.
 - [ ] Test `use mpi_f08` ABI functionality implemented by Open MPI.
       Cover implemented `use mpi_f08` ABI entry points and helpers with
       compile and runtime probes.  Unimplemented standard Fortran ABI

@@ -51,8 +51,6 @@ SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE = "symbol_diagnostics_unavailable"
 SKIP_FORTRAN_BINDINGS_DISABLED = "fortran_bindings_disabled"
 SKIP_FORTRAN_BINDING_DISABLED = "fortran_binding_disabled"
 SKIP_FORTRAN_HELPERS_SHARED = "fortran_abi_helpers_shared_with_mpifh"
-SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE = (
-    "fortran_standard_abi_runtime_unavailable")
 SKIP_FORTRAN_OPTIONAL_DATATYPES_DEFERRED = (
     "fortran_optional_datatypes_deferred"
 )
@@ -1675,6 +1673,7 @@ integer :: sendbuf
 integer :: recvbuf
 integer :: count
 integer :: type_size
+integer :: expected_type_size
 type(MPI_Comm) :: comm
 type(MPI_Status) :: status
 
@@ -1687,7 +1686,8 @@ if (ierr /= MPI_SUCCESS) stop 3
 call MPI_Comm_size(comm, size, ierr)
 if (ierr /= MPI_SUCCESS .or. size /= 2) stop 4
 call MPI_Type_size(MPI_INTEGER, type_size, ierr)
-if (ierr /= MPI_SUCCESS .or. type_size <= 0) stop 5
+expected_type_size = storage_size(sendbuf) / 8
+if (ierr /= MPI_SUCCESS .or. type_size /= expected_type_size) stop 5
 peer = 1 - rank
 sendbuf = rank + 30
 recvbuf = -1
@@ -1712,9 +1712,6 @@ if (ierr /= MPI_SUCCESS) stop 13
         "name": "fortran_mpifh_abi_helpers",
         "language": "mpif.h",
         "rank_count": 1,
-        "skip_exit_codes": {
-            77: SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE,
-        },
         "use_statement": "include 'mpif.h'",
         "api_names": (
             "MPI_Abi_get_fortran_booleans",
@@ -1723,6 +1720,7 @@ if (ierr /= MPI_SUCCESS) stop 13
             "MPI_Abi_get_version",
             "MPI_Abi_set_fortran_booleans",
             "MPI_Abi_set_fortran_info",
+            "MPI_Comm_set_errhandler",
             "MPI_Info_free",
             "MPI_Init",
             "MPI_Finalize",
@@ -1737,19 +1735,39 @@ integer :: logical_size
 logical :: logical_true
 logical :: logical_false
 logical :: is_set
+logical :: requested_true
+logical :: requested_false
+logical :: flag
+character(len=32) :: value
+integer :: numeric_value
+integer :: read_status
 
 call MPI_Init(ierr)
 if (ierr .ne. MPI_SUCCESS) stop 1
+call MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 25
 call MPI_Abi_get_version(major, minor, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 2
-if (major .eq. -1 .and. minor .eq. -1) stop 77
-if (major .ne. 1 .or. minor .ne. 0) stop 11
+if (.not. ((major .eq. -1 .and. minor .eq. -1) .or. &
+           (major .eq. 1 .and. minor .eq. 0))) stop 11
 call MPI_Abi_get_info(info, ierr)
 if (ierr .ne. MPI_SUCCESS .or. info .eq. MPI_INFO_NULL) stop 3
+call MPI_Info_get(info, 'mpi_aint_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 15
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 16
 call MPI_Info_free(info, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 4
 call MPI_Abi_get_fortran_info(finfo, ierr)
 if (ierr .ne. MPI_SUCCESS .or. finfo .eq. MPI_INFO_NULL) stop 5
+call MPI_Info_get(finfo, 'mpi_logical_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 17
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 18
+call MPI_Info_get(finfo, 'mpi_integer4_supported', len(value), value, &
+                  flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 19
+if (trim(value) .ne. 'true' .and. trim(value) .ne. 'false') stop 20
 call MPI_Abi_set_fortran_info(finfo, ierr)
 ! The normal Open MPI Fortran runtime may already have established this
 ! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
@@ -1765,11 +1783,23 @@ if (ierr .ne. MPI_SUCCESS) stop 8
 if (.not. is_set) stop 12
 if (.not. logical_true) stop 13
 if (logical_false) stop 14
-call MPI_Abi_set_fortran_booleans(logical_size, .true., .false., ierr)
+requested_true = .false.
+requested_false = .true.
+call MPI_Abi_set_fortran_booleans(logical_size, requested_true, &
+                                  requested_false, ierr)
 ! See the MPI_Abi_set_fortran_info comment above; after MPI_Init,
 ! accepting MPI_ERR_ABI avoids turning expected read-only runtime state
 ! into a false failure.
 if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 9
+logical_true = .false.
+logical_false = .true.
+is_set = .false.
+call MPI_Abi_get_fortran_booleans(logical_size, logical_true, &
+                                  logical_false, is_set, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 21
+if (.not. is_set) stop 22
+if (.not. logical_true) stop 23
+if (logical_false) stop 24
 call MPI_Finalize(ierr)
 if (ierr .ne. MPI_SUCCESS) stop 10
 """,
@@ -1778,9 +1808,6 @@ if (ierr .ne. MPI_SUCCESS) stop 10
         "name": "fortran_usempi_abi_helpers",
         "language": "use mpi",
         "rank_count": 1,
-        "skip_exit_codes": {
-            77: SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE,
-        },
         "use_statement": "use mpi",
         "api_names": (
             "MPI_Abi_get_fortran_booleans",
@@ -1789,6 +1816,7 @@ if (ierr .ne. MPI_SUCCESS) stop 10
             "MPI_Abi_get_version",
             "MPI_Abi_set_fortran_booleans",
             "MPI_Abi_set_fortran_info",
+            "MPI_Comm_set_errhandler",
             "MPI_Info_free",
             "MPI_Init",
             "MPI_Finalize",
@@ -1804,19 +1832,39 @@ integer :: logical_size
 logical :: logical_true
 logical :: logical_false
 logical :: is_set
+logical :: requested_true
+logical :: requested_false
+logical :: flag
+character(len=32) :: value
+integer :: numeric_value
+integer :: read_status
 
 call MPI_Init(ierr)
 if (ierr .ne. MPI_SUCCESS) stop 1
+call MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 25
 call MPI_Abi_get_version(major, minor, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 2
-if (major .eq. -1 .and. minor .eq. -1) stop 77
-if (major .ne. 1 .or. minor .ne. 0) stop 11
+if (.not. ((major .eq. -1 .and. minor .eq. -1) .or. &
+           (major .eq. 1 .and. minor .eq. 0))) stop 11
 call MPI_Abi_get_info(info, ierr)
 if (ierr .ne. MPI_SUCCESS .or. info .eq. MPI_INFO_NULL) stop 3
+call MPI_Info_get(info, 'mpi_aint_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 15
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 16
 call MPI_Info_free(info, ierr)
 if (ierr .ne. MPI_SUCCESS) stop 4
 call MPI_Abi_get_fortran_info(finfo, ierr)
 if (ierr .ne. MPI_SUCCESS .or. finfo .eq. MPI_INFO_NULL) stop 5
+call MPI_Info_get(finfo, 'mpi_logical_size', len(value), value, flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 17
+read(value, *, iostat=read_status) numeric_value
+if (read_status .ne. 0 .or. numeric_value .le. 0) stop 18
+call MPI_Info_get(finfo, 'mpi_integer4_supported', len(value), value, &
+                  flag, ierr)
+if (ierr .ne. MPI_SUCCESS .or. .not. flag) stop 19
+if (trim(value) .ne. 'true' .and. trim(value) .ne. 'false') stop 20
 call MPI_Abi_set_fortran_info(finfo, ierr)
 ! The normal Open MPI Fortran runtime may already have established this
 ! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
@@ -1832,11 +1880,23 @@ if (ierr .ne. MPI_SUCCESS) stop 8
 if (.not. is_set) stop 12
 if (.not. logical_true) stop 13
 if (logical_false) stop 14
-call MPI_Abi_set_fortran_booleans(logical_size, .true., .false., ierr)
+requested_true = .false.
+requested_false = .true.
+call MPI_Abi_set_fortran_booleans(logical_size, requested_true, &
+                                  requested_false, ierr)
 ! See the MPI_Abi_set_fortran_info comment above; after MPI_Init,
 ! accepting MPI_ERR_ABI avoids turning expected read-only runtime state
 ! into a false failure.
 if (ierr .ne. MPI_SUCCESS .and. ierr .ne. MPI_ERR_ABI) stop 9
+logical_true = .false.
+logical_false = .true.
+is_set = .false.
+call MPI_Abi_get_fortran_booleans(logical_size, logical_true, &
+                                  logical_false, is_set, ierr)
+if (ierr .ne. MPI_SUCCESS) stop 21
+if (.not. is_set) stop 22
+if (.not. logical_true) stop 23
+if (logical_false) stop 24
 call MPI_Finalize(ierr)
 if (ierr .ne. MPI_SUCCESS) stop 10
 """,
@@ -1845,9 +1905,6 @@ if (ierr .ne. MPI_SUCCESS) stop 10
         "name": "fortran_usempif08_abi_helpers",
         "language": "use mpi_f08",
         "rank_count": 1,
-        "skip_exit_codes": {
-            77: SKIP_FORTRAN_STANDARD_ABI_RUNTIME_UNAVAILABLE,
-        },
         "use_statement": "use mpi_f08",
         "api_names": (
             "MPI_Abi_get_fortran_booleans",
@@ -1856,6 +1913,7 @@ if (ierr .ne. MPI_SUCCESS) stop 10
             "MPI_Abi_get_version",
             "MPI_Abi_set_fortran_booleans",
             "MPI_Abi_set_fortran_info",
+            "MPI_Comm_set_errhandler",
             "MPI_Info_free",
             "MPI_Init",
             "MPI_Finalize",
@@ -1871,19 +1929,39 @@ integer :: logical_size
 logical :: logical_true
 logical :: logical_false
 logical :: is_set
+logical :: requested_true
+logical :: requested_false
+logical :: flag
+character(len=32) :: value
+integer :: numeric_value
+integer :: read_status
 
 call MPI_Init(ierr)
 if (ierr /= MPI_SUCCESS) stop 1
+call MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN, ierr)
+if (ierr /= MPI_SUCCESS) stop 25
 call MPI_Abi_get_version(major, minor, ierr)
 if (ierr /= MPI_SUCCESS) stop 2
-if (major == -1 .and. minor == -1) stop 77
-if (major /= 1 .or. minor /= 0) stop 11
+if (.not. ((major == -1 .and. minor == -1) .or. &
+           (major == 1 .and. minor == 0))) stop 11
 call MPI_Abi_get_info(info, ierr)
 if (ierr /= MPI_SUCCESS .or. info == MPI_INFO_NULL) stop 3
+call MPI_Info_get(info, 'mpi_aint_size', len(value), value, flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 15
+read(value, *, iostat=read_status) numeric_value
+if (read_status /= 0 .or. numeric_value <= 0) stop 16
 call MPI_Info_free(info, ierr)
 if (ierr /= MPI_SUCCESS) stop 4
 call MPI_Abi_get_fortran_info(finfo, ierr)
 if (ierr /= MPI_SUCCESS .or. finfo == MPI_INFO_NULL) stop 5
+call MPI_Info_get(finfo, 'mpi_logical_size', len(value), value, flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 17
+read(value, *, iostat=read_status) numeric_value
+if (read_status /= 0 .or. numeric_value <= 0) stop 18
+call MPI_Info_get(finfo, 'mpi_integer4_supported', len(value), value, &
+                  flag, ierr)
+if (ierr /= MPI_SUCCESS .or. .not. flag) stop 19
+if (trim(value) /= 'true' .and. trim(value) /= 'false') stop 20
 call MPI_Abi_set_fortran_info(finfo, ierr)
 ! The normal Open MPI Fortran runtime may already have established this
 ! state after MPI_Init.  In that case the setter reports MPI_ERR_ABI,
@@ -1899,11 +1977,23 @@ if (ierr /= MPI_SUCCESS) stop 8
 if (.not. is_set) stop 12
 if (.not. logical_true) stop 13
 if (logical_false) stop 14
-call MPI_Abi_set_fortran_booleans(logical_size, .true., .false., ierr)
+requested_true = .false.
+requested_false = .true.
+call MPI_Abi_set_fortran_booleans(logical_size, requested_true, &
+                                  requested_false, ierr)
 ! See the MPI_Abi_set_fortran_info comment above; after MPI_Init,
 ! accepting MPI_ERR_ABI avoids turning expected read-only runtime state
 ! into a false failure.
 if (ierr /= MPI_SUCCESS .and. ierr /= MPI_ERR_ABI) stop 9
+logical_true = .false.
+logical_false = .true.
+is_set = .false.
+call MPI_Abi_get_fortran_booleans(logical_size, logical_true, &
+                                  logical_false, is_set, ierr)
+if (ierr /= MPI_SUCCESS) stop 21
+if (.not. is_set) stop 22
+if (.not. logical_true) stop 23
+if (logical_false) stop 24
 call MPI_Finalize(ierr)
 if (ierr /= MPI_SUCCESS) stop 10
 """,
@@ -4861,15 +4951,23 @@ def _fortran_binding_skip(manifest, tools, language):
     return None
 
 
-def _fortran_probe_api_names(cases):
-    """Return probe API names grouped by Fortran binding layer."""
+def _fortran_check_api_names(checks):
+    """Return API names covered by successful Fortran probe results.
+
+    Static case metadata is useful for generating probes, but runtime
+    coverage must come from checks that actually PASS.  This keeps a
+    probe that compiles but exits through a stable SKIP from being
+    reported as runtime coverage.
+    """
     covered = {language: set() for language in FORTRAN_BINDING_LANGUAGES}
-    for case in cases:
-        covered[case["language"]].update(case.get("api_names", ()))
+    for check in checks:
+        language = check.get("language")
+        if check.get("result") == "PASS" and language in covered:
+            covered[language].update(check.get("api_names", ()))
     return covered
 
 
-def _fortran_coverage_audit(manifest, tools, compile_cases, runtime_cases):
+def _fortran_coverage_audit(manifest, tools, compile_checks, runtime_checks):
     """Report configured Fortran coverage populations for Phase 11.
 
     Phase 11 grows in layers.  The audit is intentionally grouped by
@@ -4878,8 +4976,8 @@ def _fortran_coverage_audit(manifest, tools, compile_cases, runtime_cases):
     exhaustive generated Fortran probes exist, the audit reports pending
     APIs instead of treating them as hidden PASSes.
     """
-    compile_covered = _fortran_probe_api_names(compile_cases)
-    runtime_covered = _fortran_probe_api_names(runtime_cases)
+    compile_covered = _fortran_check_api_names(compile_checks)
+    runtime_covered = _fortran_check_api_names(runtime_checks)
     by_language = {}
     for language in FORTRAN_BINDING_LANGUAGES:
         state = manifest["configuration"]["fortran"][language]
@@ -5133,15 +5231,16 @@ def _fortran_optional_datatype_skip(manifest, tools, progress=None):
 def _installed_fortran_checks(srcdir, manifest, tools, dirs, progress=None):
     """Run installed Fortran detection, compile, and runtime checks."""
     checks = []
+    compile_checks = _run_installed_fortran_compile_probes(
+        srcdir, manifest, tools, dirs, progress)
+    checks.extend(compile_checks)
+    runtime_checks = _run_installed_fortran_runtime_probes(
+        srcdir, manifest, tools, dirs, progress)
+    checks.extend(runtime_checks)
     if progress is not None:
         progress.start("installed_fortran_coverage_audit")
     _append_check(checks, _fortran_coverage_audit(
-        manifest, tools, INSTALLED_FORTRAN_COMPILE_PROBES,
-        INSTALLED_FORTRAN_RUNTIME_PROBES), progress)
-    checks.extend(_run_installed_fortran_compile_probes(
-        srcdir, manifest, tools, dirs, progress))
-    checks.extend(_run_installed_fortran_runtime_probes(
-        srcdir, manifest, tools, dirs, progress))
+        manifest, tools, compile_checks, runtime_checks), progress)
     _append_check(checks, _fortran_optional_datatype_skip(
         manifest, tools, progress), progress)
     return checks
