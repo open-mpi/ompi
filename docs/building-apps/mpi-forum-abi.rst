@@ -99,8 +99,28 @@ uses Open MPI's own ABI, not the MPI standard ABI.
 Fortran support
 ---------------
 
-This release does not provide a ``mpifort_abi`` compiler wrapper, and
-does not provide ``libmpifort_abi``.
+As of summer 2026, Open MPI intentionally does not provide support for
+the MPI Forum Fortran standard ABI for the following reasons:
+
+* No other MPI implementation supports the MPI Forum Fortran ABI yet.
+
+* The MPI Forum continues to discuss corrections and updates to the
+  MPI Forum ABI.
+
+Given this, it may actually be counter-productive for Open MPI to
+implement the MPI Forum Fortran ABI at this time.  If the Forum's
+Fortran ABI specification needs breaking changes, making those changes
+becomes much more difficult once there are real-world implementations
+of that Fortran ABI in use by actual MPI applications.
+
+Open MPI has therefore taken a wait-and-see approach: we will let the
+dust settle and let the MPI Forum work out the remaining issues and
+converge on a final Fortran ABI specification before committing to a
+Fortran standard ABI implementation.
+
+Specifically: this release of Open MPI does not provide a
+``mpifort_abi`` compiler wrapper, and does not provide
+``libmpifort_abi``.
 
 Open MPI does provide the MPI ABI query/helper routines documented in
 the MPI API man pages, including their Fortran bindings where the
