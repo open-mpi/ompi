@@ -16,7 +16,7 @@
 #include <string.h>
 #include "ompi/runtime/ompi_hwpc_cxi_constants.h"
 
-// A list containing all of the performance counters for the CxiPerfStats group
+/* A list containing all of the performance counters for the CxiPerfStats group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_PERFSTATS_COUNTER_GROUP_LIST[] = {
     HNI_PKTS_SENT_BY_TC,
     HNI_PKTS_RECV_BY_TC,
@@ -32,7 +32,7 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_PERFSTATS_COUNTER_GROUP_LI
     ATU_CACHE_EVICTIONS
 };
 
-// A list containing all of the performance counters for the CxiErrStats group
+/*  A list containing all of the performance counters for the CxiErrStats group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_ERRSTATS_COUNTER_GROUP_LIST[] = {
     PCT_SPT_TIMEOUTS,
     PCT_SCT_TIMEOUTS,
@@ -46,7 +46,7 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_ERRSTATS_COUNTER_GROUP_LIS
     HNI_LLR_RX_REPLAY_EVENT
 };
 
-// A list containing all of the performance counters for the CxiOpCommands group
+/* A list containing all of the performance counters for the CxiOpCommands group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_OPCOMMANDS_COUNTER_GROUP_LIST[] = {
     CQ_DMA_CMD_COUNTS,
     CQ_CQ_CMD_COUNTS,
@@ -54,7 +54,7 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_OPCOMMANDS_COUNTER_GROUP_L
     CQ_NUM_IDC_CMDS
 };
 
-// A list containing all of the performance counters for the CxiOpPackets group
+/* A list containing all of the performance counters for the CxiOpPackets group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_OPPACKETS_COUNTER_GROUP_LIST[] = {
     HNI_TX_OK_27,
     HNI_TX_OK_35,
@@ -84,7 +84,7 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_OPPACKETS_COUNTER_GROUP_LI
     HNI_PKTS_RECV_BY_TC
 };
 
-// A list containing all of the performance counters for the CxiDmaEngine group
+/*  A list containing all of the performance counters for the CxiDmaEngine group */
 static const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_DMAENGINE_COUNTER_GROUP_LIST[] = {
     OXE_MCU_MEAS,
     OXE_CHANNEL_IDLE,
@@ -95,7 +95,7 @@ static const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_DMAENGINE_COUNTER_G
     PI_PTI_TARB_MWR_PKTS
 };
 
-// A list containing all of the performance counters for the CxiWritesToHost group
+/* A list containing all of the performance counters for the CxiWritesToHost group */
 static const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_WRITESTOHOST_COUNTER_GROUP_LIST[] = {
     PARBS_TARB_PI_POSTED_PKTS,
     PARBS_TARB_PI_POSTED_BLOCKED_CNT,
@@ -103,7 +103,7 @@ static const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_WRITESTOHOST_COUNTE
     PARBS_TARB_PI_NON_POSTED_BLOCKED_CNT
 };
 
-// A list containing all of the performance counters for the CxiMessageMatchingPooled group
+/* A list containing all of the performance counters for the CxiMessageMatchingPooled group */
 static const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_MESSAGEMATCHINGPOOLED_COUNTER_GROUP_LIST[] = {
     LPE_NET_MATCH_REQUESTS,
     LPE_NET_MATCH_PRIORITY,
@@ -118,7 +118,7 @@ static const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_MESSAGEMATCHINGPOOL
     LPE_FAMO_CMDS
 };
 
-// A list containing all of the performance counters for the CxiTranslationUnit group
+/* A list containing all of the performance counters for the CxiTranslationUnit group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_TRANSLATIONUNIT_COUNTER_GROUP_LIST[] = {
     ATU_CACHE_MISS,
     ATU_CLIENT_REQ_EE,
@@ -133,13 +133,13 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_TRANSLATIONUNIT_COUNTER_GR
     ATU_ATS_TRANS_LATENCY
 };
 
-// A list containing all of the performance counters for the CxiLatencyHist group
+/* A list containing all of the performance counters for the CxiLatencyHist group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_LATENCYHIST_COUNTER_GROUP_LIST[] = {
     PCT_HOST_ACCESS_LATENCY,
     PCT_REQ_RSP_LATENCY
 };
 
-// A list containing all of the performance counters for the CxiPctReqRespTracking group
+/* A list containing all of the performance counters for the CxiPctReqRespTracking group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_PCTREQRESPTRACKING_COUNTER_GROUP_LIST[] = {
     PCT_REQ_ORDERED,
     PCT_REQ_UNORDERED,
@@ -151,7 +151,7 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_PCTREQRESPTRACKING_COUNTER
     PCT_SCT_TIMEOUTS
 };
 
-// A list containing all of the performance counters for the CxiLinkReliability group
+/* A list containing all of the performance counters for the CxiLinkReliability group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_LINKRELIABILITY_COUNTER_GROUP_LIST[] = {
     HNI_PCS_GOOD_CW,
     HNI_PCS_CORRECTED_CW,
@@ -160,7 +160,7 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_LINKRELIABILITY_COUNTER_GR
     HNI_LLR_RX_REPLAY_EVENT
 };
 
-// A list containing all of the performance counters for the CxiCongestion group
+/* A list containing all of the performance counters for the CxiCongestion group */
 const ompi_hwpc_cxi_predefined_counter_mnemonic_t CXI_CONGESTION_COUNTER_GROUP_LIST[] = {
     PARBS_TARB_PI_POSTED_PKTS,
     PARBS_TARB_PI_POSTED_BLOCKED_CNT,
@@ -196,7 +196,7 @@ const size_t CXI_CONGESTION_COUNTER_GROUP_LIST_SIZE = sizeof(CXI_CONGESTION_COUN
  * providing metadata for a short, but incomplete, collection of hardware performance counters supported.
  */
 const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
-    // Address Translation Unit Performance Counters
+    /* Address Translation Unit Performance Counters */
     SET_PREDEF_COUNTER(ATU_ATS_PRS_ODP_LATENCY, "ATS Page Request Services On-Demand Paging latency histogram. Four bins defined in C_ATU_CFG_ODP_HIST.", true, false, HAS_CATEGORIES, 4, "Histogram-Bin"),
     SET_PREDEF_COUNTER(ATU_ATS_TRANS_LATENCY, "ATS Translation latency histogram. Four bins defined in C_ATU_CFG_XLATION_HIST.", true, false, HAS_CATEGORIES, 4, "Histogram-Bin"),
     SET_PREDEF_COUNTER(ATU_CACHE_HIT_BASE_PAGE_SIZE, "Number of cache hits observed on the Base Page Size.", true, false, HAS_CATEGORIES, 4, "Page-Size"),
@@ -214,7 +214,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(ATU_NIC_PRI_ODP_LATENCY, "NIC Page Request Interface On-Demand Paging latency histogram.", true, false, HAS_CATEGORIES, 4, "Histogram-Bin"),
     SET_PREDEF_COUNTER(ATU_NTA_TRANS_LATENCY, "NTA Translation latency histogram.", true, false, HAS_CATEGORIES, 4, "Histogram-Bin"),
     SET_PREDEF_COUNTER(ATU_ODP_REQUESTS, "Number of On-Demand Paging requests.", true, false, HAS_CATEGORIES, 4, "Unknown"),
-    // Command Queue Performance Counters
+    /* Command Queue Performance Counters */
     SET_PREDEF_COUNTER(CQ_CQ_CMD_COUNTS, "Number of CQ commands of each type: See Cassini Performance Counter Guide for more details", true, false, HAS_CATEGORIES, 16, "Command-Type"),
     SET_PREDEF_COUNTER(CQ_DMA_CMD_COUNTS, "Number of DMA commands of each type: See Cassini Performance Counter Guide for more details", true, false, HAS_CATEGORIES, 16, "Command-Type"),
     SET_PREDEF_COUNTER(CQ_CYCLES_BLOCKED, "Number of cycles the pool had a command ready to send to OXE and could not make progress because another OCUSET won arbitration.", true, false, HAS_CATEGORIES, 4, "Unknown"),
@@ -232,7 +232,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(CQ_NUM_TXQ_CMD_READS, "Number of PCIe command reads issued for transmit prefetch queues. Four counters, one each for reads of 64, 128, 192, or 256 bytes.", true, false, HAS_CATEGORIES, 4, "Data-Size"),
     SET_PREDEF_COUNTER(CQ_TGT_WAITING_ON_READ, "Cycles on which target prefetch buffers are empty and pool has read requests pending. Note that this counter does not increment on cycles for which commands are being processed in another pool.", true, false, HAS_CATEGORIES, 4, "Unknown"),
     SET_PREDEF_COUNTER(CQ_TX_WAITING_ON_READ, "Cycles in which transmit prefetch buffers are empty and pool has read requests pending. Note that this counter does not increment on cycles for which commands in another pool are being processed.", true, false, HAS_CATEGORIES, 4, "Unknown"),
-    // Event Engine Performance Counters
+    /* Event Engine Performance Counters */
     SET_PREDEF_COUNTER(EE_ADDR_TRANS_PREFETCH_CNTR, "Number of prefetched address translations.", true, false, HAS_CATEGORIES, 4, "Unknown"),
     SET_PREDEF_COUNTER(EE_CBS_WRITTEN_CNTR, "Number of combining buffers written to an event queue.", true, false, HAS_CATEGORIES, 4, "Unknown"),
     SET_PREDEF_COUNTER(EE_DEFERRED_EQ_SWITCH_CNTR, "Number of event queue buffer switches not performed as soon as requested due to insufficient old event queue buffer free space immediately available to enqueue the buffer switch event.", true, false, HAS_CATEGORIES, 4, "Counter-Pool"),
@@ -245,7 +245,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(EE_EVENTS_ENQUEUED_CNTR, "Number of full events enqueued to an event queue.", true, false, HAS_CATEGORIES, 4, "Counter-Pool"),
     SET_PREDEF_COUNTER(EE_EXPIRED_CBS_WRITTEN_CNTR, "Number of partially full combining buffers written to their event queue because too much time elapsed without additional events arriving to fill the buffer.", true, false, HAS_CATEGORIES, 4, "Counter-Pool"),
     SET_PREDEF_COUNTER(EE_PARTIAL_CBS_WRITTEN_CNTR, "Number of partially full combining buffers written to an event queue.", true, false, HAS_CATEGORIES, 4, "Counter-Pool"),
-    // High-Speed Network Interface Performance Counters
+    /* High-Speed Network Interface Performance Counters */
     SET_PREDEF_COUNTER(HNI_DISCARD_CNTR, "Number of packets discarded due to a timeout for each traffic class as indicated by DISCARD_ERR.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
     SET_PREDEF_COUNTER(HNI_LLR_TX_REPLAY_EVENT, "Number of LLR replays.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_LLR_RX_REPLAY_EVENT, "Number of LLR replays.", true, false, IS_SINGLETON, 1, NULL),
@@ -260,7 +260,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(HNI_PFC_FIFO_OFLW_CNTR, "Number of packets discarded at the tail of the PFC FIFO.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
     SET_PREDEF_COUNTER(HNI_PKTS_RECV_BY_TC, "Number of packets received by traffic class <n>.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
     SET_PREDEF_COUNTER(HNI_PKTS_SENT_BY_TC, "Number of packets sent by sent by traffic class <n>.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
-    // High-Speed Network Interface (Receive) Performance Counters
+    /* High-Speed Network Interface (Receive) Performance Counters */
     SET_PREDEF_COUNTER(HNI_RX_OK_27, "Number of packets received in the 27 bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_RX_OK_35, "Number of packets received in the 35 bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_RX_OK_64, "Number of packets received in the 64 bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
@@ -276,7 +276,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(HNI_RX_PAUSED, "Number of cycles in which the pause is applied on the receive path for traffic class <n>.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
     SET_PREDEF_COUNTER(HNI_RX_PAUSED_STD, "Number of cycles in which at least one PCP pause occurred.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_RX_STALL_IXE_PKTBUF, "Number of system clocks for which the Rx path of the corresponding traffic class is stalled due to lack of space in the IXE Packet Buffer.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
-    // High-Speed Network Interface (Transmit) Performance Counters
+    /* High-Speed Network Interface (Transmit) Performance Counters */
     SET_PREDEF_COUNTER(HNI_TX_OK_27, "Number of packets sent in the 27 bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_TX_OK_35, "Number of packets sent in the 35 bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_TX_OK_64, "Number of packets sent in the 64 bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
@@ -290,7 +290,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(HNI_TX_OK_4096_to_8191, "Number of packets sent in the 4096 to 8191 bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_TX_OK_8192_to_max, "Number of packets sent in the 8192 to max bytes size bin.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(HNI_TX_PAUSED, "Number of cycles in which the transmit path is paused for traffic class <n>.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
-    // Inbound Transfer Engine Performance Counters
+    /* Inbound Transfer Engine Performance Counters */
     SET_PREDEF_COUNTER(IXE_DISP_DMAWR_REQS, "Number of requests to the IXE dispatcher for DMA write operations.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(IXE_DMAWR_STALL_NP_CDT, "Number of stalls due to no non-posted credits (cycles).", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(IXE_DMAWR_STALL_P_CDT, "Number of stalls due to no posted credits (cycles).", true, false, IS_SINGLETON, 1, NULL),
@@ -302,7 +302,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(IXE_TC_REQ_NO_ECN_PKTS, "Number of request packets without ECN set, by TC.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
     SET_PREDEF_COUNTER(IXE_TC_RSP_ECN_PKTS, "Number of response packets with ECN set, by TC.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
     SET_PREDEF_COUNTER(IXE_TC_RSP_NO_ECN_PKTS, "Number of response packets without ECN set, by TC.", true, false, HAS_CATEGORIES, 8, "Traffic-Class"),
-    //List Processing Engine Performance Counters
+    /* List Processing Engine Performance Counters */
     SET_PREDEF_COUNTER(LPE_APPEND_CMDS, "Number of Append commands received. One counter for each of the four pools of PtlTEs.", true, false, HAS_CATEGORIES, 4, "PtlTE-Pool"),
     SET_PREDEF_COUNTER(LPE_APPEND_SUCCESS, "Number of Append commands LPE successfully completed. One counter for each of the four pools of PtlTEs.", true, false, HAS_CATEGORIES, 4, "PtlTE-Pool"),
     SET_PREDEF_COUNTER(LPE_CYC_RRQ_BLOCKED, "Number of cycles in which a PE Match Request Queue dequeue was blocked because a Ready Request Queue was full.", true, false, HAS_CATEGORIES, 4, "PE-Index"),
@@ -328,7 +328,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(LPE_STS_APP_MAX_ATTEMPTS, "Maximum number of match attempts needed for an Append command in each pool. Indexed by CNTR_POOL.", true, false, HAS_CATEGORIES, 4, "Counter-Pool"),
     SET_PREDEF_COUNTER(LPE_AMO_CMDS, "Number of non-fetching AMO commands received by LPE.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(LPE_FAMO_CMDS, "Number of fetching AMO commands received by LPE.", true, false, IS_SINGLETON, 1, NULL),
-    // Management Block Performance Counters
+    /* Management Block Performance Counters */
     SET_PREDEF_COUNTER(MB_CMC_AXI_RD_REQUESTS, "Number of AXI read requests received at the CMC channels.", true, false, HAS_CATEGORIES, 4, "Unknown"),
     SET_PREDEF_COUNTER(MB_CMC_AXI_WR_REQUESTS, "Number of AXI write requests received at the CMC channels.", true, false, HAS_CATEGORIES, 4, "Unknown"),
     SET_PREDEF_COUNTER(MB_CRMC_AXI_RD_REQUESTS, "Number of CRMC AXI read requests.", true, false, HAS_CATEGORIES, 3, "Unknown"),
@@ -339,7 +339,7 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(MB_CRMC_RING_SBE, "Number of CRMC ring in single bit errors.", true, false, HAS_CATEGORIES, 3, "Unknown"),
     SET_PREDEF_COUNTER(MB_CRMC_RING_WR_REQUESTS, "Number of CRMC ring out write requests.", true, false, HAS_CATEGORIES, 3, "Unknown"),
     SET_PREDEF_COUNTER(MB_CRMC_WR_ERROR, "Number of CRMC write errors.", true, false, HAS_CATEGORIES, 3, "Unknown"),
-    // Outbound Transfer Engine Performance Counters
+    /* Outbound Transfer Engine Performance Counters */
     SET_PREDEF_COUNTER(OXE_CHANNEL_IDLE, "Number of cycles in which available bandwidth is not used.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(OXE_MCU_MEAS, "Number of flits sent by each MCU (configurable to count packets or messages).", true, false, HAS_CATEGORIES, 96, "Unknown"),
     SET_PREDEF_COUNTER(OXE_PTL_TX_GET_MSGS_TSC, "Number of portal Get messages sent by traffic shaping class. The following OXE pkt types (c_oxe_pkt_type) are included: PKT_GET where SOM is set. To be counted in the MCUOBC.", true, false, HAS_CATEGORIES, 10, "Unknown"),
@@ -355,13 +355,13 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(OXE_STALL_TS_NO_IN_CRD_TSC, "Number of clocks a TSC is not allowed to participate in traffic shaping arbitration because it is waiting for inbound shaping tokens. One counter for each TSC.", true, false, HAS_CATEGORIES, 10, "Unknown"),
     SET_PREDEF_COUNTER(OXE_STALL_TS_NO_OUT_CRD_TSC, "Number of clocks a TSC is not allowed to participate in traffic shaping arbitration because it is waiting for outbound shaping tokens. One counter for each TSC.", true, false, HAS_CATEGORIES, 10, "Unknown"),
     SET_PREDEF_COUNTER(OXE_STALL_WR_CONFLICT_PKT_BUFF_BNK, "Number of cycles header write or IDC write collides with PCIe data return. Per bank of Packet buffer.", true, false, HAS_CATEGORIES, 4, "Unknown"),
-    // Processor Interface Arbiters Performance Counters
+    /* Processor Interface Arbiters Performance Counters */
     SET_PREDEF_COUNTER(PARBS_TARB_PI_POSTED_PKTS, "Number of PCIe packets transferred using the posted path (for example, writes),", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(PARBS_TARB_PI_POSTED_BLOCKED_CNT, "and the number of cycles in which this path is blocked. Compute the ratio cycles/pkts. Values of more than a few cycles per packet indicate back pressure from the host. This endpoint is likely to be the cause of congestion.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(PARBS_TARB_PI_NON_POSTED_PKTS, "Number of PCIe packets transferred using the non-posted path (for example, reads),", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(PARBS_TARB_PI_NON_POSTED_BLOCKED_CNT, "and the number of cycles in which this path is blocked. Compute the ratio cycles/pkts. Values of more than a few cycles per packet indicate per host performance (high read latencies). This endpoint is likely to be injecting at a low rate.", true, false, IS_SINGLETON, 1, NULL),
-    // Packet Connection and Tracking Performance Counters
-    // FIXME: description of PCT_HOST_ACCESS_LATENCY and PCT_REQ_RSP_LATENCY are mistakenly swapped in User Guide
+    /* Packet Connection and Tracking Performance Counters */
+    /* FIXME: description of PCT_HOST_ACCESS_LATENCY and PCT_REQ_RSP_LATENCY are mistakenly swapped in User Guide */
     SET_PREDEF_COUNTER(PCT_CONN_SCT_OPEN, "Number of open requests.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(PCT_HOST_ACCESS_LATENCY, "Host access latency histogram, 16 bins.", true, false, HAS_CATEGORIES, 16, "Unknown"),
     SET_PREDEF_COUNTER(PCT_MST_HIT_ON_SOM, "Number of times an MST entry already exists for a request of a new message that needs a new MST entry.", true, false, IS_SINGLETON, 1, NULL),
@@ -376,11 +376,11 @@ const ompi_hwpc_cxi_counter_desc_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST[] = {
     SET_PREDEF_COUNTER(PCT_SCT_TIMEOUTS, "Number of response timeouts (or packet loss in the network). Retry handler is invoked.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(PCT_SPT_TIMEOUTS, "Number of response timeouts, (packet loss in the network). Retry handler is invoked.", true, false, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(PCT_TRS_RSP_NACK_DROPS, "Number of NACKs dropped. Retry handler is invoked.", true, false, IS_SINGLETON, 1, NULL),
-    // Triggered Operations Performance Counters
+    /* Triggered Operations Performance Counters */
     SET_PREDEF_COUNTER(TOU_CT_CMD_COUNTS, "Number of the successfully validated commands in C_CT_OP_T. Offset into the counter array is equal to the OpCode.", true, false, HAS_CATEGORIES, 16, "Command-OpCode"),
     SET_PREDEF_COUNTER(TOU_NUM_LIST_REBUILDS, "Number of list CT list rebuilds. Pooled counter, pool is equal to the PFQ number.", true, false, HAS_CATEGORIES, 4, "PFQ-Number"),
     SET_PREDEF_COUNTER(TOU_NUM_TRIG_CMDS, "Number of triggered commands. Pooled counter, pool is equal to the PFQ number.", true, false, HAS_CATEGORIES, 4, "PFQ-Number"),
-    // Retry-Handler Performance Counters
+    /* Retry-Handler Performance Counters */
     SET_PREDEF_COUNTER(SCT_TIMEOUTS, "Number of SCT timeouts.", true, true, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(SPT_TIMEOUTS, "Number of SPT timeouts.", true, true, IS_SINGLETON, 1, NULL),
     SET_PREDEF_COUNTER(SPT_TIMEOUTS_U, "Number of SPT timeouts.", true, true, IS_SINGLETON, 1, NULL),
@@ -405,14 +405,6 @@ const size_t OMPI_HWPC_CXI_PREDEFINED_COUNTERS_LIST_SIZE = sizeof(OMPI_HWPC_CXI_
 #define SET_PREDEF_COUNTER_GROUP(NAME, STRING_NAME, DESC, COUNTER_LIST, COUNTER_LIST_SIZE)   [NAME] = { .counter_group_name = #NAME, .counter_group_string_name = STRING_NAME, \
                                                              .counter_group_description = DESC, .counter_mnemonic_list = COUNTER_LIST, \
                                                              .counter_mnemonic_list_size = COUNTER_LIST_SIZE }
-
-#define SET_PREDEF_COUNTER_GROUP2(NAME, STRING_NAME, DESC)   [NAME] = { .counter_group_name = #NAME, .counter_group_string_name = STRING_NAME, \
-                                                             .counter_group_description = DESC, .counter_mnemonic_list = GET_COUNTER_GROUP_LIST(NAME), \
-                                                             .counter_mnemonic_list_size = sizeof(GET_COUNTER_GROUP_LIST(NAME)) / sizeof(ompi_hwpc_cxi_counter_desc_t) }
-
-#define SET_PREDEF_COUNTER_GROUP3(NAME, STRING_NAME, DESC)   [NAME] = { .counter_group_name = #NAME, .counter_group_string_name = STRING_NAME, \
-                                                             .counter_group_description = DESC, .counter_mnemonic_list = GET_COUNTER_GROUP_LIST(NAME), \
-                                                             .counter_mnemonic_list_size = GET_COUNTER_GROUP_LIST_SIZE(NAME) }
 
 /*
  * This array contains all predefined Cassini (CX) hardware performance counter group descriptions, providing metadata for
@@ -472,20 +464,20 @@ const ompi_hwpc_cxi_predefined_counter_mnemonic_t OMPI_HWPC_CXI_DEFAULT_COUNTERS
 };
 const size_t OMPI_HWPC_CXI_DEFAULT_COUNTERS_LIST_SIZE = sizeof(OMPI_HWPC_CXI_DEFAULT_COUNTERS_MNEMONICS_LIST) / sizeof(ompi_hwpc_cxi_predefined_counter_mnemonic_t);
 
-// Function that given a string of a counter group, returns a list of strings of all the counters in that group.
+/* Function that given a string of a counter group, returns a list of strings of all the counters in that group. */
 int ompi_hwpc_cxi_get_counters_in_group(const char *group_name, char ***counter_names, size_t *num_counters) {
 
     if (group_name == NULL) {
-        return -1; // Invalid arguments
+        return -1; /* Invalid arguments */
     }
 
     int total_found_counters = 0;
     char full_counter_name[MAX_COUNTER_NAME_SIZE];
 
-    // Cycle over counter groups
+    /* Cycle over counter groups */
     for (size_t i = 0; i < OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST_SIZE; i++) {
         if (strncmp(OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[i].counter_group_name, group_name, MAX_COUNTER_NAME_SIZE) == 0) {
-            // Cycle over all counter mnemonics in the group
+            /* Cycle over all counter mnemonics in the group */
             for (size_t j = 0; j < OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[i].counter_mnemonic_list_size; j++) {
 
                 ompi_hwpc_cxi_predefined_counter_mnemonic_t counter_mnemonic = OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[i].counter_mnemonic_list[j];
@@ -498,25 +490,25 @@ int ompi_hwpc_cxi_get_counters_in_group(const char *group_name, char ***counter_
     }
     *counter_names = malloc((size_t)total_found_counters * sizeof(char *));
     if (*counter_names == NULL) {
-        return -1; // Memory allocation failed
+        return -1; /* Memory allocation failed */
     }
-    int total_written_counters = 0; // Reset to use as index
-    // Cycle over counter groups
+    int total_written_counters = 0; /* Reset to use as index */
+    /* Cycle over counter groups */
     for (size_t i = 0; i < OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST_SIZE; i++) {
         if (strncmp(OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[i].counter_group_name, group_name, MAX_COUNTER_NAME_SIZE) == 0) {
-            // Cycle over all counter mnemonics in the group
+            /* Cycle over all counter mnemonics in the group */
             for (size_t j = 0; j < OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[i].counter_mnemonic_list_size; j++) {
 
                 ompi_hwpc_cxi_predefined_counter_mnemonic_t counter_mnemonic = OMPI_HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST[i].counter_mnemonic_list[j];
                 const ompi_hwpc_cxi_counter_desc_t *counter_desc = GET_PREDEF_COUNTER_DESC(counter_mnemonic);
                 
-                // Create a string for every category or classification of this counter_mnemonic
+                /* Create a string for every category or classification of this counter_mnemonic */
                 for (int k = 0; k < counter_desc->num_categories; k++) {
                     if (counter_desc->num_categories > 1) {
-                        // Create string of the base counter name with the category number appended
+                        /* Create string of the base counter name with the category number appended */
                         snprintf(full_counter_name, MAX_COUNTER_NAME_SIZE, "%s_%d", counter_desc->counter_name, k);
                     } else {
-                        // Single category counter; use the base name as-is
+                        /* Single category counter; use the base name as-is */
                         snprintf(full_counter_name, MAX_COUNTER_NAME_SIZE, "%s", counter_desc->counter_name);
                     }
                     (*counter_names)[(total_written_counters + k)] = strndup(full_counter_name, MAX_COUNTER_NAME_SIZE);
@@ -529,5 +521,5 @@ int ompi_hwpc_cxi_get_counters_in_group(const char *group_name, char ***counter_
 
     *num_counters = total_written_counters;
 
-    return 0; // Group found
+    return 0; /* Group found */
 }
