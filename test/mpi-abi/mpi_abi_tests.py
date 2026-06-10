@@ -5714,10 +5714,21 @@ def command(args):
     return 0
 
 
+def _default_srcdir():
+    """Return the top source tree for direct runner invocations.
+
+    Automake passes --srcdir explicitly, but argparse still evaluates
+    defaults before parsing the command line.  Python 3.7 keeps
+    Path(__file__) relative when the script is invoked as
+    ./mpi_abi_tests.py, so resolve it before indexing parents.
+    """
+    return Path(__file__).resolve().parents[2]
+
+
 def main(argv):
     """Parse command-line arguments and run the MPI ABI test runner."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--srcdir", default=Path(__file__).parents[2],
+    parser.add_argument("--srcdir", default=_default_srcdir(),
                         help="top source directory")
     parser.add_argument("--builddir", default=os.getcwd(),
                         help="top build directory")
