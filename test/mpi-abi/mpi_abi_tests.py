@@ -2800,6 +2800,10 @@ def _eval_integer_expression_node(node):
         return _eval_integer_expression_node(node.body)
     if isinstance(node, ast.Constant) and type(node.value) is int:
         return node.value
+    ast_num = getattr(ast, "Num", None)
+    if (ast_num is not None and isinstance(node, ast_num) and
+            type(node.n) is int):
+        return node.n
     if isinstance(node, ast.UnaryOp):
         operand = _eval_integer_expression_node(node.operand)
         if operand is None:

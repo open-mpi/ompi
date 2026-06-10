@@ -185,6 +185,16 @@ Note that editing `Makefile.am` files do *not* require the full
 the relevant `Makefile[.in]` files and then complete the build
 successfully.
 
+## Python compatibility
+
+Open MPI still supports Python 3.7 in some CI and user environments.
+Python code in the build system, binding generators, documentation
+tooling, and tests must remain compatible with Python 3.7 unless the
+project-wide minimum is explicitly raised.  Do not use syntax or
+standard-library APIs introduced after Python 3.7 without a fallback.
+When changing Python parser logic, remember that some AST details differ
+between Python 3.7 and newer versions.
+
 **"Did I break it?" — layered:**
 
 1. **Build cleanly.** A clean `make` after your change is the baseline.
