@@ -316,9 +316,9 @@ def _cross_runtime_loader_policy(library_path, loader_var):
     }
 
 
-def _installed_test_dirs(outdir):
-    """Create and return the installed-test scratch directory layout."""
-    base = outdir / "installed"
+def _test_dirs(outdir, name):
+    """Create and return a {base,src,bin,logs} scratch directory layout."""
+    base = outdir / name
     dirs = {
         "base": base,
         "src": base / "src",
@@ -328,38 +328,42 @@ def _installed_test_dirs(outdir):
     for path in dirs.values():
         path.mkdir(parents=True, exist_ok=True)
     return dirs
+
+
+def _installed_test_dirs(outdir):
+    """Create and return the installed-test scratch directory layout."""
+    return _test_dirs(outdir, "installed")
 
 
 def _cross_test_dirs(outdir):
     """Create and return the cross-test scratch directory layout."""
-    base = outdir / "cross"
-    dirs = {
-        "base": base,
-        "src": base / "src",
-        "bin": base / "bin",
-        "logs": base / "logs",
-    }
-    for path in dirs.values():
-        path.mkdir(parents=True, exist_ok=True)
-    return dirs
+    return _test_dirs(outdir, "cross")
+
+
+def _split_launcher_args(args):
+    """Split a launcher-argument string into a list (empty when unset)."""
+    return shlex.split(args) if args else []
 
 
 def _launcher_args(tools):
     """Return optional extra mpirun arguments from the tool configuration."""
-    args = tools["paths"]["launcher_args"]
-    return shlex.split(args) if args else []
+    return _split_launcher_args(tools["paths"]["launcher_args"])
 
 
-def _compile_overrides(tools):
-    """Return optional include/library overrides for installed C probes."""
+def _include_library_flags(include_path, library_path):
+    """Return -I/-L compiler flags for the given include/library paths."""
     args = []
-    include_path = tools["paths"]["include"]
-    library_path = tools["paths"]["library"]
     if include_path:
         args.append("-I" + include_path)
     if library_path:
         args.append("-L" + library_path)
     return args
+
+
+def _compile_overrides(tools):
+    """Return optional include/library overrides for installed C probes."""
+    paths = tools["paths"]
+    return _include_library_flags(paths["include"], paths["library"])
 
 
 def _cross_paths_for_implementation(tools, implementation):
@@ -371,12 +375,7 @@ def _cross_paths_for_implementation(tools, implementation):
 def _cross_compile_overrides(tools, implementation):
     """Return include/library overrides for the compile-side wrapper."""
     paths = _cross_paths_for_implementation(tools, implementation)
-    args = []
-    if paths.get("include"):
-        args.append("-I" + paths["include"])
-    if paths.get("library"):
-        args.append("-L" + paths["library"])
-    return args
+    return _include_library_flags(paths.get("include"), paths.get("library"))
 
 
 def _cross_compile_extra_flags(details):
@@ -396,8 +395,47 @@ def _cross_compile_extra_flags(details):
 
 def _cross_launcher_args(details):
     """Return launcher arguments for one cross-test direction."""
-    args = details.get("launcher_args")
-    return shlex.split(args) if args else []
+    return _split_launcher_args(details.get("launcher_args"))
+
+
+def _installed_helper_unit_checks():
+    """Fast self-check for the shared installed-test helper functions."""
+    failures = []
+    flag_cases = (
+        (("/inc", "/lib"), ["-I/inc", "-L/lib"]),
+        (("", "/lib"), ["-L/lib"]),
+        (("/inc", ""), ["-I/inc"]),
+        ((None, None), []),
+    )
+    for (include_path, library_path), expected in flag_cases:
+        got = _include_library_flags(include_path, library_path)
+        if got != expected:
+            failures.append({
+                "helper": "_include_library_flags",
+                "input": [include_path, library_path],
+                "expected": expected,
+                "got": got,
+            })
+    split_cases = (
+        ("-x A=1 --bind-to none", ["-x", "A=1", "--bind-to", "none"]),
+        ("", []),
+        (None, []),
+    )
+    for text, expected in split_cases:
+        got = _split_launcher_args(text)
+        if got != expected:
+            failures.append({
+                "helper": "_split_launcher_args",
+                "input": text,
+                "expected": expected,
+                "got": got,
+            })
+    if failures:
+        return _fail("fast_installed_helper_unit_checks",
+                     "installed helper unit checks failed",
+                     failures=failures)
+    return _pass("fast_installed_helper_unit_checks",
+                 checked=len(flag_cases) + len(split_cases))
 
 
 def _cross_compile_header(tools, implementation):

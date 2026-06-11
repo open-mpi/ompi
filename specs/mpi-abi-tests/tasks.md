@@ -176,10 +176,10 @@ chunk adds installed runtime probes.
       Runner-side completion-gate auditing is implemented and reported
       in JSON/text outputs, including PASS/FAIL/SKIP unit coverage.
       VPATH and ABI-enabled `make distcheck` validation have now been
-      performed.  This chunk remains partial until explicit
-      distribution-tarball ABI runs, final cross-implementation
-      disposition, external CI, and runner-simplification tasks below
-      are completed.
+      performed.  The runner-simplification task below is now complete.
+      This chunk remains partial until explicit distribution-tarball ABI
+      runs, final cross-implementation disposition, and external CI tasks
+      below are completed.
 
 ## Phase 1: Test Directory and Build Plumbing
 
@@ -1148,7 +1148,7 @@ chunk adds installed runtime probes.
       source/build path failure.
 - [x] Verify JSON and text reports are emitted and suitable for CI
       tracking.
-- [~] Simplify the ABI test runner implementation before completion.
+- [x] Simplify the ABI test runner implementation before completion.
       The Python runner has accumulated discovery, manifest, generation,
       compile, launch, reporting, and cross-implementation logic in one
       large script while coverage was being built.  Before declaring the
@@ -1169,9 +1169,18 @@ chunk adds installed runtime probes.
       preserve behavior byte-for-byte against captured `manifest`,
       `coverage`, and `check-fast` golden output, and to produce
       identical `check-abi` / `check-abi-mpich` reports, with the fast
-      self-check suite unchanged.  Remaining: a focused de-duplication
-      pass over the parallel installed/cross helper families, best done
-      with an MPI-enabled tree so the runtime paths are exercised.
+      self-check suite unchanged.  A targeted de-duplication pass then
+      consolidated the genuinely duplicated installed/cross helpers
+      (`_test_dirs`, `_include_library_flags`, `_split_launcher_args`)
+      behind shared private helpers in `_abi_installed`, with a `_fast_*`
+      self-check for the extracted logic.  The larger installed/cross
+      probe-runner loops were deliberately left separate: they share
+      control flow but differ structurally (different linkage step,
+      per-direction report fields), so merging them would reduce clarity
+      rather than improve it.  Verified with an MPI-enabled run: installed
+      `check-abi` passes, and the MPICH cross probes execute (their
+      failures are the known cross-implementation ABI divergences, not
+      refactor regressions).
 - [x] Verify complete-gate behavior for PASS, FAIL, and SKIP runs.
       A legitimate skip, such as standard ABI support disabled or
       missing optional tools in non-explicit modes, must not be

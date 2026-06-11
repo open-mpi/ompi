@@ -39,7 +39,8 @@ from _abi_probes import (
 from _abi_installed import (
     _c_parameter_normalization_unit_checks, _cross_header_feature_set_check,
     _cross_runtime_library_target, _darwin_otool_install_name,
-    _fortran_coverage_audit, _fortran_probe_source, _linux_resolved_library,
+    _fortran_coverage_audit, _fortran_probe_source,
+    _installed_helper_unit_checks, _linux_resolved_library,
     _mpich_transport_runtime_env, _non_abi_absence_check,
     _path_is_run_side_abi_library, _signature_comparison_check)
 from _abi_cross import (
@@ -2006,6 +2007,10 @@ def run_fast_checks(manifest, srcdir, builddir, progress=None):
     if progress is not None:
         progress.start("fast C parameter normalization unit checks")
     _append_check(checks, _c_parameter_normalization_unit_checks(), progress)
+
+    if progress is not None:
+        progress.start("fast installed helper unit checks")
+    _append_check(checks, _installed_helper_unit_checks(), progress)
 
     if progress is not None:
         progress.start("fast completion gate unit checks")
