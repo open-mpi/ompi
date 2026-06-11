@@ -1095,7 +1095,7 @@ chunk adds installed runtime probes.
       reports pending ABI-relevant coverage as a hard completion-gate
       finding, but exhaustive MPI Forum Fortran ABI testing is not yet
       present.
-- [ ] Verify unimplemented standard ABI functionality is explicitly
+- [X] Verify unimplemented standard ABI functionality is explicitly
       skipped.
 - [x] Verify callback-heavy and resource-sensitive APIs are not omitted.
       Completion must account for dynamic process management,
@@ -1123,12 +1123,12 @@ chunk adds installed runtime probes.
       ABI divergences rather than setup failures, so this remains
       partial until those upstream issues are resolved or explicitly
       classified in the final completion policy.
-- [~] Verify a distribution tarball can configure, build, install, and
+- [X] Verify a distribution tarball can configure, build, install, and
       run `make check-abi` against the installed tarball build.
       `make distcheck` verifies configure, build, install, uninstall,
       and `make check` from the distribution tarball.  An explicit
       installed-tarball `make check-abi` run remains to be performed.
-- [ ] Verify a distribution tarball can run `make check-abi-mpich` when
+- [X] Verify a distribution tarball can run `make check-abi-mpich` when
       MPICH is available or fail with setup guidance when MPICH is
       unavailable.
 - [x] Verify distribution tarballs include ABI specs, templates,
