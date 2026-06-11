@@ -88,7 +88,6 @@ EXTRA_DIST = \
         README.md \
         requirements.txt \
         mpi_abi_tests.py \
-        manual/README.md \
         templates/c_probe.c.in \
         templates/fortran_probe.f90.in \
         templates/README.md \
