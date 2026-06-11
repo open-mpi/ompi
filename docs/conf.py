@@ -16,6 +16,7 @@ import os
 
 import os
 import re
+import json
 import datetime
 import sphobjinv as soi
 
@@ -383,6 +384,29 @@ man_pages = find_man_pages_top()
 
 # -- Open MPI-specific options -----------------------------------------------
 
+# The two MPI object-name length limits that the *_set_name / *_get_name man
+# pages reference via substitutions.  Open MPI honors the long-standing
+# OPAL_MAX_OBJECT_NAME on its traditional ("OMPI") API entry points, and the
+# larger MPI Forum ABI value on its standard-ABI entry points.
+#
+# The Forum ABI value is read from the same standard ABI JSON that the binding
+# generator (ompi/mpi/bindings/c_header.py) consumes, so it remains the single
+# source of truth.  The OMPI value is read from the configured opal_config.h
+# when available, with a fallback for environments that build the docs without
+# first configuring (e.g. some Read the Docs flows).
+mpi_abi_max_object_name = json.load(
+    open(f"{ompi_top_srcdir}/docs/mpi-standard-abi.json")
+)["constants"]["mpi_max_object_name"]["abi_value"]
+
+ompi_max_object_name = 64
+try:
+    with open(f"{ompi_top_srcdir}/opal/include/opal_config.h") as _f:
+        _m = re.search(r"^#define\s+OPAL_MAX_OBJECT_NAME\s+(\d+)", _f.read(), re.M)
+        if _m:
+            ompi_max_object_name = int(_m.group(1))
+except OSError:
+    pass
+
 # This prolog is included in every file.  Put common stuff here.
 
 rst_prolog = f"""
@@ -409,6 +433,8 @@ rst_prolog = f"""
 .. |mpi_standard_version| replace:: {mpi_standard_major_version}.{mpi_standard_minor_version}
 .. |mpi_standard_major_version| replace:: {mpi_standard_major_version}
 .. |mpi_standard_minor_version| replace:: {mpi_standard_minor_version}
+.. |ompi_max_object_name| replace:: {ompi_max_object_name}
+.. |mpi_abi_max_object_name| replace:: {mpi_abi_max_object_name}
 .. |deprecated_favor| replace:: this routine is deprecated in favor of
 
 .. |br| raw:: html

@@ -364,7 +364,7 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
      */
     /* --------------------------------------------------------- */
     /* Set name for debugging purposes */
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SHRUNK FROM %d",
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMMUNICATOR %d SHRUNK FROM %d",
              ompi_comm_get_local_cid(newcomp),
              ompi_comm_get_local_cid(comm));
 #if OPAL_ENABLE_DEBUG
@@ -708,7 +708,7 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
     /* --------------------------------------------------------- */
     /* Set name for debugging purposes */
     ompi_communicator_t *newcomp = *context->newcomm;
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SHRUNK FROM %d",
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMMUNICATOR %d SHRUNK FROM %d",
              ompi_comm_get_local_cid(newcomp),
              ompi_comm_get_local_cid(context->comm));
 #if OPAL_ENABLE_DEBUG

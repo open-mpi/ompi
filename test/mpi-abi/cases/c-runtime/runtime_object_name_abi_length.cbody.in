@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   The standard-ABI entry points must store and return object names up to the
+ *   MPI Forum ABI value of MPI_MAX_OBJECT_NAME, which is larger than Open MPI's
+ *   long-standing internal limit (OPAL_MAX_OBJECT_NAME == 64).  Set a name that
+ *   is longer than 64 bytes but shorter than MPI_MAX_OBJECT_NAME on a datatype
+ *   (whose name lives in a fixed in-handle buffer) and on a communicator (whose
+ *   name lives in a separately allocated buffer), then read each back and
+ *   confirm it round-trips in full.  With the pre-fix 64-byte storage these
+ *   names were silently truncated, so this probe would have failed.
+ */
+int i;
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+/* This probe is compiled against the standard ABI mpi.h, so MPI_MAX_OBJECT_NAME
+ * is the MPI Forum ABI value.  Construct a name that is longer than the
+ * historical 64-byte Open MPI limit but still fits (with its terminating null)
+ * within MPI_MAX_OBJECT_NAME. */
+int long_len = MPI_MAX_OBJECT_NAME - 16;
+if (long_len <= 64) {
+    /* The ABI maximum is unexpectedly small; the test assumptions do not hold. */
+    return 2;
+}
+char long_name[MPI_MAX_OBJECT_NAME];
+for (i = 0; i < long_len; i++) {
+    long_name[i] = (char) ('A' + (i % 26));
+}
+long_name[long_len] = '\0';
+
+char got_name[MPI_MAX_OBJECT_NAME];
+int got_len;
+
+/* Datatype: name lives in a fixed array embedded in the handle. */
+MPI_Datatype dtype = MPI_DATATYPE_NULL;
+ret = MPI_Type_contiguous(2, MPI_INT, &dtype);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == dtype) {
+    return 3;
+}
+ret = MPI_Type_set_name(dtype, long_name);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+got_len = -1;
+got_name[0] = '\0';
+ret = MPI_Type_get_name(dtype, got_name, &got_len);
+if (MPI_SUCCESS != ret || got_len != long_len ||
+    0 != strcmp(got_name, long_name)) {
+    return 5;
+}
+ret = MPI_Type_free(&dtype);
+if (MPI_SUCCESS != ret) {
+    return 6;
+}
+
+/* Communicator: name lives in a separately allocated buffer. */
+MPI_Comm comm = MPI_COMM_NULL;
+ret = MPI_Comm_dup(MPI_COMM_SELF, &comm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == comm) {
+    return 7;
+}
+ret = MPI_Comm_set_name(comm, long_name);
+if (MPI_SUCCESS != ret) {
+    return 8;
+}
+got_len = -1;
+got_name[0] = '\0';
+ret = MPI_Comm_get_name(comm, got_name, &got_len);
+if (MPI_SUCCESS != ret || got_len != long_len ||
+    0 != strcmp(got_name, long_name)) {
+    return 9;
+}
+ret = MPI_Comm_free(&comm);
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 11;
+}
+return 0;

@@ -10,9 +10,7 @@
 /*
  * Test intent:
  *   Exercise datatype constructors, commit/free, naming, extent, size,
- *   match-size, F90 constructors, and envelope introspection.
- *   MPI_Type_get_contents remains a focused follow-up because the
- *   current installed ABI path exposes a crash when it is called here.
+ *   match-size, F90 constructors, and envelope/contents introspection.
  */
 int ret = MPI_Init(&argc, &argv);
 if (MPI_SUCCESS != ret) {
@@ -78,15 +76,26 @@ int nadds = -1;
 int ntypes = -1;
 int combiner = -1;
 /*
- * Envelope metadata is safe to query in this broad constructor
- * probe.  MPI_Type_get_contents is intentionally not called here:
- * this installed ABI currently crashes on that path, so it remains a
- * focused follow-up instead of being hidden in a large family probe.
+ * Query the envelope, then read the constructor arguments back with
+ * MPI_Type_get_contents.  contig is CONTIGUOUS(2, MPI_INT): expect one
+ * integer argument (count == 2) and one datatype argument (MPI_INT).
  */
 ret = MPI_Type_get_envelope(contig, &nints, &nadds, &ntypes,
                             &combiner);
 if (MPI_SUCCESS != ret || nints < 1 || ntypes < 1) {
     return 12;
+}
+if (nints > 8 || nadds > 8 || ntypes > 8) {
+    return 46;
+}
+int contents_ints[8];
+MPI_Aint contents_adds[8];
+MPI_Datatype contents_types[8];
+ret = MPI_Type_get_contents(contig, nints, nadds, ntypes,
+                            contents_ints, contents_adds, contents_types);
+if (MPI_SUCCESS != ret || 2 != contents_ints[0] ||
+    MPI_INT != contents_types[0]) {
+    return 47;
 }
 
 MPI_Datatype dup = MPI_DATATYPE_NULL;
