@@ -84,10 +84,25 @@ C_CALLBACK_CASES = \
         cases/c-callback/lifetime_nonblocking_collective_arrays.cbody.in \
         cases/c-callback/lifetime_persistent_collective_arrays.cbody.in
 
+# The runner is split across sibling modules that mpi_abi_tests.py imports
+# from its own source directory.  Every module must be distributed or VPATH
+# and distribution-tarball builds would fail to import them.
+ABI_RUNNER_MODULES = \
+        _abi_common.py \
+        _abi_tables.py \
+        _abi_discovery.py \
+        _abi_manifest.py \
+        _abi_probes.py \
+        _abi_installed.py \
+        _abi_cross.py \
+        _abi_fast.py \
+        _abi_report.py
+
 EXTRA_DIST = \
         README.md \
         requirements.txt \
         mpi_abi_tests.py \
+        $(ABI_RUNNER_MODULES) \
         templates/c_probe.c.in \
         templates/fortran_probe.f90.in \
         templates/README.md \
@@ -95,7 +110,9 @@ EXTRA_DIST = \
         $(C_RUNTIME_CASES) \
         $(C_CALLBACK_CASES)
 
-abi_test_runner = $(PYTHON) "$(srcdir)/mpi_abi_tests.py" \
+# -B keeps Python from writing __pycache__ next to the runner modules in the
+# source tree, which matters for VPATH and read-only distribution builds.
+abi_test_runner = $(PYTHON) -B "$(srcdir)/mpi_abi_tests.py" \
         --srcdir "$(top_srcdir)" \
         --builddir "$(abs_top_builddir)"
 
@@ -145,6 +162,8 @@ coverage:
 
 clean-local:
 	rm -rf check-results check-abi-results check-abi-mpich-results
+	rm -rf __pycache__
 
 distclean-local:
 	rm -rf check-results check-abi-results check-abi-mpich-results
+	rm -rf __pycache__

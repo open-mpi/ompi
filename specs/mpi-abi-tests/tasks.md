@@ -1148,7 +1148,7 @@ chunk adds installed runtime probes.
       source/build path failure.
 - [x] Verify JSON and text reports are emitted and suitable for CI
       tracking.
-- [ ] Simplify the ABI test runner implementation before completion.
+- [~] Simplify the ABI test runner implementation before completion.
       The Python runner has accumulated discovery, manifest, generation,
       compile, launch, reporting, and cross-implementation logic in one
       large script while coverage was being built.  Before declaring the
@@ -1157,6 +1157,21 @@ chunk adds installed runtime probes.
       avoidable duplication, separates major responsibilities into
       clearer helpers or modules, and keeps the fast self-check coverage
       for any extracted logic.
+      The ~10.5k-line `mpi_abi_tests.py` is now split into nine sibling
+      modules imported from the runner's own source directory:
+      `_abi_common` (constants, result primitives, I/O), `_abi_tables`
+      (static probe case data), `_abi_discovery`, `_abi_manifest`,
+      `_abi_probes` (shared parsing/audit/probe generation),
+      `_abi_installed`, `_abi_cross`, `_abi_fast`, and `_abi_report`;
+      `mpi_abi_tests.py` is now a thin CLI entry point.  The module graph
+      is acyclic and every module is listed in `EXTRA_DIST` so VPATH and
+      distribution-tarball builds find them.  The split was verified to
+      preserve behavior byte-for-byte against captured `manifest`,
+      `coverage`, and `check-fast` golden output, and to produce
+      identical `check-abi` / `check-abi-mpich` reports, with the fast
+      self-check suite unchanged.  Remaining: a focused de-duplication
+      pass over the parallel installed/cross helper families, best done
+      with an MPI-enabled tree so the runtime paths are exercised.
 - [x] Verify complete-gate behavior for PASS, FAIL, and SKIP runs.
       A legitimate skip, such as standard ABI support disabled or
       missing optional tools in non-explicit modes, must not be
