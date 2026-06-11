@@ -167,12 +167,19 @@ chunk adds installed runtime probes.
       MPICH ABI headers, parsed wrapper intent checks, platform linkage
       diagnostics, optional-feature skips, and per-direction aggregate
       summaries.
-- [ ] Chunk 13A: Add completion-gate audits and CI/distribution
+- [~] Chunk 13A: Add completion-gate audits and CI/distribution
       validation.
       Enforce completed-suite coverage for APIs and constants, callback
       and resource-sensitive coverage, PASS/FAIL/SKIP gate behavior,
       report stability, VPATH behavior, `make distcheck`, and ABI tests
       from distribution tarballs.
+      Runner-side completion-gate auditing is implemented and reported
+      in JSON/text outputs, including PASS/FAIL/SKIP unit coverage.
+      VPATH and ABI-enabled `make distcheck` validation have now been
+      performed.  This chunk remains partial until explicit
+      distribution-tarball ABI runs, final cross-implementation
+      disposition, external CI, and runner-simplification tasks below
+      are completed.
 
 ## Phase 1: Test Directory and Build Plumbing
 
@@ -1063,60 +1070,100 @@ chunk adds installed runtime probes.
 
 ## Phase 13: Completion Gate
 
-- [ ] Enable hard failure for unclassified metadata entries.
-- [ ] Enable hard failure for `test_not_written_yet` on implemented ABI
+- [x] Enable hard failure for unclassified metadata entries.
+- [x] Enable hard failure for `test_not_written_yet` on implemented ABI
       functionality.
-- [ ] Gate completion on both API and constant test status.
+- [x] Gate completion on both API and constant test status.
       The complete-suite gate must include implemented APIs and ABI
       constants so unwritten constant tests cannot be hidden by complete
       API coverage.
-- [ ] Verify every API and ABI constant from the authority metadata is
+- [x] Verify every API and ABI constant from the authority metadata is
       classified.
-- [ ] Verify all implemented C standard ABI functionality is tested.
+- [x] Verify all implemented C standard ABI functionality is tested.
       Require every implemented C API to be covered by compile/link,
       symbol, converter, runtime, callback, or explicit skip/defer
       logic appropriate to that API's metadata and family.
-- [ ] Verify all configured Fortran binding layers have exhaustive
+- [~] Verify all configured Fortran binding layers have exhaustive
       regression coverage.
-- [ ] Verify implemented `use mpi_f08` ABI functionality is tested.
+      The completion gate now fails when the Fortran coverage audit
+      reports pending configured binding-layer coverage.  This remains
+      partial because Open MPI does not yet implement MPI Forum Fortran
+      ABI support and the exhaustive generated Fortran probe work is
+      still deferred.
+- [~] Verify implemented `use mpi_f08` ABI functionality is tested.
+      The gate consumes the `use mpi_f08` Fortran coverage audit and
+      reports pending ABI-relevant coverage as a hard completion-gate
+      finding, but exhaustive MPI Forum Fortran ABI testing is not yet
+      present.
 - [ ] Verify unimplemented standard ABI functionality is explicitly
       skipped.
-- [ ] Verify callback-heavy and resource-sensitive APIs are not omitted.
+- [x] Verify callback-heavy and resource-sensitive APIs are not omitted.
       Completion must account for dynamic process management,
       attribute/error-handler callbacks, generalized requests,
       user-defined operations, datarep callbacks, MPI_T callbacks, RMA,
       MPI-IO, and any APIs intentionally skipped as untestable in local
       CI.
-- [ ] Verify `make check` passes with ABI support enabled.
-- [ ] Verify `make check` skips cleanly with ABI support disabled.
-- [ ] Verify `make distcheck` passes with MPI ABI test files included.
-- [ ] Verify `make check-abi` passes against an installed Open MPI.
-- [ ] Verify `make check-abi-mpich` passes when MPICH is available or
+- [x] Verify `make check` passes with ABI support enabled.
+      Verified both directly in `test/mpi-abi` and as part of an
+      ABI-enabled `make distcheck` run.
+- [x] Verify `make check` skips cleanly with ABI support disabled.
+      Verified with `OMPI_ABI_TEST_STANDARD_ABI=0`, preserving the
+      `standard_abi_disabled` skip result.
+- [x] Verify `make distcheck` passes with MPI ABI test files included.
+      Verified with `DISTCHECK_CONFIGURE_FLAGS` carrying the
+      ABI-enabled configure options and parallel recursive make flags.
+- [x] Verify `make check-abi` passes against an installed Open MPI.
+      Verified against the installed Open MPI prefix at
+      `/Users/jsquyres/bogus`.
+- [~] Verify `make check-abi-mpich` passes when MPICH is available or
       fails with setup guidance when MPICH is unavailable.
-- [ ] Verify a distribution tarball can configure, build, install, and
+      Discovery, native sanity, header checks, and cross-probe execution
+      were validated with installed Open MPI and MPICH prefixes.  The
+      MPICH-available run currently fails on known cross-implementation
+      ABI divergences rather than setup failures, so this remains
+      partial until those upstream issues are resolved or explicitly
+      classified in the final completion policy.
+- [~] Verify a distribution tarball can configure, build, install, and
       run `make check-abi` against the installed tarball build.
+      `make distcheck` verifies configure, build, install, uninstall,
+      and `make check` from the distribution tarball.  An explicit
+      installed-tarball `make check-abi` run remains to be performed.
 - [ ] Verify a distribution tarball can run `make check-abi-mpich` when
       MPICH is available or fail with setup guidance when MPICH is
       unavailable.
-- [ ] Verify distribution tarballs include ABI specs, templates,
+- [x] Verify distribution tarballs include ABI specs, templates,
       scripts, requirements, and runner inputs.
       `make dist` and `make distcheck` must include the source files
       needed to regenerate ABI test probes without checking generated
       probe sources into git.
-- [ ] Verify VPATH builds run ABI tests from source and distribution
+- [x] Verify VPATH builds run ABI tests from source and distribution
       trees.
       Run representative `check-fast`, `check-abi`, and optional
       `check-abi-mpich` targets from an out-of-tree build so source-tree
       path assumptions do not pass only in non-VPATH builds.
-- [ ] Verify JSON and text reports are emitted and suitable for CI
+      Verified representative VPATH `make check`, `manifest`,
+      `coverage`, `check-abi`, and `check-abi-mpich` invocations.  The
+      VPATH `check-abi-mpich` result reached the same known
+      cross-implementation failures as the in-tree run, rather than a
+      source/build path failure.
+- [x] Verify JSON and text reports are emitted and suitable for CI
       tracking.
-- [ ] Verify complete-gate behavior for PASS, FAIL, and SKIP runs.
+- [ ] Simplify the ABI test runner implementation before completion.
+      The Python runner has accumulated discovery, manifest, generation,
+      compile, launch, reporting, and cross-implementation logic in one
+      large script while coverage was being built.  Before declaring the
+      suite complete, take a maintainability pass that preserves the
+      existing command-line interface and report formats but reduces
+      avoidable duplication, separates major responsibilities into
+      clearer helpers or modules, and keeps the fast self-check coverage
+      for any extracted logic.
+- [x] Verify complete-gate behavior for PASS, FAIL, and SKIP runs.
       A legitimate skip, such as standard ABI support disabled or
       missing optional tools in non-explicit modes, must not be
       converted into a completion-gate failure.  Explicit
       `check-abi-mpich` prerequisite failures and missing implemented
       coverage must remain hard failures when the suite is complete.
-- [ ] Verify command timeouts and failure summaries cover launcher
+- [x] Verify command timeouts and failure summaries cover launcher
       hangs.
       Runtime probes that call `mpirun` must have configurable timeouts
       and record timeout failures in the same JSON/text summary as other

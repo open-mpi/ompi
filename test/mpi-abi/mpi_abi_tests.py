@@ -3128,7 +3128,7 @@ def _open_mpi_mpifort(open_mpi_install):
         path = _path_executable(bin_dir, "mpifort") if bin_dir else None
         if path is not None:
             return path
-    return shutil.which("mpifort")
+    return None
 
 
 def _api_stem(api_key, api_name):
@@ -3909,6 +3909,64 @@ def _parse_header_constants(path):
                 unresolved = True
     unparsed.update(aliases)
     return constants, unparsed
+
+
+def _header_constant_parser_unit_checks():
+    """Validate the standard ABI header constant parser.
+
+    The semantic header check depends on parser behavior that is easy to
+    erode accidentally: aliases must resolve after all numeric values are
+    known, implicit enum values must advance from explicit enum values,
+    and unparseable declarations must remain visible as diagnostics
+    instead of silently disappearing from coverage.
+    """
+    check_name = "fast_header_constant_parser_unit_checks"
+    header_text = """
+#define MPI_ALIAS_TARGET 11
+#define MPI_ALIAS MPI_ALIAS_TARGET
+#define MPI_SHIFTED (1 << 4)
+#define MPI_UNRESOLVED_ALIAS MPI_UNKNOWN_TARGET
+enum {
+    MPI_ENUM_START = 30,
+    MPI_ENUM_NEXT,
+};
+enum {
+    MPI_SECOND_ENUM_START = 7,
+    MPI_SECOND_ENUM_NEXT,
+};
+"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir) / "mpi.h"
+        path.write_text(header_text)
+        constants, unparsed = _parse_header_constants(path)
+    expected = {
+        "MPI_ALIAS_TARGET": 11,
+        "MPI_ALIAS": 11,
+        "MPI_SHIFTED": 16,
+        "MPI_ENUM_START": 30,
+        "MPI_ENUM_NEXT": 31,
+        "MPI_SECOND_ENUM_START": 7,
+        "MPI_SECOND_ENUM_NEXT": 8,
+    }
+    mismatches = {
+        name: constants.get(name)
+        for name, value in expected.items()
+        if constants.get(name) != value
+    }
+    if mismatches:
+        return _fail(
+            check_name,
+            "Header constant parser did not preserve numeric values",
+            check="numeric_values",
+            mismatches=mismatches,
+            constants=constants)
+    if "MPI_UNRESOLVED_ALIAS" not in unparsed:
+        return _fail(
+            check_name,
+            "Header constant parser dropped an unparseable declaration",
+            check="unparsed_diagnostics",
+            unparsed=unparsed)
+    return _pass(check_name)
 
 
 def _parse_header_constant_names(path):
@@ -4713,6 +4771,18 @@ int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val);
                 "MPICH-only declarations",
                 check="callback_tolerates_mpich_legacy",
                 result=callback)
+        callback_details = callback["details"]
+        if (callback_details.get("tolerated_legacy_declared") !=
+                ["MPI_Attr_put"] or
+                callback_details.get(
+                    "tolerated_legacy_declared_count") != 1 or
+                callback_details.get("missing_count") != 0):
+            return _fail(
+                check_name,
+                "Removed legacy callback tolerance details must remain "
+                "machine-readable",
+                check="callback_tolerance_details",
+                result=callback)
 
         callback = _callback_api_coverage_audit(
             manifest,
@@ -4757,6 +4827,415 @@ int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val);
                 "tolerated by cross-header comparison",
                 check="cross_header_rejects_open_mpi_legacy",
                 result=feature)
+
+    return _pass(check_name)
+
+
+def _all_report_checks(report):
+    """Return every concrete check result embedded in a report."""
+    checks = []
+    for key in ("fast_checks", "installed_checks", "cross_checks"):
+        checks.extend(report.get(key, ()))
+    return checks
+
+
+def _checks_named(report, name):
+    """Return all report checks with a given stable name."""
+    return [
+        check for check in _all_report_checks(report)
+        if check.get("name") == name
+    ]
+
+
+def _completion_gate_add_finding(findings, kind, message, **details):
+    """Append one stable completion-gate finding."""
+    finding = {
+        "kind": kind,
+        "message": message,
+    }
+    finding.update(details)
+    findings.append(finding)
+
+
+def _completion_gate_report(manifest, report):
+    """Build the completed-suite gate result for one finished report.
+
+    The normal report contains the evidence; this helper only decides
+    whether that evidence is strong enough to declare the suite complete.
+    A legitimate mode-level SKIP remains a PASS for the gate because the
+    spec explicitly allows, for example, standard-ABI-disabled builds to
+    skip rather than fail.  Any requested mode that actually ran and
+    exposed missing implemented coverage is a hard completion failure.
+    """
+    findings = []
+    if report["result"] == "SKIP":
+        return {
+            "result": "PASS",
+            "skip_preserved": True,
+            "findings": [],
+            "finding_count": 0,
+        }
+
+    entries = list(manifest["apis"]) + list(manifest["constants"])
+    invalid_classifications = [
+        entry["name"] for entry in entries
+        if entry["classification"] not in VALID_CLASSIFICATIONS
+    ]
+    if invalid_classifications:
+        _completion_gate_add_finding(
+            findings,
+            "unclassified_metadata",
+            "metadata entries have invalid classifications",
+            count=len(invalid_classifications),
+            entries=invalid_classifications[:20])
+
+    invalid_test_status = [
+        entry["name"] for entry in entries
+        if entry["test_status"] not in VALID_TEST_STATUSES
+    ]
+    if invalid_test_status:
+        _completion_gate_add_finding(
+            findings,
+            "invalid_test_status",
+            "metadata entries have invalid test status values",
+            count=len(invalid_test_status),
+            entries=invalid_test_status[:20])
+
+    api_not_written = [
+        entry["name"] for entry in manifest["apis"]
+        if (entry["classification"] == CLASS_IMPLEMENTED and
+            entry["test_status"] == TEST_NOT_WRITTEN)
+    ]
+    if api_not_written:
+        _completion_gate_add_finding(
+            findings,
+            "api_test_not_written_yet",
+            "implemented ABI APIs still have test_not_written_yet status",
+            count=len(api_not_written),
+            entries=api_not_written[:20])
+
+    constant_not_written = [
+        entry["name"] for entry in manifest["constants"]
+        if (entry["classification"] == CLASS_IMPLEMENTED and
+            entry["test_status"] == TEST_NOT_WRITTEN)
+    ]
+    if constant_not_written:
+        _completion_gate_add_finding(
+            findings,
+            "constant_test_not_written_yet",
+            "implemented ABI constants still have test_not_written_yet "
+            "status",
+            count=len(constant_not_written),
+            entries=constant_not_written[:20])
+
+    failed_checks = [
+        check for check in _all_report_checks(report)
+        if check.get("result") == "FAIL"
+    ]
+    if failed_checks:
+        _completion_gate_add_finding(
+            findings,
+            "failed_checks",
+            "report contains failed checks",
+            count=len(failed_checks),
+            checks=[check["name"] for check in failed_checks[:20]])
+
+    mode = report["mode"]
+    if mode == "check-abi":
+        runtime_audits = _checks_named(
+            report, "installed_c_runtime_api_coverage_audit")
+        callback_audits = _checks_named(
+            report, "installed_c_callback_api_coverage_audit")
+        for audit_name, audits in (
+                ("installed_c_runtime_api_coverage_audit", runtime_audits),
+                ("installed_c_callback_api_coverage_audit", callback_audits)):
+            if not audits:
+                _completion_gate_add_finding(
+                    findings,
+                    "missing_completion_audit",
+                    "required installed C coverage audit did not run",
+                    audit=audit_name)
+                continue
+            for audit in audits:
+                details = audit.get("details", {})
+                missing = details.get("missing_count", 0)
+                unclassified = details.get(
+                    "unclassified_callback_api_count", 0)
+                if missing or unclassified:
+                    _completion_gate_add_finding(
+                        findings,
+                        "missing_c_coverage",
+                        "installed C coverage audit has undeferred gaps",
+                        audit=audit_name,
+                        missing_count=missing,
+                        unclassified_callback_api_count=unclassified,
+                        missing_by_package=details.get(
+                            "missing_by_package", {}))
+
+        fortran_audits = _checks_named(
+            report, "installed_fortran_coverage_audit")
+        if not fortran_audits:
+            _completion_gate_add_finding(
+                findings,
+                "missing_completion_audit",
+                "required Fortran coverage audit did not run",
+                audit="installed_fortran_coverage_audit")
+        for audit in fortran_audits:
+            languages = audit.get("details", {}).get("languages", {})
+            pending = {}
+            for language, info in sorted(languages.items()):
+                configured = info.get("configured", {}).get("enabled")
+                pending_count = info.get("pending_phase11b_count", 0)
+                if configured is not False and pending_count:
+                    pending[language] = {
+                        "count": pending_count,
+                        "sample": info.get("pending_phase11b", []),
+                    }
+            if pending:
+                _completion_gate_add_finding(
+                    findings,
+                    "missing_fortran_coverage",
+                    "configured Fortran binding layers still have "
+                    "pending ABI coverage",
+                    languages=pending)
+
+    if mode == "check-abi-mpich":
+        summaries = _checks_named(report, "cross_direction_summary")
+        if not summaries:
+            _completion_gate_add_finding(
+                findings,
+                "missing_completion_audit",
+                "MPICH cross-direction summary did not run",
+                audit="cross_direction_summary")
+        else:
+            incomplete_summaries = []
+            for summary in summaries:
+                details = summary.get("details", {})
+                direction_count = len(details.get("directions", ()))
+                passed = details.get("direction_status", {}).get("PASS", 0)
+                if (summary.get("result") != "PASS" or
+                        passed != direction_count):
+                    incomplete_summaries.append(summary)
+        if summaries and incomplete_summaries:
+            _completion_gate_add_finding(
+                findings,
+                "cross_direction_not_passed",
+                "MPICH cross-direction probes did not all pass",
+                summaries=[
+                    {
+                        "result": summary.get("result"),
+                        "skip_reason": summary.get("skip_reason"),
+                        "details": summary.get("details", {}),
+                    }
+                    for summary in incomplete_summaries
+                ])
+
+    return {
+        "result": "FAIL" if findings else "PASS",
+        "skip_preserved": False,
+        "findings": findings,
+        "finding_count": len(findings),
+    }
+
+
+def _completion_gate_unit_checks():
+    """Validate completed-suite gate PASS/FAIL/SKIP behavior."""
+    check_name = "fast_completion_gate_unit_checks"
+    empty_manifest = {"apis": [], "constants": []}
+    skipped = _completion_gate_report(
+        empty_manifest,
+        {
+            "mode": "check-abi",
+            "result": "SKIP",
+            "fast_checks": [],
+            "installed_checks": [],
+            "cross_checks": [],
+        })
+    if skipped["result"] != "PASS" or not skipped["skip_preserved"]:
+        return _fail(
+            check_name,
+            "Completion gate must preserve legitimate mode-level SKIPs",
+            check="skip_preserved",
+            gate=skipped)
+
+    passed = _completion_gate_report(
+        empty_manifest,
+        {
+            "mode": "check-fast",
+            "result": "PASS",
+            "fast_checks": [],
+            "installed_checks": [],
+            "cross_checks": [],
+        })
+    if passed["result"] != "PASS":
+        return _fail(
+            check_name,
+            "Completion gate must pass when no findings exist",
+            check="empty_pass",
+            gate=passed)
+
+    manifest = {
+        "apis": [
+            {
+                "name": "MPI_Test_missing",
+                "classification": CLASS_IMPLEMENTED,
+                "test_status": TEST_NOT_WRITTEN,
+            }
+        ],
+        "constants": [
+            {
+                "name": "MPI_CONST_MISSING",
+                "classification": CLASS_IMPLEMENTED,
+                "test_status": TEST_NOT_WRITTEN,
+            }
+        ],
+    }
+    failed = _completion_gate_report(
+        manifest,
+        {
+            "mode": "check-fast",
+            "result": "PASS",
+            "fast_checks": [],
+            "installed_checks": [],
+            "cross_checks": [],
+        })
+    kinds = {finding["kind"] for finding in failed["findings"]}
+    if (failed["result"] != "FAIL" or
+            "api_test_not_written_yet" not in kinds or
+            "constant_test_not_written_yet" not in kinds):
+        return _fail(
+            check_name,
+            "Completion gate must fail on unwritten API and constant "
+            "coverage",
+            check="not_written_failure",
+            gate=failed)
+
+    failed = _completion_gate_report(
+        empty_manifest,
+        {
+            "mode": "check-fast",
+            "result": "FAIL",
+            "fast_checks": [_fail("synthetic_failure", "failed")],
+            "installed_checks": [],
+            "cross_checks": [],
+        })
+    kinds = {finding["kind"] for finding in failed["findings"]}
+    if failed["result"] != "FAIL" or "failed_checks" not in kinds:
+        return _fail(
+            check_name,
+            "Completion gate must fail when report checks fail",
+            check="failed_check_failure",
+            gate=failed)
+
+    missing_audit = _completion_gate_report(
+        empty_manifest,
+        {
+            "mode": "check-abi",
+            "result": "PASS",
+            "fast_checks": [],
+            "installed_checks": [],
+            "cross_checks": [],
+        })
+    kinds = {finding["kind"] for finding in missing_audit["findings"]}
+    if ("missing_completion_audit" not in kinds or
+            missing_audit["result"] != "FAIL"):
+        return _fail(
+            check_name,
+            "Completion gate must require installed coverage audits",
+            check="missing_installed_audits",
+            gate=missing_audit)
+
+    missing_c_coverage = _completion_gate_report(
+        empty_manifest,
+        {
+            "mode": "check-abi",
+            "result": "PASS",
+            "fast_checks": [],
+            "installed_checks": [
+                _pass(
+                    "installed_c_runtime_api_coverage_audit",
+                    missing_count=1,
+                    missing_by_package={"phase9_runtime": ["MPI_X"]}),
+                _pass(
+                    "installed_c_callback_api_coverage_audit",
+                    missing_count=0,
+                    unclassified_callback_api_count=0),
+                _pass(
+                    "installed_fortran_coverage_audit",
+                    languages={}),
+            ],
+            "cross_checks": [],
+        })
+    kinds = {finding["kind"] for finding in missing_c_coverage["findings"]}
+    if ("missing_c_coverage" not in kinds or
+            missing_c_coverage["result"] != "FAIL"):
+        return _fail(
+            check_name,
+            "Completion gate must fail on installed C audit gaps",
+            check="missing_c_coverage",
+            gate=missing_c_coverage)
+
+    fortran_pending = _completion_gate_report(
+        empty_manifest,
+        {
+            "mode": "check-abi",
+            "result": "PASS",
+            "fast_checks": [],
+            "installed_checks": [
+                _pass(
+                    "installed_c_runtime_api_coverage_audit",
+                    missing_count=0,
+                    unclassified_callback_api_count=0),
+                _pass(
+                    "installed_c_callback_api_coverage_audit",
+                    missing_count=0,
+                    unclassified_callback_api_count=0),
+                _pass(
+                    "installed_fortran_coverage_audit",
+                    languages={
+                        "mpi_f08": {
+                            "configured": {"enabled": None},
+                            "pending_phase11b_count": 1,
+                            "pending_phase11b": ["MPI_F08_X"],
+                        },
+                    }),
+            ],
+            "cross_checks": [],
+        })
+    kinds = {finding["kind"] for finding in fortran_pending["findings"]}
+    if ("missing_fortran_coverage" not in kinds or
+            fortran_pending["result"] != "FAIL"):
+        return _fail(
+            check_name,
+            "Completion gate must treat unknown configured Fortran state "
+            "as coverage-relevant",
+            check="fortran_unknown_pending",
+            gate=fortran_pending)
+
+    mixed_cross = _completion_gate_report(
+        empty_manifest,
+        {
+            "mode": "check-abi-mpich",
+            "result": "PASS",
+            "fast_checks": [],
+            "installed_checks": [],
+            "cross_checks": [
+                _pass(
+                    "cross_direction_summary",
+                    directions=("open_mpi_compile_mpich_run",
+                                "mpich_compile_open_mpi_run"),
+                    direction_status={"PASS": 1, "SKIP": 1}),
+            ],
+        })
+    kinds = {finding["kind"] for finding in mixed_cross["findings"]}
+    if ("cross_direction_not_passed" not in kinds or
+            mixed_cross["result"] != "FAIL"):
+        return _fail(
+            check_name,
+            "Completion gate must fail when any requested cross "
+            "direction skips",
+            check="mixed_cross_direction",
+            gate=mixed_cross)
 
     return _pass(check_name)
 
@@ -6025,6 +6504,10 @@ def run_fast_checks(manifest, srcdir, builddir, progress=None):
         checks, _header_constant_checks(manifest, srcdir, builddir), progress)
 
     if progress is not None:
+        progress.start("fast header constant parser unit checks")
+    _append_check(checks, _header_constant_parser_unit_checks(), progress)
+
+    if progress is not None:
         progress.start("fast ABI converter source checks")
     _extend_checks(checks, _abi_converter_checks(srcdir, builddir), progress)
 
@@ -6045,6 +6528,14 @@ def run_fast_checks(manifest, srcdir, builddir, progress=None):
     if progress is not None:
         progress.start("fast legacy tolerance unit checks")
     _append_check(checks, _legacy_tolerance_unit_checks(), progress)
+
+    if progress is not None:
+        progress.start("fast C parameter normalization unit checks")
+    _append_check(checks, _c_parameter_normalization_unit_checks(), progress)
+
+    if progress is not None:
+        progress.start("fast completion gate unit checks")
+    _append_check(checks, _completion_gate_unit_checks(), progress)
     return checks
 
 
@@ -7352,6 +7843,54 @@ def _normalized_c_parameter_types(args):
         _normalize_c_parameter_type(parameter)
         for parameter in _split_c_parameter_list(args)
     )
+
+
+def _c_parameter_normalization_unit_checks():
+    """Validate C parameter normalization used by header comparison.
+
+    Cross-header comparison intentionally ignores parameter names while
+    preserving ABI-relevant type spellings.  Array and pointer spelling
+    differences are particularly important because generated headers and
+    vendor headers may spell the same ABI contract differently.
+    """
+    check_name = "fast_c_parameter_normalization_unit_checks"
+    cases = {
+        "int count": "int",
+        "MPI_Comm comm": "MPI_Comm",
+        "void *attribute_val": "void*",
+        "int array_of_blocklengths[]": "int*",
+        "const MPI_Aint array_of_displacements[]": "const MPI_Aint*",
+        "MPI_Datatype *newtype": "MPI_Datatype*",
+    }
+    mismatches = {
+        parameter: {
+            "expected": expected,
+            "actual": _normalize_c_parameter_type(parameter),
+        }
+        for parameter, expected in cases.items()
+        if _normalize_c_parameter_type(parameter) != expected
+    }
+    if mismatches:
+        return _fail(
+            check_name,
+            "C parameter normalization changed unexpectedly",
+            check="parameter_normalization",
+            mismatches=mismatches)
+
+    args = (
+        "MPI_Comm comm, int array_of_ranks[], "
+        "MPI_Aint *array_of_displacements"
+    )
+    normalized = _normalized_c_parameter_types(args)
+    expected = ("MPI_Comm", "int*", "MPI_Aint*")
+    if normalized != expected:
+        return _fail(
+            check_name,
+            "C parameter-list normalization changed unexpectedly",
+            check="parameter_list_normalization",
+            expected=expected,
+            actual=normalized)
+    return _pass(check_name)
 
 
 def _normalize_c_typedef_reference(type_name):
@@ -9800,6 +10339,16 @@ def _summary_text(report, colors=None):
     if report.get("failure_guidance"):
         lines.append("failure_guidance: {0}".format(
             report["failure_guidance"]))
+    if report.get("completion_gate") is not None:
+        gate = report["completion_gate"]
+        lines.append("completion_gate: {0}".format(gate["result"]))
+        if gate.get("skip_preserved"):
+            lines.append("completion_gate_skip_preserved: true")
+        if gate["findings"]:
+            lines.append("completion_gate_findings:")
+            for finding in gate["findings"][:20]:
+                lines.append("  {0}: {1}".format(
+                    finding["kind"], finding["message"]))
     lines.append("srcdir: {0}".format(report["srcdir"]))
     lines.append("builddir: {0}".format(report["builddir"]))
     lines.append("tmpdir: {0}".format(report["tmpdir"]))
@@ -9936,6 +10485,8 @@ def command(args):
     progress = _Progress(progress_enabled, colors)
 
     report = build_report(manifest, mode, srcdir, builddir, outdir, progress)
+    if args.complete_gate:
+        report["completion_gate"] = _completion_gate_report(manifest, report)
     _, report_path, summary_path = write_outputs(manifest, report, outdir)
     if progress.enabled:
         print("")
@@ -9943,19 +10494,12 @@ def command(args):
     print("Wrote {0}".format(report_path))
     print("Wrote {0}".format(summary_path))
 
-    if args.complete_gate and report["result"] != "SKIP":
-        api_not_written = report["summary"]["api_test_status"].get(
-            TEST_NOT_WRITTEN, 0)
-        constant_not_written = report["summary"][
-            "constant_test_status"].get(TEST_NOT_WRITTEN, 0)
-        not_written = api_not_written + constant_not_written
-        if not_written:
-            print(
-                "ERROR: completion gate found {0} unwritten tests "
-                "({1} APIs, {2} constants)".format(
-                    not_written, api_not_written, constant_not_written),
-                file=sys.stderr)
-            return 1
+    if args.complete_gate and report["completion_gate"]["result"] == "FAIL":
+        print(
+            "ERROR: completion gate found {0} finding(s)".format(
+                report["completion_gate"]["finding_count"]),
+            file=sys.stderr)
+        return 1
 
     if report["result"] == "FAIL":
         return 1
