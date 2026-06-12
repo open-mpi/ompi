@@ -15,6 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
+#include "ompi/file/file.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 #include "ompi/mca/sharedfp/individual/sharedfp_individual.h"
@@ -64,6 +66,38 @@ static mca_sharedfp_base_module_2_0_0_t individual =  {
  * *******************************************************************
  */
 
+static const char *mca_sharedfp_individual_relaxed_ordering_cb(opal_infosubscriber_t *object,
+                                                               const char *key,
+                                                               const char *value)
+{
+    ompi_file_t *file;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
+
+    if (NULL == object || NULL == key || NULL == value || '\0' == value[0]) {
+        return NULL;
+    }
+
+    file = (ompi_file_t *) object;
+    data = (mca_common_ompio_data_t *) file->f_io_selected_data;
+    if (NULL == data) {
+        return NULL;
+    }
+    fh = &data->ompio_fh;
+
+    /*
+     * sharedfp selection queries every candidate component.  This callback
+     * must accept the hint while selection is still in progress because the
+     * hint raises individual's priority, but once a sharedfp module is known
+     * the hint is public only if this component actually won selection.
+     */
+    if (NULL != fh->f_sharedfp && &individual != fh->f_sharedfp) {
+        return NULL;
+    }
+
+    return value;
+}
+
 int mca_sharedfp_individual_component_init_query(bool enable_progress_threads,
                                             bool enable_mpi_threads)
 {
@@ -79,6 +113,7 @@ struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_individual_component_file
     bool relaxed_order_flag=false;
     opal_info_t *info;
     int flag;
+    int ret;
     opal_cstring_t *info_str;
     *priority = 0;
 
@@ -104,8 +139,22 @@ struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_individual_component_file
 
     /*---------------------------------------------------------*/
     /* 2. Did the user specify MPI_INFO relaxed ordering flag? */
+    if (wronly_flag) {
+        /*
+         * This hint is meaningful only when this component can be selected.
+         * Registering it conditionally avoids reporting a sharedfp hint as
+         * accepted on read-only opens where individual sharedfp will not run.
+         */
+        ret = mca_common_ompio_info_subscribe(fh, "OMPIO_SHAREDFP_RELAXED_ORDERING",
+                                              NULL,
+                                              mca_sharedfp_individual_relaxed_ordering_cb);
+        if (OMPI_SUCCESS != ret) {
+            return NULL;
+        }
+    }
+
     info = fh->f_info;
-    if ( info != &(MPI_INFO_NULL->super) ){
+    if ( wronly_flag && info != &(MPI_INFO_NULL->super) ){
         opal_info_get ( info,"OMPIO_SHAREDFP_RELAXED_ORDERING", &info_str, &flag);
         if ( flag ) {
            if ( mca_sharedfp_individual_verbose ) {
@@ -157,11 +206,18 @@ struct mca_sharedfp_base_module_2_0_0_t * mca_sharedfp_individual_component_file
 
 int mca_sharedfp_individual_component_file_unquery (ompio_file_t *file)
 {
-   /* This function might be needed for some purposes later. for now it
-    * does not have anything to do since there are no steps which need
-    * to be undone if this module is not selected */
+    /*
+     * The query path may have subscribed and accepted the relaxed-ordering
+     * hint so it could participate in priority selection.  If another
+     * sharedfp component wins, remove the public value; otherwise
+     * MPI_File_get_info would claim that a hint owned by the losing
+     * individual component is part of the active file stack.
+     */
+    if (NULL != file && NULL != file->f_info) {
+        (void) opal_info_delete(file->f_info, "OMPIO_SHAREDFP_RELAXED_ORDERING");
+    }
 
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 int mca_sharedfp_individual_module_init (ompio_file_t *file)
