@@ -310,7 +310,7 @@ templates_path = ['_templates']
 # Sphinx won't complain about the .rst files in that tree that we are
 # not referencing from here in the OMPI docs.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv', 'py*/**',
-                    'prrte-rst-content' ]
+                    'tuning-apps/_include', 'prrte-rst-content' ]
 
 
 # Clarify the language for verbatim blocks (::)
