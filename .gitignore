@@ -338,6 +338,7 @@ test/simple/mpi_barrier
 test/simple/mpi_no_op
 test/simple/mpi_spin
 test/simple/multi_abort
+test/simple/ompio_file_info
 test/simple/parallel_r8
 test/simple/parallel_r64
 test/simple/parallel_w8

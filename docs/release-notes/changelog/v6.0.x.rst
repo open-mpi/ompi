@@ -33,6 +33,10 @@ Open MPI version v6.0.0
   configure option.  These bindings were experimental, were never part
   of the MPI standard, and are no longer supported.
 
+- Improved OMPIO ``MPI_File_get_info()`` reporting so it returns
+  supported file hints that OMPIO is actually using, including
+  component-owned hints for selected OMPIO subcomponents.
+
 - Added support for MPI-4.1 functions to access and update ``MPI_Status``
   fields.
 

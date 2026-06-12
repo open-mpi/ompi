@@ -17,6 +17,7 @@
  * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -162,6 +163,10 @@ int mca_io_ompio_file_get_size (struct ompi_file_t *fh,
                                 OMPI_MPI_OFFSET_TYPE * size);
 int mca_io_ompio_file_get_amode (struct ompi_file_t *fh,
                                  int *amode);
+int mca_io_ompio_file_set_info (struct ompi_file_t *fh,
+                                struct ompi_info_t *info);
+int mca_io_ompio_file_get_info (struct ompi_file_t *fh,
+                                struct ompi_info_t **info_used);
 int mca_io_ompio_file_sync (struct ompi_file_t *fh);
 int mca_io_ompio_file_seek (struct ompi_file_t *fh,
                             OMPI_MPI_OFFSET_TYPE offet,
