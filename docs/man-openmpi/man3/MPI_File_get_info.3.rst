@@ -44,62 +44,7 @@ hints that can be set.
 HINTS
 -----
 
-The following hints can be used as values for the *info_used* argument.
-
-**SETTABLE HINTS**
-
-* ``shared_file_timeout``: Amount of time (in seconds) to wait for
-  access to the shared file pointer before exiting with
-  ``MPI_ERR_TIMEDOUT``.
-
-* ``rwlock_timeout``: Amount of time (in seconds) to wait for
-  obtaining a read or write lock on a contiguous chunk of a UNIX file
-  before exiting with ``MPI_ERR_TIMEDOUT``.
-
-* ``noncoll_read_bufsize``: Maximum size of the buffer used by MPI I/O
-  to satisfy read requests in the noncollective data-access
-  routines.
-
-  .. note:: A buffer size smaller than the distance (in bytes) in a
-            UNIX file between the first byte and the last byte of the
-            access request causes MPI I/O to iterate and perform
-            multiple UNIX ``read()`` or ``write()`` calls. If the
-            request includes multiple noncontiguous chunks of data,
-            and the buffer size is greater than the size of those
-            chunks, then the UNIX ``read()`` or ``write()`` (made at
-            the MPI I/O level) will access data not requested by this
-            process in order to reduce the total number of ``write()``
-            calls made. If this is not desirable behavior, you should
-            reduce this buffer size to equal the size of the
-            contiguous chunks within the aggregate request.
-
-* ``noncoll_write_bufsize``: Maximum size of the buffer used by MPI
-  I/O to satisfy write requests in the noncollective data-access
-  routines.
-
-  See the above note in ``noncoll_read_bufsize``.
-
-* ``coll_read_bufsize``: Maximum size of the buffer used by MPI I/O to
-  satisfy read requests in the collective data-access routines.
-
-  See the above note in ``noncoll_read_bufsize``.
-
-* ``coll_write_bufsize``: Maximum size of the buffer used by MPI I/O
-  to satisfy write requests in the collective data-access
-  routines.
-
-  See the above note in ``noncoll_read_bufsize``.
-
-* ``mpiio_concurrency``: (boolean) controls whether nonblocking
-  I/O routines can bind an extra thread to an LWP.
-
-* ``mpiio_coll_contiguous``: (boolean) controls whether subsequent
-  collective data accesses will request collectively contiguous
-  regions of the file.
-
-**NON-SETTABLE HINTS**
-
-* ``filename``: Access this hint to get the name of the file.
+.. include:: /tuning-apps/_include/ompio-mpi-info-hints.rst
 
 
 

@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserverd.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,6 +58,7 @@ int mca_fs_lustre_component_file_unquery (ompio_file_t *file);
 
 int mca_fs_lustre_module_init (ompio_file_t *file);
 int mca_fs_lustre_module_finalize (ompio_file_t *file);
+void mca_fs_lustre_info_cache_free (ompio_file_t *file);
 
 OMPI_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_lustre_component;
 /*
