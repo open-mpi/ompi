@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -45,6 +45,7 @@ IMAGE_SOURCE_FILES = \
 RST_SOURCE_FILES   = \
         $(srcdir)/*.rst \
         $(srcdir)/release-notes/*.rst \
+        $(srcdir)/release-notes/mpi-5.0/*.rst \
         $(srcdir)/release-notes/changelog/*.rst \
         $(srcdir)/installing-open-mpi/*.rst \
         $(srcdir)/installing-open-mpi/*/*.rst \
@@ -61,6 +62,12 @@ RST_SOURCE_FILES   = \
         $(srcdir)/man-openshmem/*.rst \
         $(srcdir)/man-openshmem/man*/*.rst
 
+# Non-RST data files that the documentation references at build time
+# (for example, via the Sphinx ":download:" role).  Like the RST
+# sources, these must be copied into the build tree for VPATH builds.
+DATA_SOURCE_FILES  = \
+        $(srcdir)/release-notes/mpi-5.0-conformance.json
+
 EXTRA_DIST         = \
         requirements.txt \
         no-prrte-content.rst.txt \
@@ -73,7 +80,8 @@ EXTRA_DIST         = \
         $(TEXT_SOURCE_FILES) \
         $(MARKDOWN_SOURCE_FILES) \
         $(IMAGE_SOURCE_FILES) \
-        $(RST_SOURCE_FILES)
+        $(RST_SOURCE_FILES) \
+        $(DATA_SOURCE_FILES)
 
 ###########################################################################
 
@@ -1052,7 +1060,7 @@ $(CODE_OF_CONDUCT_RST): generate-code-of-conduct-rst.py
 $(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
 $(ALL_MAN_BUILT): $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
-$(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
+$(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(DATA_SOURCE_FILES) $(SPHINX_CONFIG)
 $(ALL_MAN_BUILT): $(CODE_OF_CONDUCT_RST)
 $(ALL_MAN_BUILT): $(SENTINEL_OMPI_MAN3_BINDING)
 
@@ -1096,7 +1104,7 @@ $(ALL_MAN_BUILT): $(SENTINEL_OMPI_MAN3_BINDING)
 $(ALL_MAN_BUILT):
 	$(OMPI_V_SPHINX_COPYRST) if test "$(srcdir)" != "$(builddir)"; then \
 	    len=`echo "$(srcdir)/" | wc -c`; \
-	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
+	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(DATA_SOURCE_FILES) $(SPHINX_CONFIG); do \
 	        dir=`dirname $$file | cut -c$$len-`; \
 	        if test -z "$$dir"; then \
 	            dir=.; \
@@ -1150,7 +1158,7 @@ clean-local:
 	rm -rf ompi-prrte-objects.inv opal-pmix-objects.inv
 	if test "$(srcdir)" != "$(builddir)"; then \
 	    len=`echo "$(srcdir)/" | wc -c`; \
-	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
+	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(DATA_SOURCE_FILES) $(SPHINX_CONFIG); do \
 	        dir=`dirname $$file | cut -c$$len-`; \
 	        if test -z "$$dir"; then \
 	            rm -rf `basename $$file`; \

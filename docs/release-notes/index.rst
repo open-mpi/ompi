@@ -10,6 +10,7 @@ Release notes
    compilers
    run-time
    mpi
+   mpi-5.0
    openshmem
    mpi-collectives
    openshmem-collectives
