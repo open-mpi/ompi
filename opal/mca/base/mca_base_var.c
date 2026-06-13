@@ -1681,13 +1681,14 @@ static int var_set_from_env(mca_base_var_t *var, mca_base_var_t *original)
     if (NULL != source_env) {
         if (0 == strncasecmp(source_env, "file:", 5)) {
             original->mbv_source_file = append_filename_to_list(source_env + 5);
-            if (0 == strcmp(var->mbv_source_file, mca_base_var_override_file)) {
+            if (0 == strcmp(original->mbv_source_file, mca_base_var_override_file)) {
                 original->mbv_source = MCA_BASE_VAR_SOURCE_OVERRIDE;
             } else {
                 original->mbv_source = MCA_BASE_VAR_SOURCE_FILE;
             }
-        } else if (0 == strcasecmp(source_env, "command")) {
-            var->mbv_source = MCA_BASE_VAR_SOURCE_COMMAND_LINE;
+        } else if (0 == strcasecmp(source_env, "command") ||
+                   0 == strcasecmp(source_env, "command_line")) {
+            original->mbv_source = MCA_BASE_VAR_SOURCE_COMMAND_LINE;
         }
     }
 
@@ -1698,7 +1699,7 @@ static int var_set_from_env(mca_base_var_t *var, mca_base_var_t *original)
             new_variable = original->mbv_full_name;
         }
 
-        switch (var->mbv_source) {
+        switch (original->mbv_source) {
         case MCA_BASE_VAR_SOURCE_ENV:
             opal_show_help("help-mca-var.txt", "deprecated-mca-env", true, var_full_name,
                            new_variable);
@@ -1710,7 +1711,7 @@ static int var_set_from_env(mca_base_var_t *var, mca_base_var_t *original)
         case MCA_BASE_VAR_SOURCE_FILE:
         case MCA_BASE_VAR_SOURCE_OVERRIDE:
             opal_show_help("help-mca-var.txt", "deprecated-mca-file", true, var_full_name,
-                           mca_base_var_source_file(var), new_variable);
+                           mca_base_var_source_file(original), new_variable);
             break;
 
         case MCA_BASE_VAR_SOURCE_DEFAULT:
