@@ -108,6 +108,7 @@ MPI API manual pages (section 3)
    MPI_Error_string.3.rst
    MPI_Exscan.3.rst
    MPI_Exscan_init.3.rst
+   MPI_F_sync_reg.3.rst
    MPI_Fetch_and_op.3.rst
    MPI_File_c2f.3.rst
    MPI_File_call_errhandler.3.rst
@@ -379,10 +380,12 @@ MPI API manual pages (section 3)
    MPI_T_category_get_cvars.3.rst
    MPI_T_category_get_events.3.rst
    MPI_T_category_get_info.3.rst
+   MPI_T_category_get_index.3.rst
    MPI_T_category_get_num.3.rst
    MPI_T_category_get_num_events.3.rst
    MPI_T_category_get_pvars.3.rst
    MPI_T_cvar_get_info.3.rst
+   MPI_T_cvar_get_index.3.rst
    MPI_T_cvar_get_num.3.rst
    MPI_T_cvar_handle_alloc.3.rst
    MPI_T_cvar_handle_free.3.rst
@@ -408,6 +411,7 @@ MPI API manual pages (section 3)
    MPI_T_finalize.3.rst
    MPI_T_init_thread.3.rst
    MPI_T_pvar_get_info.3.rst
+   MPI_T_pvar_get_index.3.rst
    MPI_T_pvar_get_num.3.rst
    MPI_T_pvar_handle_alloc.3.rst
    MPI_T_pvar_handle_free.3.rst
