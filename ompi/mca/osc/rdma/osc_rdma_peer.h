@@ -16,6 +16,7 @@
 #include "osc_rdma_types.h"
 
 struct ompi_osc_rdma_module_t;
+struct mca_smsc_endpoint_t;
 
 /**
  * @brief osc rdma peer object
@@ -82,11 +83,17 @@ struct ompi_osc_rdma_peer_basic_t {
     /** remote peer's base pointer */
     osc_rdma_base_t base;
 
-    /** local pointer to peer's base */
+    /** local pointer to peer's base (set when XPMEM-mapped for MPI_Win_shared_query) */
     osc_rdma_base_t local_base;
 
     /** registration handle associated with the base */
     mca_btl_base_registration_handle_t *base_handle;
+
+    /** smsc endpoint kept alive while the XPMEM mapping below is valid */
+    struct mca_smsc_endpoint_t *smsc_endpoint;
+
+    /** smsc mapping context for unmap_peer_region (NULL if no mapping) */
+    void *smsc_map_ctx;
 };
 
 typedef struct ompi_osc_rdma_peer_basic_t ompi_osc_rdma_peer_basic_t;
