@@ -4,6 +4,8 @@
  * Copyright (c) 2022      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2024      Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -114,4 +116,4 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
 
 MCA_BASE_FRAMEWORK_DECLARE(opal, pmix, "OPAL PMI Client Framework", opal_pmix_base_frame_register,
                            opal_pmix_base_frame_open, opal_pmix_base_frame_close,
-                           mca_pmix_base_static_components, 0);
+                           mca_pmix_base_static_components, MCA_BASE_FRAMEWORK_FLAG_NOCOMPONENT);
