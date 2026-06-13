@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -194,6 +194,7 @@ OMPI_MAN3 = \
         MPI_Errors.3 \
         MPI_Exscan.3 \
         MPI_Exscan_init.3 \
+        MPI_F_sync_reg.3 \
         MPI_Fetch_and_op.3 \
         MPI_File_c2f.3 \
         MPI_File_call_errhandler.3 \
@@ -460,10 +461,12 @@ OMPI_MAN3 = \
         MPI_T_category_get_cvars.3 \
         MPI_T_category_get_events.3 \
         MPI_T_category_get_info.3 \
+        MPI_T_category_get_index.3 \
         MPI_T_category_get_num.3 \
         MPI_T_category_get_num_events.3 \
         MPI_T_category_get_pvars.3 \
         MPI_T_cvar_get_info.3 \
+        MPI_T_cvar_get_index.3 \
         MPI_T_cvar_get_num.3 \
         MPI_T_cvar_handle_alloc.3 \
         MPI_T_cvar_handle_free.3 \
@@ -495,6 +498,7 @@ OMPI_MAN3 = \
         MPI_T_init_thread.3 \
         MPI_Topo_test.3 \
         MPI_T_pvar_get_info.3 \
+        MPI_T_pvar_get_index.3 \
         MPI_T_pvar_get_num.3 \
         MPI_T_pvar_handle_alloc.3 \
         MPI_T_pvar_handle_free.3 \
