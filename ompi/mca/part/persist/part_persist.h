@@ -14,6 +14,8 @@
  * Copyright (c) 2021      Tennessee Technological University. All rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2024      High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,11 +80,77 @@ struct ompi_part_persist_t {
     int32_t                init_world;
     int32_t                my_world_rank; /* Because the back end communicators use a world rank, we need to communicate ours 
                                              to set up the requests. */
+
+    uint32_t min_message_size;          /* parameters to control internal partitioning */
+    uint32_t max_message_count;
+
     opal_atomic_int32_t    block_entry;
     opal_mutex_t lock; 
 };
 typedef struct ompi_part_persist_t ompi_part_persist_t;
 extern ompi_part_persist_t ompi_part_persist;
+
+
+
+/**
+ * @brief selects an internal partitioning based on the user-provided partitioning
+ * and the mca parameters for minimal partition size and maximal partition count.
+ * 
+ * More precisely, given a partitioning into p partitions of size s, computes
+ * an internal partitioning into p'-1 partitions of size s' and an additional 
+ * partition (remainder) of size r * s. s' is selected to be a multiple of s
+ * and r such that remainder r * s is smaller than s.
+ *
+ * @param (IN)  partitions           number of user-provided partitions
+ * @param (IN)  count                size of user-provided partitions in elements
+ * @param (OUT) internal_partitions  number of internal partitions
+ * @param (OUT) factor               number of public partitions corresponding to each internal partitions other than the last one
+ * @param (OUT) last_size            number of public partitions corresponding to the last internal partition
+ */
+static inline void part_persist_select_internal_partitioning(size_t partitions, size_t part_size, size_t* internal_partitions, size_t* factor, size_t* remainder) {
+    size_t buffer_size = partitions * part_size;
+    int min_part_size  = ompi_part_persist.min_message_size;
+    int max_part_count = ompi_part_persist.max_message_count;
+
+    // check if max_part_count imposes higher limit on partition size
+    if (max_part_count > 0 && (buffer_size / max_part_count) > min_part_size) {
+        min_part_size = buffer_size / max_part_count;
+    }
+
+    // cannot have partitions larger than buffer size
+    if (min_part_size > buffer_size) {
+        min_part_size = buffer_size;
+    }
+
+    size_t _internal_partitions, _factor, _remainder;
+
+    if (part_size < min_part_size) {    // have to use larger partititions
+        // solve p = (p' - 1) * a + r for a (factor) and r (remainder)
+        _factor = min_part_size / part_size;
+        _internal_partitions = partitions / _factor;
+        _remainder = partitions % (_factor);
+
+        if (0 == _remainder) { // we still need the size of the last partition
+            _remainder = _factor;
+        } else {               // number of partitions was floored, so add 1 for last (smaller) partition
+            _internal_partitions += 1;
+        }
+    } else {    // can keep original partitioning
+        _internal_partitions = partitions;
+        _factor = 1;
+        _remainder = 1;
+    }
+
+    // check if anything went wrong
+    if (_internal_partitions > partitions || _factor < 1
+          || ((_factor) * (_internal_partitions - 1) * part_size + (_remainder * part_size) != (partitions * part_size))) {
+        opal_output_verbose(0, ompi_part_base_framework.framework_output, "given %lu*%lu partitioning and internal partitioning of %lu*%lu + %lu*%lu are inconsistent\n", partitions, part_size, _internal_partitions - 1, (_factor) * part_size, _remainder, part_size);
+    }
+
+    *internal_partitions = _internal_partitions;
+    *factor = _factor;
+    *remainder = _remainder;
+}
 
 
 /**
@@ -95,6 +163,10 @@ mca_part_persist_free_req(struct mca_part_persist_request_t* req)
     size_t i;
     opal_list_remove_item(ompi_part_persist.progress_list, (opal_list_item_t*)req->progress_elem);
     OBJ_RELEASE(req->progress_elem);
+
+    if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
+        aggregation_scheme_regular_free(&req->aggregation_state);
+    }
 
     for(i = 0; i < req->real_parts; i++) {
         ompi_request_free(&(req->persist_reqs[i]));
@@ -245,21 +317,23 @@ mca_part_persist_progress(void)
                     dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
                     uint32_t bytes = req->real_count * dt_size;
 
-                    /* Set up persistent sends */
+                    /* Set up persistent sends. Last partition is handled separately as size may differ */
                     req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
-                    for(i = 0; i < req->real_parts; i++) {
+                    for(i = 0; i < req->real_parts - 1; i++) {
                          void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
                          err = MCA_PML_CALL(isend_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
                     }    
+                    void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
+                    err = MCA_PML_CALL(isend_init(buf, req->real_count_last, req->req_datatype, req->world_peer, req->my_send_tag+i, MCA_PML_BASE_SEND_STANDARD, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
                 } else {
                     /* parse message */
-                    req->world_peer   = req->setup_info[1].world_rank; 
-                    req->my_send_tag  = req->setup_info[1].start_tag;
-                    req->my_recv_tag  = req->setup_info[1].setup_tag;
-                    req->real_parts   = req->setup_info[1].num_parts;
-                    req->real_count   = req->setup_info[1].count;
-                    req->real_dt_size = req->setup_info[1].dt_size;
-
+                    req->world_peer      = req->setup_info[1].world_rank; 
+                    req->my_send_tag     = req->setup_info[1].start_tag;
+                    req->my_recv_tag     = req->setup_info[1].setup_tag;
+                    req->real_parts      = req->setup_info[1].num_parts;
+                    req->real_count      = req->setup_info[1].count;
+                    req->real_count_last = req->setup_info[1].count_last;
+                    req->real_dt_size    = req->setup_info[1].dt_size;
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
                     if(OMPI_SUCCESS != err) return OMPI_ERROR;
@@ -268,22 +342,27 @@ mca_part_persist_progress(void)
 
 
 
-		    /* Set up persistent sends */
+                    /* Set up persistent sends */
                     req->persist_reqs = (ompi_request_t**) malloc(sizeof(ompi_request_t*)*(req->real_parts));
                     req->flags = (int*) calloc(req->real_parts,sizeof(int));
 
                     if(req->real_dt_size == dt_size) {
 
-     	                for(i = 0; i < req->real_parts; i++) {
+                        /* Last partition is handled separately as the size may differ */
+                         for(i = 0; i < req->real_parts - 1; i++) {
                             void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
                             err = MCA_PML_CALL(irecv_init(buf, req->real_count, req->req_datatype, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
                         }
+                        void *buf = ((void*) (((char*)req->req_addr) + (bytes * i)));
+                        err = MCA_PML_CALL(irecv_init(buf, req->real_count_last, req->req_datatype, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
                     } else {
-                        for(i = 0; i < req->real_parts; i++) {
+                        for(i = 0; i < req->real_parts - 1; i++) {
                             void *buf = ((void*) (((char*)req->req_addr) + (req->real_count * req->real_dt_size * i)));
                             err = MCA_PML_CALL(irecv_init(buf, req->real_count * req->real_dt_size, MPI_BYTE, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
                         }
-		    }
+                        void *buf = ((void*) (((char*)req->req_addr) + (req->real_count * req->real_dt_size * i)));
+                        err = MCA_PML_CALL(irecv_init(buf, req->real_count_last * req->real_dt_size, MPI_BYTE, req->world_peer, req->my_send_tag+i, ompi_part_persist.part_comm, &(req->persist_reqs[i])));
+                    }
                     err = req->persist_reqs[0]->req_start(req->real_parts, (&(req->persist_reqs[0])));                     
 
                     /* Send back a message */
@@ -447,15 +526,27 @@ mca_part_persist_psend_init(const void* buf,
 
     /* non-blocking send set-up data */
     req->setup_info[0].world_rank = ompi_comm_rank(&ompi_mpi_comm_world.comm);
-    req->setup_info[0].start_tag = ompi_part_persist.next_send_tag; ompi_part_persist.next_send_tag += parts; 
+    req->setup_info[0].start_tag = ompi_part_persist.next_send_tag;
     req->my_send_tag = req->setup_info[0].start_tag;
-    req->setup_info[0].setup_tag = ompi_part_persist.next_recv_tag; ompi_part_persist.next_recv_tag++;
+    req->setup_info[0].setup_tag = ompi_part_persist.next_recv_tag;
     req->my_recv_tag = req->setup_info[0].setup_tag;
-    req->setup_info[0].num_parts = parts;
-    req->real_parts = parts;
-    req->setup_info[0].count = count;
-    req->real_count = count;
+
+    /* select internal partitioning (i.e. real_parts) here */
+    size_t factor, remaining_partitions;
+    part_persist_select_internal_partitioning(parts, count, &req->real_parts, &factor, &remaining_partitions);
+
+    aggregation_scheme_regular_psend_init(&req->aggregation_state, req->real_parts, factor, remaining_partitions);
+
+    req->real_count_last = remaining_partitions * count;     // convert to number of elements
+    req->real_count = factor * count;
+    req->setup_info[0].num_parts = req->real_parts;         // setup info has to contain internal partitioning
+    req->setup_info[0].count     = req->real_count;
+    req->setup_info[0].count_last = req->real_count_last;
     req->setup_info[0].dt_size = dt_size;
+    opal_output_verbose(5, ompi_part_base_framework.framework_output, "mapped given %lu*%lu partitioning to internal partitioning of %lu*%lu + %lu elements\n", parts, count, req->real_parts - 1, req->real_count, req->real_count_last);
+
+    ompi_part_persist.next_send_tag += req->real_parts; 
+    ompi_part_persist.next_recv_tag++;
 
     req->flags = (int*) calloc(req->real_parts, sizeof(int));
 
@@ -499,6 +590,11 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
 
     for(i = 0; i < _count && OMPI_SUCCESS == err; i++) {
         mca_part_persist_request_t *req = (mca_part_persist_request_t *)(requests[i]);
+
+        if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
+            aggregation_scheme_regular_reset(&req->aggregation_state);
+        }
+
         /* First use is a special case, to support lazy initialization */
         if(false == req->first_send)
         {
@@ -540,19 +636,29 @@ mca_part_persist_pready(size_t min_part,
     size_t i;
 
     mca_part_persist_request_t *req = (mca_part_persist_request_t *)(request);
-    if(true == req->initialized)
-    {
-        err = req->persist_reqs[min_part]->req_start(max_part-min_part+1, (&(req->persist_reqs[min_part])));
-        for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-            req->flags[i] = 0; /* Mark partition as ready for testing */
+
+
+    // queue or start available internal partitions
+    int internal_part_ready;
+    for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
+        aggregation_scheme_regular_pready(&req->aggregation_state, i, &internal_part_ready);
+
+        if (-1 != internal_part_ready) {
+            // protect the following from being called concurrently with opal_progress
+            OPAL_THREAD_LOCK(&ompi_part_persist.lock);
+
+            if(true == req->initialized) {
+                err = req->persist_reqs[internal_part_ready]->req_start(1, (&(req->persist_reqs[internal_part_ready])));
+                req->flags[internal_part_ready] = 0;     /* Mark partition as ready for testing */
+
+            } else {
+                req->flags[internal_part_ready] = -2;    /* Mark partition as queued */
+            }
+
+            OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
         }
     }
-    else
-    {
-        for(i = min_part; i <= max_part && OMPI_SUCCESS == err; i++) {
-            req->flags[i] = -2; /* Mark partition as queued */
-        }
-    }
+    
     return err;
 }
 
@@ -567,19 +673,23 @@ mca_part_persist_parrived(size_t min_part,
     int _flag = false;
     mca_part_persist_request_t *req = (mca_part_persist_request_t *)request;
 
-    if(0 != req->flags) {
+    if (req->initialized) { 
+        // handle case where Precv_init was called with different partitioning
+        if(req->req_parts != req->real_parts) {
+            // converts to item indices
+            min_part *= req->req_count;
+            max_part *= req->req_count;
+            // point to last entry of max_part
+            max_part += req->req_count - 1;
+
+            // convert to internal parts
+            min_part /= req->real_count;
+            max_part /= req->real_count;
+        }
+
         _flag = 1;
-        if(req->req_parts == req->real_parts) {
-            for(i = min_part; i <= max_part; i++) {
-                _flag = _flag && req->flags[i];            
-            }
-        } else {
-            float convert = ((float)req->real_parts) / ((float)req->req_parts);
-            size_t _min = floor(convert * min_part);
-            size_t _max = ceil(convert * max_part);
-            for(i = _min; i <= _max; i++) {
-                _flag = _flag && req->flags[i];
-            }
+        for(i = min_part; _flag && i <= max_part; i++) {
+            _flag = _flag && req->flags[i];
         }
     }
 
