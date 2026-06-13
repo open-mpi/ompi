@@ -62,7 +62,8 @@ static int init_context_freelists(mca_btl_ofi_context_t *context)
  * USE WITH NORMAL ENDPOINT ONLY */
 mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
                                                         struct fid_domain *domain,
-                                                        struct fid_ep *ep, struct fid_av *av)
+                                                        struct fid_ep *ep, struct fid_av *av,
+                                                        struct mca_btl_ofi_module_t *btl)
 {
     int rc;
     uint32_t cq_flags = FI_TRANSMIT | FI_SEND | FI_RECV;
@@ -115,6 +116,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
     context->tx_ctx = ep;
     context->rx_ctx = ep;
     context->context_id = 0;
+    context->btl = btl;
     my_context = NULL;
 
     return context;
@@ -132,6 +134,7 @@ single_fail:
 mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
                                                           struct fid_domain *domain,
                                                           struct fid_ep *sep, struct fid_av *av,
+                                                          struct mca_btl_ofi_module_t* btl,
                                                           size_t num_contexts)
 {
     BTL_VERBOSE(("creating %zu contexts", num_contexts));
@@ -234,6 +237,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
 
         /* assign the id */
         contexts[i].context_id = i;
+        contexts[i].btl = btl;
     }
 
     return contexts;
@@ -387,34 +391,60 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
             BTL_ERROR(("%s:%d: Error returned from fi_cq_readerr: %s(%d)", __FILE__, __LINE__,
                        fi_strerror(-ret), ret));
             MCA_BTL_OFI_ABORT();
-        } else if(NULL != cqerr.op_context){
+        } else {
             switch(cqerr.err) {
             case FI_EREMOTEIO:
             case FI_EHOSTUNREACH:
             case FI_ECONNABORTED:
             case FI_ECONNRESET:
+            case FI_ENOTCONN:
 #ifdef FI_EHOSTDOWN
             // FI_EHOSTDOWN added in libfabric 1.6.0
             case FI_EHOSTDOWN:
 #endif
             case FI_EIO: {
-                mca_btl_ofi_completion_context_t *c_ctx =
-                    (mca_btl_ofi_completion_context_t*) cqerr.op_context;
-                mca_btl_ofi_base_completion_t *comp =
-                    (mca_btl_ofi_base_completion_t*) c_ctx->comp;
-                mca_btl_ofi_module_t *ofi_btl =
-                    (mca_btl_ofi_module_t*) comp->btl;
-                if(ofi_btl->ofi_error_cb){
-                    opal_proc_t *ep_proc = NULL;
-                    if(comp->endpoint){
-                        ep_proc = comp->endpoint->ep_proc;
+                if (context->btl->ofi_error_cb) {
+                    opal_proc_t* proc = NULL;
+                    if (NULL != cqerr.op_context) {
+                        mca_btl_ofi_completion_context_t *c_ctx =
+                            (mca_btl_ofi_completion_context_t*) cqerr.op_context;
+                        mca_btl_ofi_base_completion_t *comp =
+                            (mca_btl_ofi_base_completion_t*) c_ctx->comp;
+                        if (NULL != comp->endpoint) {
+                            proc = comp->endpoint->ep_proc;
+                        }
                     }
-                    ofi_btl->ofi_error_cb(comp->btl, 0, ep_proc,
-                        "IO error reported by libfabric");
+#if (FI_MAJOR_VERSION > 1) || ((FI_MAJOR_VERSION > 0) && (FI_MINOR_VERSION >= 20))
+                    // Starting with v1.20, cqerr provides an fi_addr_t
+                    if (NULL == proc) {
+                        mca_btl_ofi_endpoint_t *ep = NULL;
+                        OPAL_LIST_FOREACH(ep, &context->btl->endpoints, mca_btl_ofi_endpoint_t){
+                            if (ep->peer_addr == cqerr.src_addr) {
+                                proc = ep->ep_proc;
+                                break;
+                            }
+                        }
+                    }
+#endif
+                    const char* base_str = "IO error reported by libfabric: ";
+                    const char* fi_str = fi_strerror(cqerr.err);
+                    size_t base_len = strlen(base_str);
+                    size_t fi_len = strlen(fi_str);
+                    char* err_str = malloc(base_len + fi_len + 1);
+                    for(size_t i = 0; i < base_len; i++) err_str[i] = base_str[i];
+                    for(size_t i = 0; i < fi_len; i++) err_str[i+base_len] = fi_str[i];
+                    err_str[base_len+fi_len] = '\0';
+                    if (cqerr.op_context || proc) {
+                        // Report any errors linked to an operation or known proc
+                        context->btl->ofi_error_cb(&context->btl->super, 0, proc, err_str);
+                    }
+                    free(err_str);
                 }
 
-                ++events;
-                complete_op_context(context, cqerr.op_context, OPAL_ERR_UNREACH);
+                if (NULL != cqerr.op_context) {
+                    ++events;
+                    complete_op_context(context, cqerr.op_context, OPAL_ERR_UNREACH);
+                }
                 break;
             }
             default:
