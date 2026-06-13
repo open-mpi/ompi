@@ -83,9 +83,11 @@ struct ompi_datatype_t {
     void*              args;                     /**< Data description for the user */
     opal_atomic_intptr_t packed_description;     /**< Packed description of the datatype */
     uint64_t           pml_data;                 /**< PML-specific information */
-    /* --- cacheline 6 boundary (384 bytes) --- */
-    char               name[MPI_MAX_OBJECT_NAME];/**< Externally visible name */
-    /* --- cacheline 7 boundary (448 bytes) --- */
+    /* Sized to the MPI Forum ABI maximum (OMPI_MPI_MAX_OBJECT_NAME_ABI, from
+     * configure) so the standard-ABI entry points can store full-length names.
+     * The traditional OMPI entry points still limit themselves to
+     * OPAL_MAX_OBJECT_NAME (== MPI_MAX_OBJECT_NAME). */
+    char               name[OMPI_MPI_MAX_OBJECT_NAME_ABI];/**< Externally visible name */
 
     /* size: 448, cachelines: 7, members: 7 */
 };

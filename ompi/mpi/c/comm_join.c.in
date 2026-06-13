@@ -159,7 +159,7 @@ PROTOTYPE ERROR_CLASS comm_join(INT fd, COMM_OUT intercomm)
     ompi_process_name_t rname, tmp_name;
 
     ompi_communicator_t *newcomp;
-    char port_name[MPI_MAX_PORT_NAME];
+    char port_name[@MPI_MAX_PORT_NAME@];
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

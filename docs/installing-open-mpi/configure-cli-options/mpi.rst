@@ -65,6 +65,18 @@ MPI API behaviors that can be used with ``configure``:
   Fortran bindings modulefiles.  By default, Open MPI will install
   Fortran modulefiles into ``$libdir``.
 
+* ``--enable-standard-abi``:
+  Enable building the MPI standard ABI support library.  This option is
+  enabled by default.
+
+  When enabled, Open MPI builds and installs ``libmpi_abi`` and the
+  standard ABI C compiler wrapper ``mpicc_abi``.  The wrapper uses the
+  standard ABI ``mpi.h`` installed under
+  ``$prefix/include/standard_abi`` and links applications against
+  ``libmpi_abi``.
+
+  Use ``--disable-standard-abi`` to disable this support.
+
 * ``--enable-mpi-ext[=LIST]``:
   Enable Open MPI's non-portable API extensions.  ``LIST`` is a
   comma-delimited list of extensions.  If no ``LIST`` is specified, all

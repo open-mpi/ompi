@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define datatype attribute callbacks that validate the standard ABI
+ *   datatype and keyval values passed into user callbacks.  The body
+ *   drives duplicate, explicit-delete, and datatype-free paths.
+ */
+struct type_attr_state {
+    MPI_Datatype source;
+    MPI_Datatype duplicate;
+    int keyval;
+    int original_attr;
+    int copied_attr;
+    int copy_count;
+    int original_delete_count;
+    int copied_delete_count;
+    int failure_code;
+};
+
+static struct type_attr_state type_state;
+
+static int type_attr_copy(MPI_Datatype oldtype, int keyval,
+                          void *extra_state, void *attribute_val_in,
+                          void *attribute_val_out, int *flag)
+{
+    struct type_attr_state *state = (struct type_attr_state *) extra_state;
+    if (&type_state != state) {
+        type_state.failure_code = 101;
+    } else if (oldtype != state->source) {
+        state->failure_code = 102;
+    } else if (keyval != state->keyval) {
+        state->failure_code = 103;
+    } else if (&state->original_attr != attribute_val_in) {
+        state->failure_code = 104;
+    } else {
+        *((void **) attribute_val_out) = &state->copied_attr;
+        *flag = 1;
+        ++state->copy_count;
+    }
+    return MPI_SUCCESS;
+}
+
+static int type_attr_delete(MPI_Datatype datatype, int keyval,
+                            void *attribute_val, void *extra_state)
+{
+    struct type_attr_state *state = (struct type_attr_state *) extra_state;
+    if (&type_state != state) {
+        type_state.failure_code = 111;
+    } else if (keyval != state->keyval) {
+        state->failure_code = 112;
+    } else if (datatype == state->source &&
+               &state->original_attr == attribute_val) {
+        ++state->original_delete_count;
+    } else if (datatype == state->duplicate &&
+               &state->copied_attr == attribute_val) {
+        ++state->copied_delete_count;
+    } else {
+        state->failure_code = 113;
+    }
+    return MPI_SUCCESS;
+}

@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -68,6 +68,13 @@ typedef void (ompi_errhandler_fortran_handler_fn_t)(MPI_Fint *,
  */
 typedef void (ompi_errhandler_generic_handler_fn_t)(void *, int *, ...);
 
+
+/**
+ * Typedef for converter function (internal MPI ABI support)
+ */
+
+typedef void (ompi_errhandler_converter_fn_t)(void *object, int object_type, int *err_code);
+
 /**
  * Enum to denote what language the error handler was created from
  */
@@ -108,12 +115,17 @@ struct ompi_errhandler_t {
     /* Function pointers.  Note that we *have* to have all 4 types
        (vs., for example, a union) because the predefined errhandlers
        can be invoked on any MPI object type, so we need callbacks for
-       all of three. */
+       all four. */
     MPI_Comm_errhandler_function *eh_comm_fn;
     ompi_file_errhandler_function *eh_file_fn;
     MPI_Win_errhandler_function *eh_win_fn;
     MPI_Session_errhandler_function *eh_instance_fn;
     ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
+    /*
+     * use a single function for converting OMPI internal handles to ABI
+     * compliant ones.  Only used for user defined errhandlers.
+     */
+    ompi_errhandler_converter_fn_t *eh_converter_fn;
 
     /* index in Fortran <-> C translation array */
     int eh_f_to_c_index;
@@ -184,6 +196,7 @@ OMPI_DECLSPEC extern ompi_errhandler_t* ompi_initial_error_handler_eh;
  * is raised before MPI_INIT or after MPI_FINALIZE.
  */
 OMPI_DECLSPEC extern void (*ompi_initial_error_handler)(struct ompi_communicator_t **comm, int *error_code, ...);
+
 
 /**
  * Forward declaration so that we don't have to include
@@ -381,6 +394,7 @@ extern opal_atomic_int32_t ompi_instance_count;
    * @param[in]  object_type    Enum of the type of MPI object
    * @param[in]  func           Function pointer of the error handler
    * @param[in]  language       Calling language
+   * @param[in]  converter      Optional converter function (used internally for MPI ABI)
    *
    * @returns errhandler Pointer to the ompi_errorhandler_t that will be
    *   created and returned
@@ -400,7 +414,8 @@ extern opal_atomic_int32_t ompi_instance_count;
    */
   OMPI_DECLSPEC ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
                                             ompi_errhandler_generic_handler_fn_t *func,
-                                            ompi_errhandler_lang_t language);
+                                            ompi_errhandler_lang_t language,
+                                            ompi_errhandler_converter_fn_t *converter);
 
   OMPI_DECLSPEC void ompi_errhandler_free (ompi_errhandler_t *errhandler);
 

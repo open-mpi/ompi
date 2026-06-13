@@ -28,7 +28,7 @@
 #include "ompi/mca/topo/base/base.h"
 
 PROTOTYPE ERROR_CLASS dist_graph_create(COMM comm_old, INT n, INT_ARRAY sources,
-                                        INT_ARRAY degrees, INT_ARRAY destinations, INT_ARRAY weights,
+                                        INT_ARRAY degrees, INT_ARRAY destinations, WEIGHTS weights,
                                         INFO info, INT reorder, COMM_OUT newcomm)
 {
     mca_topo_base_module_t* topo;

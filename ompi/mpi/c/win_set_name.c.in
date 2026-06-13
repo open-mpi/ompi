@@ -25,12 +25,14 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
+#include <string.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
+#include "opal/util/string_copy.h"
 
 PROTOTYPE ERROR_CLASS win_set_name(WIN win, STRING win_name)
 {
@@ -46,6 +48,14 @@ PROTOTYPE ERROR_CLASS win_set_name(WIN win, STRING win_name)
         }
     }
 
-    ret = ompi_win_set_name(win, win_name);
+    /* Limit the stored name to this entry point's MPI_MAX_OBJECT_NAME by first
+     * copying into a buffer of that size: @MPI_MAX_OBJECT_NAME@ expands to
+     * MPI_MAX_OBJECT_NAME (== OPAL_MAX_OBJECT_NAME) for the OMPI binding and to
+     * the MPI Forum ABI maximum for the standard-ABI binding.
+     * ompi_win_set_name() then stores it into the internal buffer (sized to the
+     * ABI maximum) without re-truncating. */
+    char truncated_name[@MPI_MAX_OBJECT_NAME@];
+    opal_string_copy(truncated_name, win_name, sizeof(truncated_name));
+    ret = ompi_win_set_name(win, truncated_name);
     OMPI_ERRHANDLER_RETURN(ret, win, ret, FUNC_NAME);
 }

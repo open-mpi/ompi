@@ -1,0 +1,148 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Create representative dynamic MPI objects and verify each dynamic
+ *   handle round-trips through the standard ABI converter helpers.
+ */
+#define ABI_CHECK_DYNAMIC_HANDLE(kind, type, value, code) do {              \
+    int abi_value = MPI_ ## kind ## _toint(value);                      \
+    type roundtrip = MPI_ ## kind ## _fromint(abi_value);               \
+    if (roundtrip != (value)) {                                         \
+        return (code);                                                  \
+    }                                                                   \
+    if (abi_value != PMPI_ ## kind ## _toint(value)) {                  \
+        return (code) + 1;                                              \
+    }                                                                   \
+    if (value != PMPI_ ## kind ## _fromint(abi_value)) {                \
+        return (code) + 2;                                              \
+    }                                                                   \
+} while (0)
+
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+MPI_Comm comm = MPI_COMM_NULL;
+ret = MPI_Comm_dup(MPI_COMM_WORLD, &comm);
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+ABI_CHECK_DYNAMIC_HANDLE(Comm, MPI_Comm, comm, 20);
+ret = MPI_Comm_free(&comm);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != comm) {
+    return 30;
+}
+
+MPI_Group group = MPI_GROUP_NULL;
+ret = MPI_Comm_group(MPI_COMM_WORLD, &group);
+if (MPI_SUCCESS != ret) {
+    return 40;
+}
+ABI_CHECK_DYNAMIC_HANDLE(Group, MPI_Group, group, 50);
+ret = MPI_Group_free(&group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != group) {
+    return 60;
+}
+
+MPI_Info info = MPI_INFO_NULL;
+ret = MPI_Info_create(&info);
+if (MPI_SUCCESS != ret) {
+    return 70;
+}
+ABI_CHECK_DYNAMIC_HANDLE(Info, MPI_Info, info, 80);
+ret = MPI_Info_free(&info);
+if (MPI_SUCCESS != ret || MPI_INFO_NULL != info) {
+    return 90;
+}
+
+MPI_Datatype datatype = MPI_DATATYPE_NULL;
+ret = MPI_Type_contiguous(2, MPI_INT, &datatype);
+if (MPI_SUCCESS != ret) {
+    return 100;
+}
+ret = MPI_Type_commit(&datatype);
+if (MPI_SUCCESS != ret) {
+    return 110;
+}
+ABI_CHECK_DYNAMIC_HANDLE(Type, MPI_Datatype, datatype, 120);
+ret = MPI_Type_free(&datatype);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != datatype) {
+    return 130;
+}
+
+int win_storage = 0;
+MPI_Win win = MPI_WIN_NULL;
+ret = MPI_Win_create(&win_storage, sizeof(win_storage), sizeof(int),
+                     MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+if (MPI_SUCCESS != ret) {
+    return 140;
+}
+ABI_CHECK_DYNAMIC_HANDLE(Win, MPI_Win, win, 150);
+ret = MPI_Win_free(&win);
+if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
+    return 160;
+}
+
+MPI_File file = MPI_FILE_NULL;
+ret = MPI_File_open(MPI_COMM_WORLD, "ompi_abi_converter_file.tmp",
+                    MPI_MODE_CREATE | MPI_MODE_RDWR |
+                    MPI_MODE_DELETE_ON_CLOSE,
+                    MPI_INFO_NULL, &file);
+if (MPI_SUCCESS != ret) {
+    return 170;
+}
+ABI_CHECK_DYNAMIC_HANDLE(File, MPI_File, file, 180);
+ret = MPI_File_close(&file);
+if (MPI_SUCCESS != ret || MPI_FILE_NULL != file) {
+    return 190;
+}
+
+MPI_Request request = MPI_REQUEST_NULL;
+ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret) {
+    return 200;
+}
+ABI_CHECK_DYNAMIC_HANDLE(Request, MPI_Request, request, 210);
+ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+    return 220;
+}
+
+int send_value = 17;
+int recv_value = -1;
+MPI_Status status;
+MPI_Message message = MPI_MESSAGE_NULL;
+MPI_Request send_request = MPI_REQUEST_NULL;
+ret = MPI_Isend(&send_value, 1, MPI_INT, 0, 77,
+                MPI_COMM_WORLD, &send_request);
+if (MPI_SUCCESS != ret) {
+    return 230;
+}
+ret = MPI_Mprobe(0, 77, MPI_COMM_WORLD, &message, &status);
+if (MPI_SUCCESS != ret) {
+    return 240;
+}
+ABI_CHECK_DYNAMIC_HANDLE(Message, MPI_Message, message, 250);
+ret = MPI_Mrecv(&recv_value, 1, MPI_INT, &message, &status);
+if (MPI_SUCCESS != ret || 17 != recv_value ||
+    MPI_MESSAGE_NULL != message) {
+    return 241;
+}
+ret = MPI_Wait(&send_request, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != send_request) {
+    return 242;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 243;
+}

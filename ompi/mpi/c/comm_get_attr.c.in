@@ -30,7 +30,8 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, INT comm_keyval,
+
+PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, ATTR_KEY comm_keyval,
                                     BUFFER_OUT attribute_val, INT_OUT flag)
 {
     int ret;
@@ -57,5 +58,25 @@ PROTOTYPE ERROR_CLASS comm_get_attr(COMM comm, INT comm_keyval,
 
     ret = ompi_attr_get_c(comm->c_keyhash, comm_keyval,
                           (void**)attribute_val, flag);
+#if OMPI_ABI_SRC
+    /* 
+     * special cases for attributes attached to MPI_COMM_WORLD
+     * that are set to MPI_PROC_NULL, MPI_ANY_SOURCE, etc.
+     * where the value stored internally in ompi use the ompi
+     * values and we need to return ABI values to the app.
+     */
+    if (MPI_COMM_WORLD == comm) {
+        if (MPI_HOST == comm_keyval) {
+            *(int **)attribute_val = &ompi_abi_mpi_proc_null_val;
+        } else if (MPI_IO == comm_keyval) {
+            *(int **)attribute_val = &ompi_abi_mpi_any_source_val;
+        } else if (MPI_LASTUSEDCODE == comm_keyval) {
+          OPAL_THREAD_LOCK(&comm->c_lock);
+          ompi_abi_mpi_lastusedcode = ompi_convert_intern_error_abi_error(*(int *)*(void**)attribute_val);
+          OPAL_THREAD_UNLOCK(&comm->c_lock);
+          *(int **)attribute_val = &ompi_abi_mpi_lastusedcode;
+        }
+    }
+#endif
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);
 }

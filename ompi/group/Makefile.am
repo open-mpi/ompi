@@ -25,7 +25,7 @@ headers += \
         group/group.h \
 	group/group_dbg.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         group/group.c \
         group/group_init.c \
         group/group_set_rank.c \

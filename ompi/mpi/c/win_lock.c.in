@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -32,7 +32,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 
-PROTOTYPE ERROR_CLASS win_lock(INT lock_type, INT rank, INT mpi_assert, WIN win)
+PROTOTYPE ERROR_CLASS win_lock(WIN_LOCK lock_type, INT rank, RMA_MODE_BITS mpi_assert, WIN win)
 {
     int rc;
 

@@ -17,7 +17,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -37,7 +37,7 @@
 #include "ompi/mca/io/base/io_base_request.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS file_iwrite_all(FILE fh, BUFFER buf, COUNT count,
+PROTOTYPE ERROR_CLASS file_iwrite_all(FILE fh, BUFFER_CONST buf, COUNT count,
                                       DATATYPE datatype, REQUEST_INOUT request)
 {
     int rc;

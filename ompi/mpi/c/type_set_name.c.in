@@ -52,7 +52,15 @@ PROTOTYPE ERROR_CLASS type_set_name (DATATYPE type, STRING type_name)
         }
     }
 
-    memset(type->name, 0, MPI_MAX_OBJECT_NAME);
-    opal_string_copy( type->name, type_name, MPI_MAX_OBJECT_NAME);
+    /*
+     * Bound the write by @MPI_MAX_OBJECT_NAME@: the OMPI binding expands this
+     * token to MPI_MAX_OBJECT_NAME (== OPAL_MAX_OBJECT_NAME), and the
+     * standard-ABI binding expands it to the MPI Forum ABI maximum.  type->name
+     * is sized to the ABI maximum (OMPI_MPI_MAX_OBJECT_NAME_ABI), so both fit;
+     * an over-long name is truncated safely (via opal_string_copy) as the MPI
+     * standard requires.
+     */
+    memset(type->name, 0, @MPI_MAX_OBJECT_NAME@);
+    opal_string_copy(type->name, type_name, @MPI_MAX_OBJECT_NAME@);
     return MPI_SUCCESS;
 }
