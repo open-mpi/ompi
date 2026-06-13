@@ -326,6 +326,7 @@ test/simple/attach
 test/simple/bad_exit
 test/simple/bcast_loop
 test/simple/binding
+test/simple/comm_abort
 test/simple/concurrent_spawn
 test/simple/connect
 test/simple/crisscross
@@ -336,6 +337,7 @@ test/simple/hello_output
 test/simple/hello_show_help
 test/simple/hello
 test/simple/hello++
+test/simple/initial_errh
 test/simple/intercomm1
 test/simple/interlib
 test/simple/loop_child
