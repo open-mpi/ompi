@@ -317,11 +317,18 @@ static enum ubcl_endpoint_type_t mca_pml_ubcl_get_higher_transport(
 void mca_pml_ubcl_endpoint_retain(ompi_proc_t *proc)
 {
     mca_common_ubcl_endpoint_t *endpoint = NULL;
-    assert(NULL != proc);
+    if (NULL == proc) {
+        OPAL_OUTPUT_VERBOSE((90, mca_pml_ubcl_component.output,
+                            "pml_ubcl_endpoint release : proc is NULL"));
+        return OMPI_SUCCESS;
+    }
 
     endpoint = (proc)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
-    assert(NULL != endpoint);
-
+    if (NULL == endpoint) {
+        OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output,
+                            "pml_ubcl_endpoint release : endpoint is NULL"));
+        return OMPI_SUCCESS;
+    }
     opal_atomic_fetch_add_32(&endpoint->refcount, 1);
     mca_pml_ubcl_component.nprocs++;
     OBJ_RETAIN(proc);
@@ -423,10 +430,18 @@ int mca_pml_ubcl_endpoint_release(ompi_proc_t *proc)
     ubcl_error_t ret = UBCL_SUCCESS;
     int ompi_error = OMPI_SUCCESS;
     mca_common_ubcl_endpoint_t *endpoint = NULL;
-    assert(NULL != proc);
+
+    if (NULL == proc) {
+        OPAL_OUTPUT_VERBOSE((90, mca_pml_ubcl_component.output, "pml_ubcl_endpoint release : proc is NULL"));
+        return OMPI_SUCCESS;
+    }
 
     endpoint = (proc)->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
-    assert(NULL != endpoint);
+
+    if (NULL == endpoint) {
+        OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output, "pml_ubcl_endpoint release : endpoint is NULL"));
+        return OMPI_SUCCESS;
+    }
 
     endpoint_refcount = opal_atomic_sub_fetch_32(&endpoint->refcount, 1);
     if (0 == endpoint_refcount) {
