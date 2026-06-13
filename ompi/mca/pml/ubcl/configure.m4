@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Bull SAS.  All rights reserved.
+# Copyright (c) 2024-2026 Bull SAS.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,6 +18,13 @@ AC_DEFUN([MCA_ompi_pml_ubcl_CONFIG], [
     OMPI_CHECK_UBCL([pml_ubcl],
                    [pml_ubcl_happy="yes"],
                    [pml_ubcl_happy="no"])
+
+    # See ompi/mca/common/ubcl/configure.m4 comment explaining why UBCL linking
+    # flags are removed only in dynamic mode
+    AS_IF([test "$compile_mode" = "dso"],
+          [pml_ubcl_LDFLAGS=""],
+          # Static mode should work, but Bull provides support only for dynamic components
+          [AC_MSG_WARN([Only DSO mode of pml/ubcl is tested (see --enable-mca-dso)])])
 
     AC_REQUIRE([MCA_ompi_common_ubcl_CONFIG])
     AC_REQUIRE([MCA_opal_common_ubcl_CONFIG])
