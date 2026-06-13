@@ -29,6 +29,7 @@ ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, const int *scounts,
             ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
         }
 
+#if UCC_API_VERSION < UCC_VERSION(1, 8)
         if ((COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ||
             (COLL_UCC_DT_UNSUPPORTED == ucc_rdt)) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
@@ -36,13 +37,16 @@ ucc_status_t mca_coll_ucc_scatterv_init(const void *sbuf, const int *scounts,
                         sdtype->super.name : rdtype->super.name);
             goto fallback;
         }
+#endif
     } else {
         ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+#if UCC_API_VERSION < UCC_VERSION(1, 8)
         if (COLL_UCC_DT_UNSUPPORTED == ucc_rdt) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
                         rdtype->super.name);
             goto fallback;
         }
+#endif
     }
 
     ucc_coll_args_t coll = {
