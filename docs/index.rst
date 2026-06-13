@@ -42,7 +42,8 @@ Documentation for Open MPI can be found in the following locations:
 
        For example:
 
-       * `v4.1.x README file <https://github.com/open-mpi/ompi/blob/v4.1.x/README>`_
+       * `v4.1.x README file <https://github.com/open-mpi/ompi/blob/v4.1.x/README>`_,
+         `v4.1.x FAQ <https://www.open-mpi.org/faq/>`_
        * `v4.0.x README file <https://github.com/open-mpi/ompi/blob/v4.0.x/README>`_
 
 Release announcements
