@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -249,7 +250,7 @@ int ompi_request_default_test_all(
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
             OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
-            if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
+            if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
                 rc = MPI_ERR_IN_STATUS;
 #if OPAL_ENABLE_FT_MPI
                 if (MPI_ERR_PROC_FAILED == request->req_status.MPI_ERROR
