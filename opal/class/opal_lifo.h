@@ -163,7 +163,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
         if (item == &lifo->opal_lifo_ghost) {
             return NULL;
         }
-
+        // synchronize with the wmb in push
+        opal_atomic_rmb();
         if (opal_update_counted_pointer(&lifo->opal_lifo_head, &old_head,
                                         (opal_list_item_t *) item->opal_list_next)) {
             opal_atomic_wmb();
@@ -222,6 +223,12 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
         if (&lifo->opal_lifo_ghost == item) {
             return NULL;
         }
+        /**
+         * Read memory barrier to synchronize with the wmb in push.
+         * Some architectures (e.g., risc-v) do not guarantee address dependency ordering,
+         * and the compiler may reorder operations here.
+         */
+        opal_atomic_rmb();
 
         next = (opal_list_item_t *) item->opal_list_next;
         opal_atomic_sc_ptr(&lifo->opal_lifo_head.data.item, next, ret);
@@ -248,7 +255,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
             continue;
         }
 
-        opal_atomic_wmb();
+        // read and write memory barrier to synchronize with the wmb in push
+        opal_atomic_mb();
 
         head = item;
         /* try to swap out the head pointer */
