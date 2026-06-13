@@ -42,10 +42,24 @@
  * is that even with an always_inline attribute the compiler may still emit instructions to store
  * then load the arguments to/from the stack. This sequence may cause the ll reservation to be
  * cancelled. */
-#define opal_atomic_ll_32(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int32_t *_addr = (addr);                                        \
-        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+
+/* isync is placed immediately after lwarx/ldarx rather than after the paired stwcx./stdcx.
+ * (the canonical Linux PPC_ACQUIRE_BARRIER placement).  In OPAL the LL and SC are separate
+ * macro invocations separated by arbitrary C code inside a caller-written do-while retry loop.
+ * The acquire barrier must therefore live in the LL macro so that the C loads that occur
+ * between the LL and the SC (e.g. reading item->opal_list_next in the lifo pop) are ordered
+ * after the LL's observed value.  Placing isync in the SC macro instead would fire it on
+ * every failed attempt and would still not order those intermediate loads.
+ * isync does not cancel the exclusive reservation set by lwarx/ldarx on current Power
+ * implementations; the reservation is dropped only by intervening stores to the same
+ * address or by the SC instruction itself.
+ * The SC macros use lwsync before stwcx./stdcx. to provide release semantics, matching
+ * the store-release exclusive (stlxr) used by the ARM64 backend. */
+#define opal_atomic_ll_32(addr, ret)                                                        \
+    do {                                                                                    \
+        opal_atomic_int32_t *_addr = (addr);                                                \
+        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t"                                     \
+                             "isync               \n\t" : "=&r"(ret) : "r"(_addr) : "memory"); \
     } while (0)
 
 #define opal_atomic_sc_32(addr, value, ret)                         \
@@ -53,7 +67,8 @@
         opal_atomic_int32_t *_addr = (addr);                        \
         int32_t _ret, _foo, _newval = (int32_t) value;              \
                                                                     \
-        __asm__ __volatile__("   stwcx.  %4, 0, %3  \n\t"           \
+        __asm__ __volatile__("   lwsync              \n\t"           \
+                             "   stwcx.  %4, 0, %3  \n\t"           \
                              "   li      %0,0       \n\t"           \
                              "   bne-    1f         \n\t"           \
                              "   ori     %0,%0,1    \n\t"           \
@@ -62,12 +77,13 @@
                              : "r"(_addr), "r"(_newval)             \
                              : "cc", "memory");                     \
         ret = _ret;                                                 \
-   } while (0)
+    } while (0)
 
-#define opal_atomic_ll_64(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int64_t *_addr = (addr);                                        \
-        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+#define opal_atomic_ll_64(addr, ret)                                                        \
+    do {                                                                                    \
+        opal_atomic_int64_t *_addr = (addr);                                                \
+        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t"                                     \
+                             "isync               \n\t" : "=&r"(ret) : "r"(_addr) : "memory"); \
     } while (0)
 
 #define opal_atomic_sc_64(addr, value, ret)                               \
@@ -76,7 +92,8 @@
         int64_t _newval = (int64_t) value;                                \
         int32_t _ret;                                                     \
                                                                           \
-        __asm__ __volatile__("   stdcx.  %2, 0, %1  \n\t"                 \
+        __asm__ __volatile__("   lwsync              \n\t"                \
+                             "   stdcx.  %2, 0, %1  \n\t"                 \
                              "   li      %0,0       \n\t"                 \
                              "   bne-    1f         \n\t"                 \
                              "   ori     %0,%0,1    \n\t"                 \
