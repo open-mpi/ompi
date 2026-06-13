@@ -147,7 +147,8 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
         }
     } while (1);
 
-    opal_atomic_wmb();
+    // synchronize with the wmb in push
+    opal_atomic_rmb();
 
     /* check for tail and head consistency */
     if (ghost == next) {
