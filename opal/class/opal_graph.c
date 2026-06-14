@@ -14,6 +14,7 @@
  * Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2026 Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -179,6 +180,8 @@ static void delete_all_edges_conceded_to_vertex(opal_graph_t *graph, opal_graph_
                 opal_list_remove_item(edge->in_adj_list->edges, (opal_list_item_t *) edge);
                 /* distract this edge */
                 OBJ_RELEASE(edge);
+                /* keep the graph's edge count in sync */
+                graph->number_of_edges--;
             }
         }
     }
@@ -298,8 +301,11 @@ void opal_graph_remove_vertex(opal_graph_t *graph, opal_graph_vertex_t *vertex)
     adj_list = vertex->in_adj_list;
     /**
      * remove the adjscency list of this vertex from the graph and
-     * destruct it.
+     * destruct it.  The outgoing edges of this vertex are released
+     * along with the adjacency list, so account for them in the graph's
+     * edge count.
      */
+    graph->number_of_edges -= opal_list_get_size(adj_list->edges);
     opal_list_remove_item(graph->adjacency_list, (opal_list_item_t *) adj_list);
     OBJ_RELEASE(adj_list);
     /**
