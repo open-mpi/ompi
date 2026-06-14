@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2023-2024 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -57,8 +57,18 @@ RST_SOURCE_FILES   = \
         $(srcdir)/man-openshmem/*.rst \
         $(srcdir)/man-openshmem/man*/*.rst
 
+# Files copied verbatim into the root of the rendered HTML via Sphinx's
+# html_extra_path (see conf.py) -- currently just the static llms.txt for
+# this release series.  Sphinx resolves html_extra_path relative to the
+# directory containing conf.py, so for VPATH builds these files must be
+# copied from $(srcdir) into the build tree alongside conf.py (see the
+# copy loops below), exactly like the RST sources.
+EXTRA_HTML_FILES   = \
+        $(srcdir)/llms.txt
+
 EXTRA_DIST         = \
         requirements.txt \
+        $(EXTRA_HTML_FILES) \
         no-prrte-content.rst.txt \
         html \
         man \
@@ -977,7 +987,7 @@ endif
 $(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
 $(ALL_MAN_BUILT): $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
-$(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
+$(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG) $(EXTRA_HTML_FILES)
 
 # Render the RST source into both 1) full HTML docs and 2) nroff man
 # pages.
@@ -1018,7 +1028,7 @@ $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
 $(ALL_MAN_BUILT):
 	$(OMPI_V_SPHINX_COPYRST) if test "$(srcdir)" != "$(builddir)"; then \
 	    len=`echo "$(srcdir)/" | wc -c`; \
-	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
+	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(EXTRA_HTML_FILES) $(SPHINX_CONFIG); do \
 	        dir=`dirname $$file | cut -c$$len-`; \
 	        if test -z "$$dir"; then \
 	            dir=.; \
@@ -1056,7 +1066,7 @@ clean-local:
 	rm -rf prrte-rst-content schizo-ompi-rst-content
 	if test "$(srcdir)" != "$(builddir)"; then \
 	    len=`echo "$(srcdir)/" | wc -c`; \
-	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
+	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(EXTRA_HTML_FILES) $(SPHINX_CONFIG); do \
 	        dir=`dirname $$file | cut -c$$len-`; \
 	        if test -z "$$dir"; then \
 	            rm -rf `basename $$file`; \
