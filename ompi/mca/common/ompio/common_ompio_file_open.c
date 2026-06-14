@@ -17,6 +17,7 @@
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -40,6 +41,8 @@
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
 
+#include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <math.h>
 #include "common_ompio.h"
@@ -50,6 +53,238 @@
 
 static mca_common_ompio_generate_current_file_view_fn_t generate_current_file_view_fn;
 static mca_common_ompio_get_mca_parameter_value_fn_t get_mca_parameter_value_fn;
+
+/*
+ * The info subscriber callback both decides whether a key is public in
+ * MPI_File_get_info and updates the internal field that older OMPIO code
+ * reads.  Keeping that side effect here prevents a second parser from
+ * drifting away from the value returned to the application.
+ */
+static const char *mca_common_ompio_cb_buffer_size_cb (opal_infosubscriber_t *object,
+                                                      const char *key,
+                                                      const char *value)
+{
+    ompi_file_t *file;
+    mca_common_ompio_data_t *data;
+    ompio_file_t *fh;
+    int bytes_per_agg;
+
+    if (NULL == object || NULL == value) {
+        return NULL;
+    }
+
+    file = (ompi_file_t *) object;
+    data = (mca_common_ompio_data_t *) file->f_io_selected_data;
+    if (NULL == data) {
+        return NULL;
+    }
+    fh = &data->ompio_fh;
+
+    if (1 == sscanf(value, "%d", &bytes_per_agg)) {
+        fh->f_bytes_per_agg = bytes_per_agg;
+    }
+
+    OMPIO_MCA_PRINT_INFO(fh, key, value, "");
+    return value;
+}
+
+static const char *mca_common_ompio_keep_info_value_cb (opal_infosubscriber_t *object,
+                                                        const char *key,
+                                                        const char *value)
+{
+    if (NULL == object || NULL == key || NULL == value) {
+        return NULL;
+    }
+
+    return value;
+}
+
+static const char *mca_common_ompio_cb_nodes_cb (opal_infosubscriber_t *object,
+                                                 const char *key,
+                                                 const char *value)
+{
+    if (NULL == object || NULL == key || NULL == value) {
+        return NULL;
+    }
+
+    /*
+     * The num_aggregators MCA default is -1, which means "let OMPIO
+     * choose automatically."  That sentinel is useful internally but is
+     * not a meaningful MPI_Info value to report back to users.
+     */
+    if (0 == strcmp(value, "-1")) {
+        return NULL;
+    }
+
+    return value;
+}
+
+int mca_common_ompio_info_subscribe (ompio_file_t *fh,
+                                    const char *key,
+                                    const char *value,
+                                    opal_key_interest_callback_t *callback)
+{
+    int ret;
+
+    if (NULL == fh) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /*
+     * Some nested OMPIO handles, such as private sharedfp handles, do not
+     * have a backing ompi_file_t.  They cannot participate in the public
+     * MPI_Info subscription mechanism, and treating registration as a
+     * no-op keeps those internal opens on the old behavior path.
+     */
+    if (NULL == fh->f_fh) {
+        return OMPI_SUCCESS;
+    }
+
+    if (NULL == key || NULL == callback) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    ret = opal_infosubscribe_subscribe(&fh->f_fh->super, key, value, callback);
+    if (OPAL_SUCCESS == ret) {
+        /*
+         * f_info is intentionally borrowed.  The actual storage belongs to
+         * ompi_file_t::super.s_info so MPI_File_get_info and
+         * MPI_File_set_info see the same object as the lower OMPIO code.
+         */
+        fh->f_info = fh->f_fh->super.s_info;
+    }
+
+    return ret;
+}
+
+int mca_common_ompio_info_apply (ompio_file_t *fh,
+                                opal_info_t *info)
+{
+    int ret;
+
+    if (NULL == fh || NULL == fh->f_fh) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    ret = opal_infosubscribe_change_info(&fh->f_fh->super, info);
+    if (OPAL_SUCCESS == ret) {
+        fh->f_info = fh->f_fh->super.s_info;
+    }
+
+    return ret;
+}
+
+int mca_common_ompio_info_set (ompio_file_t *fh,
+                              const char *key,
+                              const char *value)
+{
+    if (NULL == fh || NULL == key || NULL == value) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /*
+     * Internal nested OMPIO handles do not have a backing ompi_file_t and
+     * therefore cannot publish user-visible MPI_Info values.  Treat this
+     * like info_subscribe(): a successful no-op instead of writing into the
+     * borrowed info object passed to the internal open path.
+     */
+    if (NULL == fh->f_fh) {
+        return OMPI_SUCCESS;
+    }
+
+    if (NULL == fh->f_info) {
+        if (NULL == fh->f_fh->super.s_info) {
+            return OMPI_ERR_BAD_PARAM;
+        }
+        fh->f_info = fh->f_fh->super.s_info;
+    }
+
+    return opal_info_set(fh->f_info, key, value);
+}
+
+int mca_common_ompio_info_dup (ompio_file_t *fh,
+                              ompi_info_t **info_used)
+{
+    int ret;
+    opal_info_t *opal_info_used;
+
+    if (NULL == fh || NULL == info_used) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    *info_used = ompi_info_allocate();
+    if (NULL == *info_used) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (NULL == fh->f_info) {
+        if (NULL == fh->f_fh || NULL == fh->f_fh->super.s_info) {
+            ompi_info_free(info_used);
+            return OMPI_ERR_BAD_PARAM;
+        }
+        fh->f_info = fh->f_fh->super.s_info;
+    }
+
+    /*
+     * MPI requires MPI_File_get_info to return a new caller-owned
+     * MPI_Info handle.  Duplicate only public entries; rejected user hints
+     * remain internal in s_info so components can ignore them without
+     * exposing them as accepted hints.
+     */
+    opal_info_used = &(*info_used)->super;
+    ret = opal_info_dup_public(fh->f_info, &opal_info_used);
+    if (OPAL_SUCCESS != ret) {
+        ompi_info_free(info_used);
+        return ret;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int mca_common_ompio_info_register (ompio_file_t *fh)
+{
+    char default_value[32];
+    int num_aggregators;
+    int ret;
+    int size;
+
+    if (NULL == fh) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    if (NULL == fh->f_fh) {
+        return OMPI_SUCCESS;
+    }
+
+    size = snprintf(default_value, sizeof(default_value), "%d", fh->f_bytes_per_agg);
+    if (0 > size || sizeof(default_value) <= (size_t) size) {
+        return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+    }
+
+    ret = mca_common_ompio_info_subscribe (fh, "cb_buffer_size",
+                                           default_value,
+                                           mca_common_ompio_cb_buffer_size_cb);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    num_aggregators = OMPIO_MCA_GET(fh, num_aggregators);
+    size = snprintf(default_value, sizeof(default_value), "%d", num_aggregators);
+    if (0 > size || sizeof(default_value) <= (size_t) size) {
+        return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
+    }
+
+    ret = mca_common_ompio_info_subscribe (fh, "cb_nodes",
+                                           default_value,
+                                           mca_common_ompio_cb_nodes_cb);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    return mca_common_ompio_info_subscribe (fh, "collective_buffering",
+                                            "true",
+                                            mca_common_ompio_keep_info_value_cb);
+}
 
 int mca_common_ompio_file_open (ompi_communicator_t *comm,
                                 const char *filename,
@@ -100,6 +335,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     ompio_fh->f_fstype = NONE;
     ompio_fh->f_amode  = amode;
     ompio_fh->f_info   = info;
+    ompio_fh->f_info_phase = MCA_COMMON_OMPIO_INFO_PHASE_OPEN;
 
     /* set some function pointers required for fcoll, fbtls and sharedfp modules*/
     ompio_fh->f_generate_current_file_view = generate_current_file_view_fn;
@@ -123,6 +359,10 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
     }
     
     mca_common_ompio_set_file_defaults (ompio_fh);
+    ret = mca_common_ompio_info_register (ompio_fh);
+    if (OMPI_SUCCESS != ret) {
+        goto fn_fail;
+    }
 
     ompio_fh->f_split_coll_req    = NULL;
     ompio_fh->f_split_coll_in_use = false;
@@ -442,24 +682,16 @@ int mca_common_ompio_set_file_defaults (ompio_file_t *fh)
 {
 
    if (NULL != fh) {
-       opal_cstring_t *stripe_str;
        ompi_datatype_t *types[2];
        int blocklen[2] = {1, 1};
        ptrdiff_t d[2], base;
-       int i, flag;
+       int i;
        
        fh->f_flags         = 0;
        fh->f_perm          = OMPIO_PERM_NULL;
        fh->f_io_array      = NULL;
        
        fh->f_bytes_per_agg = OMPIO_MCA_GET(fh, bytes_per_agg);
-       opal_info_get (fh->f_info, "cb_buffer_size", &stripe_str, &flag);
-       if ( flag ) {
-           /* Info object trumps mca parameter value */
-           sscanf ( stripe_str->string, "%d", &fh->f_bytes_per_agg  );
-           OMPIO_MCA_PRINT_INFO(fh, "cb_buffer_size", stripe_str->string, "");
-           OBJ_RELEASE(stripe_str);
-       }
 
        fh->f_fs_block_size = 4096;
        fh->f_atomicity     = 0;

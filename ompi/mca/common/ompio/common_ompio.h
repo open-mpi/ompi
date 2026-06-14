@@ -17,6 +17,7 @@
  * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -115,6 +116,14 @@ enum ompio_fs_type
     GPFS = 6
 };
 
+enum mca_common_ompio_info_phase_t
+{
+    MCA_COMMON_OMPIO_INFO_PHASE_OPEN,
+    MCA_COMMON_OMPIO_INFO_PHASE_SET_INFO,
+    MCA_COMMON_OMPIO_INFO_PHASE_SET_VIEW
+};
+typedef enum mca_common_ompio_info_phase_t mca_common_ompio_info_phase_t;
+
 typedef struct mca_common_ompio_io_array_t {
     void                 *memory_address;
     /* we need that of type OMPI_MPI_OFFSET_TYPE */
@@ -180,6 +189,7 @@ struct ompio_file_t {
     opal_convertor_t      *f_mem_convertor;
     opal_convertor_t      *f_file_convertor;
     opal_info_t           *f_info;
+    mca_common_ompio_info_phase_t f_info_phase;
     void                  *f_fs_ptr;
     int                    f_fs_block_size;
     int                    f_atomicity;
@@ -327,6 +337,18 @@ OMPI_DECLSPEC int mca_common_ompio_file_delete (const char *filename,
                                                 struct opal_info_t *info);
 OMPI_DECLSPEC int mca_common_ompio_create_incomplete_file_handle (const char *filename,
                                                                   ompio_file_t **fh);
+OMPI_DECLSPEC int mca_common_ompio_info_subscribe (ompio_file_t *fh,
+                                                   const char *key,
+                                                   const char *value,
+                                                   opal_key_interest_callback_t *callback);
+OMPI_DECLSPEC int mca_common_ompio_info_apply (ompio_file_t *fh,
+                                               opal_info_t *info);
+OMPI_DECLSPEC int mca_common_ompio_info_set (ompio_file_t *fh,
+                                             const char *key,
+                                             const char *value);
+OMPI_DECLSPEC int mca_common_ompio_info_dup (ompio_file_t *fh,
+                                             ompi_info_t **info_used);
+OMPI_DECLSPEC int mca_common_ompio_info_register (ompio_file_t *fh);
 
 OMPI_DECLSPEC int mca_common_ompio_file_close (ompio_file_t *ompio_fh);
 OMPI_DECLSPEC int mca_common_ompio_file_get_size (ompio_file_t *ompio_fh, OMPI_MPI_OFFSET_TYPE *size);

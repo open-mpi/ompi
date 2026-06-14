@@ -326,6 +326,7 @@ test/simple/attach
 test/simple/bad_exit
 test/simple/bcast_loop
 test/simple/binding
+test/simple/comm_abort
 test/simple/concurrent_spawn
 test/simple/connect
 test/simple/crisscross
@@ -336,6 +337,7 @@ test/simple/hello_output
 test/simple/hello_show_help
 test/simple/hello
 test/simple/hello++
+test/simple/initial_errh
 test/simple/intercomm1
 test/simple/interlib
 test/simple/loop_child
@@ -344,6 +346,7 @@ test/simple/mpi_barrier
 test/simple/mpi_no_op
 test/simple/mpi_spin
 test/simple/multi_abort
+test/simple/ompio_file_info
 test/simple/parallel_r8
 test/simple/parallel_r64
 test/simple/parallel_w8
