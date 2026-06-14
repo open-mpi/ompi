@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.open-mpi.org/llms/openmpi-docs-manifest.schema.json",
+  "title": "Open MPI LLM-friendly documentation manifest",
+  "description": "Schema for openmpi-docs-manifest.json. The manifest is the single artifact that carries build identity, and it does not inventory itself. See specs/llms-friendly-docs/spec.md.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "artifact_schema_version",
+    "project",
+    "ompi_version",
+    "generated_at",
+    "artifacts"
+  ],
+  "properties": {
+    "artifact_schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Version of the manifest schema."
+    },
+    "project": {
+      "type": "string",
+      "const": "open-mpi"
+    },
+    "ompi_version": {
+      "type": "string",
+      "description": "Open MPI version derived from the top-level VERSION file."
+    },
+    "ompi_series": {
+      "type": ["string", "null"],
+      "description": "Open MPI documentation series, e.g. v6.1.x."
+    },
+    "rtd_version_slug": {
+      "type": ["string", "null"],
+      "description": "Read the Docs version slug when available."
+    },
+    "git_commit": {
+      "type": ["string", "null"],
+      "description": "Source commit used for the documentation build, when available."
+    },
+    "git_describe": {
+      "type": ["string", "null"],
+      "description": "git describe --tags --always output, when available."
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "UTC generation timestamp (ISO 8601). Always present: derived from SOURCE_DATE_EPOCH when set, else the build commit date, else the tarball/build date."
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "One entry per generated and curated artifact, EXCEPT the manifest itself.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["path", "media_type", "sha256", "bytes"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path relative to the published version root, e.g. llms/openmpi-mpi-api.jsonl."
+          },
+          "url": {
+            "type": ["string", "null"],
+            "description": "Absolute published URL, when the URL base is known."
+          },
+          "media_type": {
+            "type": "string",
+            "description": "Media type, e.g. application/jsonl, text/markdown, application/json."
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 of the artifact bytes (artifacts are wall-clock-free, so this is stable at a commit)."
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tokens_estimate": {
+            "type": ["integer", "null"],
+            "minimum": 0,
+            "description": "Estimated token count for the artifact."
+          },
+          "symbols": {
+            "type": ["array", "null"],
+            "items": { "type": "string" },
+            "description": "Symbol names covered by the artifact, when applicable."
+          },
+          "languages": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "string",
+              "enum": ["c", "fortran_mpifh", "fortran_use_mpi", "fortran_mpi_f08"]
+            },
+            "description": "Language/interface set covered by the artifact, when applicable."
+          }
+        }
+      }
+    }
+  }
+}

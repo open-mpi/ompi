@@ -14,12 +14,23 @@ import os
 
 # -- Project information -----------------------------------------------------
 
-import os
 import re
 import datetime
 import sphobjinv as soi
 
-year = datetime.datetime.now().year
+# For reproducible builds, derive the copyright year from SOURCE_DATE_EPOCH
+# when it is set (mirroring config/getdate.sh and Sphinx's own format_date,
+# which already honor it for the "Last updated on:" footer); otherwise fall
+# back to the current wall-clock year.  See https://reproducible-builds.org/.
+_source_date_epoch = os.environ.get('SOURCE_DATE_EPOCH')
+try:
+    if _source_date_epoch:
+        year = datetime.datetime.fromtimestamp(
+            int(_source_date_epoch), datetime.timezone.utc).year
+    else:
+        year = datetime.datetime.now().year
+except (ValueError, OverflowError, OSError):
+    year = datetime.datetime.now().year
 
 project = 'Open MPI'
 copyright = f'2003-{year}, The Open MPI Community'
@@ -309,8 +320,20 @@ templates_path = ['_templates']
 # Hence, listing prrte-rst-content in exclude_patterns means that
 # Sphinx won't complain about the .rst files in that tree that we are
 # not referencing from here in the OMPI docs.
+# Note: llms-src/ holds the committed curated Markdown sources for the
+# LLM-friendly docs, and llms-build/ is the generated LLM artifact staging
+# tree.  Both contain Markdown that must NOT be picked up as Sphinx source
+# documents; they are published into the HTML output by a separate copy step
+# in docs/Makefile.am (not via html_extra_path, which exclude_patterns would
+# also suppress).
+#
+# The html/ and man/ directories are the pre-rendered output copies that ship
+# in distribution tarballs (see html-local / man in Makefile.am).  Now that
+# html/llms/ contains generated Markdown, html/ (and man/, for symmetry) must
+# also be excluded so Sphinx does not re-parse those copies as source.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv', 'py*/**',
-                    'prrte-rst-content' ]
+                    'prrte-rst-content', 'llms-src', 'llms-build',
+                    'html', 'man' ]
 
 
 # Clarify the language for verbatim blocks (::)
@@ -429,3 +452,48 @@ rst_prolog += """
    .wy-table-responsive table td,.wy-table-responsive table th{white-space:normal}
    </style>
 """
+
+# -- LLM-friendly documentation artifacts ------------------------------------
+
+# The LLM-friendly artifacts are generated into a build-tree staging directory
+# (<builddir>/llms-build/) by docs/generate-llm-docs.py -- run from the Makefile
+# (the SENTINEL_OMPI_LLM target) for "make" builds, and from
+# .readthedocs-pre-create-environment.sh for Read the Docs builds (which do not
+# run "make").  They are deliberately excluded from Sphinx source discovery
+# (see exclude_patterns above), so we publish them by copying the staging tree
+# into the HTML output in a "build-finished" hook.  Doing the copy here (rather
+# than in the Makefile) means it happens inside sphinx-build and therefore
+# works identically under "make" and on Read the Docs.
+
+def _copy_llm_artifacts(app, exception):
+    import shutil
+
+    if exception is not None or app.builder.name != "html":
+        return
+
+    # The generator writes the staging tree to <builddir>/llms-build, where
+    # <builddir> is the docs build directory.  The Makefile html recipe exports
+    # OMPI_LLM_BUILDDIR so we resolve it explicitly even in an out-of-tree
+    # (VPATH) build where the build dir differs from the source dir.  Fall back
+    # to app.confdir, which equals the build dir under both "make" (the recipe
+    # copies conf.py into builddir and runs sphinx-build there) and Read the
+    # Docs (sphinx-build runs in the source dir, where the generator also ran).
+    builddir = os.environ.get("OMPI_LLM_BUILDDIR", app.confdir)
+    staging = os.path.join(builddir, "llms-build")
+    src_tree = os.path.join(staging, "llms")
+    if not os.path.isdir(src_tree):
+        # Generator was not run (e.g., a bare sphinx-build); nothing to publish.
+        return
+
+    dst_tree = os.path.join(app.outdir, "llms")
+    if os.path.isdir(dst_tree):
+        shutil.rmtree(dst_tree)
+    shutil.copytree(src_tree, dst_tree)
+
+    src_txt = os.path.join(staging, "llms.txt")
+    if os.path.isfile(src_txt):
+        shutil.copy2(src_txt, os.path.join(app.outdir, "llms.txt"))
+
+
+def setup(app):
+    app.connect("build-finished", _copy_llm_artifacts)
