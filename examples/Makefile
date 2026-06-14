@@ -15,6 +15,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # Copyright (c) 2017-2018 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,7 +27,6 @@
 
 MPICC = mpicc
 MPIFC = mpifort
-MPIJAVAC = mpijavac
 SHMEMCC = shmemcc
 SHMEMCXX = shmemc++
 SHMEMFC = shmemfort
@@ -51,16 +51,13 @@ EXAMPLES = \
 	 hello_oshmem \
 	 hello_oshmemcxx \
 	 hello_oshmemfh \
-	 Hello.class \
 	 ring_c \
 	 ring_mpifh \
 	 ring_usempi \
 	 ring_usempif08 \
 	 ring_oshmem \
 	 ring_oshmemfh \
-	 Ring.class \
 	 connectivity_c \
-	 Connectivity.class \
 	 oshmem_shmalloc \
 	 oshmem_circular_shift \
 	 oshmem_max_reduction \
@@ -94,9 +91,6 @@ mpi:
 	@ if ompi_info --parsable | grep -q bindings:use_mpi_f08:yes >/dev/null; then \
 	    $(MAKE) hello_usempif08 ring_usempif08; \
 	fi
-	@ if ompi_info --parsable | grep -q bindings:java:yes >/dev/null; then \
-	    $(MAKE) Hello.class Ring.class; \
-	fi
 	@ if ompi_info --parsable | grep -q enable-spc >/dev/null; then \
 	    $(MAKE) spc_example; \
 	fi
@@ -124,7 +118,7 @@ oshmem:
 clean:
 	rm -f $(EXAMPLES) *~ *.o
 
-# Don't rely on default rules for the Fortran and Java examples
+# Don't rely on default rules for the Fortran examples
 
 hello_c: hello_c.c
 	$(MPICC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
@@ -151,11 +145,6 @@ hello_usempif08: hello_usempif08.f90
 	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
 ring_usempif08: ring_usempif08.f90
 	$(MPIFC) $(FCFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@
-
-Hello.class: Hello.java
-	$(MPIJAVAC) Hello.java
-Ring.class: Ring.java
-	$(MPIJAVAC) Ring.java
 
 hello_oshmem: hello_oshmem_c.c
 	$(SHMEMCC) $(CFLAGS) $(LDFLAGS) $? $(LDLIBS) -o $@

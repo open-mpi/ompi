@@ -20,6 +20,7 @@
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -398,25 +399,6 @@ ompi_op_t *ompi_op_create_user(bool commute,
 error:
     /* All done */
     return new_op;
-}
-
-
-/*
- * See lengthy comment in mpi/cxx/intercepts.cc for how the C++ MPI::Op
- * callbacks work.
- */
-void ompi_op_set_java_callback(ompi_op_t *op, void *jnienv,
-                               void *object, int baseType)
-{
-    op->o_flags |= OMPI_OP_FLAGS_JAVA_FUNC;
-    /* The OMPI Java intercept was previously stored in
-       op->o_func.fort_fn by ompi_op_create_user().  So save that in
-       cxx.intercept_fn and put the user's fn in cxx.user_fn. */
-    op->o_func.java_data.intercept_fn =
-        (ompi_op_java_handler_fn_t *) op->o_func.fort_fn;
-    op->o_func.java_data.jnienv = jnienv;
-    op->o_func.java_data.object = object;
-    op->o_func.java_data.baseType = baseType;
 }
 
 

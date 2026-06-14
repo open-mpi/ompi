@@ -28,7 +28,7 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2025      Nanook Consulting  All rights reserved.
 # $COPYRIGHT$
 #
@@ -151,7 +151,6 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_usempif08_so_version)
-          AC_SUBST(libmpi_java_so_version)
           AC_SUBST(libompitrace_so_version)])
 m4_ifdef([project_oshmem],
          [AC_SUBST(liboshmem_so_version)])
@@ -640,13 +639,6 @@ AS_IF([test "$opal_cv_compiler_FAMILYNAME" = "GNU" && \
        AC_MSG_WARN([a different compiler to build Open MPI.])
        AC_MSG_ERROR([Cannot continue])
       ])
-
-##################################
-# Java MPI Binding request
-##################################
-# Only needed for OMPI
-m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
-
 
 ##################################
 # MPI / OpenSHMEM API profiling layer

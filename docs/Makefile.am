@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -898,8 +898,8 @@ OSHMEM_MAN3_INSTALL_FROM = $(OSHMEM_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 # Sphinx-generated man pages) -- they exist directly in Git.  We
 # *always* want these files to be in EXTRA_DIST (so that they're in
 # distribution tarballs).  We'll decide later whether we install each
-# of these (e.g., if configure disabled the Java bindings, we won't
-# install mpijavac.1).
+# of these (e.g., if configure did not find a C++ compiler, we won't
+# install mpic++.1).
 OMPI_MAN1_C_REDIRECTS = man-openmpi/man1/mpicc.1
 OMPI_MAN1_CXX_REDIRECTS = \
         man-openmpi/man1/mpicxx.1 \
@@ -908,7 +908,6 @@ OMPI_MAN1_FORTRAN_REDIRECTS = \
         man-openmpi/man1/mpifort.1 \
         man-openmpi/man1/mpif77.1 \
         man-openmpi/man1/mpif90.1
-OMPI_MAN1_JAVA_REDIRECTS = man-openmpi/man1/mpijavac.1
 
 OSHMEM_MAN1_C_REDIRECTS = \
         man-openshmem/man1/oshcc.1 \
@@ -926,7 +925,6 @@ EXTRA_DIST += \
         $(OMPI_MAN1_C_REDIRECTS) \
         $(OMPI_MAN1_CXX_REDIRECTS) \
         $(OMPI_MAN1_FORTRAN_REDIRECTS) \
-        $(OMPI_MAN1_JAVA_REDIRECTS) \
         $(OSHMEM_MAN1_C_REDIRECTS) \
         $(OSHMEM_MAN1_CXX_REDIRECTS) \
         $(OSHMEM_MAN1_FORTRAN_REDIRECTS)
@@ -1180,9 +1178,6 @@ man1_MANS += $(OMPI_MAN1_CXX_REDIRECTS)
 endif
 if OMPI_BUILD_ANY_FORTRAN_BINDINGS
 man1_MANS += $(OMPI_MAN1_FORTRAN_REDIRECTS)
-endif
-if OMPI_WANT_JAVA_BINDINGS
-man1_MANS += $(OMPI_MAN1_JAVA_REDIRECTS)
 endif
 
 man3_MANS = $(OMPI_MAN3_INSTALL_FROM)

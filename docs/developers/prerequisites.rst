@@ -8,8 +8,7 @@ Although it should probably be assumed, you'll need a C compiler that
 supports C11.
 
 You'll also need a Fortran compiler if you want to build the Fortran
-MPI bindings (the more recent the Fortran compiler, the better), and a
-Java compiler if you want to build the (unofficial) Java MPI bindings.
+MPI bindings (the more recent the Fortran compiler, the better).
 
 GNU Autotools
 -------------

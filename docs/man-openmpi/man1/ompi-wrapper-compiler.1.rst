@@ -2,14 +2,13 @@
 .. _man1-mpic++:
 .. _man1-mpicxx:
 .. _man1-mpifort:
-.. _man1-mpijavac:
 
 Open MPI Wrapper Compilers
 ==========================
 
 .. include_body
 
-mpicc, mpic++, mpicxx, mpifort, mpijavac |mdash| Open MPI wrapper compilers
+mpicc, mpic++, mpicxx, mpifort |mdash| Open MPI wrapper compilers
 
 SYNTAX
 ------
@@ -21,8 +20,6 @@ SYNTAX
 ``mpicxx [--showme | --showme:compile | --showme:link] ...``
 
 ``mpifort [--showme | --showme:compile | --showme:link] ...``
-
-``mpijavac [--showme | --showme:compile | --showme:link] ...``
 
 The following deprecated commands are also available |mdash| but
 ``mpifort`` should be used instead:
@@ -119,8 +116,6 @@ Open MPI provides wrapper compilers for several languages:
 
 * ``mpifort`` (and its legacy/deprecated aliases ``mpif77`` and
   ``mpif90``): Fortran
-
-* ``mpijavac``: Java
 
 The wrapper compilers for each of the languages are identical; they
 can be use interchangeably.  The different names are provided solely

@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -108,7 +109,6 @@ void ompi_info_do_config(bool want_all)
     char *fortran_have_c_funloc;
     char *fortran_08_using_wrappers_for_choice_buffer_functions;
     char *fortran_build_sizeof;
-    char *java;
     char *heterogeneous;
     char *memprofile;
     char *memdebug;
@@ -257,7 +257,6 @@ void ompi_info_do_config(bool want_all)
         fortran_usempif08_compliance = "The mpi_f08 module was not built";
     }
 
-    java = OMPI_WANT_JAVA_BINDINGS ? "yes" : "no";
     heterogeneous = OPAL_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no";
     memprofile = OPAL_ENABLE_MEM_PROFILE ? "yes" : "no";
     memdebug = OPAL_ENABLE_MEM_DEBUG ? "yes" : "no";
@@ -328,7 +327,8 @@ void ompi_info_do_config(bool want_all)
                   fortran_usempif08_compliance);
     opal_info_out("Fort mpi_f08 subarrays", "bindings:use_mpi_f08:subarrays-supported",
                   fortran_build_f08_subarrays);
-    opal_info_out("Java bindings", "bindings:java", java);
+    /* The Java bindings were removed in Open MPI v6.0.0. */
+    opal_info_out("Java bindings", "bindings:java", "no");
 
     opal_info_out("Wrapper compiler rpath", "compiler:all:rpath",
                   WRAPPER_RPATH_SUPPORT);

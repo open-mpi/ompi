@@ -163,7 +163,6 @@ Here's how we apply those rules specifically to Open MPI:
    * ``libmpi_usempi_ignore_tkr``
    * ``libmpi_usempif08``
    * ``libmpi_cxx``
-   * ``libmpi_java``
    * ``liboshmem``
 
 API and ABI Compatibility
