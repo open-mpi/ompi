@@ -4,6 +4,10 @@ docutils
 sphinx-rtd-theme
 sphobjinv
 
+# Used by validate-llm-docs.py to validate the generated LLM-friendly
+# artifacts against the published JSON Schemas (see "make check").
+jsonschema
+
 # These modules are needed for the pympistandard module when you are
 # running Python 3.6 (they became part of core Python in 3.7).  We
 # specifically use "==" (vs. "<=") because the top-level Open MPI

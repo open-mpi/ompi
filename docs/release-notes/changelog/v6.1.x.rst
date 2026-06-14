@@ -1,0 +1,19 @@
+Open MPI v6.1.x series
+======================
+
+This file contains all the NEWS updates for the Open MPI v6.1.x
+series, in reverse chronological order.
+
+Open MPI version v6.1.0
+--------------------------
+:Date: ...fill me in...
+
+- The documentation now publishes machine-readable, LLM-friendly
+  artifacts for the public MPI APIs alongside the human-facing HTML and
+  man pages: a JSONL API catalog, aggregate and per-interface Markdown
+  corpora, per-symbol Markdown pages, curated examples, an interface
+  guide, an ``ompi_info`` runtime-introspection guide (how to query an
+  installed Open MPI for its version, configuration, components, and
+  run-time MCA parameters), and a manifest, all indexed from
+  ``llms.txt``. See the "LLM-friendly documentation artifacts" page in
+  the developer documentation.
