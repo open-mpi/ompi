@@ -1,0 +1,50 @@
+# Open MPI v5.0.x
+
+Open MPI is an open source implementation of the Message Passing
+Interface (MPI) specification. This file indexes the LLM-friendly
+documentation available for this Open MPI documentation version.
+
+## About this file
+
+This is a limited llms.txt for the Open MPI v5.0.x release series. It
+indexes the human-facing HTML documentation and the rendered man pages.
+
+Open MPI publishes one llms.txt per documentation version, all under the
+same URL scheme:
+
+    https://docs.open-mpi.org/en/VERSION_SLUG/llms.txt
+
+where VERSION_SLUG is either `main` (Open MPI's development tip) or
+`vA.B.C` (A and B are the major and minor version numbers; use `vA.B.x`
+for a release branch, e.g. `v5.0.x`, or an exact `vA.B.C` for a
+git-tagged release).
+
+Open MPI v5.0.x publishes this limited index only. The full set of
+machine-readable artifacts --- a structured JSONL API catalog, aggregate
+and per-interface Markdown corpora, per-procedure Markdown pages, curated
+examples and an interface guide, and a manifest --- is published for Open
+MPI v6.0.0 and later. If you need that structured API data, use a v6.0.0
+or later version, for example
+https://docs.open-mpi.org/en/v6.0.x/llms.txt or
+https://docs.open-mpi.org/en/main/llms.txt .
+
+Documentation for Open MPI versions older than v5.0.x is not published in
+this format; for those, see
+https://github.com/open-mpi/ompi/blob/v4.1.x/README ,
+https://www.open-mpi.org/faq/ , and https://www.open-mpi.org/doc/ .
+
+- The MPI Standard (https://www.mpi-forum.org/docs/) is authoritative for
+  portable MPI semantics.
+- `MPIX_*` and `OMPI_*` APIs are Open MPI extensions, not portable MPI
+  Standard APIs.
+
+## API and command reference (man pages)
+
+- [MPI API man pages (man3 index)](man-openmpi/man3/index.html)
+- [Open MPI command man pages (man1 index)](man-openmpi/man1/index.html)
+
+## Human-facing documentation
+
+- [Building MPI applications](building-apps/index.html)
+- [Launching MPI applications](launching-apps/index.html)
+- [Tuning MPI applications](tuning-apps/index.html)
