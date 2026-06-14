@@ -4,6 +4,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,9 +74,16 @@ char *opal_filename_to_uri(const char *filename, const char *hostname)
     }
     /* escape them if necessary */
     if (0 < n) {
-        fn = (char *) malloc(strlen(filename) + n + 1);
+        /* Worst case: every character is escaped (backslash + character),
+           so allocate 2 bytes per character plus the NUL terminator.  n
+           only records whether any reserved character is present -- it
+           counts reserved types, not occurrences, so it cannot size this
+           buffer safely when a reserved character repeats. */
+        fn = (char *) malloc(2 * strlen(filename) + 1);
         i = 0;
-        for (k = 0; k < strlen(filename) - 1; k++) {
+        /* Iterate over every character of filename; a previous "- 1" bound
+           here dropped the last character whenever escaping was needed. */
+        for (k = 0; k < strlen(filename); k++) {
             for (j = 0; j < strlen(uri_reserved_path_chars) - 1; j++) {
                 if (filename[k] == uri_reserved_path_chars[j]) {
                     fn[i] = '\\';
