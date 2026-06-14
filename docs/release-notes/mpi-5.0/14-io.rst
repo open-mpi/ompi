@@ -1,0 +1,114 @@
+.. _release-notes-mpi-5.0-ch14:
+
+I/O
+===
+
+
+.. admonition:: tl;dr
+   :class: tip
+
+   Open MPI's main branch broadly conforms to MPI-5.0 Chapter 14. OMPIO is the sole MPI-IO provider (ROMIO is absent from the tree) at default priority 30, built and selected automatically on a plain ./configure && make with no special flag, no non-default MCA selection, and no external library (default fs/ufs + fbtl/posix cover generic filesystems). The whole MPI_File\_\* surface -- open/close/delete/set_size/preallocate/get_size/get_group/get_amode, set_view/get_view, all three data-access positioning families (explicit-offset, individual pointer, shared pointer), blocking/nonblocking, split-collective begin/end, nonblocking-collective iread/iwrite\_\*_all, atomicity/sync, type-extent, and the per-File default-MPI_ERRORS_RETURN error handler -- is therefore SUPPORTED by default; the only build-time caveat is removability via --disable-io-ompio, which strips the only io component with no fallback (gate note, not a conformance gap). Required data representations native and external32 are SUPPORTED (external32 clones ompi_mpi_external32_convertor and the read/write engine performs the byte conversion). Three genuine deviations stand out: the required 'internal' data representation is rejected with MPI_ERR_UNSUPPORTED_DATAREP (set_view's gate accepts only native/external32) -> UNSUPPORTED; user-defined data representations via MPI_Register_datarep are non-functional (OMPIO's register_datarep is a hard 'return OMPI_ERROR' stub) -> UNSUPPORTED; and two narrow status-reporting bugs (get_type_extent ignores f_datarep so external32 views get the native extent, and collective reads set status._ucount to the requested rather than the actual byte count, breaking EOF-by-short-read detection) -> PARTIAL. Full per-File MPI_Info hint round-trip (so MPI_File_get_info reports all hints OMPIO recognized/defaulted, set via open/set_info) is MISSING_INFLIGHT via branch pr/ompio-and-mpi-info-lets-be-friends (issue #13367); the MPI_File_set_info/get_info symbols themselves are present and return valid (minimal) results today. All 17 I/O error classes are defined.
+
+Conformance summary
+-------------------
+
+
+**23** reconciled requirement(s)/behavior(s): 18 supported, 0 conditional, 2 partial, 2 unsupported, 1 missing-but-in-flight, 0 N/A (78.3% of applicable fully supported).
+
+Caveats, gaps, and reviewer conflicts
+-------------------------------------
+
+
+'internal' data representation (required named representation; standard permits implementing it as external32)
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+:Status: **Unsupported**
+:Standard: §14.5 / p.685; §14.5.2 Advice to implementors
+:Reviewers: b1=UNSUPPORTED, b2=UNSUPPORTED, b3=SUPPORTED (reviewers disagreed)
+:Evidence: ompi/mca/io/ompio/io_ompio_file_set_view.c:70-72 (accepts ONLY native/NATIVE/external32/EXTERNAL32, else returns MPI_ERR_UNSUPPORTED_DATAREP -- this gate runs BEFORE mca_common_ompio_set_view); grep for 'internal' datarep handling in ompi/mca/io and ompi/mca/common/ompio returns zero matches
+:Notes: CONFLICT resolved against b3. b3 claimed (in caveats) 'internal' is silently treated as native via the common_ompio_file_view.c:121-131 else-branch. That is wrong: the set_view gate at io_ompio_file_set_view.c:70-72 rejects any string other than native/external32 with MPI_ERR_UNSUPPORTED_DATAREP and returns BEFORE the common backend is ever called -- so 'internal' never reaches the else-branch. b1/b2 are correct: 'internal' is a required named representation that is rejected outright. Not MISSING_INFLIGHT (neither in-flight branch adds it) and not NA (it is a required representation). A one-line alias internal->native would fix it but is absent.
+
+MPI_Register_datarep: user-defined data representations (register read/write/extent converters; invoke them during access)
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+:Status: **Unsupported**
+:Standard: §14.5.3 / p.691
+:Reviewers: b1=UNSUPPORTED, b2=UNSUPPORTED, b3=UNSUPPORTED (all 3 agree)
+:Evidence: ompi/mca/io/ompio/io_ompio_component.c:363-370 (register_datarep is a hard stub: 'return OMPI_ERROR;'); OMPIO is the only io component so MPI_Register_datarep always fails; set_view independently rejects any non-native/external32 datarep (io_ompio_file_set_view.c:70-72) so a user datarep could never drive converters
+:Notes: Unanimous non-functional. UNSUPPORTED (not MISSING_INFLIGHT -- neither PR #13280 (ABI) nor the ompio-info branch touches register_datarep). The MPI_Datarep_conversion_function / MPI_Datarep_extent_function typedefs and MPI_CONVERSION_FN_NULL are PRESENT in C and f08 (mpi.h.in:506-509, 1055-1056) but are dead because the registration backend always fails. b2 additionally notes a base-dispatch version guard (mca_type_major_version==2 never matches the v3 OMPIO component) that makes MPI_Register_datarep silently return MPI_SUCCESS without registering -- a second independent failure; either way the feature is absent.
+
+MPI_File_set_info / get_info full MPI_Info hint round-trip (get_info returns all hints OMPIO recognized/defaulted, set via open/set_info/set_view)
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+:Status: **Missing (in-flight)**
+:Standard: §14.2.8 / p.643-644
+:Reviewers: b1=PARTIAL, b2=SUPPORTED, b3=MISSING_INFLIGHT (reviewers disagreed)
+:Evidence: ompi/mca/io/ompio/io_ompio_module.c:41-42 (module set_info/get_info hooks are NULL on main -> generic opal_infosubscribe fallback); ompi/mca/common/ompio/common_ompio_file_view.c registers only cb_nodes + collective_buffering into f_info (==s_info) so only those round-trip; in-flight branch pr/ompio-and-mpi-info-lets-be-friends (issue #13367) wires mca_io_ompio_file_set_info/get_info and adds comprehensive hint + default reporting
+:Notes: CONFLICT resolved by the framework's authoritative in-flight tiebreaker: the full MPI_Info-on-MPI_File round-trip BEHAVIOR is MISSING_INFLIGHT via issue #13367. The C/f08 SYMBOLS MPI_File_set_info/get_info ARE present and return valid (minimal) results today: get_info always yields a valid possibly-empty info from s_info, and 2 hints (cb_nodes, collective_buffering) do round-trip. On main, get_info does not list all supported/defaulted hints (cb_buffer_size, striping_factor/unit, fs hints) as 14.2.8 requires, and post-open set_info hints are not re-applied. b2's 'default' overstates (generic round-trip != spec-accurate active-hint exposure); b1's 'partial' is close but the framework classifies the gap as MISSING_INFLIGHT.
+
+MPI_File_get_type_extent returns datatype extent in the file's data representation
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+:Status: **Partial**
+:Standard: §14.5.1 / p.687
+:Reviewers: b1=SUPPORTED, b2=silent, b3=PARTIAL (reviewers disagreed)
+:Gate: io/ompio (default, removable via --disable-io-ompio)
+:Evidence: ompi/mca/io/ompio/io_ompio_file_open.c:302-308 (mca_io_ompio_file_get_type_extent calls opal_datatype_type_extent(&datatype->super, extent) and ignores fh->f_datarep)
+:Notes: CONFLICT resolved to PARTIAL (b3's unique catch, verified). The implementation always returns the NATIVE extent regardless of the file's datarep, so for an external32 view with differently-sized representations it does not return the file-representation extent that 14.5.1 specifies. b1 marked it SUPPORTED, missing this. Narrow deviation: matters only for external32 views where representation sizes differ from native; for native views (the common case) it is correct.
+
+Collective read byte-count (status.MPI_Count) reflects actual bytes read so EOF is detectable by short read
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+:Status: **Partial**
+:Standard: §14.4 / p.651
+:Reviewers: b1=silent, b2=silent, b3=PARTIAL (raised by 1 reviewer)
+:Gate: io/ompio (default, removable via --disable-io-ompio)
+:Evidence: ompi/mca/common/ompio/common_ompio_file_read_all.c:139-141 (status->_ucount = max_data, the decoded requested byte count); ompi/mca/io/ompio/io_ompio_file_read.c:148-153 (status->_ucount = count \* size, the requested byte count)
+:Notes: UNIQUE (b3 only), verified valid. For MPI_File_read_all / read_at_all and their split/nonblocking forms, status._ucount is set to the full requested byte count, not the bytes actually transferred, so a short read at end-of-file over-reports and the standard's 'detect EOF by amount read < requested' is broken for the collective read families. Data movement itself is correct; this is a status-reporting deviation only. Noncollective reads report real bytes. PARTIAL.
+
+Supported requirements
+----------------------
+
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Requirement
+     - Reviewers (agreement)
+   * - MPI-IO subsystem (all MPI_File\_\* file management + data access) available by default via OMPIO
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - Explicit-offset data access (read_at/write_at/_all, nonblocking iread_at/iwrite_at/_all)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - Individual-file-pointer data access (read/write/_all, iread/iwrite/_all, seek, get_position, get_byte_offset)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - Shared-file-pointer data access (read/write_shared, iread/iwrite_shared, read/write_ordered, seek_shared, get_position_shared)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - Split-collective and nonblocking-collective data access (read/write[_at]_all_begin/end, read/write_ordered_begin/end, iread/iwrite\_\*_all)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - MPI_File_set_view / get_view (displacement, etype, filetype, MPI_DISPLACEMENT_CURRENT in sequential mode)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - 'native' data representation (no conversion)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - 'external32' data representation (required of all implementations; portable big-endian IEEE / two's-complement conversion)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - set_view rejects unrecognized/unregistered datarep strings with MPI_ERR_UNSUPPORTED_DATAREP
+     - b1=SUPP/b2=sile/b3=UNSU (conflict)
+   * - Reserved file info hints (access_style, collective_buffering, cb_buffer_size, cb_nodes, striping_factor/unit, etc.) recognized/honored
+     - b1=PART/b2=SUPP/b3=sile (conflict)
+   * - Atomic-mode consistency: MPI_File_set_atomicity / get_atomicity (default nonatomic; atomic mode enforced in access path)
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - MPI_File_sync flushes data to the storage device; collective
+     - b1=SUPP/b2=SUPP/b3=SUPP (unanimous)
+   * - Per-file error handler defaults to MPI_ERRORS_RETURN; pre-handle errors use MPI_FILE_NULL
+     - b1=SUPP/b2=SUPP/b3=sile (partial-overlap)
+   * - Nonblocking I/O completion via MPI_Test/MPI_Wait on returned request handles
+     - b1=SUPP/b2=sile/b3=sile (unique)
+   * - amode validation at open (exactly one of RDONLY/RDWR/WRONLY; reject RDONLY+CREATE/EXCL, RDWR+SEQUENTIAL)
+     - b1=sile/b2=SUPP/b3=sile (unique)
+   * - All I/O error classes (Table 14.5) defined
+     - b1=sile/b2=SUPP/b3=sile (unique)
+   * - Large-count (_c) variants of count-bearing I/O routines
+     - b1=sile/b2=SUPP/b3=SUPP (partial-overlap)
+   * - Vendor filesystem optimization backends (Lustre / GPFS / DDN IME)
+     - b1=COND/b2=sile/b3=COND (partial-overlap)
