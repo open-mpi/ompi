@@ -29,3 +29,5 @@ cp -rp $PRRTE_RST_SRC_DIR $PRRTE_RST_TARGET_DIR
 
 cd docs
 python3 ./generate-mpi-man3-bindings.py --srcdir . --builddir .
+python3 ./generate-code-of-conduct-rst.py --input ../.github/CODE_OF_CONDUCT.md --output code-of-conduct.rst
+
