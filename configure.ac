@@ -555,29 +555,6 @@ OPAL_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
 
 OPAL_CHECK_ALT_SHORT_FLOAT
 
-# Check system alignment requirements
-if test "$opal_want_heterogeneous" = 1; then
-    ompi_cv_c_word_size_align=yes
-else
-    AC_CACHE_CHECK([if word-sized integers must be word-size aligned],
-        [ompi_cv_c_word_size_align],
-        [AC_LANG_PUSH(C)
-         AC_RUN_IFELSE([AC_LANG_PROGRAM([dnl
-#include <stdlib.h>], [[    long data[2] = {0, 0};
-    long *lp;
-    int *ip;
-    ip = (int*) data;
-    ip++;
-    lp = (long*) ip;
-    return lp[0]; ]])],
-            [ompi_cv_c_word_size_align=no],
-            [ompi_cv_c_word_size_align=yes],
-            [ompi_cv_c_word_size_align=yes])])
-fi
-AS_IF([test $ompi_cv_c_word_size_align = yes], [results=1], [results=0])
-AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
-    [set to 1 if word-size integers must be aligned to word-size padding to prevent bus errors])
-
 #
 # Check for other compiler characteristics
 #
