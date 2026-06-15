@@ -79,6 +79,7 @@ Table of contents
    app-debug/index
    developers/index
    contributing
+   code-of-conduct
    license/index
    history
    man-openmpi/index
