@@ -3864,19 +3864,6 @@ end interface
 
 interface
 
-subroutine MPI_Status_set_elements(status, datatype, count, ierror)
-  include 'mpif-config.h'
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
-  integer, intent(in) :: datatype
-  integer, intent(in) :: count
-  integer, intent(out) :: ierror
-end subroutine MPI_Status_set_elements
-
-end interface
-
-
-interface
-
 subroutine MPI_Status_set_elements_x(status, datatype, count, ierror)
   include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
