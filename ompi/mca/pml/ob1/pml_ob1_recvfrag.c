@@ -768,6 +768,10 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
         sendreq->req_send.req_base.req_convertor.stream = stream;
     }
 
+    /* ensure all prior stores (copy_in_out, rdma_frag, throttle_sends,
+     * req_state, accelerator flags) are visible before complete_check
+     * may recycle the request */
+    opal_atomic_wmb();
     if (send_request_pml_complete_check(sendreq) == false)
         mca_pml_ob1_send_request_schedule(sendreq);
 }

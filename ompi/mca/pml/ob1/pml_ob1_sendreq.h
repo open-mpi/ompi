@@ -79,11 +79,14 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_range_t);
 
 static inline bool lock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
-    return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock,  1) == 1;
+    bool ret = OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock,  1) == 1;
+    opal_atomic_rmb();
+    return ret;
 }
 
 static inline bool unlock_send_request(mca_pml_ob1_send_request_t *sendreq)
 {
+    opal_atomic_wmb();
     return OPAL_THREAD_ADD_FETCH32(&sendreq->req_lock, -1) == 0;
 }
 
@@ -467,6 +470,17 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
     sendreq->req_bytes_delivered = 0;
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = seqn;
+
+    /* drain any stale send ranges left from a previous lifecycle;
+     * not protected by a lock as the sendreq is owned exclusively
+     * by the current thread at this point in the lifecycle. */
+    if (OPAL_UNLIKELY(!opal_list_is_empty(&sendreq->req_send_ranges))) {
+        opal_list_item_t *item;
+        OPAL_OUTPUT_VERBOSE((1, mca_pml_ob1_output, "stale send ranges on reused sendreq"));
+        while (NULL != (item = opal_list_remove_first(&sendreq->req_send_ranges))) {
+            opal_free_list_return(&mca_pml_ob1.send_ranges, (opal_free_list_item_t *)item);
+        }
+    }
 
     MCA_PML_BASE_SEND_START( &sendreq->req_send );
 
