@@ -325,9 +325,6 @@ static int ompi_comm_finalize (void)
         /* tear down MPI-3 predefined communicators (not initialized unless using MPI_Init) */
         OBJ_DESTRUCT( &ompi_mpi_comm_self );
         ompi_attr_delete_predefined_keyvals_for_wm();
-        /* Destroy the keyhash even is user defined attributes are still attached. */
-        OBJ_DESTRUCT(ompi_mpi_comm_world.comm.c_keyhash);
-        ompi_mpi_comm_world.comm.c_keyhash = NULL;
         OBJ_DESTRUCT( &ompi_mpi_comm_world );
 
         ompi_comm_intrinsic_init = false;
@@ -385,7 +382,8 @@ static int ompi_comm_finalize (void)
         for ( i=3; i<max; i++ ) {
             comm = ompi_comm_lookup(i);
             if (NULL == comm) continue;
-            opal_output(0, "WARNING: %d unnamed MPI_Comm handles still allocated at MPI_FINALIZE", comm->c_name);
+            opal_output(0, "WARNING: %u(%s) unnamed MPI_Comm handles still allocated at MPI_FINALIZE",
+                        ompi_comm_get_local_cid(comm), comm->c_name);
             ompi_comm_dump ( comm);
             OBJ_RELEASE(comm);
         }
@@ -496,6 +494,12 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     if ( MPI_COMM_NULL != comm && OMPI_COMM_IS_PML_ADDED(comm) ) {
         MCA_PML_CALL(del_comm (comm));
+    }
+
+    /* Release the attributes */
+    if( NULL != comm->c_keyhash) {
+        OBJ_RELEASE(comm->c_keyhash);
+        comm->c_keyhash = NULL;
     }
 
     /* Release topology module */
