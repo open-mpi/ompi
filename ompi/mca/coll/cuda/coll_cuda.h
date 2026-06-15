@@ -2,7 +2,9 @@
  * Copyright (c) 2014      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2014-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2024 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2024      Advanced Micro Devices, Inc. All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,24 +90,26 @@ mca_coll_cuda_reduce_scatter_block(const void *sbuf, void *rbuf, int rcount,
  * @retval >0                The buffer belongs to a managed buffer in
  *                           device memory.
  */
-static inline int mca_coll_cuda_check_buf(void *addr)
+static inline int mca_coll_cuda_check_buf(void *addr, int *dev_id)
 {
     uint64_t flags;
-    int dev_id;
+
     if (OPAL_LIKELY(NULL != addr)) {
-        return opal_accelerator.check_addr(addr, &dev_id, &flags);
+        return opal_accelerator.check_addr(addr, dev_id, &flags);
     } else {
+        *dev_id = MCA_ACCELERATOR_NO_DEVICE_ID;
         return 0;
     }
 }
 
-static inline void *mca_coll_cuda_memcpy(void *dest, const void *src, size_t size)
+static inline void *mca_coll_cuda_memcpy(void *dest, int dest_dev, const void *src, int src_dev, size_t size,
+                                         opal_accelerator_transfer_type_t type)
 {
     int res;
-    res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                    dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
+
+    res = opal_accelerator.mem_copy(dest_dev, src_dev, dest, src, size, type);
     if (res != 0) {
-        opal_output(0, "CUDA: Error in cuMemcpy: res=%d, dest=%p, src=%p, size=%d", res, dest, src,
+        opal_output(0, "coll/cuda: Error in in accelerator memcpy: res=%d, dest=%p, src=%p, size=%d", res, dest, src,
                     (int) size);
         abort();
     } else {
