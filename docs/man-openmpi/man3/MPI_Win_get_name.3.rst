@@ -24,6 +24,15 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
+The caller must provide a buffer of at least ``MPI_MAX_OBJECT_NAME`` bytes.
+That value depends on which Open MPI interface the application uses: it is
+|ompi_max_object_name| bytes for the traditional Open MPI interface (which
+Open MPI has used for many years) and |mpi_abi_max_object_name| bytes for
+the MPI Forum standard ABI (the value required by the MPI standard).  Open
+MPI returns a name (including its terminating null character) that fits
+within whichever limit corresponds to the interface the application was
+compiled against.
+
 
 ERRORS
 ------

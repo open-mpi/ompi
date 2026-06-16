@@ -460,7 +460,7 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        opal_string_copy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );          \
+        opal_string_copy( (PDATA)->name, MPIDDTNAME, OMPI_MPI_MAX_OBJECT_NAME_ABI );          \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
@@ -478,14 +478,14 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        opal_string_copy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );        \
+        opal_string_copy( (PDATA)->name, (MPIDDTNAME), OMPI_MPI_MAX_OBJECT_NAME_ABI );        \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)                        \
     do {                                                                             \
         /* just memcpy as it's easier this way */                                    \
         memcpy( (PDATA), (PORIGDDT), sizeof(ompi_datatype_t) );                      \
-        opal_string_copy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );          \
+        opal_string_copy( (PDATA)->name, MPIDDTNAME, OMPI_MPI_MAX_OBJECT_NAME_ABI );          \
         /* forget the language flag */                                               \
         (PDATA)->super.flags &= ~OMPI_DATATYPE_FLAG_DATA_LANGUAGE;                   \
         (PDATA)->super.flags &= ~OPAL_DATATYPE_FLAG_PREDEFINED;                      \

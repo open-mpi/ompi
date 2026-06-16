@@ -217,7 +217,10 @@ static inline int memchecker_comm(MPI_Comm comm)
      */
     opal_memchecker_base_isdefined (&comm->c_lock.m_lock_atomic, sizeof(opal_atomic_lock_t));
 #endif /* 0 */
-    opal_memchecker_base_isdefined (&comm->c_name, MPI_MAX_OBJECT_NAME);
+    /* c_name is a separately-allocated buffer (not an inline array), so check
+     * the buffer it points to -- of the ABI-maximum size it was allocated
+     * with -- rather than the bytes at the address of the pointer field. */
+    opal_memchecker_base_isdefined (comm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
     opal_memchecker_base_isdefined (&comm->c_my_rank, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_flags, sizeof(uint32_t));
     opal_memchecker_base_isdefined (&comm->c_local_group, sizeof(ompi_group_t *));
@@ -383,7 +386,7 @@ static inline int memchecker_datatype(MPI_Datatype type)
     opal_memchecker_base_isdefined (&type->d_keyhash, sizeof(opal_hash_table_t *));
     opal_memchecker_base_isdefined (&type->args, sizeof(void *));
     opal_memchecker_base_isdefined (&type->packed_description, sizeof(void *));
-    opal_memchecker_base_isdefined (&type->name, MPI_MAX_OBJECT_NAME * sizeof(char));
+    opal_memchecker_base_isdefined (&type->name, OMPI_MPI_MAX_OBJECT_NAME_ABI * sizeof(char));
 
     return OMPI_SUCCESS;
 }
