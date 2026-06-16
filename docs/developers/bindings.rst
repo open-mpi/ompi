@@ -162,6 +162,187 @@ code (or, for a naming or casing mistake, not until run time):
 If you add a new type to the ``Type`` hierarchy, a new prototype form, or a new
 code-emission path, add a test here as well.
 
+Adding New Fortran Interfaces
+------------------------------
+
+Open MPI supports multiple Fortran binding layers beyond the modern ``use
+mpi_f08`` interface described above. Adding a new MPI function requires updating
+**all** applicable layers. The MPI standard defines Fortran interfaces for most
+functions, and Open MPI implements these across three main Fortran binding
+systems. This section describes the complete pattern for adding new Fortran
+bindings.
+
+The Three Fortran Binding Layers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. **mpif.h** (``ompi/mpi/fortran/mpif-h/``) — The original Fortran 77
+   interface. Functions are hand-written C wrappers that convert between
+   Fortran and C types.
+
+2. **use mpi_f08** (``ompi/mpi/fortran/use-mpi-f08/``) — The modern Fortran
+   2008 interface with full type safety. Uses template files (``.c.in``)
+   processed by the build system to generate type-specific variants. This is
+   the interface described in the main section above.
+
+3. **use mpi (ignore TKR)** (``ompi/mpi/fortran/use-mpi-ignore-tkr/``) —
+   An alternative Fortran 90/95 interface using compiler directives to
+   ignore type/kind/rank checks. Interface declarations are in
+   ``mpi-ignore-tkr-interfaces.h.in``.
+
+Checklist for Adding a New Fortran Function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When adding a new MPI function that has Fortran bindings (nearly all
+functions except C-specific ones), you must update multiple files across
+the layers. Use existing functions as templates.
+
+For mpif.h Layer
+""""""""""""""""
+
+1. **Create the wrapper:** Add ``<function_name>_f.c`` in
+   ``ompi/mpi/fortran/mpif-h/``. This file:
+
+   * Includes ``ompi_config.h`` first
+   * Includes ``ompi/mpi/fortran/mpif-h/bindings.h``
+   * Uses ``OMPI_GENERATE_F77_BINDINGS`` to generate the strong ``PMPI_*``
+     entry points in all name-mangling variants
+   * Uses ``OMPI_GENERATE_WEAK_F77_BINDINGS`` to generate weak ``MPI_*``
+     entry points that forward to ``PMPI_*`` (on platforms without weak
+     aliases, this emits a weak symbol; where weak aliases exist, the
+     macro in ``bindings.h`` already emitted the alias)
+   * Defines the wrapper function ``ompi_<function_name>_f()``
+   * Converts Fortran types to C types using ``PMPI_Status_f2c()``,
+     ``OMPI_FINT_2_INT()``, ``OMPI_INT_2_FINT()``, etc.
+   * Calls the C implementation (typically ``PMPI_<Function_name>()``)
+   * Must handle ``MPI_STATUS_IGNORE`` and similar special constants
+
+2. **Update Makefile.am:** Add the new ``.c`` file to
+   ``lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES`` in
+   ``ompi/mpi/fortran/mpif-h/Makefile.am``, maintaining alphabetical order.
+
+3. **Update prototypes:** Add the function prototype to
+   ``ompi/mpi/fortran/mpif-h/prototypes_mpi.h`` using the ``PN2()`` macro:
+
+   .. code-block:: c
+
+      PN2(void, MPI_Function_name, mpi_function_name, MPI_FUNCTION_NAME,
+          (MPI_Fint *arg1, MPI_Fint *arg2, MPI_Fint *ierr));
+
+For use mpi_f08 Layer
+""""""""""""""""""""""
+
+1. **Create the template:** Add ``<function_name>.c.in`` in
+   ``ompi/mpi/fortran/use-mpi-f08/``. This file:
+
+   * Contains a ``PROTOTYPE`` declaration (see existing files for syntax)
+   * Uses placeholders like ``@INNER_CALL@`` that the build system expands
+   * Handles type conversions for Fortran 2008 types
+   * Manages ``MPI_F08_STATUS_IGNORE`` and similar constants
+
+2. **Update prototype list:** Add the template filename to
+   ``prototype_files`` in
+   ``ompi/mpi/fortran/use-mpi-f08/Makefile.prototype_files``, maintaining
+   alphabetical order.
+
+For use mpi (ignore TKR) Layer
+"""""""""""""""""""""""""""""""
+
+The ``use mpi`` (ignore TKR) interface declarations are **generated** from the
+binding metadata, similar to the ``use mpi_f08`` layer. The interface
+declarations live in generated ``.h.in`` files under
+``ompi/mpi/fortran/use-mpi-ignore-tkr/``.
+
+1. **Ensure the binding metadata is complete:** The Python generator in
+   ``ompi/mpi/bindings/`` reads the MPI function signatures and generates
+   interface declarations for all three Fortran layers. If the mpif.h and
+   use mpi_f08 layers are complete, the use mpi layer should be generated
+   automatically.
+
+2. **Verify generated interfaces:** After building, check that the new
+   function appears in the generated
+   ``ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces-generated.h`` file
+   with correct ``!DIR$ IGNORE_TKR`` directives. This file is compiled twice
+   during the build: once with ``OMPI_BUILD_MPI_PROFILING`` defined to
+   generate ``PMPI_*`` interfaces, and once without the define to generate
+   ``MPI_*`` interfaces.
+
+3. **Check PMPI support:** Verify both ``MPI_*`` and ``PMPI_*`` interfaces
+   are generated for the new function.
+
+Key Conventions for Fortran Bindings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* **Function naming:** The C wrapper in mpif.h uses the prefix
+  ``ompi_<function_name>_f()``. The ``OMPI_GENERATE_F77_BINDINGS`` macro
+  provides the strong ``PMPI_*`` entry points in various case/underscore
+  combinations (``PMPI_FUNCTION_NAME``, ``pmpi_function_name``,
+  ``pmpi_function_name_``, ``pmpi_function_name__``). The
+  ``OMPI_GENERATE_WEAK_F77_BINDINGS`` macro provides weak ``MPI_*`` entry
+  points that forward to the strong ``PMPI_*`` symbols.
+
+* **Profiling (PMPI) support:** All bindings must support the PMPI
+  profiling interface. Open MPI compiles each mpif.h binding exactly once
+  (with ``OMPI_BUILD_MPI_PROFILING=1``), emitting both the strong
+  ``PMPI_*`` entry points and weak ``MPI_*`` entry points in a single
+  compilation. Where weak aliases are available (ELF), the weak ``MPI_*``
+  is a zero-cost alias to ``PMPI_*``; on platforms without weak aliases
+  (e.g., macOS), the weak ``MPI_*`` is a forwarding definition. The
+  ``profile/`` subdirectory no longer exists because a second compilation
+  is not necessary.
+
+* **Type conversions:** Use the provided macros:
+
+  * ``OMPI_INT_2_FINT()`` / ``OMPI_FINT_2_INT()`` for integers
+  * ``OMPI_LOGICAL_2_INT()`` / ``OMPI_INT_2_LOGICAL()`` for logicals
+  * ``PMPI_Status_f2c()`` / ``PMPI_Status_c2f()`` for MPI_Status
+
+* **Special constants:** Check for Fortran special constants like
+  ``OMPI_IS_FORTRAN_STATUS_IGNORE()`` before dereferencing pointers.
+
+* **Error codes:** Always set ``*ierr = OMPI_INT_2_FINT(c_ierr)`` to
+  return errors to Fortran in the correct format.
+
+Weak Symbols vs. Weak Aliases
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Open MPI distinguishes between **weak symbols** and **weak aliases**:
+
+* A **weak alias** is a linker directive (e.g., ``#pragma weak MPI_Send =
+  PMPI_Send`` or ``__attribute__((weak, alias("PMPI_Send")))``) that makes one
+  symbol name resolve to another at link time, with zero runtime cost. Weak
+  aliases are supported on ELF platforms (Linux, most Unix) but **not** on
+  macOS / Mach-O.
+
+* A **weak symbol** is a symbol marked with the weak attribute (e.g.,
+  ``__attribute__((weak))``), which allows it to be overridden by a strong
+  definition at link time. On macOS, a weak ``MPI_Send`` can be a forwarding
+  function that calls ``PMPI_Send``; this has a trivial runtime cost (one
+  branch instruction) but works everywhere.
+
+Open MPI's configure terminology and preprocessor macros use "weak alias"
+consistently: ``OPAL_HAVE_WEAK_ALIASES``,
+``__opal_attribute_weak_alias__``, ``--enable-weak-aliases``. The plain weak
+symbol attribute is ``__opal_attribute_weak__``.
+
+Build System Interaction
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After adding Fortran bindings, the build system must be regenerated (see the
+Open MPI developer documentation on modifying the configure/build system).
+Template files (``.c.in``) are processed during the build to generate multiple
+type-specific wrapper functions for the Fortran 2008 interface.
+
+**Parameter naming validation:** The build system includes
+``check_fortran_param_names.py`` which validates that Fortran interface
+parameter names comply with the MPI standard. This check runs automatically
+during the build for both ``use mpi_f08`` and ``use mpi`` layers. If you add
+a new function, ensure parameter names match the standard exactly.
+
+**Testing:** After adding bindings, compile a simple Fortran test program
+that uses the new function with each interface (``use mpi_f08``, ``use mpi``,
+and ``include 'mpif.h'``) to verify all layers work correctly. Test both the
+``MPI_*`` and ``PMPI_*`` entry points to verify profiling interface support.
+
 Other Considerations
 --------------------
 
