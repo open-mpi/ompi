@@ -69,6 +69,7 @@ EXTRA_DIST         = \
         generate-llm-docs.py \
         validate-llm-docs.py \
         ompi_docs_common.py \
+        mpi-standard-abi.json \
         mpi-standard-apis.json \
         llms-src/openmpi-mpi-api.schema.json \
         llms-src/openmpi-docs-manifest.schema.json \

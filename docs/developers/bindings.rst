@@ -105,6 +105,63 @@ including any required key-value attributes for more complicated types. New
 types use a ``Type`` base class with functions that can be implemented by
 derived classes, each returning expanded Fortran or C code.
 
+Shared definitions: one source of truth
+---------------------------------------
+
+Two different generators emit the MPI Forum (standard) ABI, and they are
+driven by different inputs:
+
+* ``bindings.py`` (with the ``ompi_bindings`` package) generates the bindings
+  themselves, from the ``.c.in`` templates.
+* ``c_header.py`` generates the ABI ``mpi.h``, from ``pympistandard`` plus the
+  ABI JSON.
+
+Anything the two must agree on |mdash| the ``_ABI_INTERNAL`` name-mangling
+suffix, the opaque handle types, the list of deprecated/removed symbols that
+are pruned from the ABI |mdash| therefore lives in
+``ompi_bindings/consts.py``, which is the single source of truth.  Do not
+define such a value a second time in ``c_header.py``: the two generators would
+then be free to drift, and the emitted header would stop matching the emitted
+bindings.
+
+The tests described below enforce this, including a check that the deprecated
+list does not drift away from the ``__mpi_interface_deprecated__`` and
+``__mpi_interface_removed__`` markers in ``ompi/include/mpi.h.in``.
+
+Unit-testing the generator
+--------------------------
+
+The generator is covered by unit tests in
+``ompi/test/bindings-generator/test_bindings_generator.py``, which run as part of
+``make check`` (and therefore in CI).  They are plain Python: they import
+``ompi_bindings`` straight out of the source tree and render a handful of real
+``.c.in`` templates in memory.  Nothing is compiled, no MPI is launched, and no
+build products are needed, so you can also run them directly against a source
+tree that has never been built:
+
+.. code-block:: sh
+
+   shell$ python3 ompi/test/bindings-generator/test_bindings_generator.py
+
+The tests cover the parts of the generator that are pure and deterministic, and
+where a defect would otherwise only surface as a compile error in the generated
+code (or, for a naming or casing mistake, not until run time):
+
+* **Prototype parameter parsing** |mdash| the ``NAME``, ``NAME:COUNT``, and
+  ``NAME:COUNT:OUTCOUNT`` forms.
+* **Name mangling** |mdash| ``MPI_Xxx`` / ``PMPI_Xxx`` / ``_c`` bigcount
+  suffixes, and the ``_ABI_INTERNAL`` suffix used to keep the standard ABI
+  names from colliding with Open MPI's own.
+* **Prototype classification** |mdash| the predicates that decide whether a
+  function gets a bigcount variant or needs user-callback wrappers.
+* **Template rendering** |mdash| that representative templates render through
+  *both* the ``ompi`` and ``standard`` ABI paths without raising, and that the
+  standard ABI output calls the internal ``ompi_abi_*`` shim rather than the
+  public ``MPI_*`` symbol.
+
+If you add a new type to the ``Type`` hierarchy, a new prototype form, or a new
+code-emission path, add a test here as well.
+
 Other Considerations
 --------------------
 
