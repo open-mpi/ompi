@@ -1,0 +1,106 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise communicator creation and splitting paths that are stable
+ *   in a two-rank local CI job.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
+
+MPI_Comm split = MPI_COMM_NULL;
+ret = MPI_Comm_split(MPI_COMM_WORLD, 0, rank, &split);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == split) {
+    return 5;
+}
+ret = MPI_Comm_free(&split);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != split) {
+    return 6;
+}
+
+MPI_Comm shared = MPI_COMM_NULL;
+ret = MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank,
+                          MPI_INFO_NULL, &shared);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == shared) {
+    return 7;
+}
+ret = MPI_Comm_free(&shared);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL != shared) {
+    return 8;
+}
+
+MPI_Group world_group = MPI_GROUP_NULL;
+MPI_Group first_group = MPI_GROUP_NULL;
+int first_rank[1] = {0};
+ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
+    return 9;
+}
+ret = MPI_Group_incl(world_group, 1, first_rank, &first_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == first_group) {
+    return 10;
+}
+
+MPI_Comm created = MPI_COMM_NULL;
+ret = MPI_Comm_create(MPI_COMM_WORLD, first_group, &created);
+if (MPI_SUCCESS != ret) {
+    return 11;
+}
+if (0 == rank) {
+    if (MPI_COMM_NULL == created) {
+        return 12;
+    }
+    ret = MPI_Comm_free(&created);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != created) {
+        return 13;
+    }
+} else if (MPI_COMM_NULL != created) {
+    return 14;
+}
+
+if (0 == rank) {
+    ret = MPI_Comm_create_group(MPI_COMM_WORLD, first_group, 83,
+                                &created);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL == created) {
+        return 15;
+    }
+    ret = MPI_Comm_free(&created);
+    if (MPI_SUCCESS != ret || MPI_COMM_NULL != created) {
+        return 16;
+    }
+}
+
+ret = MPI_Group_free(&first_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != first_group) {
+    return 17;
+}
+ret = MPI_Group_free(&world_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+    return 18;
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 19;
+}

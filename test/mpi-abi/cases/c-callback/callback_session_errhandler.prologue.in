@@ -1,0 +1,41 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define a session error-handler callback that validates the ABI
+ *   session handle and error-code values passed back from Open MPI.
+ *   Sessions are independent of MPI_Init/MPI_Finalize, so the body uses
+ *   MPI_Session_init/finalize directly.
+ */
+struct session_errhandler_state {
+    MPI_Session session;
+    int calls;
+    int error_code;
+    int failure_code;
+};
+
+static struct session_errhandler_state session_errhandler_state;
+
+static void session_errhandler_callback(MPI_Session *session,
+                                        int *error_code, ...)
+{
+    if (NULL == session) {
+        session_errhandler_state.failure_code = 101;
+    } else if (*session != session_errhandler_state.session) {
+        session_errhandler_state.failure_code = 102;
+    } else if (NULL == error_code) {
+        session_errhandler_state.failure_code = 103;
+    } else if (MPI_ERR_OTHER != *error_code) {
+        session_errhandler_state.failure_code = 104;
+    } else {
+        session_errhandler_state.error_code = *error_code;
+        ++session_errhandler_state.calls;
+    }
+}

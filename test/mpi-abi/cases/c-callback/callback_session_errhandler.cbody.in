@@ -1,0 +1,76 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise session errhandler callback creation, get/set/call,
+ *   callback invocation, predefined-handler restoration, session
+ *   finalize, and errhandler cleanup through the standard ABI layer.
+ */
+session_errhandler_state.session = MPI_SESSION_NULL;
+session_errhandler_state.calls = 0;
+session_errhandler_state.error_code = MPI_SUCCESS;
+session_errhandler_state.failure_code = 0;
+
+MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+int ret = MPI_Session_create_errhandler(session_errhandler_callback,
+                                        &errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == errhandler) {
+    return 1;
+}
+
+ret = MPI_Session_init(MPI_INFO_NULL, MPI_ERRORS_RETURN,
+                       &session_errhandler_state.session);
+if (MPI_SUCCESS != ret ||
+    MPI_SESSION_NULL == session_errhandler_state.session) {
+    return 2;
+}
+
+ret = MPI_Session_set_errhandler(session_errhandler_state.session,
+                                 errhandler);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+
+MPI_Errhandler queried = MPI_ERRHANDLER_NULL;
+ret = MPI_Session_get_errhandler(session_errhandler_state.session,
+                                 &queried);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == queried) {
+    return 4;
+}
+ret = MPI_Errhandler_free(&queried);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != queried) {
+    return 5;
+}
+
+ret = MPI_Session_call_errhandler(session_errhandler_state.session,
+                                  MPI_ERR_OTHER);
+if (MPI_SUCCESS != ret || 0 != session_errhandler_state.failure_code ||
+    1 != session_errhandler_state.calls ||
+    MPI_ERR_OTHER != session_errhandler_state.error_code) {
+    return 6;
+}
+
+ret = MPI_Session_set_errhandler(session_errhandler_state.session,
+                                 MPI_ERRORS_RETURN);
+if (MPI_SUCCESS != ret) {
+    return 7;
+}
+ret = MPI_Errhandler_free(&errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler ||
+    0 != session_errhandler_state.failure_code ||
+    1 != session_errhandler_state.calls) {
+    return 8;
+}
+
+ret = MPI_Session_finalize(&session_errhandler_state.session);
+if (MPI_SUCCESS != ret ||
+    MPI_SESSION_NULL != session_errhandler_state.session) {
+    return 9;
+}

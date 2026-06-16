@@ -25,6 +25,6 @@
 # support needs to be first for dependencies
 SUBDIRS = support asm class threads datatype util mpool
 if PROJECT_OMPI
-SUBDIRS += monitoring spc mpi
+SUBDIRS += monitoring spc mpi mpi-abi
 endif
 DIST_SUBDIRS = event $(SUBDIRS)

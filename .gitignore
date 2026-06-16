@@ -457,6 +457,7 @@ test/datatype/opal_datatype_test
 test/datatype/partial
 test/datatype/position_noncontig
 test/datatype/reduce_local
+test/datatype/sizedtypes
 test/datatype/unpack_ooo
 test/datatype/unpack_hetero
 test/datatype/opal_datatype_bigcount
@@ -533,6 +534,16 @@ docs/*.inv
 venv
 py??
 __pycache__/
+
+# MPI ABI test runner output.  The bare names cover direct runner use
+# and VPATH builds whose top build directory is outside test/mpi-abi;
+# the test/mpi-abi/ names cover in-tree recursive make targets.
+check-results/
+check-abi-results/
+check-abi-mpich-results/
+test/mpi-abi/check-results/
+test/mpi-abi/check-abi-results/
+test/mpi-abi/check-abi-mpich-results/
 
 # Copies of PRRTE RST files (i.e., not source controlled in this tree)
 docs/prrte-rst-content

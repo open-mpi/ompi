@@ -1,0 +1,68 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Validate blocking and nonblocking probe APIs observe a pending
+ *   message before a real receive consumes it.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
+
+if (0 == rank) {
+    int value = 31;
+    ret = MPI_Send(&value, 1, MPI_INT, 1, 930, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 5;
+    }
+} else if (1 == rank) {
+    MPI_Status status;
+    ret = MPI_Probe(0, 930, MPI_COMM_WORLD, &status);
+    if (MPI_SUCCESS != ret || 0 != status.MPI_SOURCE ||
+        930 != status.MPI_TAG) {
+        return 6;
+    }
+    int count = -1;
+    ret = MPI_Get_count(&status, MPI_INT, &count);
+    if (MPI_SUCCESS != ret || 1 != count) {
+        return 7;
+    }
+    int flag = 0;
+    ret = MPI_Iprobe(0, 930, MPI_COMM_WORLD, &flag, &status);
+    if (MPI_SUCCESS != ret || !flag || 0 != status.MPI_SOURCE ||
+        930 != status.MPI_TAG) {
+        return 8;
+    }
+    int value = -1;
+    ret = MPI_Recv(&value, 1, MPI_INT, 0, 930, MPI_COMM_WORLD,
+                   &status);
+    if (MPI_SUCCESS != ret || 31 != value) {
+        return 9;
+    }
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 10;
+}

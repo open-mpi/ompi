@@ -1,0 +1,71 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define communicator attribute callbacks that validate the ABI values
+ *   passed back from Open MPI.  The body creates the keyval and drives
+ *   the object lifecycle; these callbacks record whether MPI supplied
+ *   the expected standard ABI communicator, keyval, extra_state, and
+ *   attribute values.
+ */
+struct comm_attr_state {
+    MPI_Comm source;
+    MPI_Comm duplicate;
+    int keyval;
+    int original_attr;
+    int copied_attr;
+    int copy_count;
+    int original_delete_count;
+    int copied_delete_count;
+    int failure_code;
+};
+
+static struct comm_attr_state comm_state;
+
+static int comm_attr_copy(MPI_Comm oldcomm, int keyval, void *extra_state,
+                          void *attribute_val_in, void *attribute_val_out,
+                          int *flag)
+{
+    struct comm_attr_state *state = (struct comm_attr_state *) extra_state;
+    if (&comm_state != state) {
+        comm_state.failure_code = 101;
+    } else if (oldcomm != state->source) {
+        state->failure_code = 102;
+    } else if (keyval != state->keyval) {
+        state->failure_code = 103;
+    } else if (&state->original_attr != attribute_val_in) {
+        state->failure_code = 104;
+    } else {
+        *((void **) attribute_val_out) = &state->copied_attr;
+        *flag = 1;
+        ++state->copy_count;
+    }
+    return MPI_SUCCESS;
+}
+
+static int comm_attr_delete(MPI_Comm comm, int keyval, void *attribute_val,
+                            void *extra_state)
+{
+    struct comm_attr_state *state = (struct comm_attr_state *) extra_state;
+    if (&comm_state != state) {
+        comm_state.failure_code = 111;
+    } else if (keyval != state->keyval) {
+        state->failure_code = 112;
+    } else if (comm == state->source &&
+               &state->original_attr == attribute_val) {
+        ++state->original_delete_count;
+    } else if (comm == state->duplicate &&
+               &state->copied_attr == attribute_val) {
+        ++state->copied_delete_count;
+    } else {
+        state->failure_code = 113;
+    }
+    return MPI_SUCCESS;
+}

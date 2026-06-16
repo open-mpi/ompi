@@ -1,0 +1,68 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Check status and sentinel conversions, including ignore sentinels,
+ *   because those values are pointer-like and easy to mis-map.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int send_value = 29;
+int recv_value = -1;
+MPI_Status status;
+ret = MPI_Sendrecv(&send_value, 1, MPI_INT, 0, 81,
+                   &recv_value, 1, MPI_INT, 0, 81,
+                   MPI_COMM_WORLD, &status);
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+if (29 != recv_value || 0 != status.MPI_SOURCE ||
+    81 != status.MPI_TAG) {
+    return 20;
+}
+
+int count = -1;
+ret = MPI_Get_count(&status, MPI_INT, &count);
+if (MPI_SUCCESS != ret || 1 != count) {
+    return 30;
+}
+
+recv_value = -1;
+ret = MPI_Sendrecv(&send_value, 1, MPI_INT, 0, 82,
+                   &recv_value, 1, MPI_INT, 0, 82,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || 29 != recv_value) {
+    return 40;
+}
+
+MPI_Request request = MPI_REQUEST_NULL;
+ret = MPI_Ibarrier(MPI_COMM_WORLD, &request);
+if (MPI_SUCCESS != ret) {
+    return 50;
+}
+ret = MPI_Waitall(1, &request, MPI_STATUSES_IGNORE);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+    return 60;
+}
+
+int inplace_value = 5;
+ret = MPI_Allreduce(MPI_IN_PLACE, &inplace_value, 1, MPI_INT,
+                    MPI_SUM, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || 5 != inplace_value) {
+    return 70;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 80;
+}
