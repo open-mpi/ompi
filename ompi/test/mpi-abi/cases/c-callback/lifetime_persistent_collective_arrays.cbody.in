@@ -1,0 +1,148 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise retained converted-array lifetime for a persistent
+ *   collective.  MPI_Alltoallw_init must capture the converted count,
+ *   displacement, and datatype arrays for later MPI_Start calls.  This
+ *   probe overwrites the user-side arrays immediately after the init
+ *   call, then starts and completes the persistent request twice.  Both
+ *   completions must use the originally supplied ABI values, and the
+ *   retained converted storage must survive until MPI_Request_free.
+ */
+int exit_code = 0;
+int mpi_initialized = 0;
+int *sendbuf = NULL;
+int *recvbuf = NULL;
+int *sendcounts = NULL;
+int *recvcounts = NULL;
+int *sdispls = NULL;
+int *rdispls = NULL;
+MPI_Datatype *sendtypes = NULL;
+MPI_Datatype *recvtypes = NULL;
+MPI_Request request = MPI_REQUEST_NULL;
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+mpi_initialized = 1;
+
+int rank = -1;
+int size = 0;
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    exit_code = 2;
+    goto cleanup;
+}
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret || size < 1) {
+    exit_code = 3;
+    goto cleanup;
+}
+
+sendbuf = calloc((size_t) size, sizeof(int));
+recvbuf = calloc((size_t) size, sizeof(int));
+sendcounts = calloc((size_t) size, sizeof(int));
+recvcounts = calloc((size_t) size, sizeof(int));
+sdispls = calloc((size_t) size, sizeof(int));
+rdispls = calloc((size_t) size, sizeof(int));
+sendtypes = calloc((size_t) size, sizeof(MPI_Datatype));
+recvtypes = calloc((size_t) size, sizeof(MPI_Datatype));
+if (NULL == sendbuf || NULL == recvbuf || NULL == sendcounts ||
+    NULL == recvcounts || NULL == sdispls || NULL == rdispls ||
+    NULL == sendtypes || NULL == recvtypes) {
+    exit_code = 4;
+    goto cleanup;
+}
+
+for (int i = 0; i < size; ++i) {
+    sendbuf[i] = rank * 100 + i;
+    recvbuf[i] = -1;
+    sendcounts[i] = 1;
+    recvcounts[i] = 1;
+    sdispls[i] = i * (int) sizeof(int);
+    rdispls[i] = i * (int) sizeof(int);
+    sendtypes[i] = MPI_INT;
+    recvtypes[i] = MPI_INT;
+}
+
+ret = MPI_Alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes,
+                         recvbuf, recvcounts, rdispls, recvtypes,
+                         MPI_COMM_WORLD, MPI_INFO_NULL, &request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request) {
+    exit_code = 5;
+    goto cleanup;
+}
+
+for (int i = 0; i < size; ++i) {
+    sendcounts[i] = 0;
+    recvcounts[i] = 0;
+    sdispls[i] = 0;
+    rdispls[i] = 0;
+    sendtypes[i] = MPI_DATATYPE_NULL;
+    recvtypes[i] = MPI_DATATYPE_NULL;
+}
+
+for (int iteration = 0; iteration < 2; ++iteration) {
+    for (int i = 0; i < size; ++i) {
+        sendbuf[i] = (iteration + 1) * 1000 + rank * 100 + i;
+        recvbuf[i] = -1;
+    }
+
+    ret = MPI_Start(&request);
+    if (MPI_SUCCESS != ret) {
+        exit_code = 6;
+        goto cleanup;
+    }
+    ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret) {
+        exit_code = 7;
+        goto cleanup;
+    }
+
+    for (int peer = 0; peer < size; ++peer) {
+        int expected = (iteration + 1) * 1000 + peer * 100 + rank;
+        if (expected != recvbuf[peer]) {
+            exit_code = 8;
+            goto cleanup;
+        }
+    }
+}
+
+ret = MPI_Request_free(&request);
+if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request) {
+    exit_code = 9;
+    goto cleanup;
+}
+
+cleanup:
+if (MPI_REQUEST_NULL != request) {
+    (void) MPI_Request_free(&request);
+}
+
+free(sendbuf);
+free(recvbuf);
+free(sendcounts);
+free(recvcounts);
+free(sdispls);
+free(rdispls);
+free(sendtypes);
+free(recvtypes);
+
+if (mpi_initialized) {
+    ret = MPI_Finalize();
+    if (MPI_SUCCESS != ret && 0 == exit_code) {
+        exit_code = 10;
+    }
+}
+
+if (0 != exit_code) {
+    return exit_code;
+}

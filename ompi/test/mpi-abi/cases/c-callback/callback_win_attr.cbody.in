@@ -1,0 +1,87 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise window attribute keyval creation, set/get/delete,
+ *   win-free delete callbacks, and keyval cleanup.  The prologue
+ *   callbacks validate ABI-facing window, keyval, extra_state, and
+ *   attribute values.  There is no duplicate-copy path for windows.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int value = 0;
+win_state.win = MPI_WIN_NULL;
+win_state.keyval = MPI_KEYVAL_INVALID;
+win_state.explicit_attr = 59;
+win_state.free_attr = 61;
+
+ret = MPI_Win_create(&value, sizeof(value), sizeof(value), MPI_INFO_NULL,
+                     MPI_COMM_WORLD, &win_state.win);
+if (MPI_SUCCESS != ret || MPI_WIN_NULL == win_state.win) {
+    return 2;
+}
+
+ret = MPI_Win_create_keyval(win_attr_copy, win_attr_delete,
+                            &win_state.keyval, &win_state);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == win_state.keyval) {
+    return 3;
+}
+
+ret = MPI_Win_set_attr(win_state.win, win_state.keyval,
+                       &win_state.explicit_attr);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+
+void *attribute = NULL;
+int flag = 0;
+ret = MPI_Win_get_attr(win_state.win, win_state.keyval, &attribute, &flag);
+if (MPI_SUCCESS != ret || 1 != flag ||
+    &win_state.explicit_attr != attribute) {
+    return 5;
+}
+
+ret = MPI_Win_delete_attr(win_state.win, win_state.keyval);
+if (MPI_SUCCESS != ret || 0 != win_state.failure_code ||
+    1 != win_state.explicit_delete_count) {
+    return 6;
+}
+
+flag = 1;
+ret = MPI_Win_get_attr(win_state.win, win_state.keyval, &attribute, &flag);
+if (MPI_SUCCESS != ret || 0 != flag) {
+    return 7;
+}
+
+ret = MPI_Win_set_attr(win_state.win, win_state.keyval,
+                       &win_state.free_attr);
+if (MPI_SUCCESS != ret) {
+    return 8;
+}
+
+ret = MPI_Win_free(&win_state.win);
+if (MPI_SUCCESS != ret || MPI_WIN_NULL != win_state.win ||
+    0 != win_state.failure_code || 1 != win_state.free_delete_count ||
+    0 != win_state.copy_count) {
+    return 9;
+}
+
+ret = MPI_Win_free_keyval(&win_state.keyval);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != win_state.keyval) {
+    return 10;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 11;
+}

@@ -1,0 +1,44 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Validate initialization state APIs before, during, and after one
+ *   MPI lifetime in a dedicated executable.
+ */
+int initialized = -1;
+int finalized = -1;
+int ret = MPI_Initialized(&initialized);
+if (MPI_SUCCESS != ret || initialized) {
+    return 1;
+}
+ret = MPI_Finalized(&finalized);
+if (MPI_SUCCESS != ret || finalized) {
+    return 2;
+}
+ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+ret = MPI_Initialized(&initialized);
+if (MPI_SUCCESS != ret || !initialized) {
+    return 4;
+}
+ret = MPI_Finalized(&finalized);
+if (MPI_SUCCESS != ret || finalized) {
+    return 5;
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 6;
+}
+ret = MPI_Finalized(&finalized);
+if (MPI_SUCCESS != ret || !finalized) {
+    return 7;
+}

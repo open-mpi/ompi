@@ -225,6 +225,16 @@ defines shared build rules and variables (like `OMPI_BINDINGS_GENERATOR`).
 Changes to it also only require `make`, not the full `autogen.pl` +
 `./configure` process.
 
+## Python compatibility
+
+Open MPI still supports Python 3.7 in some CI and user environments.
+Python code in the build system, binding generators, documentation
+tooling, and tests must remain compatible with Python 3.7 unless the
+project-wide minimum is explicitly raised.  Do not use syntax or
+standard-library APIs introduced after Python 3.7 without a fallback.
+When changing Python parser logic, remember that some AST details differ
+between Python 3.7 and newer versions.
+
 **"Did I break it?" — layered:**
 
 1. **Build cleanly.** A clean `make` after your change is the baseline.
@@ -372,6 +382,7 @@ honor:
 |------|--------------|
 | `opal/` | OPAL portability layer (`opal/mca/` = its frameworks) |
 | `ompi/` | OMPI / MPI layer; `ompi/mpi/` = language bindings, `ompi/mca/` = frameworks |
+| `ompi/mpi/README_ABI.md` | **MPI-5 ABI support** — how Open MPI supports the standardized binary interface |
 | `oshmem/` | OpenSHMEM layer |
 | `3rd-party/` | embedded upstreams + submodules (OpenPMIx, PRRTE fork) — don't hand-edit |
 | `config/` | m4 macros for Autoconf / Automake / Libtool |

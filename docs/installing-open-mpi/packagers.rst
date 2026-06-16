@@ -25,11 +25,13 @@ the following:
    # Install Sphinx so that Open MPI can re-build its docs with the
    # installed PRRTE's docs
 
-   virtualenv venv
-   . ./venv/bin/activate
-   pip install docs/requirements.txt
+   shell$ python3 -m venv venv
+   # Or: python3 -m virtualenv venv
+   # Or: virtualenv --python=python3 venv
+   shell$ . ./venv/bin/activate
+   shell$ pip install -r requirements.txt
 
-   ./configure --with-libevent=external --with-hwloc=external \
+   shell$ ./configure --with-libevent=external --with-hwloc=external \
        --with-pmix=external --with-prrte=external ...
 
 .. important:: Note the installation of the Sphinx tool so that Open

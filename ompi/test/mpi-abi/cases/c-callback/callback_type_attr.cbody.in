@@ -1,0 +1,109 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise datatype attribute keyval creation, set/get/delete,
+ *   duplicate-triggered copy callbacks, datatype-free delete callbacks,
+ *   and keyval cleanup.  The prologue callbacks validate the ABI-facing
+ *   datatype, keyval, extra_state, and attribute values.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+type_state.source = MPI_DATATYPE_NULL;
+type_state.duplicate = MPI_DATATYPE_NULL;
+type_state.keyval = MPI_KEYVAL_INVALID;
+type_state.original_attr = 31;
+type_state.copied_attr = 43;
+
+ret = MPI_Type_dup(MPI_INT, &type_state.source);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == type_state.source) {
+    return 2;
+}
+
+ret = MPI_Type_create_keyval(type_attr_copy, type_attr_delete,
+                             &type_state.keyval, &type_state);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID == type_state.keyval) {
+    return 3;
+}
+
+ret = MPI_Type_set_attr(type_state.source, type_state.keyval,
+                        &type_state.original_attr);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+
+void *attribute = NULL;
+int flag = 0;
+ret = MPI_Type_get_attr(type_state.source, type_state.keyval,
+                        &attribute, &flag);
+if (MPI_SUCCESS != ret || 1 != flag ||
+    &type_state.original_attr != attribute) {
+    return 5;
+}
+
+ret = MPI_Type_dup(type_state.source, &type_state.duplicate);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == type_state.duplicate) {
+    return 6;
+}
+if (0 != type_state.failure_code || 1 != type_state.copy_count) {
+    return 7;
+}
+
+attribute = NULL;
+flag = 0;
+ret = MPI_Type_get_attr(type_state.duplicate, type_state.keyval,
+                        &attribute, &flag);
+if (MPI_SUCCESS != ret || 1 != flag ||
+    &type_state.copied_attr != attribute) {
+    return 8;
+}
+
+ret = MPI_Type_delete_attr(type_state.source, type_state.keyval);
+if (MPI_SUCCESS != ret || 0 != type_state.failure_code ||
+    1 != type_state.original_delete_count) {
+    return 9;
+}
+
+flag = 1;
+ret = MPI_Type_get_attr(type_state.source, type_state.keyval,
+                        &attribute, &flag);
+if (MPI_SUCCESS != ret || 0 != flag) {
+    return 10;
+}
+
+ret = MPI_Type_free(&type_state.duplicate);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != type_state.duplicate ||
+    0 != type_state.failure_code || 1 != type_state.copied_delete_count) {
+    return 11;
+}
+
+ret = MPI_Type_free_keyval(&type_state.keyval);
+if (MPI_SUCCESS != ret || MPI_KEYVAL_INVALID != type_state.keyval ||
+    0 != type_state.failure_code ||
+    1 != type_state.original_delete_count ||
+    1 != type_state.copied_delete_count) {
+    return 12;
+}
+
+ret = MPI_Type_free(&type_state.source);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != type_state.source ||
+    0 != type_state.failure_code ||
+    1 != type_state.original_delete_count ||
+    1 != type_state.copied_delete_count) {
+    return 13;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 14;
+}
