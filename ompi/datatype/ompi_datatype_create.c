@@ -42,7 +42,12 @@ static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
     datatype->d_f_to_c_index     = -1;
     datatype->id                 = -1;
     datatype->d_keyhash          = NULL;
-    datatype->name[0]            = '\0';
+    /* The externally visible name is a heap buffer sized to the MPI Forum ABI
+     * maximum so the standard-ABI entry points can store a full-length name. */
+    datatype->name               = (char *) malloc(OMPI_MPI_MAX_OBJECT_NAME_ABI);
+    if (NULL != datatype->name) {
+        datatype->name[0]        = '\0';
+    }
     datatype->packed_description = 0;
     datatype->pml_data           = 0;
 }
@@ -66,8 +71,8 @@ static void __ompi_datatype_release(ompi_datatype_t * datatype)
         ompi_attr_delete_all( TYPE_ATTR, datatype, datatype->d_keyhash );
         OBJ_RELEASE( datatype->d_keyhash );
     }
-    /* make sure the name is set to empty */
-    datatype->name[0] = '\0';
+    free(datatype->name);
+    datatype->name = NULL;
 }
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_datatype_t, __ompi_datatype_allocate, __ompi_datatype_release);
@@ -76,6 +81,16 @@ ompi_datatype_t * ompi_datatype_create( size_t expectedSize )
 {
     int ret;
     ompi_datatype_t * datatype = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);
+
+    /* The constructor allocates the heap name buffer; if that failed, treat
+     * the whole creation as out-of-memory so no caller ever sees a datatype
+     * with a NULL name (callers already handle a NULL return here). */
+    if (NULL == datatype || NULL == datatype->name) {
+        if (NULL != datatype) {
+            OBJ_RELEASE(datatype);
+        }
+        return NULL;
+    }
 
     ret = opal_datatype_create_desc( &(datatype->super), expectedSize);
     if (OPAL_SUCCESS != ret)
@@ -118,8 +133,9 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
 
     char *new_name;
     opal_asprintf(&new_name, "Dup %s", oldType->name);
-    opal_string_copy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME);
-    new_ompi_datatype->name[MPI_MAX_OBJECT_NAME - 1] = '\0';
+    /* opal_string_copy() always NUL-terminates, so no manual terminator is
+     * needed after it. */
+    opal_string_copy(new_ompi_datatype->name, new_name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
     free(new_name);
 
     return OMPI_SUCCESS;

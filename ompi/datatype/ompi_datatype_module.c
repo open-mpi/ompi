@@ -343,10 +343,25 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     [OMPI_DATATYPE_MPI_FLOAT] = &ompi_mpi_float.dt,
     [OMPI_DATATYPE_MPI_DOUBLE] = &ompi_mpi_double.dt,
     [OMPI_DATATYPE_MPI_LONG_DOUBLE] = &ompi_mpi_long_double.dt,
+    /* Only emit an array entry for the Fortran complex kinds this build
+     * actually provides.  When a kind is unavailable its OMPI_DATATYPE_MPI_*
+     * index macro is redefined to OMPI_DATATYPE_MPI_UNAVAILABLE, so an
+     * unconditional entry would collide with the unavailable sentinel's slot
+     * (a -Winitializer-overrides warning and, worse, would leave the kind's
+     * real numeric slot NULL).  Empty slots are handled at the point of use in
+     * ompi_datatype_args.c. */
+#if OMPI_HAVE_FORTRAN_COMPLEX4
     [OMPI_DATATYPE_MPI_COMPLEX4] = &ompi_mpi_complex4.dt,
+#endif
+#if OMPI_HAVE_FORTRAN_COMPLEX8
     [OMPI_DATATYPE_MPI_COMPLEX8] = &ompi_mpi_complex8.dt,
+#endif
+#if OMPI_HAVE_FORTRAN_COMPLEX16
     [OMPI_DATATYPE_MPI_COMPLEX16] = &ompi_mpi_complex16.dt,
+#endif
+#if OMPI_HAVE_FORTRAN_COMPLEX32
     [OMPI_DATATYPE_MPI_COMPLEX32] = &ompi_mpi_complex32.dt,
+#endif
     [OMPI_DATATYPE_MPI_WCHAR] = &ompi_mpi_wchar.dt,
     [OMPI_DATATYPE_MPI_PACKED] = &ompi_mpi_packed.dt,
 
@@ -460,7 +475,10 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        opal_string_copy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );          \
+        /* name is a compile-time string literal; point at it rather than       \
+         * copying, since the heap name buffer is not allocated for predefined   \
+         * datatypes until ompi_datatype_init() finishes (see below). */         \
+        (PDATA)->name = (char *) (MPIDDTNAME);                                        \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
@@ -478,14 +496,15 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         ptype->super.desc.desc = NULL;                                               \
         ptype->super.opt_desc.desc = NULL;                                           \
         OBJ_RELEASE( ptype );                                                        \
-        opal_string_copy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );        \
+        (PDATA)->name = (char *) (MPIDDTNAME);                                        \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)                        \
     do {                                                                             \
         /* just memcpy as it's easier this way */                                    \
         memcpy( (PDATA), (PORIGDDT), sizeof(ompi_datatype_t) );                      \
-        opal_string_copy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );          \
+        /* override the name pointer copied by the memcpy above */                   \
+        (PDATA)->name = (char *) (MPIDDTNAME);                                        \
         /* forget the language flag */                                               \
         (PDATA)->super.flags &= ~OMPI_DATATYPE_FLAG_DATA_LANGUAGE;                   \
         (PDATA)->super.flags &= ~OPAL_DATATYPE_FLAG_PREDEFINED;                      \
@@ -698,6 +717,24 @@ int32_t ompi_datatype_init( void )
         } else {
             datatype->flags &= ~OPAL_DATATYPE_FLAG_NO_GAPS;
         }
+    }
+
+    /* Each predefined datatype's name currently points at a compile-time string
+     * literal (from its static initializer or the DECLARE_* macros above).
+     * Replace it with a writable heap buffer sized to the MPI Forum ABI maximum
+     * so that MPI_Type_set_name() can store a full-length name into a predefined
+     * datatype without writing through a read-only literal.  Predefined
+     * datatypes live for the lifetime of the process (ompi_datatype_finalize()
+     * never destructs them), so these buffers are intentionally never freed. */
+    for( i = 0; i < ompi_datatype_number_of_predefined_data; i++ ) {
+        ompi_datatype_t* datatype =
+            (ompi_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
+        char* heap_name = (char*)malloc(OMPI_MPI_MAX_OBJECT_NAME_ABI);
+        if( NULL == heap_name ) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        opal_string_copy(heap_name, datatype->name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
+        datatype->name = heap_name;
     }
 
     /* get a reference to the attributes subsys */

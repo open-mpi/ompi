@@ -1198,6 +1198,11 @@ AC_SUBST(OPAL_3RDPARTY_DISTCLEAN_DIRS)
 OPAL_SETUP_FT
 
 ##################################
+# MPI Forum values
+##################################
+OMPI_GET_FORUM_ABI_VALUES
+
+##################################
 # MCA
 ##################################
 

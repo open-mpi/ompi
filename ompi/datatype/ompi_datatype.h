@@ -83,11 +83,15 @@ struct ompi_datatype_t {
     void*              args;                     /**< Data description for the user */
     opal_atomic_intptr_t packed_description;     /**< Packed description of the datatype */
     uint64_t           pml_data;                 /**< PML-specific information */
-    /* --- cacheline 6 boundary (384 bytes) --- */
-    char               name[MPI_MAX_OBJECT_NAME];/**< Externally visible name */
-    /* --- cacheline 7 boundary (448 bytes) --- */
-
-    /* size: 448, cachelines: 7, members: 7 */
+    /* Externally visible name.  This is a heap-allocated pointer rather than an
+     * inline array so that sizing the buffer to the MPI Forum ABI maximum
+     * (OMPI_MPI_MAX_OBJECT_NAME_ABI) does not grow ompi_datatype_t and consume
+     * the predefined-handle padding slack (see PREDEFINED_DATATYPE_PAD below).
+     * The buffer is always allocated at OMPI_MPI_MAX_OBJECT_NAME_ABI bytes; the
+     * traditional OMPI entry points still limit the stored name to
+     * OPAL_MAX_OBJECT_NAME (== MPI_MAX_OBJECT_NAME).  This mirrors the pointer
+     * conversions of ompi_communicator_t.c_name and ompi_win_t.w_name. */
+    char              *name;                      /**< Externally visible name */
 };
 
 typedef struct ompi_datatype_t ompi_datatype_t;
@@ -111,6 +115,14 @@ struct ompi_predefined_datatype_t {
 };
 
 typedef struct ompi_predefined_datatype_t ompi_predefined_datatype_t;
+
+/* Keep real slack in the predefined-handle padding: if ompi_datatype_t ever
+ * grows to (or past) PREDEFINED_DATATYPE_PAD, the padding[] array above
+ * silently becomes zero-length (a compiler extension) or fails to compile.
+ * Catch that here with an explicit, self-documenting error instead. */
+_Static_assert(sizeof(ompi_datatype_t) < PREDEFINED_DATATYPE_PAD,
+               "ompi_datatype_t no longer fits within PREDEFINED_DATATYPE_PAD; "
+               "raise PREDEFINED_DATATYPE_PAD to preserve predefined-handle slack");
 
 /*
  * The list of predefined datatypes is specified in ompi/include/mpi.h.in
