@@ -37,7 +37,7 @@ ABI_INTERNAL_SUFFIX = '_ABI_INTERNAL'
 # The functions here are exactly those that ompi/include/mpi.h.in marks
 # with __mpi_interface_deprecated__ or __mpi_interface_removed__; the
 # remaining entries are constants, which cannot carry such an attribute.
-# test/bindings-generator/ asserts that correspondence, so this list cannot
+# ompi/test/bindings-generator/ asserts that correspondence, so this list cannot
 # quietly drift away from mpi.h.in.
 #
 # TODO: this list is a workaround until pympistandard can indicate which

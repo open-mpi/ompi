@@ -1,0 +1,138 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise MPI_Op_create and MPI_Op_free with a callback that sees
+ *   standard ABI datatype handles and mutates the reduction output
+ *   buffer.  MPI_Reduce_local guarantees local callback execution; the
+ *   two-rank MPI_Allreduce path verifies the created operation is also
+ *   usable by MPI collective code.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int rank = -1;
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+int size = 0;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+/*
+ * Require exactly the two ranks this case is launched with: the
+ * MPI_Allreduce path below is meant to prove the user-defined op is
+ * usable by a real multi-rank collective, which a single-rank run would
+ * satisfy trivially.
+ */
+if (MPI_SUCCESS != ret || size != @EXPECTED_RANKS@) {
+    return 3;
+}
+
+user_op_state.calls = 0;
+user_op_state.total_length = 0;
+user_op_state.failure_code = 0;
+
+MPI_Op op = MPI_OP_NULL;
+ret = MPI_Op_create(user_op_callback, 1, &op);
+if (MPI_SUCCESS != ret || MPI_OP_NULL == op) {
+    return 4;
+}
+
+int commute = 0;
+ret = MPI_Op_commutative(op, &commute);
+if (MPI_SUCCESS != ret || !commute) {
+    return 5;
+}
+
+user_op_expected_datatype = MPI_INT;
+
+int local_in[2] = {3, 5};
+int local_inout[2] = {7, 11};
+ret = MPI_Reduce_local(local_in, local_inout, 2, MPI_INT, op);
+if (MPI_SUCCESS != ret || 10 != local_inout[0] ||
+    16 != local_inout[1] || 0 != user_op_state.failure_code ||
+    user_op_state.calls < 1 || user_op_state.total_length < 2) {
+    return 6;
+}
+
+int send = rank + 1;
+int recv = 0;
+int expected = (size * (size + 1)) / 2;
+ret = MPI_Allreduce(&send, &recv, 1, MPI_INT, op, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || expected != recv ||
+    0 != user_op_state.failure_code) {
+    return 7;
+}
+
+/*
+ * Broaden datatype-converter coverage: drive the same user op through
+ * MPI_Reduce_local with a range of predefined datatypes and one derived
+ * type.  The callback validates that the datatype handle it receives is
+ * exactly the expected standard ABI handle, which only holds if the ABI
+ * op's datatype converter (o_datatype_converter) translated OMPI's
+ * internal handle correctly.  The predefined types exercise distinct
+ * branches of the converter's handle map; the derived type exercises its
+ * pass-through (non-predefined) path.
+ */
+unsigned char reduce_in[64];
+unsigned char reduce_out[64];
+for (int i = 0; i < (int) sizeof(reduce_in); ++i) {
+    reduce_in[i] = 0;
+    reduce_out[i] = 0;
+}
+
+MPI_Datatype predefined[] = {
+    MPI_DOUBLE, MPI_FLOAT, MPI_LONG, MPI_SHORT, MPI_CHAR, MPI_FLOAT_INT
+};
+for (int i = 0; i < (int) (sizeof(predefined) / sizeof(predefined[0])); ++i) {
+    int calls_before = user_op_state.calls;
+    user_op_expected_datatype = predefined[i];
+    ret = MPI_Reduce_local(reduce_in, reduce_out, 1, predefined[i], op);
+    if (MPI_SUCCESS != ret || 0 != user_op_state.failure_code ||
+        user_op_state.calls != calls_before + 1) {
+        return 10;
+    }
+}
+
+MPI_Datatype derived = MPI_DATATYPE_NULL;
+ret = MPI_Type_contiguous(2, MPI_INT, &derived);
+if (MPI_SUCCESS != ret) {
+    return 11;
+}
+ret = MPI_Type_commit(&derived);
+if (MPI_SUCCESS != ret) {
+    return 11;
+}
+{
+    int calls_before = user_op_state.calls;
+    user_op_expected_datatype = derived;
+    ret = MPI_Reduce_local(reduce_in, reduce_out, 1, derived, op);
+    if (MPI_SUCCESS != ret || 0 != user_op_state.failure_code ||
+        user_op_state.calls != calls_before + 1) {
+        return 12;
+    }
+}
+ret = MPI_Type_free(&derived);
+if (MPI_SUCCESS != ret) {
+    return 13;
+}
+
+ret = MPI_Op_free(&op);
+if (MPI_SUCCESS != ret || MPI_OP_NULL != op ||
+    0 != user_op_state.failure_code) {
+    return 8;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 9;
+}

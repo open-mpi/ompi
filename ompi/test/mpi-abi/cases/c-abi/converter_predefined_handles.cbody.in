@@ -1,0 +1,51 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Round-trip every metadata-declared predefined C handle that the
+ *   installed standard ABI header exposes through *_toint/fromint.
+ *   Generated placeholders keep the expected handle set tied to docs/.
+ */
+#define ABI_CHECK_PREDEFINED_HANDLE(kind, value) do {                       \
+    ++predefined_ ## kind ## _checks;                                   \
+    int abi_value = MPI_ ## kind ## _toint(value);                      \
+    if (abi_value != (int) (intptr_t) (value)) {                        \
+        fprintf(stderr, "ABI_FAIL:predefined:%s:toint\n", #value);     \
+        return 20;                                                      \
+    }                                                                   \
+    if (value != MPI_ ## kind ## _fromint(abi_value)) {                 \
+        fprintf(stderr, "ABI_FAIL:predefined:%s:fromint\n", #value);   \
+        return 20;                                                      \
+    }                                                                   \
+    if (abi_value != PMPI_ ## kind ## _toint(value)) {                  \
+        fprintf(stderr, "ABI_FAIL:predefined:%s:ptoint\n", #value);    \
+        return 20;                                                      \
+    }                                                                   \
+    if (value != PMPI_ ## kind ## _fromint(abi_value)) {                \
+        fprintf(stderr, "ABI_FAIL:predefined:%s:pfromint\n", #value);  \
+        return 20;                                                      \
+    }                                                                   \
+} while (0)
+
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+@PREDEFINED_HANDLE_DECLS@
+
+@PREDEFINED_HANDLE_CHECKS@
+
+@PREDEFINED_HANDLE_GUARDS@
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 12;
+}

@@ -1,0 +1,51 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise the Fortran numeric intrinsic type support routines
+ *   MPI_Type_match_size and MPI_Type_create_f90_{integer,real,complex}
+ *   (MPI-5.0 Section 19.1.9).  These operate on the optional, size-specific
+ *   and KIND-parameterized Fortran datatypes, so they require Fortran type
+ *   support to be available; per the standard it is erroneous to request a
+ *   (typeclass, size) or (p, r) not supported by the compiler.  This probe
+ *   is therefore gated with requires_fortran and is skipped when the MPI
+ *   installation was built without Fortran bindings.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+MPI_Datatype matched = MPI_DATATYPE_NULL;
+ret = MPI_Type_match_size(MPI_TYPECLASS_INTEGER, sizeof(int),
+                          &matched);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == matched) {
+    return 2;
+}
+MPI_Datatype f90_integer = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_f90_integer(9, &f90_integer);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == f90_integer) {
+    return 3;
+}
+MPI_Datatype f90_real = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_f90_real(6, 37, &f90_real);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == f90_real) {
+    return 4;
+}
+MPI_Datatype f90_complex = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_f90_complex(6, 37, &f90_complex);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == f90_complex) {
+    return 5;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 6;
+}

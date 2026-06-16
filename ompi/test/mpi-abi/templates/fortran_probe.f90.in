@@ -1,0 +1,14 @@
+! -*- fortran -*-
+!
+! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+! $COPYRIGHT$
+!
+! Additional copyrights may follow
+!
+! $HEADER$
+!
+
+program abi_probe
+@USE_STATEMENT@
+@BODY@
+end program abi_probe

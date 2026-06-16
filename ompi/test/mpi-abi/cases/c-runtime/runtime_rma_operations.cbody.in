@@ -1,0 +1,378 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise active-target and passive-target RMA synchronization,
+ *   one-sided data movement, atomic operations, and request-based RMA
+ *   calls with real value checks.
+ *
+ *   This probe intentionally uses exactly two ranks and one integer
+ *   window.  The small setup keeps failures attributable to ABI
+ *   argument conversion rather than to large-memory or multi-target
+ *   progress behavior.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int rank = -1;
+int size = -1;
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret || size != @EXPECTED_RANKS@) {
+    return 3;
+}
+
+int storage = rank;
+MPI_Win win = MPI_WIN_NULL;
+ret = MPI_Win_create(&storage, sizeof(storage), sizeof(storage),
+                     MPI_INFO_NULL, MPI_COMM_WORLD, &win);
+if (MPI_SUCCESS != ret || MPI_WIN_NULL == win) {
+    return 4;
+}
+
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 5;
+}
+if (0 == rank) {
+    int put_value = 11;
+    ret = MPI_Put(&put_value, 1, MPI_INT, 1, 0, 1, MPI_INT, win);
+    if (MPI_SUCCESS != ret) {
+        return 6;
+    }
+}
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 7;
+}
+if (1 == rank && 11 != storage) {
+    return 8;
+}
+
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 9;
+}
+int got = -1;
+if (0 == rank) {
+    ret = MPI_Get(&got, 1, MPI_INT, 1, 0, 1, MPI_INT, win);
+    if (MPI_SUCCESS != ret) {
+        return 10;
+    }
+}
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 11;
+}
+if (0 == rank && 11 != got) {
+    return 12;
+}
+
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 13;
+}
+if (1 == rank) {
+    int add = 5;
+    ret = MPI_Accumulate(&add, 1, MPI_INT, 0, 0, 1, MPI_INT,
+                         MPI_SUM, win);
+    if (MPI_SUCCESS != ret) {
+        return 14;
+    }
+}
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 15;
+}
+if (0 == rank && 5 != storage) {
+    return 16;
+}
+
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 17;
+}
+int get_accumulate_result = -1;
+if (0 == rank) {
+    int origin = 3;
+    ret = MPI_Get_accumulate(&origin, 1, MPI_INT,
+                             &get_accumulate_result, 1,
+                             MPI_INT, 1, 0, 1, MPI_INT, MPI_SUM,
+                             win);
+    if (MPI_SUCCESS != ret) {
+        return 18;
+    }
+}
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 19;
+}
+if (1 == rank && 14 != storage) {
+    return 20;
+}
+if (0 == rank && 11 != get_accumulate_result) {
+    return 21;
+}
+
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 22;
+}
+int cas_result = -1;
+if (0 == rank) {
+    int compare = 14;
+    int swap = 21;
+    ret = MPI_Compare_and_swap(&swap, &compare, &cas_result, MPI_INT,
+                               1, 0, win);
+    if (MPI_SUCCESS != ret) {
+        return 23;
+    }
+}
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 24;
+}
+if (1 == rank && 21 != storage) {
+    return 25;
+}
+if (0 == rank && 14 != cas_result) {
+    return 26;
+}
+
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 27;
+}
+int fetch_result = -1;
+if (0 == rank) {
+    int add = 4;
+    ret = MPI_Fetch_and_op(&add, &fetch_result, MPI_INT, 1, 0,
+                           MPI_SUM,
+                           win);
+    if (MPI_SUCCESS != ret) {
+        return 28;
+    }
+}
+ret = MPI_Win_fence(0, win);
+if (MPI_SUCCESS != ret) {
+    return 29;
+}
+if (1 == rank && 25 != storage) {
+    return 30;
+}
+if (0 == rank && 21 != fetch_result) {
+    return 31;
+}
+
+if (0 == rank) {
+    int value = 31;
+    MPI_Request req = MPI_REQUEST_NULL;
+    ret = MPI_Win_lock(MPI_LOCK_EXCLUSIVE, 1, 0, win);
+    if (MPI_SUCCESS != ret) {
+        return 32;
+    }
+    ret = MPI_Rput(&value, 1, MPI_INT, 1, 0, 1, MPI_INT, win,
+                   &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 33;
+    }
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req) {
+        return 34;
+    }
+    ret = MPI_Win_flush(1, win);
+    if (MPI_SUCCESS != ret) {
+        return 35;
+    }
+    int rget_value = -1;
+    ret = MPI_Rget(&rget_value, 1, MPI_INT, 1, 0, 1, MPI_INT, win,
+                   &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 36;
+    }
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        31 != rget_value) {
+        return 37;
+    }
+    ret = MPI_Win_flush_local(1, win);
+    if (MPI_SUCCESS != ret) {
+        return 38;
+    }
+    int add = 2;
+    ret = MPI_Raccumulate(&add, 1, MPI_INT, 1, 0, 1, MPI_INT,
+                          MPI_SUM, win, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 39;
+    }
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req) {
+        return 40;
+    }
+    int origin = 3;
+    int previous = -1;
+    ret = MPI_Rget_accumulate(&origin, 1, MPI_INT, &previous, 1,
+                              MPI_INT, 1, 0, 1, MPI_INT, MPI_SUM,
+                              win, &req);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == req) {
+        return 41;
+    }
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != req ||
+        33 != previous) {
+        return 42;
+    }
+    ret = MPI_Win_unlock(1, win);
+    if (MPI_SUCCESS != ret) {
+        return 43;
+    }
+}
+ret = MPI_Barrier(MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret) {
+    return 44;
+}
+if (1 == rank && 36 != storage) {
+    return 45;
+}
+
+ret = MPI_Win_lock_all(0, win);
+if (MPI_SUCCESS != ret) {
+    return 46;
+}
+if (0 == rank) {
+    int self_value = 41;
+    ret = MPI_Put(&self_value, 1, MPI_INT, 0, 0, 1, MPI_INT, win);
+    if (MPI_SUCCESS != ret) {
+        return 47;
+    }
+}
+ret = MPI_Win_flush_all(win);
+if (MPI_SUCCESS != ret) {
+    return 48;
+}
+ret = MPI_Win_flush_local_all(win);
+if (MPI_SUCCESS != ret) {
+    return 49;
+}
+ret = MPI_Win_sync(win);
+if (MPI_SUCCESS != ret) {
+    return 50;
+}
+ret = MPI_Win_unlock_all(win);
+if (MPI_SUCCESS != ret) {
+    return 51;
+}
+if (0 == rank && 41 != storage) {
+    return 52;
+}
+
+MPI_Group world_group = MPI_GROUP_NULL;
+MPI_Group rank0_group = MPI_GROUP_NULL;
+MPI_Group rank1_group = MPI_GROUP_NULL;
+int rank0_list[1] = {0};
+int rank1_list[1] = {1};
+ret = MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == world_group) {
+    return 53;
+}
+ret = MPI_Group_incl(world_group, 1, rank0_list, &rank0_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == rank0_group) {
+    return 54;
+}
+ret = MPI_Group_incl(world_group, 1, rank1_list, &rank1_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL == rank1_group) {
+    return 55;
+}
+
+if (1 == rank) {
+    ret = MPI_Win_post(rank0_group, 0, win);
+    if (MPI_SUCCESS != ret) {
+        return 56;
+    }
+    ret = MPI_Win_wait(win);
+    if (MPI_SUCCESS != ret || 51 != storage) {
+        return 57;
+    }
+    ret = MPI_Win_post(rank0_group, 0, win);
+    if (MPI_SUCCESS != ret) {
+        return 58;
+    }
+} else {
+    int pscw_value = 51;
+    ret = MPI_Win_start(rank1_group, 0, win);
+    if (MPI_SUCCESS != ret) {
+        return 59;
+    }
+    ret = MPI_Put(&pscw_value, 1, MPI_INT, 1, 0, 1, MPI_INT, win);
+    if (MPI_SUCCESS != ret) {
+        return 60;
+    }
+    ret = MPI_Win_complete(win);
+    if (MPI_SUCCESS != ret) {
+        return 61;
+    }
+}
+if (1 == rank) {
+    int complete = 0;
+    while (!complete) {
+        ret = MPI_Win_test(win, &complete);
+        if (MPI_SUCCESS != ret) {
+            return 62;
+        }
+    }
+} else {
+    int pscw_value = 61;
+    ret = MPI_Win_start(rank1_group, 0, win);
+    if (MPI_SUCCESS != ret) {
+        return 63;
+    }
+    ret = MPI_Put(&pscw_value, 1, MPI_INT, 1, 0, 1, MPI_INT, win);
+    if (MPI_SUCCESS != ret) {
+        return 64;
+    }
+    ret = MPI_Win_complete(win);
+    if (MPI_SUCCESS != ret) {
+        return 65;
+    }
+}
+ret = MPI_Barrier(MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret) {
+    return 66;
+}
+if (1 == rank && 61 != storage) {
+    return 67;
+}
+
+ret = MPI_Group_free(&rank1_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != rank1_group) {
+    return 68;
+}
+ret = MPI_Group_free(&rank0_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != rank0_group) {
+    return 69;
+}
+ret = MPI_Group_free(&world_group);
+if (MPI_SUCCESS != ret || MPI_GROUP_NULL != world_group) {
+    return 70;
+}
+ret = MPI_Win_free(&win);
+if (MPI_SUCCESS != ret || MPI_WIN_NULL != win) {
+    return 71;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 72;
+}

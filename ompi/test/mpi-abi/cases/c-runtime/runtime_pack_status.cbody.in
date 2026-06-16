@@ -1,0 +1,122 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Validate pack/unpack, external32 packing, and status setter/getter
+ *   APIs with checked values rather than success-only calls.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int pack_size = -1;
+ret = MPI_Pack_size(1, MPI_INT, MPI_COMM_WORLD, &pack_size);
+if (MPI_SUCCESS != ret || pack_size <= 0) {
+    return 2;
+}
+char buffer[128];
+int position = 0;
+int value = 1234;
+ret = MPI_Pack(&value, 1, MPI_INT, buffer, sizeof(buffer),
+               &position, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || position <= 0) {
+    return 3;
+}
+int unpacked = -1;
+int unpack_position = 0;
+ret = MPI_Unpack(buffer, sizeof(buffer), &unpack_position, &unpacked,
+                 1, MPI_INT, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || 1234 != unpacked) {
+    return 4;
+}
+
+MPI_Aint external_size = -1;
+ret = MPI_Pack_external_size("external32", 1, MPI_INT,
+                             &external_size);
+if (MPI_SUCCESS != ret || external_size <= 0 ||
+    external_size > (MPI_Aint) sizeof(buffer)) {
+    return 5;
+}
+MPI_Aint external_position = 0;
+ret = MPI_Pack_external("external32", &value, 1, MPI_INT, buffer,
+                        sizeof(buffer), &external_position);
+if (MPI_SUCCESS != ret || external_position <= 0) {
+    return 6;
+}
+unpacked = -1;
+external_position = 0;
+ret = MPI_Unpack_external("external32", buffer, sizeof(buffer),
+                          &external_position, &unpacked, 1,
+                          MPI_INT);
+if (MPI_SUCCESS != ret || 1234 != unpacked) {
+    return 7;
+}
+
+MPI_Status status;
+ret = MPI_Status_set_source(&status, 17);
+if (MPI_SUCCESS != ret) {
+    return 8;
+}
+ret = MPI_Status_set_tag(&status, 19);
+if (MPI_SUCCESS != ret) {
+    return 9;
+}
+ret = MPI_Status_set_error(&status, MPI_ERR_OTHER);
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+int source = -1;
+int tag = -1;
+int error = MPI_SUCCESS;
+ret = MPI_Status_get_source(&status, &source);
+if (MPI_SUCCESS != ret || 17 != source) {
+    return 11;
+}
+ret = MPI_Status_get_tag(&status, &tag);
+if (MPI_SUCCESS != ret || 19 != tag) {
+    return 12;
+}
+ret = MPI_Status_get_error(&status, &error);
+if (MPI_SUCCESS != ret || MPI_ERR_OTHER != error) {
+    return 13;
+}
+ret = MPI_Status_set_cancelled(&status, 1);
+if (MPI_SUCCESS != ret) {
+    return 14;
+}
+int cancelled = 0;
+ret = MPI_Test_cancelled(&status, &cancelled);
+if (MPI_SUCCESS != ret || !cancelled) {
+    return 15;
+}
+ret = MPI_Status_set_elements(&status, MPI_INT, 3);
+if (MPI_SUCCESS != ret) {
+    return 16;
+}
+int elements = -1;
+ret = MPI_Get_elements(&status, MPI_INT, &elements);
+if (MPI_SUCCESS != ret || 3 != elements) {
+    return 17;
+}
+ret = MPI_Status_set_elements_x(&status, MPI_INT, 5);
+if (MPI_SUCCESS != ret) {
+    return 18;
+}
+MPI_Count elements_x = -1;
+ret = MPI_Get_elements_x(&status, MPI_INT, &elements_x);
+if (MPI_SUCCESS != ret || 5 != elements_x) {
+    return 19;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 20;
+}

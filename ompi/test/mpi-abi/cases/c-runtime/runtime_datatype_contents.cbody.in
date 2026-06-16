@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise MPI_Type_get_contents in its own executable.  This API
+ *   decodes implementation-owned datatype internals back into standard
+ *   ABI handles and constructor arguments, so it is a distinct ABI path
+ *   from the constructor and envelope probes.
+ *
+ *   Keep the datatype simple but not trivial: a struct type includes
+ *   integer, address, and datatype arrays, which forces all output
+ *   arrays in the C binding to be converted and returned correctly.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int blocklens[2] = {1, 2};
+MPI_Aint displs[2] = {0, 4 * (MPI_Aint) sizeof(int)};
+MPI_Datatype types[2] = {MPI_INT, MPI_INT};
+MPI_Datatype struct_type = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_struct(2, blocklens, displs, types,
+                             &struct_type);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == struct_type) {
+    return 2;
+}
+
+int nints = -1;
+int nadds = -1;
+int ntypes = -1;
+int combiner = -1;
+ret = MPI_Type_get_envelope(struct_type, &nints, &nadds, &ntypes,
+                            &combiner);
+if (MPI_SUCCESS != ret || MPI_COMBINER_STRUCT != combiner ||
+    3 != nints || 2 != nadds || 2 != ntypes) {
+    return 3;
+}
+
+int out_ints[3] = {0};
+MPI_Aint out_addrs[2] = {0};
+MPI_Datatype out_types[2] = {MPI_DATATYPE_NULL};
+ret = MPI_Type_get_contents(struct_type, nints, nadds, ntypes,
+                            out_ints, out_addrs, out_types);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+
+if (2 != out_ints[0] || 1 != out_ints[1] || 2 != out_ints[2]) {
+    return 5;
+}
+if (0 != out_addrs[0] ||
+    4 * (MPI_Aint) sizeof(int) != out_addrs[1]) {
+    return 6;
+}
+if (MPI_INT != out_types[0] || MPI_INT != out_types[1]) {
+    return 7;
+}
+
+ret = MPI_Type_free(&struct_type);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != struct_type) {
+    return 8;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 9;
+}

@@ -1,0 +1,62 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define window attribute callbacks for the RMA-gated window keyval
+ *   APIs.  MPI has no MPI_Win_dup, so the copy callback is expected not
+ *   to run; the delete callback validates explicit-delete and win-free
+ *   cleanup paths.
+ */
+struct win_attr_state {
+    MPI_Win win;
+    int keyval;
+    int explicit_attr;
+    int free_attr;
+    int copy_count;
+    int explicit_delete_count;
+    int free_delete_count;
+    int failure_code;
+};
+
+static struct win_attr_state win_state;
+
+static int win_attr_copy(MPI_Win oldwin, int keyval, void *extra_state,
+                         void *attribute_val_in, void *attribute_val_out,
+                         int *flag)
+{
+    (void) oldwin;
+    (void) keyval;
+    (void) extra_state;
+    (void) attribute_val_in;
+    (void) attribute_val_out;
+    *flag = 0;
+    ++win_state.copy_count;
+    return MPI_SUCCESS;
+}
+
+static int win_attr_delete(MPI_Win win, int keyval, void *attribute_val,
+                           void *extra_state)
+{
+    struct win_attr_state *state = (struct win_attr_state *) extra_state;
+    if (&win_state != state) {
+        win_state.failure_code = 101;
+    } else if (win != state->win) {
+        state->failure_code = 102;
+    } else if (keyval != state->keyval) {
+        state->failure_code = 103;
+    } else if (&state->explicit_attr == attribute_val) {
+        ++state->explicit_delete_count;
+    } else if (&state->free_attr == attribute_val) {
+        ++state->free_delete_count;
+    } else {
+        state->failure_code = 104;
+    }
+    return MPI_SUCCESS;
+}

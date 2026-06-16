@@ -201,7 +201,7 @@ When working on ABI-related code, remember:
   infrastructure.
 - The generated `mpi.h` and `abi.h` — edit the `abi.h.in` template or
   the JSON files / `c_header.py` generator.
-- Generated test probes emitted into the build tree by `test/mpi-abi/`.
+- Generated test probes emitted into the build tree by `ompi/test/mpi-abi/`.
 
 **DO edit (with care):**
 - Templates under `ompi/mpi/c/` (`.c.in`, `.c.in_obc`, `.c.in_nbc`)
@@ -224,7 +224,7 @@ When working on ABI-related code, remember:
 
 ## MPI ABI test suite
 
-Open MPI includes a dedicated test suite under `test/mpi-abi/` that
+Open MPI includes a dedicated test suite under `ompi/test/mpi-abi/` that
 validates the ABI-facing surface. The suite is a Python program
 (`mpi_abi_tests.py`) that checks metadata consistency, installed
 artifacts, symbol reachability, handle translation, complete public API
@@ -240,7 +240,7 @@ MPI test suite.
 #### 1. `make check` — Fast metadata and manifest checks
 
 Runs automatically as part of the standard `make check` (via
-`check-local` in `test/mpi-abi/`).
+`check-local` in `ompi/test/mpi-abi/`).
 
 - **Prerequisites:** None — runs entirely from source and build trees
 - **No installation required:** Does not need `mpicc_abi`, `mpirun`, or
@@ -252,7 +252,7 @@ Runs automatically as part of the standard `make check` (via
     constants, and Fortran helper contracts
   - Catches drift between the ABI description and what's implemented,
     skipped, or uncovered **before** installation or launching
-- **Output:** `$(builddir)/test/mpi-abi/check-results/`
+- **Output:** `$(builddir)/ompi/test/mpi-abi/check-results/`
 
 **When to run:** Always safe; runs in CI as part of normal `make check`.
 Even when changing runtime ABI code, this mode remains useful because it
@@ -268,7 +268,7 @@ Validates an **installed** Open MPI against the standard MPI ABI.
   - `mpicc_abi`, `mpirun`, and the standard ABI header must be
     discoverable by the test runner
   - Tool and path discovery can be overridden with `OMPI_ABI_TEST_*`
-    environment variables; see `test/mpi-abi/Makefile.am` and the
+    environment variables; see `ompi/test/mpi-abi/Makefile.am` and the
     runner sources for the authoritative list
 - **What it checks:**
   - Compiles and runs test probes using the installed `mpicc_abi` and
@@ -276,7 +276,7 @@ Validates an **installed** Open MPI against the standard MPI ABI.
   - Validates handle translation, API call paths, and callback
     conversion
   - Exercises the ABI layer end-to-end
-- **Output:** `$(builddir)/test/mpi-abi/check-abi-results/`
+- **Output:** `$(builddir)/ompi/test/mpi-abi/check-abi-results/`
 
 **When to run:** After `make install`, when validating the installed ABI
 layer.
@@ -292,14 +292,14 @@ MPICH's standard ABI artifacts.
     with its `mpicc_abi` on `PATH`
   - Open MPI's `mpirun` must be discoverable by the test runner
   - Tool and path discovery can be overridden with `OMPI_ABI_TEST_*`
-    environment variables; see `test/mpi-abi/Makefile.am` and the
+    environment variables; see `ompi/test/mpi-abi/Makefile.am` and the
     runner sources for the authoritative list
 - **What it checks:**
   - Compiles test probes using **MPICH's `mpicc_abi`** and header
   - Links and runs against **Open MPI's `libmpi_abi.so`**
   - Validates that an application built with one implementation can run
     with another (the **core ABI promise**)
-- **Output:** `$(builddir)/test/mpi-abi/check-abi-mpich-results/`
+- **Output:** `$(builddir)/ompi/test/mpi-abi/check-abi-mpich-results/`
 
 **When to run:** When validating cross-implementation compatibility (the
 defining feature of the standard ABI). This mode is intended to confirm
@@ -312,7 +312,7 @@ and launcher environment.
 The suite can also be invoked directly:
 
 ```bash
-cd test/mpi-abi
+cd ompi/test/mpi-abi
 python -B mpi_abi_tests.py --srcdir=<top-srcdir> --builddir=<top-builddir> <mode>
 ```
 
