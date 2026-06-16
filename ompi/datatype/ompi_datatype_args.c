@@ -665,6 +665,12 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 #endif
         assert( data_id < OMPI_DATATYPE_MAX_PREDEFINED );
         *packed_buffer = iposition + 2;
+        /* A predefined id whose local slot is empty (e.g. a Fortran complex
+         * kind that this build lacks but a heterogeneous peer possesses) maps
+         * to the unavailable sentinel rather than a NULL datatype. */
+        if( NULL == ompi_datatype_basicDatatypes[data_id] ) {
+            return (ompi_datatype_t*)ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_UNAVAILABLE];
+        }
         return (ompi_datatype_t*)ompi_datatype_basicDatatypes[data_id];
     }
 
@@ -708,6 +714,12 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
 #endif
         if( data_id < OMPI_DATATYPE_MAX_PREDEFINED ) {
             array_of_datatype[i] = (ompi_datatype_t*)ompi_datatype_basicDatatypes[data_id];
+            /* Fall back to the unavailable sentinel for an empty predefined slot
+             * (e.g. a Fortran complex kind absent from this build). */
+            if( NULL == array_of_datatype[i] ) {
+                array_of_datatype[i] =
+                    (ompi_datatype_t*)ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_UNAVAILABLE];
+            }
             continue;
         }
         array_of_datatype[i] =

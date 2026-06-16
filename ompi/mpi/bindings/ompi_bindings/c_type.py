@@ -2026,7 +2026,7 @@ class TypeCommCopyAttrFunctionStandard(StandardABIType):
         # OOM corners leak it, matching the engine's semantics for the
         # Fortran bindings.
         code.append('helper = ( ompi_abi_wrapper_helper_t *)ompi_abi_malloc(1, sizeof(ompi_abi_wrapper_helper_t));')
-        code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
+        code.append('if (NULL == helper) return ompi_convert_intern_error_abi_error(MPI_ERR_NO_MEM);')
         code.append(f'if ({self.name} == MPI_COMM_NULL_COPY_FN_ABI_INTERNAL)'  + '{')
         code.append('copy_fn = ABI_C_MPI_COMM_NULL_COPY_FN;')
         code.append('} else if (' + f'{self.name}' + ' == MPI_COMM_DUP_FN_ABI_INTERNAL) {')
@@ -2310,7 +2310,7 @@ class TypeTypeCopyAttrFunctionStandard(StandardABIType):
         # OOM corners leak it, matching the engine's semantics for the
         # Fortran bindings.
         code.append('helper = ( ompi_abi_wrapper_helper_t *)ompi_abi_malloc(1, sizeof(ompi_abi_wrapper_helper_t));')
-        code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
+        code.append('if (NULL == helper) return ompi_convert_intern_error_abi_error(MPI_ERR_NO_MEM);')
         code.append(f'if ({self.name} == MPI_TYPE_NULL_COPY_FN_ABI_INTERNAL)'  + '{')
         code.append('copy_fn = ABI_C_MPI_TYPE_NULL_COPY_FN;')
         code.append('} else if (' + f'{self.name}' + ' == MPI_TYPE_DUP_FN_ABI_INTERNAL) {')
@@ -2425,7 +2425,7 @@ class TypeWinCopyAttrFunctionStandard(StandardABIType):
         # OOM corners leak it, matching the engine's semantics for the
         # Fortran bindings.
         code.append('helper = ( ompi_abi_wrapper_helper_t *)ompi_abi_malloc(1,sizeof(ompi_abi_wrapper_helper_t));')
-        code.append('if (NULL == helper)  return MPI_ERR_NO_MEM;')
+        code.append('if (NULL == helper) return ompi_convert_intern_error_abi_error(MPI_ERR_NO_MEM);')
         code.append(f'if ({self.name} == MPI_WIN_NULL_COPY_FN_ABI_INTERNAL)'  + '{')
         code.append('copy_fn = ABI_C_MPI_WIN_NULL_COPY_FN;')
         code.append('} else if (' + f'{self.name}' + ' == MPI_WIN_DUP_FN_ABI_INTERNAL) {')
