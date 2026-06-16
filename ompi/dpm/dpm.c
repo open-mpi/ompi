@@ -1718,7 +1718,7 @@ int ompi_dpm_dyn_init(void)
     ompi_mpi_comm_parent = newcomm;
 
     /* Set name for debugging purposes */
-    snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
+    snprintf(newcomm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI_COMM_PARENT");
     newcomm->c_flags |= OMPI_COMM_NAMEISSET;
 
     return OMPI_SUCCESS;
