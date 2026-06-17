@@ -14,6 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,7 @@ PROTOTYPE VOID session_attach_buffer(SESSION session, BUFFER_ASYNC x, COUNT size
     c_session = PMPI_Session_f2c(*session);
 
     if (OMPI_CFI_IS_CONTIGUOUS(x)) {
-        c_ierr = PMPI_Session_attach_buffer(c_session, OMPI_CFI_BASE_ADDR(x), c_size);
+        c_ierr = PMPI_Session_attach_buffer(c_session, OMPI_F2C_BUFFER_AUTOMATIC(OMPI_CFI_BASE_ADDR(x)), c_size);
     } else {
         c_ierr = MPI_ERR_BUFFER;
         OMPI_ERRHANDLER_INVOKE(c_session, c_ierr, FUNC_NAME);
