@@ -15,7 +15,7 @@
 #                         reserved.
 # Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
-# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025-2026 Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -445,6 +445,7 @@ api_f08_generated.F90: $(template_files)
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    $(gen_ts) \
+	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
 	    code \
 	    --lang fortran \
 	    --prototype-files $(template_files)

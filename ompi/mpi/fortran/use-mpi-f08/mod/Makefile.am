@@ -13,6 +13,7 @@
 # Copyright (C) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -93,6 +94,7 @@ mpi-f08-interfaces-generated.h: $(template_files)
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    $(gen_ts) \
+	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
 	    --fort-std f08 \
 	    interface \
 	    --prototype-files $(template_files)

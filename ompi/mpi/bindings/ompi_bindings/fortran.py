@@ -1,6 +1,7 @@
 # Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -16,16 +17,57 @@ listed.
 """
 from collections import namedtuple
 import json
+import os
 import re
+import sys
 from ompi_bindings import consts, util
 from ompi_bindings.fortran_type import FortranType
 from ompi_bindings.parser import SourceTemplate
 
 
+# Cache of {function_name_lower: [standard f08 dummy-argument names]} loaded
+# from pympistandard.  None means "not yet attempted"; an empty dict means
+# "attempted but unavailable" (the generator then falls back to the names
+# hard-coded in the *.in PROTOTYPE lines).
+_STANDARD_F08_NAMES = None
+
+
+def standard_f08_names(pympistd_dir):
+    """Load the standard MPI F08 dummy-argument names from pympistandard.
+
+    The Open MPI templates use generic internal names (e.g. 'x', 'x1') for
+    the choice-buffer arguments; the C back-end code refers to those names.
+    The user-visible mpi_f08 interfaces, however, must use the parameter
+    names mandated by the MPI standard so that keyword arguments work.  This
+    returns, per function, the ordered list of standard F08 dummy names
+    (excluding ierror), which the Fortran generator substitutes for the
+    template names -- without touching the C back-end.
+    """
+    global _STANDARD_F08_NAMES
+    if _STANDARD_F08_NAMES is not None:
+        return _STANDARD_F08_NAMES
+    names = {}
+    if pympistd_dir:
+        src = os.path.join(pympistd_dir, 'src')
+        if os.path.isdir(src):
+            sys.path.insert(0, src)
+            import pympistandard as std
+            std.use_api_version(1)
+            for key, proc in std.PROCEDURES.items():
+                f08 = getattr(proc.express, 'f08', None)
+                if f08 is None:
+                    continue
+                names[key.lower()] = [p.name.lower() for p in f08.parameters
+                                      if p.name.lower() != consts.FORTRAN_ERROR_NAME]
+    _STANDARD_F08_NAMES = names
+    return names
+
+
 class FortranBinding:
     """Class for generating the binding for a single function."""
 
-    def __init__(self, prototype, out, template=None, bigcount=False, needs_ts=False, gen_f90=False):
+    def __init__(self, prototype, out, template=None, bigcount=False, needs_ts=False,
+                 gen_f90=False, f08_names=None):
         # Generate bigcount interface version
         self.bigcount = bigcount
         self.fn_name = template.prototype.name
@@ -38,6 +80,16 @@ class FortranBinding:
             self.parameters.append(param.construct(fn_name=self.fn_name,
                                                    bigcount=bigcount,
                                                    gen_f90=gen_f90))
+        # For Fortran generation, replace the template's internal parameter
+        # names with the standard MPI F08 dummy-argument names.  Only done
+        # when the count of standard names matches (i.e. the prototype and the
+        # standard agree on the number of non-ierror arguments); otherwise the
+        # template names are kept so a misaligned prototype never silently
+        # emits a wrong name.  The C back-end (print_c_source) constructs its
+        # own FortranBinding without f08_names, so it is unaffected.
+        if f08_names is not None and len(f08_names) == len(self.parameters):
+            for param, std_name in zip(self.parameters, f08_names):
+                param.name = std_name
 
     def dump(self, *pargs, **kwargs):
         """Write to the output file."""
@@ -274,9 +326,10 @@ def print_c_source_header(out):
     out.dump('#include "bigcount.h"')
 
 
-def print_binding(prototype, lang, out, bigcount=False, template=None, needs_ts=False, gen_f90=False):
+def print_binding(prototype, lang, out, bigcount=False, template=None, needs_ts=False, gen_f90=False, f08_names=None):
     """Print the binding with or without bigcount."""
-    binding = FortranBinding(prototype, out=out, bigcount=bigcount, template=template, needs_ts=needs_ts, gen_f90=gen_f90)
+    binding = FortranBinding(prototype, out=out, bigcount=bigcount, template=template, needs_ts=needs_ts,
+                             gen_f90=gen_f90, f08_names=f08_names)
     if lang == 'fortran':
         binding.print_f_source()
     else:
@@ -300,6 +353,11 @@ def generate_code(args, out):
     else:
         gen_f90 = True
 
+    # Standard F08 dummy-argument names are only applied to the F08 Fortran
+    # interfaces, never to the C back-end (whose body refers to the template's
+    # internal names) and not to the older mpi (f90) module.
+    std_names = standard_f08_names(args.pympistd_dir) if (args.lang == 'fortran' and not gen_f90) else {}
+
     if args.lang == 'fortran':
         print_f_source_header(out)
         out.dump()
@@ -312,10 +370,13 @@ def generate_code(args, out):
         out.dump()
         has_buffers = util.prototype_has_buffers(template.prototype)
         needs_ts = has_buffers and args.generate_ts_suffix
-        print_binding(template.prototype, args.lang, out, template=template, needs_ts=needs_ts, gen_f90=gen_f90)
+        f08_names = std_names.get('mpi_' + template.prototype.name.lower())
+        print_binding(template.prototype, args.lang, out, template=template, needs_ts=needs_ts,
+                      gen_f90=gen_f90, f08_names=f08_names)
         if util.prototype_has_bigcount(template.prototype) and gen_f90 == False:
             out.dump()
-            print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template, needs_ts=needs_ts)
+            print_binding(template.prototype, args.lang, bigcount=True, out=out, template=template,
+                          needs_ts=needs_ts, f08_names=f08_names)
 
 
 def generate_interface(args, out):
@@ -330,16 +391,23 @@ def generate_interface(args, out):
     else:
         gen_f90 = True
 
+    # The interface specifications are part of the user-visible mpi_f08
+    # module, so they use the standard MPI dummy-argument names too.  The
+    # older mpi (f90) module is out of scope.
+    std_names = standard_f08_names(args.pympistd_dir) if not gen_f90 else {}
+
     for template in templates:
         ext_name = util.ext_api_func_name(template.prototype.name)
         out.dump(f'interface {ext_name}')
         has_buffers = util.prototype_has_buffers(template.prototype)
         needs_ts = has_buffers and args.generate_ts_suffix
-        binding = FortranBinding(template.prototype, template=template, needs_ts=needs_ts, gen_f90=gen_f90, out=out)
+        f08_names = std_names.get('mpi_' + template.prototype.name.lower())
+        binding = FortranBinding(template.prototype, template=template, needs_ts=needs_ts,
+                                 gen_f90=gen_f90, out=out, f08_names=f08_names)
         binding.print_interface()
         if util.prototype_has_bigcount(template.prototype) and gen_f90 == False:
             out.dump()
             binding_c = FortranBinding(template.prototype, out=out, template=template,
-                                       needs_ts=needs_ts, bigcount=True)
+                                       needs_ts=needs_ts, bigcount=True, f08_names=f08_names)
             binding_c.print_interface()
         out.dump(f'end interface {ext_name}')
