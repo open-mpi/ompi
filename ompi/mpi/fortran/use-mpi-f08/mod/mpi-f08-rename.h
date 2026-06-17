@@ -610,7 +610,6 @@
 #define MPI_Session_get_errhandler PMPI_Session_get_errhandler
 #define MPI_Session_get_info_f08 PMPI_Session_get_info_f08
 #define MPI_Session_get_info PMPI_Session_get_info
-#define MPI_Session_get_info PMPI_Session_get_info
 #define MPI_Session_get_nth_pset_f08 PMPI_Session_get_nth_pset_f08
 #define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
 #define MPI_Session_get_num_psets_f08 PMPI_Session_get_num_psets_f08
