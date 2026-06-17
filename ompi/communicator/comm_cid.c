@@ -326,12 +326,20 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
         tag = (char *) arg0;
         break;
     case OMPI_COMM_CID_GROUP:
+        if (NULL == comm) {
+            rc = OMPI_ERROR;
+            goto fn_exit;
+        }
         ompi_group_translate_ranks (newcomm->c_local_group, 1, &(int){0},
                                     comm->c_local_group, &leader_rank);
 
         tag = ompi_comm_extended_cid_get_unique_tag (&comm->c_contextidb, *((int *) arg0), leader_rank);
         break;
     case OMPI_COMM_CID_INTRA:
+        if (NULL == comm) {
+            rc = OMPI_ERROR;
+            goto fn_exit;
+        }
         tag = ompi_comm_extended_cid_get_unique_tag (&comm->c_contextidb, -1, 0);
         break;
     }
@@ -880,7 +888,7 @@ static inline void ompi_comm_set_disjointness_nb_complete(ompi_comm_cid_context_
 static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
 {
     int ret;
-    ompi_communicator_t **newcomm = context->newcommp, *comm = context->comm;
+    ompi_communicator_t **newcomm = context->newcommp;
 
     /**
      * Determine the new communicator's disjointness based on
