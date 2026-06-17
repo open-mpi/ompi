@@ -12,7 +12,7 @@
 # Copyright (c) 2006-2018 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
-# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025-2026 Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,6 +24,7 @@ EXTRA_DIST += \
         mpi/fortran/configure-fortran-output-bottom.h \
         mpi/help-mpi-api.txt \
         mpi/bindings/bindings.py \
+        mpi/bindings/check_f08_names.py \
         mpi/bindings/ompi_bindings/consts.py \
         mpi/bindings/ompi_bindings/c.py \
         mpi/bindings/ompi_bindings/c_type.py \

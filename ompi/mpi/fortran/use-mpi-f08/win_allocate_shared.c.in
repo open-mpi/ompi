@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,7 @@
 
 PROTOTYPE VOID win_allocate_shared(AINT size, DISP disp_unit,
                                    INFO info, COMM comm, C_PTR_OUT baseptr,
-                                   WIN win)
+                                   WIN_OUT win)
 {
     int c_ierr;
     MPI_Info c_info;

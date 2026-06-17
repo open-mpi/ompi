@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,7 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID type_size(DATATYPE type, COUNT size)
+PROTOTYPE VOID type_size(DATATYPE type, COUNT_OUT size)
 {
     int c_ierr;
     MPI_Datatype c_type = PMPI_Type_f2c(*type);

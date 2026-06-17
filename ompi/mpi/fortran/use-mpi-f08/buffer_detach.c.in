@@ -23,7 +23,7 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID buffer_detach(C_PTR_OUT buffer, COUNT size)
+PROTOTYPE VOID buffer_detach(C_PTR_OUT buffer, COUNT_OUT size)
 {
     int c_ierr;
     @COUNT_TYPE@ c_size;
