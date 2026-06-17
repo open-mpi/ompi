@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 
 #include "opal_config.h"
 #include <assert.h>
+#include <stdlib.h>
 
 #include "opal/class/opal_list.h"
 #include "opal/constants.h"
@@ -36,6 +38,176 @@ typedef struct test_data {
 } test_data_t;
 
 OBJ_CLASS_INSTANCE(test_data_t, opal_list_item_t, NULL, NULL);
+
+/* Comparator for opal_list_sort(): ascending order on test_data_t.data */
+static int compare_test_data(opal_list_item_t **a, opal_list_item_t **b)
+{
+    const test_data_t *da = (const test_data_t *) *a;
+    const test_data_t *db = (const test_data_t *) *b;
+    if (da->data < db->data) {
+        return -1;
+    } else if (da->data > db->data) {
+        return 1;
+    }
+    return 0;
+}
+
+static void test_sort(void)
+{
+    opal_list_t slist;
+    test_data_t items[5];
+    test_data_t *ele;
+    size_t expected_order[] = {0, 1, 2, 3, 4};
+    /* Insert in reverse order so sort is non-trivial */
+    size_t insert_order[] = {4, 2, 0, 3, 1};
+    size_t n = 5;
+    size_t i;
+    int rc;
+    size_t idx;
+
+    OBJ_CONSTRUCT(&slist, opal_list_t);
+    for (i = 0; i < n; i++) {
+        OBJ_CONSTRUCT(&items[i], test_data_t);
+        items[i].data = insert_order[i];
+        opal_list_append(&slist, (opal_list_item_t *) &items[i]);
+    }
+    test_verify("sort: list has correct size before sort",
+                n == opal_list_get_size(&slist));
+
+    rc = opal_list_sort(&slist, compare_test_data);
+    test_verify("opal_list_sort returns success", OPAL_SUCCESS == rc);
+    test_verify("sort: list size unchanged after sort",
+                n == opal_list_get_size(&slist));
+
+    /* Verify order is ascending */
+    idx = 0;
+    OPAL_LIST_FOREACH(ele, &slist, test_data_t) {
+        test_verify("sort: element in correct ascending position",
+                    ele->data == expected_order[idx]);
+        idx++;
+    }
+    test_verify("sort: iterated correct number of elements", idx == n);
+
+    /* Remove all items before destructing (items are stack-allocated) */
+    while (!opal_list_is_empty(&slist)) {
+        opal_list_remove_first(&slist);
+    }
+    OBJ_DESTRUCT(&slist);
+    for (i = 0; i < n; i++) {
+        OBJ_DESTRUCT(&items[i]);
+    }
+}
+
+static void test_insert_pos(void)
+{
+    opal_list_t ilist;
+    test_data_t items[4];
+    test_data_t *ele;
+    opal_list_item_t *pos;
+    size_t i;
+    size_t idx;
+
+    /* Build list: 0 -> 1 -> 2, then insert 99 before item[1] */
+    OBJ_CONSTRUCT(&ilist, opal_list_t);
+    for (i = 0; i < 3; i++) {
+        OBJ_CONSTRUCT(&items[i], test_data_t);
+        items[i].data = i;
+        opal_list_append(&ilist, (opal_list_item_t *) &items[i]);
+    }
+    OBJ_CONSTRUCT(&items[3], test_data_t);
+    items[3].data = 99;
+
+    /* pos = item at index 1 (data==1) */
+    pos = opal_list_get_next(opal_list_get_first(&ilist));
+    opal_list_insert_pos(&ilist, pos, (opal_list_item_t *) &items[3]);
+
+    test_verify("insert_pos: list size after insert", 4 == opal_list_get_size(&ilist));
+
+    /* Expected order: 0, 99, 1, 2 */
+    {
+        size_t expected[] = {0, 99, 1, 2};
+        idx = 0;
+        OPAL_LIST_FOREACH(ele, &ilist, test_data_t) {
+            test_verify("insert_pos: element order correct",
+                        ele->data == expected[idx]);
+            idx++;
+        }
+        test_verify("insert_pos: iterated correct count", idx == 4);
+    }
+
+    while (!opal_list_is_empty(&ilist)) {
+        opal_list_remove_first(&ilist);
+    }
+    OBJ_DESTRUCT(&ilist);
+    for (i = 0; i < 4; i++) {
+        OBJ_DESTRUCT(&items[i]);
+    }
+}
+
+static void test_foreach_macros(void)
+{
+    opal_list_t flist;
+    test_data_t items[4];
+    test_data_t *ele, *next;
+    size_t n = 4;
+    size_t i;
+    size_t fwd_count, rev_count;
+
+    OBJ_CONSTRUCT(&flist, opal_list_t);
+    for (i = 0; i < n; i++) {
+        OBJ_CONSTRUCT(&items[i], test_data_t);
+        items[i].data = i;
+        opal_list_append(&flist, (opal_list_item_t *) &items[i]);
+    }
+
+    /* OPAL_LIST_FOREACH forward */
+    fwd_count = 0;
+    i = 0;
+    OPAL_LIST_FOREACH(ele, &flist, test_data_t) {
+        test_verify("FOREACH: element data matches forward order", ele->data == i);
+        fwd_count++;
+        i++;
+    }
+    test_verify("FOREACH: visited all elements", fwd_count == n);
+
+    /* OPAL_LIST_FOREACH_REV */
+    rev_count = 0;
+    i = n;
+    OPAL_LIST_FOREACH_REV(ele, &flist, test_data_t) {
+        i--;
+        test_verify("FOREACH_REV: element data matches reverse order", ele->data == i);
+        rev_count++;
+    }
+    test_verify("FOREACH_REV: visited all elements", rev_count == n);
+
+    /* OPAL_LIST_FOREACH_SAFE: remove even-data items while iterating */
+    OPAL_LIST_FOREACH_SAFE(ele, next, &flist, test_data_t) {
+        if (0 == ele->data % 2) {
+            opal_list_remove_item(&flist, (opal_list_item_t *) ele);
+        }
+    }
+    /* For n=4 we removed items with data 0 and 2; remaining: 1, 3 */
+    test_verify("FOREACH_SAFE: list size after safe removal",
+                2 == opal_list_get_size(&flist));
+    {
+        size_t expected[] = {1, 3};
+        size_t idx = 0;
+        OPAL_LIST_FOREACH(ele, &flist, test_data_t) {
+            test_verify("FOREACH_SAFE: remaining elements correct",
+                        ele->data == expected[idx]);
+            idx++;
+        }
+        test_verify("FOREACH_SAFE: iterated remaining count", idx == 2);
+    }
+
+    while (!opal_list_is_empty(&flist)) {
+        opal_list_remove_first(&flist);
+    }
+    OBJ_DESTRUCT(&flist);
+    for (i = 0; i < n; i++) {
+        OBJ_DESTRUCT(&items[i]);
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -305,6 +477,11 @@ int main(int argc, char **argv)
 
     if (NULL != elements)
         free(elements);
+
+    /* Additional coverage tests */
+    test_sort();
+    test_insert_pos();
+    test_foreach_macros();
 
     opal_finalize_util();
 

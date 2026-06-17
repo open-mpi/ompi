@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -155,9 +156,25 @@ static void test(bool thread_usage)
             if (0 != opal_pointer_array_set_item(array, i, NULL))
                 test_failure("Add/Remove: failure during item removal ");
     }
+    /*
+     * Re-add up to 4 items.  The array was init'd with max_size=4;
+     * after the removals above (indices 1 and 3 freed), exactly 2 slots
+     * are available.  So the first 2 adds succeed (returning >= 0) and
+     * the last 2 fail because the array is at max capacity (returning -1).
+     *
+     * PRE-EXISTING BUG FIXED:
+     *   Original code used `if (!opal_pointer_array_add(...))` which
+     *   treats the return value as a boolean -- this incorrectly reports
+     *   a failure when index 0 is returned (because !0 == true).
+     *   Changed to `< 0` to check for the documented error sentinel.
+     *
+     *   The guard was also wrong: `if (i != 2)` only excuses the i==2
+     *   failure; the i==3 failure (same root cause: at max capacity)
+     *   was incorrectly reported as a test failure.  Changed to `i >= 2`.
+     */
     for (i = 0; i < 4; i++) {
-        if (!opal_pointer_array_add(array, (void *) (uintptr_t)(i + 1))) {
-            if (i != 2) {
+        if (0 > opal_pointer_array_add(array, (void *) (uintptr_t)(i + 1))) {
+            if (i < 2) {
                 test_failure("Add/Remove: failure during the readd ");
                 break;
             }
@@ -170,6 +187,73 @@ static void test(bool thread_usage)
     free(test_data);
 }
 
+static void test_set_size_and_get_size(void)
+{
+    opal_pointer_array_t *array;
+    int rc;
+    int initial_size;
+
+    array = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(array, 4, 64, 4);
+
+    initial_size = opal_pointer_array_get_size(array);
+    test_verify("get_size returns initial allocation size", initial_size == 4);
+
+    /* Grow the array via set_size */
+    rc = opal_pointer_array_set_size(array, 16);
+    test_verify("set_size to larger value succeeds", OPAL_SUCCESS == rc);
+    test_verify("get_size reflects new size", opal_pointer_array_get_size(array) >= 16);
+
+    /* set_size to the same value should be a no-op (no error) */
+    rc = opal_pointer_array_set_size(array, 16);
+    test_verify("set_size to same value succeeds", OPAL_SUCCESS == rc);
+
+    /* set_size to a smaller value: documented to succeed without shrinking */
+    rc = opal_pointer_array_set_size(array, 2);
+    test_verify("set_size to smaller value succeeds", OPAL_SUCCESS == rc);
+
+    OBJ_RELEASE(array);
+}
+
+static void test_test_and_set_item(void)
+{
+    opal_pointer_array_t *array;
+    bool ok;
+    void *sentinel_a = (void *) (uintptr_t) 0xABCD;
+    void *sentinel_b = (void *) (uintptr_t) 0xEF01;
+
+    array = OBJ_NEW(opal_pointer_array_t);
+    opal_pointer_array_init(array, 4, 64, 4);
+
+    /* Slot 2 is free: test_and_set should succeed */
+    ok = opal_pointer_array_test_and_set_item(array, 2, sentinel_a);
+    test_verify("test_and_set on free slot returns true", ok == true);
+    test_verify("test_and_set stored correct value",
+                opal_pointer_array_get_item(array, 2) == sentinel_a);
+
+    /* Slot 2 is now occupied: test_and_set should fail */
+    ok = opal_pointer_array_test_and_set_item(array, 2, sentinel_b);
+    test_verify("test_and_set on occupied slot returns false", ok == false);
+    /* value should be unchanged */
+    test_verify("test_and_set did not overwrite occupied slot",
+                opal_pointer_array_get_item(array, 2) == sentinel_a);
+
+    /* test_and_set at an index beyond current size (auto-grow) */
+    ok = opal_pointer_array_test_and_set_item(array, 10, sentinel_b);
+    test_verify("test_and_set beyond current size grows array", ok == true);
+    test_verify("test_and_set at grown index has correct value",
+                opal_pointer_array_get_item(array, 10) == sentinel_b);
+
+    /* After freeing slot 2 (set to NULL), test_and_set should succeed again */
+    opal_pointer_array_set_item(array, 2, NULL);
+    ok = opal_pointer_array_test_and_set_item(array, 2, sentinel_b);
+    test_verify("test_and_set on newly-freed slot returns true", ok == true);
+    test_verify("test_and_set after free has new value",
+                opal_pointer_array_get_item(array, 2) == sentinel_b);
+
+    OBJ_RELEASE(array);
+}
+
 int main(int argc, char **argv)
 {
     test_init("opal_pointer_array");
@@ -179,6 +263,10 @@ int main(int argc, char **argv)
 
     /* run through tests with thread usage set to true */
     test(true);
+
+    /* Additional API coverage */
+    test_set_size_and_get_size();
+    test_test_and_set_item();
 
     return test_finalize();
 }
