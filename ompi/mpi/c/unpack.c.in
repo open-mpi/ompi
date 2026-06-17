@@ -97,7 +97,7 @@ PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf,
 
         /* Check for truncation */
         opal_convertor_get_packed_size( &local_convertor, &size );
-        if( (*position + size) > (unsigned int)insize ) {
+        if( (*position + size) > (size_t)insize ) {
             OBJ_DESTRUCT( &local_convertor );
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
