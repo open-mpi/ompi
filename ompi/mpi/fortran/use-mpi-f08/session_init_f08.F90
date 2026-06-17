@@ -7,6 +7,7 @@
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2019-2021 Triad National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
@@ -18,7 +19,7 @@ subroutine MPI_Session_init_f08(info,errhandler,session,ierror)
    use :: ompi_mpifh_bindings, only : ompi_session_init_f
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
-   TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
+   TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
    TYPE(MPI_Session), INTENT(OUT) :: session
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
