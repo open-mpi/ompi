@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022      The University of Tennessee and The University
@@ -822,6 +822,24 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     return OMPI_SUCCESS;
 }
 
+/* MPI-5.0 sec 11.3.1: the Session's actually-provided thread level is fixed
+ * for the Session's lifetime, so always re-assert it regardless of later
+ * info changes. The returned strings are string literals (static storage),
+ * which opal_info_set() copies, so no allocation/lifetime management is
+ * needed. The callback signature matches opal_key_interest_callback_t. */
+static const char *ompi_info_thread_level_cb (opal_infosubscriber_t *obj,
+                                               const char *key, const char *value)
+{
+    ompi_instance_t *instance = (ompi_instance_t *) obj;
+    switch (instance->i_thread_level) {
+    case MPI_THREAD_FUNNELED:   return "MPI_THREAD_FUNNELED";
+    case MPI_THREAD_SERIALIZED: return "MPI_THREAD_SERIALIZED";
+    case MPI_THREAD_MULTIPLE:   return "MPI_THREAD_MULTIPLE";
+    case MPI_THREAD_SINGLE:
+    default:                    return "MPI_THREAD_SINGLE";
+    }
+}
+
 int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t *errhandler, ompi_instance_t **instance, int argc, char **argv)
 {
     ompi_instance_t *new_instance;
@@ -859,13 +877,34 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
     new_instance->error_handler = errhandler;
     OBJ_RETAIN(new_instance->error_handler);
 
+    /* Store the actually-provided thread level so it can be published via
+     * MPI_Session_get_info (MPI-5.0 sec 11.3.1 / sec 11.3.3). */
+    new_instance->i_thread_level = ts_level;
+
+
+    /* Ensure s_info is allocated before subscribing pre-defined keys. */
+    if (NULL == new_instance->super.s_info) {
+        new_instance->super.s_info = OBJ_NEW(opal_info_t);
+    }
+
     /* Copy info if there is one. */
+    if (OPAL_UNLIKELY(NULL != info)) {
+        opal_info_dup(info, &new_instance->super.s_info);
+    }
+
+    /* MPI-5.0 sec 11.3.1 / sec 11.3.3: the actually-provided thread support
+     * level must be retrievable via MPI_Session_get_info. Publish it into the
+     * Session info so it round-trips through session_get_info(). */
+    opal_infosubscribe_subscribe (&new_instance->super, "thread_level",
+                                  ompi_info_thread_level_cb (&new_instance->super,
+                                                             "thread_level", NULL),
+                                  ompi_info_thread_level_cb);
+
     if (OPAL_UNLIKELY(NULL != info)) {
         opal_cstring_t *memkind_requested;
         ompi_info_memkind_assert_type type;
         int flag;
-        
-        new_instance->super.s_info = OBJ_NEW(opal_info_t);
+
         opal_info_get(info, "mpi_memory_alloc_kinds", &memkind_requested, &flag);
         if (1 == flag) {
             char *memkind_provided;
@@ -874,10 +913,6 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
                                           memkind_provided, ompi_info_memkind_cb);
             free (memkind_provided);
             OBJ_RELEASE(memkind_requested);
-        }
-
-        if (info) {
-            opal_info_dup(info, &new_instance->super.s_info);
         }
     }
 
