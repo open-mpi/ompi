@@ -5,7 +5,8 @@ PROGS = mpi_no_op mpi_barrier hello hello_nodename abort multi_abort comm_abort 
 		parallel_w8 parallel_w64 parallel_r8 parallel_r64 sio sendrecv_blaster early_abort \
 		debugger singleton_client_server intercomm_create spawn_tree init-exit77 mpi_info \
 		info_spawn server client ring binding badcoll attach xlib \
-		no-disconnect nonzero interlib pinterlib add_host
+		no-disconnect nonzero interlib pinterlib add_host \
+		buffer_attach_detach_f08
 
 all: $(PROGS)
 
@@ -22,6 +23,11 @@ xlib: xlib.c
 
 pinterlib: pinterlib.c
 	$(CC) $(CFLAGS) $(CFLAGS_INTERNAL) $^ -o $@ -lpmix
+
+# Fortran mpi_f08 test (no built-in .f90 rule)
+
+buffer_attach_detach_f08: buffer_attach_detach_f08.f90
+	$(FC) $(FCFLAGS) $^ -o $@
 
 CC = mpicc
 CFLAGS = -g --openmpi:linkall

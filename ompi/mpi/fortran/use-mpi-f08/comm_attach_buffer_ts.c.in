@@ -14,6 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@ PROTOTYPE VOID comm_attach_buffer(COMM comm, BUFFER_ASYNC x, COUNT size)
     @COUNT_TYPE@ c_size = (@COUNT_TYPE@)*size;
 
     if (OMPI_CFI_IS_CONTIGUOUS(x)) {
-        c_ierr = PMPI_Comm_attach_buffer(c_comm, OMPI_CFI_BASE_ADDR(x), c_size);
+        c_ierr = PMPI_Comm_attach_buffer(c_comm, OMPI_F2C_BUFFER_AUTOMATIC(OMPI_CFI_BASE_ADDR(x)), c_size);
     } else {
         c_ierr = MPI_ERR_BUFFER;
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME);
