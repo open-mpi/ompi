@@ -658,7 +658,7 @@ typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
 enum {
     /* MPI-1 */
     MPI_TAG_UB,
-    MPI_HOST __mpi_interface_deprecated_in_mpi41__("MPI_HOST is deprecated since MPI 4.1"), 
+    MPI_HOST __mpi_interface_deprecated_in_mpi41__("MPI_HOST is deprecated since MPI 4.1"),
     MPI_IO,
     MPI_WTIME_IS_GLOBAL,
 
@@ -3691,7 +3691,7 @@ OMPI_DECLSPEC  int PMPI_Type_get_envelope(MPI_Datatype type, int *num_integers,
                                           int *num_addresses, int *num_datatypes,
                                           int *combiner);
 OMPI_DECLSPEC  int PMPI_Type_get_envelope_c(MPI_Datatype type, MPI_Count *num_integers,
-                                          MPI_Count *num_addresses, MPI_Count *num_large_counts, 
+                                          MPI_Count *num_addresses, MPI_Count *num_large_counts,
         				  MPI_Count *num_datatypes, int *combiner);
 OMPI_DECLSPEC  int PMPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb,
                                         MPI_Aint *extent);
