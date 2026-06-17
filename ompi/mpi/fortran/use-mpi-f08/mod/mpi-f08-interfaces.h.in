@@ -13,6 +13,7 @@
 ! Copyright (c) 2021-2023 Triad National Security, LLC. All rights
 !                         reserved.
 ! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
+! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! This file provides the interface specifications for the MPI Fortran
@@ -52,11 +53,11 @@ end subroutine MPI_Pready_f08
 end interface  MPI_Pready
 
 interface  MPI_Pready_list
-subroutine MPI_Pready_list_f08(length,partitions,request,ierror)
+subroutine MPI_Pready_list_f08(length,array_of_partitions,request,ierror)
    use :: mpi_f08_types, only : MPI_Request
    implicit none
    INTEGER, INTENT(IN) :: length
-   INTEGER, DIMENSION(*), INTENT(IN) :: partitions
+   INTEGER, DIMENSION(*), INTENT(IN) :: array_of_partitions
    TYPE(MPI_Request), INTENT(IN) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Pready_list_f08
@@ -135,11 +136,11 @@ end subroutine MPI_Session_get_errhandler_f08
 end interface MPI_Session_get_errhandler
 
 interface MPI_Session_get_info
-subroutine MPI_Session_get_info_f08(session, info, ierror)
+subroutine MPI_Session_get_info_f08(session, info_used, ierror)
    use :: mpi_f08_types, only : MPI_Session, MPI_Info
    implicit none
    TYPE(MPI_Session), INTENT(IN) :: session
-   TYPE(MPI_Info), INTENT(OUT) :: info
+   TYPE(MPI_Info), INTENT(OUT) :: info_used
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Session_get_info_f08
 end interface MPI_Session_get_info
