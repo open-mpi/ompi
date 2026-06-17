@@ -252,7 +252,7 @@
 #define MPI_Session_get_errhandler PMPI_Session_get_errhandler
 #define MPI_Session_get_info PMPI_Session_get_info
 #define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
-#define MPI_Session_get_nth_psetlen PMPI_Session_get_nth_psetlen
+#define MPI_Session_get_num_psets PMPI_Session_get_num_psets
 #define MPI_Session_get_pset_info PMPI_Session_get_pset_info
 #define MPI_Session_init PMPI_Session_init
 #define MPI_Session_finalize PMPI_Session_finalize
