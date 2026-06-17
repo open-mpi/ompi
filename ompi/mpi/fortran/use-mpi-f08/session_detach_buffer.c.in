@@ -23,7 +23,7 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID session_detach_buffer(SESSION session, C_PTR_OUT buffer, COUNT size)
+PROTOTYPE VOID session_detach_buffer(SESSION session, C_PTR_OUT buffer, COUNT_OUT size)
 {
     int c_ierr;
     MPI_Session c_session;

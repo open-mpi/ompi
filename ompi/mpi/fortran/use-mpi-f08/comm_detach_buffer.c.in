@@ -23,7 +23,7 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID comm_detach_buffer(COMM comm, C_PTR_OUT buffer, COUNT size)
+PROTOTYPE VOID comm_detach_buffer(COMM comm, C_PTR_OUT buffer, COUNT_OUT size)
 {
     int c_ierr;
     MPI_Comm c_comm;
