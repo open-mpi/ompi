@@ -460,6 +460,23 @@ endif
 
 ###########################################################################
 
+# Validate that the mpi_f08 interfaces -- both the generated
+# (api_f08_generated.F90) and the hand-written (*_f08.F90) ones -- use the
+# parameter names, types, and intents mandated by the MPI standard, as
+# provided by the pympistandard submodule.  Run during "make check"; fails
+# if any mpi_f08 interface drifts from the standard.  The hand-written
+# sources live in $(srcdir); api_f08_generated.F90 is in the build directory
+# (built by "all", on which "check" depends).
+f08_name_check_handwritten = $(filter-out api_f08_generated.F90,$(mpi_api_files))
+
+check-local:
+	@$(PYTHON) $(top_srcdir)/ompi/mpi/bindings/check_f08_names.py \
+	    --label "mpi_f08 bindings (generated + hand-written)" \
+	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
+	    api_f08_generated.F90 $(f08_name_check_handwritten:%=$(srcdir)/%)
+
+###########################################################################
+
 # Install the generated .mod files.  Unfortunately, each F90 compiler
 # may generate different filenames, so we have to use a glob.  :-(
 
