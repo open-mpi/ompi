@@ -33,3 +33,5 @@ ERRORS
 :ref:`MPI_T_category_get_num_events` will fail if:
 
 * ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface not initialized
+
+* ``MPI_T_ERR_INVALID_INDEX``: The category index is invalid
