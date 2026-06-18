@@ -106,7 +106,8 @@
         }                                                               \
     } while(0)
 
-static inline ucc_status_t coll_ucc_req_wait(ucc_coll_req_h req)
+static inline ucc_status_t coll_ucc_req_wait(ucc_coll_req_h req,
+                                             mca_coll_ucc_module_t *module)
 {
     ucc_status_t status;
     while (UCC_OK != (status = ucc_collective_test(req))) {
@@ -116,7 +117,7 @@ static inline ucc_status_t coll_ucc_req_wait(ucc_coll_req_h req)
             ucc_collective_finalize(req);
             return status;
         }
-        ucc_context_progress(mca_coll_ucc_component.ucc_context);
+        ucc_context_progress(module->domain->ucc_context);
         opal_progress();
     }
     return ucc_collective_finalize(req);
