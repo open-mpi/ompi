@@ -1,6 +1,6 @@
 /**
   Copyright (c) 2021      Mellanox Technologies. All rights reserved.
-  Copyright (c) 2022 NVIDIA Corporation.  All rights reserved.
+  Copyright (c) 2022-2026 NVIDIA Corporation.  All rights reserved.
   Copyright (c) 2025      Fujitsu Limited. All rights reserved.
   $COPYRIGHT$
 
@@ -47,6 +47,39 @@ typedef struct mca_coll_ucc_req {
 } mca_coll_ucc_req_t;
 OBJ_CLASS_DECLARATION(mca_coll_ucc_req_t);
 
+/**
+ * A UCC "OOB domain": the intermediary that owns a single UCC context and
+ * the out-of-band (OOB) bootstrap communicator used to create that context.
+ *
+ * The OOB is implemented over an MPI communicator (PML point-to-point).
+ * UCC only uses it to bootstrap the context (an allgather at context create,
+ * and context teardown); team create/destroy and all normal collectives are
+ * collective over the team itself and do not touch the OOB.  A domain is
+ * shared (refcounted) by the communicator that created it and every
+ * communicator derived from it, so a whole family reuses one heavyweight UCC
+ * context and addresses into it through an ep map.
+ *
+ * Because the context outlives the user communicator that bootstrapped it
+ * (e.g. the user may free the bootstrap communicator while derived
+ * communicators are still alive), the domain holds its own reference to
+ * @comm (OBJ_RETAIN at creation, OBJ_RELEASE when the context is destroyed).
+ * The bootstrap communicator therefore stays valid for the OOB for as long
+ * as the context exists.  Communicators created without a usable parent
+ * domain (MPI_Comm_create_from_group, MPI_Intercomm_merge) bootstrap their
+ * own domain, since no existing context is guaranteed to span their ranks.
+ */
+typedef struct mca_coll_ucc_oob_domain_t {
+    opal_list_item_t     super;
+    /* Bootstrap communicator backing the OOB.  Owned reference: retained for
+       the lifetime of the domain so the OOB stays usable even after the user
+       frees its handle to this communicator. */
+    ompi_communicator_t *comm;
+    ucc_context_h        ucc_context;
+    /* Number of UCC modules (communicators) currently referencing it. */
+    int                  refcount;
+} mca_coll_ucc_oob_domain_t;
+OBJ_CLASS_DECLARATION(mca_coll_ucc_oob_domain_t);
+
 struct mca_coll_ucc_component_t {
     mca_coll_base_component_3_0_0_t super;
     int                             ucc_priority;
@@ -57,13 +90,21 @@ struct mca_coll_ucc_component_t {
     char                           *cts;
     const char                     *compiletime_version;
     const char                     *runtime_version;
-    bool                            libucc_initialized;
     ucc_lib_h                       ucc_lib;
     ucc_lib_attr_t                  ucc_lib_attr;
     ucc_coll_type_t                 cts_requested;
     ucc_coll_type_t                 nb_cts_requested;
     ucc_coll_type_t                 ps_cts_requested;
-    ucc_context_h                   ucc_context;
+    /* List of live mca_coll_ucc_oob_domain_t.  Each holds its own UCC
+       context; the single shared ucc_lib is created with the first domain
+       and finalized with the last.  The progress callback iterates this
+       list to progress every live context. */
+    opal_list_t                     domains;
+    int                             domain_count;
+    /* The UCC library and the per-communicator attribute keyval are created
+       lazily with the first domain and persist across domain churn. */
+    bool                            keyval_created;
+    bool                            requests_initialized;
     opal_free_list_t                requests;
 };
 typedef struct mca_coll_ucc_component_t mca_coll_ucc_component_t;
@@ -77,7 +118,16 @@ struct mca_coll_ucc_module_t {
     mca_coll_base_module_t                          super;
     ompi_communicator_t*                            comm;
     int                                             rank;
+    /* OOB domain (and thus UCC context) used by this communicator. May be
+       shared with the parent/ancestor communicator it was derived from. */
+    mca_coll_ucc_oob_domain_t*                      domain;
     ucc_team_h                                      ucc_team;
+    /* Backing array for the UCC team ep_map when this communicator is an
+       arbitrary (non-strided) permutation of the domain's bootstrap
+       communicator.  Maps team rank -> bootstrap-comm rank (i.e. context
+       endpoint).  NULL for the FULL/STRIDED cases that need no array.  Kept
+       alive for the team's lifetime and freed at module destruct. */
+    int*                                            ep_map_ranks;
     mca_coll_base_module_allreduce_fn_t             previous_allreduce;
     mca_coll_base_module_t*                         previous_allreduce_module;
     mca_coll_base_module_iallreduce_fn_t            previous_iallreduce;
