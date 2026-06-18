@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2026      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +47,8 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
                           MPI_Aint array_of_addresses[],
                           MPI_Datatype array_of_datatypes[])
 {
-    int rc, i;
+    int rc;
+    size_t i;
     MPI_Datatype newtype;
 
     MEMCHECKER(
@@ -85,7 +87,6 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
                                 MPI_ERR_TYPE, FUNC_NAME );
     }
     // now get the contents
-    ci = max_integers, cl = 0, ca = max_addresses, cd = max_datatypes;
     rc = ompi_datatype_get_args( mtype, 1, &ci, array_of_integers,
                                 &cl, NULL,
                                 &ca, array_of_addresses,
@@ -95,7 +96,7 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
                                 MPI_ERR_INTERN, FUNC_NAME );
     }
 
-    for( i = 0; i < max_datatypes; i++ ) {
+    for( i = 0; i < cd; i++ ) {
         /* if we have a predefined datatype then we return directly a pointer to
          * the datatype, otherwise we should create a copy and give back the copy.
          */
