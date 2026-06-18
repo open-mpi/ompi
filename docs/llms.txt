@@ -1,0 +1,111 @@
+# Open MPI v5.0.x
+
+Open MPI is an open source implementation of the Message Passing
+Interface (MPI) specification. This file indexes the LLM-friendly
+documentation available for this Open MPI documentation version.
+
+## About this file
+
+This is a limited llms.txt for the Open MPI v5.0.x release series. It
+indexes the human-facing HTML documentation and the rendered man pages.
+
+Open MPI publishes one llms.txt per documentation version, all under the
+same URL scheme:
+
+    https://docs.open-mpi.org/en/VERSION_SLUG/llms.txt
+
+where VERSION_SLUG is either `main` (Open MPI's development tip) or
+`vA.B.C` (A and B are the major and minor version numbers; use `vA.B.x`
+for a release branch, e.g. `v5.0.x`, or an exact `vA.B.C` for a
+git-tagged release).
+
+Open MPI v5.0.x publishes this limited index only. The full set of
+machine-readable artifacts --- a structured JSONL API catalog, aggregate
+and per-interface Markdown corpora, per-procedure Markdown pages, curated
+examples and an interface guide, and a manifest --- is published for Open
+MPI v6.0.0 and later. If you need that structured API data, use a v6.0.0
+or later version, for example
+https://docs.open-mpi.org/en/v6.0.x/llms.txt or
+https://docs.open-mpi.org/en/main/llms.txt .
+
+Documentation for Open MPI versions older than v5.0.x is not published in
+this format; for those, see
+https://github.com/open-mpi/ompi/blob/v4.1.x/README ,
+https://www.open-mpi.org/faq/ , and https://www.open-mpi.org/doc/ .
+
+- The MPI Standard (https://www.mpi-forum.org/docs/) is authoritative for
+  portable MPI semantics.
+- `MPIX_*` and `OMPI_*` APIs are Open MPI extensions, not portable MPI
+  Standard APIs.
+
+## API and command reference (man pages)
+
+- [MPI API man pages (man3 index)](man-openmpi/man3/index.html)
+- [Open MPI command man pages (man1 index)](man-openmpi/man1/index.html)
+
+## Human-facing documentation
+
+- [Building MPI applications](building-apps/index.html)
+- [Launching MPI applications](launching-apps/index.html)
+- [Tuning MPI applications](tuning-apps/index.html)
+
+## Runtime introspection (installed Open MPI)
+
+The links above are static documentation for this version. To inspect a
+*specific* installation --- its exact Open MPI version, build
+configuration, the MCA components that were compiled in, and the
+run-time tunables (MCA parameters) those components expose --- query the
+installation directly with the `ompi_info` command (listed in the man1
+index above). That information is installation-specific, so it is not
+captured here.
+
+Version and configuration:
+
+- `ompi_info --version` prints the Open MPI version.
+- `ompi_info` with no arguments prints a human-readable summary: the
+  version, the `./configure` command line, the compilers used, the
+  enabled MPI language bindings, and the MCA components that were built.
+- `ompi_info --parsable` prints the same information in a stable,
+  machine-readable `key:value` format (for example, an
+  `ompi:version:full:...` line carries the exact version).
+
+Discovering MCA parameters: the available set depends on which
+components were built, so list them from the installation with
+
+    ompi_info --all --parsable
+
+`--all` shows all configuration options and raises the MCA-parameter
+detail to the maximum (every "level", 1--9); by default only level-1
+parameters are shown. The output is self-describing: each parameter
+emits one line per field, keyed
+`mca:<framework>:<component>:param:<name>:<field>:<value>`, for example:
+
+    mca:btl:tcp:param:btl_tcp_if_include:value:
+    mca:btl:tcp:param:btl_tcp_if_include:level:1
+    mca:btl:tcp:param:btl_tcp_if_include:help:Comma-delimited list ...
+    mca:btl:tcp:param:btl_tcp_if_include:type:string
+
+Read the field names directly from the output: typical fields are the
+current `value`, its `source`, whether it is read-only (`status`), the
+verbosity `level`, the `help` text, the value `type`, whether it is
+`deprecated`, any `enumerator` values, and any `synonym_of` (an older
+name that still works).
+
+Setting MCA parameters: once you know a parameter's name, set it
+(highest precedence first) on the `mpirun` / `mpiexec` command line, in
+the environment, or in a parameter file:
+
+    # command line (highest precedence):
+    mpirun --mca btl tcp,self,sm -np 4 ./my_app
+
+    # environment variable (prefix the parameter name with OMPI_MCA_):
+    export OMPI_MCA_btl=tcp,self,sm
+
+    # parameter file: one "name = value" per line in
+    #   $HOME/.openmpi/mca-params.conf       (per user) or
+    #   $prefix/etc/openmpi-mca-params.conf  (system-wide)
+
+PMIx and PRRTE (Open MPI's run-time dependencies) have their own MCA
+systems, set with the `--pmixmca` / `--prtemca` options and the
+`PMIX_MCA_` / `PRTE_MCA_` environment-variable prefixes (note the single
+"R" in `PRTE_MCA_`).
