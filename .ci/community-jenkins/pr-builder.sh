@@ -3,6 +3,7 @@
 # Copyright (c) 2022-2023 Amazon.com, Inc. or its affiliates.  All rights
 #                         reserved.
 # Copyright (c) 2022-2023 Joe Downs.  All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,7 +18,7 @@ COMPILER=
 DISTCHECK=0
 AUTOGEN_ARGS=
 CONFIGURE_ARGS=
-MAKE_ARGS=
+MAKE_ARGS="V=1 VERBOSE=1"
 MAKE_J="-j 8"
 PREFIX="${WORKSPACE}/install"
 MPIRUN_MODE=${MPIRUN_MODE:-runall}
