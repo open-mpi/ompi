@@ -92,7 +92,7 @@ int mca_coll_ucc_scatterv(const void *sbuf, ompi_count_array_t scounts,
                                                      rbuf, rcount, rdtype, root,
                                                      false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
-    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req));
+    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req, ucc_module));
     return OMPI_SUCCESS;
 failed:
     return OMPI_ERROR;
