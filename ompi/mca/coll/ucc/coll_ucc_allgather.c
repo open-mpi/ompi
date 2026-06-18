@@ -82,7 +82,7 @@ int mca_coll_ucc_allgather(const void *sbuf, size_t scount, struct ompi_datatype
                                                       rbuf, rcount, rdtype,
                                                       false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
-    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req));
+    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req, ucc_module));
     return OMPI_SUCCESS;
 failed:
     return OMPI_ERROR;
