@@ -23,3 +23,4 @@ probably don't need to read this section.
    sphinx
    rst-for-markdown-expats.rst
    bindings
+   llm-friendly-docs

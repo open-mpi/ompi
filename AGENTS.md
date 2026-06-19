@@ -313,6 +313,18 @@ honor:
   the middle project layer (OPAL → OMPI → OSHMEM) and its `ompi_` /
   `OMPI_` symbol prefix — never as a public-facing name for the
   package.)
+- **Keep the LLM-friendly docs in sync.** The machine-readable MPI API
+  artifacts (catalog, corpora, per-symbol pages, manifest) regenerate
+  automatically from the man-page RST and binding metadata, so they
+  cannot drift. The *curated* sources under
+  [`docs/llms-src/`](docs/llms-src/) (the interface guide, examples, and
+  the `ompi_info` runtime-introspection guide) can: when a PR changes
+  public MPI documentation, update the affected curated files when
+  relevant. If you change the curated examples or the
+  JSON Schemas, regenerate
+  `specs/llms-friendly-docs/sample-records.jsonl` so `make check`
+  (which validates the artifacts) still passes. See
+  [`docs/developers/llm-friendly-docs.rst`](docs/developers/llm-friendly-docs.rst).
 
 ## Repository map
 

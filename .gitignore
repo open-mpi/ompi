@@ -519,6 +519,10 @@ docs/_static
 docs/_static/css/custom.css
 docs/_templates
 docs/man-openmpi/man3/bindings
+docs/llms-build
+docs/llms-build.stamp
+docs/llms-det-a
+docs/llms-det-b
 docs/*.inv
 
 # Common Python virtual environment and cache directory names

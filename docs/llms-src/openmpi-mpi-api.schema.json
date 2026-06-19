@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.open-mpi.org/llms/openmpi-mpi-api.schema.json",
+  "title": "Open MPI LLM-friendly API catalog record",
+  "description": "Schema for one JSON object (one line) in openmpi-mpi-api.jsonl. Schema version 1. See specs/llms-friendly-docs/spec.md.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "project",
+    "docset",
+    "name",
+    "kind",
+    "standard",
+    "category",
+    "languages",
+    "bindings",
+    "parameters",
+    "semantics",
+    "errors",
+    "seealso",
+    "urls",
+    "sources"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Version of this JSONL record schema, independent of the Open MPI release."
+    },
+    "project": {
+      "type": "string",
+      "const": "open-mpi"
+    },
+    "docset": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Semantic-only build descriptor. Build identity (git/timestamp) lives only in the manifest.",
+      "required": ["ompi_version", "schema_version"],
+      "properties": {
+        "ompi_version": {
+          "type": "string",
+          "description": "Open MPI version derived from the top-level VERSION file, e.g. v6.1.0a1."
+        },
+        "ompi_series": {
+          "type": "string",
+          "description": "Open MPI documentation series, e.g. v6.1.x."
+        },
+        "schema_version": {
+          "type": "integer",
+          "const": 1
+        }
+      }
+    },
+    "name": {
+      "type": "string",
+      "description": "Primary API name, e.g. MPI_Send.",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["standard", "extension", "deprecated", "removed"]
+    },
+    "standard": {
+      "type": ["object", "null"],
+      "description": "MPI Standard version information when known.",
+      "additionalProperties": true,
+      "properties": {
+        "version": {
+          "type": ["string", "null"],
+          "description": "MPI Standard version string, e.g. 4.1, when known."
+        }
+      }
+    },
+    "category": {
+      "type": ["string", "null"],
+      "enum": [
+        "point-to-point",
+        "collective",
+        "communicator",
+        "group",
+        "datatype",
+        "rma",
+        "io",
+        "topology",
+        "sessions",
+        "info",
+        "process",
+        "error-handling",
+        "tools",
+        "extension",
+        "other",
+        null
+      ]
+    },
+    "languages": {
+      "type": "array",
+      "description": "The set of language interfaces for which this record provides bindings; should match the distinct `language` values across `bindings`. JSON Schema validates only enum membership and uniqueness here; the cross-field equality with `bindings[].language` is enforced separately by the CI validator.",
+      "items": {
+        "type": "string",
+        "enum": ["c", "fortran_mpifh", "fortran_use_mpi", "fortran_mpi_f08"]
+      },
+      "uniqueItems": true
+    },
+    "bindings": {
+      "type": "array",
+      "description": "One entry per binding variant. May be empty for an extension with no recoverable signature.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["language", "procedure", "signature", "large_count", "return_convention", "parameters"],
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": ["c", "fortran_mpifh", "fortran_use_mpi", "fortran_mpi_f08"]
+          },
+          "procedure": {
+            "type": "string",
+            "description": "Procedure name for this binding, e.g. MPI_Send."
+          },
+          "signature": {
+            "type": "string",
+            "description": "Rendered signature text."
+          },
+          "large_count": {
+            "type": "boolean",
+            "description": "True if this is the large-count ('embiggened', _c) variant."
+          },
+          "return_convention": {
+            "type": ["string", "null"],
+            "description": "How the binding reports errors/results, e.g. 'int return code' (C) or 'ierror argument' (Fortran)."
+          },
+          "parameters": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/parameter" }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "description": "Normalized parameter metadata. For extension records, fields may be 'unknown' or omitted.",
+      "items": { "$ref": "#/$defs/parameter" }
+    },
+    "semantics": {
+      "type": ["object", "null"],
+      "additionalProperties": true,
+      "properties": {
+        "blocking": { "type": ["boolean", "string", "null"] },
+        "collective": { "type": ["boolean", "string", "null"] },
+        "local": { "type": ["boolean", "string", "null"] },
+        "initialization_required": { "type": ["boolean", "string", "null"] },
+        "threading_notes": { "type": ["string", "null"] }
+      }
+    },
+    "errors": {
+      "type": ["object", "null"],
+      "additionalProperties": true,
+      "properties": {
+        "convention": {
+          "type": ["string", "null"],
+          "description": "Error-return convention summary."
+        },
+        "url": {
+          "type": ["string", "null"],
+          "description": "Link to the human error-handling documentation."
+        }
+      }
+    },
+    "seealso": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Related API names."
+    },
+    "documented_with": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Co-documented procedure names that share this API's man page."
+    },
+    "urls": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["html", "markdown"],
+      "properties": {
+        "html": {
+          "type": "string",
+          "description": "Canonical human HTML page URL for this procedure."
+        },
+        "markdown": {
+          "type": "string",
+          "description": "Per-symbol Markdown page URL for this procedure (every documented procedure has one)."
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["rst"],
+      "properties": {
+        "rst": {
+          "type": "string",
+          "description": "Source RST path (relative to the docs source tree) for this procedure's man page."
+        },
+        "binding_metadata": {
+          "type": ["string", "null"],
+          "description": "Origin of the binding metadata, e.g. 'pympistandard' or 'rst' for extensions."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "parameter": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "direction": {
+          "type": ["string", "null"],
+          "enum": ["in", "out", "inout", "unknown", null]
+        },
+        "type": {
+          "type": ["string", "null"],
+          "description": "Datatype/kind of the parameter, when known."
+        },
+        "intent": {
+          "type": ["string", "null"],
+          "description": "Fortran intent or C const-ness, when known."
+        },
+        "optional": {
+          "enum": [true, false, "unknown", null],
+          "description": "Whether the parameter is optional; the only permitted string is 'unknown' (when not reliably extractable)."
+        },
+        "description": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}
