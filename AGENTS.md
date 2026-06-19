@@ -51,7 +51,7 @@ OPAL    (libopen-pal) portability layer (OS/arch abstractions)
 - **OPAL** — portability primitives. Symbols prefixed `opal_` / `OPAL_`.
   This is where most OS/arch `#if` blocks belong.
 - **OMPI** — everything the MPI standard mandates: the language bindings
-  (C, several Fortran flavors, non-standard Java) on top, MCA frameworks
+  (C and several Fortran flavors) on top, MCA frameworks
   underneath. Symbols prefixed `ompi_` / `OMPI_`; only *official* MPI
   symbols get `MPI_` / `mpi_`.
 - **OSHMEM** — the OpenSHMEM API layer; sibling to OMPI, changes slowly.

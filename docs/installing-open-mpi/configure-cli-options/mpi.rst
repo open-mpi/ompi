@@ -29,19 +29,6 @@ MPI API behaviors that can be used with ``configure``:
 
   :ref:`See the ULFM section <ulfm-label>` for more information.
 
-* ``--enable-mpi-java``:
-  Enable building of an **EXPERIMENTAL** Java MPI interface (disabled
-  by default).  You may also need to specify ``--with-jdk-dir``,
-  ``--with-jdk-bindir``, and/or ``--with-jdk-headers``.
-
-  .. warning:: Note that this Java interface is **INCOMPLETE**
-     (meaning: it does not support all MPI functionality) and **LIKELY
-     TO CHANGE**.  The Open MPI developers would very much like to
-     hear your feedback about this interface.
-
-  :ref:`See the Java section <open-mpi-java-label>` for many more
-  details.
-
 * ``--enable-mpi-fortran[=VALUE]``:
   By default, Open MPI will attempt to build all 3 Fortran bindings:
   ``mpif.h``, the ``mpi`` module, and the ``mpi_f08`` module.  The following

@@ -4,8 +4,7 @@ Open MPI profiling interface
 ============================
 
 Open MPI |ompi_ver| supports the "PMPI" profiling interface as
-prescribed by the MPI standard for the C and Fortran bindings (*not*
-the :ref:`Open MPI Java binding extensions <open-mpi-java-label>`).
+prescribed by the MPI standard for the C and Fortran bindings.
 
 Per MPI-4.0 section 15.2.1, MPI implementations must document which
 bindings layer on top of each other, so that profile developers know

@@ -243,12 +243,11 @@ Including files
   .. code-block:: rst
 
      .. include:: features-extensions.rst
-     .. include:: features-java.rst
 
-  Those directives include those 2 files right here in this RST file.
+  That directive includes that file right here in this RST file.
 
   .. important:: Chapter/section/subsection delimiters will be
-                 continued in those files as part of rendering this
+                 continued in that file as part of rendering this
                  file.
 
 Hyperlinks to URLs

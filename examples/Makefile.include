@@ -16,6 +16,7 @@
 # Copyright (c) 2013      Mellanox Technologies, Inc.  All rights reserved.
 # Copyright (c) 2017      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -54,7 +55,5 @@ EXTRA_DIST += \
         examples/oshmem_max_reduction.c \
         examples/oshmem_strided_puts.c \
         examples/oshmem_symmetric_data.c \
-        examples/Hello.java \
-        examples/Ring.java \
         examples/spc_example.c \
         examples/hello_sessions_c.c
