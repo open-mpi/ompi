@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,7 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID testany(INT count, REQUEST_ARRAY_INOUT array_of_requests:count, INT indx,
+PROTOTYPE VOID testany(INT count, REQUEST_ARRAY_INOUT array_of_requests:count, INDEX_OUT indx,
                        LOGICAL_OUT flag, STATUS_OUT status)
 {
     MPI_Request *c_req;
