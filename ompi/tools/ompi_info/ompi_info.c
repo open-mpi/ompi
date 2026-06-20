@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2013 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -154,6 +155,10 @@ int main(int argc, char *argv[])
     }
     if (opal_cmd_line_is_taken(ompi_info_cmd_line, "type")) {
         opal_info_do_type(ompi_info_cmd_line);
+        acted = true;
+    }
+    if (want_all || opal_cmd_line_is_taken(ompi_info_cmd_line, "event")) {
+        opal_info_do_event(want_all, ompi_info_cmd_line);
         acted = true;
     }
 
