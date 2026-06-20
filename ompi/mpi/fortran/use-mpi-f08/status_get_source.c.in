@@ -21,25 +21,22 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID status_set_elements(STATUS_INOUT status, DATATYPE datatype,
-			           COUNT count)
+PROTOTYPE VOID status_get_source(STATUS status, INT_OUT source)
 {
     int c_ierr;
-    MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
+    int c_source;
     MPI_Status c_status;
-    @COUNT_TYPE@ c_count = (@COUNT_TYPE@)*count;
-
-    /* This seems silly, but someone will do it */
 
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+        *source = OMPI_INT_2_FINT(0);
         c_ierr = MPI_SUCCESS;
     } else {
         PMPI_Status_f2c( status, &c_status );
 
-        c_ierr = @INNER_CALL@(&c_status, c_type, c_count);
+        c_ierr = @INNER_CALL@(&c_status, &c_source);
 
         if (MPI_SUCCESS == c_ierr) {
-            PMPI_Status_c2f(&c_status, status);
+            *source = OMPI_INT_2_FINT(c_source);
         }
     }
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);

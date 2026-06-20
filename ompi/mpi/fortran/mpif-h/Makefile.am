@@ -453,9 +453,15 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         start_f.c \
         status_f082f_f.c \
         status_f2f08_f.c \
+        status_get_error_f.c \
+        status_get_source_f.c \
+        status_get_tag_f.c \
         status_set_cancelled_f.c \
         status_set_elements_f.c \
         status_set_elements_x_f.c \
+        status_set_error_f.c \
+        status_set_source_f.c \
+        status_set_tag_f.c \
         testall_f.c \
         testany_f.c \
         test_cancelled_f.c \

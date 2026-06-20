@@ -18,4 +18,11 @@ prototype_files = \
         session_detach_buffer.c.in \
         session_flush_buffer.c.in \
         session_iflush_buffer.c.in \
+        status_get_error.c.in \
+        status_get_source.c.in \
+        status_get_tag.c.in \
+        status_set_elements.c.in \
+        status_set_error.c.in \
+        status_set_source.c.in \
+        status_set_tag.c.in \
         type_get_value_index.c.in
