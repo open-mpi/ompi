@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,4 +18,7 @@
 # $HEADER$
 #
 
-SUBDIRS = environment
+# Note: the "environment" subdirectory is stale (it links against a
+# long-gone src/ library layout) and is not part of the build; only the
+# "t" MPI_T tests are wired in.
+SUBDIRS = t

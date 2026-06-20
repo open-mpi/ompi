@@ -68,3 +68,8 @@ Open MPI version v6.0.0
 
   - Extended the ``accelerator`` collective component to support
     more collective operations on device buffers.
+
+- ``MPI_T_category_get_events`` and ``MPI_T_category_get_num_events``
+  now validate their ``cat_index`` argument and return
+  ``MPI_T_ERR_INVALID_INDEX`` for an out-of-range index, consistent
+  with the other ``MPI_T_category_get_*`` query functions.
