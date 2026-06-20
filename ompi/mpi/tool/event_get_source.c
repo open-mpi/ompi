@@ -6,6 +6,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,9 +27,20 @@
 
 int MPI_T_event_get_source (MPI_T_event_instance event, int *source_index)
 {
+    int rc;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    return MPI_T_ERR_INVALID_HANDLE;
+    if (MPI_PARAM_CHECK && NULL == source_index) {
+        return MPI_ERR_ARG;
+    }
+
+    rc = mca_base_event_instance_get_source (ompit_event_inst (event), source_index);
+    if (OPAL_SUCCESS != rc) {
+        return MPI_T_ERR_INVALID_HANDLE;
+    }
+
+    return MPI_SUCCESS;
 }

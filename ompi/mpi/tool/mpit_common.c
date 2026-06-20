@@ -10,6 +10,7 @@
  *                         reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,18 +20,103 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
+#include "opal/mca/threads/thread_usage.h"
+
+#include <assert.h>
+#include <stdlib.h>
+
 opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
 volatile uint32_t ompi_mpit_init_count = 0;
 
+#if OPAL_ENABLE_DEBUG
+/* Per-thread depth of MPI_T big-lock sections this thread holds (debug only),
+   used by the OPAL raise-check hook to detect a producer raising an event
+   while this thread holds the big lock (a deadlock hazard -- sec. 5.10). */
+static opal_thread_local int ompi_mpit_locked_depth = 0;
+#endif
+
 void ompi_mpit_lock (void)
 {
     opal_mutex_lock (&ompi_mpit_big_lock);
+#if OPAL_ENABLE_DEBUG
+    ++ompi_mpit_locked_depth;
+#endif
 }
 
 void ompi_mpit_unlock (void)
 {
+#if OPAL_ENABLE_DEBUG
+    --ompi_mpit_locked_depth;
+#endif
     opal_mutex_unlock (&ompi_mpit_big_lock);
+}
+
+/* --- MPI_T events: callback contexts, trampolines, debug hook ------------ */
+
+ompi_mpit_event_cb_ctx_t *ompit_event_cb_ctx_new (ompit_generic_fn_t fn, void *user_data)
+{
+    ompi_mpit_event_cb_ctx_t *ctx = malloc (sizeof (*ctx));
+    if (NULL != ctx) {
+        ctx->fn = fn;
+        ctx->user_data = user_data;
+    }
+    return ctx;
+}
+
+void ompit_event_ctx_release (void *user_data)
+{
+    free (user_data);
+}
+
+void ompit_event_cb_trampoline (mca_base_event_instance_t *inst,
+                                mca_base_event_registration_t *reg,
+                                mca_base_event_cb_safety_t cb_safety, void *user_data)
+{
+    ompi_mpit_event_cb_ctx_t *ctx = (ompi_mpit_event_cb_ctx_t *) user_data;
+    MPI_T_event_cb_function fn = (MPI_T_event_cb_function) ctx->fn;
+
+    fn ((MPI_T_event_instance) (void *) inst, ompit_event_handle (reg),
+        (MPI_T_cb_safety) cb_safety, ctx->user_data);
+}
+
+void ompit_event_dropped_trampoline (opal_count_t count, mca_base_event_registration_t *reg,
+                                     int source_index, mca_base_event_cb_safety_t cb_safety,
+                                     void *user_data)
+{
+    ompi_mpit_event_cb_ctx_t *ctx = (ompi_mpit_event_cb_ctx_t *) user_data;
+    MPI_T_event_dropped_cb_function fn = (MPI_T_event_dropped_cb_function) ctx->fn;
+
+    fn ((MPI_Count) count, ompit_event_handle (reg), source_index, (MPI_T_cb_safety) cb_safety,
+        ctx->user_data);
+}
+
+void ompit_event_free_trampoline (mca_base_event_registration_t *reg,
+                                  mca_base_event_cb_safety_t cb_safety, void *user_data)
+{
+    ompi_mpit_event_cb_ctx_t *ctx = (ompi_mpit_event_cb_ctx_t *) user_data;
+    MPI_T_event_free_cb_function fn = (MPI_T_event_free_cb_function) ctx->fn;
+
+    fn (ompit_event_handle (reg), (MPI_T_cb_safety) cb_safety, ctx->user_data);
+
+    /* The free callback fires exactly once, at registration teardown; OPAL does
+       not release free_user_data, so free our context here. */
+    ompit_event_ctx_release (ctx);
+}
+
+#if OPAL_ENABLE_DEBUG
+static void ompit_event_assert_no_big_lock (void)
+{
+    assert (0 == ompi_mpit_locked_depth
+            && "an MPI_T event was raised while this thread holds ompi_mpit_big_lock");
+}
+#endif
+
+void ompit_install_event_debug_hook (void)
+{
+#if OPAL_ENABLE_DEBUG
+    mca_base_event_debug_raise_check_fn = ompit_event_assert_no_big_lock;
+#endif
 }
 
 static MPI_Datatype mca_to_mpi_datatypes[MCA_BASE_VAR_TYPE_MAX] = {

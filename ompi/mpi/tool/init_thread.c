@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,6 +62,11 @@ int MPI_T_init_thread (int required, int *provided)
             rc = MPI_T_ERR_INVALID;
             break;
         }
+
+        /* Install the OPAL debug raise-check hook so a producer that raises an
+           MPI_T event while holding the big lock trips an assert rather than
+           deadlocking (no-op unless OPAL_ENABLE_DEBUG; sec. 5.10). */
+        ompit_install_event_debug_hook ();
 
         /* determine the thread level. TODO -- this might
            be wrong */
