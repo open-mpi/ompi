@@ -30,6 +30,7 @@
  * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,6 +103,19 @@
 #include "ompi/mpiext/mpiext.h"
 #include "ompi/mca/hook/base/base.h"
 #include "ompi/util/timings.h"
+#include "opal/types.h"
+
+/* opal_count_t is the layer-safe backing type for MPI_Count: both are derived
+   from a single configure-computed value (OPAL_FIND_COUNT_TYPE), so OPAL code
+   can manipulate counts without referencing any MPI type.  Guarantee at build
+   time that the two stay the same width. */
+_Static_assert(sizeof(opal_count_t) == sizeof(MPI_Count),
+               "opal_count_t and MPI_Count must be the same size");
+/* opal_count_t must be signed: later code (e.g. the mca_base_event drop
+   accounting) saturates against OPAL_COUNT_MAX and relies on negative values
+   being representable / detectable. */
+_Static_assert((opal_count_t) -1 < 0,
+               "opal_count_t must be a signed type");
 
 /* newer versions of gcc have poisoned this deprecated feature */
 #ifdef HAVE___MALLOC_INITIALIZE_HOOK
