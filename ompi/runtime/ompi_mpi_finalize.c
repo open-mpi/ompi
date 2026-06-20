@@ -92,6 +92,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/attribute/attribute.h"
 #include "ompi/instance/instance.h"
+#include "ompi/runtime/ompi_mpit_events.h"
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -137,6 +138,24 @@ int ompi_mpi_finalize(void)
     }
     opal_atomic_wmb();
     opal_atomic_swap_32(&ompi_mpi_state, OMPI_MPI_STATE_FINALIZE_STARTED);
+
+    /* Raise the MPI_T finalization event for the world model at the very start
+       of finalization, while MPI_COMM_WORLD still exists so the payload can
+       carry this process' rank (the session model raises its own finalization
+       event from ompi_mpi_instance_finalize(), with world_rank = -1).  No-op
+       when no tool is listening or the producer is disabled. */
+    if (NULL != ompi_event_finalization) {
+        /* The world model has no user-facing instance handle, so instance_id is
+           an ABI-independent internal correlation token (see ompi_mpi_init.c);
+           the session model's instance_id is the ABI-gated MPI_Session handle. */
+        struct {
+            int32_t  model;
+            int32_t  world_rank;
+            uint64_t instance_id;
+        } payload = {OMPI_T_MODEL_WORLD, ompi_comm_rank(&ompi_mpi_comm_world.comm),
+                     (uint64_t) (uintptr_t) ompi_mpi_instance_default};
+        mca_base_event_raise(ompi_event_finalization, NULL, &payload);
+    }
 
     /* Per MPI-2:4.8, we have to free MPI_COMM_SELF before doing
        anything else in MPI_FINALIZE (to include setting up such that

@@ -29,6 +29,7 @@
  * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2025      BULL S.A.S. All rights reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,6 +59,7 @@
 
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/runtime/ompi_mpit_events.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 #include "ompi/info/info_memkind.h"
@@ -2337,6 +2339,26 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
     comm->c_flags |= OMPI_COMM_NAMEISSET;
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
 
+    /* MPI_T: notify tools bound to THIS communicator that it was (re)named
+       (sec. 6.1).  Object-bound delivery means only registrations bound to this
+       communicator are invoked.  Raised after the lock is dropped so a callback
+       may re-enter MPI on the communicator (e.g. MPI_Comm_get_name to read the
+       new name, which the fixed payload does not carry). */
+    if (NULL != ompi_event_comm_name_set) {
+        struct {
+            uint64_t handle;
+        } payload;
+        /* XXX ABI (#13280): the MPI_Comm handle must match the registering
+           tool's ABI (ompi_mpit_callback_abi). */
+        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+            payload.handle = (uint64_t) (uintptr_t) comm;
+        } else {
+            /* TODO ABI (#13280): set the MPI Standard ABI handle value. */
+            payload.handle = 0;
+        }
+        mca_base_event_raise_bound(ompi_event_comm_name_set, NULL, comm, &payload);
+    }
+
     return OMPI_SUCCESS;
 }
 /**********************************************************************/
@@ -2473,6 +2495,35 @@ int ompi_comm_free( ompi_communicator_t **comm )
             return ret;
         }
         OBJ_RELEASE((*comm)->c_keyhash);
+    }
+
+    /* Raise the MPI_T communicator-freed event now that teardown is committed
+       (the fallible attribute-delete step above has succeeded); the remaining
+       teardown cannot fail, and the context id is still valid until the final
+       release below.  Raising here (not at entry) keeps the freed event off the
+       attribute-delete failure path, so it pairs with the created event.  The
+       participation guard mirrors the created producer (raised in
+       ompi_comm_activate_complete only for ranks that join the new communicator),
+       so a rank that built a transient communicator it never joined -- e.g. an
+       MPI_UNDEFINED color in MPI_Comm_split, or a non-member of MPI_Comm_create's
+       group -- does not emit an unpaired freed.  No-op when no tool is listening
+       or the producer is disabled.  (comm and the communicator it points to are
+       already dereferenced above, so no NULL check here.) */
+    if (NULL != ompi_event_comm_freed && NULL != (*comm)->c_local_group
+        && MPI_UNDEFINED != (*comm)->c_local_group->grp_my_rank) {
+        struct {
+            uint64_t handle;
+        } payload;
+        /* XXX ABI: the MPI_Comm handle value must match the registering MPI_T
+           tool's ABI (ompi_mpit_callback_abi). */
+        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+            payload.handle = (uint64_t) (uintptr_t) *comm;
+        } else {
+            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
+               communicator *comm. */
+            payload.handle = 0;
+        }
+        mca_base_event_raise(ompi_event_comm_freed, NULL, &payload);
     }
 
     if ( OMPI_COMM_IS_INTER(*comm) ) {
