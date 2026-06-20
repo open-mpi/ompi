@@ -54,8 +54,8 @@ int MPI_T_category_get_num_events (int cat_index, int *num_events)
             break;
         }
 
-        /* Open MPI does not yet register any MPI_T events. */
-        *num_events = 0;
+        *num_events = (int) opal_value_array_get_size (
+            (opal_value_array_t *) &group->group_events);
         rc = MPI_SUCCESS;
     } while (0);
 
