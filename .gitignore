@@ -525,6 +525,7 @@ test/threads/opal_atomic_thread_bench
 
 test/util/aaa
 test/util/test_session_dir_out
+test/util/mca_base_event_test
 test/util/opal_os_path
 test/util/opal_argv
 test/util/opal_os_create_dirpath

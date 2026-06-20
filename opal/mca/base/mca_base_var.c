@@ -24,7 +24,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
- * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023, 2026 Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +48,7 @@
 #include "opal/constants.h"
 #include "opal/include/opal_stdint.h"
 #include "opal/mca/base/mca_base_alias.h"
+#include "opal/mca/base/mca_base_event.h"
 #include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/mca.h"
@@ -282,6 +283,19 @@ int mca_base_var_init(void)
         /* Set this before we register the parameter, below */
 
         mca_base_var_initialized = true;
+
+        /* Initialize the MPI_T event registry only after the var system is
+           marked initialized.  mca_base_event_init() registers its own MCA
+           parameters via mca_base_var_register(), and register_variable()
+           re-enters mca_base_var_init() while !mca_base_var_initialized -- which
+           would re-run this initializer and leak the just-built var storage.
+           (mca_base_pvar_init() above is safe here: it registers no MCA
+           parameters during init.) */
+        ret = mca_base_event_init();
+        if (OPAL_SUCCESS != ret) {
+            mca_base_var_initialized = false;
+            return ret;
+        }
     }
 
     opal_finalize_register_cleanup(mca_base_var_finalize);
@@ -1155,6 +1169,7 @@ static void mca_base_var_finalize(void)
 
         (void) mca_base_var_group_finalize();
         (void) mca_base_pvar_finalize();
+        (void) mca_base_event_finalize();
 
         OBJ_DESTRUCT(&mca_base_var_index_hash);
 

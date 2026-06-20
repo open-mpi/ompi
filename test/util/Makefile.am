@@ -36,6 +36,7 @@ check_PROGRAMS = \
 	opal_path_nfs \
         opal_json \
         opal_sha256 \
+        mca_base_event_test \
 	opal_timer \
 	opal_string_copy \
 	opal_numtostr \
@@ -221,6 +222,12 @@ opal_sha256_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
 opal_sha256_DEPENDENCIES = $(opal_sha256_LDADD)
+
+mca_base_event_test_SOURCES = mca_base_event_test.c
+mca_base_event_test_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+        $(top_builddir)/test/support/libsupport.a
+mca_base_event_test_DEPENDENCIES = $(mca_base_event_test_LDADD)
 
 clean-local:
 	rm -f test_session_dir_out test-file opal_path_nfs.out
