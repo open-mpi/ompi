@@ -11,6 +11,15 @@ Open MPI version v6.0.0
 - Added support for the MPI-4.0 embiggened APIs (i.e., functions with
   ``MPI_Count`` parameters).
 
+- Implemented the MPI_T events interface (MPI-5.0 section 15.3.8): event
+  sources and types, event handles (including events bound to a specific MPI
+  object), callbacks honoring the callback-safety levels, and dropped-event
+  handlers, plus a set of built-in event producers (MPI
+  initialization/finalization for both the world and session models,
+  communicator and RMA window lifecycle, communicator naming, error-handler
+  invocations, and OS-level memory release). List the registered sources and
+  event types with ``ompi_info --event``.
+
 - Fix build system and some internal code to support compiler
   link-time optimization (LTO).
 

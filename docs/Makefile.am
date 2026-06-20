@@ -464,6 +464,7 @@ OMPI_MAN3 = \
         MPI_Status_set_source.3 \
         MPI_Status_set_tag.3 \
         MPI_T.3 \
+        MPI_T_Events.3 \
         MPI_T_category_changed.3 \
         MPI_T_category_get_categories.3 \
         MPI_T_category_get_cvars.3 \
