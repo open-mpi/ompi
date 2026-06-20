@@ -18,6 +18,7 @@
 # Copyright (c) 2014-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -58,79 +59,30 @@ AC_DEFUN([_OMPI_FIND_MPI_AINT_TYPE], [
 dnl #########################################################################
 
 AC_DEFUN([_OMPI_FIND_MPI_COUNT_TYPE], [
-    # Find the type of MPI_Count.  Per MPI-3.0 2.5.8, it needs to be
-    # as least as large as an int, MPI_Aint, and MPI_Offset (we'll
-    # define MPI_Offset later to be the same as an MPI_Count).
+    # MPI_Count shares its backing type with opal_count_t.  Rather than
+    # recompute it here, derive it from the OPAL_COUNT_* shell variables that
+    # OPAL_FIND_COUNT_TYPE already computed (the single source of truth, run
+    # unconditionally in configure.ac before this macro).  This guarantees
+    # sizeof(MPI_Count) == sizeof(opal_count_t); a build-time _Static_assert in
+    # OMPI enforces it.  See config/opal_find_count_type.m4 for the rationale
+    # behind the type selection (<= size_t, >= ptrdiff_t, not the widest type).
 
-    # Note, however, that per
-    # https://svn.open-mpi.org/trac/ompi/ticket/4205, MPI_Count cannot
-    # be larger than a size_t (e.g., if you're compiling in 32 bit
-    # more on a 64 bit platform, long long will be 8 bytes, but size_t
-    # will only be 4 bytes).  The entire BTL, PML, and convertor
-    # infrastructure rely on sizeof(MPI_Count) being <=
-    # sizeof(size_t).  So artificially limit the size of MPI_Count, if
-    # necessary.
-
-    # Also note: do not search for int64_t or int32_t, because using
-    # these types mean that we would need to include <stdint.h> in
-    # mpi.h, which we probably shouldn't do.
-
-    # Finally, note that MPI_Count has an impact on the extent of a
-    # datatype, extent defined by the MPI standard as an MPI_Aint.
-    # This MPI_Aint is also the largest different between two memory
-    # pointers -- the well-known ptrdiff_t.  There *are* systems where
-    # the address space is 32 bit but the filesystem space is 64 bit
-    # (e.g., BlueGene), and therefore MPI_Aint is 32 bit and
-    # MPI_Offset (and therefore MPI_Count) is 64 bit.  Open MPI
-    # doesn't currently support this configuration -- re-tooling in
-    # the convertor/PML/BML/BTL will be necessary before that can work
-    # properly.
-
-    # Keep in mind, however, that while ptrdiff_t and size_t represent
-    # similar concepts (length or displacement in memory), one is
-    # slightly larger than the other (one is unsigned and the other
-    # signed) and there is no requirement for them to be of the same
-    # width.  On systems with non-monolithic memory space, the scheme
-    # we use below may not work.  On systems with non-monolithic
-    # memory space, the scheme we use below may not work.  ...but such
-    # systems are pretty rare today.
-
-    MPI_COUNT_TYPE=unknown
     AC_MSG_CHECKING([for type of MPI_Count])
-    if test $ac_cv_sizeof_long_long -le $ac_cv_sizeof_size_t && \
-       test $ac_cv_sizeof_long_long -ge $MPI_AINT_SIZE; then
-        MPI_COUNT_TYPE="long long"
-        MPI_COUNT_DATATYPE=MPI_LONG_LONG
-        MPI_COUNT_SIZE=$ac_cv_sizeof_long_long
-    elif test $ac_cv_sizeof_long -le $ac_cv_sizeof_size_t && \
-         test $ac_cv_sizeof_long -ge $MPI_AINT_SIZE; then
-        MPI_COUNT_TYPE=long
-        MPI_COUNT_DATATYPE=MPI_LONG
-        MPI_COUNT_SIZE=$ac_cv_sizeof_long
-    elif test $ac_cv_sizeof_int -le $ac_cv_sizeof_size_t && \
-         test $ac_cv_sizeof_int -ge $MPI_AINT_SIZE; then
-        MPI_COUNT_TYPE=int
-        MPI_COUNT_DATATYPE=MPI_INT
-        MPI_COUNT_SIZE=$ac_cv_sizeof_int
-    fi
 
-    if test "$MPI_COUNT_TYPE" = "unknown"; then
-        AC_MSG_RESULT([not found])
-        AC_MSG_WARN([*** Unable to find a good type for MPI_Count])
-        AC_MSG_ERROR([Cannot continue])
-    fi
+    MPI_COUNT_TYPE=$OPAL_COUNT_TYPE
+    MPI_COUNT_SIZE=$OPAL_COUNT_SIZE
+    MPI_COUNT_MAX=$OPAL_COUNT_MAX
 
-    if test $MPI_COUNT_SIZE -eq 8 ; then
-        MPI_COUNT_MAX="0x7fffffffffffffffll"
-    elif test $MPI_COUNT_SIZE -eq 4 ; then
-        MPI_COUNT_MAX="0x7fffffffl"
-    elif test $MPI_COUNT_SIZE -eq 2 ; then
-        MPI_COUNT_MAX="0x7fff"
-    else
-        AC_MSG_RESULT([$MPI_COUNT_TYPE (size: $MPI_COUNT_SIZE)])
-        AC_MSG_WARN([*** Configure cannot handle this size -- contact Open MPI developers])
-        AC_MSG_ERROR([Cannot continue])
-    fi
+    # The corresponding MPI datatype (also reused for MPI_Offset, below).
+    case "$MPI_COUNT_TYPE" in
+        "long long") MPI_COUNT_DATATYPE=MPI_LONG_LONG ;;
+        long)        MPI_COUNT_DATATYPE=MPI_LONG ;;
+        int)         MPI_COUNT_DATATYPE=MPI_INT ;;
+        *)
+            AC_MSG_RESULT([$MPI_COUNT_TYPE])
+            AC_MSG_ERROR([*** No corresponding MPI datatype for MPI_Count type "$MPI_COUNT_TYPE"])
+            ;;
+    esac
 
     AC_DEFINE_UNQUOTED(OMPI_MPI_COUNT_SIZE, $MPI_COUNT_SIZE,
                        [Size of the MPI_Count datatype])
