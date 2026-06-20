@@ -17,6 +17,7 @@
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,7 +58,14 @@ static converter_info_t converters[MAX_CONVERTERS] = {{0}};
 
 static int opal_strerror_int(int errnum, const char **str)
 {
-    int i, ret = OPAL_SUCCESS;
+    /* Default to a non-success value so that an errnum matched by no
+       registered converter is reported as unknown by the callers
+       (opal_strerror/opal_strerror_r/opal_perror), which then format an
+       "Unknown error" string.  Previously this defaulted to OPAL_SUCCESS,
+       leaving *str == NULL for unmatched codes and causing opal_strerror()
+       to return NULL -- violating its documented contract that an unknown
+       errnum yields a (non-NULL) overwritable buffer. */
+    int i, ret = OPAL_ERROR;
     *str = NULL;
 
     for (i = 0; i < MAX_CONVERTERS; ++i) {
