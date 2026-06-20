@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,6 +26,8 @@
 
 int MPI_T_event_get_index (const char *name, int *event_index)
 {
+    int rc;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
@@ -33,5 +36,9 @@ int MPI_T_event_get_index (const char *name, int *event_index)
         return MPI_ERR_ARG;
     }
 
-    return MPI_T_ERR_INVALID_NAME;
+    ompi_mpit_lock ();
+    rc = mca_base_event_get_by_name (name, event_index);
+    ompi_mpit_unlock ();
+
+    return (OPAL_SUCCESS == rc) ? MPI_SUCCESS : MPI_T_ERR_INVALID_NAME;
 }
