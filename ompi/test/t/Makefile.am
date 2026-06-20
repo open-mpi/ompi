@@ -26,6 +26,15 @@ include $(top_srcdir)/Makefile.mca-dso-check
 check_PROGRAMS = \
         mpi_t_category_get_events \
         mpi_t_concurrent_init \
+        mpi_t_errcodes \
+        mpi_t_event_14019 \
+        mpi_t_event_comm_name \
+        mpi_t_event_inert_ok \
+        mpi_t_event_producers \
+        mpi_t_event_reinit \
+        mpi_t_event_selftest \
+        mpi_t_event_smoke \
+        mpi_t_event_world \
         mpi_t_level_no_downgrade \
         mpi_t_level_pinning \
         mpi_t_lifecycle \
@@ -57,6 +66,42 @@ mpi_t_concurrent_init_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 # framework selected (not necessarily pthreads), and are only applied
 # to the wrapper compilers -- they are not AC_SUBSTed for Makefile use.
 mpi_t_concurrent_init_LDADD = $(test_ldadd) -lpthread
+
+mpi_t_errcodes_SOURCES = mpi_t_errcodes.c
+mpi_t_errcodes_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_errcodes_LDADD = $(test_ldadd)
+
+mpi_t_event_14019_SOURCES = mpi_t_event_14019.c
+mpi_t_event_14019_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_14019_LDADD = $(test_ldadd)
+
+mpi_t_event_comm_name_SOURCES = mpi_t_event_comm_name.c
+mpi_t_event_comm_name_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_comm_name_LDADD = $(test_ldadd)
+
+mpi_t_event_inert_ok_SOURCES = mpi_t_event_inert_ok.c
+mpi_t_event_inert_ok_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_inert_ok_LDADD = $(test_ldadd)
+
+mpi_t_event_producers_SOURCES = mpi_t_event_producers.c
+mpi_t_event_producers_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_producers_LDADD = $(test_ldadd)
+
+mpi_t_event_reinit_SOURCES = mpi_t_event_reinit.c
+mpi_t_event_reinit_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_reinit_LDADD = $(test_ldadd)
+
+mpi_t_event_selftest_SOURCES = mpi_t_event_selftest.c
+mpi_t_event_selftest_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_selftest_LDADD = $(test_ldadd)
+
+mpi_t_event_smoke_SOURCES = mpi_t_event_smoke.c
+mpi_t_event_smoke_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_smoke_LDADD = $(test_ldadd)
+
+mpi_t_event_world_SOURCES = mpi_t_event_world.c
+mpi_t_event_world_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_event_world_LDADD = $(test_ldadd)
 
 mpi_t_level_no_downgrade_SOURCES = mpi_t_level_no_downgrade.c mpi_t_lifecycle.h
 mpi_t_level_no_downgrade_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
