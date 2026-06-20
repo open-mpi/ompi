@@ -124,10 +124,17 @@ Open MPI's MPI_T categories are organized hierarchically:
 MPI_T Events
 ^^^^^^^^^^^^
 
-Open MPI provides a set of stub interfaces for MPI_T events. More complete
-support for MPI_T events will be provided in a future release of Open MPI.
+Open MPI implements the MPI_T events interface: it exports a set of event
+*sources* and event *types* that a tool can enumerate, bind registration
+handles to, and receive through callbacks. Event delivery is synchronous and,
+in this release, occurs only in normal (non-signal) execution contexts.
+
+See :ref:`MPI_T_Events` for an overview and a detailed description of the
+built-in event sources and event types, and use ``ompi_info --event`` to list
+those available in a given installation.
 
 .. seealso::
+   * :ref:`MPI_T_Events`
    * :ref:`MPI_T_category_changed`
    * :ref:`MPI_T_category_get_categories`
    * :ref:`MPI_T_category_get_cvars`
