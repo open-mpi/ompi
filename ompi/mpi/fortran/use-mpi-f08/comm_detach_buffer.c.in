@@ -15,6 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +36,7 @@ PROTOTYPE VOID comm_detach_buffer(COMM comm, C_PTR_OUT buffer, COUNT_OUT size)
 
     if (MPI_SUCCESS == c_ierr) {
         *size = (@COUNT_FINT_TYPE@)(c_size);
-        if (MPI_BUFFER_AUTOMATIC == buffer) {
+        if (MPI_BUFFER_AUTOMATIC == *((void **)buffer)) {
             *((void **)buffer) = OMPI_FORTRAN_BUFFER_AUTOMATIC_ADDR();
         }
     }
