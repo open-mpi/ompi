@@ -75,6 +75,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/runtime/ompi_mpit_events.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/errhandler/errhandler.h"
@@ -672,6 +673,28 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     OMPI_TIMING_FINALIZE;
 
     ompi_hook_base_mpi_init_bottom(argc, argv, requested, provided);
+
+    /* Raise the MPI_T initialization event for the world model now that init is
+       complete and MPI_COMM_WORLD exists, so the payload can carry this process'
+       rank and the world size (the session model raises its own initialization
+       event from ompi_mpi_instance_init(), with world_rank/size = -1).  No-op
+       when no tool is listening or the producer is disabled. */
+    if (NULL != ompi_event_initialization) {
+        /* The world model exposes no user-facing instance handle (MPI_Init
+           returns none), so instance_id is purely an internal correlation token
+           (init<->finalize) and is ABI-independent -- unlike the session model,
+           where instance_id is the MPI_Session handle and is ABI-gated. */
+        struct {
+            int32_t  model;
+            int32_t  thread_level;
+            int32_t  world_rank;
+            int32_t  world_size;
+            uint64_t instance_id;
+        } payload = {OMPI_T_MODEL_WORLD, (int32_t) *provided,
+                     ompi_comm_rank(MPI_COMM_WORLD), ompi_comm_size(MPI_COMM_WORLD),
+                     (uint64_t) (uintptr_t) ompi_mpi_instance_default};
+        mca_base_event_raise(ompi_event_initialization, NULL, &payload);
+    }
 
     return MPI_SUCCESS;
 }
