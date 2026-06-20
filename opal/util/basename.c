@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,6 +104,11 @@ char *opal_basename(const char *filename)
 
 char *opal_dirname(const char *filename)
 {
+    /* Check for the bozo case (mirrors opal_basename()) */
+    if (NULL == filename) {
+        return NULL;
+    }
+
 #if defined(HAVE_DIRNAME) || OPAL_HAVE_DIRNAME
     char *safe_tmp = strdup(filename), *result;
     if (NULL == safe_tmp) {
