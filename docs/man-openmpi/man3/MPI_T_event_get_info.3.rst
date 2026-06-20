@@ -50,3 +50,7 @@ ERRORS
 * ``MPI_T_ERR_INVALID``: Invalid use of the interface or bad parameter values(s).
 
 * ``MPI_ERR_OTHER``: Other error
+
+.. seealso::
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`
