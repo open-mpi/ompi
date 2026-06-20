@@ -16,6 +16,7 @@
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -139,6 +140,12 @@ OPAL_DECLSPEC int mca_base_var_group_add_var(const int group_index, const int pa
  * Add a performance variable to a group
  */
 OPAL_DECLSPEC int mca_base_var_group_add_pvar(const int group_index, const int param_index);
+
+/**
+ * Add an MPI_T event (by index) to a group.  Append-only and order-preserving
+ * (sec. 15.3.9): an event is never removed from or reordered within a category.
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_event(const int group_index, const int event_index);
 
 /**
  * \internal
