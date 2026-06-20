@@ -3,6 +3,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,6 +97,8 @@ OPAL_DECLSPEC void opal_info_do_arch(void);
 OPAL_DECLSPEC void opal_info_do_hostname(void);
 
 OPAL_DECLSPEC void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line);
+
+OPAL_DECLSPEC void opal_info_do_event(bool want_all, opal_cmd_line_t *opal_info_cmd_line);
 
 OPAL_DECLSPEC void opal_info_out(const char *pretty_message, const char *plain_message,
                                  const char *value);
