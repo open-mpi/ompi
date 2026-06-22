@@ -24,6 +24,7 @@
  *                         reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -157,9 +158,9 @@ int ompi_mpi_register_params(void)
     /* yield if the node is oversubscribed and allow users to override */
     (void) mca_base_var_register("ompi", "mpi", NULL, "yield_when_idle",
                                  "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
-                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
-                                 OPAL_INFO_LVL_5,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0,
+                                 MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+                                 MCA_BASE_VAR_SCOPE_LOCAL,
                                  &ompi_mpi_yield_when_idle);
 
     ompi_mpi_event_tick_rate = -1;
