@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright (c) 2025 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025-2026 Jeffrey M. Squyres.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -17,16 +17,16 @@
 #
 # Using this method, we can emit both "regular" and "embiggened"
 # versions of each API (if an "embiggened" version exists).
+#
+# Logic that is shared with the LLM-friendly documentation generator
+# (parsing the .. mpi-bindings: directives, loading pympistandard, and
+# rendering the C/F90/F08 binding strings) lives in ompi_docs_common.py.
 
-import re
 import os
-import sys
 import textwrap
 import argparse
 
-from pathlib import Path
-from collections import defaultdict
-from pprint import pprint
+import ompi_docs_common as common
 
 #----------------
 
@@ -94,8 +94,8 @@ def generate(func_name_arg, output_dir, directives):
     # C bindings
     emitted_header = False
     for data in func_names_data:
-        binding = str(data.express.iso_c)
-        if binding and len(binding) > 0 and binding != 'None':
+        binding = common.c_binding(data)
+        if binding is not None:
             have_binding = True
             if not emitted_header:
                 out.append('C Syntax')
@@ -105,23 +105,15 @@ def generate(func_name_arg, output_dir, directives):
                 out.append(blank)
                 emitted_header = True
 
-            # Per
-            # https://github.com/mpi-forum/pympistandard/issues/25,
-            # there's a bug that the binding for MPI_Pcontrol returns
-            # a string containing "\ldots", not "...".  Do a manual
-            # replacement here.
-            binding = binding.replace(r'\ldots', '...')
-
             line = textwrap.fill(binding, width=72,
                                  initial_indent='    ',
                                  subsequent_indent = '        ')
             out.append(line)
             out.append(blank)
 
-            if data.has_embiggenment():
-                binding = str(data.express.embiggen.iso_c)
-                binding = binding.replace(r'\ldots', '...')
-                line = textwrap.fill(binding, width=72,
+            large = common.c_binding_large(data)
+            if large is not None:
+                line = textwrap.fill(large, width=72,
                                      initial_indent='    ',
                                      subsequent_indent = '        ')
                 out.append(line)
@@ -131,8 +123,8 @@ def generate(func_name_arg, output_dir, directives):
     # Note: the f90 bindings were not embiggened
     emitted_header = False
     for data in func_names_data:
-        binding = str(data.express.f90)
-        if binding and len(binding) > 0 and binding != 'None':
+        binding = common.f90_binding(data)
+        if binding is not None:
             have_binding = True
             if not emitted_header:
                 out.append('Fortran Syntax')
@@ -152,8 +144,8 @@ def generate(func_name_arg, output_dir, directives):
     # F08 bindings
     emitted_header = False
     for data in func_names_data:
-        binding = str(data.express.f08)
-        if binding and len(binding) > 0 and binding != 'None':
+        binding = common.f08_binding(data)
+        if binding is not None:
             have_binding = True
             if not emitted_header:
                 out.append('Fortran 2008 Syntax')
@@ -169,9 +161,9 @@ def generate(func_name_arg, output_dir, directives):
                 out.append(f'    {line}')
             out.append(blank)
 
-            if data.has_embiggenment():
-                binding = str(data.express.embiggen.f08)
-                lines = binding.split('\n')
+            large = common.f08_binding_large(data)
+            if large is not None:
+                lines = large.split('\n')
                 for line in lines:
                     out.append(f'    {line}')
                 out.append(blank)
@@ -199,44 +191,6 @@ def generate(func_name_arg, output_dir, directives):
 
 #----------------
 
-# Some existing .3.rst man pages actually contain the docs for
-# multiple MPI_* API functions.  Read the .3.rst files and look for
-# directives that mean "this file contains documentation for all these
-# MPI API functions".
-def read_rst_man_pages(src_dir):
-    directives = {}
-    prog = re.compile(r'^MPI_.*\.3\.rst$')
-
-    man3_dir = Path(os.path.join(src_dir, 'man-openmpi', 'man3')).resolve()
-    for file in os.listdir(man3_dir):
-        # Only want MPI man pages
-        if not prog.match(file):
-            continue
-
-        with open(os.path.join(man3_dir, file)) as fp:
-            lines = fp.readlines()
-
-        file_api_name = file.replace('.3.rst', '').lower()
-
-        # Make an initial/empty list for every MPI API man page that
-        # we find
-        directives[file_api_name] = list()
-
-        prefix = '.. mpi-bindings:'
-        for line in lines:
-            line = line.strip()
-            if not line.startswith(prefix):
-                continue
-
-            bindings = line[len(prefix):].split(',')
-            for binding in bindings:
-                binding = binding.strip()
-                directives[file_api_name].append(binding.lower())
-
-    return directives
-
-#----------------
-
 def main():
     args = setup_cli()
 
@@ -245,26 +199,12 @@ def main():
 
     # Read existing srcdir/man-openmpi/man3/MPI_*.3.rst files and look
     # for directives to guide this generation process.
-    directives = read_rst_man_pages(src_dir)
+    directives = common.read_rst_man_pages(src_dir)
 
-    # A bit of a hack to load the pympistandard module, which is in
-    # the Open MPI '3rd-party" tree in the source dir.
-    pympistandard_dir = Path(os.path.join(src_dir, '..', '3rd-party',
-                                          'pympistandard', 'src')).resolve()
-
-    sys.path.insert(0, str(pympistandard_dir))
+    # Load the embedded pympistandard library plus the MPI Standard API
+    # JSON (docs/mpi-standard-apis.json).
     global std
-    import pympistandard as std
-
-    # This is the JSON file with all the MPI standard APIs.  This is
-    # not currently officially distributed by the MPI Forum, so it was
-    # obtained by checking out the relevant branch from
-    # https://github.com/mpi-forum/mpi-standard/ and doing a build.
-    # This will create a file named apis.json.  Copy that here to this
-    # tree.
-    mpi_standard_json = os.path.abspath(os.path.join(src_dir,
-                                                     'mpi-standard-apis.json'))
-    std.use_api_version(1, given_path=mpi_standard_json)
+    std = common.load_pympistandard(src_dir)
 
     # We need to write all of these into the build tree.  See
     # docs/Makefile.am for a fuller explaination: all RST files are

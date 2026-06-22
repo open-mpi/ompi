@@ -31,3 +31,11 @@ cd docs
 python3 ./generate-mpi-man3-bindings.py --srcdir . --builddir .
 python3 ./generate-code-of-conduct-rst.py --input ../.github/CODE_OF_CONDUCT.md --output code-of-conduct.rst
 
+# Generate the LLM-friendly artifacts into the build-tree staging directory
+# (must run after the man3 bindings, whose generated RST it include-expands).
+# A "build-finished" hook in conf.py copies the staging tree into the HTML
+# output during the sphinx-build that Read the Docs runs.  The URL base for
+# the generated links is taken from READTHEDOCS_CANONICAL_URL, so they use the
+# correct version slug (e.g. .../en/main/).
+python3 ./generate-llm-docs.py --srcdir . --builddir .
+
