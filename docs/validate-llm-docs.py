@@ -24,7 +24,9 @@ Run after generate-llm-docs.py (e.g. via "make check" in docs/).  Checks:
 * the manifest inventories every artifact except itself, with matching sha256
   and byte size, and lists nothing that is missing on disk;
 * the committed sample records (specs/llms-friendly-docs/sample-records.jsonl)
-  validate against the schema and match the generated catalog;
+  validate against the schema and match the generated catalog by semantic
+  content, ignoring the per-build version stamp (docset) so the samples need
+  not be regenerated on every version bump and stay valid across branches;
 * every MPI Forum procedure that Open MPI actually implements has a man page,
   so an implemented MPI API is never silently undocumented.
 
@@ -224,9 +226,30 @@ def main():
             if rec['name'] not in catalog:
                 fail(errors, "sample {} not in generated catalog".format(
                     rec['name']))
-            elif catalog[rec['name']] != line:
-                fail(errors, "sample {} differs from generated catalog record "
-                     "(regenerate the samples)".format(rec['name']))
+            else:
+                # Compare the sample against the generated record by semantic
+                # content, ignoring the docset field.  docset carries the
+                # per-build Open MPI version and series (e.g. ompi_version
+                # "v6.1.0a1", ompi_series "v6.1.x"): a single global stamp,
+                # identical across every record, that changes on every version
+                # bump, branch, and release.  Comparing it byte-for-byte would
+                # force the committed samples to be regenerated every time the
+                # version changes, and -- worse -- would tie a sample file to a
+                # single branch's VERSION, so cherry-picking this check to a
+                # release branch (whose VERSION differs from main) would always
+                # fail here even though the API content is identical.  The
+                # version is not API content; its shape is still validated
+                # against the schema above, schema_version is also a top-level
+                # record field that remains compared here, and any formatting or
+                # key-ordering drift in the catalog file is caught separately by
+                # the manifest sha256/byte-size check.  So drop docset from both
+                # sides and compare the rest.
+                gen = {k: v for k, v in json.loads(catalog[rec['name']]).items()
+                       if k != 'docset'}
+                smp = {k: v for k, v in rec.items() if k != 'docset'}
+                if gen != smp:
+                    fail(errors, "sample {} differs from generated catalog "
+                         "record (regenerate the samples)".format(rec['name']))
 
     # --- coverage: an implemented MPI API must have a man page ---
     # A procedure in the MPI Forum metadata that Open MPI actually implements
