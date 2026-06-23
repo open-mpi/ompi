@@ -26,10 +26,31 @@
 int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                          void *buf)
 {
+    int ret;
+
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* XXX -- TODO -- Implement me */
-    return MPI_T_ERR_INVALID_HANDLE;
+    // MPI_T_PVAR_ALL_HANDLES is explicitly disallowed for readreset
+    // (no single buffer to fill).
+    if (MPI_T_PVAR_ALL_HANDLES == handle || session != handle->session) {
+        return MPI_T_ERR_INVALID_HANDLE;
+    }
+
+    ompi_mpit_lock ();
+
+    if (!mca_base_pvar_is_atomic (handle->pvar)) {
+        ompi_mpit_unlock ();
+        return MPI_T_ERR_PVAR_NO_ATOMIC;   // direct: not via ompit_opal_to_mpit_error
+    }
+
+    ret = mca_base_pvar_handle_read_value (handle, buf);
+    if (OPAL_SUCCESS == ret) {
+        ret = mca_base_pvar_handle_reset (handle);
+    }
+
+    ompi_mpit_unlock ();
+
+    return ompit_opal_to_mpit_error (ret);
 }
