@@ -12,6 +12,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2026      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +49,8 @@ int MPI_Type_get_contents_c(MPI_Datatype mtype,
                             MPI_Count  array_of_large_counts[],
                             MPI_Datatype array_of_datatypes[])
 {
-    int rc, i;
+    int rc;
+    size_t i;
     MPI_Datatype newtype;
 
     MEMCHECKER(
@@ -96,7 +98,11 @@ int MPI_Type_get_contents_c(MPI_Datatype mtype,
                                 MPI_ERR_INTERN, FUNC_NAME );
     }
 
-    for( i = 0; i < max_datatypes; i++ ) {
+    /* Iterate over the actual number of constituent datatypes (cd), not
+     * the caller-provided capacity (max_datatypes): only the first cd
+     * entries of array_of_datatypes[] were filled in above, so iterating
+     * to max_datatypes would dereference uninitialized handles. */
+    for( i = 0; i < cd; i++ ) {
         /* if we have a predefined datatype then we return directly a pointer to
          * the datatype, otherwise we should create a copy and give back the copy.
          */
