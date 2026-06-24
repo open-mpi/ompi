@@ -63,11 +63,21 @@ PROTOTYPE ERROR_CLASS get_count(STATUS status, DATATYPE datatype, COUNT_OUT coun
             *count = 0;
         } else {
             internal_count = status->_ucount / size; /* count the number of complete datatypes */
-            if( (internal_count * size) != status->_ucount ||
-                internal_count > ((size_t) INT_MAX) ) {
+            if( (internal_count * size) != status->_ucount ) {
+                /* received bytes are not a whole number of datatype copies */
+                *count = MPI_UNDEFINED;
+#if OMPI_BIGCOUNT_SRC
+            } else if( internal_count > ((size_t) MPI_COUNT_MAX) ) {
+                /* bound against the OUT parameter's own limit, not INT_MAX */
+                *count = MPI_UNDEFINED;
+            } else {
+                *count = (MPI_Count) internal_count;
+#else
+            } else if( internal_count > ((size_t) INT_MAX) ) {
                 *count = MPI_UNDEFINED;
             } else {
                 *count = (int)internal_count;
+#endif
             }
         }
     }
