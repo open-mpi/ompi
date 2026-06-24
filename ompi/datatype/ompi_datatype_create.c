@@ -13,6 +13,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,7 +72,7 @@ static void __ompi_datatype_release(ompi_datatype_t * datatype)
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_datatype_t, __ompi_datatype_allocate, __ompi_datatype_release);
 
-ompi_datatype_t * ompi_datatype_create( int32_t expectedSize )
+ompi_datatype_t * ompi_datatype_create( size_t expectedSize )
 {
     int ret;
     ompi_datatype_t * datatype = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);

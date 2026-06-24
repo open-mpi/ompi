@@ -16,6 +16,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -101,7 +102,8 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, size_t scount,
                                            mca_coll_base_module_t *module)
 {
     int line = -1, err = 0, rank, size, sendto, recvfrom, distance, blockcount, i;
-    int *new_rcounts = NULL, *new_rdispls = NULL, *new_scounts = NULL, *new_sdispls = NULL;
+    size_t *new_rcounts = NULL, *new_scounts = NULL;
+    ptrdiff_t *new_rdispls = NULL, *new_sdispls = NULL;
     ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
     struct ompi_datatype_t *new_rdtype, *new_sdtype;
@@ -142,11 +144,11 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, size_t scount,
     blockcount = 1;
     tmpsend = (char*) rbuf;
 
-    new_rcounts = (int*) calloc(4*size, sizeof(int));
+    new_rcounts = (size_t*) calloc(4*size, sizeof(size_t));
     if (NULL == new_rcounts) { err = -1; line = __LINE__; goto err_hndl; }
-    new_rdispls = new_rcounts + size;
-    new_scounts = new_rdispls + size;
-    new_sdispls = new_scounts + size;
+    new_scounts = new_rcounts + size;
+    new_rdispls = (ptrdiff_t*) (new_scounts + size);
+    new_sdispls = new_rdispls + size;
 
     for (distance = 1; distance < size; distance<<=1) {
 
@@ -168,10 +170,12 @@ int ompi_coll_base_allgatherv_intra_bruck(const void *sbuf, size_t scount,
             new_rcounts[i] = ompi_count_array_get(rcounts, tmp_rrank);
             new_rdispls[i] = ompi_disp_array_get(rdispls, tmp_rrank);
         }
-        err = ompi_datatype_create_indexed(blockcount, new_scounts, new_sdispls,
+        err = ompi_datatype_create_indexed(blockcount, OMPI_COUNT_ARRAY_CREATE(new_scounts),
+                                           OMPI_DISP_ARRAY_CREATE(new_sdispls),
                                            rdtype, &new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-        err = ompi_datatype_create_indexed(blockcount, new_rcounts, new_rdispls,
+        err = ompi_datatype_create_indexed(blockcount, OMPI_COUNT_ARRAY_CREATE(new_rcounts),
+                                           OMPI_DISP_ARRAY_CREATE(new_rdispls),
                                            rdtype, &new_rdtype);
 
         err = ompi_datatype_commit(&new_sdtype);
@@ -513,7 +517,8 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, size_t scount
     int neighbor[2], offset_at_step[2], recv_data_from[2], send_data_from;
     size_t new_scounts[2], new_rcounts[2];
     ptrdiff_t new_sdispls[2], new_rdispls[2];
-    int tmp_new_scounts[2], tmp_new_rcounts[2], tmp_new_sdispls[2], tmp_new_rdispls[2];
+    size_t tmp_new_scounts[2], tmp_new_rcounts[2];
+    ptrdiff_t tmp_new_sdispls[2], tmp_new_rdispls[2];
     ptrdiff_t rlb, rext;
     char *tmpsend = NULL, *tmprecv = NULL;
     struct ompi_datatype_t  *new_rdtype, *new_sdtype;
@@ -611,7 +616,8 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, size_t scount
         tmp_new_scounts[1] = new_scounts[1];
         tmp_new_sdispls[0] = new_sdispls[0];
         tmp_new_sdispls[1] = new_sdispls[1];
-        err = ompi_datatype_create_indexed(2, tmp_new_scounts, tmp_new_sdispls, rdtype,
+        err = ompi_datatype_create_indexed(2, OMPI_COUNT_ARRAY_CREATE(tmp_new_scounts),
+                                           OMPI_DISP_ARRAY_CREATE(tmp_new_sdispls), rdtype,
                                            &new_sdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         err = ompi_datatype_commit(&new_sdtype);
@@ -626,7 +632,8 @@ ompi_coll_base_allgatherv_intra_neighborexchange(const void *sbuf, size_t scount
         tmp_new_rcounts[1] = new_rcounts[1];
         tmp_new_rdispls[0] = new_rdispls[0];
         tmp_new_rdispls[1] = new_rdispls[1];
-        err = ompi_datatype_create_indexed(2, tmp_new_rcounts, tmp_new_rdispls, rdtype,
+        err = ompi_datatype_create_indexed(2, OMPI_COUNT_ARRAY_CREATE(tmp_new_rcounts),
+                                           OMPI_DISP_ARRAY_CREATE(tmp_new_rdispls), rdtype,
                                            &new_rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
         err = ompi_datatype_commit(&new_rdtype);
@@ -757,7 +764,6 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, size_t scount,
     MPI_Aint extent, lb;
     char *send_buf = NULL;
     struct ompi_datatype_t *newtype, *send_type;
-    int *tmp_rcounts, *tmp_disps;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -801,22 +807,8 @@ ompi_coll_base_allgatherv_intra_basic_default(const void *sbuf, size_t scount,
      * datatype.
      */
 
-    /* TODO:BIGCOUNT: Remove temporaries once ompi_datatype interface is updated */
-    tmp_rcounts = malloc(size * sizeof(int));
-    if (NULL == tmp_rcounts) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    tmp_disps = malloc(size * sizeof(int));
-    if (NULL == tmp_disps) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for (int i = 0; i < size; i++) {
-        tmp_rcounts[i] = ompi_count_array_get(rcounts, i);
-        tmp_disps[i] = ompi_disp_array_get(disps, i);
-    }
-    err = ompi_datatype_create_indexed(size,tmp_rcounts,tmp_disps,rdtype,&newtype);
-    free(tmp_rcounts);
-    free(tmp_disps);
+    err = ompi_datatype_create_indexed(size, rcounts, disps,
+                                       rdtype, &newtype);
     if (MPI_SUCCESS != err) {
         return err;
     }

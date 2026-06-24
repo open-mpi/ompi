@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,7 +67,8 @@ PROTOTYPE ERROR_CLASS Get_elements(STATUS status, DATATYPE datatype, COUNT_OUT c
 
     ret = ompi_datatype_get_elements (datatype, status->_ucount, &internal_count);
     if (OMPI_SUCCESS == ret || OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
-        if (OMPI_SUCCESS == ret && internal_count <= INT_MAX) {
+        /* check if value fits if compiling the legacy int API */
+        if (OMPI_SUCCESS == ret && (internal_count <= INT_MAX || sizeof(*count) > sizeof(int))) {
             *count = internal_count;
         } else {
             /* If we have more elements that we can represent with a signed int then we must
