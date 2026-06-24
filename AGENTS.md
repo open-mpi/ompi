@@ -216,10 +216,28 @@ successfully.
    multiple hosts/specialized hardware — **do not assume you can run all
    of it locally, and don't report untested code as verified.**
 
+**Test across environments when you can.** Portability across a wide
+variety of environments is a core Open MPI goal. The primary development
+environments are common Linux distributions and macOS, but the code is
+expected to run far more widely. When container-based tooling is
+available, it can be a practical way to reproduce, diagnose, and test
+user-space behavior specific to an environment you aren't running
+natively — for example, using Docker on macOS to exercise Linux
+user-space code paths. (Containers don't replace real
+network/hardware/launcher testing, but they're useful for OS and
+user-space differences.)
+
 **Add tests for new code.** Whenever practical, add unit tests under
 [`test/`](test/) that are wired into `make check` (and therefore run in
 CI). Prefer a `make check`-able test over a manual one-off so the
 coverage sticks and regressions are caught automatically.
+
+**Never bend a test to accommodate a bug.** Do not weaken, skip, or
+rewrite an existing test — and do not craft a new one — merely to make
+buggy behavior pass. Tests encode intended behavior: when one fails, the
+default assumption is that the code is wrong, not the test. If you find a
+genuine bug in the code base, identify it, report it, and where
+appropriate fix it — don't paper over it in the test suite.
 
 ## Performance discipline
 
@@ -242,6 +260,21 @@ Concrete rules for hot paths:
   OPAL or in the hardware-specific component — not smeared across
   portable MPI logic.
 
+## Working in a shared repository
+
+Don't assume you're the only agent (or person) using this clone. In
+particular, if you're working in a **git worktree**, other worktrees may
+be active against the same underlying repository at the same time. Avoid
+repo-wide git commands that reach outside your own working area and can
+disrupt others — for example, `git worktree prune`, or `git stash`
+(which writes to the repository-wide stash ref shared by all worktrees).
+Keep your git operations scoped to your own branch and worktree.
+
+As a narrow exception, creating a **new branch** when you need to park
+work in progress (for example, instead of `git stash`) is fine. Just be
+careful not to collide with branches that other agents or people may be
+using in the same clone — pick a clearly-scoped, unlikely-to-clash name.
+
 ## Contributing
 
 Authoritative process:
@@ -256,16 +289,30 @@ honor:
   body explaining *why*. Open MPI does **not** use Conventional Commits
   (`feat:`/`fix:` prefixes) — write prose. Don't add AI tooling
   attribution. Wrap commit-message lines at around 75 characters.
+- **Keep incidental fixes as their own commits.** Small "drive-by" bug
+  fixes you notice while working on something else are welcome, but it is
+  usually best to land them as standalone commits, separate from your
+  main change, so each can be evaluated and reviewed on its own. One
+  logical change per commit keeps history reviewable and easy to bisect.
 - **Branch flow:** land on `main` first via a GitHub pull request, then
   cherry-pick to the relevant release branch(es) `vMAJOR.MINOR.x` with a
   `(cherry picked from commit ...)` line at the end of the commit
-  message; use `git cherry-pick -x` to add it. Never commit features
-  directly to a release branch. See
+  message; use `git cherry-pick -x` to add it. Open MPI always lands
+  commits on `main` and release branches through pull requests; never
+  push directly to those branches. Never commit features directly to a
+  release branch. See
   [`docs/developers/git-github.rst`](docs/developers/git-github.rst).
 - **Update the docs and the changelog** when user-visible behavior
   changes: RST under [`docs/`](docs/), and a release-notes entry under
   [`docs/release-notes/changelog/`](docs/release-notes/changelog/)
   (`vMAJOR.MINOR.x.rst`).
+- **In user-facing docs, the package's name is "Open MPI."** When
+  referring to this software package as a whole in user-facing
+  documentation, always write the formal name **Open MPI** — never the
+  abbreviation "OMPI". ("OMPI" is correct only as the internal name of
+  the middle project layer (OPAL → OMPI → OSHMEM) and its `ompi_` /
+  `OMPI_` symbol prefix — never as a public-facing name for the
+  package.)
 
 ## Repository map
 
