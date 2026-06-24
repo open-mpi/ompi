@@ -1,5 +1,6 @@
 # Copyright (c) 2024      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -7,6 +8,8 @@
 #
 # $HEADER$
 """Source parsing code."""
+
+import os
 
 class Parameter:
 

@@ -68,6 +68,7 @@ opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
  * infrastructure that manages its structure (e.g., OpenPMIx). If we setup this
  * session directory structure, then we shall cleanup after ourselves.
  */
+static bool destroy_top_session_dir = false;
 static bool destroy_job_session_dir = false;
 static bool destroy_proc_session_dir = false;
 
@@ -84,56 +85,20 @@ static int _setup_proc_session_dir(char **sdir);
 #define OPAL_PRINT_NAME_ARGS_MAX_SIZE   50
 #define OPAL_PRINT_NAME_ARG_NUM_BUFS    16
 
-static bool fns_init=false;
-static opal_tsd_tracked_key_t print_args_tsd_key;
 static char* opal_print_args_null = "NULL";
 typedef struct {
-    char *buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS];
+    char buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS][OPAL_PRINT_NAME_ARGS_MAX_SIZE + 1];
     int cntr;
 } opal_print_args_buffers_t;
-
-static void
-buffer_cleanup(void *value)
-{
-    int i;
-    opal_print_args_buffers_t *ptr;
-
-    if (NULL != value) {
-        ptr = (opal_print_args_buffers_t*)value;
-        for (i=0; i < OPAL_PRINT_NAME_ARG_NUM_BUFS; i++) {
-            free(ptr->buffers[i]);
-        }
-        free (ptr);
-    }
-    fns_init = false;
-}
 
 static opal_print_args_buffers_t*
 get_print_name_buffer(void)
 {
-    opal_print_args_buffers_t *ptr;
-    int ret, i;
+    static opal_thread_local opal_print_args_buffers_t name_buffer = {
+        .cntr = 0
+    };
 
-    if (!fns_init) {
-        /* setup the print_args function */
-        OBJ_CONSTRUCT(&print_args_tsd_key, opal_tsd_tracked_key_t);
-        opal_tsd_tracked_key_set_destructor(&print_args_tsd_key, buffer_cleanup);
-        fns_init = true;
-    }
-
-    ret = opal_tsd_tracked_key_get(&print_args_tsd_key, (void**)&ptr);
-    if (OPAL_SUCCESS != ret) return NULL;
-
-    if (NULL == ptr) {
-        ptr = (opal_print_args_buffers_t*)malloc(sizeof(opal_print_args_buffers_t));
-        for (i=0; i < OPAL_PRINT_NAME_ARG_NUM_BUFS; i++) {
-            ptr->buffers[i] = (char *) malloc((OPAL_PRINT_NAME_ARGS_MAX_SIZE+1) * sizeof(char));
-        }
-        ptr->cntr = 0;
-        ret = opal_tsd_tracked_key_set(&print_args_tsd_key, (void*)ptr);
-    }
-
-    return (opal_print_args_buffers_t*) ptr;
+    return &name_buffer;
 }
 
 static char* ompi_pmix_print_jobids(const opal_jobid_t job)
@@ -888,8 +853,13 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (0 == opal_process_info.num_local_peers) {
         if (NULL != peers) {
             opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+        } else if (opal_process_info.is_singleton) {
+            /* if we are a singleton, then we have no local peers */
+            opal_process_info.num_local_peers = 0;
         } else {
-            opal_process_info.num_local_peers = 1;
+            ret = OPAL_ERR_BAD_PARAM;
+            error = "local peers";
+            goto error;
         }
     }
     /* if my local rank if too high, then that's an error */
@@ -983,25 +953,28 @@ int ompi_rte_finalize(void)
 {
 
     /* cleanup the session directory we created */
+    if (NULL != opal_process_info.proc_session_dir && destroy_proc_session_dir) {
+        opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
+                                true, check_file);
+        free(opal_process_info.proc_session_dir);
+        opal_process_info.proc_session_dir = NULL;
+        destroy_proc_session_dir = false;
+    }
+
     if (NULL != opal_process_info.job_session_dir && destroy_job_session_dir) {
         opal_os_dirpath_destroy(opal_process_info.job_session_dir,
-                                false, check_file);
+                                true, check_file);
         free(opal_process_info.job_session_dir);
         opal_process_info.job_session_dir = NULL;
         destroy_job_session_dir = false;
     }
-
-    if (NULL != opal_process_info.top_session_dir) {
+    
+    if (NULL != opal_process_info.top_session_dir && destroy_top_session_dir) {
+        opal_os_dirpath_destroy(opal_process_info.top_session_dir,
+                                true, check_file);
         free(opal_process_info.top_session_dir);
         opal_process_info.top_session_dir = NULL;
-    }
-
-    if (NULL != opal_process_info.proc_session_dir && destroy_proc_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
-                                false, check_file);
-        free(opal_process_info.proc_session_dir);
-        opal_process_info.proc_session_dir = NULL;
-        destroy_proc_session_dir = false;
+        destroy_top_session_dir = false;
     }
 
     if (NULL != opal_process_info.app_sizes) {
@@ -1032,10 +1005,6 @@ int ompi_rte_finalize(void)
     if (NULL != opal_process_info.initial_errhandler) {
         free(opal_process_info.initial_errhandler);
         opal_process_info.initial_errhandler = NULL;
-    }
-
-    if (fns_init) {
-        OBJ_DESTRUCT(&print_args_tsd_key);
     }
 
     /* cleanup our internal nspace hack */
@@ -1165,32 +1134,50 @@ void ompi_rte_wait_for_debugger(void)
 
 static int _setup_top_session_dir(char **sdir)
 {
+    /*
+     * Use a session directory structure similar to prrte (create only one
+     * directory for the top session) so that it can be cleaned up correctly
+     * when terminated.
+     */
     char *tmpdir;
+    int rc;
+    uid_t uid = geteuid();
+    pid_t pid = getpid();
 
     if( NULL == (tmpdir = getenv("TMPDIR")) )
         if( NULL == (tmpdir = getenv("TEMP")) )
             if( NULL == (tmpdir = getenv("TMP")) )
                 tmpdir = "/tmp";
 
-    *sdir = strdup(tmpdir);
+    if (0 > opal_asprintf(sdir, "%s/%s.%s.%lu.%lu",
+                              tmpdir, "ompi",
+                              opal_process_info.nodename,
+                              (unsigned long)pid, (unsigned long) uid)) {
+        opal_process_info.top_session_dir = NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    rc = opal_os_dirpath_create(opal_process_info.top_session_dir, 0700);
+    if (OPAL_SUCCESS != rc) {
+        // could not create top session dir
+        free(opal_process_info.top_session_dir);
+        opal_process_info.top_session_dir = NULL;
+        return rc;
+    }
+    destroy_top_session_dir = true;
     return OPAL_SUCCESS;
 }
 
 static int _setup_job_session_dir(char **sdir)
 {
     int rc;
-    /* get the effective uid */
-    uid_t uid = geteuid();
 
-    if (0 > opal_asprintf(sdir, "%s/ompi.%s.%lu/jf.0/%u",
+    if (0 > opal_asprintf(sdir, "%s/%u",
                           opal_process_info.top_session_dir,
-                          opal_process_info.nodename,
-                          (unsigned long)uid,
                           opal_process_info.my_name.jobid)) {
         opal_process_info.job_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rc = opal_os_dirpath_create(opal_process_info.job_session_dir, 0755);
+    rc = opal_os_dirpath_create(opal_process_info.job_session_dir, 0700);
     if (OPAL_SUCCESS != rc) {
         // could not create session dir
         free(opal_process_info.job_session_dir);
@@ -1211,7 +1198,7 @@ static int _setup_proc_session_dir(char **sdir)
         opal_process_info.proc_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rc = opal_os_dirpath_create(opal_process_info.proc_session_dir, 0755);
+    rc = opal_os_dirpath_create(opal_process_info.proc_session_dir, 0700);
     if (OPAL_SUCCESS != rc) {
         // could not create session dir
         free(opal_process_info.proc_session_dir);

@@ -24,5 +24,3 @@ build support for that library).
    shared-memory
    ib-and-roce
    iwarp
-   cuda
-   rocm

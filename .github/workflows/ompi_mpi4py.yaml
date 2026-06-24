@@ -15,6 +15,9 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -32,7 +35,7 @@ jobs:
       if:   ${{ runner.os == 'Linux' }}
 
     - name: Checkout Open MPI
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
        path: mpi-build
        submodules: recursive
@@ -102,7 +105,7 @@ jobs:
               numpy cffi pyyaml
 
     - name: Checkout mpi4py
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: ${{ inputs.repository || 'mpi4py/mpi4py' }}
         ref: ${{ inputs.ref }}
@@ -113,27 +116,27 @@ jobs:
         CFLAGS: "-O0"
 
     - name: Test mpi4py (singleton)
-      run:  python test/main.py -v -x test_doc
+      run:  python test/main.py -v -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=1)
-      run:  mpiexec -n 1 python test/main.py -v -x test_doc
+      run:  mpiexec -n 1 python test/main.py -v -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=2)
-      run:  mpiexec -n 2 python test/main.py -v -f -x test_doc
+      run:  mpiexec -n 2 python test/main.py -v -f -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=3)
-      run:  mpiexec -n 3 python test/main.py -v -f -x test_doc
+      run:  mpiexec -n 3 python test/main.py -v -f -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=4)
-      run:  mpiexec -n 4 python test/main.py -v -f -x test_doc
+      run:  mpiexec -n 4 python test/main.py -v -f -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
     - name: Test mpi4py (np=5)
-      run:  mpiexec -n 5 python test/main.py -v -f -x test_doc
+      run:  mpiexec -n 5 python test/main.py -v -f -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
 
@@ -151,7 +154,7 @@ jobs:
         echo LD_LIBRARY_PATH=/opt/ompi/lib >> $GITHUB_ENV
 
     - name: Test mpi4py (singleton)
-      run:  python test/main.py -v -x test_doc
+      run:  python test/main.py -v -x TestExcErrhandlerNull
       if:   ${{ true }}
       timeout-minutes: 10
 

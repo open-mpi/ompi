@@ -44,6 +44,7 @@ mca_btl_ofi_frag_completion_t *mca_btl_ofi_frag_completion_alloc(mca_btl_base_mo
 
     comp = (mca_btl_ofi_frag_completion_t *) opal_free_list_get(&context->frag_comp_list);
     comp->base.btl = btl;
+    comp->base.endpoint = frag->endpoint;
     comp->base.my_context = context;
     comp->base.my_list = &context->frag_comp_list;
     comp->base.type = type;
@@ -145,9 +146,9 @@ int mca_btl_ofi_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
 }
 
 int mca_btl_ofi_recv_frag(mca_btl_ofi_module_t *ofi_btl, mca_btl_base_endpoint_t *endpoint,
-                          mca_btl_ofi_context_t *context, mca_btl_ofi_base_frag_t *frag)
+                          mca_btl_ofi_context_t *context, mca_btl_ofi_base_frag_t *frag,
+                          int rc)
 {
-    int rc;
     mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + frag->hdr.tag;
     mca_btl_base_segment_t segment = {.seg_addr.pval = (void *) (frag + 1),
                                       .seg_len = frag->hdr.len};
@@ -158,9 +159,11 @@ int mca_btl_ofi_recv_frag(mca_btl_ofi_module_t *ofi_btl, mca_btl_base_endpoint_t
                                                    .tag = frag->hdr.tag,
                                                    .cbdata = reg->cbdata};
 
-    /* call the callback */
-    reg->cbfunc(&ofi_btl->super, &recv_desc);
-    mca_btl_ofi_frag_complete(frag, OPAL_SUCCESS);
+    if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
+        /* call the callback */
+        reg->cbfunc(&ofi_btl->super, &recv_desc);
+    }
+    mca_btl_ofi_frag_complete(frag, rc);
 
     /* repost the recv */
     rc = mca_btl_ofi_post_recvs((mca_btl_base_module_t *) ofi_btl, context, 1);

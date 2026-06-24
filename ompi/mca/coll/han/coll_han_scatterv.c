@@ -226,7 +226,10 @@ int mca_coll_han_scatterv_intra(const void *sbuf, ompi_count_array_t scounts, om
         if (need_bounce_buf) {
             ptrdiff_t ssize, sgap;
             ssize = opal_datatype_span(&rdtype->super, total_up_scounts, &sgap);
-            bounce_buf = malloc(ssize);
+            bounce_buf = han_scratch_or_malloc(
+                &han_module->scratch_buf[0],
+                &han_module->scratch_buf_size[0],
+                ssize, mca_coll_han_component.han_use_persist_buffers);
             if (!bounce_buf) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto root_out;
@@ -293,7 +296,7 @@ int mca_coll_han_scatterv_intra(const void *sbuf, ompi_count_array_t scounts, om
         if (up_peer_ub) {
             free(up_peer_ub);
         }
-        if (bounce_buf) {
+        if (bounce_buf && !mca_coll_han_component.han_use_persist_buffers) {
             free(bounce_buf);
         }
 
@@ -355,7 +358,10 @@ int mca_coll_han_scatterv_intra(const void *sbuf, ompi_count_array_t scounts, om
         total_rsize += low_scounts[i];
     }
 
-    tmp_buf = (char *) malloc(total_rsize); /* tmp_buf is still valid if total_rsize is 0 */
+    tmp_buf = han_scratch_or_malloc(
+        &han_module->scratch_buf[1],
+        &han_module->scratch_buf_size[1],
+        total_rsize, mca_coll_han_component.han_use_persist_buffers);
     if (!tmp_buf) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto node_leader_out;
@@ -382,7 +388,7 @@ node_leader_out:
     if (low_displs) {
         free(low_displs);
     }
-    if (tmp_buf) {
+    if (tmp_buf && !mca_coll_han_component.han_use_persist_buffers) {
         free(tmp_buf);
     }
 

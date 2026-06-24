@@ -1,0 +1,28 @@
+# -*- text -*-
+#
+# Copyright (c) 2024      Bull SAS. All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the English help file for Open MPI's BXI support.
+#
+[dlopen disabled]
+Open MPI was compiled without dynamic library support (e.g., with the
+ --disable-dlopen flag), and therefore cannot utilize UBCL support.
+
+If you need UBCL support, reconfigure Open MPI with dynamic library support enabled.
+#
+[dlopen failed]
+The library attempted to open the following UBCL libraries,
+but each of them failed. UBCL cannot be used.
+%s
+If you need to use UBCL, then try setting LD_LIBRARY_PATH to the location
+of libubcl.so to get passed this issue.
+#
+[No memory]
+A call to allocate memory within the UBCL support failed.  This is
+an unrecoverable error and will cause the program to abort.
+  Hostname:  %s

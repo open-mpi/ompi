@@ -1564,10 +1564,14 @@ static int create_ep(opal_btl_usnic_module_t *module, struct opal_btl_usnic_chan
     } else {
         str = "UNKNOWN";
     }
-    opal_output_verbose(15, USNIC_OUT,
-                        "btl:usnic:create_ep:%s: new usnic local endpoint channel %s: %s:%d",
-                        module->linux_device_name, str, inet_ntoa(sin->sin_addr),
-                        ntohs(sin->sin_port));
+    {
+        char ep_addr[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &sin->sin_addr, ep_addr, sizeof(ep_addr));
+        opal_output_verbose(15, USNIC_OUT,
+                            "btl:usnic:create_ep:%s: new usnic local endpoint channel %s: %s:%d",
+                            module->linux_device_name, str, ep_addr,
+                            ntohs(sin->sin_port));
+    }
 
     return OPAL_SUCCESS;
 }

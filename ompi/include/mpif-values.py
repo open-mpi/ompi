@@ -9,6 +9,9 @@
 #                         reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC. All rights
+#                         reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -148,6 +151,9 @@ handles = {
     'MPI_C_LONG_DOUBLE_COMPLEX': 71,
     'MPI_COUNT': 72,
     'MPI_COMPLEX4': 73,
+    # Leave room for 16bit datatypes
+    # See https://github.com/mpi-forum/mpi-issues/issues/65
+    'MPI_LOGICAL16': 77,
     'MPI_MESSAGE_NO_PROC': 1,
     'MPI_INFO_ENV': 1,
 }
@@ -295,6 +301,7 @@ constants = {
     'MPI_T_ERR_INVALID': 72,
     'MPI_ERR_SESSION': 78,
     'MPI_ERR_VALUE_TOO_LARGE': 79,
+    'MPI_ERR_ERRHANDLER': 80,
     'MPI_ERR_LASTCODE': 92,
     'MPI_IDENT': 0,
     'MPI_CONGRUENT': 1,
@@ -319,6 +326,7 @@ constants = {
     'MPI_COMBINER_F90_INTEGER': 16,
     'MPI_COMBINER_RESIZED': 17,
     'MPI_COMBINER_HINDEXED_BLOCK': 18,
+    'MPI_COMBINER_VALUE_INDEX': 19,
     'MPI_COMM_TYPE_SHARED': 0,
     'OMPI_COMM_TYPE_HWTHREAD': 1,
     'OMPI_COMM_TYPE_CORE': 2,
@@ -334,6 +342,8 @@ constants = {
     'OMPI_COMM_TYPE_CLUSTER': 11,
     'MPI_COMM_TYPE_HW_UNGUIDED': 12,
     'MPI_COMM_TYPE_HW_GUIDED': 13,
+    'MPI_COMM_TYPE_RESOURCE_GUIDED': 14,
+    'OMPI_COMM_TYPE_NVLINK': 15,
 }
 
 # IO Constants

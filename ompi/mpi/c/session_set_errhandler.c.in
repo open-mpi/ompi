@@ -43,7 +43,7 @@ PROTOTYPE ERROR_CLASS session_set_errhandler(SESSION session, ERRHANDLER errhand
                    MPI_ERRHANDLER_NULL == errhandler ||
                    ( OMPI_ERRHANDLER_TYPE_INSTANCE != errhandler->eh_mpi_object_type &&
                      OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
-            return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE(session, MPI_ERR_ERRHANDLER,
                                           FUNC_NAME);
         }
     }

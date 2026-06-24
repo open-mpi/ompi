@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,7 @@
 
 extern int32_t ompi_datatype_number_of_predefined_data;
 
-const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, uint16_t datalang )
+const ompi_datatype_t* ompi_datatype_match_size( size_t size, uint16_t datakind, uint16_t datalang )
 {
     int32_t i;
     const ompi_datatype_t* datatype;
@@ -41,11 +43,21 @@ const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, ui
 
         datatype = (ompi_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i);
 
+        /* Only basic scalar predefined types are valid matches for a
+         * (typeclass, size) request.  Requiring OPAL_DATATYPE_FLAG_BASIC
+         * skips two kinds of entries that would otherwise produce bogus
+         * matches: types that are unavailable in this build (e.g. the
+         * Fortran types in a --disable-mpi-fortran build, which have size 0
+         * and would spuriously match a size-0 request), and composite
+         * predefined types (e.g. MPI_2REAL, a pair of REALs whose 8-byte
+         * size would otherwise be returned for a request of REAL/8). */
+        if( (datatype->super.flags & OPAL_DATATYPE_FLAG_BASIC) != OPAL_DATATYPE_FLAG_BASIC )
+            continue;
         if( (datatype->super.flags & OMPI_DATATYPE_FLAG_DATA_LANGUAGE) != datalang )
             continue;
         if( (datatype->super.flags & OMPI_DATATYPE_FLAG_DATA_TYPE) != datakind )
             continue;
-        if( (size_t)size == datatype->super.size ) {
+        if( size == datatype->super.size ) {
             return datatype;
         }
     }

@@ -18,7 +18,7 @@
 # Copyright (c) 2015-2021 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2019-2022 Triad National Security, LLC. All rights
+# Copyright (c) 2019-2025 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
@@ -49,6 +49,9 @@ linked_files = \
         padd_error_class_f.c \
         padd_error_code_f.c \
         padd_error_string_f.c \
+        premove_error_class_f.c \
+        premove_error_code_f.c \
+        premove_error_string_f.c \
         paint_add_f.c \
         paint_diff_f.c \
         pallgather_f.c \
@@ -86,6 +89,7 @@ linked_files = \
         pcart_sub_f.c \
         pclose_port_f.c \
         pcomm_accept_f.c \
+        pcomm_attach_buffer_f.c \
         pcomm_call_errhandler_f.c \
         pcomm_compare_f.c \
         pcomm_connect_f.c \
@@ -95,11 +99,14 @@ linked_files = \
         pcomm_create_group_f.c \
         pcomm_create_keyval_f.c \
         pcomm_delete_attr_f.c \
+        pcomm_detach_buffer_f.c \
         pcomm_disconnect_f.c \
         pcomm_dup_f.c \
         pcomm_dup_with_info_f.c \
+        pcomm_flush_buffer_f.c \
         pcomm_idup_f.c \
         pcomm_idup_with_info_f.c \
+        pcomm_iflush_buffer_f.c \
         pcomm_free_f.c \
         pcomm_free_keyval_f.c \
         pcomm_get_attr_f.c \
@@ -203,6 +210,7 @@ linked_files = \
         pget_count_f.c \
         pget_elements_f.c \
         pget_elements_x_f.c \
+        pget_hw_resource_info_f.c \
         pget_library_version_f.c \
         pget_processor_name_f.c \
         pget_version_f.c \
@@ -321,6 +329,9 @@ linked_files = \
         preduce_scatter_block_init_f.c \
         prequest_free_f.c \
         prequest_get_status_f.c \
+        prequest_get_status_all_f.c \
+        prequest_get_status_any_f.c \
+        prequest_get_status_some_f.c \
         prsend_f.c \
         prsend_init_f.c \
         pscan_f.c \
@@ -333,13 +344,17 @@ linked_files = \
         psend_init_f.c \
         psendrecv_f.c \
         psendrecv_replace_f.c \
+        psession_attach_buffer_f.c \
         psession_call_errhandler_f.c \
         psession_create_errhandler_f.c \
+        psession_detach_buffer_f.c \
+        psession_flush_buffer_f.c \
         psession_get_errhandler_f.c \
         psession_get_info_f.c \
         psession_get_nth_pset_f.c \
         psession_get_num_psets_f.c \
         psession_get_pset_info_f.c \
+        psession_iflush_buffer_f.c \
         psession_init_f.c \
         psession_finalize_f.c \
         psession_set_errhandler_f.c \
@@ -349,9 +364,15 @@ linked_files = \
         pstart_f.c \
         pstatus_f082f_f.c \
         pstatus_f2f08_f.c \
+        pstatus_get_error_f.c \
+        pstatus_get_source_f.c \
+        pstatus_get_tag_f.c \
         pstatus_set_cancelled_f.c \
         pstatus_set_elements_f.c \
         pstatus_set_elements_x_f.c \
+        pstatus_set_error_f.c \
+        pstatus_set_source_f.c \
+        pstatus_set_tag_f.c \
         ptestall_f.c \
         ptestany_f.c \
         ptest_cancelled_f.c \
@@ -384,6 +405,7 @@ linked_files = \
         ptype_get_name_f.c \
         ptype_get_true_extent_f.c \
         ptype_get_true_extent_x_f.c \
+        ptype_get_value_index_f.c \
         ptype_indexed_f.c \
         ptype_match_size_f.c \
         ptype_set_attr_f.c \

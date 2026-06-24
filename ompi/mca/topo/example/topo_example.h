@@ -66,14 +66,15 @@ OBJ_CLASS_DECLARATION(mca_topo_example_module_t);
 
 int mca_topo_example_cart_map(struct ompi_communicator_t *comm,
                               int ndims,
-                              int *dims,
-                              int *periods,
+                              const int *dims,
+                              const int *periods,
                               int *newrank);
+
 
 int mca_topo_example_graph_map(struct ompi_communicator_t *comm,
                                int nnodes,
-                               int *index,
-                               int *edges,
+                               const int *index,
+                               const int *edges,
                                int *newrank);
 /*
  * ******************************************************************

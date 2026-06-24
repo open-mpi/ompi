@@ -1,6 +1,6 @@
 #
 # Copyright (c) 2012-2019 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2017-2020 Research Organization for Information Science
+# Copyright (c) 2017-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # $COPYRIGHT$
@@ -72,6 +72,7 @@ CLEANFILES += *.i90
 # may generate different filenames, so we have to use a glob.  :-(
 #
 install-exec-hook:
+	@ $(INSTALL) -d $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR)
 	@ for file in `ls *.mod`; do \
 	  echo $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
 	  $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \

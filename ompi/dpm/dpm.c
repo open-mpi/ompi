@@ -1975,7 +1975,7 @@ static char *find_prte(void)
 #if OMPI_USING_INTERNAL_PRRTE
     /* 2) If using internal PRRTE, use our bindir.  Note that this
      * will obey OPAL_PREFIX and OPAL_DESTDIR */
-    opal_asprintf(&filename, "%s%sprte", opal_install_dirs.bindir, OPAL_PATH_SEP);
+    opal_asprintf(&filename, "%s%sompi-prte", opal_install_dirs.bindir, OPAL_PATH_SEP);
     return filename;
 #else
 
@@ -2195,7 +2195,10 @@ static int start_dvm(char **hostfiles, char **dash_host)
     PMIx_Commit();
 
     /* we are no longer a singleton */
-     opal_process_info.is_singleton = false;
+    opal_process_info.is_singleton = false;
+
+    /* Now that prte is started, we use it to clean up the directory */
+    opal_pmix_register_cleanup(opal_process_info.top_session_dir, true, false, false);
 
     return OMPI_SUCCESS;
 }

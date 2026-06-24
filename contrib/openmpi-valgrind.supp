@@ -67,22 +67,6 @@
 #
 ###############################################################
 
-# inet_ntoa on linux mallocs a static buffer.  We can't free
-# it, so we have to live with it
-{
-  linux_inet_ntoa
-  Memcheck:Leak
-  fun:malloc
-  fun:inet_ntoa
-}
-{
-  linux_inet_ntoa_thread
-  Memcheck:Leak
-  fun:calloc
-  fun:pthread_setspecific
-  fun:inet_ntoa
-}
-
 
 ###############################################################
 #

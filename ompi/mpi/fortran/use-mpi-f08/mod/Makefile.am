@@ -7,12 +7,13 @@
 # Copyright (c) 2012-2013 Inria.  All rights reserved.
 # Copyright (c) 2013      Los Alamos National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2015-2020 Research Organization for Information Science
+# Copyright (c) 2015-2024 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
-# Copyright (C) 2024      Triad National Security, LLC. All rights
+# Copyright (C) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -93,11 +94,28 @@ mpi-f08-interfaces-generated.h: $(template_files)
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    $(gen_ts) \
+	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
+	    --fort-std f08 \
 	    interface \
 	    --prototype-files $(template_files)
 
 # Delete generated file on maintainer-clean
 MAINTAINERCLEANFILES = mpi-f08-interfaces-generated.h
+if OPAL_DEVEL_BUILD
+CLEANFILES += mpi-f08-interfaces-generated.h
+endif
+
+# Validate that the mpi_f08 interface specifications -- the user-visible
+# explicit interfaces, generated separately from the implementations -- use
+# the parameter names, types, and intents mandated by the MPI standard (via
+# the pympistandard submodule).  Run during "make check"; fails on any
+# drift.  Both headers are generated in the build directory (built by
+# "all", on which "check" depends).
+check-local:
+	@$(PYTHON) $(top_srcdir)/ompi/mpi/bindings/check_f08_names.py \
+	    --label "mpi_f08 interface specifications" \
+	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
+	    mpi-f08-interfaces-generated.h mpi-f08-interfaces.h
 
 #
 # Automake doesn't do Fortran dependency analysis, so must list them
@@ -130,6 +148,7 @@ pmpi-f08-interfaces.lo: mpi-f08-interfaces-generated.h
 # may generate different filenames, so we have to use a glob.  :-(
 
 install-exec-hook:
+	@ $(INSTALL) -d $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR)
 	@ for file in `ls *.mod`; do \
 	  echo $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \
 	  $(INSTALL) $$file $(DESTDIR)$(OMPI_FORTRAN_MODULEDIR); \

@@ -46,6 +46,16 @@ MPI_COMM_TYPE_SHARED
    This type splits the communicator into subcommunicators, each of
    which can create a shared memory region.
 
+MPI_COMM_TYPE_HW_GUIDED
+   This type splits the communicator into subcommunicators according
+   to the resource type specified by the ``mpi_hw_resource_type``
+   info key.
+
+MPI_COMM_TYPE_RESOURCE_GUIDED
+   This type splits the communicator into subcommunicators according
+   to the resource type specified by the ``mpi_hw_resource_type``
+   or ``mpi_pset_name`` info key.
+
 OMPI_COMM_TYPE_NODE
    Synonym for MPI_COMM_TYPE_SHARED.
 
@@ -92,6 +102,12 @@ OMPI_COMM_TYPE_CU
 OMPI_COMM_TYPE_CLUSTER
    This type splits the communicator into subcommunicators, each of
    which belongs to the same cluster.
+
+OMPI_COMM_TYPE_NVLINK
+   This type splits the communicator into subcommunicators based on
+   the NVLink domain associated with each process. It may also be
+   requested via ``MPI_COMM_TYPE_HW_GUIDED`` with
+   ``mpi_hw_resource_type`` set to ``nvlink``.
 
 
 NOTES

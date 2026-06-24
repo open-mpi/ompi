@@ -37,8 +37,10 @@ int MPI_T_cvar_read (MPI_T_cvar_handle handle, void *buf)
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    if (MPI_PARAM_CHECK && NULL == buf) {
-        return MPI_T_ERR_INVALID;
+    if (MPI_PARAM_CHECK) {
+        if ((NULL == buf) || (NULL == handle)) {
+            return MPI_T_ERR_INVALID;
+        }
     }
 
     ompi_mpit_lock ();

@@ -21,7 +21,7 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID waitall(INT count, REQUEST_ARRAY array_of_requests:count,
+PROTOTYPE VOID waitall(INT count, REQUEST_ARRAY_INOUT array_of_requests:count,
                        STATUS_ARRAY array_of_statuses)
 {
     MPI_Request *c_req;

@@ -497,7 +497,7 @@ static void era_debug_print_group(int lvl, ompi_group_t *group, ompi_communicato
     }
     s = 128 + n * 16;
     str = (char*)malloc(s);
-    sprintf(str, "Group of size %d. Ranks in %d.%d: (", n, comm->c_index, comm->c_epoch);
+    snprintf(str, s, "Group of size %d. Ranks in %d.%d: (", n, comm->c_index, comm->c_epoch);
     p = strlen(str);
     for(i = 0; i < n; i++) {
         snprintf(str + p, s - p, "%d%s", gra[i], i==n-1 ? "" : ", ");
@@ -1930,6 +1930,7 @@ static void *era_error_event_cb(int fd, int flags, void *context) {
     ompi_coll_ftagree_era_agreement_info_t* ci = event->ci;
     free(event);
     era_mark_process_failed(ci, r);
+    OBJ_RELEASE(ci);
     return NULL;
 }
 
@@ -1948,6 +1949,7 @@ static void era_mark_process_failed(ompi_coll_ftagree_era_agreement_info_t *ci, 
         event->rank = rank;
         opal_event_evtimer_set(opal_sync_event_base, &event->ev, era_error_event_cb, event);
         opal_event_add(&event->ev, &now);
+        OBJ_RETAIN(ci);
         return;
     }
 
@@ -2283,7 +2285,7 @@ static void send_msg(ompi_communicator_t *comm,
                     b++;
                 } while(w < 256);
                 if( strlen(strbytes) >= 252 ) {
-                    sprintf(strbytes + 252, "...");
+                    snprintf(strbytes + 252, 256 - 252, "...");
                 }
 
                 OPAL_OUTPUT_VERBOSE((30, ompi_ftmpi_output_handle,
@@ -2954,6 +2956,15 @@ int mca_coll_ftagree_era_finalize(void)
                          "%s ftagree:agreement (ERA) GC: %lu passed agreements remain in the passed agreements hash table\n",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                          opal_hash_table_get_size(&era_passed_agreements)));
+    /* Some agreements can remain in the era_passed_agreements table until
+     * finalize; notably, the last agreement in a communicator that has been
+     * freed.
+     *
+     * The commit that added this comment also removed the (unused) function
+     * mca_coll_ftagree_era_free_comm that could enforce purging that table
+     * during comm_free, at the cost of making comm_free hard synchronizing;
+     * this was deemed too disruptive for the small memory usage gain.
+     */
     for( rc = opal_hash_table_get_first_key_uint64(&era_passed_agreements, &key64, &value, &node);
          OPAL_SUCCESS == rc;
          rc = opal_hash_table_get_next_key_uint64(&era_passed_agreements, &key64, &value, node, &node) ) {
@@ -3366,46 +3377,3 @@ int mca_coll_ftagree_iera_intra(void *contrib,
     return OMPI_SUCCESS;
 }
 
-#if 0
-// Per @bosilca and @jsquyres discussion 29 Apr 2021: there is
-// probably a memory leak in MPI_FINALIZE right now, because this
-// function does not appear to be being called from anywhere.
-// @bosilca's team is looking into it.
-int mca_coll_ftagree_era_free_comm(ompi_communicator_t* comm,
-                                   mca_coll_base_module_t *module)
-{
-    ompi_group_t* acked;
-    era_identifier_t aid;
-    int rc;
-
-    OPAL_OUTPUT_VERBOSE((4, ompi_ftmpi_output_handle,
-                         "%s ftagree:agreement (ERA) Freeing Communicator (%d.%d).\n",
-                         OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                         comm->c_contextid,
-                         comm->c_epoch));
-
-    opal_mutex_lock(&ompi_group_afp_mutex);
-    ompi_group_intersection(comm->c_remote_group, ompi_group_all_failed_procs, &acked);
-    opal_mutex_unlock(&ompi_group_afp_mutex);
-    do {
-        rc = mca_coll_ftagree_era_intra(NULL,
-                                        0,
-                                        &ompi_mpi_int.dt,
-                                        &ompi_mpi_op_band.op,
-                                        &acked, true,
-                                        comm,
-                                        comm->c_coll->coll_agree_module);
-    } while(rc != MPI_SUCCESS);
-    OBJ_RELEASE(acked);
-
-    aid.ERAID_FIELDS.contextid = comm->c_contextid.cid_sub.u64;
-    aid.ERAID_FIELDS.epoch     = comm->c_epoch;
-
-    opal_mutex_lock(&era_mutex);
-    /** We don't need to set aid.ERAID_FIELDS.agreementid to collect all of them */
-    era_collect_passed_agreements(aid, 0, (uint16_t)-1);
-    opal_mutex_unlock(&era_mutex);
-
-    return OMPI_SUCCESS;
-}
-#endif

@@ -15,6 +15,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2021 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -182,12 +183,18 @@ int mca_sharedfp_sm_file_open (struct ompi_communicator_t *comm,
 
 #if defined(HAVE_SEM_OPEN)
 
+    /* POSIX requires a named-semaphore name to begin with '/' (and to
+       contain no other '/').  Linux and macOS tolerate a missing leading
+       slash, but FreeBSD enforces POSIX: sem_open() of a name that does not
+       start with '/' fails with EINVAL.  That made MPI_File_open() fail on
+       FreeBSD whenever the sm sharedfp component was selected (its default
+       priority is the highest), so always emit a leading-slash name. */
 #if defined (__APPLE__)
     sm_data->sem_name = (char*) malloc( sizeof(char) * 32);
-    snprintf(sm_data->sem_name,31,"OMPIO_%s",filename_basename);
+    snprintf(sm_data->sem_name,31,"/OMPIO_%s",filename_basename);
 #else
     sm_data->sem_name = (char*) malloc( sizeof(char) * 253);
-    snprintf(sm_data->sem_name,252,"OMPIO_%s",filename_basename);
+    snprintf(sm_data->sem_name,252,"/OMPIO_%s",filename_basename);
 #endif
     // We're now done with filename_basename.  Free it here so that we
     // don't have to keep freeing it in the error/return cases.

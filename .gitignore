@@ -228,11 +228,6 @@ ompi/mpi/fortran/use-mpi-tkr/mpi_kinds.ompi_module
 ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.f90
 ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.h
 
-ompi/mpi/java/java/mpi
-ompi/mpi/java/java/*.jar
-ompi/mpi/java/java/*.h
-ompi/mpi/java/java/doc
-
 ompi/mpi/tool/profile/*.c
 
 ompi/mpiext/affinity/c/example
@@ -277,7 +272,6 @@ ompi/tools/wrappers/ompi.pc
 ompi/tools/wrappers/ompi-c.pc
 ompi/tools/wrappers/ompi-cxx.pc
 ompi/tools/wrappers/ompi-fort.pc
-ompi/tools/wrappers/mpijavac.pl
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
@@ -456,8 +450,12 @@ test/datatype/to_self
 test/datatype/checksum
 test/datatype/position
 test/datatype/ddt_raw
+test/datatype/ddt_raw2
+test/datatype/large_data
 test/datatype/opal_datatype_test
+test/datatype/partial
 test/datatype/position_noncontig
+test/datatype/reduce_local
 test/datatype/unpack_ooo
 test/datatype/unpack_hetero
 
@@ -471,6 +469,8 @@ test/monitoring/example_reduce_count
 test/monitoring/test_overhead
 test/monitoring/test_pvar_access
 
+test/mpool/mpool_memkind
+
 test/mpi/environment/chello
 
 test/runtime/parse_context
@@ -483,6 +483,7 @@ test/spc/spc_test
 
 test/threads/opal_condition
 test/threads/opal_thread
+test/threads/opal_atomic_thread_bench
 
 test/util/aaa
 test/util/test_session_dir_out
@@ -506,6 +507,7 @@ test/util/opal_path_nfs.out
 test/util/opal_bit_ops
 test/util/bipartite_graph
 test/util/opal_sha256
+test/util/opal_json
 
 opal/test/reachable/reachable_netlink
 opal/test/reachable/reachable_weighted
@@ -517,6 +519,11 @@ docs/_static
 docs/_static/css/custom.css
 docs/_templates
 docs/man-openmpi/man3/bindings
+docs/llms-build
+docs/llms-build.stamp
+docs/llms-det-a
+docs/llms-det-b
+docs/*.inv
 
 # Common Python virtual environment and cache directory names
 venv
@@ -532,6 +539,9 @@ docs/schizo-ompi-rst-content
 docs/html
 docs/man
 
+# other doc RST files to ignore as they are generated
+docs/code-of-conduct.rst
+
 # Generated C Bindings
 ompi/mpi/c/*_generated*.c
 
@@ -539,3 +549,7 @@ ompi/mpi/c/*_generated*.c
 ompi/mpi/fortran/use-mpi-f08/*_generated.F90
 ompi/mpi/fortran/use-mpi-f08/base/*_generated.c
 ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces-generated.h
+ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces-generated.h
+ompi/mpi/fortran/use-mpi-ignore-tkr/*_generated.F90
+
+.vscode/

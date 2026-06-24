@@ -7,6 +7,7 @@
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2019      Triad National Security, LLC. All rights
 !                         reserved.
+! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 ! $COPYRIGHT$
 
 #include "mpi-f08-rename.h"
@@ -15,7 +16,7 @@ subroutine MPI_Session_finalize_f08(session,ierror)
    use :: mpi_f08_types, only : MPI_Session
    use :: ompi_mpifh_bindings, only : ompi_session_finalize_f
    implicit none
-   TYPE(MPI_Session), INTENT(OUT) :: session
+   TYPE(MPI_Session), INTENT(INOUT) :: session
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

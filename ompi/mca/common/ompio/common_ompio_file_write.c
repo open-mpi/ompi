@@ -13,7 +13,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -187,6 +187,7 @@ int mca_common_ompio_file_write_pipelined (ompio_file_t *fh,
         tbuf2 = mca_common_ompio_alloc_buf (fh, bytes_per_cycle);
         if (NULL == tbuf2) {
             opal_output(1, "common_ompio: error allocating memory\n");
+            opal_convertor_cleanup (&convertor);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         writebuf = tbuf2;

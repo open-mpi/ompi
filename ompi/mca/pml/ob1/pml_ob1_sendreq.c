@@ -261,6 +261,10 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
     SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)req_bytes_delivered,
                     OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
 
+    /* ensure bytes_delivered is visible before req_state update, so that
+     * another thread's complete_check sees consistent state */
+    opal_atomic_wmb();
+
     /* advance the request */
     OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
 
@@ -360,6 +364,9 @@ mca_pml_ob1_rget_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t rdma_length)
         MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
     }
 
+    /* ensure all prior stores (bytes_delivered, rdma_frag, error status)
+     * are visible before complete_check may recycle the request */
+    opal_atomic_wmb();
     send_request_pml_complete_check(sendreq);
 
     if( OPAL_LIKELY(0 < rdma_length) ) {
@@ -440,6 +447,9 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
                                                                        sizeof(mca_pml_ob1_frag_hdr_t));
     }
 
+    /* ensure prior non-atomic stores (e.g. error status) are visible
+     * before atomic updates that complete_check will observe */
+    opal_atomic_wmb();
     OPAL_THREAD_ADD_FETCH32(&sendreq->req_pipeline_depth, -1);
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
     SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)req_bytes_delivered,
@@ -1318,11 +1328,13 @@ static void mca_pml_ob1_put_completion (mca_btl_base_module_t* btl, struct mca_b
 
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS == status) ) {
-        /* TODO -- read ordering */
         mca_pml_ob1_send_fin (sendreq->req_send.req_base.req_proc, bml_btl,
                               frag->rdma_hdr.hdr_rdma.hdr_frag, frag->rdma_length,
                               0, 0);
 
+        /* ensure send_fin stores are visible before bytes_delivered
+         * update that complete_check observes */
+        opal_atomic_wmb();
         /* check for request completion */
         OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length);
         SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)frag->rdma_length,
@@ -1411,6 +1423,7 @@ void mca_pml_ob1_send_request_put (mca_pml_ob1_send_request_t *sendreq,
     mca_pml_ob1_rdma_frag_t* frag;
 
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_TYPE_ACK) {
+        opal_atomic_wmb();  /* ensure prior stores visible before req_state update */
         OPAL_THREAD_ADD_FETCH32(&sendreq->req_state, -1);
     }
 
@@ -1434,6 +1447,10 @@ void mca_pml_ob1_send_request_put (mca_pml_ob1_send_request_t *sendreq,
         /* rget fallback on put */
         frag = sendreq->rdma_frag;
         sendreq->rdma_frag = NULL;
+        /* ensure rdma_frag = NULL is visible before req_state signals
+         * completion — plain store of 0 is the completion trigger that
+         * complete_check observes */
+        opal_atomic_wmb();
         sendreq->req_state = 0;
     }
 

@@ -48,7 +48,7 @@ supported. This section contains a list of features added for the release.
 * Added support for :ref:`MPI_Info_get_string()<mpi_info_get_string>`.
 * Added support for ``initial_error_handler`` info key and the
   ``MPI_ERRORS_ABORT`` infrastructure.
-* Added support for ``mpi_minimum_alignment`` info key.
+* Added support for ``mpi_minimum_memory_alignment`` info key.
 * Added support for ``MPI_COMM_TYPE_HW_GUIDED`` and
   ``MPI_COMM_TYPE_HW_UNGUIDED``.
 * Added support for :ref:`MPI_Info_create_env()<mpi_info_create_env>`.

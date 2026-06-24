@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     # From
     # https://github.com/marketplace/actions/close-issues-after-no-reply:
     # only remove the label if someone replies to an issue who is not

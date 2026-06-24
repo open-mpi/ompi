@@ -11,7 +11,7 @@ application compiled with Open MPI v4.x can be executed with Open MPI
 .. important:: ABI is maintained for *most* of the Fortran MPI bindings, too |mdash| see below for additional information.
 
 There are however a few scenarios where an application compiled with
-Open MPI v4.x might not execute correctly with Open MPI 5.0.
+Open MPI v4.x might not execute correctly with Open MPI |ompi_series|.
 
 - Fortran compilers provide varying degrees of ABI guarantees between
   their releases.  As such, Open MPI can only provide ABI guarantees
@@ -34,7 +34,7 @@ Open MPI v4.x might not execute correctly with Open MPI 5.0.
     compilers (e.g., GNU Fortran >= v4.9), Open MPI v5.0.0 removed the
     names from the MPI interfaces when there is only a single
     subroutine in the interface, and that subroutine name exactly
-    matches the iterface name.  This change is likely to make Open MPI
+    matches the interface name.  This change is likely to make Open MPI
     |ompi_series|'s ``mpi`` module bindings *less* restrictive than
     Open MPI v4.x, but it *may* also have ABI implications, depending
     on your Fortran compiler.

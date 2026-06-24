@@ -101,6 +101,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_logical1_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_logical2_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_logical4_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_logical8_addr;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_logical16_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_integer_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_integer1_addr;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t *ompi_mpi_integer2_addr;

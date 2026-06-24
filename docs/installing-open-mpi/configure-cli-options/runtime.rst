@@ -17,9 +17,9 @@ can be used with ``configure``:
   so that executables such as ``mpicc`` and ``mpirun`` can be found
   without needing to type long path names.
 
-* ``--with-alps``:
-  Force the building of for the Cray Alps run-time environment.  If
-  Alps support cannot be found, configure will abort.
+* ``--with-pals``:
+  Force the building of for the Cray PALS run-time environment.  If
+  PALS support cannot be found, configure will abort.
 
 * ``--with-lsf=DIR``:
   Specify the directory where the LSF libraries and header files are

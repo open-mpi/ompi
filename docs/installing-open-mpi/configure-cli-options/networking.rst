@@ -14,15 +14,6 @@ can be used with ``configure``:
 
   FCA is the support library for Mellanox switches and HCAs.
 
-* ``--with-hcoll=DIR``:
-  Specify the directory where the Mellanox hcoll library and header
-  files are located.  This option is generally only necessary if the
-  hcoll headers and libraries are not in default compiler/linker
-  search paths.
-
-  hcoll is the support library for MPI collective operation offload on
-  Mellanox ConnectX-3 HCAs (and later).
-
 * ``--with-knem=DIR``:
   Specify the directory where the knem libraries and header files are
   located.  This option is generally only necessary if the knem headers

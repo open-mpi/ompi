@@ -45,7 +45,7 @@ interprets, nor distributes them:
 
    int main(int argv, char *argv[]) {
        MPI_Init(&argc, &argv);
-       /* ...body of main MPI pogram... */
+       /* ...body of main MPI program... */
        MPI_Finalize();
        return 0;
    }

@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights
+# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # $COPYRIGHT$
@@ -157,6 +157,7 @@ COMMUNICATOR_SPLIT_TYPES = [
     'MPI_COMM_TYPE_SHARED',
     'MPI_COMM_TYPE_HW_UNGUIDED',
     'MPI_COMM_TYPE_HW_GUIDED',
+    'MPI_COMM_TYPE_RESOURCE_GUIDED',
 ]
 
 RESERVED_WINDOWS = [

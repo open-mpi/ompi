@@ -2,6 +2,9 @@ name: macOS
 
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   macOS:
     runs-on: macos-latest
@@ -19,7 +22,7 @@ jobs:
         brew install libtool
         # unlink libevent
         brew unlink libevent || true
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
             submodules: recursive
     - name: Build Open MPI

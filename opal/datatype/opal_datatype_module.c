@@ -20,6 +20,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,7 +34,7 @@
 
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype.h"
-#include "opal/datatype/opal_datatype_internal.h"
+#include "opal/datatype/opal_datatype_constructors.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/arch.h"
@@ -84,6 +85,8 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_double_complex
     = OPAL_DATATYPE_INITIALIZER_DOUBLE_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_long_double_complex
     = OPAL_DATATYPE_INITIALIZER_LONG_DOUBLE_COMPLEX(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_float128_complex
+    = OPAL_DATATYPE_INITIALIZER_FLOAT128_COMPLEX(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool = OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar = OPAL_DATATYPE_INITIALIZER_WCHAR(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_long =  OPAL_DATATYPE_INITIALIZER_LONG(0);
@@ -93,7 +96,6 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable
 
 OPAL_DECLSPEC dt_elem_desc_t opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED]
     = {{{{0}}}};
-
 /*
  * NOTE: The order of this array *MUST* match the order in opal_datatype_basicDatatypes
  * (use of designated initializers should relax this restrictions some)
@@ -103,17 +105,17 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     [OPAL_DATATYPE_INT2] = sizeof(int16_t),
     [OPAL_DATATYPE_INT4] = sizeof(int32_t),
     [OPAL_DATATYPE_INT8] = sizeof(int64_t),
-    [OPAL_DATATYPE_INT16] = 16, /* sizeof (int128_t) */
+    [OPAL_DATATYPE_INT16] = 16,                    /* sizeof (int128_t) */
     [OPAL_DATATYPE_UINT1] = sizeof(uint8_t),
     [OPAL_DATATYPE_UINT2] = sizeof(uint16_t),
     [OPAL_DATATYPE_UINT4] = sizeof(uint32_t),
     [OPAL_DATATYPE_UINT8] = sizeof(uint64_t),
-    [OPAL_DATATYPE_UINT16] = 16,  /* sizeof (uint128_t) */
-    [OPAL_DATATYPE_FLOAT2] = 2,   /* sizeof (float2) */
-    [OPAL_DATATYPE_FLOAT4] = 4,   /* sizeof (float4) */
-    [OPAL_DATATYPE_FLOAT8] = 8,   /* sizeof (float8) */
-    [OPAL_DATATYPE_FLOAT12] = 12, /* sizeof (float12) */
-    [OPAL_DATATYPE_FLOAT16] = 16, /* sizeof (float16) */
+    [OPAL_DATATYPE_UINT16] = 16,                   /* sizeof (uint128_t) */
+    [OPAL_DATATYPE_FLOAT2] = 2,                    /* sizeof (float2) */
+    [OPAL_DATATYPE_FLOAT4] = 4,                    /* sizeof (float4) */
+    [OPAL_DATATYPE_FLOAT8] = 8,                    /* sizeof (float8) */
+    [OPAL_DATATYPE_FLOAT12] = OPAL_SIZEOF_FLOAT12, /* sizeof (float12) */
+    [OPAL_DATATYPE_FLOAT16] = OPAL_SIZEOF_FLOAT16, /* sizeof (float16) */
 #if defined(HAVE_SHORT_FLOAT__COMPLEX)
     [OPAL_DATATYPE_SHORT_FLOAT_COMPLEX] = sizeof(short float _Complex),
 #elif defined(HAVE_OPAL_SHORT_FLOAT_COMPLEX_T)
@@ -128,6 +130,13 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     [OPAL_DATATYPE_WCHAR] = sizeof(wchar_t),
     [OPAL_DATATYPE_LONG] = sizeof(long),
     [OPAL_DATATYPE_UNSIGNED_LONG] = sizeof(unsigned long),
+#if defined(HAVE__FLOAT128) && defined(HAVE__FLOAT128__COMPLEX)
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = sizeof(_Float128 _Complex),
+#elif defined(HAVE___FLOAT128) && defined(HAVE___FLOAT128__COMPLEX)
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = sizeof(__float128 _Complex),
+#else
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = 32, /* typical sizeof(_Float128 _Complex) */
+#endif
 };
 
 /*
@@ -164,6 +173,7 @@ OPAL_DECLSPEC const opal_datatype_t *opal_datatype_basicDatatypes[OPAL_DATATYPE_
     [OPAL_DATATYPE_WCHAR] = &opal_datatype_wchar,
     [OPAL_DATATYPE_LONG] = &opal_datatype_long,
     [OPAL_DATATYPE_UNSIGNED_LONG] = &opal_datatype_unsigned_long,
+    [OPAL_DATATYPE_FLOAT128_COMPLEX] = &opal_datatype_float128_complex,
     [OPAL_DATATYPE_UNAVAILABLE] = &opal_datatype_unavailable,
 };
 
@@ -284,6 +294,9 @@ int32_t opal_datatype_init(void)
     }
 
     opal_finalize_register_cleanup(opal_datatype_finalize);
+
+    /* Sanity check*/
+    assert(opal_datatype_local_sizes[OPAL_DATATYPE_FLOAT12] == opal_datatype_float12.size);
 
     return OPAL_SUCCESS;
 }

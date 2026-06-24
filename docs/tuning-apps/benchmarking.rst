@@ -8,7 +8,7 @@ This documentation is by no means a definitive guide, but it does try
 to offer some suggestions for generating accurate, meaningful
 benchmarks.
 
-#. Decide *exactly* what you are benchmarking and setup your system
+#. Decide *exactly* what you are benchmarking and set up your system
    accordingly.  For example, if you are trying to benchmark maximum
    performance, then many of the suggestions listed below are
    extremely relevant (be the only user on the systems and network in
@@ -82,7 +82,7 @@ benchmarks.
 
    * Perform some "warmup" events first.  Many MPI implementations
      (including Open MPI) |mdash| and other subsystems upon which the
-     MPI uses |mdash| may use "lazy" semantics to setup and maintain
+     MPI uses |mdash| may use "lazy" semantics to set up and maintain
      streams of communications.  Hence, the first event (or first few
      events) may well take significantly longer than subsequent
      events.
@@ -108,4 +108,3 @@ benchmarks.
    system configuration that you are benchmarking.  Note, for example,
    all hardware and software characteristics (to include hardware,
    firmware, and software versions as appropriate).
-

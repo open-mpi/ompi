@@ -18,6 +18,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,6 +103,7 @@ int ompi_request_default_wait_any(size_t count,
 
 recheck:
     WAIT_SYNC_INIT(&sync, 1);
+    opal_atomic_wmb();  /* release: sync struct init must be visible before CAS publishes &sync */
 
     num_requests_null_inactive = 0;
     for (i = 0; i < count; i++) {
@@ -228,7 +230,7 @@ int ompi_request_default_wait_all( size_t count,
     size_t i, completed = 0, failed = 0;
     ompi_request_t **rptr;
     ompi_request_t *request;
-    int mpi_error = OMPI_SUCCESS;
+    int mpi_error = OMPI_SUCCESS, rc;
     ompi_wait_sync_t sync;
 
     if (OPAL_UNLIKELY(0 == count)) {
@@ -237,6 +239,7 @@ int ompi_request_default_wait_all( size_t count,
 
 recheck:
     WAIT_SYNC_INIT(&sync, count);
+    opal_atomic_wmb();  /* release: sync struct init must be visible before CAS publishes &sync */
     rptr = requests;
     for (i = 0; i < count; i++) {
         void *_tmp_ptr = REQUEST_PENDING;
@@ -356,13 +359,12 @@ recheck:
 
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
-                continue;
-            }
-            /* Only free the request if there is no error on it */
-            if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
+            } else if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
+                /* Only free the request if there is no error on it */
+                
                 /* If there's an error while freeing the request,
-                   assume that the request is still there.
-                   Otherwise, Bad Things will happen later! */
+                assume that the request is still there.
+                Otherwise, Bad Things will happen later! */
                 int tmp = ompi_request_free(rptr);
                 if (OMPI_SUCCESS == mpi_error && OMPI_SUCCESS != tmp) {
                     mpi_error = tmp;
@@ -373,7 +375,6 @@ recheck:
             }
         }
     } else {
-        int rc;
         /* free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
             void *_tmp_ptr = &sync;
@@ -382,8 +383,9 @@ recheck:
 
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
                 rc = ompi_status_empty.MPI_ERROR;
-                goto absorb_error_and_continue;
+                continue;
             }
+            rc = OMPI_SUCCESS;
             /*
              * Assert only if no requests were failed.
              * Since some may still be pending.
@@ -406,7 +408,8 @@ recheck:
                         rc = MPI_ERR_PROC_FAILED_PENDING;
                     }
 #endif  /* OPAL_ENABLE_FT_MPI */
-                    goto absorb_error_and_continue;
+                    mpi_error = MPI_ERR_IN_STATUS;
+                    continue;
                  }
             }
             assert( REQUEST_COMPLETE(request) );
@@ -417,18 +420,12 @@ recheck:
                 rc = ompi_grequest_invoke_query(request, &request->req_status);
             }
 
-            rc = request->req_status.MPI_ERROR;
-
-            if( request->req_persistent ) {
+            if (request->req_persistent) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
-            } else if (MPI_SUCCESS == rc) {
+            } else if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
                 /* Only free the request if there is no error on it */
-                int tmp = ompi_request_free(rptr);
-                if (OMPI_SUCCESS == mpi_error && OMPI_SUCCESS != tmp) {
-                    mpi_error = tmp;
-                }
+                rc = ompi_request_free(rptr);
             }
-    absorb_error_and_continue:
 #if OPAL_ENABLE_FT_MPI
             if( (MPI_ERR_PROC_FAILED == rc) || (MPI_ERR_REVOKED == rc) ) {
                 mpi_error = rc;
@@ -441,7 +438,7 @@ recheck:
              *  passed to that function."
              * So we should do so here as well.
              */
-            if( OMPI_SUCCESS == mpi_error && rc != OMPI_SUCCESS) {
+            if (OMPI_SUCCESS == mpi_error && OMPI_SUCCESS != rc) {
                 mpi_error = MPI_ERR_IN_STATUS;
             }
         }
@@ -471,6 +468,7 @@ int ompi_request_default_wait_some(size_t count,
 
   recheck:
     WAIT_SYNC_INIT(&sync, 1);
+    opal_atomic_wmb();  /* release: sync struct init must be visible before CAS publishes &sync */
 
     *outcount = 0;
 

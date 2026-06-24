@@ -39,7 +39,7 @@ PROTOTYPE ERROR_CLASS errhandler_free(ERRHANDLER_OUT errhandler)
     if (NULL == errhandler ||
         (ompi_errhandler_is_intrinsic(*errhandler) &&
          1 == (*errhandler)->super.obj_reference_count)) {
-      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+      return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ERRHANDLER,
                                    "MPI_Errhandler_free");
     }
   }

@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,8 +48,8 @@ static int datatype_duplicate  (ompi_datatype_t *oldtype, ompi_datatype_t **newt
         ompi_datatype_destroy (&type);
         return MPI_ERR_INTERN;
     }
-    
-    ompi_datatype_set_args( type, 0, NULL, 0, NULL, 1, &oldtype, MPI_COMBINER_DUP );
+
+    ompi_datatype_set_args( type, 0, 0, NULL, 0, OMPI_DISP_ARRAY_NULL, 1, &oldtype, MPI_COMBINER_DUP );
 
     *newtype = type;
     return OMPI_SUCCESS;
@@ -328,7 +329,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     bool info_is_set=false;
     opal_info_get (info, "collective_buffering", &stripe_str, &flag);
     if ( flag ) {
-        if ( strncmp ( stripe_str->string, "false", sizeof("true") )){
+        if ( 0 == strncasecmp(stripe_str->string, "false", 5) ){
             info_is_set = true;
             OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", stripe_str->string, "enforcing using individual fcoll component");
         } else {
@@ -340,7 +341,7 @@ int mca_common_ompio_set_view (ompio_file_t *fh,
     } else {
         opal_info_get (fh->f_info, "collective_buffering", &stripe_str, &flag);
         if ( flag ) {
-            if ( strncmp ( stripe_str->string, "false", sizeof("true") )){
+            if ( 0 == strncasecmp(stripe_str->string, "false", 5) ){
                 info_is_set = true;
                 OMPIO_MCA_PRINT_INFO(fh, "collective_buffering", stripe_str->string, "enforcing using individual fcoll component");
             } else {

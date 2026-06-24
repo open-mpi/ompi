@@ -36,6 +36,7 @@ headers = \
         opal_datatype_pack_unpack_predefined.h \
         opal_datatype_pack.h \
         opal_datatype_prototypes.h \
+	opal_datatype_constructors.h \
         opal_datatype_unpack.h
 
 

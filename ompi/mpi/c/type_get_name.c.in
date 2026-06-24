@@ -43,7 +43,7 @@ PROTOTYPE ERROR_CLASS type_get_name(DATATYPE type, STRING_OUT type_name, INT_OUT
 
    if ( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == type || MPI_DATATYPE_NULL == type) {
+      if (NULL == type) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                       FUNC_NAME );
       } else if (NULL == type_name || NULL == resultlen) {

@@ -33,7 +33,7 @@
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
 #include "opal/opal_socket_errno.h"
-#include <string.h>
+#include "opal/mca/timer/base/base.h"
 
 #include "btl_tcp.h"
 #include "btl_tcp_endpoint.h"
@@ -540,26 +540,38 @@ void mca_btl_tcp_dump(struct mca_btl_base_module_t *base_btl,
 int mca_btl_tcp_recv_blocking(int sd, void *data, size_t size)
 {
     unsigned char *ptr = (unsigned char *) data;
+    opal_timer_t start = opal_timer_base_get_usec(), now;
+
     size_t cnt = 0;
     while (cnt < size) {
         int retval = recv(sd, ((char *) ptr) + cnt, size - cnt, 0);
-        /* remote closed connection */
-        if (0 == retval) {
-            OPAL_OUTPUT_VERBOSE((100, opal_btl_base_framework.framework_output,
-                                 "remote peer unexpectedly closed connection while I was waiting "
-                                 "for a blocking message"));
-            break;
-        }
-
-        /* socket is non-blocking so handle errors */
-        if (retval < 0) {
-            if (opal_socket_errno != EINTR && opal_socket_errno != EAGAIN
-                && opal_socket_errno != EWOULDBLOCK) {
-                BTL_VERBOSE(("recv(%d) failed: %s (%d)", sd, strerror(opal_socket_errno),
-                             opal_socket_errno));
+        now = opal_timer_base_get_usec();
+        if (0 >= retval) {
+            /* remote closed connection */
+            if (0 == retval) {
+                OPAL_OUTPUT_VERBOSE((100, opal_btl_base_framework.framework_output,
+                                     "remote peer unexpectedly closed connection while I was waiting "
+                                     "for a blocking message"));
                 break;
             }
-            continue;
+
+            /* socket is non-blocking so handle errors */
+            if (opal_socket_errno != EINTR && opal_socket_errno != EAGAIN
+                && opal_socket_errno != EWOULDBLOCK) {
+                mca_btl_tcp_print_info_about_socket(sd,
+                                                    "recv(%d) failed: %s (%d) during connection "
+                                                    "handshake. Maybe not an OMPI process ?",
+                                                    sd, strerror(opal_socket_errno), opal_socket_errno);
+                    break;
+            }
+            /* socket is blocking, we need to enforce some timeout */
+            if (opal_socket_errno != EINTR) { /* EAGAIN | EWOULDBLOCK */
+                if ( (now - start) >= (unsigned long long)mca_btl_tcp_component.tcp_handshake_timeout ) {
+                    mca_btl_tcp_print_info_about_socket(sd, "timeout while waiting for the connection handshake. Maybe the peer is not an Open MPI process?");
+                    break;
+                }
+            }
+            continue;  /* skip the counting */
         }
         cnt += retval;
     }

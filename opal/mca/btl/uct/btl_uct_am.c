@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      Google, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +27,7 @@ mca_btl_base_descriptor_t *mca_btl_uct_alloc(mca_btl_base_module_t *btl,
     mca_btl_uct_module_t *uct_btl = (mca_btl_uct_module_t *) btl;
     mca_btl_uct_base_frag_t *frag = NULL;
 
-    if (size <= (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
+    if (size <= (size_t) uct_btl->am_tl->uct_iface_attr.cap.am.max_short) {
         frag = mca_btl_uct_frag_alloc_short(uct_btl, endpoint);
     } else if (size <= uct_btl->super.btl_eager_limit) {
         frag = mca_btl_uct_frag_alloc_eager(uct_btl, endpoint);
@@ -40,7 +41,9 @@ mca_btl_base_descriptor_t *mca_btl_uct_alloc(mca_btl_base_module_t *btl,
         frag->base.des_segment_count = 1;
         frag->base.des_flags = flags;
         frag->base.order = order;
-        frag->uct_iov.length = size;
+        frag->uct_iov[1].length = size;
+        frag->uct_iov[2].length = 0;
+        frag->uct_iov_count = 2;
         if (NULL != frag->base.super.registration) {
             /* zero-copy fragments will need callbacks */
             frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
@@ -55,7 +58,6 @@ static inline void _mca_btl_uct_send_pack(void *data, void *header, size_t heade
 {
     uint32_t iov_count = 1;
     struct iovec iov;
-    size_t length;
 
     if (header_size > 0) {
         assert(NULL != header);
@@ -89,11 +91,11 @@ struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src(mca_btl_base_module_t 
             return NULL;
         }
 
-        _mca_btl_uct_send_pack((void *) ((intptr_t) frag->uct_iov.buffer + reserve), NULL, 0,
+        _mca_btl_uct_send_pack((void *) ((intptr_t) frag->uct_iov[1].buffer + reserve), NULL, 0,
                                convertor, size);
         /* update the length of the fragment according to the convertor packed data */
         frag->segments[0].seg_len = reserve + *size;
-        frag->uct_iov.length = frag->segments[0].seg_len;
+        frag->uct_iov[1].length = frag->segments[0].seg_len;
     } else {
         opal_convertor_get_current_pointer(convertor, &data_ptr);
         assert(NULL != data_ptr);
@@ -103,20 +105,21 @@ struct mca_btl_base_descriptor_t *mca_btl_uct_prepare_src(mca_btl_base_module_t 
             return NULL;
         }
 
-        frag->uct_iov.length = total_size;
+        frag->uct_iov[1].length = reserve;
+
+        /* user data */
+        frag->uct_iov[2].length = *size;
+        frag->uct_iov[2].buffer = data_ptr;
+
+        frag->uct_iov_count = 3;
+
         frag->base.order = order;
         frag->base.des_flags = flags;
-        if (total_size > (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
-            frag->segments[0].seg_len = reserve;
-            frag->segments[1].seg_len = *size;
-            frag->segments[1].seg_addr.pval = data_ptr;
-            frag->base.des_segment_count = 2;
-        } else {
-            frag->segments[0].seg_len = total_size;
-            memcpy((void *) ((intptr_t) frag->segments[0].seg_addr.pval + reserve), data_ptr,
-                   *size);
-            frag->base.des_segment_count = 1;
-        }
+
+        frag->segments[0].seg_len = reserve;
+        frag->segments[1].seg_len = *size;
+        frag->segments[1].seg_addr.pval = data_ptr;
+        frag->base.des_segment_count = 2;
     }
 
     return &frag->base;
@@ -167,7 +170,7 @@ static void mca_btl_uct_append_pending_frag(mca_btl_uct_module_t *uct_btl,
 int mca_btl_uct_send_frag(mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t *frag, bool append)
 {
     mca_btl_uct_device_context_t *context = frag->context;
-    const ssize_t msg_size = frag->uct_iov.length + 8;
+    const ssize_t msg_size = frag->uct_iov[0].length + frag->uct_iov[1].length + frag->uct_iov[2].length;
     ssize_t size;
     ucs_status_t ucs_status;
     uct_ep_h ep_handle = NULL;
@@ -182,10 +185,10 @@ int mca_btl_uct_send_frag(mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t
         mca_btl_uct_context_lock(context);
         /* attempt to post the fragment */
         if (NULL != frag->base.super.registration
-            && (context->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_AM_ZCOPY)) {
+            && (uct_btl->am_tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_AM_ZCOPY)) {
             frag->comp.dev_context = context;
-            ucs_status = uct_ep_am_zcopy(ep_handle, MCA_BTL_UCT_FRAG, &frag->header,
-                                         sizeof(frag->header), &frag->uct_iov, 1, 0,
+            ucs_status = uct_ep_am_zcopy(ep_handle, MCA_BTL_UCT_FRAG, frag->uct_iov[0].buffer,
+                                         frag->uct_iov[0].length, &frag->uct_iov[1], 1, 0,
                                          &frag->comp.uct_comp);
 
             if (OPAL_LIKELY(UCS_INPROGRESS == ucs_status)) {
@@ -195,12 +198,8 @@ int mca_btl_uct_send_frag(mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t
             }
         } else {
             /* short message */
-            if (1 == frag->base.des_segment_count
-                && (frag->uct_iov.length + 8)
-                       < MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, 0).cap.am.max_short) {
-                ucs_status = uct_ep_am_short(ep_handle, MCA_BTL_UCT_FRAG, frag->header.value,
-                                             frag->uct_iov.buffer, frag->uct_iov.length);
-
+            if (msg_size < uct_btl->am_tl->uct_iface_attr.cap.am.max_short) {
+                ucs_status = uct_ep_am_short_iov(ep_handle, MCA_BTL_UCT_FRAG, frag->uct_iov, frag->uct_iov_count);
                 if (OPAL_LIKELY(UCS_OK == ucs_status)) {
                     uct_worker_progress(context->uct_worker);
                     mca_btl_uct_context_unlock(context);
@@ -233,7 +232,7 @@ int mca_btl_uct_send_frag(mca_btl_uct_module_t *uct_btl, mca_btl_uct_base_frag_t
     }
 
     OPAL_THREAD_LOCK(&uct_btl->lock);
-    mca_btl_uct_append_pending_frag(uct_btl, frag, context, true);
+    mca_btl_uct_append_pending_frag(uct_btl, frag, context, /*ready=*/true);
     OPAL_THREAD_UNLOCK(&uct_btl->lock);
 
     return OPAL_SUCCESS;
@@ -250,7 +249,7 @@ int mca_btl_uct_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
 
     BTL_VERBOSE(("btl/uct sending descriptor %p from %d -> %d. length = %" PRIu64,
                  (void *) descriptor, OPAL_PROC_MY_NAME.vpid, endpoint->ep_proc->proc_name.vpid,
-                 frag->uct_iov.length));
+                 frag->uct_iov[0].length + frag->uct_iov[1].length + frag->uct_iov[2].length));
 
     frag->header.data.tag = tag;
     frag->context = context;
@@ -260,14 +259,14 @@ int mca_btl_uct_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
         OPAL_THREAD_LOCK(&uct_btl->lock);
         /* check one more time in case another thread is completing the connection now */
         if (OPAL_SUCCESS != mca_btl_uct_endpoint_test_am(uct_btl, endpoint, context, &ep_handle)) {
-            mca_btl_uct_append_pending_frag(uct_btl, frag, context, false);
+            mca_btl_uct_append_pending_frag(uct_btl, frag, context, /*ready=*/false);
             OPAL_THREAD_UNLOCK(&uct_btl->lock);
             return OPAL_SUCCESS;
         }
         OPAL_THREAD_UNLOCK(&uct_btl->lock);
     }
 
-    return mca_btl_uct_send_frag(uct_btl, frag, true);
+    return mca_btl_uct_send_frag(uct_btl, frag, /*append=*/true);
 }
 
 struct mca_btl_uct_sendi_pack_args_t {
@@ -291,9 +290,9 @@ static size_t mca_btl_uct_sendi_pack(void *data, void *arg)
     return args->header_size + args->payload_size + 8;
 }
 
-static inline size_t mca_btl_uct_max_sendi(mca_btl_uct_module_t *uct_btl, int context_id)
+static inline size_t mca_btl_uct_max_sendi(mca_btl_uct_module_t *uct_btl)
 {
-    return MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, context_id).cap.am.max_bcopy;
+    return uct_btl->am_tl->uct_iface_attr.cap.am.max_bcopy;
 }
 
 int mca_btl_uct_sendi(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
@@ -313,7 +312,7 @@ int mca_btl_uct_sendi(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpo
 
     rc = mca_btl_uct_endpoint_check_am(uct_btl, endpoint, context, &ep_handle);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc
-                      || msg_size > mca_btl_uct_max_sendi(uct_btl, context->context_id))) {
+                      || msg_size > mca_btl_uct_max_sendi(uct_btl))) {
         if (descriptor) {
             *descriptor = mca_btl_uct_alloc(btl, endpoint, order, total_size, flags);
         }
@@ -327,7 +326,7 @@ int mca_btl_uct_sendi(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpo
     if (0 == payload_size) {
         ucs_status = uct_ep_am_short(ep_handle, MCA_BTL_UCT_FRAG, am_header.value, header,
                                      header_size);
-    } else if (msg_size < (size_t) MCA_BTL_UCT_TL_ATTR(uct_btl->am_tl, context->context_id)
+    } else if (msg_size < (size_t) uct_btl->am_tl->uct_iface_attr
                               .cap.am.max_short) {
         int8_t *data = alloca(total_size);
         size_t packed_payload_size = payload_size;

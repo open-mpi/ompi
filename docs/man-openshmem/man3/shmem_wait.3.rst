@@ -81,24 +81,6 @@ processor that it has completed some action.
 
 The arguments are as follows:
 
-target
-   The remotely accessible integer data object to be updated on the
-   remote PE. If you are using C/C++, the type of target should match
-   that implied in the SYNOPSIS section. If you are using the Fortran
-   compiler, it must be of type integer with an element size of 4 bytes
-   for SHMEM_INT4_ADD and 8 bytes for SHMEM_INT8_ADD.
-
-value
-   The value to be atomically added to target. If you are using C/C++,
-   the type of value should match that implied in the SYNOPSIS section.
-   If you are using Fortran, it must be of type integer with an element
-   size of target.
-
-pe
-   An integer that indicates the PE number upon which target is to be
-   updated. If you are using Fortran, it must be a default integer
-   value.
-
 ivar
    A remotely accessible integer variable that is being updated by
    another PE. If you are using C/C++, the type of ivar should match
@@ -139,7 +121,7 @@ cmp
 
 cmp_value
    cmp_value must be of type integer. If you are using C/C++, the type
-   of cmp_value should match thatimplied in the SYNOPSIS section. If you
+   of cmp_value should match that implied in the SYNOPSIS section. If you
    are using Fortran, cmp_value must be an integer of the same size and
    kind as ivar. The :ref:`shmem_wait` routines return when ivar is no longer
    equal to cmp_value. The :ref:`shmem_wait_until` routines return when the

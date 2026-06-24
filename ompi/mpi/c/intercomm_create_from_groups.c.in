@@ -55,7 +55,7 @@ PROTOTYPE ERROR_CLASS intercomm_create_from_groups (GROUP local_group, INT local
                     ( OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type &&
                      OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
                return ompi_errhandler_invoke (NULL, MPI_COMM_NULL, OMPI_ERRHANDLER_TYPE_COMM,
-                                      MPI_ERR_ARG,FUNC_NAME);
+                                      MPI_ERR_ERRHANDLER,FUNC_NAME);
 
         }
 

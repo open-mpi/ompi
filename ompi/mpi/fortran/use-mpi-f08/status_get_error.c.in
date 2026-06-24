@@ -1,0 +1,43 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+PROTOTYPE VOID status_get_error(STATUS status, INT_OUT err)
+{
+    int c_ierr;
+    int c_err;
+    MPI_Status c_status;
+
+    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+        *err = OMPI_INT_2_FINT(0);
+        c_ierr = MPI_SUCCESS;
+    } else {
+        PMPI_Status_f2c( status, &c_status );
+
+        c_ierr = @INNER_CALL@(&c_status, &c_err);
+
+        if (MPI_SUCCESS == c_ierr) {
+            *err = OMPI_INT_2_FINT(c_err);
+        }
+    }
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+}

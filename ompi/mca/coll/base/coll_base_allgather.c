@@ -291,8 +291,8 @@ int ompi_coll_base_allgather_intra_sparbit(const void *sbuf, size_t scount,
 
            /* Since each process sends several non-contiguos blocks of data, each block sent (and therefore each send and recv call) needs a different tag. */
            /* As base OpenMPI only provides one tag for allgather, we are forced to use a tag space from other components in the send and recv calls */
-           MCA_PML_CALL(isend(tmpsend + (ptrdiff_t) send_disp * scount * rext, scount, rdtype, sendto, MCA_COLL_BASE_TAG_HCOLL_BASE - send_disp, MCA_PML_BASE_SEND_STANDARD, comm, requests + transfer_count));
-           MCA_PML_CALL(irecv(tmprecv + (ptrdiff_t) recv_disp * rcount * rext, rcount, rdtype, recvfrom, MCA_COLL_BASE_TAG_HCOLL_BASE - recv_disp, comm, requests + data_expected - exclusion + transfer_count));
+           MCA_PML_CALL(isend(tmpsend + (ptrdiff_t) send_disp * scount * rext, scount, rdtype, sendto, MCA_COLL_BASE_TAG_NEIGHBOR_BASE - send_disp, MCA_PML_BASE_SEND_STANDARD, comm, requests + transfer_count));
+           MCA_PML_CALL(irecv(tmprecv + (ptrdiff_t) recv_disp * rcount * rext, rcount, rdtype, recvfrom, MCA_COLL_BASE_TAG_NEIGHBOR_BASE - recv_disp, comm, requests + data_expected - exclusion + transfer_count));
        }
        ompi_request_wait_all(transfer_count * 2, requests, MPI_STATUSES_IGNORE);
 

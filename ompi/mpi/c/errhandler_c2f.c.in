@@ -35,7 +35,7 @@ PROTOTYPE FINT errhandler_c2f(ERRHANDLER errhandler)
   if (MPI_PARAM_CHECK) {
 	/* mapping an invalid handle to a null handle */
     if (NULL == errhandler) {
-        return OMPI_INT_2_FINT(-1);
+        return OMPI_INT_2_FINT(MPI_ERR_ERRHANDLER);
     }
   }
 

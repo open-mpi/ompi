@@ -6,6 +6,7 @@
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -264,7 +265,8 @@ static int unpack_ooo(void)
     len[0] = 1;
     len[1] = 1;
 
-    rc = ompi_datatype_create_struct(2, len, disp, type, &newtype);
+    rc = ompi_datatype_create_struct(2, OMPI_COUNT_ARRAY_CREATE(len),
+                                     OMPI_DISP_ARRAY_CREATE(disp), type, &newtype);
     if (OMPI_SUCCESS != rc) {
         fprintf(stderr, "could not create struct\n");
         return 1;

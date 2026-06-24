@@ -38,6 +38,9 @@ on:
 jobs:
   stale:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       # https://github.com/marketplace/actions/close-stale-issues
       - uses: actions/stale@v9

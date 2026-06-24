@@ -4,8 +4,8 @@ Launching with Slurm
 Open MPI supports two modes of launching parallel MPI jobs under
 Slurm:
 
-#. Using Open MPI's full-features ``mpirun`` launcher.
-#. Using Slurm's "direct launch" capability.
+#. Using Open MPI's full-featured ``mpirun`` launcher.
+#. Using Slurm's "direct launch" capability with the ``srun`` launcher.
 
 Unless there is a strong reason to use ``srun`` for direct launch, the
 Open MPI team recommends using ``mpirun`` for launching under Slurm jobs.

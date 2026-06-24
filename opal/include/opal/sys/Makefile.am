@@ -42,4 +42,5 @@ headers += \
 include opal/sys/x86_64/Makefile.am
 include opal/sys/arm64/Makefile.am
 include opal/sys/powerpc/Makefile.am
+include opal/sys/riscv64/Makefile.am
 include opal/sys/gcc_builtin/Makefile.am

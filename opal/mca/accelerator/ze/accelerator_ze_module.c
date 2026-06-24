@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2022      Advanced Micro Devices, Inc. All Rights reserved.
- * Copyright (c) 2023-2024 Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2023-2025 Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -453,8 +453,7 @@ static int mca_accelerator_ze_memcpy_async(int dest_dev_id, int src_dev_id, void
    ze_result_t zret;
    opal_accelerator_ze_stream_t *ze_stream = NULL;
 
-   if (NULL == stream || NULL == src ||
-        NULL == dest   || size < 0) {
+   if (NULL == stream || NULL == src || NULL == dest) {
         return OPAL_ERR_BAD_PARAM;
     }
    if (0 == size) {
@@ -489,7 +488,7 @@ static int mca_accelerator_ze_memcpy(int dest_dev_id, int src_dev_id, void *dest
 
     opal_accelerator_ze_stream_t *ze_stream = NULL;
 
-    if (NULL == src || NULL == dest || size <0) {
+    if (NULL == src || NULL == dest) {
         return OPAL_ERR_BAD_PARAM;
     }
     if (0 == size) {
@@ -574,6 +573,14 @@ static int mca_accelerator_ze_memmove_async(int dest_dev_id, int src_dev_id, voi
                                             const void *src, size_t size,
                                             opal_accelerator_stream_t *stream,
                                             opal_accelerator_transfer_type_t type)
+{
+    /*
+     * TODO
+     */
+    return OPAL_ERR_NOT_IMPLEMENTED;
+}
+
+static int mca_accelerator_ze_sync_stream(opal_accelerator_stream_t *stream)
 {
     /*
      * TODO
@@ -850,15 +857,6 @@ static int mca_accelerator_ze_get_buffer_id(int dev_id, const void *addr, opal_a
     *buf_id = pMemAllocProperties.id;
 
     return OPAL_SUCCESS;
-}
-
-
-static int mca_accelerator_ze_wait_stream(opal_accelerator_stream_t *stream)
-{
-    /*
-     * TODO
-     */
-    return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
 static int mca_accelerator_ze_get_num_devices(int *num_devices)

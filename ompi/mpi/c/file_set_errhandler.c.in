@@ -51,7 +51,7 @@ PROTOTYPE ERROR_CLASS file_set_errhandler(FILE file, ERRHANDLER errhandler)
                    MPI_ERRHANDLER_NULL == errhandler ||
                    (OMPI_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type &&
 		    OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
-            return OMPI_ERRHANDLER_INVOKE(file, MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(file, MPI_ERR_ERRHANDLER, FUNC_NAME);
         }
     }
 

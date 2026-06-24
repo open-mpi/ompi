@@ -152,7 +152,7 @@ Multi-line code/fixed-width font
     case, the example code block will be rendered in the bulleted
     item.
 
-Whereas this parargraph and code block will be outside of the
+Whereas this paragraph and code block will be outside of the
 above bulleted list:
 
 .. code-block:: sh
@@ -243,12 +243,11 @@ Including files
   .. code-block:: rst
 
      .. include:: features-extensions.rst
-     .. include:: features-java.rst
 
-  Those directives include those 2 files right here in this RST file.
+  That directive includes that file right here in this RST file.
 
   .. important:: Chapter/section/subsection delimiters will be
-                 continued in those files as part of rendering this
+                 continued in that file as part of rendering this
                  file.
 
 Hyperlinks to URLs

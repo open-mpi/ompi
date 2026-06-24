@@ -805,7 +805,7 @@ int main(int argc, char *argv[])
     assert(pdt2 == NULL);
 
     /* clean-ups all data allocations */
-    opal_finalize_util();
+    opal_finalize();
 
     return OPAL_SUCCESS;
 }

@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2022 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2023-2025 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -35,9 +36,12 @@ SPHINX_OPTS       ?= -W --keep-going -j auto
 # However, it is necessary to list $(srcdir) when using wildcards.
 TEXT_SOURCE_FILES  = \
         $(srcdir)/license/*.txt
+MARKDOWN_SOURCE_FILES = \
+        $(top_srcdir)/.github/CODE_OF_CONDUCT.md
 IMAGE_SOURCE_FILES = \
         $(srcdir)/openmpi_logo.png \
-        $(srcdir)/installing-open-mpi/required-support-libraries-dependency-graph.png
+        $(srcdir)/installing-open-mpi/required-support-libraries-dependency-graph.png \
+        $(srcdir)/tuning-apps/collectives/images/xhc-hierarchy.svg
 RST_SOURCE_FILES   = \
         $(srcdir)/*.rst \
         $(srcdir)/release-notes/*.rst \
@@ -60,12 +64,22 @@ RST_SOURCE_FILES   = \
 EXTRA_DIST         = \
         requirements.txt \
         no-prrte-content.rst.txt \
+        generate-code-of-conduct-rst.py \
         generate-mpi-man3-bindings.py \
+        generate-llm-docs.py \
+        validate-llm-docs.py \
+        ompi_docs_common.py \
         mpi-standard-apis.json \
+        llms-src/openmpi-mpi-api.schema.json \
+        llms-src/openmpi-docs-manifest.schema.json \
+        llms-src/openmpi-mpi-interface-guide.md \
+        llms-src/openmpi-mpi-examples.md \
+        llms-src/openmpi-runtime-introspection.md \
         html \
         man \
         $(SPHINX_CONFIG) \
         $(TEXT_SOURCE_FILES) \
+        $(MARKDOWN_SOURCE_FILES) \
         $(IMAGE_SOURCE_FILES) \
         $(RST_SOURCE_FILES)
 
@@ -118,6 +132,8 @@ OMPI_MAN3 = \
         MPI_Bsend_init.3 \
         MPI_Buffer_attach.3 \
         MPI_Buffer_detach.3 \
+        MPI_Buffer_flush.3 \
+        MPI_Buffer_iflush.3 \
         MPI_Cancel.3 \
         MPI_Cart_coords.3 \
         MPI_Cart_create.3 \
@@ -129,6 +145,7 @@ OMPI_MAN3 = \
         MPI_Cart_sub.3 \
         MPI_Close_port.3 \
         MPI_Comm_accept.3 \
+        MPI_Comm_attach_buffer.3 \
         MPI_Comm_c2f.3 \
         MPI_Comm_call_errhandler.3 \
         MPI_Comm_compare.3 \
@@ -139,10 +156,12 @@ OMPI_MAN3 = \
         MPI_Comm_create_group.3 \
         MPI_Comm_create_keyval.3 \
         MPI_Comm_delete_attr.3 \
+        MPI_Comm_detach_buffer.3 \
         MPI_Comm_disconnect.3 \
         MPI_Comm_dup.3 \
         MPI_Comm_dup_with_info.3 \
         MPI_Comm_f2c.3 \
+        MPI_Comm_flush_buffer.3 \
         MPI_Comm_free.3 \
         MPI_Comm_free_keyval.3 \
         MPI_Comm_get_attr.3 \
@@ -153,6 +172,7 @@ OMPI_MAN3 = \
         MPI_Comm_group.3 \
         MPI_Comm_idup.3 \
         MPI_Comm_idup_with_info.3 \
+        MPI_Comm_iflush_buffer.3 \
         MPI_Comm_join.3 \
         MPI_Comm_rank.3 \
         MPI_Comm_remote_group.3 \
@@ -179,8 +199,10 @@ OMPI_MAN3 = \
         MPI_Errhandler_set.3 \
         MPI_Error_class.3 \
         MPI_Error_string.3 \
+        MPI_Errors.3 \
         MPI_Exscan.3 \
         MPI_Exscan_init.3 \
+        MPI_F_sync_reg.3 \
         MPI_Fetch_and_op.3 \
         MPI_File_c2f.3 \
         MPI_File_call_errhandler.3 \
@@ -256,6 +278,7 @@ OMPI_MAN3 = \
         MPI_Get_count.3 \
         MPI_Get_elements.3 \
         MPI_Get_elements_x.3 \
+        MPI_Get_hw_resource_info.3 \
         MPI_Get_library_version.3 \
         MPI_Get_processor_name.3 \
         MPI_Get_version.3 \
@@ -383,10 +406,16 @@ OMPI_MAN3 = \
         MPI_Reduce_scatter_block_init.3 \
         MPI_Reduce_scatter_init.3 \
         MPI_Register_datarep.3 \
+        MPI_Remove_error_class.3 \
+        MPI_Remove_error_code.3 \
+        MPI_Remove_error_string.3 \
         MPI_Request_c2f.3 \
         MPI_Request_f2c.3 \
         MPI_Request_free.3 \
         MPI_Request_get_status.3 \
+        MPI_Request_get_status_all.3 \
+        MPI_Request_get_status_any.3 \
+        MPI_Request_get_status_some.3 \
         MPI_Rget.3 \
         MPI_Rget_accumulate.3 \
         MPI_Rput.3 \
@@ -402,13 +431,17 @@ OMPI_MAN3 = \
         MPI_Send_init.3 \
         MPI_Sendrecv.3 \
         MPI_Sendrecv_replace.3 \
+        MPI_Session_attach_buffer.3 \
         MPI_Session_create_errhandler.3 \
+        MPI_Session_detach_buffer.3 \
         MPI_Session_f2c.3 \
         MPI_Session_finalize.3 \
+        MPI_Session_flush_buffer.3 \
         MPI_Session_get_info.3 \
         MPI_Session_get_nth_pset.3 \
         MPI_Session_get_num_psets.3 \
         MPI_Session_get_pset_info.3 \
+        MPI_Session_iflush_buffer.3 \
         MPI_Session_init.3 \
         MPI_Sizeof.3 \
         MPI_Ssend.3 \
@@ -435,10 +468,12 @@ OMPI_MAN3 = \
         MPI_T_category_get_categories.3 \
         MPI_T_category_get_cvars.3 \
         MPI_T_category_get_events.3 \
+        MPI_T_category_get_index.3 \
         MPI_T_category_get_info.3 \
         MPI_T_category_get_num.3 \
         MPI_T_category_get_num_events.3 \
         MPI_T_category_get_pvars.3 \
+        MPI_T_cvar_get_index.3 \
         MPI_T_cvar_get_info.3 \
         MPI_T_cvar_get_num.3 \
         MPI_T_cvar_handle_alloc.3 \
@@ -470,6 +505,7 @@ OMPI_MAN3 = \
         MPI_T_finalize.3 \
         MPI_T_init_thread.3 \
         MPI_Topo_test.3 \
+        MPI_T_pvar_get_index.3 \
         MPI_T_pvar_get_info.3 \
         MPI_T_pvar_get_num.3 \
         MPI_T_pvar_handle_alloc.3 \
@@ -514,6 +550,7 @@ OMPI_MAN3 = \
         MPI_Type_get_name.3 \
         MPI_Type_get_true_extent.3 \
         MPI_Type_get_true_extent_x.3 \
+        MPI_Type_get_value_index.3 \
         MPI_Type_hindexed.3 \
         MPI_Type_hvector.3 \
         MPI_Type_indexed.3 \
@@ -847,9 +884,21 @@ OMPI_MAN3_RST = $(OMPI_MAN3:%.3=man-openmpi/man3/%.3.rst)
 OMPI_MAN3_BUILT = $(OMPI_MAN3:%.3=$(MAN_OUTDIR)/%.3)
 OMPI_MAN3_INSTALL_FROM = $(OMPI_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 
+# Generate this file from CODE_OF_CONDUCT.md as part of the Sphinx
+# docs build.
+CODE_OF_CONDUCT_RST = $(builddir)/code-of-conduct.rst
+
 # Use this one file as a sentinel for building all the Open MPI man
 # page API bindings files
 SENTINEL_OMPI_MAN3_BINDING = $(builddir)/man-openmpi/man3/bindings/mpi_init.rst
+
+# Stamp file marking a completed LLM-friendly documentation generator run.
+# A stamp (touched unconditionally after the generator) is used rather than a
+# generated artifact: the generator only rewrites files whose content changed,
+# so an artifact's mtime would not advance when only *other* artifacts changed,
+# and the HTML copy step below could be skipped.  The stamp lives outside the
+# llms-build/ staging tree so the generator's stale-file pruning leaves it.
+SENTINEL_OMPI_LLM = $(builddir)/llms-build.stamp
 
 OMPI_MAN7_RST = $(OMPI_MAN7:%.7=man-openmpi/man7/%.7.rst)
 OMPI_MAN7_BUILT = $(OMPI_MAN7:%.7=$(MAN_OUTDIR)/%.7)
@@ -869,8 +918,8 @@ OSHMEM_MAN3_INSTALL_FROM = $(OSHMEM_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 # Sphinx-generated man pages) -- they exist directly in Git.  We
 # *always* want these files to be in EXTRA_DIST (so that they're in
 # distribution tarballs).  We'll decide later whether we install each
-# of these (e.g., if configure disabled the Java bindings, we won't
-# install mpijavac.1).
+# of these (e.g., if configure did not find a C++ compiler, we won't
+# install mpic++.1).
 OMPI_MAN1_C_REDIRECTS = man-openmpi/man1/mpicc.1
 OMPI_MAN1_CXX_REDIRECTS = \
         man-openmpi/man1/mpicxx.1 \
@@ -879,7 +928,6 @@ OMPI_MAN1_FORTRAN_REDIRECTS = \
         man-openmpi/man1/mpifort.1 \
         man-openmpi/man1/mpif77.1 \
         man-openmpi/man1/mpif90.1
-OMPI_MAN1_JAVA_REDIRECTS = man-openmpi/man1/mpijavac.1
 
 OSHMEM_MAN1_C_REDIRECTS = \
         man-openshmem/man1/oshcc.1 \
@@ -897,7 +945,6 @@ EXTRA_DIST += \
         $(OMPI_MAN1_C_REDIRECTS) \
         $(OMPI_MAN1_CXX_REDIRECTS) \
         $(OMPI_MAN1_FORTRAN_REDIRECTS) \
-        $(OMPI_MAN1_JAVA_REDIRECTS) \
         $(OSHMEM_MAN1_C_REDIRECTS) \
         $(OSHMEM_MAN1_CXX_REDIRECTS) \
         $(OSHMEM_MAN1_FORTRAN_REDIRECTS)
@@ -929,7 +976,7 @@ man: $(ALL_MAN_BUILT)
 # Remove the copies of the built HTML and man pages to get back to a
 # clean git clone.
 maintainer-clean-local:
-	rm -rf html man man-openmpi/man3/bindings
+	rm -rf html man man-openmpi/man3/bindings llms-build llms-build.stamp $(CODE_OF_CONDUCT_RST)
 
 # If we're doing a VPATH build, we may have "html" and "man"
 # directories in the build tree (e.g., if we did "make dist").  Remove
@@ -1011,15 +1058,41 @@ $(builddir)/man-openmpi/man3/bindings:
 
 $(SENTINEL_OMPI_MAN3_BINDING): $(builddir)/man-openmpi/man3/bindings
 $(SENTINEL_OMPI_MAN3_BINDING): generate-mpi-man3-bindings.py
+$(SENTINEL_OMPI_MAN3_BINDING): ompi_docs_common.py
 $(SENTINEL_OMPI_MAN3_BINDING): mpi-standard-apis.json
 	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-mpi-man3-bindings.py \
 		--srcdir $(srcdir) --builddir $(builddir)
+
+# Generate the LLM-friendly artifacts into the build-tree staging
+# directory.  This must run after the man3 bindings (whose generated RST
+# the LLM generator include-expands) and before Sphinx (which copies the
+# staging tree into the HTML output, below).
+$(SENTINEL_OMPI_LLM): generate-llm-docs.py
+$(SENTINEL_OMPI_LLM): ompi_docs_common.py
+$(SENTINEL_OMPI_LLM): mpi-standard-apis.json
+$(SENTINEL_OMPI_LLM): llms-src/openmpi-mpi-interface-guide.md
+$(SENTINEL_OMPI_LLM): llms-src/openmpi-mpi-examples.md
+$(SENTINEL_OMPI_LLM): llms-src/openmpi-runtime-introspection.md
+$(SENTINEL_OMPI_LLM): llms-src/openmpi-mpi-api.schema.json
+$(SENTINEL_OMPI_LLM): llms-src/openmpi-docs-manifest.schema.json
+$(SENTINEL_OMPI_LLM): $(RST_SOURCE_FILES)
+$(SENTINEL_OMPI_LLM): $(SENTINEL_OMPI_MAN3_BINDING)
+	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-llm-docs.py \
+		--srcdir $(srcdir) --builddir $(builddir)
+	@touch $@
+
+$(CODE_OF_CONDUCT_RST): $(top_srcdir)/.github/CODE_OF_CONDUCT.md
+$(CODE_OF_CONDUCT_RST): generate-code-of-conduct-rst.py
+	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-code-of-conduct-rst.py \
+		--input $(top_srcdir)/.github/CODE_OF_CONDUCT.md --output $@
 
 $(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
 $(ALL_MAN_BUILT): $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
 $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
+$(ALL_MAN_BUILT): $(CODE_OF_CONDUCT_RST)
 $(ALL_MAN_BUILT): $(SENTINEL_OMPI_MAN3_BINDING)
+$(ALL_MAN_BUILT): $(SENTINEL_OMPI_LLM)
 
 # Render the RST source into both 1) full HTML docs and 2) nroff man
 # pages.
@@ -1075,8 +1148,23 @@ $(ALL_MAN_BUILT):
 	cp -rpf "$(OMPI_PRRTE_RST_CONTENT_DIR)" "$(builddir)"; \
 	copied_dir=`basename $(OMPI_PRRTE_RST_CONTENT_DIR)`; \
 	chmod -R u+w "$(builddir)/$$copied_dir"
-	$(OMPI_V_SPHINX_HTML) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
-	$(OMPI_V_SPHINX_MAN) OMPI_TOP_SRCDIR=$(top_srcdir) $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_HTML) \
+	    OMPI_TOP_SRCDIR="$(top_srcdir)" \
+	    OMPI_DOCDIR="$(docdir)" \
+	    OPAL_PMIX_DOCS_URL_BASE="$(OPAL_PMIX_DOCS_URL_BASE)" \
+	    OPAL_USING_INTERNAL_PMIX="$(OPAL_USING_INTERNAL_PMIX)" \
+	    OMPI_PRRTE_DOCS_URL_BASE="$(OMPI_PRRTE_DOCS_URL_BASE)" \
+	    OMPI_USING_INTERNAL_PRRTE="$(OMPI_USING_INTERNAL_PRRTE)" \
+	    OMPI_LLM_BUILDDIR="$(builddir)" \
+	    $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(OMPI_V_SPHINX_HTML) \
+	    OMPI_TOP_SRCDIR="$(top_srcdir)" \
+	    OMPI_DOCDIR="$(docdir)" \
+	    OPAL_PMIX_DOCS_URL_BASE="$(OPAL_PMIX_DOCS_URL_BASE)" \
+	    OPAL_USING_INTERNAL_PMIX="$(OPAL_USING_INTERNAL_PMIX)" \
+	    OMPI_PRRTE_DOCS_URL_BASE="$(OMPI_PRRTE_DOCS_URL_BASE)" \
+	    OMPI_USING_INTERNAL_PRRTE="$(OMPI_USING_INTERNAL_PRRTE)" \
+	    $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 # A useful rule to invoke manually to ensure that all of the external
 # HTML links we have are valid.  Running this rule requires
@@ -1094,9 +1182,37 @@ linkcheck:
 #
 # Also, if this is a VPATH build, then we made a copy of a bunch of
 # RST source files to the build tree.  So delete all of those, too.
+# Validate the generated LLM-friendly artifacts (JSON Schema, cross-field
+# invariants, no unresolved RST, manifest integrity, sample sync) and confirm
+# the generator is deterministic at a fixed SOURCE_DATE_EPOCH.  Runs as part of
+# "make check"; depends on the LLM-docs generation sentinel so the artifacts are
+# always present (a missing/failed generation now fails the check loudly rather
+# than being silently skipped).
+check-local: $(SENTINEL_OMPI_LLM)
+	@$(PYTHON3) $(srcdir)/validate-llm-docs.py \
+	    --srcdir $(srcdir) --llms-dir $(builddir)/llms-build/llms \
+	    --samples $(srcdir)/../specs/llms-friendly-docs/sample-records.jsonl && \
+	rm -rf $(builddir)/llms-det-a $(builddir)/llms-det-b && \
+	SOURCE_DATE_EPOCH=1700000000 $(PYTHON3) $(srcdir)/generate-llm-docs.py \
+	    --srcdir $(srcdir) --builddir $(builddir) \
+	    --outdir $(builddir)/llms-det-a > /dev/null && \
+	SOURCE_DATE_EPOCH=1700000000 $(PYTHON3) $(srcdir)/generate-llm-docs.py \
+	    --srcdir $(srcdir) --builddir $(builddir) \
+	    --outdir $(builddir)/llms-det-b > /dev/null && \
+	if diff -r $(builddir)/llms-det-a $(builddir)/llms-det-b > /dev/null; then \
+	    echo "  CHECK LLM docs: deterministic at fixed SOURCE_DATE_EPOCH"; \
+	    rm -rf $(builddir)/llms-det-a $(builddir)/llms-det-b; \
+	else \
+	    echo "ERROR: LLM docs are not deterministic" >&2; \
+	    rm -rf $(builddir)/llms-det-a $(builddir)/llms-det-b; exit 1; \
+	fi
+
 clean-local:
 	rm -rf $(OUTDIR)
+	rm -rf llms-build llms-build.stamp llms-det-a llms-det-b
+	rm -f $(CODE_OF_CONDUCT_RST)
 	rm -rf prrte-rst-content schizo-ompi-rst-content
+	rm -rf ompi-prrte-objects.inv opal-pmix-objects.inv
 	if test "$(srcdir)" != "$(builddir)"; then \
 	    len=`echo "$(srcdir)/" | wc -c`; \
 	    for file in $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES) $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG); do \
@@ -1114,7 +1230,7 @@ clean-local:
 # macro.  This hooks into the normal Automake build mechanisms, and
 # will ultimately cause the invocation of the above rule that runs
 # Sphinx to build the HTML and man pages.
-BUILT_SOURCES = $(ALL_MAN_BUILT)
+BUILT_SOURCES = $(CODE_OF_CONDUCT_RST) $(ALL_MAN_BUILT)
 
 endif OPAL_BUILD_DOCS
 
@@ -1129,9 +1245,6 @@ man1_MANS += $(OMPI_MAN1_CXX_REDIRECTS)
 endif
 if OMPI_BUILD_ANY_FORTRAN_BINDINGS
 man1_MANS += $(OMPI_MAN1_FORTRAN_REDIRECTS)
-endif
-if OMPI_WANT_JAVA_BINDINGS
-man1_MANS += $(OMPI_MAN1_JAVA_REDIRECTS)
 endif
 
 man3_MANS = $(OMPI_MAN3_INSTALL_FROM)

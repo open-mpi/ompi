@@ -13,8 +13,9 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,17 +23,20 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID buffer_detach(C_PTR_OUT buffer, COUNT size)
+PROTOTYPE VOID buffer_detach(C_PTR_OUT buffer, COUNT_OUT size)
 {
     int c_ierr;
-    void *dummy;
     @COUNT_TYPE@ c_size;
 
-    c_ierr = @INNER_CALL@(&dummy, &c_size);
+    c_ierr = @INNER_CALL@(buffer, &c_size);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
         *size = (@COUNT_FINT_TYPE@)(c_size);
+        if (MPI_BUFFER_AUTOMATIC == *((void **)buffer)) {
+            *((void **)buffer) = OMPI_FORTRAN_BUFFER_AUTOMATIC_ADDR();
+        }
     }
+
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }

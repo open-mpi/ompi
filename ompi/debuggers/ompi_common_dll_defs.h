@@ -247,7 +247,7 @@ typedef struct
             int MPI_TAG;
             int MPI_ERROR;
             int _cancelled;
-            size_t _ucount;
+            int _ucount;
         } offset;
     } ompi_status_public_t;
     /* datatype structure */

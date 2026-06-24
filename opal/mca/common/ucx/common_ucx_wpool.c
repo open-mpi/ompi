@@ -32,6 +32,7 @@ __thread int initialized = 0;
 #endif
 
 bool opal_common_ucx_thread_enabled = false;
+bool opal_common_ucx_single_threaded = true;
 opal_atomic_int64_t opal_common_ucx_ep_counts = 0;
 opal_atomic_int64_t opal_common_ucx_unpacked_rkey_counts = 0;
 
@@ -55,7 +56,7 @@ static opal_common_ucx_winfo_t *_winfo_create(opal_common_ucx_wpool_t *wpool)
     if (opal_common_ucx_thread_enabled || wpool->dflt_winfo == NULL) {
         memset(&worker_params, 0, sizeof(worker_params));
         worker_params.field_mask = UCP_WORKER_PARAM_FIELD_THREAD_MODE;
-        worker_params.thread_mode = UCS_THREAD_MODE_SINGLE;
+        worker_params.thread_mode = opal_common_ucx_single_threaded ? UCS_THREAD_MODE_SINGLE : UCS_THREAD_MODE_SERIALIZED;
         status = ucp_worker_create(wpool->ucp_ctx, &worker_params, &worker);
         if (UCS_OK != status) {
             MCA_COMMON_UCX_ERROR("ucp_worker_create failed: %d", status);

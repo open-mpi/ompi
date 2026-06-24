@@ -6,7 +6,7 @@
 CI is managed by [Azure Pipelines](https://docs.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops) service.
 
 Mellanox Open MPI CI includes:
-* Open MPI building with internal stable engineering versions of UCX and HCOLL. The building is run in Docker-based environment.
+* Open MPI building with internal stable engineering versions of UCX. The building is run in Docker-based environment.
 * Sanity functional testing.
 ### How to Run CI
 Mellanox Open MPI CI is triggered upon the following events:

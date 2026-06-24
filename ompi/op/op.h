@@ -21,6 +21,7 @@
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2021      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -72,15 +73,6 @@ typedef void (ompi_op_fortran_handler_fn_t)(const void *, void *,
 typedef void (ompi_op_fortran_handler_bc_fn_t)(const void *, void *,
                                                size_t *, MPI_Fint *);
 
-/**
- * Typedef for Java op functions intercept (used for user-defined
- * MPI.Ops).
- */
-typedef void (ompi_op_java_handler_fn_t)(const void *, void *, int *,
-                                         struct ompi_datatype_t **,
-                                         int baseType,
-                                         void *jnienv, void *object);
-
 /*
  * Flags for MPI_Op
  */
@@ -88,8 +80,6 @@ typedef void (ompi_op_java_handler_fn_t)(const void *, void *, int *,
 #define OMPI_OP_FLAGS_INTRINSIC    0x0001
 /** Set if the callback function is in Fortran */
 #define OMPI_OP_FLAGS_FORTRAN_FUNC 0x0002
-/** Set if the callback function is in Java */
-#define OMPI_OP_FLAGS_JAVA_FUNC    0x0008
 /** Set if the callback function is associative (MAX and SUM will both
     have ASSOC set -- in fact, it will only *not* be set if we
     implement some extensions to MPI, because MPI says that all
@@ -162,14 +152,6 @@ struct ompi_op_t {
         ompi_op_fortran_handler_fn_t *fort_fn;
         /** Fortran handler function pointer  - bigcount*/
         ompi_op_fortran_handler_bc_fn_t *fort_fn_bc;
-        /** Java intercept function data */
-        struct {
-            /* The OMPI C++ callback/intercept function */
-            ompi_op_java_handler_fn_t *intercept_fn;
-            /* The Java run time environment */
-            void *jnienv, *object;
-            int baseType;
-        } java_data;
     } o_func;
 
     /** 3-buffer functions, which is only for intrinsic ops.  No need
@@ -367,13 +349,6 @@ int ompi_op_init(void);
 ompi_op_t *ompi_op_create_user(bool commute,
                                bool bigcount,
                                ompi_op_fortran_handler_fn_t func);
-
-/**
- * Mark an MPI_Op as holding a Java callback function, and cache that
- * function in the MPI_Op.
- */
-OMPI_DECLSPEC void ompi_op_set_java_callback(ompi_op_t *op,  void *jnienv,
-                                             void *object, int baseType);
 
 /**
  * Check to see if an op is intrinsic.
@@ -593,12 +568,6 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
         } else {
             op->o_func.fort_fn_bc(source, target, &full_count, &f_dtype);
         }
-        return;
-    } else if (0 != (op->o_flags & OMPI_OP_FLAGS_JAVA_FUNC)) {
-        op->o_func.java_data.intercept_fn(source, target, &count, &dtype,
-                                          op->o_func.java_data.baseType,
-                                          op->o_func.java_data.jnienv,
-                                          op->o_func.java_data.object);
         return;
     }
     if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {

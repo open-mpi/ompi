@@ -51,7 +51,7 @@ static inline char *CICO_BUFFER(xhc_comm_t *xc, int member) {
  *    equal work.
  *
  * See also the comments in the reduce area struct definition for the different
- * fields, and the comments in the defintion of xhc_reduce_load_balance_enum_t. */
+ * fields, and the comments in the definition of xhc_reduce_load_balance_enum_t. */
 static void init_reduce_areas(xhc_comm_t *comms, size_t allreduce_count,
         size_t dtype_size, xhc_reduce_load_balance_enum_t lb_policy) {
 
@@ -1414,4 +1414,4 @@ int mca_coll_xhc_allreduce(const void *sbuf, void *rbuf,
 
     return xhc_allreduce_internal(sbuf, rbuf, count,
         datatype, op, ompi_comm, ompi_module, true);
-}        
+}

@@ -944,7 +944,7 @@ static inline int ompi_osc_ucx_check_ops_and_flush (ompi_osc_ucx_module_t *modul
     uint64_t base_tmp, tail_tmp;
     int ret = OMPI_SUCCESS;
 
-    if (module->ctx->num_incomplete_req_ops > ompi_osc_ucx_outstanding_ops_flush_threshold) {
+    if ((size_t)module->ctx->num_incomplete_req_ops > ompi_osc_ucx_outstanding_ops_flush_threshold) {
         ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
         if (ret != OPAL_SUCCESS) {
             ret = OMPI_ERROR;

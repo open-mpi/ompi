@@ -70,7 +70,8 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
         assert( 0 < size );
         /* Allocate enough space for list (add 1 to keep the final '\0' if already exact size) */
         max_length = snprintf(NULL, 0, "%d,", world_size - 1) + 1;
-        tmp_procs = malloc((1 + max_length * size) * sizeof(char));
+        int bufsize = (1 + max_length * size) * sizeof(char);
+        tmp_procs = malloc(bufsize);
         if( NULL == tmp_procs ) {
             OPAL_MONITORING_PRINT_ERR("Cannot allocate memory for caching proc list.");
         } else {
@@ -78,7 +79,7 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
             /* Build procs list */
             for(i = 0; i < size; ++i) {
                 if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, data->p_comm->c_remote_group, &world_rank) )
-                    pos += sprintf(&tmp_procs[pos], "%d,", world_rank);
+                    pos += snprintf(&tmp_procs[pos], bufsize - pos, "%d,", world_rank);
             }
             tmp_procs[pos - 1] = '\0'; /* Remove final coma */
             data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust to size required */

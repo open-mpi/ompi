@@ -155,7 +155,7 @@ questions in your e-mail:
 #. Which UCX and OpenFabrics version are you running?  Please specify
    where you got the software from (e.g., from the OpenFabrics and/or
    UCX community web sites, already included in your Linux
-   distribution, downloade from NVIDIA's web site, etc.).
+   distribution, downloaded from NVIDIA's web site, etc.).
 
 #. What distro and version of Linux are you running?  What is your
    kernel version?

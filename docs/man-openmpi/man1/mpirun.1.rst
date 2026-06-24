@@ -93,7 +93,7 @@ Except where noted, these concepts and command line argument are all
 applicable to Open MPI as well.  Open MPI extends the available PRRTE
 command line options, and also slightly modifies the PRRTE's default
 behaviors in a few cases.  These will be specifically described in the
-docuemtnation below.
+documentation below.
 
 COMMAND LINE OPTIONS
 --------------------
@@ -193,7 +193,7 @@ processes will be bound to the package.
   context. If no value is provided for the number of copies to execute
   (i.e., neither the ``-n`` nor its synonyms are provided on the
   command line), Open MPI will automatically execute a copy of the
-  program on each process slot (see PRRTE's `defintion of "slot"
+  program on each process slot (see PRRTE's `definition of "slot"
   <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-slot>`_
   for description of a "process slot"). This feature, however, can
   only be used in the SPMD model and will return an error (without
@@ -267,10 +267,13 @@ To map processes:
 
 * ``--cpu-list <cpus>``: Comma-delimited list of processor IDs to
   which to bind processes [default=``NULL``].  Processor IDs are
-  interpreted as hwloc logical core IDs.
+  interpreted as `Hwloc <https://www.open-mpi.org/projects/hwloc/>`_
+  logical core IDs.
 
-  .. note:: You can run Run the hwloc ``lstopo(1)`` command to see a
-            list of available cores and their logical IDs.
+  .. note:: You can run the `Hwloc
+            <https://www.open-mpi.org/projects/hwloc/>`_ ``lstopo(1)``
+            command to see a list of available cores and their logical
+            IDs.
 
 To order processes' ranks in ``MPI_COMM_WORLD``:
 
@@ -428,7 +431,7 @@ Setting MCA parameters:
             parameters passed via ``--mca`` and handle them
             appropriately, but it may not always guess correctly.  It
             is best to use ``--pmixmca`` and ``--prtemca`` when
-            passing MCA parammeters to PMIx and PRRTE, respectively.
+            passing MCA parameters to PMIx and PRRTE, respectively.
 
 * ``--pmixmca <key> <value>``: Send arguments to MCA modules in the
   PMIx subsystem.  See the :ref:`Setting MCA Parameters
@@ -520,14 +523,14 @@ There are also other options:
   via the ``slots`` keyword in a hostfile or from a resource manager
   such as Slurm), the use of this option changes the default
   calculation of number of slots on a node.  See the PRRTE's
-  `defintion of "slot"
+  `definition of "slot"
   <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-slot>`_
   for more details.
 
   Also note that the use of this option changes the Open MPI's
   definition of a "processor element" from a processor core to a
   hardware thread.  See
-  PRRTE's `defintion of a "processor element"
+  PRRTE's `definition of a "processor element"
   <https://docs.prrte.org/en/latest/placement/overview.html#definition-of-pe>`_
   for more details.
 
@@ -1157,7 +1160,7 @@ If only ``--bind-to OBJ`` is specified, then ``--map-by`` is determined by the n
   R2  hostA  [../../../../../../../..][BB/../../../../../../..]
   R3  hostA  [../../../../../../../..][../BB/../../../../../..]
 
-The mapping pattern might be better seen if we change the default ``--rank-by`` from ``fill`` to ``span``. First, the processes are mapped by package iterating between the two marking a core at a time. Next, the processes are ranked in a spanning manner that load balances them across the object they were mapped against. Finally, the processes are bound to the core that they were mapped againast.
+The mapping pattern might be better seen if we change the default ``--rank-by`` from ``fill`` to ``span``. First, the processes are mapped by package iterating between the two marking a core at a time. Next, the processes are ranked in a spanning manner that load balances them across the object they were mapped against. Finally, the processes are bound to the core that they were mapped against.
 
 .. code::
 
@@ -1206,12 +1209,12 @@ Means that:
 * Rank 1 runs on node bb, bound to logical package 0, cores 0 and 1.
 * Rank 2 runs on node cc, bound to logical cores 2 and 3.
 
-Note that only logicical processor locations are supported. By default, the values specifed are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
+Note that only logical processor locations are supported. By default, the values specified are assumed to be cores. If you intend to specify specific hardware threads then you must add the ``:hwtcpus`` qualifier to the ``--map-by`` command line option (e.g., ``--map-by rankfile:file=myrankfile:hwtcpus``).
 
 If the binding specification overlaps between any two ranks then an error occurs. If you intend to allow processes to share the same logical processing unit then you must pass the ``--bind-to :overload-allowed`` command line option to tell the runtime to ignore this check.
 
 The hostnames listed above are "absolute," meaning that actual
-resolveable hostnames are specified.  However, hostnames can also be
+resolvable hostnames are specified.  However, hostnames can also be
 specified as "relative," meaning that they are specified in relation
 to an externally-specified list of hostnames (e.g., by ``mpirun``'s
 ``--host`` argument, a hostfile, or a job scheduler).
@@ -1230,10 +1233,11 @@ hostnames, indexed from 0.  For example:
 
 All package/core slot locations are specified as logical indexes.
 
-.. note:: The Open MPI v1.6 series used physical indexes. Starting in Open MPI v5.0 only logicial indexes are supported and the ``rmaps_rank_file_physical`` MCA parameter is no longer recognized.
+.. note:: The Open MPI v1.6 series used physical indexes. Starting in Open MPI v5.0 only logical indexes are supported and the ``rmaps_rank_file_physical`` MCA parameter is no longer recognized.
 
-You can use tools such as Hwloc's `lstopo(1)` to find the logical
-indexes of package and cores.
+You can use tools such as `Hwloc's
+<https://www.open-mpi.org/projects/hwloc/>`_ ``lstopo(1)`` command to
+find the logical indexes of package and cores.
 
 Application Context or Executable Program?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

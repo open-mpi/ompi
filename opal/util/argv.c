@@ -13,6 +13,7 @@
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -492,8 +493,11 @@ int opal_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
         *argv = tmp;
     }
 
-    /* adjust the argc */
-    (*argc) -= num_to_delete;
+    /* Adjust argc to the actual new length of the array.  "i" is the
+       index of the trailing NULL, i.e., the new element count.  Using
+       this (rather than subtracting num_to_delete) keeps argc correct
+       even when num_to_delete runs past the end of the array. */
+    *argc = i;
 
     return OPAL_SUCCESS;
 }

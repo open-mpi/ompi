@@ -13,6 +13,8 @@
 # Copyright (c) 2015-2017 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      Triad National Security, LLC. All rights
+#                         reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -51,5 +53,7 @@ libmpi_fortran_base_la_SOURCES = \
         conversion_fn_null_f.c \
         f90_accessors.c \
         strings.c \
-        test_constants_f.c
+        test_constants_f.c \
+        fortran_base_topo_neighbors.h \
+        topo_neighbors.c
 endif

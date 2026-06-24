@@ -22,6 +22,12 @@ prototype_files = \
         bsend_ts.c.in \
         buffer_attach_ts.c.in \
         buffer_detach.c.in \
+        buffer_flush.c.in \
+        buffer_iflush.c.in \
+        comm_attach_buffer_ts.c.in \
+        comm_detach_buffer.c.in \
+        comm_flush_buffer.c.in \
+        comm_iflush_buffer.c.in \
         compare_and_swap_ts.c.in \
         exscan_init_ts.c.in \
         exscan_ts.c.in \
@@ -70,6 +76,7 @@ prototype_files = \
         get_address_ts.c.in \
         get_count.c.in \
         get_elements.c.in \
+        get_hw_resource_info.c.in \
         get_ts.c.in \
         iallgather_ts.c.in \
         iallgatherv_ts.c.in \
@@ -128,6 +135,10 @@ prototype_files = \
         reduce_scatter_init_ts.c.in \
         reduce_scatter_ts.c.in \
         reduce_ts.c.in \
+	request_get_status.c.in \
+        request_get_status_all.c.in \
+        request_get_status_any.c.in \
+        request_get_status_some.c.in \
         rget_accumulate_ts.c.in \
         rget_ts.c.in \
         rput_ts.c.in \
@@ -143,9 +154,19 @@ prototype_files = \
         sendrecv_replace_ts.c.in \
         sendrecv_ts.c.in \
         send_ts.c.in \
+        session_attach_buffer_ts.c.in \
+        session_detach_buffer.c.in \
+        session_flush_buffer.c.in \
+        session_iflush_buffer.c.in \
         ssend_init_ts.c.in \
         ssend_ts.c.in \
+        status_get_error.c.in \
+        status_get_source.c.in \
+        status_get_tag.c.in \
         status_set_elements.c.in \
+        status_set_error.c.in \
+        status_set_source.c.in \
+        status_set_tag.c.in \
         testany.c.in \
         type_contiguous.c.in \
         type_create_darray.c.in \
@@ -156,6 +177,7 @@ prototype_files = \
         type_create_struct.c.in \
         type_create_subarray.c.in \
         type_get_true_extent.c.in \
+        type_get_value_index.c.in \
         type_indexed.c.in \
         type_size.c.in \
         type_vector.c.in \

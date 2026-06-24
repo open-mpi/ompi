@@ -87,7 +87,7 @@ non-blocking) use an optimized implementation on top of  ``ob1``.
 - Loopback (send-to-self)
 - TCP
 - UCT (InfiniBand)
-- uGNI (Cray Gemini, Aries)
+- OFI/libfabric
 - Shared Memory (FT supported with CMA and XPMEM; KNEM is untested)
 - Tuned and non-blocking collective communications
 
@@ -159,7 +159,7 @@ Running under a batch scheduler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ULFM can operate under a job/batch scheduler, and is tested routinely
-with ALPS, PBS, and Slurm. One difficulty comes from the fact that
+with PBS and Slurm. One difficulty comes from the fact that
 many job schedulers handle failures by triggering an immediate "cleanup"
 of the application as soon as any process fails. In addition, failure
 detection subsystems integrated into PRTE are not active in direct launch
@@ -190,7 +190,7 @@ mpi_ft_foo <value>`` for Open MPI options, and with ``--prtemca
 errmgr_detector_bar <value>`` for PRTE options.
 
 .. important:: The main control for enabling/disabling fault tolerance
-   at runtime is the ``--with-ft ulfm`` (or its synomym ``--with-ft mpi``)
+   at runtime is the ``--with-ft ulfm`` (or its synonym ``--with-ft mpi``)
    ``mpirun`` CLI option. This option sets up multiple subsystems in
    Open MPI to enable fault tolerance. The options described below are
    best used to override the default behavior after the ``--with-ft ulfm``
@@ -305,7 +305,7 @@ three classifications:
    after a failure.
 3. **Disabled:** This framework/component will cause unspecified behavior when
    fault tolerance is enabled. As a consequence, it will be disabled when the
-   ``--with-ft ulfm`` option is used (see above for defails about implicit
+   ``--with-ft ulfm`` option is used (see above for details about implicit
    parameters loaded from the ``ft-mpi`` aggregate param file).
 
 Any framework or component not listed below are categorized as **Unmodified**,
@@ -333,7 +333,7 @@ correctly after a failure.
   * ``cuda``, ``inter``, ``sync``, ``sm``: **untested** (they have not
     been modified to handle faults, but we expect correct post-fault
     behavior)
-  * ``hcoll``, ``portals4`` **disabled** (they have not been modified
+  * ``portals4`` **disabled** (it has not been modified
     to handle faults, and we expect unspecified post-fault behavior)
 
 * ``osc``: MPI one-sided communications
@@ -371,7 +371,7 @@ ULFM Integrated in Open MPI
 
 As of |ompi_ver|, ULFM is now integrated directly in to the community
 release of Open MPI.  The following sections describe previous ULFM
-standlone releases.
+standalone releases.
 
 ULFM Standalone Release 4.0.2u1
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -434,7 +434,7 @@ main (November 2018).
 * Bugfixes:
 
   * Correct the behavior of process placement during an MPI_COMM_SPAWN
-    when some slots were occcupied by failed processes.
+    when some slots were occupied by failed processes.
   * MPI_COMM_SPAWN accepts process placement directives in the Info object.
   * Fixed deadlocks in some NBC collective operations.
   * Crashes and deadlocks in MPI_FINALIZE have been resolved.

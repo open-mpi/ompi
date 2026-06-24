@@ -16,6 +16,7 @@
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -502,6 +503,9 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
          *****************************************************************/
         bytes_received = 0;
 
+        /**
+         * TODO: replace with big count?
+         */
         while (bytes_to_read_in_cycle) {
             /* This next block identifies which process is the holder
             ** of the sorted[current_index] element;
@@ -774,8 +778,8 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
                 send_req[i] = MPI_REQUEST_NULL;
                 if ( 0 < disp_index[i] ) {
                     ompi_datatype_create_hindexed(disp_index[i],
-                                                  blocklen_per_process[i],
-                                                  displs_per_process[i],
+                                                  OMPI_COUNT_ARRAY_CREATE(blocklen_per_process[i]),
+                                                  OMPI_DISP_ARRAY_CREATE(displs_per_process[i]),
                                                   MPI_BYTE,
                                                   &sendtype[i]);
                     ompi_datatype_commit(&sendtype[i]);
@@ -854,8 +858,8 @@ mca_common_ompio_base_file_read_all (struct ompio_file_t *fh,
             }
 
             ompi_datatype_create_hindexed(block_index+1,
-                                          blocklength_proc,
-                                          displs_proc,
+                                          OMPI_COUNT_ARRAY_CREATE(blocklength_proc),
+                                          OMPI_DISP_ARRAY_CREATE(displs_proc),
                                           MPI_BYTE,
                                           &newType);
             ompi_datatype_commit(&newType);

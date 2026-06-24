@@ -21,6 +21,8 @@
  * Copyright (c) 2018-2021 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,14 +67,21 @@ int32_t ompi_datatype_number_of_predefined_data = 0;
  *   Additionally to OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE, we have a OMPI_DATATYPE_INIT_PREDEFINED,
  *   for all available types (getting rid of duplication of the name.
  */
-ompi_predefined_datatype_t ompi_mpi_datatype_null =
+ompi_predefined_datatype_t ompi_mpi_datatype_null = {
     {
-        {
-            OPAL_DATATYPE_INITIALIZER_EMPTY(OMPI_DATATYPE_FLAG_PREDEFINED|OPAL_DATATYPE_FLAG_CONTIGUOUS),
-            OMPI_DATATYPE_EMPTY_DATA(EMPTY),
-        },
-        {0, } /* padding */
-    };
+        OPAL_DATATYPE_INITIALIZER_EMPTY(OMPI_DATATYPE_FLAG_PREDEFINED
+                                        | OPAL_DATATYPE_FLAG_CONTIGUOUS),
+        .id = OMPI_DATATYPE_MPI_NULL,
+        .d_f_to_c_index = -1,
+        .d_keyhash = NULL,
+        .args = NULL,
+        .packed_description = 0,
+        .name = "MPI_DATATYPE_NULL",
+    },
+    {
+        0,
+    } /* padding */
+};
 
 ompi_predefined_datatype_t ompi_mpi_unavailable =    OMPI_DATATYPE_INIT_PREDEFINED (UNAVAILABLE, 0);
 
@@ -224,6 +233,11 @@ ompi_predefined_datatype_t ompi_mpi_logical8 =       OMPI_DATATYPE_INIT_PREDEFIN
 #else
 ompi_predefined_datatype_t ompi_mpi_logical8 =       OMPI_DATATYPE_INIT_UNAVAILABLE (LOGICAL8, OMPI_DATATYPE_FLAG_DATA_FORTRAN );
 #endif
+#if OMPI_HAVE_FORTRAN_LOGICAL16
+ompi_predefined_datatype_t ompi_mpi_logical16 =       OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (INT, LOGICAL16, OMPI_SIZEOF_FORTRAN_LOGICAL16, OMPI_ALIGNMENT_FORTRAN_LOGICAL16, 0);
+#else
+ompi_predefined_datatype_t ompi_mpi_logical16 =       OMPI_DATATYPE_INIT_UNAVAILABLE (LOGICAL16, OMPI_DATATYPE_FLAG_DATA_FORTRAN );
+#endif
 #if OMPI_HAVE_FORTRAN_REAL2
 ompi_predefined_datatype_t ompi_mpi_real2 =          OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE_FORTRAN (FLOAT, REAL2, OMPI_SIZEOF_FORTRAN_REAL2, OMPI_ALIGNMENT_FORTRAN_REAL2, OMPI_DATATYPE_FLAG_DATA_FLOAT);
 #else
@@ -317,7 +331,7 @@ ompi_predefined_datatype_t ompi_mpi_count = OMPI_DATATYPE_INIT_UNAVAILABLE_BASIC
  * Everything referring to types/ids should be ORDERED as in ompi_datatype_basicDatatypes array.
  */
 const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED] = {
-    [OMPI_DATATYPE_MPI_EMPTY] = &ompi_mpi_datatype_null.dt,
+    [OMPI_DATATYPE_MPI_NULL] = &ompi_mpi_datatype_null.dt,
     [OMPI_DATATYPE_MPI_INT8_T] = &ompi_mpi_int8_t.dt,
     [OMPI_DATATYPE_MPI_UINT8_T] = &ompi_mpi_uint8_t.dt,
     [OMPI_DATATYPE_MPI_INT16_T] = &ompi_mpi_int16_t.dt,
@@ -385,6 +399,8 @@ const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEF
     [OMPI_DATATYPE_MPI_SHORT_FLOAT] = &ompi_mpi_short_float.dt,
     [OMPI_DATATYPE_MPI_C_SHORT_FLOAT_COMPLEX] = &ompi_mpi_c_short_float_complex.dt,
 
+    [OMPI_DATATYPE_MPI_FLOAT128] = &ompi_mpi_real16.dt,
+
     [OMPI_DATATYPE_MPI_UNAVAILABLE] = &ompi_mpi_unavailable.dt,
 };
 
@@ -426,7 +442,9 @@ opal_pointer_array_t ompi_datatype_f_to_c_table = {{0}};
         displ[1] = (ptrdiff_t)(&(s[0].v2));                                          \
         displ[1] -= base;                                                            \
                                                                                      \
-        ompi_datatype_create_struct( 2, bLength, displ, types, &ptype );             \
+        ompi_datatype_create_struct( 2, OMPI_COUNT_ARRAY_CREATE(bLength),            \
+                                     OMPI_DISP_ARRAY_CREATE(displ), types,           \
+                                     &ptype );                                       \
         displ[0] = (ptrdiff_t)(&(s[1]));                                             \
         displ[0] -= base;                                                            \
         if( displ[0] != (displ[1] + (ptrdiff_t)sizeof(type2)) )                      \
@@ -665,6 +683,9 @@ int32_t ompi_datatype_init( void )
     MOOG(short_float, 74);
     MOOG(c_short_float_complex, 75);
     MOOG(cxx_sfltcplex, 76);
+
+    /* Datatype added in MPI 5.0 */
+    MOOG(logical16, 77);
 
     /**
      * Now make sure all non-contiguous types are marked as such.

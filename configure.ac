@@ -15,7 +15,7 @@
 # Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
-# Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2013      Mellanox Technologies, Inc.
 #                         All rights reserved.
@@ -28,7 +28,7 @@
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2025      Nanook Consulting  All rights reserved.
 # $COPYRIGHT$
 #
@@ -151,7 +151,6 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_usempif08_so_version)
-          AC_SUBST(libmpi_java_so_version)
           AC_SUBST(libompitrace_so_version)])
 m4_ifdef([project_oshmem],
          [AC_SUBST(liboshmem_so_version)])
@@ -276,6 +275,7 @@ m4_ifdef([project_oshmem],
 ############################################################################
 # Configuration options
 ############################################################################
+OMPI_HAVE_ACCELERATOR_SUPPORT=0
 
 OPAL_CONFIGURE_OPTIONS
 
@@ -415,6 +415,7 @@ AC_CHECK_TYPES(__int128)
 AC_CHECK_TYPES(uint128_t)
 AC_CHECK_TYPES(long long)
 
+AC_CHECK_TYPES(_Float128)
 AC_CHECK_TYPES(__float128)
 AC_CHECK_TYPES(short float)
 AC_CHECK_TYPES(long double)
@@ -425,6 +426,8 @@ AC_CHECK_TYPES(short float _Complex)
 AC_CHECK_TYPES(float _Complex)
 AC_CHECK_TYPES(double _Complex)
 AC_CHECK_TYPES(long double _Complex)
+AC_CHECK_TYPES(_Float128 _Complex)
+AC_CHECK_TYPES(__float128 _Complex)
 
 AC_CHECK_TYPES(intptr_t)
 AC_CHECK_TYPES(uintptr_t)
@@ -450,6 +453,9 @@ fi
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long double)
+if test "$ac_cv_type__Float128" = yes; then
+    AC_CHECK_SIZEOF(_Float128)
+fi
 if test "$ac_cv_type___float128" = yes; then
     AC_CHECK_SIZEOF(__float128)
 fi
@@ -461,6 +467,12 @@ fi
 AC_CHECK_SIZEOF(float _Complex)
 AC_CHECK_SIZEOF(double _Complex)
 AC_CHECK_SIZEOF(long double _Complex)
+if test "$ac_cv_type__Float128__Complex" = yes; then
+    AC_CHECK_SIZEOF(_Float128 _Complex)
+fi
+if test "$ac_cv_type___float128__Complex" = yes; then
+    AC_CHECK_SIZEOF(__float128 _Complex)
+fi
 
 AC_CHECK_SIZEOF(void *)
 AS_IF([test "$ac_cv_sizeof_void_p" -eq 4],
@@ -510,6 +522,9 @@ fi
 OPAL_C_GET_ALIGNMENT(float, OPAL_ALIGNMENT_FLOAT)
 OPAL_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
 OPAL_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
+if test "$ac_cv_type__Float128" = yes; then
+    OPAL_C_GET_ALIGNMENT(_Float128, OPAL_ALIGNMENT__FLOAT128)
+fi
 if test "$ac_cv_type___float128" = yes; then
     OPAL_C_GET_ALIGNMENT(__float128, OPAL_ALIGNMENT___FLOAT128)
 fi
@@ -523,6 +538,12 @@ fi
 OPAL_C_GET_ALIGNMENT(float _Complex, OPAL_ALIGNMENT_FLOAT_COMPLEX)
 OPAL_C_GET_ALIGNMENT(double _Complex, OPAL_ALIGNMENT_DOUBLE_COMPLEX)
 OPAL_C_GET_ALIGNMENT(long double _Complex, OPAL_ALIGNMENT_LONG_DOUBLE_COMPLEX)
+if test "$ac_cv_type__Float128__Complex" = yes; then
+    OPAL_C_GET_ALIGNMENT(_Float128 _Complex, OPAL_ALIGNMENT__FLOAT128_COMPLEX)
+fi
+if test "$ac_cv_type___float128__Complex" = yes; then
+    OPAL_C_GET_ALIGNMENT(__float128 _Complex, OPAL_ALIGNMENT___FLOAT128_COMPLEX)
+fi
 
 OPAL_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 OPAL_C_GET_ALIGNMENT(size_t, OPAL_ALIGNMENT_SIZE_T)
@@ -618,13 +639,6 @@ AS_IF([test "$opal_cv_compiler_FAMILYNAME" = "GNU" && \
        AC_MSG_WARN([a different compiler to build Open MPI.])
        AC_MSG_ERROR([Cannot continue])
       ])
-
-##################################
-# Java MPI Binding request
-##################################
-# Only needed for OMPI
-m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
-
 
 ##################################
 # MPI / OpenSHMEM API profiling layer
@@ -896,6 +910,14 @@ AC_CHECK_MEMBERS([struct timespec.tv_nsec],
 #
 m4_ifdef([project_ompi], [OMPI_FIND_MPI_AINT_COUNT_OFFSET])
 
+#
+# now that we have MPI_COUNT_KIND set, try building
+# MPI F08 bindings if that level of fortran support is requested
+#
+m4_ifdef([project_ompi], [AS_IF([test $OMPI_BUILD_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPIF08_BINDINGS],
+                                [OMPI_FORTRAN_CHECK_BIG_COUNT([],
+                                     [AC_MSG_ERROR([The mpi_f08 module cannot be compiled using the current set of Fortran compiler options ($FCFLAGS).  Either change compiler options or use --enable-mpi-fortran=usempi])])
+                                ])])
 # checkpoint results
 AC_CACHE_SAVE
 
@@ -1522,7 +1544,7 @@ AC_CONFIG_FILES([
     test/util/Makefile
 ])
 
-m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile])])
+m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile test/mpi/Makefile test/mpi/t/Makefile])])
 
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])

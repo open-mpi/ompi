@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -74,6 +74,9 @@ PROTOTYPE VOID reduce_scatter_init(BUFFER x1, BUFFER_OUT x2,
     }
 
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
+    if (idx > 0) {
+        ompi_coll_base_add_release_arrays_cb(c_request);
+    }
 
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 

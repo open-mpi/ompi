@@ -1,6 +1,7 @@
 # Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
 # Copyright (c) 2023      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow

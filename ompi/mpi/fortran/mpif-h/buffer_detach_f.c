@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,9 +65,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
 #endif
 #endif
 
-
-/* (this comment is repeated in ompi/mpi/fortran/use-mpi-f08/buffer_detach.c)
- *
+/*
  * MPI-3.1 section 3.6, page 45, states that the mpif.h and mpi module
  * interfaces for MPI_BUFFER_DETACH ignore the buffer argument.
  * Therefore, for the mpif.h and mpi module interfaces, we use a dummy

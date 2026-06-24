@@ -25,12 +25,19 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
     const char ts_level_multi[] = "MPI_THREAD_MULTIPLE";
 
     if ( MPI_PARAM_CHECK ) {
-        if (NULL == errhandler || NULL == session) {
-            return MPI_ERR_ARG;
+        if (NULL == errhandler) {
+            rc = MPI_ERR_ERRHANDLER;
+            goto fn_exit;
+        }
+
+        if (NULL == session) {
+            rc = MPI_ERR_ARG;
+            goto fn_exit;
         }
 
         if (NULL == info || ompi_info_is_freed (info)) {
-            return MPI_ERR_INFO;
+            rc = MPI_ERR_INFO;
+            goto fn_exit;
         }
     }
 
@@ -46,5 +53,6 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
 
     rc = ompi_mpi_instance_init (ts_level, &info->super, errhandler, session, 0, NULL);
     /* if an error occurred raise it on the null session */
+fn_exit:
     OMPI_ERRHANDLER_RETURN (rc, MPI_SESSION_NULL, rc, FUNC_NAME);
 }

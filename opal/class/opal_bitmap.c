@@ -14,6 +14,7 @@
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025-2026 Jeffrey M. Squyres. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,32 +62,34 @@ int opal_bitmap_set_max_size(opal_bitmap_t *bm, int max_size)
     }
 
     /*
-     * Only if the caller wants to set the maximum size,
-     * we set it (in numbers of bits!), otherwise it is
-     * set to INT_MAX in the constructor.
+     * Store the cap in bits, matching the documented contract (see the
+     * header).  When the caller does not set it, it is INT_MAX (set in
+     * the constructor).
      */
-    bm->max_size = (int) (((size_t) max_size + SIZE_OF_BASE_TYPE - 1) / SIZE_OF_BASE_TYPE);
+    bm->max_size = max_size;
 
     return OPAL_SUCCESS;
 }
 
 int opal_bitmap_init(opal_bitmap_t *bm, int size)
 {
+    if ((size <= 0) || (NULL == bm)) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
     /*
-     * Only if the caller set the maximum size before initializing,
-     * we test here (in numbers of bits!)
-     * By default, the max size is INT_MAX, set in the constructor.
+     * Enforce the optional maximum (in bits) on the requested size before
+     * rounding up to a whole number of array elements.  bm->max_size is
+     * expressed in bits (see opal_bitmap_set_max_size()); by default it is
+     * INT_MAX, set in the constructor.
      */
-    if ((size <= 0) || (NULL == bm) || (size > bm->max_size)) {
+    if (size > bm->max_size) {
         return OPAL_ERR_BAD_PARAM;
     }
 
     bm->array_size = (int) (((size_t) size + SIZE_OF_BASE_TYPE - 1) / SIZE_OF_BASE_TYPE);
     if (NULL != bm->bitmap) {
         free(bm->bitmap);
-        if (bm->max_size < bm->array_size) {
-            bm->max_size = bm->array_size;
-        }
     }
     bm->bitmap = (uint64_t *) malloc(bm->array_size * sizeof(uint64_t));
     if (NULL == bm->bitmap) {
@@ -99,9 +102,11 @@ int opal_bitmap_init(opal_bitmap_t *bm, int size)
 
 int opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
 {
-    int index, offset, new_size;
+    int index, offset, new_size, max_array_size;
 
-    if ((bit < 0) || (NULL == bm) || (bit > bm->max_size)) {
+    /* bm->max_size is the optional cap in bits; valid bit indices are
+       0 .. max_size-1. */
+    if ((bit < 0) || (NULL == bm) || (bit >= bm->max_size)) {
         return OPAL_ERR_BAD_PARAM;
     }
 
@@ -115,8 +120,13 @@ int opal_bitmap_set_bit(opal_bitmap_t *bm, int bit)
          valid and we simply expand the bitmap */
 
         new_size = index + 1;
-        if (new_size > bm->max_size) {
-            new_size = bm->max_size;
+        /* Clamp growth to the cap, converted from bits to array elements.
+           The bit-range check above already guarantees new_size stays
+           within this bound, but keep the clamp consistent with max_size. */
+        max_array_size = (int) (((size_t) bm->max_size + SIZE_OF_BASE_TYPE - 1)
+                                / SIZE_OF_BASE_TYPE);
+        if (new_size > max_array_size) {
+            new_size = max_array_size;
         }
 
         /* New size is just a multiple of the original size to fit in
@@ -225,6 +235,22 @@ int opal_bitmap_find_and_set_first_unset_bit(opal_bitmap_t *bm, int *position)
     }
 
     (*position) += i * SIZE_OF_BASE_TYPE;
+
+    /*
+     * The fast path above sets the first unset bit in word i directly,
+     * without consulting bm->max_size.  When max_size is not a multiple of
+     * SIZE_OF_BASE_TYPE, the last allocated word can contain unset bits that
+     * lie beyond the cap, so this path can otherwise hand back (and set) a
+     * bit at/after max_size.  If that happened the bitmap is full within its
+     * valid range [0, max_size): undo the speculative set and report it,
+     * matching opal_bitmap_set_bit() -- which the all-words-full grow path
+     * above already goes through.
+     */
+    if (*position >= bm->max_size) {
+        bm->bitmap[i] &= ~(1UL << (*position - i * SIZE_OF_BASE_TYPE));
+        return OPAL_ERR_BAD_PARAM;
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -361,20 +387,36 @@ int opal_bitmap_num_unset_bits(opal_bitmap_t *bm, int len)
 int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len)
 {
     int i, cnt = 0;
+    int num_elements, remaining_bits;
     uint64_t val;
 
 #if OPAL_ENABLE_DEBUG
-    if ((len < 0) || NULL == bm || (len >= (bm->array_size * SIZE_OF_BASE_TYPE))) {
+    if ((len < 0) || NULL == bm || (len > (bm->array_size * SIZE_OF_BASE_TYPE))) {
         return 0;
     }
 #endif
 
-    for (i = 0; i < len; ++i) {
+    /* Calculate how many full array elements to process */
+    num_elements = len / SIZE_OF_BASE_TYPE;
+    remaining_bits = len % SIZE_OF_BASE_TYPE;
+
+    /* Count bits in full elements */
+    for (i = 0; i < num_elements; ++i) {
         if (0 == (val = bm->bitmap[i])) {
             continue;
         }
         /*  Peter Wegner in CACM 3 (1960), 322. This method goes through as many
          *  iterations as there are set bits. */
+        for (; val; cnt++) {
+            val &= val - 1; /* clear the least significant bit set */
+        }
+    }
+
+    /* Handle the last partial element if there are remaining bits */
+    if (remaining_bits > 0) {
+        val = bm->bitmap[num_elements];
+        /* Mask off bits beyond len */
+        val &= ((1UL << remaining_bits) - 1);
         for (; val; cnt++) {
             val &= val - 1; /* clear the least significant bit set */
         }

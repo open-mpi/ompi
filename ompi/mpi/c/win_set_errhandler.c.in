@@ -46,7 +46,7 @@ PROTOTYPE ERROR_CLASS win_set_errhandler(WIN win, ERRHANDLER errhandler)
                    MPI_ERRHANDLER_NULL == errhandler ||
                    (OMPI_ERRHANDLER_TYPE_WIN != errhandler->eh_mpi_object_type &&
                     OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
-            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ERRHANDLER, FUNC_NAME);
         }
     }
 

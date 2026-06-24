@@ -36,6 +36,8 @@ MPI API manual pages (section 3)
    MPI_Bsend_init.3.rst
    MPI_Buffer_attach.3.rst
    MPI_Buffer_detach.3.rst
+   MPI_Buffer_flush.3.rst
+   MPI_Buffer_iflush.3.rst
    MPI_Cancel.3.rst
    MPI_Cart_coords.3.rst
    MPI_Cart_create.3.rst
@@ -47,6 +49,7 @@ MPI API manual pages (section 3)
    MPI_Cartdim_get.3.rst
    MPI_Close_port.3.rst
    MPI_Comm_accept.3.rst
+   MPI_Comm_attach_buffer.3.rst
    MPI_Comm_c2f.3.rst
    MPI_Comm_call_errhandler.3.rst
    MPI_Comm_compare.3.rst
@@ -57,10 +60,12 @@ MPI API manual pages (section 3)
    MPI_Comm_create_group.3.rst
    MPI_Comm_create_keyval.3.rst
    MPI_Comm_delete_attr.3.rst
+   MPI_Comm_detach_buffer.3.rst
    MPI_Comm_disconnect.3.rst
    MPI_Comm_dup.3.rst
    MPI_Comm_dup_with_info.3.rst
    MPI_Comm_f2c.3.rst
+   MPI_Comm_flush_buffer.3.rst
    MPI_Comm_free.3.rst
    MPI_Comm_free_keyval.3.rst
    MPI_Comm_get_attr.3.rst
@@ -71,6 +76,7 @@ MPI API manual pages (section 3)
    MPI_Comm_group.3.rst
    MPI_Comm_idup.3.rst
    MPI_Comm_idup_with_info.3.rst
+   MPI_Comm_iflush_buffer.3.rst
    MPI_Comm_join.3.rst
    MPI_Comm_rank.3.rst
    MPI_Comm_remote_group.3.rst
@@ -102,6 +108,7 @@ MPI API manual pages (section 3)
    MPI_Error_string.3.rst
    MPI_Exscan.3.rst
    MPI_Exscan_init.3.rst
+   MPI_F_sync_reg.3.rst
    MPI_Fetch_and_op.3.rst
    MPI_File_c2f.3.rst
    MPI_File_call_errhandler.3.rst
@@ -177,6 +184,7 @@ MPI API manual pages (section 3)
    MPI_Get_count.3.rst
    MPI_Get_elements.3.rst
    MPI_Get_elements_x.3.rst
+   MPI_Get_hw_resource_info.3.rst
    MPI_Get_library_version.3.rst
    MPI_Get_processor_name.3.rst
    MPI_Get_version.3.rst
@@ -305,10 +313,16 @@ MPI API manual pages (section 3)
    MPI_Reduce_scatter_block_init.3.rst
    MPI_Reduce_scatter_init.3.rst
    MPI_Register_datarep.3.rst
+   MPI_Remove_error_class.3.rst
+   MPI_Remove_error_code.3.rst
+   MPI_Remove_error_string.3.rst
    MPI_Request_c2f.3.rst
    MPI_Request_f2c.3.rst
    MPI_Request_free.3.rst
    MPI_Request_get_status.3.rst
+   MPI_Request_get_status_all.3.rst
+   MPI_Request_get_status_any.3.rst
+   MPI_Request_get_status_some.3.rst
    MPI_Rget.3.rst
    MPI_Rget_accumulate.3.rst
    MPI_Rput.3.rst
@@ -324,16 +338,20 @@ MPI API manual pages (section 3)
    MPI_Send_init.3.rst
    MPI_Sendrecv.3.rst
    MPI_Sendrecv_replace.3.rst
+   MPI_Session_attach_buffer.3.rst
    MPI_Session_c2f.3.rst
    MPI_Session_call_errhandler.3.rst
    MPI_Session_create_errhandler.3.rst
+   MPI_Session_detach_buffer.3.rst
    MPI_Session_f2c.3.rst
    MPI_Session_finalize.3.rst
+   MPI_Session_flush_buffer.3.rst
    MPI_Session_get_errhandler.3.rst
    MPI_Session_get_info.3.rst
    MPI_Session_get_nth_pset.3.rst
    MPI_Session_get_num_psets.3.rst
    MPI_Session_get_pset_info.3.rst
+   MPI_Session_iflush_buffer.3.rst
    MPI_Session_init.3.rst
    MPI_Session_set_errhandler.3.rst
    MPI_Sizeof.3.rst
@@ -361,10 +379,12 @@ MPI API manual pages (section 3)
    MPI_T_category_get_categories.3.rst
    MPI_T_category_get_cvars.3.rst
    MPI_T_category_get_events.3.rst
+   MPI_T_category_get_index.3.rst
    MPI_T_category_get_info.3.rst
    MPI_T_category_get_num.3.rst
    MPI_T_category_get_num_events.3.rst
    MPI_T_category_get_pvars.3.rst
+   MPI_T_cvar_get_index.3.rst
    MPI_T_cvar_get_info.3.rst
    MPI_T_cvar_get_num.3.rst
    MPI_T_cvar_handle_alloc.3.rst
@@ -390,6 +410,7 @@ MPI API manual pages (section 3)
    MPI_T_event_set_dropped_handler.3.rst
    MPI_T_finalize.3.rst
    MPI_T_init_thread.3.rst
+   MPI_T_pvar_get_index.3.rst
    MPI_T_pvar_get_info.3.rst
    MPI_T_pvar_get_num.3.rst
    MPI_T_pvar_handle_alloc.3.rst
@@ -440,6 +461,7 @@ MPI API manual pages (section 3)
    MPI_Type_get_name.3.rst
    MPI_Type_get_true_extent.3.rst
    MPI_Type_get_true_extent_x.3.rst
+   MPI_Type_get_value_index.3.rst
    MPI_Type_hindexed.3.rst
    MPI_Type_hvector.3.rst
    MPI_Type_indexed.3.rst

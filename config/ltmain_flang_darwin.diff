@@ -1,13 +1,14 @@
 --- config/ltmain.sh
 +++ config/ltmain.sh
-@@ -9024,7 +9024,14 @@
+@@ -9024,7 +9024,15 @@
 	  compile_deplibs="$new_inherited_linker_flags $compile_deplibs"
 	  finalize_deplibs="$new_inherited_linker_flags $finalize_deplibs"
 	else
 -	  compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
 +	  case $host in
 +	    *-*-darwin*)
-+	      case $CC in
++	      func_cc_basename "$CC"
++	      case $func_cc_basename_result in
 +		flang*) compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`;;
 +		*) compiler_flags="$compiler_flags "`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`;;
 +	      esac;;
@@ -16,7 +17,7 @@
 	fi
        fi
        dependency_libs=$newdependency_libs
-@@ -9369,7 +9376,7 @@
+@@ -9369,7 +9377,7 @@
            # On Darwin other compilers
            func_cc_basename $CC
            case $func_cc_basename_result in
@@ -25,12 +26,13 @@
                    verstring="$wl-compatibility_version $wl$minor_current $wl-current_version $wl$minor_current.$revision"
                    ;;
                *)
-@@ -9869,7 +9876,10 @@
+@@ -9869,7 +9877,11 @@
        # Time to change all our "foo.ltframework" stuff back to "-framework foo"
        case $host in
 	  *-*-darwin*)
 -	  newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
-+	  case $CC in
++	  func_cc_basename "$CC"
++	  case $func_cc_basename_result in
 +	    flang*) newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`;;
 +	    *) newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`;;
 +	  esac

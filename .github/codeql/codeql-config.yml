@@ -1,0 +1,19 @@
+#
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# CodeQL configuration for Open MPI.  Push / PR scans load this file
+# locally from the checked-out branch.  The scheduled cross-branch scan
+# loads this same file from the default branch via CodeQL's remote
+# config-file syntax, so the release-branch scans do not require a local
+# copy of this file to already exist.
+
+name: "Open MPI CodeQL config"
+
+paths-ignore:
+  - '3rd-party'
+  - '**/test'

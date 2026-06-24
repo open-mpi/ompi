@@ -15,12 +15,12 @@
 # major, minor, and release are generally combined in the form
 # <major>.<minor>.<release>.
 
-major=5
+major=6
 minor=1
 release=0
 
 # MPI Standard Compliance Level
-mpi_standard_version=3
+mpi_standard_version=4
 mpi_standard_subversion=1
 
 # OMPI required dependency versions.
@@ -101,7 +101,6 @@ libmpi_usempi_tkr_so_version=0:0:0
 libmpi_usempi_ignore_tkr_so_version=0:0:0
 libmpi_usempif08_so_version=0:0:0
 libopen_pal_so_version=0:0:0
-libmpi_java_so_version=0:0:0
 liboshmem_so_version=0:0:0
 libompitrace_so_version=0:0:0
 

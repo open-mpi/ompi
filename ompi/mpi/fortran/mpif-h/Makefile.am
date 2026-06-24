@@ -18,7 +18,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
-# Copyright (c) 2021-2022 Triad National Security, LLC. All rights
+# Copyright (c) 2021-2025 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 #
@@ -137,6 +137,9 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         add_error_class_f.c \
         add_error_code_f.c \
         add_error_string_f.c \
+        remove_error_class_f.c \
+        remove_error_code_f.c \
+        remove_error_string_f.c \
         aint_add_f.c \
         aint_diff_f.c \
         allgather_f.c \
@@ -174,6 +177,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         cart_sub_f.c \
         close_port_f.c \
         comm_accept_f.c \
+        comm_attach_buffer_f.c \
         comm_call_errhandler_f.c \
         comm_compare_f.c \
         comm_connect_f.c \
@@ -183,11 +187,13 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_create_group_f.c \
         comm_create_keyval_f.c \
         comm_delete_attr_f.c \
+        comm_detach_buffer_f.c \
         comm_disconnect_f.c \
         comm_dup_f.c \
         comm_dup_with_info_f.c \
         comm_idup_f.c \
         comm_idup_with_info_f.c \
+        comm_flush_buffer_f.c \
         comm_free_f.c \
         comm_free_keyval_f.c \
         comm_get_attr_f.c \
@@ -196,6 +202,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         comm_get_name_f.c \
         comm_get_parent_f.c \
         comm_group_f.c \
+        comm_iflush_buffer_f.c \
         comm_join_f.c \
         comm_rank_f.c \
         comm_remote_group_f.c \
@@ -291,6 +298,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         get_count_f.c \
         get_elements_f.c \
         get_elements_x_f.c \
+        get_hw_resource_info_f.c \
         get_library_version_f.c \
         get_processor_name_f.c \
         get_version_f.c \
@@ -410,6 +418,9 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         register_datarep_f.c \
         request_free_f.c \
         request_get_status_f.c \
+        request_get_status_all_f.c \
+        request_get_status_any_f.c \
+        request_get_status_some_f.c \
         rsend_f.c \
         rsend_init_f.c \
         scan_f.c \
@@ -422,13 +433,17 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         send_init_f.c \
         sendrecv_f.c \
         sendrecv_replace_f.c \
+        session_attach_buffer_f.c \
         session_call_errhandler_f.c \
         session_create_errhandler_f.c \
+        session_detach_buffer_f.c \
+        session_flush_buffer_f.c \
         session_get_errhandler_f.c \
         session_get_info_f.c \
         session_get_nth_pset_f.c \
         session_get_num_psets_f.c \
         session_get_pset_info_f.c \
+        session_iflush_buffer_f.c \
         session_init_f.c \
         session_finalize_f.c \
         session_set_errhandler_f.c \
@@ -438,9 +453,15 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         start_f.c \
         status_f082f_f.c \
         status_f2f08_f.c \
+        status_get_error_f.c \
+        status_get_source_f.c \
+        status_get_tag_f.c \
         status_set_cancelled_f.c \
         status_set_elements_f.c \
         status_set_elements_x_f.c \
+        status_set_error_f.c \
+        status_set_source_f.c \
+        status_set_tag_f.c \
         testall_f.c \
         testany_f.c \
         test_cancelled_f.c \
@@ -473,6 +494,7 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         type_get_name_f.c \
         type_get_true_extent_f.c \
         type_get_true_extent_x_f.c \
+        type_get_value_index_f.c \
         type_indexed_f.c \
         type_match_size_f.c \
         type_set_attr_f.c \

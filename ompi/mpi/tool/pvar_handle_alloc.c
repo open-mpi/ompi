@@ -9,6 +9,8 @@
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +37,12 @@ int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
+    }
+
+    if (NULL != obj_handle) {
+        if (ompit_obj_invalid(obj_handle)) {
+            return MPI_T_ERR_INVALID_HANDLE;
+        }
     }
 
     ompi_mpit_lock ();

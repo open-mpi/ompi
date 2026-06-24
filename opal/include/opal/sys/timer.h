@@ -63,6 +63,8 @@ BEGIN_C_DECLS
 #    include "opal/sys/arm64/timer.h"
 #elif defined(PLATFORM_ARCH_POWERPC)
 #    include "opal/sys/powerpc/timer.h"
+#elif defined(PLATFORM_ARCH_RISCV)
+#    include "opal/sys/riscv64/timer.h"
 #endif
 
 #ifndef DOXYGEN

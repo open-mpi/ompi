@@ -154,6 +154,7 @@ module mpi_f08_types
   type(MPI_Datatype), parameter   :: MPI_LOGICAL2                = MPI_Datatype(OMPI_MPI_LOGICAL2)
   type(MPI_Datatype), parameter   :: MPI_LOGICAL4                = MPI_Datatype(OMPI_MPI_LOGICAL4)
   type(MPI_Datatype), parameter   :: MPI_LOGICAL8                = MPI_Datatype(OMPI_MPI_LOGICAL8)
+  type(MPI_Datatype), parameter   :: MPI_LOGICAL16               = MPI_Datatype(OMPI_MPI_LOGICAL16)
   type(MPI_Datatype), parameter   :: MPI_C_BOOL                  = MPI_Datatype(OMPI_MPI_C_BOOL)
   type(MPI_Datatype), parameter   :: MPI_CXX_BOOL                = MPI_Datatype(OMPI_MPI_CXX_BOOL)
   type(MPI_Datatype), parameter   :: MPI_COUNT                   = MPI_Datatype(OMPI_MPI_COUNT)

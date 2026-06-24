@@ -56,6 +56,6 @@ ERRORS
    * :ref:`MPI_Bsend_init`
    * :ref:`MPI_Rsend_init`
    * :ref:`MPI_Send_init`
-   * MPI_Sssend_init
+   * :ref:`MPI_Ssend_init`
    * :ref:`MPI_Recv_init`
    * :ref:`MPI_Startall`

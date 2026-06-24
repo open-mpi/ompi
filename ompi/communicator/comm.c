@@ -24,9 +24,11 @@
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2025      BULL S.A.S. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +41,8 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
+#include "opal/mca/accelerator/accelerator.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/string_copy.h"
@@ -63,6 +67,7 @@
 struct ompi_comm_split_type_hw_guided_t {
     const char *info_value;
     int split_type;
+    bool use_for_unguided;
 };
 typedef struct ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_t;
 
@@ -72,18 +77,19 @@ typedef struct ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_t
  * the order in this array must be from largest topology class to smallest.
  */
 static const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[] = {
-    {.info_value = "cluster",  .split_type = OMPI_COMM_TYPE_CLUSTER},
-    {.info_value = "cu",       .split_type = OMPI_COMM_TYPE_CU},
-    {.info_value = "host",     .split_type = OMPI_COMM_TYPE_HOST},
-    {.info_value = "mpi_shared_memory", .split_type = MPI_COMM_TYPE_SHARED},
-    {.info_value = "board",    .split_type = OMPI_COMM_TYPE_BOARD},
-    {.info_value = "numanode", .split_type = OMPI_COMM_TYPE_NUMA},
-    {.info_value = "socket",   .split_type = OMPI_COMM_TYPE_SOCKET},
-    {.info_value = "l3cache",  .split_type = OMPI_COMM_TYPE_L3CACHE},
-    {.info_value = "l2cache",  .split_type = OMPI_COMM_TYPE_L2CACHE},
-    {.info_value = "l1cache",  .split_type = OMPI_COMM_TYPE_L1CACHE},
-    {.info_value = "core",     .split_type = OMPI_COMM_TYPE_CORE},
-    {.info_value = "hwthread", .split_type = OMPI_COMM_TYPE_HWTHREAD},
+    {.info_value = "cluster",  .split_type = OMPI_COMM_TYPE_CLUSTER,  .use_for_unguided = false},
+    {.info_value = "nvlink",   .split_type = OMPI_COMM_TYPE_NVLINK,   .use_for_unguided = false},
+    {.info_value = "cu",       .split_type = OMPI_COMM_TYPE_CU,       .use_for_unguided = true},
+    {.info_value = "host",     .split_type = OMPI_COMM_TYPE_HOST,     .use_for_unguided = true},
+    {.info_value = "mpi_shared_memory", .split_type = MPI_COMM_TYPE_SHARED, .use_for_unguided = true},
+    {.info_value = "board",    .split_type = OMPI_COMM_TYPE_BOARD,    .use_for_unguided = true},
+    {.info_value = "numanode", .split_type = OMPI_COMM_TYPE_NUMA,     .use_for_unguided = true},
+    {.info_value = "socket",   .split_type = OMPI_COMM_TYPE_SOCKET,   .use_for_unguided = true},
+    {.info_value = "l3cache",  .split_type = OMPI_COMM_TYPE_L3CACHE,  .use_for_unguided = true},
+    {.info_value = "l2cache",  .split_type = OMPI_COMM_TYPE_L2CACHE,  .use_for_unguided = true},
+    {.info_value = "l1cache",  .split_type = OMPI_COMM_TYPE_L1CACHE,  .use_for_unguided = true},
+    {.info_value = "core",     .split_type = OMPI_COMM_TYPE_CORE,     .use_for_unguided = true},
+    {.info_value = "hwthread", .split_type = OMPI_COMM_TYPE_HWTHREAD, .use_for_unguided = true},
     {.info_value = NULL},
 };
 
@@ -98,6 +104,9 @@ static const char * ompi_comm_split_type_to_str(int split_type) {
     }
     else if (MPI_COMM_TYPE_HW_UNGUIDED == split_type) {
         return "MPI_COMM_TYPE_HW_UNGUIDED";
+    }
+    else if (MPI_COMM_TYPE_RESOURCE_GUIDED == split_type) {
+        return "MPI_COMM_TYPE_RESOURCE_GUIDED";
     }
     return "Unknown";
 }
@@ -274,10 +283,14 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
             /* NTH: use internal idup function that takes a local group argument */
             ompi_comm_idup_internal (old_localcomm, newcomm->c_local_group, NULL, NULL,
                                      &newcomm->c_local_comm, req);
+            if (NULL != newcomm->c_local_comm
+                && !OMPI_COMM_IS_INTRINSIC(newcomm->c_local_comm)) {
+                OBJ_RETAIN(newcomm->c_local_comm);
+            }
         } else {
-            /* take ownership of the old communicator (it must be an intracommunicator) */
             assert (OMPI_COMM_IS_INTRA(oldcomm));
             newcomm->c_local_comm = oldcomm;
+            OBJ_RETAIN(newcomm->c_local_comm);
         }
     } else {
         newcomm->c_remote_group = newcomm->c_local_group;
@@ -828,11 +841,13 @@ static int ompi_comm_split_type_get_part (ompi_group_t *group, const int split_t
         case OMPI_COMM_TYPE_CLUSTER:
             include = OPAL_PROC_ON_LOCAL_CLUSTER(locality);
             break;
+        case OMPI_COMM_TYPE_NVLINK:
         case MPI_COMM_TYPE_HW_GUIDED:
         case MPI_COMM_TYPE_HW_UNGUIDED:
+        case MPI_COMM_TYPE_RESOURCE_GUIDED:
             /*
-             * MPI_COMM_TYPE_HW_(UN)GUIDED handled in calling function.
-             * We should not get here as the split type will be changed
+             * MPI_COMM_TYPE_HW_(UN)GUIDED and MPI_COMM_TYPE_RESOURCE_GUIDED handled 
+             * in calling function. We should not get here as the split type will be changed
              * at a higher level.
              */
             opal_show_help("help-comm.txt",
@@ -906,6 +921,270 @@ static int ompi_comm_split_verify (ompi_communicator_t *comm, int split_type, in
     free (results);
 
     return OMPI_SUCCESS;
+}
+
+static int ompi_comm_split_type_nvlink_domain_compare(const void *a, const void *b)
+{
+    return memcmp(a, b, OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN);
+}
+
+static int ompi_comm_split_type_nvlink_hex_nibble(char digit)
+{
+    if ('0' <= digit && digit <= '9') {
+        return digit - '0';
+    }
+    if ('a' <= digit && digit <= 'f') {
+        return digit - 'a' + 10;
+    }
+    if ('A' <= digit && digit <= 'F') {
+        return digit - 'A' + 10;
+    }
+    return -1;
+}
+
+static int ompi_comm_split_type_parse_nvlink_domain(
+    const char *value, opal_accelerator_cuda_nvlink_domain_t *domain)
+{
+    char uuid_string[2 * OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN + 1] = {0};
+    unsigned int clique_id;
+    int cuda_device;
+    int end = 0;
+
+    if (NULL == value ||
+        3 != sscanf(value, "cuda_device=%d,cluster_uuid=%32[0123456789abcdefABCDEF],clique_id=%u%n",
+                    &cuda_device, uuid_string, &clique_id, &end) ||
+        '\0' != value[end] ||
+        2 * OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN != strlen(uuid_string)) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    domain->cuda_device = cuda_device;
+    domain->clique_id = (uint32_t) clique_id;
+    for (int i = 0; i < OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN; ++i) {
+        int high = ompi_comm_split_type_nvlink_hex_nibble(uuid_string[2 * i]);
+        int low = ompi_comm_split_type_nvlink_hex_nibble(uuid_string[2 * i + 1]);
+
+        if (0 > high || 0 > low) {
+            return OMPI_ERR_BAD_PARAM;
+        }
+        domain->cluster_uuid[i] = (uint8_t) ((high << 4) | low);
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int ompi_comm_split_type_get_nvlink_domain(
+    opal_accelerator_cuda_nvlink_domain_t *domain)
+{
+    char **value = NULL;
+    int var_id, rc;
+
+    domain->cuda_device = MCA_ACCELERATOR_NO_DEVICE_ID;
+    memset(domain->cluster_uuid, 0, sizeof(domain->cluster_uuid));
+    domain->clique_id = 0;
+
+    /* The CUDA accelerator owns the cache and exposes it through this
+     * read-only MCA variable. If CUDA did not register or fill it, the default
+     * no-device domain above keeps the split color MPI_UNDEFINED. */
+    var_id = mca_base_var_find("opal", "accelerator", NULL, "nvlink_domain");
+    if (0 > var_id) {
+        return OMPI_ERR_NOT_FOUND;
+    }
+
+    rc = mca_base_var_get_value(var_id, &value, NULL, NULL);
+    if (OMPI_SUCCESS != rc || NULL == value) {
+        return rc;
+    }
+
+    return ompi_comm_split_type_parse_nvlink_domain(*value, domain);
+}
+
+#if OPAL_ENABLE_DEBUG
+static void ompi_comm_split_type_nvlink_uuid_to_hex(
+    const uint8_t uuid[OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN],
+    char hex_uuid[2 * OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN + 1])
+{
+    static const char hex[] = "0123456789abcdef";
+
+    for (int i = 0; i < OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN; ++i) {
+        hex_uuid[2 * i] = hex[uuid[i] >> 4];
+        hex_uuid[2 * i + 1] = hex[uuid[i] & 0x0f];
+    }
+    hex_uuid[2 * OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN] = '\0';
+}
+#endif
+
+#define OMPI_COMM_SPLIT_TYPE_NVLINK_UUID_WORDS 4
+#define OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS OMPI_COMM_SPLIT_TYPE_NVLINK_UUID_WORDS
+#define OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_SIZE \
+    (OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS * sizeof(int))
+
+static int ompi_comm_split_type_nvlink(ompi_communicator_t *comm, int local_split_type,
+                                       opal_info_t *info, ompi_communicator_t **newcomm)
+{
+    opal_accelerator_cuda_nvlink_domain_t my_domain = {
+        .cuda_device = MCA_ACCELERATOR_NO_DEVICE_ID,
+    };
+    int my_token[OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS] = {0};
+    int *domains = NULL;
+    int local_size = ompi_comm_size(comm), remote_size = 0, max_domains;
+    int inter, send_first = 0, local_offset = 0, remote_offset = 0;
+    int color = MPI_UNDEFINED, rc = OMPI_SUCCESS;
+    bool have_domain = false;
+
+    /* The allgather payload is only the 16-byte color identifier, carried as
+     * MPI_INTs through the split-time allgather/broadcast exchange. The
+     * communicator uses the MCA-backed NVLink domain cache exactly as stored.
+     * Its default is an all-zero UUID with cuda_device set to
+     * MCA_ACCELERATOR_NO_DEVICE_ID; ranks in that state still enter the
+     * collective exchange with a zero token, but keep MPI_UNDEFINED as their
+     * split color because the default does not imply an NVLink domain. Only the
+     * CUDA accelerator may replace NVML's active single-node all-zero
+     * clusterUuid with a hostname-derived token.
+     */
+    inter = OMPI_COMM_IS_INTER(comm);
+    if (inter) {
+        remote_size = ompi_comm_remote_size(comm);
+        send_first = ompi_comm_determine_first_auto(comm);
+        if (send_first) {
+            remote_offset = local_size * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+        } else {
+            local_offset = remote_size * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+        }
+    }
+
+    max_domains = local_size + remote_size;
+    domains = malloc(max_domains * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_SIZE);
+    /* Do not add a collective allocation check here: all ranks must enter the
+     * same split-time allgather sequence. For now assume the local allocations
+     * succeed. */
+
+    if (MPI_UNDEFINED != local_split_type) {
+        (void) ompi_comm_split_type_get_nvlink_domain(&my_domain);
+        if (MCA_ACCELERATOR_NO_DEVICE_ID != my_domain.cuda_device) {
+            memcpy(my_token, my_domain.cluster_uuid,
+                   OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_SIZE);
+            have_domain = true;
+        }
+    }
+
+    rc = comm->c_coll->coll_allgather(my_token,
+                                      OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS,
+                                      MPI_INT, domains + remote_offset,
+                                      OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS,
+                                      MPI_INT, comm,
+                                      comm->c_coll->coll_allgather_module);
+    if (OMPI_SUCCESS != rc) {
+        goto failure;
+    }
+
+    if (inter) {
+        int local_root = 0 == ompi_comm_rank(comm) ? MPI_ROOT : MPI_PROC_NULL;
+        int *bcast_domains;
+        int bcast_count, bcast_root;
+
+        /* Intercommunicator allgather gives each group the peer group's tokens.
+         * Use the deterministic send_first value to establish one global order
+         * for the domains array on both groups: all ranks from the "first" side
+         * followed by all ranks from the "second" side. The allgather writes
+         * the peer block directly into its final global-order position. The two
+         * broadcasts then send each peer block back to its owning side so every
+         * process ends with an identical domains[] layout. The conditional
+         * expressions below pick the block, count, and root for each direction:
+         * first the second-side block, then the first-side block. This common
+         * order is what lets the color assignment below avoid sorting. */
+        bcast_domains = domains + (send_first ? remote_offset : local_offset);
+        bcast_count = (send_first ? remote_size : local_size)
+                      * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+        bcast_root = send_first ? local_root : 0;
+        rc = comm->c_coll->coll_bcast(bcast_domains, bcast_count, MPI_INT,
+                                      bcast_root, comm,
+                                      comm->c_coll->coll_bcast_module);
+        if (OMPI_SUCCESS != rc) {
+            goto failure;
+        }
+
+        bcast_domains = domains + (send_first ? local_offset : remote_offset);
+        bcast_count = (send_first ? local_size : remote_size)
+                      * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+        bcast_root = send_first ? 0 : local_root;
+        rc = comm->c_coll->coll_bcast(bcast_domains, bcast_count, MPI_INT,
+                                      bcast_root, comm,
+                                      comm->c_coll->coll_bcast_module);
+        if (OMPI_SUCCESS != rc) {
+            goto failure;
+        }
+    }
+
+#if OPAL_ENABLE_DEBUG
+    for (int i = 0; i < max_domains; ++i) {
+        int *domain = domains + i * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+        char hex_uuid[2 * OPAL_ACCELERATOR_NVLINK_CLUSTER_UUID_LEN + 1];
+
+        ompi_comm_split_type_nvlink_uuid_to_hex((const uint8_t *) domain,
+                                                hex_uuid);
+        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "rank %d: nvlink domain[%d] uuid=%s",
+                             ompi_comm_rank(comm), i, hex_uuid));
+    }
+#endif
+
+    if (have_domain) {
+        int unique_count = 0;
+
+        /* Build the color map in global domain order without sorting. The
+         * domains array is identical on all processes after the exchange above,
+         * so the first occurrence of each token is globally deterministic.
+         *
+         * As we scan domains[], keep the unique tokens compacted in the prefix
+         * domains[0..unique_count). A candidate token is unique only if it does
+         * not match any token already in that prefix. Once a candidate is known
+         * to be unique, check whether it is the local token before moving it
+         * into domains[unique_count]; unique_count is then exactly the color for
+         * that token. Stop as soon as the local token is assigned, because later
+         * colors do not affect this process. */
+        for (int i = 0; MPI_UNDEFINED == color && i < max_domains; ++i) {
+            int *domain = domains + i * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+            int *unique_domain = domains + unique_count * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+            bool seen = false;
+
+            for (int j = 0; j < unique_count; ++j) {
+                int *prior_domain = domains + j * OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_INTS;
+
+                if (0 == ompi_comm_split_type_nvlink_domain_compare(domain, prior_domain)) {
+                    seen = true;
+                    break;
+                }
+            }
+
+            if (seen) {
+                continue;
+            }
+
+            if (0 == ompi_comm_split_type_nvlink_domain_compare(my_token, domain)) {
+                color = unique_count;
+                /* We only need to enumerate colors up to the local process'
+                 * NVLink domain. */
+                break;
+            }
+            if (domain != unique_domain) {
+                memcpy(unique_domain, domain, OMPI_COMM_SPLIT_TYPE_NVLINK_TOKEN_SIZE);
+            }
+            ++unique_count;
+        }
+    }
+
+    free(domains);
+
+    return ompi_comm_split_with_info(comm, color, (int) my_domain.clique_id, info, newcomm,
+                                     false);
+
+failure:
+    /* Reaching this path means the split-time collective exchange failed, so
+     * the collective behavior of this function is already compromised. A future
+     * failure path should revoke the input communicator and return MPI_COMM_NULL
+     * as the new communicator. */
+    free(domains);
+    return ompi_comm_split_with_info(comm, MPI_UNDEFINED, 0, info, newcomm, false);
 }
 
 /**
@@ -1111,13 +1390,16 @@ static int ompi_comm_split_unguided(ompi_communicator_t *comm, int split_type, i
      * calling ompi_comm_split_type specifying the split type as
      * MPI_COMM_TYPE_HW_GUIDED using the next lower topology class until a
      * split results in a smaller size communicator than the input communicator.
-     * The search starts with OMPI_COMM_TYPE_CU since that is the highest possible
-     * topology class where the communicator size can be smaller than MPI_COMM_WORLD.
      */
     original_size = ompi_comm_size(unguided_comm);
     split_info = OBJ_NEW(opal_info_t);
-    i = 1;
+    i = 0;
     while (NULL != ompi_comm_split_type_hw_guided_support[i].info_value) {
+        if (!ompi_comm_split_type_hw_guided_support[i].use_for_unguided) {
+            i = i + 1;
+            continue;
+        }
+
         /* MPI_COMM_TYPE_HW_GUIDED splits require mpi_hw_resource_type to be set */
         opal_info_set(split_info, "mpi_hw_resource_type",
                       ompi_comm_split_type_hw_guided_support[i].info_value);
@@ -1186,7 +1468,8 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
     inter = OMPI_COMM_IS_INTER(comm);
 
     /* Step 0: Convert MPI_COMM_TYPE_HW_GUIDED to the internal type */
-    if (MPI_COMM_TYPE_HW_GUIDED == split_type) {
+    if ((MPI_COMM_TYPE_HW_GUIDED == split_type) ||
+        (MPI_COMM_TYPE_RESOURCE_GUIDED == split_type)) {
         opal_info_get(info, "mpi_hw_resource_type", &value, &flag);
         /* If key is not in the 'info', then return MPI_COMM_NULL.
          * This is caught at the MPI interface level, but it doesn't hurt to
@@ -1299,6 +1582,8 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
         return ompi_comm_split_unguided( comm, split_type,
                                          key, need_split, no_reorder,
                                          no_undefined, info, newcomm );
+    } else if (OMPI_COMM_TYPE_NVLINK == global_split_type) {
+        return ompi_comm_split_type_nvlink(comm, split_type, info, newcomm);
     } else {
         return ompi_comm_split_type_core( comm, global_split_type, split_type,
                                           key, need_split, no_reorder,
@@ -1669,11 +1954,11 @@ int ompi_intercomm_create (ompi_communicator_t *local_comm, int local_leader, om
         /* remember that the remote_leader and bridge_comm arguments
            just have to be valid at the local_leader */
         if ( local_rank == local_leader ) {
-            if (ompi_comm_invalid (bridge_comm) || (bridge_comm->c_flags & OMPI_COMM_INTER)) {
+            if (ompi_comm_invalid (bridge_comm) ) {
                 return MPI_ERR_COMM;
             }
 
-            if ((remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
+            if ( ompi_comm_peer_invalid( bridge_comm, remote_leader) ) {
                 return OMPI_ERR_BAD_PARAM;
             }
         } /* if ( local_rank == local_leader ) */
@@ -2163,8 +2448,6 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 int ompi_comm_free( ompi_communicator_t **comm )
 {
     int ret;
-    int cid = (*comm)->c_index;
-    int is_extra_retain = OMPI_COMM_IS_EXTRA_RETAIN(*comm);
 
     /* Release attributes.  We do this now instead of during the
        communicator destructor for 2 reasons:
@@ -2193,7 +2476,9 @@ int ompi_comm_free( ompi_communicator_t **comm )
     }
 
     if ( OMPI_COMM_IS_INTER(*comm) ) {
-        if ( ! OMPI_COMM_IS_INTRINSIC((*comm)->c_local_comm)) {
+        if (NULL != (*comm)->c_local_comm
+            && ! OMPI_COMM_IS_INTRINSIC((*comm)->c_local_comm)) {
+            OBJ_RELEASE((*comm)->c_local_comm);
             ompi_comm_free (&(*comm)->c_local_comm);
         }
     }
@@ -2215,29 +2500,6 @@ int ompi_comm_free( ompi_communicator_t **comm )
         ompi_comm_num_dyncomm --;
     }
     OBJ_RELEASE( (*comm) );
-
-    if ( is_extra_retain) {
-        /* This communicator has been marked as an "extra retain"
-         * communicator. This can happen if a communicator creates
-         * 'dependent' subcommunicators (e.g. for inter
-         * communicators or when using hierarch collective
-         * module *and* the cid of the dependent communicator
-         * turned out to be lower than of the parent one.
-         * In that case, the reference counter has been increased
-         * by one more, in order to handle the scenario,
-         * that the user did not free the communicator.
-         * Note, that if we enter this routine, we can
-         * decrease the counter by one more therefore. However,
-         * in ompi_comm_finalize, we only used OBJ_RELEASE instead
-         * of ompi_comm_free(), and the increased reference counter
-         * makes sure that the pointer to the dependent communicator
-         * still contains a valid object.
-         */
-        ompi_communicator_t *tmpcomm = ompi_comm_lookup(cid);
-        if ( NULL != tmpcomm ){
-            ompi_comm_free(&tmpcomm);
-        }
-    }
 
     *comm = MPI_COMM_NULL;
     return OMPI_SUCCESS;

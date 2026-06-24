@@ -7,7 +7,7 @@ Open MPI represents the merger of three prior MPI implementations:
    center and later migrated to the University of Notre Dame.
 #. LA-MPI: from the US Department of Energy Los Alamos National
    Laboratory.
-#. FT-MPI: from the University of Tennassee at Knoxville.  One of the
+#. FT-MPI: from the University of Tennessee at Knoxville.  One of the
    UTK developers moved back to the University of Stuttgart in late
    2004, which effectively added their team into the project.
 

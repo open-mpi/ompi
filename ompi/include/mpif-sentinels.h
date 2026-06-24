@@ -13,6 +13,7 @@
 ! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 ! Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+! Copyright (c) 2025 Triad National Security, LLC. All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -57,6 +58,9 @@
       integer MPI_UNWEIGHTED(1)
 !     Ditto for MPI_WEIGHTS_EMPTY
       integer MPI_WEIGHTS_EMPTY(1)
+!     MPI_BUFFER_AUTOMATIC is similar to MPI_BOTTOM (see Section 3.6 
+!     of MPI 4.1 standard
+      integer MPI_BUFFER_AUTOMATIC
 
       common/mpi_fortran_bottom/MPI_BOTTOM
       common/mpi_fortran_in_place/MPI_IN_PLACE
@@ -67,3 +71,4 @@
       common/mpi_fortran_statuses_ignore/MPI_STATUSES_IGNORE
       common/mpi_fortran_unweighted/MPI_UNWEIGHTED
       common/mpi_fortran_weights_empty/MPI_WEIGHTS_EMPTY
+      common/mpi_fortran_buffer_automatic/MPI_BUFFER_AUTOMATIC

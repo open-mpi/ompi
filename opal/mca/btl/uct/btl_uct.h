@@ -64,6 +64,9 @@ struct mca_btl_uct_module_t {
     /** base BTL interface */
     mca_btl_base_module_t super;
 
+    /** module index in the component module array */
+    int module_index;
+
     /** whether the module has been fully initialized or not */
     bool initialized;
 
@@ -76,30 +79,14 @@ struct mca_btl_uct_module_t {
     /** mutex to protect the module */
     opal_recursive_mutex_t lock;
 
-    /** async context */
-    ucs_async_context_t *ucs_async;
-
     /** transport for active messaging */
     mca_btl_uct_tl_t *am_tl;
 
     /** transport for RDMA/AMOs */
     mca_btl_uct_tl_t *rdma_tl;
 
-    /** transport for forming connections (if needed) */
-    mca_btl_uct_tl_t *conn_tl;
-
-    /** array containing the am_tl and rdma_tl */
-    mca_btl_uct_tl_t *comm_tls[2];
-
-#if UCT_API >= UCT_VERSION(1, 7)
-    uct_component_h uct_component;
-#endif
-
     /** registration cache */
     mca_rcache_base_module_t *rcache;
-
-    /** name of the memory domain backing this module */
-    char *md_name;
 
     /** am and rdma share endpoints */
     bool shared_endpoints;
@@ -119,8 +106,9 @@ struct mca_btl_uct_module_t {
     /** frags that were waiting on connections that are now ready to send */
     opal_list_t pending_frags;
 
-    /** pending connection requests */
-    opal_fifo_t pending_connection_reqs;
+    /** allowed transports */
+    char *allowed_transports;
+    mca_btl_uct_include_list_t allowed_transport_list;
 };
 typedef struct mca_btl_uct_module_t mca_btl_uct_module_t;
 
@@ -133,6 +121,9 @@ struct mca_btl_uct_component_t {
     /** base BTL component */
     mca_btl_base_component_3_0_0_t super;
 
+    /** whether the component is initialized. controls cleanup. */
+    bool initialized;
+
     /** number of TL modules */
     int module_count;
 
@@ -141,9 +132,14 @@ struct mca_btl_uct_component_t {
 
     /** allowed UCT memory domains */
     char *memory_domains;
+    mca_btl_uct_include_list_t memory_domain_list;
 
     /** allowed transports */
     char *allowed_transports;
+
+    /** transports to consider for forming connections */
+    char *connection_domains;
+    mca_btl_uct_include_list_t connection_domain_list;
 
     /** number of worker contexts to create */
     int num_contexts_per_module;
@@ -158,6 +154,17 @@ struct mca_btl_uct_component_t {
 
     /** connection retry timeout */
     unsigned int connection_retry_timeout;
+
+#if UCT_API >= UCT_VERSION(1, 7)
+    uct_component_h *uct_components;
+    unsigned num_uct_components;
+#endif
+
+    /** list of memory domains (btl_uct_md_t) */
+    opal_list_t md_list;
+
+    /** connection transport (if needed). reference is owned by conn_md */
+    mca_btl_uct_tl_t *conn_tl;
 };
 typedef struct mca_btl_uct_component_t mca_btl_uct_component_t;
 
@@ -293,10 +300,15 @@ ucs_status_t mca_btl_uct_am_handler(void *arg, void *data, size_t length, unsign
 struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t *module,
                                                    opal_proc_t *proc);
 
-int mca_btl_uct_query_tls(mca_btl_uct_module_t *module, mca_btl_uct_md_t *md,
-                          uct_tl_resource_desc_t *tl_descs, unsigned tl_count);
+int mca_btl_uct_populate_tls(mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_descs, unsigned tl_count);
 int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
                                            mca_btl_uct_conn_req_t *req);
+
+mca_btl_uct_module_t *mca_btl_uct_alloc_module(mca_btl_uct_md_t *md,
+                                               size_t registration_size);
+
+int mca_btl_uct_evaluate_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_t *tl);
+int mca_btl_uct_enable_tl_conn(mca_btl_uct_tl_t *tl);
 
 /**
  * @brief Checks if a tl is suitable for using for RDMA
@@ -305,7 +317,7 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
  */
 static inline bool mca_btl_uct_tl_supports_rdma(mca_btl_uct_tl_t *tl)
 {
-    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags
+    return (tl->uct_iface_attr.cap.flags
             & (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY))
            == (UCT_IFACE_FLAG_PUT_ZCOPY | UCT_IFACE_FLAG_GET_ZCOPY);
 }
@@ -315,7 +327,7 @@ static inline bool mca_btl_uct_tl_supports_rdma(mca_btl_uct_tl_t *tl)
  */
 static inline bool mca_btl_uct_tl_support_am(mca_btl_uct_tl_t *tl)
 {
-    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags
+    return (tl->uct_iface_attr.cap.flags
             & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_AM_BCOPY | UCT_IFACE_FLAG_AM_ZCOPY));
 }
 
@@ -326,7 +338,7 @@ static inline bool mca_btl_uct_tl_support_am(mca_btl_uct_tl_t *tl)
  */
 static inline bool mca_btl_uct_tl_supports_conn(mca_btl_uct_tl_t *tl)
 {
-    return (MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags
+    return (tl->uct_iface_attr.cap.flags
             & (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE))
            == (UCT_IFACE_FLAG_AM_SHORT | UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }
@@ -338,7 +350,11 @@ static inline bool mca_btl_uct_tl_supports_conn(mca_btl_uct_tl_t *tl)
  */
 static inline bool mca_btl_uct_tl_requires_connection_tl(mca_btl_uct_tl_t *tl)
 {
-    return !(MCA_BTL_UCT_TL_ATTR(tl, 0).cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE);
+    if (NULL == tl) {
+        return false;
+    }
+
+    return !(tl->uct_iface_attr.cap.flags & UCT_IFACE_FLAG_CONNECT_TO_IFACE);
 }
 
 END_C_DECLS

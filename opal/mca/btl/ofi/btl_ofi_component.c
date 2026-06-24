@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
- * Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -150,7 +150,7 @@ static int mca_btl_ofi_component_register(void)
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    mca_btl_ofi_component.mode = MCA_BTL_OFI_MODE_ONE_SIDED;
+    mca_btl_ofi_component.mode = MCA_BTL_OFI_MODE_FULL_SUPPORT;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version, "mode", msg,
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
@@ -339,6 +339,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     domain_attr.control_progress = progress_mode;
     domain_attr.data_progress = progress_mode;
 
+    if (enable_mpi_threads) {
+        domain_attr.threading = FI_THREAD_SAFE;
+    } else {
+        domain_attr.threading = FI_THREAD_DOMAIN;
+    }
+
     /* select endpoint type */
     ep_attr.type = FI_EP_RDM;
 
@@ -359,7 +365,8 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     tx_attr.iov_limit = 1;
     rx_attr.iov_limit = 1;
 
-    tx_attr.op_flags = FI_DELIVERY_COMPLETE;
+    tx_attr.op_flags = FI_DELIVERY_COMPLETE | FI_COMPLETION;
+    rx_attr.op_flags = FI_COMPLETION;
 
     mca_btl_ofi_component.module_count = 0;
 
@@ -372,9 +379,18 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 no_hmem:
 #endif
 
+    hints.fabric_attr->fabric = opal_common_ofi.fabric;
+    hints.domain_attr->domain = opal_common_ofi.domain;
+
     /* Do the query. The earliest version that supports FI_HMEM hints is 1.9.
      * The earliest version the explictly allow provider to call CUDA API is 1.18  */
     rc = fi_getinfo(FI_VERSION(1, 18), NULL, NULL, 0, &hints, &info_list);
+    if (FI_ENODATA == -rc && (hints.fabric_attr->fabric || hints.domain_attr->domain)) {
+        /* Retry without fabric and domain */
+        hints.fabric_attr->fabric = NULL;
+        hints.domain_attr->domain = NULL;
+        rc = fi_getinfo(FI_VERSION(1, 18), NULL, NULL, 0, &hints, &info_list);
+    }
     if (FI_ENOSYS == -rc) {
         rc = fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0, &hints, &info_list);
     }
@@ -553,14 +569,14 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         ("initializing dev:%s provider:%s", linux_device_name, info->fabric_attr->prov_name));
 
     /* fabric */
-    rc = fi_fabric(ofi_info->fabric_attr, &fabric, NULL);
+    rc = opal_common_ofi_fi_fabric(ofi_info->fabric_attr, &fabric);
     if (0 != rc) {
         BTL_VERBOSE(("%s failed fi_fabric with err=%s", linux_device_name, fi_strerror(-rc)));
         goto fail;
     }
 
     /* domain */
-    rc = fi_domain(fabric, ofi_info, &domain, NULL);
+    rc = opal_common_ofi_fi_domain(fabric, ofi_info, &domain);
     if (0 != rc) {
         BTL_VERBOSE(("%s failed fi_domain with err=%s", linux_device_name, fi_strerror(-rc)));
         goto fail;
@@ -609,7 +625,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
         /* create contexts */
         module->contexts = mca_btl_ofi_context_alloc_scalable(ofi_info, domain, ep, av,
-                                                              num_contexts_to_create);
+                                                              module, num_contexts_to_create);
 
     } else {
         /* warn the user if they want more than 1 context */
@@ -631,7 +647,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         module->is_scalable_ep = false;
 
         /* create contexts */
-        module->contexts = mca_btl_ofi_context_alloc_normal(ofi_info, domain, ep, av);
+        module->contexts = mca_btl_ofi_context_alloc_normal(ofi_info, domain, ep, av, module);
     }
 
     if (NULL == module->contexts) {
@@ -657,7 +673,6 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
     module->use_fi_mr_bind = false;
-    module->bypass_cache = false;
 
 #if defined(FI_HMEM)
     if (ofi_info->caps & FI_HMEM) {
@@ -672,13 +687,6 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
     if (ofi_info->domain_attr->mr_mode & FI_MR_ENDPOINT) {
         module->use_fi_mr_bind = true;
-    }
-
-    /* Currently there is no API to query whether the libfabric provider
-     * uses an underlying registration cache. For now, just check for known
-     * providers that use registration caching. */
-    if (!strncasecmp(info->fabric_attr->prov_name, "efa", 3)) {
-        module->bypass_cache = true;
     }
 
     /* create endpoint list */
@@ -751,11 +759,11 @@ fail:
     }
 
     if (NULL != domain) {
-        fi_close(&domain->fid);
+        opal_common_ofi_domain_release(domain);
     }
 
     if (NULL != fabric) {
-        fi_close(&fabric->fid);
+        opal_common_ofi_fabric_release(fabric);
     }
     free(module);
 

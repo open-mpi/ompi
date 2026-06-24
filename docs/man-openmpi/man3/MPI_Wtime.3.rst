@@ -70,7 +70,7 @@ function will be used to obtain a monotonic clock value with whatever
 precision is supported on that platform (e.g., nanoseconds).
 
 Note, too, that the MCA parameter opal_timer_require_monotonic can
-influcence this behavior. It defaults to true, but if set to false, Open
+influence this behavior. It defaults to true, but if set to false, Open
 MPI may use a finer-grained timing mechanism (e.g., the RDTSC/RDTSCP
 clock ticks on x86_64 platforms), but is not guaranteed to be monotonic
 in some cases (e.g., if the MPI process is not bound to a single

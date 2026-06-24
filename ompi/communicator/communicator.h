@@ -22,10 +22,10 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,7 +69,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_GRAPH        0x00000200
 #define OMPI_COMM_DIST_GRAPH   0x00000400
 #define OMPI_COMM_PML_ADDED    0x00001000
-#define OMPI_COMM_EXTRA_RETAIN 0x00004000
 #define OMPI_COMM_MAPBY_NODE   0x00008000
 #define OMPI_COMM_GLOBAL_INDEX 0x00010000
 
@@ -86,7 +85,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_IS_DISJOINT_SET(comm) ((comm)->c_flags & OMPI_COMM_DISJOINT_SET)
 #define OMPI_COMM_IS_DISJOINT(comm) ((comm)->c_flags & OMPI_COMM_DISJOINT)
 #define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags & OMPI_COMM_PML_ADDED)
-#define OMPI_COMM_IS_EXTRA_RETAIN(comm) ((comm)->c_flags & OMPI_COMM_EXTRA_RETAIN)
 #define OMPI_COMM_IS_TOPO(comm) (OMPI_COMM_IS_CART((comm)) || \
                                  OMPI_COMM_IS_GRAPH((comm)) || \
                                  OMPI_COMM_IS_DIST_GRAPH((comm)))
@@ -97,7 +95,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
 
 #define OMPI_COMM_SET_PML_ADDED(comm) ((comm)->c_flags |= OMPI_COMM_PML_ADDED)
-#define OMPI_COMM_SET_EXTRA_RETAIN(comm) ((comm)->c_flags |= OMPI_COMM_EXTRA_RETAIN)
 #define OMPI_COMM_SET_MAPBY_NODE(comm) ((comm)->c_flags |= OMPI_COMM_MAPBY_NODE)
 
 #define OMPI_COMM_ASSERT_NO_ANY_TAG     0x00000001
@@ -148,8 +145,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
  */
 #define OMPI_COMM_SENTINEL        0x00000001
 
-/* A macro comparing two CIDs */
-#define OMPI_COMM_CID_IS_LOWER(comm1,comm2) ( ((comm1)->c_index < (comm2)->c_index)? 1:0)
 
 OMPI_DECLSPEC extern opal_hash_table_t ompi_comm_hash;
 OMPI_DECLSPEC extern opal_pointer_array_t ompi_mpi_communicators;
@@ -344,6 +339,9 @@ struct ompi_communicator_t {
 
     /* instance that this comm belongs to */
     ompi_instance_t* instance;
+
+    /* pointer to buffer object used for buffered sends */
+    void *bsend_buffer;
 
 #if OPAL_ENABLE_FT_MPI
     /** agreement caching info for topology and previous returned decisions */
@@ -726,6 +724,11 @@ OMPI_DECLSPEC bool ompi_comm_is_proc_active(ompi_communicator_t *comm, int peer_
 OMPI_DECLSPEC int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remote);
 
 /*
+ * Locally revoke a communicator
+ */
+OMPI_DECLSPEC bool ompi_comm_revoke_local(ompi_communicator_t* comm, bool coll_only);
+
+/*
  * Returns true if point-to-point communications with the target process
  * are supported (this means if the process is a valid peer, if the
  * communicator is not revoked and if the peer is not already marked as
@@ -848,6 +851,18 @@ OMPI_DECLSPEC int ompi_comm_revoke_init(void);
 OMPI_DECLSPEC int ompi_comm_revoke_finalize(void);
 
 #endif /* OPAL_ENABLE_FT_MPI */
+
+static inline void *ompi_comm_bsend_buffer_get(ompi_communicator_t *comm)
+{
+    assert(NULL != comm);
+    return comm->bsend_buffer;
+}
+
+static inline int ompi_comm_bsend_buffer_set(ompi_communicator_t *comm, void *buffer)
+{
+    comm->bsend_buffer = buffer;
+    return OMPI_SUCCESS;
+}
 
 static inline bool ompi_comm_peer_invalid (const ompi_communicator_t* comm, const int peer_id)
 {

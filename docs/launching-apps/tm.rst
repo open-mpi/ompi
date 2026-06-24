@@ -7,7 +7,7 @@ managers.
 Verify PBS/Torque support
 -------------------------
 
-The ``prte_info`` command can be used to determine whether or not an
+The :ref:`prte_info(1) <prrte:man1-prte_info>` command can be used to determine whether or not an
 installed Open MPI includes Torque/PBS Pro support:
 
 .. code-block::
@@ -28,8 +28,8 @@ installed.
    PMIx and PRRTE details from the end user, but this is one place
    that Open MPI is unable to hide the fact that PRRTE provides this
    functionality, not Open MPI.  Hence, users need to use the
-   ``prte_info`` command to check for PBS/Torque support (not
-   ``ompi_info``).
+   :ref:`prte_info(1) <prrte:man1-prte_info>` command to check for PBS/Torque support (not
+   :ref:`ompi_info(1) <man1-ompi_info>`).
 
 Launching
 ---------
@@ -37,7 +37,7 @@ Launching
 When properly configured, Open MPI obtains both the list of hosts and
 how many processes to start on each host from Torque / PBS Pro
 directly.  Hence, it is unnecessary to specify the ``--hostfile``,
-``--host``, or ``-n`` options to ``mpirun``.  Open MPI will use
+``--host``, or ``-n`` options to :ref:`mpirun(1) <man1-mpirun>`.  Open MPI will use
 PBS/Torque-native mechanisms to launch and kill processes (``ssh`` is
 not required).
 

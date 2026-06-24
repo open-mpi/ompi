@@ -55,6 +55,8 @@ in an integer.
 If an attribute is already present, the delete function (specified when
 the corresponding keyval was created) will be called.
 
+Note that the ``MPI_HOST`` attribute is  *deprecated* as of MPI-4.1.
+
 
 ERRORS
 ------

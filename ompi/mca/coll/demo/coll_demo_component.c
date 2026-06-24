@@ -62,7 +62,7 @@ const mca_coll_base_component_3_0_0_t mca_coll_demo_component = {
        about the component itself */
 
     .collm_version = {
-        MCA_COLL_BASE_VERSION_2_4_0,
+        MCA_COLL_BASE_VERSION_3_0_0,
 
         /* Component name and version */
         .mca_component_name = "demo",

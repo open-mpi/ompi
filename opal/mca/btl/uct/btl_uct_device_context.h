@@ -37,6 +37,15 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
  */
 void mca_btl_uct_context_destroy(mca_btl_uct_device_context_t *context);
 
+/**
+ * @brief Enable active messages on context if not already enabled
+ *
+ * @param[in] tl      TL this context belongs to
+ * @param[in] context Context to enable active messages on.
+ */
+void mca_btl_uct_context_enable_am_handler(mca_btl_uct_tl_t *tl,
+                                           mca_btl_uct_device_context_t *context);
+
 static inline bool mca_btl_uct_context_trylock(mca_btl_uct_device_context_t *context)
 {
     return OPAL_THREAD_TRYLOCK(&context->mutex);
@@ -94,14 +103,14 @@ mca_btl_uct_module_get_tl_context_specific(mca_btl_uct_module_t *module, mca_btl
     mca_btl_uct_device_context_t *context = tl->uct_dev_contexts[context_id];
 
     if (OPAL_UNLIKELY(NULL == context)) {
-        OPAL_THREAD_LOCK(&module->lock);
+        OPAL_THREAD_LOCK(&tl->tl_lock);
         context = tl->uct_dev_contexts[context_id];
         if (OPAL_UNLIKELY(NULL == context)) {
             context = tl->uct_dev_contexts[context_id] = mca_btl_uct_context_create(module, tl,
                                                                                     context_id,
                                                                                     true);
         }
-        OPAL_THREAD_UNLOCK(&module->lock);
+        OPAL_THREAD_UNLOCK(&tl->tl_lock);
     }
 
     return context;

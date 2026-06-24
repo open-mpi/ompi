@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -100,9 +101,9 @@ mca_coll_inter_scatterv_inter(const void *sbuf, ompi_count_array_t scounts,
 		displace[i] = displace[i-1] + counts[i-1];
 	    }
 	}
-	/* perform the scatterv locally */
 	OMPI_COUNT_ARRAY_INIT(&counts_arg, counts);
 	OMPI_DISP_ARRAY_INIT(&displace_arg, displace);
+	/* perform the scatterv locally */
 	err = comm->c_local_comm->c_coll->coll_scatterv(ptmp, counts_arg, displace_arg,
 						       rdtype, rbuf, rcount,
 						       rdtype, 0, comm->c_local_comm,
@@ -139,20 +140,8 @@ mca_coll_inter_scatterv_inter(const void *sbuf, ompi_count_array_t scounts,
 	    return err;
 	}
 
-	/* TODO:BIGCOUNT: Remove these temporaries once ompi_datatype is updated for bigcount */
-	int *tmp_scounts = malloc(sizeof(int) * size);
-	int *tmp_disps = malloc(sizeof(int) * size);
-	if (NULL == tmp_scounts || NULL == tmp_disps) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	for (i = 0; i < size; ++i) {
-	    tmp_scounts[i] = (int) ompi_count_array_get(scounts, i);
-	    tmp_disps[i] = (int) ompi_disp_array_get(disps, i);
-	}
-	ompi_datatype_create_indexed(size,tmp_scounts,tmp_disps,sdtype,&ndtype);
+	ompi_datatype_create_indexed(size,scounts,disps,sdtype,&ndtype);
 	ompi_datatype_commit(&ndtype);
-	free(tmp_scounts);
-	free(tmp_disps);
 
 	err = MCA_PML_CALL(send(sbuf, 1, ndtype, 0,
 				MCA_COLL_BASE_TAG_SCATTERV,

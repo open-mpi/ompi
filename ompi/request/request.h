@@ -465,6 +465,7 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
             _tmp_ptr = REQUEST_PENDING;
 
             WAIT_SYNC_INIT(&sync, 1);
+            opal_atomic_wmb();  /* release: sync struct init must be visible before CAS publishes &sync */
 
             if (OPAL_ATOMIC_COMPARE_EXCHANGE_STRONG_PTR(&req->req_complete, &_tmp_ptr, &sync)) {
                 SYNC_WAIT(&sync);
@@ -533,6 +534,7 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
 
             ompi_wait_sync_t *tmp_sync = (ompi_wait_sync_t *) OPAL_ATOMIC_SWAP_PTR(&request->req_complete,
                                                                                     REQUEST_COMPLETED);
+            opal_atomic_rmb();  /* acquire: pair with wmb before CAS to see sync struct contents */
             if( REQUEST_PENDING != tmp_sync ) {
                 wait_sync_update(tmp_sync, 1, request->req_status.MPI_ERROR);
             }

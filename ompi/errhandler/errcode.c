@@ -19,6 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -127,6 +128,7 @@ static ompi_mpi_errcode_t ompi_err_revoked;
 #endif
 static ompi_mpi_errcode_t ompi_err_session;
 static ompi_mpi_errcode_t ompi_err_value_too_large;
+static ompi_mpi_errcode_t ompi_err_errhandler;
 
 static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t* errcode);
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t* errcode);
@@ -245,6 +247,7 @@ int ompi_mpi_errcode_init (void)
 #endif
     CONSTRUCT_ERRCODE( ompi_err_session,  MPI_ERR_SESSION,  "MPI_ERR_SESSION: Invalid session handle" );
     CONSTRUCT_ERRCODE( ompi_err_value_too_large,  MPI_ERR_VALUE_TOO_LARGE,  "MPI_ERR_VALUE_TOO_LARGE: Value is too large to store" );
+    CONSTRUCT_ERRCODE( ompi_err_errhandler,  MPI_ERR_ERRHANDLER,  "MPI_ERR_ERRHANDLER: Invalid error handler handle" );
 
     /* Per MPI-3 p353:27-32, MPI_LASTUSEDCODE must be >=
        MPI_ERR_LASTCODE.  So just start it as == MPI_ERR_LASTCODE. */
@@ -277,7 +280,8 @@ int ompi_mpi_errcode_finalize (void)
          * we have to free.
          */
         errc = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, i);
-        OBJ_RELEASE (errc);
+        if (NULL != errc)
+            OBJ_RELEASE (errc);
     }
 
     OBJ_DESTRUCT(&ompi_success);
@@ -362,6 +366,7 @@ int ompi_mpi_errcode_finalize (void)
 #endif
     OBJ_DESTRUCT(&ompi_err_session);
     OBJ_DESTRUCT(&ompi_err_value_too_large);
+    OBJ_DESTRUCT(&ompi_err_errhandler);
     OBJ_DESTRUCT(&ompi_mpi_errcodes);
     ompi_mpi_errcode_lastpredefined = 0;
     opal_mutex_unlock(&errcode_lock);
@@ -413,6 +418,112 @@ int ompi_mpi_errnum_add_string(int errnum, const char *errstring, int len)
     }
 
     opal_string_copy( errcodep->errstring, errstring, len );
+    return OMPI_SUCCESS;
+}
+
+int ompi_mpi_errcode_remove(int errnum)
+{
+    int ret = OMPI_ERROR;
+    ompi_mpi_errcode_t *errcodep = NULL;
+
+    opal_mutex_lock(&errcode_lock);
+
+    errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
+        return OMPI_ERROR;
+    }
+
+    /* Must have already removed estring before remove error code */
+    if (errcodep->errstring[0] == '\0') {
+        if (MPI_UNDEFINED != errcodep->code) {
+            ret = opal_pointer_array_set_item(&ompi_mpi_errcodes, errnum, NULL);
+            if (OPAL_SUCCESS == ret) {
+                if (errnum == ompi_mpi_errcode_lastused) {
+                    ompi_mpi_errcode_lastused--;
+                    ret = ompi_mpi_errcode_lastused;
+                }
+            }
+        }
+    }
+
+    opal_mutex_unlock(&errcode_lock);
+
+    /* Release the object on success */
+    if (ret >= 0) {
+        OBJ_RELEASE(errcodep);
+    }
+
+    /*
+     * Return lastused value captured under lock so caller has
+     * consistent value to set MPI_LASTUSEDCODE attribute.
+     * On error, we return less than zero (e.g., OMPI_ERROR).
+     */
+    return ret;
+}
+
+int ompi_mpi_errclass_remove(int errclass)
+{
+    int ret = OMPI_ERROR;
+    ompi_mpi_errcode_t *errcodep = NULL;
+
+    opal_mutex_lock(&errcode_lock);
+
+    errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errclass);
+    if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
+        return OMPI_ERROR;
+    }
+
+    /* Must have already removed estring before remove error class */
+    if (errcodep->errstring[0] == '\0') {
+        /* Must have already removed ecode before remove error class */
+        if (MPI_UNDEFINED == errcodep->code) {
+            if (MPI_UNDEFINED != errcodep->cls) {
+                ret = opal_pointer_array_set_item(&ompi_mpi_errcodes, errcodep->cls, NULL);
+                if (OPAL_SUCCESS == ret) {
+                    if (errclass == ompi_mpi_errcode_lastused) {
+                        ompi_mpi_errcode_lastused--;
+                        ret = ompi_mpi_errcode_lastused;
+                    }
+                }
+            }
+        }
+    }
+
+    opal_mutex_unlock(&errcode_lock);
+
+    /* Release the object on success */
+    if (ret >= 0) {
+        OBJ_RELEASE(errcodep);
+    }
+
+    /*
+     * Return lastused value captured under lock so caller has
+     * consistent value to set MPI_LASTUSEDCODE attribute.
+     * On error, we return less than zero (e.g., OMPI_ERROR).
+     */
+    return ret;
+}
+
+int ompi_mpi_errnum_remove_string(int errnum)
+{
+    ompi_mpi_errcode_t *errcodep = NULL;
+
+    opal_mutex_lock(&errcode_lock);
+
+    errcodep = (ompi_mpi_errcode_t *)opal_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    if ( NULL == errcodep ) {
+        opal_mutex_unlock(&errcode_lock);
+        return OMPI_ERROR;
+    }
+
+    if (errcodep->errstring[0] != '\0') {
+        memset ( errcodep->errstring, 0, MPI_MAX_ERROR_STRING);
+    }
+
+    opal_mutex_unlock(&errcode_lock);
+
     return OMPI_SUCCESS;
 }
 

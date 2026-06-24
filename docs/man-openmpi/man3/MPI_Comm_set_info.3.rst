@@ -26,7 +26,7 @@ DESCRIPTION
 :ref:`MPI_Comm_set_info` sets new values for the hints of the communicator
 associated with *comm*. :ref:`MPI_Comm_set_info` is a collective routine. The
 info object may be different on each process, but any info entries that
-an implementation requires to be the same on all processes must appear
+an implementation requires to have identical values on all processes must appear
 with the same value in each process's *info* object.
 
 The following info key assertions may be accepted by Open MPI:

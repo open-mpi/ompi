@@ -18,7 +18,7 @@
  * Copyright (c) 2015-2024 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2018      Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
@@ -47,7 +47,14 @@ ompi_request_t                   ompi_request_empty = {{{{0}}}};
 #if MPI_VERSION >= 4
 ompi_request_t                   ompi_request_empty_send = {{{{0}}}};
 #endif
-ompi_status_public_t             ompi_status_empty = {0};
+/*
+ * See section 3.7.3 of the MPI 1.3 (probably older as well) MPI standard
+ */
+ompi_status_public_t             ompi_status_empty = {.MPI_TAG = MPI_ANY_TAG,
+                                                      .MPI_SOURCE = MPI_ANY_SOURCE,
+                                                      .MPI_ERROR = MPI_SUCCESS,
+                                                      ._cancelled = 0,
+                                                      ._ucount = 0UL};
 ompi_request_fns_t               ompi_request_functions = {
     ompi_request_default_test,
     ompi_request_default_test_any,

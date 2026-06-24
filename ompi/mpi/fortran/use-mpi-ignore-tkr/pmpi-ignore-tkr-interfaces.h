@@ -2,6 +2,7 @@
 !
 ! Copyright (c) 2020-2022 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
+! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -227,8 +228,10 @@
 #define MPI_Reduce_scatter_block PMPI_Reduce_scatter_block
 #define MPI_Reduce_scatter_block_init PMPI_Reduce_scatter_block_init
 #define MPI_Register_datarep PMPI_Register_datarep
+#define MPI_Remove_error_class PMPI_Remove_error_class
+#define MPI_Remove_error_code PMPI_Remove_error_code
+#define MPI_Remove_error_string PMPI_Remove_error_string
 #define MPI_Request_free PMPI_Request_free
-#define MPI_Request_get_status PMPI_Request_get_status
 #define MPI_Rget PMPI_Rget
 #define MPI_Rget_accumulate PMPI_Rget_accumulate
 #define MPI_Rput PMPI_Rput
@@ -249,7 +252,7 @@
 #define MPI_Session_get_errhandler PMPI_Session_get_errhandler
 #define MPI_Session_get_info PMPI_Session_get_info
 #define MPI_Session_get_nth_pset PMPI_Session_get_nth_pset
-#define MPI_Session_get_nth_psetlen PMPI_Session_get_nth_psetlen
+#define MPI_Session_get_num_psets PMPI_Session_get_num_psets
 #define MPI_Session_get_pset_info PMPI_Session_get_pset_info
 #define MPI_Session_init PMPI_Session_init
 #define MPI_Session_finalize PMPI_Session_finalize

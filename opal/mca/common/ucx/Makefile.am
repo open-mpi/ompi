@@ -61,8 +61,7 @@ lib@OPAL_LIB_NAME@mca_common_ucx_la_LDFLAGS = \
 		$(common_ucx_LDFLAGS)
 lib@OPAL_LIB_NAME@mca_common_ucx_la_LIBADD = \
 		$(common_ucx_LIBS) \
-		$(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la \
-		$(OMPI_TOP_BUILDDIR)/opal/mca/memory/libmca_memory.la
+		$(OMPI_TOP_BUILDDIR)/opal/lib@OPAL_LIB_NAME@.la
 lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_SOURCES = \
         $(headers) $(sources)
 lib@OPAL_LIB_NAME@mca_common_ucx_noinst_la_CPPFLAGS = \

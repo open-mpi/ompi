@@ -10,17 +10,23 @@
  * $HEADER$
  */
 
+#include <uct/api/uct.h>
+
 #if !defined(BTL_UCT_TYPES_H)
 #    define BTL_UCT_TYPES_H
 
 #    include "opal/mca/btl/btl.h"
 
+#include "opal/class/opal_fifo.h"
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_object.h"
 #include "opal/mca/timer/base/base.h"
 
 /* forward declarations */
 struct mca_btl_uct_module_t;
 struct mca_btl_base_endpoint_t;
 struct mca_btl_uct_base_frag_t;
+struct mca_btl_uct_tl_t;
 
 /* TL endpoint flags */
 /** connection data was received */
@@ -64,10 +70,27 @@ typedef struct mca_btl_uct_modex_t mca_btl_uct_modex_t;
  */
 struct mca_btl_uct_md_t {
     /** make this an opal object */
-    opal_object_t super;
+    opal_list_item_t super;
+
+    /** if true none of the tls in this domain will be used
+     * for communication */
+    bool connection_only_domain;
+
+    /** name of the memory domain backing this module */
+    char *md_name;
+
+    /** list of mca_btl_uct_tl_t's for this memory domain */
+    opal_list_t tls;
 
     /** UCT memory domain handle */
     uct_md_h uct_md;
+
+    /** memory domain attributes */
+    uct_md_attr_t md_attr;
+
+#if UCT_API >= UCT_VERSION(1, 7)
+    uct_component_h uct_component;
+#endif
 };
 
 typedef struct mca_btl_uct_md_t mca_btl_uct_md_t;
@@ -89,6 +112,9 @@ struct mca_btl_uct_conn_req_t {
 
     /** transport index that should be connected */
     int tl_index;
+
+    /** module that is being connected (local index to the receiver) */
+    int module_index;
 
     /** endpoint address data */
     uint8_t ep_addr[];
@@ -118,6 +144,8 @@ typedef struct mca_btl_uct_tl_endpoint_t mca_btl_uct_tl_endpoint_t;
 struct mca_btl_uct_connection_ep_t {
     /** opal base object */
     opal_object_t super;
+
+    struct mca_btl_uct_tl_t *tl;
 
     /** UCT endpoint used for connection */
     uct_ep_h uct_ep;
@@ -151,9 +179,6 @@ struct mca_btl_uct_device_context_t {
     /** UCT interface handle */
     uct_iface_h uct_iface;
 
-    /** interface attributes */
-    uct_iface_attr_t uct_iface_attr;
-
     /** RDMA completions */
     opal_free_list_t rdma_completions;
 
@@ -163,6 +188,9 @@ struct mca_btl_uct_device_context_t {
 
     /** progress is enabled on this context */
     bool progress_enabled;
+
+    /** communication AM handler is installed */
+    bool am_handler_installed;
 
     /** context is in AM callback */
     volatile bool in_am_callback;
@@ -267,7 +295,10 @@ struct mca_btl_uct_base_frag_t {
     mca_btl_uct_am_header_t header;
 
     /** pre-filled UCT io vector */
-    uct_iov_t uct_iov;
+    uct_iov_t uct_iov[3];
+
+    /** how many iov entries are filled */
+    int uct_iov_count;
 
     /** completion structure */
     mca_btl_uct_uct_completion_t comp;
@@ -285,7 +316,7 @@ struct mca_btl_base_endpoint_t {
     opal_proc_t *ep_proc;
 
     /** mutex to protect this structure */
-    opal_recursive_mutex_t ep_lock;
+    opal_mutex_t ep_lock;
 
     /** cached connection endpoint */
     mca_btl_uct_connection_ep_t *conn_ep;
@@ -308,7 +339,7 @@ struct mca_btl_uct_tl_t {
     /** relative priority 0 == highest */
     int priority;
 
-    /** memory domain associated with this tl */
+    /** memory domain associated with this tl (no reference) */
     mca_btl_uct_md_t *uct_md;
 
     /** lock protecting tl structures */
@@ -323,21 +354,31 @@ struct mca_btl_uct_tl_t {
     /** device name for this tl (used for creating device contexts) */
     char *uct_dev_name;
 
+    /** UCT device type from the tl description */
+    uct_device_type_t dev_type;
+
     /** maximum number of device contexts that can be created */
     int max_device_contexts;
 
     /** array of device contexts */
-    mca_btl_uct_device_context_t **uct_dev_contexts;
+    mca_btl_uct_device_context_t *uct_dev_contexts[MCA_BTL_UCT_MAX_WORKERS];
 
     /** tl index. this is used to differentiate (if there is any difference)
      * between rdma and am endpoints */
     int tl_index;
+
+    /** interface attributes */
+    uct_iface_attr_t uct_iface_attr;
+
+    /** async context */
+    ucs_async_context_t *ucs_async;
+
+    /** pending connection requests */
+    opal_fifo_t pending_connection_reqs;
 };
 
 typedef struct mca_btl_uct_tl_t mca_btl_uct_tl_t;
 OBJ_CLASS_DECLARATION(mca_btl_uct_tl_t);
-
-#    define MCA_BTL_UCT_TL_ATTR(tl, context_id) (tl)->uct_dev_contexts[(context_id)]->uct_iface_attr
 
 struct mca_btl_uct_pending_connection_request_t {
     opal_list_item_t super;
@@ -346,5 +387,37 @@ struct mca_btl_uct_pending_connection_request_t {
 
 typedef struct mca_btl_uct_pending_connection_request_t mca_btl_uct_pending_connection_request_t;
 OBJ_CLASS_DECLARATION(mca_btl_uct_pending_connection_request_t);
+
+/**
+ * @brief parsed include/exclude list
+ *
+ */
+struct mca_btl_uct_include_list_t {
+    opal_object_t super;
+
+    /** argv-style (NULL terminated) array of strings */
+    char **list;
+    /** is an inclusive list (vs exclusive) */
+    bool include;
+};
+typedef struct mca_btl_uct_include_list_t mca_btl_uct_include_list_t;
+OBJ_CLASS_DECLARATION(mca_btl_uct_include_list_t);
+
+struct mca_btl_uct_tl_modex_t {
+    /** total size of this modex */
+    uint16_t size;
+    char tl_name[UCT_TL_NAME_MAX];
+    uint8_t data[];
+} __opal_attribute_packed__;
+typedef struct mca_btl_uct_tl_modex_t mca_btl_uct_tl_modex_t;
+
+struct mca_btl_uct_md_modex_t {
+    /** total size of this modex */
+    uint16_t size;
+    uint16_t module_index;
+    char md_name[UCT_MD_NAME_MAX];
+    uint8_t data[];
+} __opal_attribute_packed__;
+typedef struct mca_btl_uct_md_modex_t mca_btl_uct_md_modex_t;
 
 #endif /* !defined(BTL_UCT_TYPES_H) */

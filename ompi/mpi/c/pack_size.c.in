@@ -60,7 +60,7 @@ PROTOTYPE ERROR_CLASS pack_size(COUNT incount, DATATYPE datatype, COMM comm,
                                               incount, NULL, 0, &local_convertor );
 
     opal_convertor_get_packed_size( &local_convertor, &length );
-    *size = (int)length;
+    *size = length;
     OBJ_DESTRUCT( &local_convertor );
 
     return MPI_SUCCESS;

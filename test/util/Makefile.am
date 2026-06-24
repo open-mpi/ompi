@@ -43,7 +43,8 @@ check_PROGRAMS = \
 	opal_bit_ops \
 	opal_path_nfs \
         opal_json \
-        opal_sha256
+        opal_sha256 \
+	opal_timer
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -95,11 +96,11 @@ opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
 #        $(top_builddir)/test/support/libsupport.a
 #opal_os_path_DEPENDENCIES = $(opal_os_path_LDADD)
 
-#opal_timer_SOURCES = opal_timer.c
-#opal_timer_LDADD = \
-#        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
-#        $(top_builddir)/test/support/libsupport.a
-#opal_timer_DEPENDENCIES = $(opal_timer_LDADD)
+opal_timer_SOURCES = opal_timer.c
+opal_timer_LDADD = \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+        $(top_builddir)/test/support/libsupport.a
+opal_timer_DEPENDENCIES = $(opal_timer_LDADD)
 
 
 #orte_sys_info_SOURCES = orte_sys_info.c

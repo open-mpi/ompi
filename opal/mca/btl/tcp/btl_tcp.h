@@ -126,6 +126,12 @@ struct mca_btl_tcp_component_t {
     int tcp_sndbuf;         /**< socket sndbuf size */
     int tcp_rcvbuf;         /**< socket rcvbuf size */
     int tcp_disable_family; /**< disabled AF_family */
+    /* Timeouts used during connection establishment. The recv timeout is the timeout for the recv
+       socket, while the handshake timeout is the time after which the handshake is abandoned and
+       the tentative connection dropped.
+     */
+    int tcp_recv_timeout;
+    int tcp_handshake_timeout;
 
     /* free list of fragment descriptors */
     opal_free_list_t tcp_frag_eager;
@@ -335,6 +341,13 @@ int mca_btl_tcp_send_blocking(int sd, const void *data, size_t size);
  * non-blocking most of the time.
  */
 int mca_btl_tcp_recv_blocking(int sd, void *data, size_t size);
+
+/*
+ * Print extended information about the socket and then the formatted error
+ * message specified by the caller.
+ */
+void mca_btl_tcp_print_info_about_socket(int sd, char *fmt, ...)
+        __attribute__((format(printf, 2, 3)));
 
 END_C_DECLS
 #endif

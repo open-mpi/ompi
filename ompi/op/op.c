@@ -19,6 +19,8 @@
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -235,6 +237,8 @@ int ompi_op_init(void)
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_LONG] = OMPI_OP_BASE_TYPE_LONG;
     ompi_op_ddt_map[OMPI_DATATYPE_MPI_UNSIGNED_LONG] = OMPI_OP_BASE_TYPE_UNSIGNED_LONG;
 
+    ompi_op_ddt_map[OMPI_DATATYPE_MPI_FLOAT128] = OMPI_OP_BASE_TYPE_REAL16;
+
     /* Create the intrinsic ops */
 
     if (OMPI_SUCCESS !=
@@ -284,10 +288,6 @@ int ompi_op_init(void)
                       FLAGS, "MPI_NO_OP")) {
         return OMPI_ERROR;
     }else{
-/* This code is placed back here to support
- * HCOL allreduce at the moment. It is a part of bgate repository only. This conflict with OMPI v1.7
- * is to be resolved some other way.
- * */
         ompi_mpi_op_null.op.op_type = OMPI_OP_NULL;
         ompi_mpi_op_max.op.op_type = OMPI_OP_MAX;
         ompi_mpi_op_min.op.op_type = OMPI_OP_MIN;
@@ -399,25 +399,6 @@ ompi_op_t *ompi_op_create_user(bool commute,
 error:
     /* All done */
     return new_op;
-}
-
-
-/*
- * See lengthy comment in mpi/cxx/intercepts.cc for how the C++ MPI::Op
- * callbacks work.
- */
-void ompi_op_set_java_callback(ompi_op_t *op, void *jnienv,
-                               void *object, int baseType)
-{
-    op->o_flags |= OMPI_OP_FLAGS_JAVA_FUNC;
-    /* The OMPI Java intercept was previously stored in
-       op->o_func.fort_fn by ompi_op_create_user().  So save that in
-       cxx.intercept_fn and put the user's fn in cxx.user_fn. */
-    op->o_func.java_data.intercept_fn =
-        (ompi_op_java_handler_fn_t *) op->o_func.fort_fn;
-    op->o_func.java_data.jnienv = jnienv;
-    op->o_func.java_data.object = object;
-    op->o_func.java_data.baseType = baseType;
 }
 
 

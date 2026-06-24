@@ -15,6 +15,8 @@
  * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
  *                         reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -261,6 +263,7 @@ static int ompi_coll_tuned_read_rules_json (const opal_json_t *json_root, ompi_c
         opal_output_verbose(1, ompi_coll_tuned_stream,
             "The \"collectives\" field must be a dictionary of collectives.");
         opal_json_free(&collectives_obj);
+        free(alg_rules);
         return OPAL_ERROR;
     }
 
@@ -363,6 +366,9 @@ error_cleanup:
     opal_json_free(&comm_rule);
     opal_json_free(&comm_rule_array);
     opal_json_free(&collectives_obj);
+    if (NULL != alg_rules) {
+        free(alg_rules);
+    }
     return OMPI_ERROR;
 }
 

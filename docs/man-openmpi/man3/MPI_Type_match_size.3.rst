@@ -41,6 +41,25 @@ suitable datatype. In C use the sizeof builtin instead of :ref:`MPI_Sizeof`.
 It is erroneous to specify a size not supported by the compiler.
 
 
+NOTES
+-----
+
+In Open MPI, *typeclass* always refers to a Fortran numeric intrinsic
+type, and :ref:`MPI_Type_match_size` only ever returns an intrinsic
+Fortran predefined datatype (for example, ``MPI_REAL8``,
+``MPI_INTEGER4``, or ``MPI_COMPLEX8``) |mdash| regardless of whether it
+is called from C or Fortran. It does not return C predefined datatypes
+(such as ``MPI_DOUBLE``), nor composite predefined datatypes (such as
+``MPI_2REAL`` or ``MPI_2INTEGER``), even when one of those happens to
+have the requested *size*.
+
+Consequently, if Open MPI was built with ``--disable-mpi-fortran``, the
+Fortran intrinsic datatypes are unavailable. In that case no datatype
+can match any *typeclass* / *size* combination: every such request is
+treated as a size not supported by the compiler, and the call fails with
+error class ``MPI_ERR_ARG`` (subject to the relevant error handler).
+
+
 ERRORS
 ------
 

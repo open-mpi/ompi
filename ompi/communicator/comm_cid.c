@@ -24,8 +24,9 @@
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2020-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2020-2026 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,8 +61,6 @@
 /* for use when we don't have a PMIx that supports CID generation */
 opal_atomic_int64_t ompi_comm_next_base_cid = 1;
 
-/* A macro comparing two CIDs */
-#define OMPI_COMM_CID_IS_LOWER(comm1,comm2) ( ((comm1)->c_index < (comm2)->c_index)? 1:0)
 
 struct ompi_comm_cid_context_t;
 
@@ -417,7 +416,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
        char msg_string[1024];
         switch (rc) {
         case PMIX_ERR_UNREACH:
-            sprintf(msg_string,"PMIx server unreachable");
+            snprintf(msg_string, sizeof(msg_string), "PMIx server unreachable");
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,
@@ -427,7 +426,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
             rc = MPI_ERR_UNSUPPORTED_OPERATION;
             break;
         case PMIX_ERR_NOT_SUPPORTED:
-            sprintf(msg_string,"PMIx server does not support PMIx Group operations");
+            snprintf(msg_string, sizeof(msg_string), "PMIx server does not support PMIx Group operations");
             opal_show_help("help-comm.txt",
                            "MPI function not supported",
                            true,
@@ -577,7 +576,7 @@ int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *com
        functions but the pml does not support these functions so return not supported */
     if (NULL == comm) {
        char msg_string[1024];
-       sprintf(msg_string,"The PML being used - %s - does not support MPI sessions related features",
+       snprintf(msg_string, sizeof(msg_string), "The PML being used - %s - does not support MPI sessions related features",
                mca_pml_base_selected_component.pmlm_version.mca_component_name);
        opal_show_help("help-comm.txt",
                       "MPI function not supported",
@@ -926,30 +925,6 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
         return ret;
     }
 
-    /* For an inter communicator, we have to deal with the potential
-     * problem of what is happening if the local_comm that we created
-     * has a lower CID than the parent comm. This is not a problem
-     * as long as the user calls MPI_Comm_free on the inter communicator.
-     * However, if the communicators are not freed by the user but released
-     * by Open MPI in MPI_Finalize, we walk through the list of still available
-     * communicators and free them one by one. Thus, local_comm is freed before
-     * the actual inter-communicator. However, the local_comm pointer in the
-     * inter communicator will still contain the 'previous' address of the local_comm
-     * and thus this will lead to a segmentation violation. In order to prevent
-     * that from happening, we increase the reference counter local_comm
-     * by one if its CID is lower than the parent. We cannot increase however
-     *  its reference counter if the CID of local_comm is larger than
-     * the CID of the inter communicators, since a regular MPI_Comm_free would
-     * leave in that the case the local_comm hanging around and thus we would not
-     * recycle CID's properly, which was the reason and the cause for this trouble.
-     */
-    if (OMPI_COMM_IS_INTER(*newcomm)) {
-        if (OMPI_COMM_CID_IS_LOWER(*newcomm, comm)) {
-            OMPI_COMM_SET_EXTRA_RETAIN (*newcomm);
-            OBJ_RETAIN (*newcomm);
-        }
-    }
-
     /* done */
     return OMPI_SUCCESS;
 }
@@ -1066,7 +1041,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     pmix_value_t *val = NULL;
     ompi_comm_extended_cid_t excid;
     int rc = OMPI_SUCCESS;
-    size_t remote_cid64;
+    size_t remote_cid64 = 0;
 
     assert(NULL != remote_cid);
 
@@ -1082,7 +1057,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     PMIX_INFO_LOAD(&tinfo[1], PMIX_GROUP_CONTEXT_ID, &excid.cid_base, PMIX_SIZE);
     PMIX_INFO_SET_QUALIFIER(&tinfo[1]);
     if (PMIX_SUCCESS != (rc = PMIx_Get(&pmix_proc, PMIX_GROUP_LOCAL_CID, tinfo, 2, &val))) {
-        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID cid_base %ld %s", excid.cid_base, PMIx_Error_string(rc)));
+        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID cid_base %"PRIu64" %s", excid.cid_base, PMIx_Error_string(rc)));
         rc = OMPI_ERR_NOT_FOUND;
         goto done;
     }
@@ -1094,7 +1069,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     }
 
     if (val->type != PMIX_SIZE) {
-        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID type mismatch"));
+        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID type mismatch - %s", PMIx_Value_string(val)));
         rc = OMPI_ERR_TYPE_MISMATCH;
         goto done;
     }
@@ -1103,7 +1078,7 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     rc = OMPI_SUCCESS;
     *remote_cid = (uint32_t)remote_cid64;
     comm->c_index_vec[dest] = (uint32_t)remote_cid64;
-    OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get PMIX_GROUP_LOCAL_CID %d for cid_base %ld", *remote_cid, excid.cid_base));
+    OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get PMIX_GROUP_LOCAL_CID %d for cid_base %"PRIu64, *remote_cid, excid.cid_base));
 
 done:
     if (NULL != val) {

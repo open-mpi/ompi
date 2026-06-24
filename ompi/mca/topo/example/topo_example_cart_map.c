@@ -41,15 +41,15 @@
 
 int mca_topo_example_cart_map (ompi_communicator_t* comm,
                                int ndims,
-                               int *dims,
-                               int *periods,
+                               const int *dims,
+                               const int *periods,
                                int *newrank)
 {
     int nprocs;
     int rank;
     int size;
     int i;
-    int *p;
+    const int *p;
 
     /*
      * Compute the # of processes in the grid.

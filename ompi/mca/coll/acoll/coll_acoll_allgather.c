@@ -537,6 +537,9 @@ int mca_coll_acoll_allgather(const void *sbuf, size_t scount, struct ompi_dataty
 
     /* Return if intra-node communicator */
     if ((1 == num_nodes) || (size <= 2)) {
+        /* Call barrier to ensure that the data is copied properly before returning */
+        ompi_coll_base_barrier_intra_basic_linear(comm, module);
+
         /* All done */
         return err;
     }
@@ -619,6 +622,9 @@ int mca_coll_acoll_allgather(const void *sbuf, size_t scount, struct ompi_dataty
             return err;
         }
     }
+
+    /* Call barrier to ensure that the data is copied properly before returning */
+    ompi_coll_base_barrier_intra_basic_linear(comm, module);
 
     /* All done */
     return err;

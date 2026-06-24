@@ -155,8 +155,10 @@ mca_coll_basic_module_enable(mca_coll_base_module_t *module,
     BASIC_INSTALL_COLL_API(comm, basic_module, neighbor_alltoallw, mca_coll_basic_neighbor_alltoallw);
 
     /* Default to some shim mappings over allreduce */
+#if OPAL_ENABLE_FT_MPI
     BASIC_INSTALL_COLL_API(comm, basic_module, agree, ompi_coll_base_agree_noft);
     BASIC_INSTALL_COLL_API(comm, basic_module, iagree, ompi_coll_base_iagree_noft);
+#endif
 
     BASIC_INSTALL_COLL_API(comm, basic_module, reduce_local, mca_coll_base_reduce_local);
 

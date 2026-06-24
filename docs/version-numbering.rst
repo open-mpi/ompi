@@ -67,7 +67,7 @@ format.  Each of the three numbers has a specific meaning:
   change in the code base and/or end-user functionality, and also
   indicate a break from backward compatibility.  Specifically: Open
   MPI releases with different major version numbers are not
-  backward compatibale with each other.
+  backward compatible with each other.
 
   .. important:: This rule does not extend to versions prior to
      v1.10.0.  Specifically: v1.10.x is not guaranteed to be backward
@@ -163,7 +163,6 @@ Here's how we apply those rules specifically to Open MPI:
    * ``libmpi_usempi_ignore_tkr``
    * ``libmpi_usempif08``
    * ``libmpi_cxx``
-   * ``libmpi_java``
    * ``liboshmem``
 
 API and ABI Compatibility

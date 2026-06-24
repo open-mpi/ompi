@@ -30,7 +30,7 @@ PROTOTYPE VOID alltoallw(BUFFER x1, COUNT_ARRAY sendcounts,
     int size, c_ierr;
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
-    MPI_Datatype *c_sendtypes = NULL, *c_recvtypes;
+    MPI_Datatype *c_sendtypes = NULL, *c_recvtypes = NULL;
     @COUNT_TYPE@ *tmp_sendcounts = NULL;
     @DISP_TYPE@ *tmp_sdispls = NULL;
     @COUNT_TYPE@ *tmp_recvcounts = NULL;
@@ -59,7 +59,7 @@ PROTOTYPE VOID alltoallw(BUFFER x1, COUNT_ARRAY sendcounts,
     if (MPI_SUCCESS != c_ierr) {
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         OMPI_ERRHANDLER_INVOKE(c_comm, c_ierr, FUNC_NAME)
-        return;
+        goto fn_exit;
     }
 
     c_recvtypes = (MPI_Datatype *) malloc(size * sizeof(MPI_Datatype));
@@ -84,6 +84,7 @@ PROTOTYPE VOID alltoallw(BUFFER x1, COUNT_ARRAY sendcounts,
                           c_recvtypes, c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
+fn_exit:
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(sendcounts, tmp_sendcounts);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(sdispls, tmp_sdispls);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP(recvcounts, tmp_recvcounts);
@@ -92,5 +93,7 @@ PROTOTYPE VOID alltoallw(BUFFER x1, COUNT_ARRAY sendcounts,
     if (NULL != c_sendtypes) {
         free(c_sendtypes);
     }
-    free(c_recvtypes);
+    if (NULL != c_recvtypes) {
+        free(c_recvtypes);
+    }
 }

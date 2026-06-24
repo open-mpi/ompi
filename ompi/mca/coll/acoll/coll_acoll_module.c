@@ -64,7 +64,7 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
         *priority = 0;
         return NULL;
     }
-    if (OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) < 2) {
+    if (ompi_comm_size(comm) < mca_coll_acoll_comm_size_thresh) {
         *priority = 0;
         return NULL;
     }
@@ -132,6 +132,17 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
         break;
     }
 
+    // Check SMSC availability (currently only for XPMEM)
+    if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
+        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_coll_base_framework.framework_output,
+                            "coll:acoll: Error: SMSC's MAP feature is not available. "
+                            "SMSC will be disabled for this communicator irrespective of "
+                            "the mca parameters.");
+        acoll_module->has_smsc = 0;
+    } else {
+        acoll_module->has_smsc = 1;
+    }
+
     acoll_module->force_numa = mca_coll_acoll_force_numa;
     acoll_module->use_dyn_rules = mca_coll_acoll_use_dynamic_rules;
     acoll_module->disable_shmbcast = mca_coll_acoll_disable_shmbcast;
@@ -151,6 +162,9 @@ mca_coll_base_module_t *mca_coll_acoll_comm_query(struct ompi_communicator_t *co
     }
     acoll_module->allg_lin = mca_coll_acoll_allgather_lin;
     acoll_module->allg_ring = mca_coll_acoll_allgather_ring_1;
+
+    acoll_module->disable_fallback = 0;
+    acoll_module->red_algo = -1;
 
     /* Choose whether to use [intra|inter], and [subgroup|normal]-based
      * algorithms. */

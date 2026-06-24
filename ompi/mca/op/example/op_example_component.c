@@ -123,7 +123,6 @@ static char *example_component_version;
  */
 static int example_component_register(void)
 {
-    int val;
     char *str;
 
     opal_output(ompi_op_base_framework.framework_output, "example component register");

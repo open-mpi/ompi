@@ -71,6 +71,8 @@ int   ompi_coll_tuned_scatter_large_msg = 0;
 int   ompi_coll_tuned_scatter_min_procs = 0;
 int   ompi_coll_tuned_scatter_blocking_send_ratio = 0;
 
+static int deprecated_mca_params = -1;
+
 /* forced algorithm variables */
 /* indices for the MCA parameters */
 coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT] = {{0}};
@@ -161,7 +163,6 @@ static int tuned_register(void)
                                            MCA_BASE_VAR_SCOPE_ALL,
                                            &ompi_coll_tuned_init_chain_fanout);
 
-    int deprecated_mca_params = -1;
     (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
                                            "alltoall_small_msg",
                                            "threshold (if supported) to decide if small MSGs alltoall algorithm will be used",

@@ -490,7 +490,7 @@ mca_part_persist_psend_init(const void* buf,
     return err;
 }
 
-__opal_attribute_always_inline__ static inline int
+static inline int
 mca_part_persist_start(size_t count, ompi_request_t** requests)
 {
     int err = OMPI_SUCCESS;
@@ -525,7 +525,6 @@ mca_part_persist_start(size_t count, ompi_request_t** requests)
         req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
         req->req_ompi.req_status._cancelled = 0;
         req->req_part_complete = false;
-        req->req_ompi.req_complete = false;
         OPAL_ATOMIC_SWAP_PTR(&req->req_ompi.req_complete, REQUEST_PENDING);   
     }
 

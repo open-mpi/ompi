@@ -15,6 +15,7 @@
 !                         reserved.
 ! Copyright (c) 2021      Bull S.A.S. All rights reserved.
 ! Copyright (c) 2021      IBM Corporation.  All rights reserved.
+! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -3356,13 +3357,30 @@ end interface
 
 interface
 
-subroutine MPI_Request_get_status(request, flag, status, ierror)
-  include 'mpif-config.h'
-  integer, intent(in) :: request
-  logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
+subroutine MPI_Remove_error_class(errorclass, ierror)
+  integer, intent(in) :: errorclass
   integer, intent(out) :: ierror
-end subroutine MPI_Request_get_status
+end subroutine MPI_Remove_error_class
+
+end interface
+
+
+interface
+
+subroutine MPI_Remove_error_code(errorcode, ierror)
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Remove_error_code
+
+end interface
+
+
+interface
+
+subroutine MPI_Remove_error_string(errorcode, ierror)
+  integer, intent(in) :: errorcode
+  integer, intent(out) :: ierror
+end subroutine MPI_Remove_error_string
 
 end interface
 
@@ -3729,15 +3747,14 @@ subroutine MPI_Session_get_nth_pset(session, info, n, pset_len, pset_name, ierro
 end subroutine MPI_Session_get_nth_pset
 end interface
 
-interface MPI_Session_get_nth_psetlen
-subroutine MPI_Session_get_nth_psetlen(session, n, pset_len, ierror)
-   implicit none
+interface MPI_Session_get_num_psets
+subroutine MPI_Session_get_num_psets(session, info, npset_names, ierror)
    integer, INTENT(IN) :: session
-   INTEGER, INTENT(IN) :: n
-   INTEGER, INTENT(OUT) :: pset_len
+   integer, INTENT(IN) :: info
+   INTEGER, INTENT(OUT) :: npset_names
    INTEGER, INTENT(OUT) :: ierror
-end subroutine MPI_Session_get_nth_psetlen
-end interface 
+end subroutine MPI_Session_get_num_psets
+end interface
 
 interface MPI_Session_get_pset_info
 subroutine MPI_Session_get_pset_info(session, pset_name, info, ierror)
@@ -3840,19 +3857,6 @@ subroutine MPI_Status_set_cancelled(status, flag, ierror)
   logical, intent(in) :: flag
   integer, intent(out) :: ierror
 end subroutine MPI_Status_set_cancelled
-
-end interface
-
-
-interface
-
-subroutine MPI_Status_set_elements(status, datatype, count, ierror)
-  include 'mpif-config.h'
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
-  integer, intent(in) :: datatype
-  integer, intent(in) :: count
-  integer, intent(out) :: ierror
-end subroutine MPI_Status_set_elements
 
 end interface
 

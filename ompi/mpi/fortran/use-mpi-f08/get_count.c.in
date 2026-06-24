@@ -21,15 +21,14 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID get_count(STATUS status, DATATYPE datatype, COUNT count)
+PROTOTYPE VOID get_count(STATUS status, DATATYPE datatype, COUNT_OUT count)
 {
     int c_ierr;
     MPI_Datatype c_type = PMPI_Type_f2c(*datatype);
     MPI_Status   c_status;
-    @COUNT_TYPE@ c_count;
+    @COUNT_TYPE@ c_count = 0;
 
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-        *count = OMPI_INT_2_FINT(0);
         c_ierr = MPI_SUCCESS;
     } else {
         c_ierr = PMPI_Status_f2c(status, &c_status);

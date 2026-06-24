@@ -9,7 +9,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2020      Triad National Security, LLC. All rights
 #                         reserved.
-# Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+# Copyright (c) 2022-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -48,6 +48,7 @@ mtl_ofi_sources = \
     mtl_ofi_component.c \
     mtl_ofi_endpoint.h \
     mtl_ofi_endpoint.c \
+    mtl_ofi_mr.c \
     mtl_ofi_request.h \
     mtl_ofi_types.h \
     mtl_ofi_opt.h \

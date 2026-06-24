@@ -1,6 +1,7 @@
 /* -*- Mode: C; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2024 - 2025 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026        NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,11 +15,8 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "opal/include/opal/align.h"
-
-#ifdef HAVE_XPMEM_H
 #include "opal/mca/rcache/base/base.h"
-#include <xpmem.h>
-#endif
+
 
 
 /* shared memory structure */
@@ -30,10 +28,45 @@
 #define LEADER_SHM_SIZE 16384
 #define PER_RANK_SHM_SIZE 8192
 
-extern uint64_t mca_coll_acoll_xpmem_buffer_size;
-extern int mca_coll_acoll_without_xpmem;
-extern int mca_coll_acoll_xpmem_use_sr_buf;
+extern uint64_t mca_coll_acoll_smsc_buffer_size;
+extern int mca_coll_acoll_without_smsc;
+extern int mca_coll_acoll_smsc_use_sr_buf;
 extern int mca_coll_acoll_barrier_algo;
+
+/*
+ * Hybrid backoff spin-wait with adaptive progress calls.
+ * Optimized for intra-node shared memory synchronization.
+ *
+ * Three-phase strategy:
+ * - Fast path (0-MCA_COLL_ACOLL_SPIN_FAST_PATH_ITERS): Pure spinning for typical shared memory case
+ * - Medium path (FAST_PATH-MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_ITERS): Moderate progress for NUMA delays
+ * - Slow path (MEDIUM_PATH+): Aggressive progress for unexpected contention
+ */
+static inline void spin_wait_with_progress(volatile int *flag, int expected_value)
+{
+    int pcount = 0;
+    int progress_freq = 1;
+    int observed;
+
+    while ((observed = __atomic_load_n(flag, __ATOMIC_ACQUIRE)) != expected_value) {
+        pcount++;
+        if (pcount < MCA_COLL_ACOLL_SPIN_FAST_PATH_ITERS) {
+            /* Fast path: pure spinning for intra-node shared memory (typical case) */
+            continue;
+        } else if (pcount < MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_ITERS) {
+            /* Medium path: moderate progress for NUMA delays or contention */
+            if (0 == pcount % MCA_COLL_ACOLL_SPIN_MEDIUM_PATH_FREQ) {
+                opal_progress();
+            }
+        } else {
+            /* Slow path: aggressive progress for unexpected delays */
+            for (int j = 0; j < progress_freq; j++) {
+                opal_progress();
+            }
+            if (progress_freq < MCA_COLL_ACOLL_SPIN_SLOW_PATH_MAX_FREQ) progress_freq++;
+        }
+    }
+}
 
 
 /* Function to allocate scratch buffer */
@@ -169,11 +202,16 @@ static inline int check_and_create_subc(ompi_communicator_t *comm,
     subc->initialized_shm_data = false;
     subc->data = NULL;
     subc->barrier_algo = mca_coll_acoll_barrier_algo;
-#ifdef HAVE_XPMEM_H
-    subc->xpmem_buf_size = mca_coll_acoll_xpmem_buffer_size;
-    subc->without_xpmem = mca_coll_acoll_without_xpmem;
-    subc->xpmem_use_sr_buf = mca_coll_acoll_xpmem_use_sr_buf;
-#endif
+
+    if (acoll_module->has_smsc) {
+        subc->smsc_buf_size = mca_coll_acoll_smsc_buffer_size;
+        subc->smsc_use_sr_buf = mca_coll_acoll_smsc_use_sr_buf;
+        subc->without_smsc = mca_coll_acoll_without_smsc;
+    } else {
+        subc->smsc_buf_size = 0;
+        subc->smsc_use_sr_buf = 0;
+        subc->without_smsc = 1;
+    }
     return MPI_SUCCESS;
 
 }
@@ -229,8 +267,6 @@ static inline int comm_grp_ranks_local(ompi_communicator_t *comm, ompi_communica
         }
     }
 
-    err = ompi_group_free(&grp);
-    err = ompi_group_free(&local_grp);
     free(ranks);
     free(local_ranks);
 
@@ -251,6 +287,7 @@ static inline int mca_coll_acoll_create_base_comm(ompi_communicator_t **parent_c
         err = ompi_comm_split(parent_comm[i], color, rank[i], &subc->base_comm[base_lyr][i], false);
         if (MPI_SUCCESS != err)
             return err;
+        OBJ_RETAIN(subc->base_comm[base_lyr][i]);
 
         /* Find out local rank of root in base comm */
         err = comm_grp_ranks_local(parent_comm[i], subc->base_comm[base_lyr][i], &is_root_node,
@@ -413,12 +450,14 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->local_comm);
         /* Create socket-level subcommunicator */
         err = ompi_comm_split_type(comm, OMPI_COMM_TYPE_SOCKET, 0, &comm_info,
                                    &(subc->socket_comm));
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->socket_comm);
         OBJ_DESTRUCT(&comm_info);
         OBJ_CONSTRUCT(&comm_info, opal_info_t);
         opal_info_set(&comm_info, "ompi_comm_coll_preference", "libnbc,basic,^acoll");
@@ -428,10 +467,12 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->subgrp_comm);
         err = ompi_comm_split_type(comm, OMPI_COMM_TYPE_NUMA, 0, &comm_info, &(subc->numa_comm));
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->numa_comm);
         subc->subgrp_size = ompi_comm_size(subc->subgrp_comm);
         OBJ_DESTRUCT(&comm_info);
 
@@ -479,18 +520,14 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
 
         if (subc->initialized) {
             if (subc->num_nodes > 1) {
-                ompi_comm_free(&(subc->leader_comm));
-                subc->leader_comm = NULL;
+                coll_acoll_subcomm_free(&(subc->leader_comm));
             }
-            ompi_comm_free(&(subc->socket_ldr_comm));
-            subc->socket_ldr_comm = NULL;
+            coll_acoll_subcomm_free(&(subc->socket_ldr_comm));
         }
         for (int i = 0; i < MCA_COLL_ACOLL_NUM_LAYERS; i++) {
             if (subc->initialized) {
-                ompi_comm_free(&(subc->base_comm[MCA_COLL_ACOLL_L3CACHE][i]));
-                subc->base_comm[MCA_COLL_ACOLL_L3CACHE][i] = NULL;
-                ompi_comm_free(&(subc->base_comm[MCA_COLL_ACOLL_NUMA][i]));
-                subc->base_comm[MCA_COLL_ACOLL_NUMA][i] = NULL;
+                coll_acoll_subcomm_free(&(subc->base_comm[MCA_COLL_ACOLL_L3CACHE][i]));
+                coll_acoll_subcomm_free(&(subc->base_comm[MCA_COLL_ACOLL_NUMA][i]));
             }
             subc->base_root[MCA_COLL_ACOLL_L3CACHE][i] = -1;
             subc->base_root[MCA_COLL_ACOLL_NUMA][i] = -1;
@@ -542,6 +579,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->leader_comm);
 
         /* Find out local rank of root in leader comm */
         err = comm_grp_ranks_local(comm, subc->leader_comm, &is_root_node, &subc->outer_grp_root,
@@ -561,6 +599,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         err = ompi_comm_split(comm, color, rank, &subc->socket_ldr_comm, false);
         if (MPI_SUCCESS != err)
             return err;
+        OBJ_RETAIN(subc->socket_ldr_comm);
 
         /* Find out local rank of root in socket leader comm */
         err = comm_grp_ranks_local(comm, subc->socket_ldr_comm, &is_root_socket,
@@ -626,6 +665,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         if (MPI_SUCCESS != err) {
             return err;
         }
+        OBJ_RETAIN(subc->socket_ldr_comm);
 
         /* Find out local rank of root in socket leader comm */
         err = comm_grp_ranks_local(comm, subc->socket_ldr_comm, &is_root_socket,
@@ -658,6 +698,10 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
         numa_rank = ompi_comm_rank(subc->numa_comm);
         color = (0 == numa_rank) ? 0 : 1;
         err = ompi_comm_split(subc->local_comm, color, rank, &subc->numa_comm_ldrs, false);
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+        OBJ_RETAIN(subc->numa_comm_ldrs);
 
         /* Find out local rank of root in numa comm */
         err = comm_grp_ranks_local(comm, subc->numa_comm, &subc->is_root_numa, &subc->numa_root,
@@ -710,6 +754,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
             if (MPI_SUCCESS != err) {
                 return err;
             }
+            OBJ_RETAIN(subc->local_r_comm);
         }
 
         err = mca_coll_acoll_derive_r2r_latency(comm, subc, acoll_module);
@@ -735,6 +780,7 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
             if (MPI_SUCCESS != err) {
                 return err;
             }
+            OBJ_RETAIN(subc->split_comm[ii]);
         }
 
         subc->derived_node_size = (size + subc->num_nodes - 1) / subc->num_nodes;
@@ -755,36 +801,11 @@ static inline int mca_coll_acoll_comm_split_init(ompi_communicator_t *comm,
     return err;
 }
 
-#ifdef HAVE_XPMEM_H
-static inline int mca_coll_acoll_xpmem_register(void *xpmem_apid, void *base, size_t size,
-                                                mca_rcache_base_registration_t *reg)
-{
-    struct xpmem_addr xpmem_addr;
-    xpmem_addr.apid = *((xpmem_apid_t *) xpmem_apid);
-    xpmem_addr.offset = (uintptr_t) base;
-    struct acoll_xpmem_rcache_reg_t *xpmem_reg = (struct acoll_xpmem_rcache_reg_t *) reg;
-    xpmem_reg->xpmem_vaddr = xpmem_attach(xpmem_addr, size, NULL);
-
-    if ((void *) -1 == xpmem_reg->xpmem_vaddr) {
-        return -1;
-    }
-    return 0;
-}
-
-static inline int mca_coll_acoll_xpmem_deregister(void *xpmem_apid,
-                                                  mca_rcache_base_registration_t *reg)
-{
-    int status = xpmem_detach(((struct acoll_xpmem_rcache_reg_t *) reg)->xpmem_vaddr);
-    return status;
-}
-#endif
-
 static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communicator_t *comm,
                                   coll_acoll_data_t *data, coll_acoll_subcomms_t *subc, int root)
 {
     int size, ret = 0, rank, line;
 
-    int cid = ompi_comm_get_local_cid(comm);
     if (subc->initialized_data) {
         return ret;
     }
@@ -794,13 +815,47 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto error_hndl;
     }
+
+    // initialize data
+    data->allshm_rbuf = NULL;
+    data->allshm_sbuf = NULL;
+    data->allshmmmap_sbuf = NULL;
+    data->scratch = NULL;
+    data->smsc_info.sreg = NULL;
+    data->smsc_info.rreg = NULL;
+    data->smsc_info.ep = NULL;
+    data->smsc_saddr = NULL;
+    data->smsc_raddr = NULL;
+    data->l1_gp = NULL;
+    data->l2_gp = NULL;
+    data->allshmseg_id = NULL;
+
+
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
     data->comm_size = size;
 
-#ifdef HAVE_XPMEM_H
-    if (0 == subc->xpmem_use_sr_buf) {
-        data->scratch = (char *) malloc(subc->xpmem_buf_size);
+    data->smsc_info.sreg = (void **) malloc(sizeof(void *) * size);
+    data->smsc_info.rreg = (void **) malloc(sizeof(void *) * size);
+    if (NULL == data->smsc_info.sreg || NULL == data->smsc_info.rreg) {
+        line = __LINE__;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto error_hndl;
+    }
+    data->smsc_info.ep = (mca_smsc_endpoint_t **) malloc(sizeof(mca_smsc_endpoint_t *) * size);
+    if (NULL == data->smsc_info.ep) {
+        line = __LINE__;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto error_hndl;
+    }
+    for (int i = 0 ; i < size; i++) {
+        data->smsc_info.ep[i] = NULL;
+        data->smsc_info.sreg[i] = NULL;
+        data->smsc_info.rreg[i] = NULL;
+    }
+
+    if (0 == subc->smsc_use_sr_buf) {
+        data->scratch = (char *) malloc(subc->smsc_buf_size);
         if (NULL == data->scratch) {
             line = __LINE__;
             ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -810,19 +865,6 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
         data->scratch = NULL;
     }
 
-    xpmem_segid_t seg_id;
-    data->allseg_id = (xpmem_segid_t *) malloc(sizeof(xpmem_segid_t) * size);
-    if (NULL == data->allseg_id) {
-        line = __LINE__;
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto error_hndl;
-    }
-    data->all_apid = (xpmem_apid_t *) malloc(sizeof(xpmem_apid_t) * size);
-    if (NULL == data->all_apid) {
-        line = __LINE__;
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto error_hndl;
-    }
     data->allshm_sbuf = (void **) malloc(sizeof(void *) * size);
     if (NULL == data->allshm_sbuf) {
         line = __LINE__;
@@ -835,86 +877,38 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto error_hndl;
     }
-    data->xpmem_saddr = (void **) malloc(sizeof(void *) * size);
-    if (NULL == data->xpmem_saddr) {
+
+    data->smsc_saddr = (void **) malloc(sizeof(void *) * size);
+    if (NULL == data->smsc_saddr) {
         line = __LINE__;
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto error_hndl;
     }
-    data->xpmem_raddr = (void **) malloc(sizeof(void *) * size);
-    if (NULL == data->xpmem_raddr) {
+    data->smsc_raddr = (void **) malloc(sizeof(void *) * size);
+    if (NULL == data->smsc_raddr) {
         line = __LINE__;
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto error_hndl;
     }
-    data->rcache = (mca_rcache_base_module_t **) malloc(sizeof(mca_rcache_base_module_t *) * size);
-    if (NULL == data->rcache) {
-        line = __LINE__;
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto error_hndl;
-    }
-    data->xpmem_reg_tracker_ht = NULL;
-    data->xpmem_reg_tracker_ht = (opal_hash_table_t **) malloc(sizeof(opal_hash_table_t*) * size);
-    if (NULL == data->xpmem_reg_tracker_ht) {
-        line = __LINE__;
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-        goto error_hndl;
-    }
-
-    seg_id = xpmem_make(0, XPMEM_MAXADDR_SIZE, XPMEM_PERMIT_MODE, (void *) 0666);
-    if (-1 == seg_id) {
-        line = __LINE__;
-        ret = -1;
-        goto error_hndl;
-    }
-
-    ret = comm->c_coll->coll_allgather(&seg_id, sizeof(xpmem_segid_t), MPI_BYTE, data->allseg_id,
-                                       sizeof(xpmem_segid_t), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
-
-    /* Assuming the length of rcache name is less than 50 characters */
-    char rc_name[50];
-    for (int i = 0; i < size; i++) {
-        if (rank != i) {
-            data->all_apid[i] = xpmem_get(data->allseg_id[i], XPMEM_RDWR, XPMEM_PERMIT_MODE,
-                                          (void *) 0666);
-            if (-1 == data->all_apid[i]) {
-                line = __LINE__;
-                ret = -1;
-                goto error_hndl;
-            }
-            if (-1 == data->all_apid[i]) {
-                line = __LINE__;
-                ret = -1;
-                goto error_hndl;
-            }
-            sprintf(rc_name, "acoll_%d_%d_%d", cid, rank, i);
-            mca_rcache_base_resources_t rcache_element
-                = {.cache_name = rc_name,
-                   .reg_data = &data->all_apid[i],
-                   .sizeof_reg = sizeof(struct acoll_xpmem_rcache_reg_t),
-                   .register_mem = mca_coll_acoll_xpmem_register,
-                   .deregister_mem = mca_coll_acoll_xpmem_deregister};
-
-            data->rcache[i] = mca_rcache_base_module_create("grdma", NULL, &rcache_element);
-            if (NULL == data->rcache[i]) {
-                ret = -1;
-                line = __LINE__;
-                goto error_hndl;
-            }
-            data->xpmem_reg_tracker_ht[i] = OBJ_NEW(opal_hash_table_t);
-            opal_hash_table_init(data->xpmem_reg_tracker_ht[i], 2048);
-        }
-    }
-#endif
 
     /* temporary variables */
     int tmp1, tmp2, tmp3 = root;
     comm_grp_ranks_local(comm, subc->numa_comm, &tmp1, &tmp2, &data->l1_gp, tmp3);
+    if (NULL == data->l1_gp) {
+        line = __LINE__;
+        ret = OMPI_ERROR;
+        goto error_hndl;
+    }
     data->l1_gp_size = ompi_comm_size(subc->numa_comm);
     data->l1_local_rank = ompi_comm_rank(subc->numa_comm);
 
     comm_grp_ranks_local(comm, subc->numa_comm_ldrs, &tmp1, &tmp2, &data->l2_gp, tmp3);
+    if (NULL == data->l2_gp) {
+        line = __LINE__;
+        ret = OMPI_ERROR;
+        goto error_hndl;
+    }
+
     data->l2_gp_size = ompi_comm_size(subc->numa_comm_ldrs);
     data->l2_local_rank = ompi_comm_rank(subc->numa_comm_ldrs);
     data->offset[0] = LEADER_SHM_SIZE;
@@ -923,6 +917,13 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
     data->offset[3] = data->offset[2] + rank * PER_RANK_SHM_SIZE;
     data->allshmseg_id = (opal_shmem_ds_t *) malloc(sizeof(opal_shmem_ds_t) * size);
     data->allshmmmap_sbuf = (void **) malloc(sizeof(void *) * size);
+
+    if (NULL == data->allshmseg_id || NULL == data->allshmmmap_sbuf) {
+        line = __LINE__;
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto error_hndl;
+    }
+
     data->sync[0] = 0;
     data->sync[1] = 0;
     char *shfn;
@@ -1001,26 +1002,22 @@ static inline int coll_acoll_init(mca_coll_base_module_t *module, ompi_communica
 error_hndl:
     (void) line;
     if (NULL != data) {
-#ifdef HAVE_XPMEM_H
-        free(data->allseg_id);
-        data->allseg_id = NULL;
-        free(data->all_apid);
-        data->all_apid = NULL;
         free(data->allshm_sbuf);
         data->allshm_sbuf = NULL;
         free(data->allshm_rbuf);
         data->allshm_rbuf = NULL;
-        free(data->xpmem_saddr);
-        data->xpmem_saddr = NULL;
-        free(data->xpmem_raddr);
-        data->xpmem_raddr = NULL;
-        free(data->xpmem_reg_tracker_ht);
-        data->xpmem_reg_tracker_ht = NULL;
-        free(data->rcache);
-        data->rcache = NULL;
+        free(data->smsc_saddr);
+        data->smsc_saddr = NULL;
+        free(data->smsc_raddr);
+        data->smsc_raddr = NULL;
         free(data->scratch);
         data->scratch = NULL;
-#endif
+        free(data->smsc_info.ep);
+        data->smsc_info.ep = NULL;
+        free(data->smsc_info.sreg);
+        data->smsc_info.sreg = NULL;
+        free(data->smsc_info.rreg);
+        data->smsc_info.rreg = NULL;
         free(data->allshmseg_id);
         data->allshmseg_id = NULL;
         free(data->allshmmmap_sbuf);
@@ -1035,70 +1032,44 @@ error_hndl:
     return ret;
 }
 
-#ifdef HAVE_XPMEM_H
-static inline void update_rcache_reg_hashtable_entry
-                            (struct acoll_xpmem_rcache_reg_t *reg,
-                             opal_hash_table_t* ht)
-{
-    // Converting pointer to uint64 to use as key.
-    uint64_t key = (uint64_t)reg;
-    // Converting uint64_t to pointer type to use for value.
-    uint64_t value = 1;
-    int ht_ret = opal_hash_table_get_value_uint64(ht, key, (void**)(&value));
-
-    if (OPAL_ERR_NOT_FOUND == ht_ret) {
-        value = 1;
-        opal_hash_table_set_value_uint64(ht, key, (void*)(value));
-    } else if (OPAL_SUCCESS == ht_ret) {
-        value += 1;
-        opal_hash_table_set_value_uint64(ht, key, (void*)(value));
+static inline int register_mem_with_smsc(int rank, int size, size_t total_dsize, coll_acoll_data_t *data, struct ompi_communicator_t *comm) {
+    ompi_proc_t *proc = NULL;
+    mca_smsc_endpoint_t *smsc_ep = NULL;
+    if (NULL == data->smsc_info.ep) {
+        return MPI_ERR_OTHER;
     }
-}
 
-static inline void register_and_cache(int size, size_t total_dsize, int rank,
-                                      coll_acoll_data_t *data)
-{
-    uintptr_t base, bound;
     for (int i = 0; i < size; i++) {
         if (rank != i) {
-            mca_rcache_base_module_t *rcache_i = data->rcache[i];
-            int access_flags = 0;
-            struct acoll_xpmem_rcache_reg_t *sbuf_reg = NULL, *rbuf_reg = NULL;
-            base = OPAL_DOWN_ALIGN((uintptr_t) data->allshm_sbuf[i], 4096, uintptr_t);
-            bound = OPAL_ALIGN((uintptr_t) data->allshm_sbuf[i] + total_dsize, 4096, uintptr_t);
-            int ret = rcache_i->rcache_register(rcache_i, (void *) base, bound - base, access_flags,
-                                                MCA_RCACHE_ACCESS_ANY,
-                                                (mca_rcache_base_registration_t **) &sbuf_reg);
-
-            if (ret != 0) {
-                sbuf_reg = NULL;
-                return;
+            if (NULL == data->smsc_info.ep[i]) {
+                proc = ompi_comm_peer_lookup(comm, i);
+                data->smsc_info.ep[i] = MCA_SMSC_CALL(get_endpoint, &proc->super);
             }
-            update_rcache_reg_hashtable_entry(sbuf_reg, data->xpmem_reg_tracker_ht[i]);
-
-            data->xpmem_saddr[i] = (void *) ((uintptr_t) sbuf_reg->xpmem_vaddr
-                                             + ((uintptr_t) data->allshm_sbuf[i]
-                                                - (uintptr_t) sbuf_reg->base.base));
-
-            base = OPAL_DOWN_ALIGN((uintptr_t) data->allshm_rbuf[i], 4096, uintptr_t);
-            bound = OPAL_ALIGN((uintptr_t) data->allshm_rbuf[i] + total_dsize, 4096, uintptr_t);
-            ret = rcache_i->rcache_register(rcache_i, (void *) base, bound - base, access_flags,
-                                            MCA_RCACHE_ACCESS_ANY,
-                                            (mca_rcache_base_registration_t **) &rbuf_reg);
-
-            if (ret != 0) {
-                rbuf_reg = NULL;
-                return;
+            if (NULL == data->smsc_info.ep[i]) {
+                 opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_coll_base_framework.framework_output,
+                     "coll:acoll: SMSC endpoint not available for processes.\n");
+                return MPI_ERR_OTHER;
             }
-            update_rcache_reg_hashtable_entry(rbuf_reg, data->xpmem_reg_tracker_ht[i]);
+            smsc_ep = data->smsc_info.ep[i];
+            data->smsc_info.sreg[i] = MCA_SMSC_CALL(map_peer_region, smsc_ep,
+                MCA_RCACHE_FLAGS_PERSIST, data->allshm_sbuf[i], total_dsize, &data->smsc_saddr[i]);
+            data->smsc_info.rreg[i] = MCA_SMSC_CALL(map_peer_region, smsc_ep,
+                MCA_RCACHE_FLAGS_PERSIST, data->allshm_rbuf[i], total_dsize, &data->smsc_raddr[i]);
 
-            data->xpmem_raddr[i] = (void *) ((uintptr_t) rbuf_reg->xpmem_vaddr
-                                             + ((uintptr_t) data->allshm_rbuf[i]
-                                                - (uintptr_t) rbuf_reg->base.base));
         } else {
-            data->xpmem_saddr[i] = data->allshm_sbuf[i];
-            data->xpmem_raddr[i] = data->allshm_rbuf[i];
+            data->smsc_saddr[i] = data->allshm_sbuf[i];
+            data->smsc_raddr[i] = data->allshm_rbuf[i];
+        }
+    }
+    return MPI_SUCCESS;
+}
+
+static inline void unmap_mem_with_smsc(int rank, int size, coll_acoll_data_t *data)
+{
+    for (int i = 0; i < size; i++) {
+        if (rank != i && NULL != data->smsc_info.sreg[i]  && NULL != data->smsc_info.rreg[i]) {
+            MCA_SMSC_CALL(unmap_peer_region, data->smsc_info.sreg[i]);
+            MCA_SMSC_CALL(unmap_peer_region, data->smsc_info.rreg[i]);
         }
     }
 }
-#endif

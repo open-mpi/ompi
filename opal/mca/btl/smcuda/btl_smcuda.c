@@ -235,7 +235,6 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
         free(loc);
     } else {
         /* If we have hwloc support, then get accurate information */
-        loc = NULL;
         if (OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
             rc = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_NODE, 0,
                                                     OPAL_HWLOC_AVAILABLE);
@@ -249,6 +248,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
             mca_btl_smcuda_component.num_mem_nodes = rc;
         }
     }
+    loc = NULL;
     /* see if we were given our location */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING, &OPAL_PROC_MY_NAME, &loc, PMIX_STRING);
     if (OPAL_SUCCESS == rc) {
@@ -267,6 +267,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
                 free(mynuma);
             }
             free(loc);
+            loc = NULL;
         }
     } else {
         /* If we have hwloc support, then get accurate information */
@@ -486,7 +487,7 @@ static struct mca_btl_base_endpoint_t *create_sm_endpoint(int local_proc, struct
     OBJ_CONSTRUCT(&ep->pending_sends, opal_list_t);
     OBJ_CONSTRUCT(&ep->endpoint_lock, opal_mutex_t);
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
-    sprintf(path, "%s" OPAL_PATH_SEP "sm_fifo.%lu", opal_process_info.job_session_dir,
+    snprintf(path, sizeof(path), "%s" OPAL_PATH_SEP "sm_fifo.%lu", opal_process_info.job_session_dir,
             (unsigned long) proc->proc_name.vpid);
     ep->fifo_fd = open(path, O_WRONLY);
     if (ep->fifo_fd < 0) {

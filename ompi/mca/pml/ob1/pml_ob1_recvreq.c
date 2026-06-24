@@ -108,16 +108,19 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
     }
     if( !request->req_match_received ) { /* the match has not been already done */
         assert( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ); /* not matched isn't it */
+        if(OPAL_LIKELY(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
+                       request->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE)) {
 #if MCA_PML_OB1_CUSTOM_MATCH
-        custom_match_prq_cancel(ob1_comm->prq, request);
+            custom_match_prq_cancel(ob1_comm->prq, request);
 #else
-        if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
-            opal_list_remove_item( &ob1_comm->wild_receives, (opal_list_item_t*)request );
-        } else {
-            mca_pml_ob1_comm_proc_t* proc = mca_pml_ob1_peer_lookup (comm, request->req_recv.req_base.req_peer);
-            opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
-        }
+            if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
+                opal_list_remove_item( &ob1_comm->wild_receives, (opal_list_item_t*)request );
+            } else {
+                mca_pml_ob1_comm_proc_t* proc = mca_pml_ob1_peer_lookup (comm, request->req_recv.req_base.req_peer);
+                opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
+            }
 #endif
+        }
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
                                 &(request->req_recv.req_base), PERUSE_RECV );
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
@@ -225,6 +228,9 @@ static void mca_pml_ob1_put_completion (mca_pml_ob1_rdma_frag_t *frag, int64_t r
 
     if (OPAL_LIKELY(0 < rdma_size)) {
 
+        /* ensure pipeline_depth and frag cleanup are visible before
+         * bytes_received update that complete_check observes */
+        opal_atomic_wmb();
         /* check completion status */
         OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, rdma_size);
         SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)rdma_size,
@@ -440,6 +446,9 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
         MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
     }
 
+    /* ensure all prior stores (bytes_received, error status, frag cleanup)
+     * are visible before complete_check may recycle the request */
+    opal_atomic_wmb();
     recv_request_pml_complete_check(recvreq);
 
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
@@ -593,6 +602,9 @@ void mca_pml_ob1_recv_request_progress_frag( mca_pml_ob1_recv_request_t* recvreq
                                recvreq->req_recv.req_base.req_datatype);
                );
 
+    /* ensure unpack stores are visible before bytes_received update
+     * that complete_check observes */
+    opal_atomic_wmb();
     OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                     OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
@@ -671,6 +683,9 @@ void mca_pml_ob1_recv_request_frag_copy_finished( mca_btl_base_module_t* btl,
      * known that the data has been copied out of the descriptor. */
     des->des_cbfunc(NULL, NULL, des, 0);
 
+    /* ensure copy and descriptor cleanup are visible before
+     * bytes_received update that complete_check observes */
+    opal_atomic_wmb();
     OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, bytes_received);
     SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                     OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
@@ -884,6 +899,9 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
         SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)bytes_received,
                         OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
     }
+    /* ensure all prior stores (unpack, match, bytes_received) are visible
+     * before complete_check may recycle the request */
+    opal_atomic_wmb();
     /* check completion status */
     if(recv_request_pml_complete_check(recvreq) == false &&
        recvreq->req_rdma_offset < recvreq->req_send_offset) {
