@@ -1,0 +1,42 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# Shared Automake fragment for unit tests that initialize OPAL.
+#
+# When Open MPI is configured with --enable-mca-dso, MCA components are
+# built as standalone DSOs that are dlopen'ed at run time from the
+# install tree ($libdir/openmpi).  But "make check" runs before "make
+# install", so those DSOs do not yet exist in their installed location:
+# they are scattered throughout the build tree under libtool ".libs"
+# directories.  Tests that call opal_init() / opal_init_util() would
+# therefore fail to find the components they need.
+#
+# To make "make check" work in an uninstalled --enable-mca-dso build
+# tree, point OPAL's component search path at the build-tree ".libs"
+# directories that hold the freshly-built OPAL component DSOs.  The path
+# is computed at test-run time (via a shell backquote), not at
+# Makefile-parse time, because the DSOs are not built until the "all"
+# prerequisite of "make check" has completed.  We deliberately replace
+# the search path (rather than appending SYS_DEFAULT) so the tests
+# exercise exactly the components that were just built, not any older
+# copy that might already be installed under the configured prefix.
+#
+# Notes:
+#  - This is a no-op for a static (non-DSO) build: those components are
+#    linked directly into libopen-pal, and the ".libs" dirs we point at
+#    simply contain no loadable DSOs.
+#  - It is harmless for tests that never open a framework: they do not
+#    read this MCA parameter.
+#  - The env var prefix really is "OMPI_MCA_" even for OPAL-level
+#    parameters (OPAL_MCA_PREFIX == "OMPI_MCA_"); the full parameter
+#    name is opal_mca_base_component_path (see mca_base_open.c).
+
+AM_TESTS_ENVIRONMENT = \
+	OMPI_MCA_opal_mca_base_component_path="`find $(abs_top_builddir)/opal/mca -type d -name .libs | tr '\n' ':'`"; \
+	export OMPI_MCA_opal_mca_base_component_path;
