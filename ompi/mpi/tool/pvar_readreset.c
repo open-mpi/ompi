@@ -34,7 +34,7 @@ int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
 
     // MPI_T_PVAR_ALL_HANDLES is explicitly disallowed for readreset
     // (no single buffer to fill).
-    if (MPI_T_PVAR_ALL_HANDLES == handle || session != handle->session) {
+    if (MPI_T_PVAR_ALL_HANDLES == handle || NULL == handle || session != handle->session) {
         return MPI_T_ERR_INVALID_HANDLE;
     }
 
@@ -43,6 +43,12 @@ int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
     if (!mca_base_pvar_is_atomic (handle->pvar)) {
         ompi_mpit_unlock ();
         return MPI_T_ERR_PVAR_NO_ATOMIC;   // direct: not via ompit_opal_to_mpit_error
+    }
+
+    // Readreset is not allowed on read-only pvars
+    if (mca_base_pvar_is_readonly (handle->pvar)) {
+        ompi_mpit_unlock ();
+        return MPI_T_ERR_PVAR_NO_WRITE;
     }
 
     ret = mca_base_pvar_handle_read_value (handle, buf);
