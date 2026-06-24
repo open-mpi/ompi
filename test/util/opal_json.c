@@ -10,6 +10,7 @@
  */
 
 #include "opal_config.h"
+#include "opal/constants.h"
 #include "opal/util/json/opal_json.h"
 #include "opal/runtime/opal.h"
 #include "support.h"
@@ -264,9 +265,9 @@ static void test_invalid_json_string(void)
 
 int main(int argc, char **argv)
 {
-
-    opal_init(&argc, &argv);
+    int rc = opal_init(&argc, &argv);
     test_init("opal_util_json");
+    test_verify("opal_init() succeeds", OPAL_SUCCESS == rc);
     test_valid_json();
     test_invalid_json_string();
     opal_finalize();
