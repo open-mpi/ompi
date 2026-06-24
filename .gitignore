@@ -458,6 +458,9 @@ test/datatype/position_noncontig
 test/datatype/reduce_local
 test/datatype/unpack_ooo
 test/datatype/unpack_hetero
+test/datatype/opal_datatype_bigcount
+test/datatype/ompi_datatype_bigcount
+test/datatype/mpi_datatype_bigcount
 
 test/event/signal-test
 test/event/event-test
