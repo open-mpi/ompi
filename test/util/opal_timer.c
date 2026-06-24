@@ -20,14 +20,20 @@
 
 #include <unistd.h>
 
+#include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/runtime/opal.h"
 
 int main(int argc, char *argv[])
 {
     opal_timer_t start, end, diff;
+    int rc;
 
-    opal_init(&argc, &argv);
+    rc = opal_init(&argc, &argv);
+    if (OPAL_SUCCESS != rc) {
+        fprintf(stderr, "opal_init() failed: %d\n", rc);
+        return 1;
+    }
 
     printf("--> frequency: %llu\n", (unsigned long long) opal_timer_base_get_freq());
 
