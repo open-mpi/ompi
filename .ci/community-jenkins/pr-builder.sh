@@ -3,6 +3,7 @@
 # Copyright (c) 2022-2023 Amazon.com, Inc. or its affiliates.  All rights
 #                         reserved.
 # Copyright (c) 2022-2023 Joe Downs.  All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -17,7 +18,7 @@ COMPILER=
 DISTCHECK=0
 AUTOGEN_ARGS=
 CONFIGURE_ARGS=
-MAKE_ARGS=
+MAKE_ARGS="V=1 VERBOSE=1"
 MAKE_J="-j 8"
 PREFIX="${WORKSPACE}/install"
 MPIRUN_MODE=${MPIRUN_MODE:-runall}
@@ -145,13 +146,16 @@ if test "${COMPILER}" != "" ; then
         exit 1
     fi
 
+    set +u
     . ${HOME}/ompi-compiler-setup.sh
     activate_compiler ${COMPILER}
+    set -u
 
-    CONFIGURE_ARGS="${CONFIGURE_ARGS} CC=${CC} CPP=${CPP} CXX=${CXX} FC=${FC}"
-    if test "$FC" = "" ; then
+    CONFIGURE_ARGS="${CONFIGURE_ARGS} CC=${CC} CPP=${CPP} CXX=${CXX}"
+    if [ -z "${FC:-}" ] ; then
         CONFIGURE_ARGS="${CONFIGURE_ARGS} --disable-mpi-fortran"
     else
+        CONFIGURE_ARGS="${CONFIGURE_ARGS} FC=${FC}"
         # Flang doesn't seem good enough (yet) to compile our Fortran bindings,
         # so skip for now.
         case "${COMPILER}" in
@@ -163,6 +167,12 @@ if test "${COMPILER}" != "" ; then
 fi
 
 CONFIGURE_ARGS="$CONFIGURE_ARGS --disable-silent-rules"
+
+# Work around the fact that FreeBSD's hwloc package installs Ze and
+# that breaks something in the cudasm path on FreeBSD.
+if test "${PLATFORM_ID}" = "FreeBSD" ; then
+    CONFIGURE_ARGS="${CONFIGURE_ARGS} --without-ze"
+fi
 
 echo "--> Compiler setup: $CONFIGURE_ARGS"
 
@@ -241,10 +251,13 @@ fi
 
 echo "--> running make ${MAKE_J} ${MAKE_ARGS} all"
 make ${MAKE_J} ${MAKE_ARGS} all
-echo "--> running make check"
-make ${MAKE_ARGS} check
+# while backwards, it is important to run "make install" before "make check",
+# because many of the tests call opal_init(), which will fail unless it can find
+# components.
 echo "--> running make install"
 make ${MAKE_ARGS} install
+echo "--> running make check"
+make ${MAKE_ARGS} check
 
 export PATH="${PREFIX}/bin":${PATH}
 

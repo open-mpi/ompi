@@ -255,7 +255,7 @@ An example for configure UCC and Open MPI with ROCm is shown below:
                       --with-ucx=/path/to/ucx-rocm-install \
                       --with-ucc=/path/to/ucc-rocm-install
 
-To use the UCC component in an application requires setting some
+Using the UCC component in an application requires setting some
 additional parameters:
 
 .. code-block::

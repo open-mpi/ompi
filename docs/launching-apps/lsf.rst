@@ -1,7 +1,12 @@
 Launching with LSF
 ==================
 
-Open MPI supports the LSF resource manager.
+Open MPI supports some versions of the LSF resource manager.
+
+Problems have been reported with using the most recent releases of LSF, in particular
+the version supplied with IBM Spectrum LSF Version 10.1 Fix Pack 15.
+The suggested workaround is to use an older release of the LSF 10.1 package or to
+configure Open MPI without LSF support.
 
 Verify LSF support
 ------------------

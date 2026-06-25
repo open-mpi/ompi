@@ -7,6 +7,7 @@ dnl Copyright (c) 2016      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -56,12 +57,6 @@ EOF
             fi
         else
             echo "Build MPI Fortran bindings: no" >&AS_MESSAGE_FD
-        fi
-
-        if test $WANT_MPI_JAVA_BINDINGS -eq 1 ; then
-            echo "Build MPI Java bindings (experimental): yes" >&AS_MESSAGE_FD
-        else
-            echo "Build MPI Java bindings (experimental): no" >&AS_MESSAGE_FD
         fi
     fi
 

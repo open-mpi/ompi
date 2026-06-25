@@ -30,6 +30,7 @@
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved
  * Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -657,7 +658,7 @@ typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn
 enum {
     /* MPI-1 */
     MPI_TAG_UB,
-    MPI_HOST __mpi_interface_deprecated_in_mpi41__("MPI_HOST is deprecated since MPI 4.1"), 
+    MPI_HOST __mpi_interface_deprecated_in_mpi41__("MPI_HOST is deprecated since MPI 4.1"),
     MPI_IO,
     MPI_WTIME_IS_GLOBAL,
 
@@ -868,7 +869,8 @@ enum {
   OMPI_COMM_TYPE_CLUSTER,
   MPI_COMM_TYPE_HW_UNGUIDED,
   MPI_COMM_TYPE_HW_GUIDED,
-  MPI_COMM_TYPE_RESOURCE_GUIDED
+  MPI_COMM_TYPE_RESOURCE_GUIDED,
+  OMPI_COMM_TYPE_NVLINK
 };
 #define OMPI_COMM_TYPE_NODE MPI_COMM_TYPE_SHARED
 
@@ -2363,7 +2365,7 @@ OMPI_DECLSPEC  int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype data
 OMPI_DECLSPEC  int MPI_Sendrecv_replace_c(void * buf, MPI_Count count, MPI_Datatype datatype,
                                           int dest, int sendtag, int source, int recvtag,
                                           MPI_Comm comm, MPI_Status *status);
-OMPI_DECLSPEC  MPI_Fint MPI_Session_c2f (const MPI_Session session);
+OMPI_DECLSPEC  MPI_Fint MPI_Session_c2f (MPI_Session session);
 OMPI_DECLSPEC  int MPI_Session_attach_buffer(MPI_Session session, void *buffer, int size);
 OMPI_DECLSPEC  int MPI_Session_attach_buffer_c(MPI_Session session, void *buffer, MPI_Count size);
 OMPI_DECLSPEC  int MPI_Session_call_errhandler(MPI_Session session, int errorcode);
@@ -3537,7 +3539,7 @@ OMPI_DECLSPEC  int PMPI_Sendrecv_replace(void * buf, int count, MPI_Datatype dat
 OMPI_DECLSPEC  int PMPI_Sendrecv_replace_c(void * buf, MPI_Count count, MPI_Datatype datatype,
                                            int dest, int sendtag, int source, int recvtag,
                                            MPI_Comm comm, MPI_Status *status);
-OMPI_DECLSPEC  MPI_Fint PMPI_Session_c2f (const MPI_Session session);
+OMPI_DECLSPEC  MPI_Fint PMPI_Session_c2f (MPI_Session session);
 OMPI_DECLSPEC  int PMPI_Session_attach_buffer(MPI_Session session, void *buffer, int size);
 OMPI_DECLSPEC  int PMPI_Session_attach_buffer_c(MPI_Session session, void *buffer, MPI_Count size);
 OMPI_DECLSPEC  int PMPI_Session_call_errhandler(MPI_Session session, int errorcode);
@@ -3689,7 +3691,7 @@ OMPI_DECLSPEC  int PMPI_Type_get_envelope(MPI_Datatype type, int *num_integers,
                                           int *num_addresses, int *num_datatypes,
                                           int *combiner);
 OMPI_DECLSPEC  int PMPI_Type_get_envelope_c(MPI_Datatype type, MPI_Count *num_integers,
-                                          MPI_Count *num_addresses, MPI_Count *num_large_counts, 
+                                          MPI_Count *num_addresses, MPI_Count *num_large_counts,
         				  MPI_Count *num_datatypes, int *combiner);
 OMPI_DECLSPEC  int PMPI_Type_get_extent(MPI_Datatype type, MPI_Aint *lb,
                                         MPI_Aint *extent);

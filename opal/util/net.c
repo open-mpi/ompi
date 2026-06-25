@@ -20,6 +20,7 @@
  *                         reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -211,8 +212,11 @@ bool opal_net_islocalhost(const struct sockaddr *addr)
     case AF_INET: {
         const struct sockaddr_in *inaddr = (struct sockaddr_in *) addr;
         /* if it's in the 127. domain, it shouldn't be routed
-           (0x7f == 127) */
-        if (0x7F000000 == (0x7F000000 & ntohl(inaddr->sin_addr.s_addr))) {
+           (0x7f == 127).  Mask the full top byte (0xFF000000), not just
+           its low 7 bits (0x7F000000): the latter also matches 255.x.x.x
+           because 0xFF & 0x7F == 0x7F, incorrectly reporting 255.0.0.0 as
+           localhost. */
+        if (0x7F000000 == (0xFF000000 & ntohl(inaddr->sin_addr.s_addr))) {
             return true;
         }
         return false;

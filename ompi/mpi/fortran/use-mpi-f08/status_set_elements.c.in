@@ -12,7 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -21,7 +21,7 @@
  * $HEADER$
  */
 
-PROTOTYPE VOID status_set_elements(STATUS status, DATATYPE datatype,
+PROTOTYPE VOID status_set_elements(STATUS_INOUT status, DATATYPE datatype,
 			           COUNT count)
 {
     int c_ierr;
@@ -38,8 +38,6 @@ PROTOTYPE VOID status_set_elements(STATUS status, DATATYPE datatype,
 
         c_ierr = @INNER_CALL@(&c_status, c_type, c_count);
 
-        /* If datatype is really being set, then that needs to be
-           converted.... */
         if (MPI_SUCCESS == c_ierr) {
             PMPI_Status_c2f(&c_status, status);
         }

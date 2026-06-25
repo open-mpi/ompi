@@ -3747,15 +3747,14 @@ subroutine MPI_Session_get_nth_pset(session, info, n, pset_len, pset_name, ierro
 end subroutine MPI_Session_get_nth_pset
 end interface
 
-interface MPI_Session_get_nth_psetlen
-subroutine MPI_Session_get_nth_psetlen(session, n, pset_len, ierror)
-   implicit none
+interface MPI_Session_get_num_psets
+subroutine MPI_Session_get_num_psets(session, info, npset_names, ierror)
    integer, INTENT(IN) :: session
-   INTEGER, INTENT(IN) :: n
-   INTEGER, INTENT(OUT) :: pset_len
+   integer, INTENT(IN) :: info
+   INTEGER, INTENT(OUT) :: npset_names
    INTEGER, INTENT(OUT) :: ierror
-end subroutine MPI_Session_get_nth_psetlen
-end interface 
+end subroutine MPI_Session_get_num_psets
+end interface
 
 interface MPI_Session_get_pset_info
 subroutine MPI_Session_get_pset_info(session, pset_name, info, ierror)
@@ -3858,19 +3857,6 @@ subroutine MPI_Status_set_cancelled(status, flag, ierror)
   logical, intent(in) :: flag
   integer, intent(out) :: ierror
 end subroutine MPI_Status_set_cancelled
-
-end interface
-
-
-interface
-
-subroutine MPI_Status_set_elements(status, datatype, count, ierror)
-  include 'mpif-config.h'
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
-  integer, intent(in) :: datatype
-  integer, intent(in) :: count
-  integer, intent(out) :: ierror
-end subroutine MPI_Status_set_elements
 
 end interface
 

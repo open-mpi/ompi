@@ -234,7 +234,7 @@ do {                                                                    \
 do {                                                                    \
     /* init/re-init the request */                                      \
     request->req_base.req_pml_complete = false;                         \
-    request->req_base.req_ompi.req_complete = false;                    \
+    request->req_base.req_ompi.req_complete = REQUEST_PENDING;          \
     request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
                                                                         \
     /* always set the req_status.MPI_TAG to ANY_TAG before starting the \
@@ -256,7 +256,7 @@ do {                                                                    \
 do {                                                                    \
     /* init/re-init the request */                                      \
     request->req_base.req_pml_complete = false;                         \
-    request->req_base.req_ompi.req_complete = false;                    \
+    request->req_base.req_ompi.req_complete = REQUEST_PENDING;          \
     request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
                                                                         \
     /* always set the req_status.MPI_TAG to ANY_TAG before starting the \
@@ -278,7 +278,7 @@ do {                                                                    \
 /*     opal_output(0, "posting hvy request %d\n", request);                */ \
     /* init/re-init the request */                                      \
     request->req_base.req_pml_complete = false;                         \
-    request->req_base.req_ompi.req_complete = false;                    \
+    request->req_base.req_ompi.req_complete = REQUEST_PENDING;          \
     request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
                                                                         \
     /* always set the req_status.MPI_TAG to ANY_TAG before starting the \

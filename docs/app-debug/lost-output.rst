@@ -18,7 +18,7 @@ MPI process when it displays the error message.  If the process's
 memory is already corrupted, Open MPI's attempt to allocate memory may
 fail and the process will simply terminate, possibly silently.  When Open
 MPI does not attempt to aggregate error messages, most of its setup
-work is done when the MPI library is initiaized  and no memory is allocated
+work is done when the MPI library is initialized and no memory is allocated
 during the "print the error" routine.  It therefore almost always successfully
 outputs error messages in real time |mdash| but at the expense that you'll
 potentially see the same error message for *each* MPI process that

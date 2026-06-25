@@ -58,7 +58,7 @@ neither modifies, interprets, nor distributes them:
    int main(int argv, char *argv[]) {
        int provided;
        MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-       /* ...body of main MPI pogram... */
+       /* ...body of main MPI program... */
        MPI_Finalize();
        return 0;
    }
@@ -142,7 +142,7 @@ of the values listed below.
           environment variable.
 
           Starting with Open MPI v6.0.0, the Open MPI community
-          recomends using one of the string name variants so that it
+          recommends using one of the string name variants so that it
           can be correctly mapped to the corresponding Open MPI ABI
           value or the MPI Standard ABI value, as relevant.
 

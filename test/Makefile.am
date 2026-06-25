@@ -14,6 +14,7 @@
 # Copyright (c) 2015-2016 Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2017      IBM Corporation. All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -24,6 +25,6 @@
 # support needs to be first for dependencies
 SUBDIRS = support asm class threads datatype util mpool
 if PROJECT_OMPI
-SUBDIRS += monitoring spc hwpc_cxi
+SUBDIRS += monitoring spc hwpc_cxi mpi
 endif
 DIST_SUBDIRS = event $(SUBDIRS)

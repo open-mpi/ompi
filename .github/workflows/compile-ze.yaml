@@ -23,7 +23,7 @@ jobs:
         cd build
         cmake ../ -DCMAKE_INSTALL_PREFIX=/opt/ze
         sudo make -j1 install
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
             submodules: recursive
     - name: Build Open MPI (VPATH)

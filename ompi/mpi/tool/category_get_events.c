@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,10 +32,32 @@
 
 int MPI_T_category_get_events(int cat_index, int len, int indices[])
 {
+    const mca_base_var_group_t *group;
     int rc = MPI_SUCCESS;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
     }
+
+    ompi_mpit_lock ();
+
+    do {
+        /* Look up the category to validate cat_index, consistent with the
+           sibling MPI_T_category_get_{cvars,pvars,categories} functions. */
+        rc = mca_base_var_group_get (cat_index, &group);
+        if (0 > rc) {
+            rc = (OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX : MPI_T_ERR_INVALID;
+            break;
+        }
+
+        /* Open MPI does not yet register any MPI_T events, so there is
+           nothing to copy into the caller's len-element indices[] array.
+           When events are implemented, populate indices[] from the
+           per-category event list here. */
+        rc = MPI_SUCCESS;
+    } while (0);
+
+    ompi_mpit_unlock ();
+
     return rc;
 }

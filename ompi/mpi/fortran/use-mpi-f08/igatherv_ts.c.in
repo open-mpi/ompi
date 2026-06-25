@@ -101,5 +101,8 @@ PROTOTYPE VOID igatherv(BUFFER_ASYNC x1, COUNT sendcount, DATATYPE sendtype,
 
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(displs, tmp_displs, c_request, c_ierr, idx);
+    if (idx > 0) {
+        ompi_coll_base_add_release_arrays_cb(c_request);
+    }
 
 }

@@ -226,8 +226,7 @@ identical) directory structures under them:
 There are other top-level directories in each of the sub-projects,
 each having to do with specific logic and code for that project.  For
 example, the MPI API implementations can be found under
-``ompi/mpi/LANGUAGE``, where ``LANGUAGE`` is ``c``, ``fortran``, or
-``java``.
+``ompi/mpi/LANGUAGE``, where ``LANGUAGE`` is ``c`` or ``fortran``.
 
 The layout of the ``mca`` trees are strictly defined.  They are of the
 form:

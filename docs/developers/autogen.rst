@@ -4,7 +4,7 @@ Running ``autogen.pl``
 You can now run OMPI's top-level ``autogen.pl`` script.  This script
 will invoke the GNU Autoconf, Automake, and Libtool commands in the
 proper order and do a bunch of component discovery and housekeeping to
-setup to run OMPI's top-level ``configure`` script.
+set up to run OMPI's top-level ``configure`` script.
 
 Running ``autogen.pl`` may take a few minutes, depending on your
 system.  It's not very exciting to watch.

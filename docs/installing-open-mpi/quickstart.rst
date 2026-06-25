@@ -37,9 +37,11 @@ packages:
 .. code-block:: sh
 
    # For Homebrew
-   shell$ brew install openmpi
+   # https://formulae.brew.sh/formula/open-mpi
+   shell$ brew install open-mpi
 
    # For MacPorts
+   # https://ports.macports.org/search/?q=openmpi
    shell$ port install openmpi
 
 .. important:: Binary packages may or may not include support for

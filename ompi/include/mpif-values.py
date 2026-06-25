@@ -11,6 +11,7 @@
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2025      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -342,6 +343,7 @@ constants = {
     'MPI_COMM_TYPE_HW_UNGUIDED': 12,
     'MPI_COMM_TYPE_HW_GUIDED': 13,
     'MPI_COMM_TYPE_RESOURCE_GUIDED': 14,
+    'OMPI_COMM_TYPE_NVLINK': 15,
 }
 
 # IO Constants

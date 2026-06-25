@@ -1,4 +1,4 @@
-.. _ompi-features-extentions-label:
+.. _ompi-features-extensions-label:
 
 Open MPI extensions
 ===================

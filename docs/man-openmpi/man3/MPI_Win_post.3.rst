@@ -46,7 +46,7 @@ MPI_MODE_NOSTORE
 
 MPI_MODE_NOPUT
    Informs that the local window will not be updated by put or
-   accummulate calls until the ensuing wait synchronization.
+   accumulate calls until the ensuing wait synchronization.
 
 
 ERRORS

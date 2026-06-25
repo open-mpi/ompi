@@ -43,12 +43,16 @@ mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, size_t r
     ptrdiff_t gap;
     char *rbuf1 = NULL, *sbuf1 = NULL, *rbuf2 = NULL;
     int sbuf_dev, rbuf_dev;
-    size_t sbufsize, rbufsize;
+    size_t sbufsize, rbufsize, rbuf_in_size;
     int rc;
 
     rbufsize = opal_datatype_span(&dtype->super, rcount, &gap);
 
     sbufsize = rbufsize * ompi_comm_size(comm);
+    /* With MPI_IN_PLACE the input lives entirely in rbuf and spans
+     * comm_size * rcount elements; stage the full span device->host so the
+     * fallback collective doesn't read past the host allocation. */
+    rbuf_in_size = (MPI_IN_PLACE == sbuf) ? sbufsize : rbufsize;
     rc = mca_coll_accelerator_check_buf((void *)sbuf, &sbuf_dev);
     if (rc < 0) {
         return rc;
@@ -67,12 +71,12 @@ mca_coll_accelerator_reduce_scatter_block(const void *sbuf, void *rbuf, size_t r
         return rc;
     }
     if (rc > 0) {
-        rbuf1 = (char*)malloc(rbufsize);
+        rbuf1 = (char*)malloc(rbuf_in_size);
         if (NULL == rbuf1) {
             if (NULL != sbuf1) free(sbuf1);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        mca_coll_accelerator_memcpy(rbuf1, MCA_ACCELERATOR_NO_DEVICE_ID, rbuf, rbuf_dev, rbufsize,
+        mca_coll_accelerator_memcpy(rbuf1, MCA_ACCELERATOR_NO_DEVICE_ID, rbuf, rbuf_dev, rbuf_in_size,
                                     MCA_ACCELERATOR_TRANSFER_DTOH);
         rbuf2 = rbuf; /* save away original buffer */
         rbuf = rbuf1 - gap;

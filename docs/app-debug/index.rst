@@ -8,7 +8,7 @@ logic errors, uninitialized variables, storage overlays and timing
 problems.
 
 Debugging a parallel application can be further complicated
-by problems that can include additional race conditions and aysynchronous
+by problems that can include additional race conditions and asynchronous
 events, as well as understanding execution of multiple application
 processes running simultaneously.
 

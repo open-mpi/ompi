@@ -14,7 +14,7 @@ operating systems supported has changed over time (e.g., native
 Microsoft Windows support was added in v1.3.3, and although it was
 removed prior to v1.8, is still supported through Cygwin).  :ref:`See
 the Platform Notes section <platform-notes-section-label>` for a
-listing of the OSes that that version supports.
+listing of the OSes that version supports.
 
 Open MPI is fairly POSIX-neutral, so it will run without *too* many
 modifications on most POSIX-like systems.  Hence, if we haven't listed

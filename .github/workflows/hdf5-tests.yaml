@@ -13,7 +13,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y --no-install-recommends wget
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
             submodules: recursive
     - name: Build Open MPI

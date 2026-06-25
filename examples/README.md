@@ -21,7 +21,6 @@ The MPI version of the canonical "hello world" program:
 * Fortran mpif.h: `hello_mpifh.f`
 * Fortran use mpi: `hello_usempi.f90`
 * Fortran use mpi_f08: `hello_usempif08.f90`
-* Java: `Hello.java`
 * C shmem.h: `hello_oshmem_c.c`
 * Fortran shmem.fh: `hello_oshmemfh.f90`
 
@@ -34,7 +33,6 @@ Send a trivial message around in a ring:
 * Fortran mpif.h: `ring_mpifh.f`
 * Fortran use mpi: `ring_usempi.f90`
 * Fortran use mpi_f08: `ring_usempif08.f90`
-* Java: `Ring.java`
 * C shmem.h: `ring_oshmem_c.c`
 * Fortran shmem.fh: `ring_oshmemfh.f90`
 

@@ -160,7 +160,13 @@ prototype_files = \
         session_iflush_buffer.c.in \
         ssend_init_ts.c.in \
         ssend_ts.c.in \
+        status_get_error.c.in \
+        status_get_source.c.in \
+        status_get_tag.c.in \
         status_set_elements.c.in \
+        status_set_error.c.in \
+        status_set_source.c.in \
+        status_set_tag.c.in \
         testany.c.in \
         type_contiguous.c.in \
         type_create_darray.c.in \
