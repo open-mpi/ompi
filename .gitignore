@@ -479,6 +479,11 @@ test/mpool/mpool_memkind
 
 test/mpi/environment/chello
 
+test/mpi/file/file_info_defaults
+test/mpi/file/file_info_hints
+test/mpi/file/file_info_memkind
+test/mpi/file/file_info_set_view
+
 test/runtime/parse_context
 test/runtime/sigchld
 test/runtime/start_shut
