@@ -56,9 +56,25 @@ PROTOTYPE ERROR_CLASS type_create_resized(DATATYPE oldtype,
       OMPI_ERRHANDLER_NOHANDLE_RETURN( rc, rc, FUNC_NAME );
    }
 
+   /* lb and extent are byte displacements that may apply in both memory
+    * and file contexts, so the large-count interface types them as
+    * MPI_Count rather than MPI_Aint (MPI-5.0 sec 19.2).  Store them where
+    * MPI_Type_get_contents[_c] is required to return them: in the
+    * large-count array for the _c interface (so num_addresses == 0,
+    * num_large_counts == 2), and in the address array for the classic
+    * interface (num_addresses == 2). */
    {
-      MPI_Count a_a[2] = {lb, extent};
-      ompi_datatype_set_args( *newtype, 0, 0, NULL, 2, OMPI_DISP_ARRAY_CREATE(a_a), 1, &oldtype, MPI_COMBINER_RESIZED );
+#if OMPI_BIGCOUNT_SRC
+      MPI_Count a_l[2] = {lb, extent};
+      ompi_count_array_t a_i[1] = {OMPI_COUNT_ARRAY_CREATE(a_l)};
+      ompi_datatype_set_args( *newtype, 0, 2, a_i, 0, OMPI_DISP_ARRAY_NULL,
+                              1, &oldtype, MPI_COMBINER_RESIZED );
+#else
+      MPI_Aint a_a[2] = {lb, extent};
+      ompi_datatype_set_args( *newtype, 0, 0, NULL, 2,
+                              OMPI_DISP_ARRAY_CREATE(a_a),
+                              1, &oldtype, MPI_COMBINER_RESIZED );
+#endif
    }
 
    return MPI_SUCCESS;

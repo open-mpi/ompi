@@ -36,13 +36,19 @@ block(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
       ompi_datatype_t *type_old, ompi_datatype_t **type_new,
       ptrdiff_t *st_offset)
 {
-    int blksize, global_size, mysize, i, j, rc, start_loop, step;
+    int i, rc, start_loop, step;
+    /* global_size and the derived block/local sizes can exceed INT_MAX for
+     * big-count gsizes, so they must be 64 bit (signed: mysize/j can go
+     * negative before clamping). */
+    ptrdiff_t blksize, global_size, mysize, j;
     ptrdiff_t stride, disps[2];
 
     global_size = ompi_count_array_get(gsize_array, dim);
 
     if (darg == MPI_DISTRIBUTE_DFLT_DARG)
-        blksize = (global_size + nprocs - 1) / nprocs;
+        /* ceil(global_size/nprocs) without the "+ nprocs - 1" addition, which
+         * would overflow ptrdiff_t for a global_size near PTRDIFF_MAX. */
+        blksize = global_size / nprocs + (0 != global_size % nprocs);
     else {
         blksize = darg;
     }
@@ -59,13 +65,13 @@ block(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
 
     stride = orig_extent;
     if (dim == start_loop) {
-        rc = ompi_datatype_create_contiguous(mysize, type_old, type_new);
+        rc = ompi_datatype_create_contiguous((size_t) mysize, type_old, type_new);
         if (OMPI_SUCCESS != rc) return rc;
     } else {
         for (i = start_loop ; i != dim ; i += step) {
             stride *= ompi_count_array_get(gsize_array, i);
         }
-        rc = ompi_datatype_create_hvector(mysize, 1, stride, type_old, type_new);
+        rc = ompi_datatype_create_hvector((size_t) mysize, 1, stride, type_old, type_new);
         if (OMPI_SUCCESS != rc) return rc;
     }
 
@@ -97,7 +103,11 @@ cyclic(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
        ompi_datatype_t* type_old, ompi_datatype_t **type_new,
        ptrdiff_t *st_offset)
 {
-    int blksize, i, blklens[2], st_index, end_index, local_size, rem, count, rc;
+    int blksize, i, blklens[2], rc;
+    /* The global index range and local element count can exceed INT_MAX
+     * for big-count gsizes (blksize stays int -- it is the int-typed
+     * distribution argument). */
+    ptrdiff_t st_index, end_index, local_size, rem, count;
     ptrdiff_t stride, disps[2];
     ompi_datatype_t *type_tmp, *types[2];
 
@@ -107,21 +117,24 @@ cyclic(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
         blksize = darg;
     }
 
-    st_index = rank * blksize;
+    /* blksize stays int (it is the int distribution argument), but force the
+     * index/stride products to 64 bits so they cannot overflow before being
+     * stored in the (widened) ptrdiff_t locals. */
+    st_index = (ptrdiff_t) rank * blksize;
     end_index = ompi_count_array_get(gsize_array, dim) - 1;
 
     if (end_index < st_index) {
         local_size = 0;
     } else {
-        local_size = ((end_index - st_index + 1)/(nprocs*blksize))*blksize;
-        rem = (end_index - st_index + 1) % (nprocs*blksize);
+        local_size = ((end_index - st_index + 1)/((ptrdiff_t) nprocs*blksize))*blksize;
+        rem = (end_index - st_index + 1) % ((ptrdiff_t) nprocs*blksize);
         local_size += rem < blksize ? rem : blksize;
     }
 
     count = local_size / blksize;
     rem = local_size % blksize;
 
-    stride = nprocs*blksize*orig_extent;
+    stride = (ptrdiff_t) nprocs*blksize*orig_extent;
     if (order == MPI_ORDER_FORTRAN) {
         for (i=0; i<dim; i++) {
             stride *= ompi_count_array_get(gsize_array, i);
@@ -132,7 +145,7 @@ cyclic(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
         }
     }
 
-    rc = ompi_datatype_create_hvector(count, blksize, stride, type_old, type_new);
+    rc = ompi_datatype_create_hvector((size_t) count, blksize, stride, type_old, type_new);
     if (OMPI_SUCCESS != rc) return rc;
 
     if (rem) {
@@ -141,7 +154,7 @@ cyclic(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
 
         types  [0] = *type_new; types  [1] = type_old;
         disps  [0] = 0;         disps  [1] = count*stride;
-        blklens[0] = 1;         blklens[1] = rem;
+        blklens[0] = 1;         blklens[1] = (int) rem; /* rem < blksize (int) */
 
         rc = ompi_datatype_create_struct(2, OMPI_COUNT_ARRAY_CREATE(blklens), OMPI_DISP_ARRAY_CREATE(disps), types, &type_tmp);
         ompi_datatype_destroy(type_new);
@@ -165,7 +178,7 @@ cyclic(ompi_count_array_t gsize_array, int dim, int ndims, int nprocs,
     rc = opal_datatype_resize( &(*type_new)->super, disps[0], disps[1] );
     if (OMPI_SUCCESS != rc) return rc;
 
-    *st_offset = rank * blksize;
+    *st_offset = (ptrdiff_t) rank * blksize;
     /* in terms of no. of elements of type oldtype in this dimension */
     if (local_size == 0) *st_offset = 0;
 

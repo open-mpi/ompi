@@ -238,6 +238,13 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         break;
 
     case MPI_COMBINER_RESIZED:
+        /* The large-count interface passes lb and extent as two MPI_Count
+         * values in counts[0]; the classic interface passes them through
+         * the displacement array instead (cl == 0 here, handled by the
+         * generic MPI_Aint copy below). */
+        if (cl > 0) {
+            copy_count_array(2, &pi, &pl, counts[0]);
+        }
         break;
 
     case MPI_COMBINER_HINDEXED_BLOCK:
@@ -1017,8 +1024,18 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
         break;
         /******************************************************************/
     case MPI_COMBINER_RESIZED:
-        ompi_datatype_create_resized(d[0], a[0], a[1], &datatype);
-        ompi_datatype_set_args( datatype, 0, 0, NULL, 2, disp_array, 1, d, MPI_COMBINER_RESIZED );
+        if (NULL == l) {
+            /* classic: lb/extent were stored as MPI_Aint displacements */
+            ompi_datatype_create_resized(d[0], a[0], a[1], &datatype);
+            ompi_datatype_set_args( datatype, 0, 0, NULL, 2, disp_array, 1, d, MPI_COMBINER_RESIZED );
+        } else {
+            /* large count: lb/extent were stored as MPI_Count large counts.
+             * lb may be negative; the size_t -> ptrdiff_t cast restores the
+             * signed value via a two's-complement round-trip. */
+            ompi_count_array_t a_i[1] = {OMPI_COUNT_ARRAY_CREATE(l)};
+            ompi_datatype_create_resized(d[0], (ptrdiff_t) l[0], (ptrdiff_t) l[1], &datatype);
+            ompi_datatype_set_args( datatype, 0, 2, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_RESIZED );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_HINDEXED_BLOCK:
@@ -1027,7 +1044,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
             size_t ca;
             opal_disp_array_t displacements; // for create_hindexed_block
             opal_disp_array_t disp_args; // for set_args
-            opal_count_array_t a_i[3];// = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(&bLength)};
+            opal_count_array_t a_i[3];
             if (l == NULL) {
                 count = i[0];
                 bLength = i[1];
@@ -1043,7 +1060,10 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
                 a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 2);
-                cl = 3;
+                /* count + blocklength + count displacements; hardcoding 3
+                 * here (the count == 1 case) under-allocates the large-count
+                 * array in set_args and corrupts the envelope. */
+                cl = 2 + count;
                 displacements = OMPI_DISP_ARRAY_CREATE(l + 2); // displacements are MPI_Count
                 disp_args = OMPI_DISP_ARRAY_NULL;
                 ca = 0;
