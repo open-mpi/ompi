@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2019-2025 Bull SAS.  All rights reserved.
+ * Copyright (c) 2019-2026 Bull SAS.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -106,7 +106,6 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
 
     char *input_buf = NULL;
     mca_common_ubcl_endpoint_t *endpoint = NULL;
-    ubcl_memory_descriptor_t sbuf_md;
     ubcl_error_t err = 0;
     ubcl_send_mode_t send_mode;
     uint64_t cid;
@@ -127,12 +126,12 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
     endpoint = (mca_common_ubcl_endpoint_t *) req->proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML];
 
     /* Init UBCL MD */
-    err = ubcl_memory_descriptor_init(&sbuf_md);
+    err = ubcl_memory_descriptor_init(&req->md);
     if (UBCL_SUCCESS != err) {
         mca_pml_ubcl_error(ubcl_error_to_ompi(err), "Failed to initialize ubcl MD");
     }
     if (pml_ubcl_request_is_cuda_buf(req)) {
-        err = ubcl_memory_descriptor_set_properties(UBCL_BUF_IS_CUDA, &sbuf_md);
+        err = ubcl_memory_descriptor_set_properties(UBCL_BUF_IS_CUDA, &req->md);
         if (UBCL_SUCCESS != err) {
             mca_pml_ubcl_error(ubcl_error_to_ompi(err),
                                "Failed to set MD properties, got error: %d", err);
@@ -143,7 +142,7 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
     if (! MCA_PML_UBCL_REQUEST_NEED_XPACK(req)) {
         ptrdiff_t gap = 0;
         size_t span = opal_datatype_span(&req->datatype->super, req->count, &gap);
-        err = ubcl_memory_descriptor_build_contiguous(input_buf+gap, span, &sbuf_md);
+        err = ubcl_memory_descriptor_build_contiguous(input_buf + gap, span, &req->md);
         if (UBCL_SUCCESS != err) {
             mca_pml_ubcl_error(ubcl_error_to_ompi(err),
                                "Failed to build contiguous memory descriptor for input buffer");
@@ -151,11 +150,9 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
     }
 
     /* Always build a custom MD representation so that we have a fallback */
-    err = ubcl_memory_descriptor_build_custom((void *) &req->convertor,
-                                              pml_ubcl_datatype_pack,
-                                              pml_ubcl_datatype_unpack,
-                                              pml_ubcl_datatype_mem_size,
-                                              pml_ubcl_datatype_finish, &sbuf_md);
+    err = ubcl_memory_descriptor_build_custom((void *) &req->convertor, pml_ubcl_datatype_pack,
+                                              pml_ubcl_datatype_unpack, pml_ubcl_datatype_mem_size,
+                                              pml_ubcl_datatype_finish, &req->md);
     if (UBCL_SUCCESS != err) {
         mca_pml_ubcl_error(ubcl_error_to_ompi(err),
                            "Failed to build custom memory descriptor for input buffer");
@@ -171,9 +168,9 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
     OPAL_OUTPUT_VERBOSE(
         (50, mca_pml_ubcl_component.output, "PML/UBCL ISEND: sending to rank=%zu\n", endpoint->rank));
 
-    err = ubcl_isend(sbuf_md, tag, ubcl_cid, endpoint->rank, send_mode,
-                     (ubcl_completion_callback_fct) &ubcl_request_send_complete_cb,
-                     *request, &req->ubcl_operation_handle);
+    err = ubcl_isend(req->md, tag, ubcl_cid, endpoint->rank, send_mode,
+                     (ubcl_completion_callback_fct) ubcl_request_send_complete_cb, *request,
+                     &req->ubcl_operation_handle);
     if (UBCL_ERROR == err) {
         mca_pml_ubcl_error(ubcl_error_to_ompi(err), "Failed to send data");
     }
