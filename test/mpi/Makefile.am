@@ -20,5 +20,5 @@
 
 # Note: the "environment" subdirectory is stale (it links against a
 # long-gone src/ library layout) and is not part of the build; only the
-# "t" MPI_T tests are wired in.
-SUBDIRS = t
+# "t" MPI_T tests and the "file" MPI-IO info tests are wired in.
+SUBDIRS = t file
