@@ -307,10 +307,12 @@ static void pack_unpack_check(const char *label, ompi_datatype_t *type)
      * cl would shrink here. */
     size_t ci0, cl0, ca0, cd0, ci1, cl1, ca1, cd1;
     int32_t comb0 = -1, comb1 = -2;
-    ompi_datatype_get_args(type, 0, &ci0, NULL, &cl0, NULL, &ca0, NULL, &cd0,
-                           NULL, &comb0);
-    ompi_datatype_get_args(rebuilt, 0, &ci1, NULL, &cl1, NULL, &ca1, NULL, &cd1,
-                           NULL, &comb1);
+    CHECK(OMPI_SUCCESS
+          == ompi_datatype_get_args(type, 0, &ci0, NULL, &cl0, NULL, &ca0, NULL,
+                                    &cd0, NULL, &comb0));
+    CHECK(OMPI_SUCCESS
+          == ompi_datatype_get_args(rebuilt, 0, &ci1, NULL, &cl1, NULL, &ca1,
+                                    NULL, &cd1, NULL, &comb1));
     CHECK(comb0 == comb1);
     CHECK(ci0 == ci1);
     CHECK(cl0 == cl1);
@@ -337,11 +339,13 @@ static void pack_unpack_check(const char *label, ompi_datatype_t *type)
             CHECK(false); /* allocation failure */
         } else {
             size_t qi = ci0, ql = cl0, qa = ca0, qd = cd0;
-            ompi_datatype_get_args(type, 1, &qi, i0, &ql, l0, &qa, a0, &qd, d0,
-                                   NULL);
+            CHECK(OMPI_SUCCESS
+                  == ompi_datatype_get_args(type, 1, &qi, i0, &ql, l0, &qa, a0,
+                                            &qd, d0, NULL));
             qi = ci1; ql = cl1; qa = ca1; qd = cd1;
-            ompi_datatype_get_args(rebuilt, 1, &qi, i1, &ql, l1, &qa, a1, &qd,
-                                   d1, NULL);
+            CHECK(OMPI_SUCCESS
+                  == ompi_datatype_get_args(rebuilt, 1, &qi, i1, &ql, l1, &qa,
+                                            a1, &qd, d1, NULL));
 
             for (size_t k = 0; k < ci0; ++k) {
                 CHECK(i0[k] == i1[k]);
