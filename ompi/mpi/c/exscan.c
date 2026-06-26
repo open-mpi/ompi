@@ -64,8 +64,15 @@ int MPI_Exscan(const void *sendbuf, void *recvbuf, int count,
                                           FUNC_NAME);
         }
 
-        /* Unrooted operation -- same checks for intracommunicators
-           and intercommunicators */
+        /* No intercommunicators allowed! (MPI does not define
+           MPI_EXSCAN on intercommunicators) */
+
+        else if (OMPI_COMM_IS_INTER(comm)) {
+          err = MPI_ERR_COMM;
+        }
+
+        /* Unrooted operation; checks for all ranks */
+
         else if (MPI_OP_NULL == op) {
             err = MPI_ERR_OP;
         } else if (!ompi_op_is_valid(op, datatype, &msg, FUNC_NAME)) {
