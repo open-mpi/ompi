@@ -59,12 +59,12 @@ can be used with ``configure``:
   Set configuration values for Portals 4
 
 * ``--with-psm2=DIR``:
-  Specify the directory where the Intel Omni-Path PSM2 library and
+  Specify the directory where the Cornelis Networks Omni-Path PSM2 library and
   header files are located.  This option is generally only necessary
   if the PSM2 headers and libraries are not in default compiler/linker
   search paths.
 
-  PSM is the support library for Intel Omni-Path network adapters.
+  PSM2 is the support library for Cornelis Networks Omni-Path network adapters.
 
 * ``--with-psm2-libdir=DIR``:
   Look in directory for the PSM2 libraries.  By default, Open MPI will
