@@ -273,6 +273,9 @@ typedef uint8_t mca_btl_base_tag_t;
  */
 #define MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION 0x800000
 
+/** btl supports multi-rail with module_index in registration handle */
+#define MCA_BTL_FLAGS_MULTI_RAIL 0x1000000
+
 /* End of btl flags. if additional flags are added please update
  * mca_btl_base_flag_enum_flags in btl_base_frame.c */
 

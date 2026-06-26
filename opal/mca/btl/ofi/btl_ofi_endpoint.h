@@ -40,6 +40,12 @@ struct mca_btl_base_endpoint_t {
     struct fid_ep *ofi_endpoint;
     fi_addr_t peer_addr;
 
+    /** multi-rail: per-peer-module addresses (one fi_addr_t per peer rail).
+     *  peer_addrs[k] resolves to the peer's module k endpoint in this module's AV.
+     *  Used by get/put to target the correct remote NIC matching the remote rkey. */
+    fi_addr_t *peer_addrs;
+    int num_peer_addrs;
+
     /** endpoint proc */
     opal_proc_t *ep_proc;
 

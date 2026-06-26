@@ -290,16 +290,16 @@ mca_btl_ofi_context_t *get_ofi_context(mca_btl_ofi_module_t *btl)
     /* With TLS, we cache the context we use. */
     static volatile int64_t cur_num = 0;
 
-    if (OPAL_UNLIKELY(my_context == NULL)) {
-        OPAL_THREAD_LOCK(&btl->module_lock);
+    /* Multi-rail fix: cache a per-thread context slot index and always
+     * index into the requested module's own contexts array (not a fixed
+     * pointer to one module's context). */
+    static opal_thread_local int64_t my_ctx_idx = -1;
 
-        my_context = &btl->contexts[cur_num];
-        cur_num = (cur_num + 1) % btl->num_contexts;
-
-        OPAL_THREAD_UNLOCK(&btl->module_lock);
+    if (OPAL_UNLIKELY(my_ctx_idx < 0)) {
+        my_ctx_idx = opal_atomic_fetch_add_64(&cur_num, 1);
     }
 
-    assert(my_context);
+    my_context = &btl->contexts[my_ctx_idx % btl->num_contexts];
     return my_context;
 #else
     return get_ofi_context_rr(btl);
@@ -447,10 +447,15 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
                 }
                 break;
             }
-            default:
-                BTL_ERROR(("fi_cq_readerr: %s(%d) (provider err_code = %d)\n",
-                           fi_strerror(-cqerr.err), cqerr.err, cqerr.prov_errno));
+            default: {
+                char _pbuf[256];
+                const char *_ps = fi_cq_strerror(context->cq,
+                    cqerr.prov_errno, cqerr.err_data, _pbuf, sizeof(_pbuf));
+                BTL_ERROR(("fi_cq_readerr: %s(%d) prov_errno=%d prov_str=\"%s\"",
+                    fi_strerror(-cqerr.err), cqerr.err, cqerr.prov_errno,
+                    _ps ? _ps : "(null)"));
                 MCA_BTL_OFI_ABORT();
+            }
             }
         }
     }

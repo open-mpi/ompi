@@ -123,6 +123,11 @@ struct mca_btl_ofi_module_t {
 
     char *linux_device_name;
 
+    /* multi-rail: this module endpoint name + index, for per-rail modex pairing */
+    void *ep_name;
+    size_t ep_namelen;
+    int module_index;
+
     /** whether the module has been fully initialized or not */
     bool initialized;
     bool use_virt_addr;
@@ -157,6 +162,7 @@ struct mca_btl_ofi_component_t {
     /** number of TL modules */
     int module_count;
     int num_contexts_per_module;
+    int max_modules;
     int num_cqe_read;
     int progress_threshold;
     int mode;
@@ -182,8 +188,8 @@ struct mca_btl_base_registration_handle_t {
     uint64_t rkey;
     void *desc;
     void *base_addr;
+    int module_index;   /* rail/domain that registered this MR (multi-rail) */
 };
-
 struct mca_btl_ofi_reg_t {
     mca_rcache_base_registration_t base;
     struct fid_mr *ur_mr;
