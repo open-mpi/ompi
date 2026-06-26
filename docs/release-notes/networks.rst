@@ -24,7 +24,6 @@ There are multiple MPI network models available in this release:
 
   * OpenFabrics Interfaces ("libfabric" tag matching)
   * Intel Omni-Path PSM2 (version 11.2.173 or later)
-  * Intel True Scale PSM (QLogic InfiniPath)
   * Portals 4
 
 * ``ucx`` uses the `Unified Communication X (UCX) communication
