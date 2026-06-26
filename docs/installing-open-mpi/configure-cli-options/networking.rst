@@ -32,7 +32,7 @@ can be used with ``configure``:
   compiler/linker search paths.
 
   Libfabric is the support library for OpenFabrics Interfaces-based
-  network adapters, such as Cisco usNIC, Intel True Scale PSM, etc.
+  network adapters, such as Cisco usNIC, etc.
 
 * ``--with-libfabric-libdir=DIR``:
   Look in directory for the libfabric libraries.  By default, Open MPI
@@ -57,20 +57,6 @@ can be used with ``configure``:
 * ``--with-portals4-max-md-size=SIZE`` and
   ``--with-portals4-max-va-size=SIZE``:
   Set configuration values for Portals 4
-
-* ``--with-psm=<directory>``:
-  Specify the directory where the QLogic InfiniPath / Intel True Scale
-  PSM library and header files are located.  This option is generally
-  only necessary if the PSM headers and libraries are not in default
-  compiler/linker search paths.
-
-  PSM is the support library for QLogic InfiniPath and Intel True Scale
-  network adapters.
-
-* ``--with-psm-libdir=DIR``:
-  Look in directory for the PSM libraries.  By default, Open MPI will
-  look in ``DIR/lib`` and ``DIR/lib64``, which covers most cases.  This
-  option is only needed for special configurations.
 
 * ``--with-psm2=DIR``:
   Specify the directory where the Intel Omni-Path PSM2 library and
