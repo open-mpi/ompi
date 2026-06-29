@@ -208,11 +208,130 @@ When working on ABI-related code, remember:
 1. Regenerate: `./autogen.pl`
 2. Reconfigure: `./configure <same options>`
 3. Rebuild: `make -j`
-4. Test: `make check` and smoke-test examples (see [`/AGENTS.md`](/AGENTS.md))
+4. Test: see the MPI ABI test suite section below
 
 **Test both ABIs:**
 - OMPI ABI: `mpicc` + `mpirun`
 - MPI ABI: `mpicc_abi` + `mpirun` (verify in `<prefix>/include/standard_abi/`)
+
+---
+
+## MPI ABI test suite
+
+Open MPI includes a dedicated test suite under `test/mpi-abi/` that
+validates the ABI-facing surface. The suite is a Python program
+(`mpi_abi_tests.py`) that checks metadata consistency, installed
+artifacts, symbol reachability, handle translation, complete public API
+call paths, callback conversion, and cross-implementation compatibility.
+
+**Important:** These tests validate the **ABI layer** (the translation
+between MPI ABI and OMPI ABI), not the underlying MPI algorithms. They
+assume the core Open MPI implementation is already tested by the general
+MPI test suite.
+
+### Three make targets
+
+#### 1. `make check` — Fast metadata and manifest checks
+
+Runs automatically as part of the standard `make check` (via
+`check-local` in `test/mpi-abi/`).
+
+- **Prerequisites:** None — runs entirely from source and build trees
+- **No installation required:** Does not need `mpicc_abi`, `mpirun`, or
+  an installed Open MPI
+- **What it checks:**
+  - Compares MPI-standard-derived ABI metadata (from `docs/`) against
+    the test suite's manifest
+  - Validates classification rules, generated-source contracts, C header
+    constants, and Fortran helper contracts
+  - Catches drift between the ABI description and what's implemented,
+    skipped, or uncovered **before** installation or launching
+- **Output:** `test/mpi-abi/check-results/` (in the build tree)
+
+**When to run:** Always safe; runs in CI as part of normal `make check`.
+
+#### 2. `make check-abi` — Installed standard ABI checks
+
+Validates an **installed** Open MPI against the standard MPI ABI.
+
+- **Prerequisites:**
+  - Open MPI must be installed (`make install`)
+  - `mpicc_abi`, `mpirun`, and the standard ABI header must be on `PATH`
+    (or override with `OMPI_ABI_TEST_MPICC_ABI`, `OMPI_ABI_TEST_MPIRUN`,
+    `OMPI_ABI_TEST_INCLUDE_DIR` environment variables)
+- **What it checks:**
+  - Compiles and runs test probes using the installed `mpicc_abi` and
+    standard ABI header
+  - Validates handle translation, API call paths, and callback
+    conversion
+  - Exercises the ABI layer end-to-end
+- **Output:** `test/mpi-abi/check-abi-results/` (in the build tree)
+
+**When to run:** After `make install`, when validating the installed ABI
+layer.
+
+#### 3. `make check-abi-mpich` — Cross-implementation compatibility
+
+Tests **interoperability** between Open MPI's `libmpi_abi.so` and
+MPICH's standard ABI artifacts.
+
+- **Prerequisites:**
+  - Open MPI must be installed (`make install`)
+  - **MPICH** (or another ABI-compliant implementation) must be installed
+    with its `mpicc_abi` on `PATH`
+  - Open MPI's `mpirun` must be on `PATH`
+  - Override paths as needed with `OMPI_ABI_TEST_MPICC_ABI` (points to
+    MPICH's `mpicc_abi`), `OMPI_ABI_TEST_MPIRUN` (points to Open MPI's
+    `mpirun`), `OMPI_ABI_TEST_LD_LIBRARY_PATH` (includes Open MPI's
+    `lib/`)
+- **What it checks:**
+  - Compiles test probes using **MPICH's `mpicc_abi`** and header
+  - Links and runs against **Open MPI's `libmpi_abi.so`**
+  - Validates that an application built with one implementation can run
+    with another (the **core ABI promise**)
+- **Output:** `test/mpi-abi/check-abi-mpich-results/` (in the build
+  tree)
+
+**When to run:** When validating cross-implementation compatibility (the
+defining feature of the standard ABI).
+
+### Running the test suite manually
+
+The suite can also be invoked directly:
+
+```bash
+cd test/mpi-abi
+python -B mpi_abi_tests.py --srcdir=<top-srcdir> --builddir=<top-builddir> <mode>
+```
+
+**Modes:**
+- `manifest` — Print the test manifest (what's covered, skipped, etc.)
+- `coverage` — Print coverage statistics
+- `check-fast` — Run fast metadata/manifest checks (same as `make check`)
+- `check-abi` — Run installed ABI checks (same as `make check-abi`)
+- `check-abi-mpich` — Run cross-implementation checks (same as `make
+  check-abi-mpich`)
+
+**Options:**
+- `--complete-gate` — Fail if implemented ABI entries lack test coverage
+- `--no-progress` — Suppress per-check progress lines
+- `--color-tests={auto,yes,no,always,never}` — Control colorized output
+
+### For AI agents: when to run which test
+
+| Scenario | Test target | Why |
+|----------|-------------|-----|
+| Modified binding templates (`.c.in`) | `make check` | Fast check for metadata consistency |
+| Modified `abi_converter.*` or ABI constants | `make check-abi` | Validate handle translation and conversion logic |
+| Modified `abi.h.in` or `c_header.py` | `make check-abi` | Validate generated header correctness |
+| Modified JSON files in `docs/` | `make check` first, then `make check-abi` | Catch metadata drift, then validate runtime behavior |
+| Before submitting a PR touching ABI code | All three: `make check && make check-abi && make check-abi-mpich` | Full validation (if MPICH is available) |
+
+**Note:** `make check-abi-mpich` requires a separate MPICH installation
+and is not always practical in all environments. It is primarily for
+validating cross-implementation compatibility claims.
+
+---
 
 See [`/AGENTS.md`](/AGENTS.md) for general Open MPI development
 practices, coding standards, and contribution workflow.
