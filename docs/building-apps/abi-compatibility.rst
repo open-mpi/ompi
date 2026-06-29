@@ -18,40 +18,6 @@ This section describes the **Open MPI ABI** compatibility between Open
 MPI releases.
 
 For information about the MPI standard ABI defined by MPI-5.0, see
-:ref:`Building MPI applications using the MPI ABI
-<label-building-with-mpi-abi>`.
-
-What is the Open MPI ABI?
--------------------------
-
-The Open MPI |ompi_series| series maintains Application Binary
-Interface (ABI) compatibility for the C MPI bindings to the last major
-Open MPI release, as described in the :ref:`Version numbers and
-compatibility <version_numbers_section_label>` section.
-
-Specifically, an application compiled with Open MPI v4.x can be
-executed with Open MPI |ompi_series| without having to recompile the
-application.
-
-.. important:: ABI is maintained for most of the Fortran MPI bindings,
-               too — see below for additional information.
-
-Open MPI ABI exceptions
------------------------
-
-          * **The Open MPI ABI:** this is the ABI that Open MPI has
-            supported for multiple releases over many years.
-
-          * **The MPI Forum ABI:** this is the official ABI as defined
-            by the MPI standard.  It was not supported in Open MPI
-            until v6.0.0.
-
-          These two ABIs are different and not interchangeable.
-
-This section describes the **Open MPI ABI** compatibility between Open
-MPI releases.
-
-For information about the MPI standard ABI defined by MPI-5.0, see
 :ref:`Building MPI applications using the MPI Forum ABI
 <label-building-with-mpi-abi>`.
 

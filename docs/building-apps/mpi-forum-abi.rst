@@ -157,9 +157,8 @@ errors, or appear to work until an MPI object crosses the ABI boundary.
 
 Use *one* MPI ABI consistently for every object file that calls MPI:
 
-* For a C MPI application using the MPI-5.0 standard ABI, you can
-  compile and link all MPI-using C objects with ``mpicc`` *or*
-  ``mpicc_abi``.
+* For a C MPI application using the MPI-5.0 standard ABI, compile and
+  link all MPI-using C objects with ``mpicc_abi``.
 * For other MPI applications, including mixed C and Fortran
   applications, compile C objects with ``mpicc`` and Fortran objects
   with ``mpifort``.

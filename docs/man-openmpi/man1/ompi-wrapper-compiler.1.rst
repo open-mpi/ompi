@@ -129,7 +129,7 @@ provided solely for backwards compatibility.
 
 The ``mpicc_abi`` wrapper is different: it compiles and links C MPI
 applications against the MPI standard ABI ``mpi.h`` and ``libmpi_abi``.
-See :ref:`Building MPI applications using the MPI ABI
+See :ref:`Building MPI applications using the MPI Forum ABI
 <label-building-with-mpi-abi>` for more information.
 
 
