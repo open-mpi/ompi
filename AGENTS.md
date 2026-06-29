@@ -351,6 +351,7 @@ honor:
 |------|--------------|
 | `opal/` | OPAL portability layer (`opal/mca/` = its frameworks) |
 | `ompi/` | OMPI / MPI layer; `ompi/mpi/` = language bindings, `ompi/mca/` = frameworks |
+| `ompi/mpi/README_ABI.md` | **MPI-5 ABI support** — how Open MPI supports the standardized binary interface |
 | `oshmem/` | OpenSHMEM layer |
 | `3rd-party/` | embedded upstreams + submodules (OpenPMIx, PRRTE fork) — don't hand-edit |
 | `config/` | m4 macros for Autoconf / Automake / Libtool |
