@@ -2,7 +2,7 @@
 
 **Last updated:** 29 June 2026
 
-> **For AI agents:** Start with [`/AGENTS.md`](/AGENTS.md) for Open MPI
+> **For AI agents:** Start with [`../../AGENTS.md`](../../AGENTS.md) for Open MPI
 > development orientation. This document describes the **MPI ABI
 > implementation** — how Open MPI supports the standardized
 > Application Binary Interface defined in MPI-5 Chapter 20.
@@ -11,7 +11,8 @@
 - **MPI ABI** — the *standardized* binary interface (MPI-5 Chapter 20,
   Appendix A) that enables dynamic library interoperability across
   implementations (MPICH, Open MPI, etc.).
-- **OMPI ABI** — Open MPI's *traditional, non-standard* ABI used by
+- **Open MPI ABI** (called **OMPI ABI** in this document for brevity) —
+  Open MPI's traditional, implementation-specific ABI used by
   `libmpi.so` and Open MPI's `mpicc` wrapper.
 
 ---
@@ -25,20 +26,23 @@ recompile required. This only applies to **dynamically linked**
 applications.
 
 **Library and wrapper names** (mandated by the MPI-5 standard):
-- Library: `libmpi_abi.so` (SONAME: `libmpi_abi.0`; must match MPICH)
+- Library filename: `libmpi_abi.so`
 - Compiler wrapper: `mpicc_abi`
 - Standardized header: `mpi.h` (e.g., from
   <https://github.com/mpi-forum/mpi-abi-stubs>)
 
-**Version control:** The SONAME major/minor versions are set in the
-top-level `VERSION` file.
+**Versioning:** Open MPI aims to follow the same standard-ABI library
+naming / versioning convention used by other ABI implementations;
+consult the top-level `VERSION` file for Open MPI's current SONAME
+settings.
 
 ## Architecture: how Open MPI's libraries are structured
 
 **Minimal internal changes:** Relatively few changes were made to Open
 MPI's internal components to support the MPI ABI. The primary change is
-in **library structure**: Open MPI now ships *two* top-level MPI
-libraries — one for each ABI — both linked against a shared internal
+in **library structure**: Open MPI now builds two top-level C MPI
+interface libraries — one for the standardized MPI ABI and one for Open
+MPI's traditional ABI — both linked against a shared internal
 implementation library.
 
 **Library structure:**
@@ -57,8 +61,8 @@ implementation library.
 - **`libmpi.la`** — Open MPI's traditional (non-standard) ABI library,
   linked by `mpicc`. (Name configurable via `@OMPI_LIBMPI_NAME@` in
   Makefiles.)
-- **`libopen_mpi.la`** — the shared internal implementation that both
-  ABIs link against; contains all the core MPI logic.
+- **`libopen_mpi.la`** — the shared internal implementation used by
+  both C ABI layers.
 
 **Fortran:** The Fortran OMPI libraries (e.g., `libmpi_usempi.so`) are
 linked against `libmpi.so.0` (the OMPI ABI), **not** the MPI ABI.
@@ -77,7 +81,6 @@ linked against `libmpi.so.0` (the OMPI ABI), **not** the MPI ABI.
     `standard_abi/mpi.h`
 
 ---
-
 
 ## Code generation: the binding infrastructure
 
@@ -102,7 +105,8 @@ bugs in both the standard itself and the `mpi-abi-stubs` repo.
    - `mpi-standard-abi.json` — generated via a tool (not yet upstream)
      that extracts standardized constant values (e.g., `MPI_COMM_WORLD`)
      from the Appendix A LaTeX.
-   - Both reside in the top-level `docs/` folder.
+   - Both live under `docs/` in the source tree; verify exact filenames
+     and locations before editing.
 3. **`c_header.py`** — parses the JSON files and generates the MPI ABI
    `mpi.h` and a **name-mangled** `abi.h` (used internally). Uses
    methods from `pympistandard`. (Eventually will be fully integrated
@@ -156,11 +160,12 @@ and `abi_converter.c` (in addition to the binding source files).
 1. **Minimal changes to internal Open MPI source code.** Most of the ABI
    support is in the generated bindings, not the core implementation.
 
-2. **Do NOT call top-level `MPI_*()` functions from within
-   `libopen_mpi`.** The top-level MPI ABI C entry points expect MPI ABI
-   constants. Calling them from internal Open MPI code (which uses OMPI
-   ABI constants) will fail. Always call the internal `ompi_*` routines
-   instead (see [`/AGENTS.md`](/AGENTS.md) golden rules).
+2. **Do NOT call public `MPI_*()` entry points from the internal
+   implementation.** The MPI ABI entry points expect standardized ABI
+   handle / sentinel representations, not Open MPI's internal
+   representations. Internal code must call the corresponding
+   `ompi_*` routines instead (see
+   [`../../AGENTS.md`](../../AGENTS.md) golden rules).
 
 3. **Converter arrays for non-blocking/persistent operations.** In some
    non-blocking and persistent methods, arrays of converted values must
@@ -179,13 +184,13 @@ functions**. Each requires different handling in the MPI ABI:
 | Attribute copy/delete | **Wrapper generation:** wrappers convert OMPI ABI ↔ MPI ABI constants; no changes to OMPI internals. |
 | Operator functions (reductions) | **Extended internal support:** translation routine converts datatype arguments OMPI ABI → MPI ABI. |
 | Error handlers | **Extended internal support:** similar to operator functions. |
-| Generalized request functions | **No conversion needed:** `MPI_Status` structure is similar enough in both ABIs. |
-| Datarep functions | **No support needed:** Open MPI doesn't fully support datarep functions yet. |
+| Generalized request functions | **No additional wrapper support needed:** `MPI_Status` structure is compatible enough in both ABIs. |
+| Datarep functions | **No conversion handling needed:** Open MPI's current datarep support does not require ABI-specific handling. |
 | MPI_T event callbacks | **No support needed:** MPI_T event implementation is just stubs. |
 
 ---
 
-## For AI agents: editing guidelines
+## Editing guidelines for developers and AI agents
 
 When working on ABI-related code, remember:
 
@@ -196,6 +201,7 @@ When working on ABI-related code, remember:
   infrastructure.
 - The generated `mpi.h` and `abi.h` — edit the `abi.h.in` template or
   the JSON files / `c_header.py` generator.
+- Generated test probes emitted into the build tree by `test/mpi-abi/`.
 
 **DO edit (with care):**
 - Templates under `ompi/mpi/c/` (`.c.in`, `.c.in_obc`, `.c.in_nbc`)
@@ -246,9 +252,12 @@ Runs automatically as part of the standard `make check` (via
     constants, and Fortran helper contracts
   - Catches drift between the ABI description and what's implemented,
     skipped, or uncovered **before** installation or launching
-- **Output:** `test/mpi-abi/check-results/` (in the build tree)
+- **Output:** `$(builddir)/test/mpi-abi/check-results/`
 
 **When to run:** Always safe; runs in CI as part of normal `make check`.
+Even when changing runtime ABI code, this mode remains useful because it
+catches metadata / manifest drift independently of installation and
+launcher setup.
 
 #### 2. `make check-abi` — Installed standard ABI checks
 
@@ -256,16 +265,18 @@ Validates an **installed** Open MPI against the standard MPI ABI.
 
 - **Prerequisites:**
   - Open MPI must be installed (`make install`)
-  - `mpicc_abi`, `mpirun`, and the standard ABI header must be on `PATH`
-    (or override with `OMPI_ABI_TEST_MPICC_ABI`, `OMPI_ABI_TEST_MPIRUN`,
-    `OMPI_ABI_TEST_INCLUDE_DIR` environment variables)
+  - `mpicc_abi`, `mpirun`, and the standard ABI header must be
+    discoverable by the test runner
+  - Tool and path discovery can be overridden with `OMPI_ABI_TEST_*`
+    environment variables; see `test/mpi-abi/Makefile.am` and the
+    runner sources for the authoritative list
 - **What it checks:**
   - Compiles and runs test probes using the installed `mpicc_abi` and
     standard ABI header
   - Validates handle translation, API call paths, and callback
     conversion
   - Exercises the ABI layer end-to-end
-- **Output:** `test/mpi-abi/check-abi-results/` (in the build tree)
+- **Output:** `$(builddir)/test/mpi-abi/check-abi-results/`
 
 **When to run:** After `make install`, when validating the installed ABI
 layer.
@@ -279,21 +290,22 @@ MPICH's standard ABI artifacts.
   - Open MPI must be installed (`make install`)
   - **MPICH** (or another ABI-compliant implementation) must be installed
     with its `mpicc_abi` on `PATH`
-  - Open MPI's `mpirun` must be on `PATH`
-  - Override paths as needed with `OMPI_ABI_TEST_MPICC_ABI` (points to
-    MPICH's `mpicc_abi`), `OMPI_ABI_TEST_MPIRUN` (points to Open MPI's
-    `mpirun`), `OMPI_ABI_TEST_LD_LIBRARY_PATH` (includes Open MPI's
-    `lib/`)
+  - Open MPI's `mpirun` must be discoverable by the test runner
+  - Tool and path discovery can be overridden with `OMPI_ABI_TEST_*`
+    environment variables; see `test/mpi-abi/Makefile.am` and the
+    runner sources for the authoritative list
 - **What it checks:**
   - Compiles test probes using **MPICH's `mpicc_abi`** and header
   - Links and runs against **Open MPI's `libmpi_abi.so`**
   - Validates that an application built with one implementation can run
     with another (the **core ABI promise**)
-- **Output:** `test/mpi-abi/check-abi-mpich-results/` (in the build
-  tree)
+- **Output:** `$(builddir)/test/mpi-abi/check-abi-mpich-results/`
 
 **When to run:** When validating cross-implementation compatibility (the
-defining feature of the standard ABI).
+defining feature of the standard ABI). This mode is intended to confirm
+the standard ABI promise: compile with another implementation's
+ABI-facing wrapper and header, then run against Open MPI's ABI library
+and launcher environment.
 
 ### Running the test suite manually
 
@@ -325,7 +337,7 @@ python -B mpi_abi_tests.py --srcdir=<top-srcdir> --builddir=<top-builddir> <mode
 | Modified `abi_converter.*` or ABI constants | `make check-abi` | Validate handle translation and conversion logic |
 | Modified `abi.h.in` or `c_header.py` | `make check-abi` | Validate generated header correctness |
 | Modified JSON files in `docs/` | `make check` first, then `make check-abi` | Catch metadata drift, then validate runtime behavior |
-| Before submitting a PR touching ABI code | All three: `make check && make check-abi && make check-abi-mpich` | Full validation (if MPICH is available) |
+| Before submitting a PR touching ABI code | Prefer `make check`, then `make check-abi`, and `make check-abi-mpich` when MPICH is available | Best practical validation coverage |
 
 **Note:** `make check-abi-mpich` requires a separate MPICH installation
 and is not always practical in all environments. It is primarily for
@@ -333,5 +345,5 @@ validating cross-implementation compatibility claims.
 
 ---
 
-See [`/AGENTS.md`](/AGENTS.md) for general Open MPI development
+See [`../../AGENTS.md`](../../AGENTS.md) for general Open MPI development
 practices, coding standards, and contribution workflow.
