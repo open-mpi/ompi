@@ -19,6 +19,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -395,5 +396,183 @@ ompi_coll_base_alltoallv_intra_basic_linear(const void *sbuf, ompi_count_array_t
     /* Free the requests in all cases as they are persistent */
     ompi_coll_base_free_reqs(reqs, nreqs);
 
+    return err;
+}
+
+int
+ompi_coll_base_alltoallv_intra_basic_linear_sync(const void *sbuf, ompi_count_array_t scounts, ompi_disp_array_t sdisps,
+                                                 struct ompi_datatype_t *sdtype,
+                                                 void *rbuf, ompi_count_array_t rcounts, ompi_disp_array_t rdisps,
+                                                 struct ompi_datatype_t *rdtype,
+                                                 struct ompi_communicator_t *comm,
+                                                 mca_coll_base_module_t *module,
+                                                 int allowed_posted_reqs)
+{
+    int si, ri, size, rank, err = MPI_SUCCESS, nreqs, nrreqs, nsreqs, line;
+    int remaining_reqs, max_posted_recv, max_posted_comms, position;
+    ptrdiff_t sext, rext;
+    ompi_request_t **reqs;
+    mca_coll_base_module_t *base_module = (mca_coll_base_module_t*) module;
+    mca_coll_base_comm_t *data = base_module->base_data;
+    size_t rdtype_size, sdtype_size, rcount, scount;
+
+    if (MPI_IN_PLACE == sbuf) {
+        return  mca_coll_base_alltoallv_intra_basic_inplace (rbuf, rcounts, rdisps,
+                                                              rdtype, comm, module);
+    }
+
+    ompi_datatype_type_size(rdtype, &rdtype_size);
+    ompi_datatype_type_size(sdtype, &sdtype_size);
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    remaining_reqs = 2 * size;
+
+    allowed_posted_reqs = ((allowed_posted_reqs > size || allowed_posted_reqs <= 0) ?
+                           size : allowed_posted_reqs);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:alltoallv_intra_basic_linear_sync rank %d", rank));
+
+    ompi_datatype_type_extent(sdtype, &sext);
+    ompi_datatype_type_extent(rdtype, &rext);
+
+    if (0 != ompi_count_array_get(scounts, rank) && (0 != sdtype_size)) {
+        err = ompi_datatype_sndrcv(((char *) sbuf) + ompi_disp_array_get(sdisps, rank) * sext, ompi_count_array_get(scounts, rank), sdtype,
+                                   ((char *) rbuf) + ompi_disp_array_get(rdisps, rank) * rext, ompi_count_array_get(rcounts, rank), rdtype);
+        if (MPI_SUCCESS != err) {
+            return err;
+        }
+    }
+
+    /* If only one process, we're done. */
+    if (1 == size) {
+        return MPI_SUCCESS;
+    }
+
+    /* Now, initiate all send/recv to/from others. */
+    nreqs = max_posted_recv = 0;
+    reqs = ompi_coll_base_comm_get_reqs(data, 2 * allowed_posted_reqs);
+    if( NULL == reqs ) { line = __LINE__; err = OMPI_ERR_OUT_OF_RESOURCE; goto error_hndl; }
+
+    /* Post receives first */
+    if (0 != rdtype_size) {
+        for (nreqs = 0, nrreqs = 0, ri = (rank + 1) % size;
+             (nreqs < allowed_posted_reqs) && (nrreqs < size);
+             ri = (ri + 1) % size, ++nrreqs) {
+            rcount = ompi_count_array_get(rcounts, ri);
+            if ((0 == rcount) || (ri == rank)) {
+                remaining_reqs--;
+                continue;
+            }
+            err = MCA_PML_CALL(irecv
+                               ((char*)rbuf + ompi_disp_array_get(rdisps, ri) * rext, rcount, rdtype, ri,
+                                MCA_COLL_BASE_TAG_ALLTOALLV, comm, &reqs[nreqs]));
+            nreqs++;
+            if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+        }
+    } else {
+        nrreqs = size;
+        remaining_reqs -= size;
+    }
+    max_posted_recv = nreqs;  /* keep track of the maximum number of receives posted */
+    /* Now post sends */
+    if (0 != sdtype_size) {
+        for (nsreqs = 0, si = (rank + size - 1) % size;
+             nreqs < (max_posted_recv + allowed_posted_reqs) && (nsreqs < size);
+             si = (si + size - 1) % size, ++nsreqs) {
+            scount = ompi_count_array_get(scounts, si);
+            if ((0 == scount) || (si == rank)) {
+                remaining_reqs--;
+                continue;
+            }
+            err = MCA_PML_CALL(isend
+                               ((char*)sbuf + ompi_disp_array_get(sdisps, si) * sext, scount, sdtype, si,
+                                MCA_COLL_BASE_TAG_ALLTOALLV,
+                                MCA_PML_BASE_SEND_STANDARD, comm, &reqs[nreqs]));
+            nreqs++;
+            if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+        }
+    } else {
+        remaining_reqs -= size;
+        nsreqs = size;
+    }
+    max_posted_comms = nreqs;
+
+    /* As requests complete, replace them with corresponding requests:
+       - wait for any request to complete, mark the request as
+       MPI_REQUEST_NULL
+       - If it was a receive request, replace it with new irecv request
+       (if any)
+       - if it was a send request, replace it with new isend request (if any)
+    */
+    while (remaining_reqs) {
+        if (nrreqs == size && nsreqs == size) {  /* all possible requests are now posted */
+            /* Optimization for the case when all requests have been posted  */
+            err = ompi_request_wait_all(max_posted_comms, reqs, MPI_STATUSES_IGNORE);
+            if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+            break;
+        }
+        err = ompi_request_wait_any(max_posted_comms, reqs, &position, MPI_STATUS_IGNORE);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+        reqs[position] = MPI_REQUEST_NULL;
+        remaining_reqs--;
+        if (position < max_posted_recv) {
+            while(nrreqs < size) {
+                ri = (rank + nrreqs + 1) % size;
+                ++nrreqs;
+                rcount = ompi_count_array_get(rcounts, ri);
+                if ((0 == rcount) || (0 == rdtype_size) || (ri == rank)) {
+                    remaining_reqs--;
+                    continue;
+                }
+                err = MCA_PML_CALL(irecv
+                                   ((char*)rbuf + ompi_disp_array_get(rdisps, ri) * rext, rcount, rdtype, ri,
+                                    MCA_COLL_BASE_TAG_ALLTOALLV, comm,
+                                    &reqs[position]));
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+                break;  /* stop at the first posted recv */
+            }
+        } else {
+            while (nsreqs < size) {
+                si = (rank + size - 1 - nsreqs) % size;
+                ++nsreqs;
+                scount =  ompi_count_array_get(scounts, si);
+                if ((0 == scount) || (0 == sdtype_size) || (si == rank)) {
+                    remaining_reqs--;
+                    continue;
+                }
+                err = MCA_PML_CALL(isend
+                                   ((char*)sbuf + ompi_disp_array_get(sdisps, si) * sext, scount, sdtype, si,
+                                    MCA_COLL_BASE_TAG_ALLTOALLV,
+                                    MCA_PML_BASE_SEND_STANDARD, comm,
+                                    &reqs[position]));
+                if (MPI_SUCCESS != err) { line = __LINE__; goto error_hndl; }
+                break;  /* stop at the first posted send */
+            }
+        }
+    }
+
+ error_hndl:
+    /* find a real error code */
+    if (MPI_ERR_IN_STATUS == err) {
+        for( int i = 0; i < max_posted_comms; i++ ) {
+            if (MPI_REQUEST_NULL == reqs[i]) continue;
+            if (MPI_ERR_PENDING == reqs[i]->req_status.MPI_ERROR) continue;
+            if (reqs[i]->req_status.MPI_ERROR != MPI_SUCCESS) {
+                err = reqs[i]->req_status.MPI_ERROR;
+                break;
+            }
+        }
+    }
+    /* Free the requests in all cases as they are persistent */
+    ompi_coll_base_free_reqs(reqs, 2 * allowed_posted_reqs);
+
+    if (MPI_SUCCESS != err) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "%s:%4d\tError occurred %d, rank %2d", __FILE__, line, err,
+                     rank));
+    }
+    (void)line;
     return err;
 }
