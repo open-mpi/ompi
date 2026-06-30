@@ -1,0 +1,447 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+debugger_available()
+{
+    command -v gdb >/dev/null 2>&1
+}
+
+debugger_collect_stack()
+{
+    pid=$1
+
+    gdb -q -batch -p "$pid" \
+        -ex "info threads" \
+        -ex "thread apply all bt" \
+        -ex "detach"
+}
+
+debugger_marker_command()
+{
+    marker=$1
+
+    printf "printf \"%s\\\\n\"\n" "$marker"
+}
+
+debugger_backtrace_command()
+{
+    printf "thread apply all bt\n"
+}
+
+debugger_current_backtrace_command()
+{
+    printf "bt\n"
+}
+
+debugger_select_frame_command()
+{
+    frame_number=$1
+
+    printf "frame %s\n" "$frame_number"
+}
+
+debugger_start()
+{
+    pid=$1
+    command_file=$2
+    log_file=$3
+    tail_pid_file=$4
+
+    { tail -f "$command_file" & printf "%s\n" "$!" > "$tail_pid_file"; wait "$!" 2>/dev/null; } 2>/dev/null |
+        gdb -q -p "$pid" > "$log_file" 2>&1 &
+    printf "%s\n" "$!"
+}
+
+debugger_startup_commands()
+{
+    cat <<EOF
+set pagination off
+set confirm off
+EOF
+}
+
+debugger_find_frame_number()
+{
+    raw_file=$1
+    function_name=$2
+
+    awk -v function_name="$function_name" '
+        index($0, function_name) && match($0, /^#[0-9]+/) {
+            frame = substr($0, RSTART + 1, RLENGTH - 1)
+            print frame
+            exit
+        }
+    ' "$raw_file"
+}
+
+debugger_parse_stack()
+{
+    raw_file=$1
+    funcs_file=$2
+    details_file=$3
+    labels_file=$4
+
+    : > "$funcs_file"
+    : > "$details_file"
+    : > "$labels_file"
+
+    awk -v funcs_file="$funcs_file" \
+        -v details_file="$details_file" \
+        -v labels_file="$labels_file" '
+        function trim(s)
+        {
+            sub(/^[[:space:]]*/, "", s)
+            sub(/[[:space:]]*$/, "", s)
+            return s
+        }
+
+        function strip_function(s)
+        {
+            s = trim(s)
+            sub(/[[:space:]]+at[[:space:]].*/, "", s)
+            sub(/[[:space:]]+from[[:space:]].*/, "", s)
+            sub(/[[:space:]]+[+][[:space:]].*/, "", s)
+            sub(/[[:space:]]+[+][0-9].*/, "", s)
+            sub(/\(.*/, "", s)
+            return trim(s)
+        }
+
+        function gdb_function(line, s)
+        {
+            s = line
+            sub(/^[[:space:]]*#[0-9]+[[:space:]]*/, "", s)
+            if (match(s, / in /)) {
+                s = substr(s, RSTART + RLENGTH)
+            } else {
+                sub(/^0x[0-9a-fA-F]+[[:space:]]*/, "", s)
+            }
+            return strip_function(s)
+        }
+
+        function frame_location(line, location)
+        {
+            if (match(line, /[[:space:]]at[[:space:]][^[:space:]]+:[0-9][0-9]*/)) {
+                location = substr(line, RSTART + 4, RLENGTH - 4)
+                return trim(location)
+            }
+
+            return ""
+        }
+
+        function emit_frame(function_name, detail)
+        {
+            if (done) {
+                return
+            }
+            if ("" == function_name) {
+                return
+            }
+            location = frame_location(detail)
+            print function_name >> funcs_file
+            print trim(detail) >> details_file
+            if ("" == location) {
+                print function_name >> labels_file
+            } else {
+                printf "%s (%s)\n", function_name, location >> labels_file
+            }
+            if ("main" == function_name) {
+                done = 1
+            }
+        }
+
+        /^[[:space:]]*#[0-9]+[[:space:]]/ {
+            emit_frame(gdb_function($0), $0)
+            next
+        }
+    ' "$raw_file"
+}
+
+debugger_gdb_python_quote()
+{
+    printf "%s" "$1" |
+        sed -e 's/\\/\\\\/g' -e "s/'/\\\\'/g" -e "s/^/'/" -e "s/$/'/"
+}
+
+debugger_gdb_openmpi_inspector_prelude()
+{
+    cat <<'EOF'
+python
+import gdb
+
+OFFSET_MASK = 0xffffffff
+OFFSET_BITS = 32
+SM_FIFO_FREE = -2
+FLAG_SINGLE_COPY = 1
+FLAG_COMPLETE = 2
+FLAG_SETUP_FBOX = 4
+
+REQUEST_COMPLETED = 1
+REQ_STATE = {0: 'INVALID', 1: 'INACTIVE', 2: 'ACTIVE', 3: 'CANCELLED'}
+
+def ompi_pdb_comp():
+    return gdb.parse_and_eval('mca_btl_sm_component')
+
+def ompi_pdb_ep_array():
+    return ompi_pdb_comp()['endpoints']
+
+def ompi_pdb_rel2virt(offset):
+    offset = int(offset)
+    idx = (offset >> OFFSET_BITS) & 0xffff
+    segbase = int(ompi_pdb_ep_array()[idx]['segment_base'])
+    addr = (offset & OFFSET_MASK) + segbase
+    hdr_t = gdb.lookup_type('mca_btl_sm_hdr_t').pointer()
+    return gdb.Value(addr).cast(hdr_t), idx
+
+def ompi_pdb_flagstr(f):
+    f = int(f)
+    parts = []
+    if f & FLAG_SINGLE_COPY:
+        parts.append('SINGLE_COPY')
+    if f & FLAG_COMPLETE:
+        parts.append('COMPLETE')
+    if f & FLAG_SETUP_FBOX:
+        parts.append('SETUP_FBOX')
+    if f == 0:
+        parts.append('INLINE/0')
+    return '|'.join(parts) + ' (0x%x)' % f
+
+def ompi_pdb_list_len(l):
+    try:
+        return int(l['opal_list_length'])
+    except gdb.error:
+        return -1
+
+def ompi_pdb_find_waitall_frame():
+    f = gdb.newest_frame()
+    while f is not None:
+        name = f.name() or ''
+        if 'ompi_request_default_wait_all' in name:
+            return f
+        f = f.older()
+    return None
+
+def ompi_pdb_field(val, path):
+    cur = val
+    try:
+        for p in path.split('.'):
+            cur = cur[p]
+        return str(cur)
+    except gdb.error:
+        return '<%s?>' % path
+
+def ompi_pdb_btlsm_dump():
+    c = ompi_pdb_comp()
+    print('============================================================')
+    try:
+        pi = gdb.parse_and_eval('opal_process_info')
+        print('local_rank=%s node_rank=%s num_local_peers=%s' % (
+            pi['my_local_rank'], pi['my_node_rank'], pi['num_local_peers']))
+    except gdb.error:
+        print('(opal_process_info unavailable)')
+
+    fifo = c['my_fifo']
+    head = int(fifo['fifo_head'])
+    tail = int(fifo['fifo_tail'])
+    print('my_fifo: head=%d tail=%d fbox_available=%s' % (
+        head, tail, fifo['fbox_available']))
+
+    print('--- incoming FIFO contents (what THIS rank has not yet consumed) ---')
+    if head == SM_FIFO_FREE:
+        print('  <empty>  => no returns/sends queued for us (points at case B)')
+    else:
+        n = 0
+        cur = head
+        while cur != SM_FIFO_FREE and n < 200:
+            try:
+                hdr, owner = ompi_pdb_rel2virt(cur)
+                h = hdr.dereference()
+                print('  [%3d] off=0x%x owner_rank=%d flags=%s tag=%s len=%s next=%d' % (
+                    n, cur & OFFSET_MASK, owner, ompi_pdb_flagstr(h['flags']),
+                    h['tag'], h['len'], int(h['next'])))
+                cur = int(h['next'])
+            except gdb.error as e:
+                print('  [%3d] <decode error: %s>' % (n, e))
+                break
+            n += 1
+        print('  total queued (capped 200): %d  => returns ARE waiting (case A)' % n)
+
+    print('--- fragment free lists (allocated vs free) ---')
+    for name in ('sm_frags_user', 'sm_frags_eager', 'sm_frags_max_send'):
+        try:
+            fl = c[name]
+            alloc = int(fl['fl_num_allocated'])
+            print('  %-18s fl_num_allocated=%d' % (name, alloc))
+        except gdb.error as e:
+            print('  %-18s <unavailable: %s>' % (name, e))
+
+    print('--- endpoints (pending sends / peer fifo head-tail) ---')
+    npeers = int(gdb.parse_and_eval('opal_process_info')['num_local_peers']) + 1
+    eps = ompi_pdb_ep_array()
+    for i in range(npeers):
+        try:
+            ep = eps[i]
+            psr = int(ep['peer_smp_rank'])
+            if psr < 0:
+                continue
+            pend = ompi_pdb_list_len(ep['pending_frags'])
+            pf = ep['fifo']
+            if int(pf) != 0:
+                ph = int(pf['fifo_head'])
+                pt = int(pf['fifo_tail'])
+            else:
+                ph = pt = 0
+            fbo = 'fbox' if int(ep['fbox_out']['buffer']) != 0 else '----'
+            print('  ep[%2d] peer=%2d pending_frags=%d peer_fifo(head=%d tail=%d) %s' % (
+                i, psr, pend, ph, pt, fbo))
+        except gdb.error as e:
+            print('  ep[%2d] <error: %s>' % (i, e))
+
+    print('--- pending_endpoints list length = %d ---' %
+          ompi_pdb_list_len(c['pending_endpoints']))
+    print('============================================================')
+
+def ompi_pdb_req_dump(arg):
+    args = arg.split()
+    if len(args) == 2:
+        base = gdb.parse_and_eval(args[0])
+        count = int(gdb.parse_and_eval(args[1]))
+        req_t = gdb.lookup_type('ompi_request_t').pointer().pointer()
+        requests = base.cast(req_t)
+    else:
+        f = ompi_pdb_find_waitall_frame()
+        if f is None:
+            print('req_dump: no ompi_request_default_wait_all frame; '
+                  'pass: req_dump <requests_ptr> <count>')
+            return
+        requests = f.read_var('requests')
+        count = int(f.read_var('count'))
+
+    print('============================================================')
+    print('req_dump: count=%d requests=%s' % (count, requests))
+    incomplete = 0
+    for i in range(count):
+        try:
+            r = requests[i]
+            if int(r) == 0:
+                print('  [%3d] <NULL request>' % i)
+                incomplete += 1
+                continue
+            rd = r.dereference()
+            comp = int(rd['req_complete'])
+            state = int(rd['req_state'])
+            if comp == REQUEST_COMPLETED:
+                continue
+            incomplete += 1
+            st = rd['req_status']
+            try:
+                rtype = str(rd['req_type'])
+            except gdb.error:
+                rtype = '?'
+            comp_s = {0: 'PENDING', 1: 'COMPLETED'}.get(comp, 'SYNC@0x%x' % comp)
+            print('  [%3d] type=%s state=%s(%d) complete=%s '
+                  'status{SOURCE=%s TAG=%s err=%s _ucount=%s _cancelled=%s}' % (
+                      i, rtype, REQ_STATE.get(state, '?'), state, comp_s,
+                      st['MPI_SOURCE'], st['MPI_TAG'], st['MPI_ERROR'],
+                      st['_ucount'], st['_cancelled']))
+        except gdb.error as e:
+            print('  [%3d] <error: %s>' % (i, e))
+    print('--- incomplete/non-completed requests: %d / %d ---' %
+          (incomplete, count))
+    print('============================================================')
+
+def ompi_pdb_pml_dump(arg):
+    print('============================================================')
+    try:
+        ob1 = gdb.parse_and_eval('mca_pml_ob1')
+        for nm in ('send_pending', 'recv_pending', 'rdma_pending',
+                   'pckt_pending', 'non_existing_communicator_pending'):
+            try:
+                print('  mca_pml_ob1.%-34s size=%s' % (
+                    nm, ob1[nm]['opal_list_length']))
+            except gdb.error:
+                pass
+        print('  mca_pml_ob1.enabled = %s' % ob1['enabled'])
+    except gdb.error as e:
+        print('  <mca_pml_ob1 unavailable: %s>' % e)
+
+    f = ompi_pdb_find_waitall_frame()
+    if f is None:
+        print('pml_dump: no wait_all frame found')
+        print('============================================================')
+        return
+    requests = f.read_var('requests')
+    count = int(f.read_var('count'))
+
+    args = arg.split()
+    if len(args) >= 2:
+        start = int(args[0])
+        n = int(args[1])
+        idxs = range(start, min(start + n, count))
+    else:
+        idxs = []
+        for i in range(count):
+            r = requests[i]
+            if int(r) and int(r.dereference()['req_complete']) != 1:
+                idxs.append(i)
+                if len(idxs) >= 4:
+                    break
+
+    sr_t = gdb.lookup_type('mca_pml_ob1_send_request_t').pointer()
+    for i in idxs:
+        r = requests[i]
+        sr = r.cast(sr_t)
+        print('  --- request[%d] @%s ---' % (i, r))
+        print('      req_pending        = %s' % ompi_pdb_field(sr, 'req_pending'))
+        print('      req_state          = %s' % ompi_pdb_field(sr, 'req_state'))
+        print('      req_lock           = %s' % ompi_pdb_field(sr, 'req_lock'))
+        print('      req_pipeline_depth = %s' %
+              ompi_pdb_field(sr, 'req_pipeline_depth'))
+        print('      req_bytes_delivered= %s' %
+              ompi_pdb_field(sr, 'req_bytes_delivered'))
+        print('      req_rdma_cnt       = %s' % ompi_pdb_field(sr, 'req_rdma_cnt'))
+        print('      bytes_packed       = %s' %
+              ompi_pdb_field(sr, 'req_send.req_bytes_packed'))
+        print('      send_mode          = %s' %
+              ompi_pdb_field(sr, 'req_send.req_send_mode'))
+        print('      peer/tag/seq       = %s / %s / %s' % (
+            ompi_pdb_field(sr, 'req_send.req_base.req_peer'),
+            ompi_pdb_field(sr, 'req_send.req_base.req_tag'),
+            ompi_pdb_field(sr, 'req_send.req_base.req_sequence')))
+        print('      pml_complete       = %s' %
+              ompi_pdb_field(sr, 'req_send.req_base.req_pml_complete'))
+    print('============================================================')
+end
+EOF
+}
+
+debugger_btlsm_dump_command()
+{
+    debugger_gdb_openmpi_inspector_prelude
+    cat <<'EOF'
+python
+ompi_pdb_btlsm_dump()
+end
+EOF
+}
+
+debugger_req_dump_command()
+{
+    arg=$(debugger_gdb_python_quote "${1-}")
+
+    debugger_gdb_openmpi_inspector_prelude
+    printf "python\nompi_pdb_req_dump(%s)\nend\n" "$arg"
+}
+
+debugger_pml_dump_command()
+{
+    arg=$(debugger_gdb_python_quote "${1-}")
+
+    debugger_gdb_openmpi_inspector_prelude
+    printf "python\nompi_pdb_pml_dump(%s)\nend\n" "$arg"
+}
