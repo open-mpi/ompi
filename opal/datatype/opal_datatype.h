@@ -41,6 +41,7 @@
 
 #include "opal_config.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "opal/class/opal_object.h"
@@ -94,6 +95,12 @@ BEGIN_C_DECLS
  * setups.
  */
 #define OPAL_DATATYPE_OPTIMIZED_RESTRICTED  0x1000
+/*
+ * The last fragment of one full datatype instance is adjacent to the first
+ * fragment of the next instance. Commit-time optimization cannot fold this into
+ * a count-1 description, but convertor setup can use the hint for count > 1.
+ */
+#define OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE 0x2000
 
 /**
  * The number of supported entries in the data-type definition and the
@@ -155,6 +162,9 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_datatype_t);
 OPAL_DECLSPEC extern const opal_datatype_t
     *opal_datatype_basicDatatypes[OPAL_DATATYPE_MAX_PREDEFINED];
 OPAL_DECLSPEC extern const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
+
+/* Set before datatype commit; false forces mixed optimized regions to use OPAL_DATATYPE_UINT1. */
+OPAL_DECLSPEC extern bool opal_datatype_optimize_preserve_type;
 
 /* Local Architecture as provided by opal_arch_compute_local_id() */
 OPAL_DECLSPEC extern uint32_t opal_local_arch;
