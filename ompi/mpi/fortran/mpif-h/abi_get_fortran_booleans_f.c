@@ -41,8 +41,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ABI_GET_FORTRAN_BOOLEANS,
                            pmpi_abi_get_fortran_booleans_,
                            pmpi_abi_get_fortran_booleans__,
                            pompi_abi_get_fortran_booleans_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (comm, keyval, attribute_val, flag, ierr) )
+                           (MPI_Fint *logical_size, ompi_fortran_logical_t *logical_true, ompi_fortran_logical_t *logical_false, ompi_fortran_logical_t *is_set, MPI_Fint *ierr),
+                           (logical_size, logical_true, logical_false, is_set, ierr) )
 #endif
 #endif
 
@@ -61,8 +61,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ABI_GET_FORTRAN_BOOLEANS,
                            mpi_abi_get_fortran_booleans_,
                            mpi_abi_get_fortran_booleans__,
                            ompi_abi_get_fortran_booleans_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
-                           (comm, keyval, attribute_val, flag, ierr) )
+                           (MPI_Fint *logical_size, ompi_fortran_logical_t *logical_true, ompi_fortran_logical_t *logical_false, ompi_fortran_logical_t *is_set, MPI_Fint *ierr),
+                           (logical_size, logical_true, logical_false, is_set, ierr) )
 #else
 #define ompi_abi_get_fortran_booleans_f pompi_abi_get_fortran_booleans_f
 #endif
@@ -83,7 +83,6 @@ void ompi_abi_get_fortran_booleans_f(MPI_Fint *logical_size,
                                            OMPI_LOGICAL_SINGLE_NAME_CONVERT(logical_true),
                                            OMPI_LOGICAL_SINGLE_NAME_CONVERT(logical_false),
                                            OMPI_LOGICAL_SINGLE_NAME_CONVERT(is_set));
-    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     OMPI_SINGLE_INT_2_LOGICAL(logical_true);
