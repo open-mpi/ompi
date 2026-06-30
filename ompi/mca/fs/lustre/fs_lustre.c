@@ -13,6 +13,7 @@
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      DataDirect Networks. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,5 +126,6 @@ int mca_fs_lustre_module_init (ompio_file_t *file)
 
 int mca_fs_lustre_module_finalize (ompio_file_t *file)
 {
+    mca_fs_lustre_info_cache_free(file);
     return OMPI_SUCCESS;
 }

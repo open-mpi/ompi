@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,6 +41,7 @@ int mca_fs_gpfs_component_file_unquery(ompio_file_t *file);
 
 int mca_fs_gpfs_module_init(ompio_file_t *file);
 int mca_fs_gpfs_module_finalize(ompio_file_t *file);
+void mca_fs_gpfs_info_cache_free(ompio_file_t *file);
 OMPI_DECLSPEC extern mca_fs_base_component_2_0_0_t mca_fs_gpfs_component;
 
 /*

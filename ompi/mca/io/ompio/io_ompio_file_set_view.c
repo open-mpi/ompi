@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  *  Copyright (c) 2026      Stony Brook University.  All rights reserved.
  *  $COPYRIGHT$
  *
@@ -65,7 +66,11 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
 {
     int ret=OMPI_SUCCESS;
     mca_common_ompio_data_t *data;
+    mca_common_ompio_info_phase_t previous_phase;
     ompio_file_t *fh;
+    opal_info_t *previous_info;
+    opal_info_t *staged_info;
+    int previous_bytes_per_agg;
 
     if ( (strcmp(datarep, "native") && strcmp(datarep, "NATIVE") &&
           strcmp(datarep, "external32") && strcmp(datarep, "EXTERNAL32"))) {
@@ -87,7 +92,59 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
         
     
     OPAL_THREAD_LOCK(&fp->f_lock);
-    ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
+    previous_info = fp->super.s_info;
+    previous_bytes_per_agg = fh->f_bytes_per_agg;
+
+    /*
+     * set_view setup consumes accepted hints while it builds the new file
+     * view.  Apply the user's info to a staged copy first: the setup code
+     * sees the requested values, but get_info will not expose them unless
+     * the whole view change succeeds.
+     */
+    staged_info = OBJ_NEW(opal_info_t);
+    if (NULL == staged_info) {
+        OPAL_THREAD_UNLOCK(&fp->f_lock);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (NULL != previous_info) {
+        ret = opal_info_dup_public(previous_info, &staged_info);
+        if (OPAL_SUCCESS != ret) {
+            OBJ_RELEASE(staged_info);
+            OPAL_THREAD_UNLOCK(&fp->f_lock);
+            return ret;
+        }
+    }
+
+    fp->super.s_info = staged_info;
+    fh->f_info = staged_info;
+
+    previous_phase = fh->f_info_phase;
+    fh->f_info_phase = MCA_COMMON_OMPIO_INFO_PHASE_SET_VIEW;
+
+    ret = mca_common_ompio_info_apply(fh, info);
+    fh->f_info_phase = previous_phase;
+
+    if (OMPI_SUCCESS == ret) {
+        ret = mca_common_ompio_set_view(fh, disp, etype, filetype, datarep, info);
+    }
+
+    if (OMPI_SUCCESS == ret) {
+        if (NULL != previous_info) {
+            OBJ_RELEASE(previous_info);
+        }
+    } else {
+        /*
+         * Restore both the public info object and the internal field updated
+         * by cb_buffer_size.  Without the field rollback, a failed set_view
+         * could leave behavior changed even though get_info was restored.
+         */
+        fp->super.s_info = previous_info;
+        fh->f_info = previous_info;
+        fh->f_bytes_per_agg = previous_bytes_per_agg;
+        OBJ_RELEASE(staged_info);
+    }
+
     OPAL_THREAD_UNLOCK(&fp->f_lock);
     return ret;
 }
@@ -113,4 +170,3 @@ int mca_io_ompio_file_get_view (struct ompi_file_t *fp,
 
     return OMPI_SUCCESS;
 }
-
