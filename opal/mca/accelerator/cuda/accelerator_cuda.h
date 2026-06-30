@@ -2,7 +2,7 @@
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2024      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
@@ -57,6 +57,15 @@ OBJ_CLASS_DECLARATION(opal_accelerator_cuda_ipc_event_handle_t);
 extern opal_accelerator_cuda_stream_t opal_accelerator_cuda_memcpy_stream;
 extern opal_mutex_t opal_accelerator_cuda_stream_lock;
 extern bool mca_accelerator_cuda_init_complete;
+
+/* Tunables for accelerator_cuda_check_addr fast path. When the CUDA driver
+ * cannot classify a pointer via cuPointerGetAttributes(), check_addr falls
+ * back to per-allocation queries for VMM (cuMemRetainAllocationHandle) and
+ * stream-ordered memory pools (cuPointerGetAttribute(MEMPOOL_HANDLE)). These
+ * are expensive on the per-message hot path; users who do not use those
+ * allocators can disable the fallbacks. */
+extern bool opal_accelerator_cuda_enable_vmm_check;
+extern bool opal_accelerator_cuda_enable_mpool_check;
 
 OPAL_DECLSPEC extern opal_accelerator_cuda_component_t mca_accelerator_cuda_component;
 
