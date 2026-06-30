@@ -1200,6 +1200,9 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     int ret;
     uint64_t i;
+    ucs_status_ptr_t request;
+    ucp_request_param_t param = {0};
+    ucp_ep_h ep;
 
     assert(module->lock_count == 0);
     assert(opal_list_is_empty(&module->pending_posts) == true);
@@ -1213,6 +1216,29 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
         return ret;
     }
 
+    ret = module->comm->c_coll->coll_barrier(module->comm,
+                                             module->comm->c_coll->coll_barrier_module);
+    if (ret != OMPI_SUCCESS) {
+        return ret;
+    }
+
+    if (!opal_common_ucx_thread_enabled &&
+        mca_osc_ucx_component.num_modules == 1) {
+        /* flush all the default endpoints for the last window */
+        for (i = 0; i < mca_osc_ucx_component.comm_world_size; i++) {
+            ep = mca_osc_ucx_component.endpoints[i];
+            if (ep != NULL) {
+                request = ucp_ep_flush_nbx(ep, &param);
+                ret = opal_common_ucx_wait_request(request,
+                                                   mca_osc_ucx_component.wpool->dflt_winfo->worker,
+                                                   "ucp_flush_nbx");
+                if (ret != OMPI_SUCCESS) {
+                    return ret;
+                }
+            }
+        }
+    }
+    
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
     if (ret != OMPI_SUCCESS) {
