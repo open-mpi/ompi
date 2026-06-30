@@ -17,6 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2025-2026 Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,19 +61,22 @@ typedef struct __dt_args {
 } ompi_datatype_args_t;
 
 /**
- * Some architectures really don't like having unaligned
- * accesses.  We'll be int aligned, because any sane system will
- * require that.  But we might not be long aligned, and some
- * architectures will complain if a long is accessed on int
- * alignment (but not long alignment).  On those architectures,
- * copy the buffer into an aligned buffer first.
+ * The packed datatype description interleaves 32-bit ints with word-size
+ * (size_t / ptrdiff_t) values.  After writing an int the running pointer is
+ * only int-aligned, so accessing the following word-size value through it is
+ * an unaligned access -- which is undefined behavior and faults on
+ * strict-alignment architectures (e.g. RISC-V).  Realign the pointer up to
+ * word size before every word-size access.  The pack and unpack paths apply
+ * this identically, so the on-the-wire layout stays consistent.
+ *
+ * This was previously gated on OPAL_ALIGN_WORD_SIZE_INTEGERS, but that
+ * configure probe runs an unaligned access at configure time: under an
+ * emulator (e.g. qemu) the probe silently succeeds and disables the
+ * alignment even though the target hardware actually faults.  Aligning
+ * unconditionally is correct everywhere and only costs a few padding bytes.
  */
-#if OPAL_ALIGN_WORD_SIZE_INTEGERS
 #define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE) \
     (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(ptrdiff_t), TYPE)
-#else
-#define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE)
-#endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
 
 /**
  * Copies count elements from the given count array into either
@@ -521,8 +525,10 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     next_packed += sizeof(int) * args->cd;
 
     /* copy the array of 32bit counts at the end */
-    memcpy( next_packed, args->i, sizeof(int) * args->ci );
-    next_packed += args->ci * sizeof(int);
+    if( 0 < args->ci ) {
+        memcpy( next_packed, args->i, sizeof(int) * args->ci );
+        next_packed += args->ci * sizeof(int);
+    }
 
     /* copy the rest of the data */
     for( i = 0; i < args->cd; i++ ) {
@@ -1081,6 +1087,15 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
     return datatype;
 }
 
+/*
+ * Note: *packed_buffer must be at least word-size (sizeof(ptrdiff_t))
+ * aligned.  The description interleaves 32-bit ints with word-size values
+ * and the unpack code realigns the running pointer to word size before each
+ * word-size access (see OMPI_DATATYPE_ALIGN_PTR); that realignment is
+ * relative to the buffer base, so the base must itself be word aligned for
+ * the reads to land on the same offsets the packer wrote.  Buffers produced
+ * by ompi_datatype_get_pack_description() (malloc'd) satisfy this.
+ */
 ompi_datatype_t* ompi_datatype_create_from_packed_description( void** packed_buffer,
                                                                struct ompi_proc_t* remote_processor )
 {
