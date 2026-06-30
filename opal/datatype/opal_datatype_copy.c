@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -32,8 +32,8 @@
 
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype.h"
-#include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/prefetch.h"
 #include "opal/util/output.h"
 #include "opal/mca/accelerator/accelerator.h"

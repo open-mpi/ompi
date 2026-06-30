@@ -8,7 +8,8 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
-# $COPYRIGHT$
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+## $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
@@ -27,7 +28,6 @@ include $(top_srcdir)/Makefile.mca-dso-check
 # test/datatype before this directory existed.  (reduce_local is driven
 # by getopt() command-line arguments; see check_op.sh.)
 TESTS = \
-        checksum \
         position \
         position_noncontig \
         ddt_test \
@@ -87,10 +87,6 @@ ddt_raw2_LDADD = $(mpi_ldadd)
 ddt_pack_SOURCES = ddt_pack.c
 ddt_pack_LDFLAGS = $(common_ldflags)
 ddt_pack_LDADD = $(internal_ldadd)
-
-checksum_SOURCES = checksum.c
-checksum_LDFLAGS = $(common_ldflags)
-checksum_LDADD = $(internal_ldadd)
 
 position_SOURCES = position.c
 position_LDFLAGS = $(common_ldflags)
