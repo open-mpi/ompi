@@ -48,7 +48,6 @@ check_PROGRAMS = \
 	opal_uri \
 	opal_qsort \
 	opal_alfg \
-	opal_crc \
 	opal_fd \
 	opal_arch \
 	opal_cmd_line \
@@ -117,10 +116,6 @@ opal_qsort_DEPENDENCIES = $(opal_test_ldadd)
 opal_alfg_SOURCES = opal_alfg.c
 opal_alfg_LDADD = $(opal_test_ldadd)
 opal_alfg_DEPENDENCIES = $(opal_test_ldadd)
-
-opal_crc_SOURCES = opal_crc.c
-opal_crc_LDADD = $(opal_test_ldadd)
-opal_crc_DEPENDENCIES = $(opal_test_ldadd)
 
 opal_fd_SOURCES = opal_fd.c
 opal_fd_LDADD = $(opal_test_ldadd)
@@ -227,4 +222,3 @@ clean-local:
 
 distclean-local:
 	rm -rf *.dSYM .deps .libs *.out *.log *.o *.trs $(check_PROGRAMS) Makefile
-

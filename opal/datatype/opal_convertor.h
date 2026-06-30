@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
@@ -48,10 +48,9 @@ BEGIN_C_DECLS
 #define CONVERTOR_SEND                   0x00040000
 #define CONVERTOR_HOMOGENEOUS            0x00080000
 #define CONVERTOR_NO_OP                  0x00100000
-#define CONVERTOR_WITH_CHECKSUM          0x00200000
 #define CONVERTOR_ACCELERATOR            0x00400000
 #define CONVERTOR_ACCELERATOR_ASYNC      0x00800000
-#define CONVERTOR_TYPE_MASK              0x10FF0000
+#define CONVERTOR_TYPE_MASK              0x10DF0000
 #define CONVERTOR_STATE_START            0x01000000
 #define CONVERTOR_STATE_COMPLETE         0x02000000
 #define CONVERTOR_STATE_ALLOC            0x04000000
@@ -87,48 +86,34 @@ typedef struct dt_stack_t dt_stack_t;
 
 struct opal_convertor_t {
     opal_object_t super; /**< basic superclass */
-    uint32_t remoteArch; /**< the remote architecture */
-    uint32_t flags;      /**< the properties of this convertor */
-    size_t local_size;   /**< overall length data on local machine, compared to bConverted */
-    size_t remote_size;  /**< overall length data on remote machine, compared to bConverted */
+
+    /* Descriptor and dispatch state is fixed after convertor preparation. */
     const opal_datatype_t *pDesc;   /**< the datatype description associated with the convertor */
     const dt_type_desc_t *use_desc; /**< the version used by the convertor (normal or optimized) */
     opal_datatype_count_t count;    /**< the total number of full datatype elements */
+    size_t remote_size;             /**< overall length data on the remote machine */
+    struct opal_convertor_master_t *master; /**< the master convertor */
+    convertor_advance_fct_t fAdvance;       /**< pointer to the pack/unpack functions */
 
     /* --- cacheline boundary (64 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
-    uint32_t stack_size;              /**< size of the allocated stack */
-    unsigned char *pBaseBuf;          /**< initial buffer as supplied by the user */
-    dt_stack_t *pStack;               /**< the local stack for the actual conversion */
-    convertor_advance_fct_t fAdvance; /**< pointer to the pack/unpack functions */
-
-    /* --- cacheline boundary (96 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
-    struct opal_convertor_master_t *master; /**< the master convertor */
-
-    /* All others fields get modified for every call to pack/unpack functions */
-    uint32_t stack_pos;    /**< the actual position on the stack */
-    size_t partial_length; /**< amount of data left over from the last unpack */
-    size_t bConverted;     /**< # of bytes already converted */
+    /* Keep mutable runtime state together on the cache line used by pack and unpack. */
+    size_t bConverted;           /**< # of bytes already converted */
+    size_t partial_length;       /**< amount of data left over from the last unpack */
+    size_t local_size;           /**< overall length data on the local machine */
+    unsigned char *pBaseBuf;     /**< initial buffer as supplied by the user */
+    dt_stack_t *pStack;          /**< the local stack for the actual conversion */
+    memcpy_fct_t cbmemcpy;       /**< memcpy or accelerator memcpy */
+    uint32_t flags;              /**< the properties of this convertor */
+    uint32_t stack_pos;          /**< the actual position on the stack */
+    uint32_t stack_size;         /**< size of the allocated stack */
+    uint32_t remoteArch;         /**< the remote architecture */
 
     /* --- cacheline boundary (128 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
-    uint32_t checksum; /**< checksum computed by pack/unpack operation */
-    uint32_t csum_ui1; /**< partial checksum computed by pack/unpack operation */
-    size_t csum_ui2;   /**< partial checksum computed by pack/unpack operation */
-
-    /* --- fields are no more aligned on cacheline --- */
     dt_stack_t static_stack[DT_STATIC_STACK_SIZE]; /**< local stack for small datatypes */
 
-    memcpy_fct_t cbmemcpy; /**< memcpy or accelerator memcpy */
-    opal_accelerator_stream_t *stream;  /**<Accelerator stream for async copy */
+    opal_accelerator_stream_t *stream; /**< accelerator stream for async copy */
 };
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_convertor_t);
-
-/*
- *
- */
-static inline uint32_t opal_convertor_get_checksum(opal_convertor_t *convertor)
-{
-    return convertor->checksum;
-}
 
 /*
  *
@@ -323,11 +308,8 @@ static inline int32_t opal_convertor_set_position(opal_convertor_t *convertor, s
     /* Remove the completed flag if it's already set */
     convertor->flags &= ~CONVERTOR_COMPLETED;
 
-    if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS) &&
-#if defined(CHECKSUM)
-        !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&
-#endif /* defined(CHECKSUM) */
-        (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {
+    if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)
+        && (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {
         /* Contiguous and no checkpoint and no homogeneous unpack */
         convertor->bConverted = *position;
         return OPAL_SUCCESS;
@@ -336,22 +318,6 @@ static inline int32_t opal_convertor_set_position(opal_convertor_t *convertor, s
     return opal_convertor_set_position_nocheck(convertor, position);
 }
 
-/*
- *
- */
-static inline int32_t opal_convertor_personalize(opal_convertor_t *convertor, uint32_t flags,
-                                                 size_t *position)
-{
-    convertor->flags |= flags;
-
-    if (OPAL_UNLIKELY(NULL == position))
-        return OPAL_SUCCESS;
-    return opal_convertor_set_position(convertor, position);
-}
-
-/*
- *
- */
 OPAL_DECLSPEC int opal_convertor_clone(const opal_convertor_t *source,
                                        opal_convertor_t *destination, int32_t copy_stack);
 

@@ -45,19 +45,9 @@
 #    define DO_DEBUG(INST)
 #endif /* OPAL_ENABLE_DEBUG */
 
-#include "opal/datatype/opal_datatype_checksum.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
 #include "opal/datatype/opal_datatype_unpack.h"
-
-#if defined(CHECKSUM)
-#    define opal_unpack_general_function            opal_unpack_general_checksum
-#    define opal_unpack_homogeneous_contig_function opal_unpack_homogeneous_contig_checksum
-#    define opal_generic_simple_unpack_function     opal_generic_simple_unpack_checksum
-#else
-#    define opal_unpack_general_function            opal_unpack_general
-#    define opal_unpack_homogeneous_contig_function opal_unpack_homogeneous_contig
-#    define opal_generic_simple_unpack_function     opal_generic_simple_unpack
-#endif /* defined(CHECKSUM) */
 
 /**
  * This function will be used to unpack all datatypes that have the contiguous flag set.
@@ -68,8 +58,8 @@
  * taken in account directly in the opal_convertor_unpack function (in convertor.c) for
  * the homogeneous case.
  */
-int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct iovec *iov,
-                                                uint32_t *out_size, size_t *max_data)
+int32_t opal_unpack_homogeneous_contig(opal_convertor_t *pConv, struct iovec *iov,
+                                       uint32_t *out_size, size_t *max_data)
 {
     const opal_datatype_t *pData = pConv->pDesc;
     unsigned char *user_memory, *packed_buffer;
@@ -105,7 +95,7 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
             DO_DEBUG(opal_output(0, "unpack contig [%d] dest %p src %p length %" PRIsize_t "\n",
                                  iov_idx, (void *) user_memory, (void *) packed_buffer,
                                  remaining););
-            MEMCPY_CSUM(user_memory, packed_buffer, remaining, pConv);
+            pConv->cbmemcpy(user_memory, packed_buffer, remaining, pConv);
             pConv->bConverted += remaining; /* how much will get unpacked this time */
         }
     } else {
@@ -129,7 +119,7 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
                                      "unpack gaps [%d] dest %p src %p length %" PRIsize_t " [%d]\n",
                                      iov_idx, (void *) user_memory, (void *) packed_buffer,
                                      stack[1].count, i););
-                MEMCPY_CSUM(user_memory, packed_buffer, stack[1].count, pConv);
+                pConv->cbmemcpy(user_memory, packed_buffer, stack[1].count, pConv);
 
                 packed_buffer += stack[1].count;
                 remaining -= stack[1].count;
@@ -150,7 +140,7 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
                     opal_output(0,
                                 "unpack gaps [%d] dest %p src %p length %" PRIsize_t " [epilog]\n",
                                 iov_idx, (void *) user_memory, (void *) packed_buffer, remaining););
-                MEMCPY_CSUM(user_memory, packed_buffer, remaining, pConv);
+                pConv->cbmemcpy(user_memory, packed_buffer, remaining, pConv);
                 stack[1].count -= remaining;
                 stack[1].disp += remaining; /* keep the += in case we are copying less that the
                                                datatype size */
@@ -204,8 +194,6 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
                            (unsigned long)data_length, (void*)*memory,
                            (unsigned long)pConvertor->bConverted,
                            (unsigned long)pConvertor->local_size, pConvertor->count ); );
-    COMPUTE_CSUM( partial_data, length, pConvertor );
-
     /* Find a byte value that is not used in the partial buffer. We use it as a marker
      * to identify what has not been modified by the unpack call. */
  find_unused_byte:
@@ -275,8 +263,8 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
  * is contiguous but with a gap in the beginning or at the end.
  * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
  */
-int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct iovec *iov,
-                                            uint32_t *out_size, size_t *max_data)
+int32_t opal_generic_simple_unpack(opal_convertor_t *pConvertor, struct iovec *iov,
+                                   uint32_t *out_size, size_t *max_data)
 {
     dt_stack_t *pStack;        /* pointer to the position on the stack */
     uint32_t pos_desc;         /* actual position in the description of the derived datatype */
@@ -541,8 +529,8 @@ update_and_return:
     *(packed) = _packed;
 }
 
-int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec *iov,
-                                     uint32_t *out_size, size_t *max_data)
+int32_t opal_unpack_general(opal_convertor_t *pConvertor, struct iovec *iov,
+                            uint32_t *out_size, size_t *max_data)
 {
     dt_stack_t *pStack; /* pointer to the position on the stack */
     uint32_t pos_desc;  /* actual position in the description of the derived datatype */

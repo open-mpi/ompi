@@ -6,6 +6,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -16,7 +17,6 @@
 #include "ompi_config.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/runtime/opal.h"
 
 #include <stdio.h>

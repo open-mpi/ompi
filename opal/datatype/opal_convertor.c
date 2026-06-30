@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
@@ -38,13 +38,10 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype.h"
-#include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
 #include "opal/mca/accelerator/accelerator.h"
-
-#define MEMCPY_ACCELERATOR(DST, SRC, BLENGTH, CONVERTOR) \
-    CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
 
 static void *opal_convertor_accelerator_memcpy(void *dest, const void *src, size_t size, opal_convertor_t *convertor)
 {
@@ -231,9 +228,6 @@ opal_convertor_t *opal_convertor_create(int32_t remote_arch, int32_t mode)
             *(MAX_DATA) = 0;                                                        \
             return 1; /* nothing to do */                                           \
         }                                                                           \
-        (CONVERTOR)->checksum = OPAL_CSUM_ZERO;                                     \
-        (CONVERTOR)->csum_ui1 = 0;                                                  \
-        (CONVERTOR)->csum_ui2 = 0;                                                  \
         assert((CONVERTOR)->bConverted < (CONVERTOR)->local_size);                  \
     } while (0)
 
@@ -268,7 +262,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
             if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
                 iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
             } else {
-                MEMCPY_ACCELERATOR(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
+                pConv->cbmemcpy(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
             }
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
@@ -282,7 +276,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
         if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
             iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
         } else {
-            MEMCPY_ACCELERATOR(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
+            pConv->cbmemcpy(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
         }
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
@@ -315,7 +309,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
             if (iov[i].iov_len >= pending_length) {
                 goto complete_contiguous_data_unpack;
             }
-            MEMCPY_ACCELERATOR(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
+            pConv->cbmemcpy(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
 
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
@@ -326,7 +320,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
 
     complete_contiguous_data_unpack:
         iov[i].iov_len = pending_length;
-        MEMCPY_ACCELERATOR(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
+        pConv->cbmemcpy(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
         pConv->flags |= CONVERTOR_COMPLETED;
@@ -518,9 +512,8 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
                                                                                                 \
         convertor->remote_size = convertor->local_size;                                         \
         if (OPAL_LIKELY(convertor->remoteArch == opal_local_arch)) {                            \
-            if (!(convertor->flags & CONVERTOR_WITH_CHECKSUM)                                   \
-                && ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                             \
-                    || ((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && (1 == count)))) { \
+            if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                \
+                || ((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && (1 == count))) {      \
                 return OPAL_SUCCESS;                                                            \
             }                                                                                   \
         }                                                                                       \
@@ -529,9 +522,7 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         opal_convertor_compute_remote_size(convertor);                                          \
         assert(NULL != convertor->use_desc->desc);                                              \
         /* For predefined datatypes (contiguous) do nothing more */                             \
-        /* if checksum is enabled then always continue */                                       \
-        if (((convertor->flags & (CONVERTOR_WITH_CHECKSUM | OPAL_DATATYPE_FLAG_NO_GAPS))        \
-             == OPAL_DATATYPE_FLAG_NO_GAPS)                                                     \
+        if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                    \
             && ((convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))                   \
                 == (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {                                 \
             return OPAL_SUCCESS;                                                                \
@@ -581,31 +572,15 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
     assert(!(convertor->flags & CONVERTOR_SEND));
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
 
-#if defined(CHECKSUM)
-    if (OPAL_UNLIKELY(convertor->flags & CONVERTOR_WITH_CHECKSUM)) {
-        if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_unpack_general_checksum;
-        } else {
-            if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                convertor->fAdvance = opal_unpack_homogeneous_contig_checksum;
-            } else {
-                convertor->fAdvance = opal_generic_simple_unpack_checksum;
-            }
-        }
+    if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
+        convertor->fAdvance = opal_unpack_general;
     } else {
-#endif /* defined(CHECKSUM) */
-        if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_unpack_general;
+        if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+            convertor->fAdvance = opal_unpack_homogeneous_contig;
         } else {
-            if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                convertor->fAdvance = opal_unpack_homogeneous_contig;
-            } else {
-                convertor->fAdvance = opal_generic_simple_unpack;
-            }
+            convertor->fAdvance = opal_generic_simple_unpack;
         }
-#if defined(CHECKSUM)
     }
-#endif
     return OPAL_SUCCESS;
 }
 
@@ -620,43 +595,21 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
 
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
 
-#if defined(CHECKSUM)
-    if (convertor->flags & CONVERTOR_WITH_CHECKSUM) {
-        if (CONVERTOR_SEND_CONVERSION
-            == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_pack_general_checksum;
-        } else {
-            if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)
-                    || (1 >= convertor->count)) {
-                    convertor->fAdvance = opal_pack_homogeneous_contig_checksum;
-                } else {
-                    convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps_checksum;
-                }
-            } else {
-                convertor->fAdvance = opal_generic_simple_pack_checksum;
-            }
-        }
+    if (CONVERTOR_SEND_CONVERSION
+        == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
+        convertor->fAdvance = opal_pack_general;
     } else {
-#endif /* defined(CHECKSUM) */
-        if (CONVERTOR_SEND_CONVERSION
-            == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_pack_general;
-        } else {
-            if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)
-                    || (1 >= convertor->count)) {
-                    convertor->fAdvance = opal_pack_homogeneous_contig;
-                } else {
-                    convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
-                }
+        if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+            if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)
+                || (1 >= convertor->count)) {
+                convertor->fAdvance = opal_pack_homogeneous_contig;
             } else {
-                convertor->fAdvance = opal_generic_simple_pack;
+                convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
             }
+        } else {
+            convertor->fAdvance = opal_generic_simple_pack;
         }
-#if defined(CHECKSUM)
     }
-#endif
     return OPAL_SUCCESS;
 }
 
@@ -733,9 +686,6 @@ void opal_convertor_dump(opal_convertor_t *convertor)
     }
     if (convertor->flags & CONVERTOR_NO_OP) {
         opal_output(0, "no_op ");
-    }
-    if (convertor->flags & CONVERTOR_WITH_CHECKSUM) {
-        opal_output(0, "checksum ");
     }
     if (convertor->flags & CONVERTOR_ACCELERATOR) {
         opal_output(0, "ACCELERATOR ");

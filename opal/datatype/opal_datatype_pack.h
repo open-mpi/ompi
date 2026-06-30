@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
@@ -22,13 +22,6 @@
 
 #include "opal_config.h"
 #include "opal/datatype/opal_datatype_pack_unpack_predefined.h"
-
-#if !defined(CHECKSUM)
-/* Make use of existing macro to do device style memcpy */
-#    undef MEMCPY_CSUM
-#    define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR) \
-        CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
-#endif
 
 /**
  * This function deals only with partial elements. The COUNT points however to the whole leftover
@@ -70,7 +63,7 @@ static inline int pack_partial_blocklen(opal_convertor_t *CONVERTOR, const dt_el
     DO_DEBUG(opal_output(0, "pack memcpy( %p, %p, %lu ) => space %lu [partial]\n", (void *) _packed,
                          (void *) _memory, (unsigned long) do_now_bytes,
                          (unsigned long) (*(SPACE))););
-    MEMCPY_CSUM(_packed, _memory, do_now_bytes, (CONVERTOR));
+    (CONVERTOR)->cbmemcpy(_packed, _memory, do_now_bytes, (CONVERTOR));
     *(memory) += (ptrdiff_t) do_now_bytes;
     if (do_now == left_in_block) /* compensate if completed a blocklen */
         *(memory) += _elem->extent
@@ -122,7 +115,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
             DO_DEBUG(opal_output(0, "pack memcpy( %p, %p, %lu ) => space %lu [blen = 1]\n",
                                  (void *) _packed, (void *) _memory, (unsigned long) blocklen_bytes,
                                  (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-            MEMCPY_CSUM(_packed, _memory, blocklen_bytes, (CONVERTOR));
+            (CONVERTOR)->cbmemcpy(_packed, _memory, blocklen_bytes, (CONVERTOR));
             _packed += blocklen_bytes;
             _memory += _elem->extent;
         }
@@ -138,7 +131,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
             DO_DEBUG(opal_output(0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
                                  (void *) _packed, (void *) _memory, (unsigned long) blocklen_bytes,
                                  (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-            MEMCPY_CSUM(_packed, _memory, blocklen_bytes, (CONVERTOR));
+            (CONVERTOR)->cbmemcpy(_packed, _memory, blocklen_bytes, (CONVERTOR));
             _packed += blocklen_bytes;
             _memory += _elem->extent;
             cando_count -= _elem->blocklen;
@@ -157,7 +150,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
         DO_DEBUG(opal_output(0, "pack 3. memcpy( %p, %p, %lu ) => space %lu [epilog]\n",
                              (void *) _packed, (void *) _memory, (unsigned long) do_now_bytes,
                              (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-        MEMCPY_CSUM(_packed, _memory, do_now_bytes, (CONVERTOR));
+        (CONVERTOR)->cbmemcpy(_packed, _memory, do_now_bytes, (CONVERTOR));
         _memory += do_now_bytes;
         _packed += do_now_bytes;
     }
@@ -185,7 +178,7 @@ static inline void pack_contiguous_loop(opal_convertor_t *CONVERTOR, const dt_el
         DO_DEBUG(opal_output(0, "pack 3. memcpy( %p, %p, %lu ) => space %lu\n", (void *) *(packed),
                              (void *) _memory, (unsigned long) _end_loop->size,
                              (unsigned long) (*(SPACE) -_i * _end_loop->size)););
-        MEMCPY_CSUM(*(packed), _memory, _end_loop->size, (CONVERTOR));
+        (CONVERTOR)->cbmemcpy(*(packed), _memory, _end_loop->size, (CONVERTOR));
         *(packed) += _end_loop->size;
         _memory += _loop->extent;
     }
