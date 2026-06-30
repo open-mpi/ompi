@@ -48,6 +48,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/output.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/proc/proc.h"
 
 /*
  * Local functions
@@ -183,6 +184,54 @@ void ompi_mpi_errors_abort_win_handler(struct ompi_win_t **win,
   }
   backend_abort(false, "win", abort_comm, name, error_code, arglist);
   va_end(arglist);
+}
+
+void ompi_mpi_errors_abort_instance_handler(struct ompi_instance_t **instance,
+                                            int *error_code, ...)
+{
+  char *name;
+  va_list arglist;
+  int err = MPI_ERR_UNKNOWN;
+  opal_proc_t *local_proc;
+  pmix_proc_t my_pmix_proc = PMIX_PROC_STATIC_INIT;
+
+  va_start(arglist, error_code);
+
+  if (NULL != instance && NULL != *instance) {
+      name = (*instance)->i_name;
+  } else {
+      name = NULL;
+  }
+
+  if (NULL != error_code) {
+     err = *error_code;
+  }
+
+  /* We only want aggregation while the rte is initialized */
+  if (ompi_rte_initialized) {
+      backend_abort_aggregate(false, "session", NULL, name, error_code, arglist);
+  } else {
+      backend_abort_no_aggregate(false, "session", NULL, name, error_code, arglist);
+  }
+
+  va_end(arglist);
+
+  /* 
+   * MPI-5.0 Sec 9.3 (pp.447-448): ERRORS_ABORT on a session aborts ONLY the
+   * local MPI process.  We signal the PMIx runtime that the local process
+   * is to be aborted by explicitly specifying the pmix_proc_t of the local
+   * process in the call to PMIx_Abort.  Note that when using the PRRTe
+   * PMIx server one must use the mpirun --enable-recovery option
+   * to prevent the server from aborting the other processes in the job.
+   */
+
+  local_proc = opal_proc_local_get();
+  OPAL_PMIX_CONVERT_NAME(&my_pmix_proc, &local_proc->proc_name);
+  PMIx_Abort(err, NULL, &my_pmix_proc, 1);
+
+  /* Now Exit */
+  _exit(err);
+
 }
 
 void ompi_mpi_errors_are_fatal_instance_handler (struct ompi_instance_t **instance,

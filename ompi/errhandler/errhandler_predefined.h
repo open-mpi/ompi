@@ -50,6 +50,8 @@ OMPI_DECLSPEC void ompi_mpi_errors_abort_file_handler(struct ompi_file_t **file,
 					    int *error_code, ...);
 OMPI_DECLSPEC void ompi_mpi_errors_abort_win_handler(struct ompi_win_t **win,
 					    int *error_code, ...);
+OMPI_DECLSPEC void ompi_mpi_errors_abort_instance_handler(struct ompi_instance_t **instance,
+					    int *error_code, ...);
 
 /**
  * Handler function for MPI_ERRORS_RETURN
