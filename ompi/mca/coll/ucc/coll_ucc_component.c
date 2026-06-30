@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
- * Copyright (c) 2024 NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
  *
@@ -248,7 +248,10 @@ static int mca_coll_ucc_open(void)
 {
     mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
     mca_coll_ucc_output          = opal_output_open(NULL);
-    cm->libucc_initialized       = false;
+    cm->domain_count             = 0;
+    cm->keyval_created           = false;
+    cm->requests_initialized     = false;
+    OBJ_CONSTRUCT(&cm->domains, opal_list_t);
     opal_output_set_verbosity(mca_coll_ucc_output, cm->ucc_verbose);
     mca_coll_ucc_init_default_cts();
     return OMPI_SUCCESS;
@@ -256,5 +259,15 @@ static int mca_coll_ucc_open(void)
 
 static int mca_coll_ucc_close(void)
 {
+    mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
+
+    /* By now every UCC communicator has been freed, so all domains and the
+       UCC library are already gone.  Drop the request free list (created
+       lazily with the first library init) and the (now empty) domain list. */
+    if (cm->requests_initialized) {
+        OBJ_DESTRUCT(&cm->requests);
+        cm->requests_initialized = false;
+    }
+    OBJ_DESTRUCT(&cm->domains);
     return OMPI_SUCCESS;
 }
