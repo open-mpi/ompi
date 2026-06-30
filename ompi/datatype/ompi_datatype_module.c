@@ -813,6 +813,9 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
     } else {
         if( pData->super.flags & OPAL_DATATYPE_FLAG_COMMITTED ) index += snprintf( buffer + index, length - index, "committed " );
         if( pData->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) index += snprintf( buffer + index, length - index, "contiguous " );
+        if( pData->super.flags & OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE ) {
+            index += snprintf( buffer + index, length - index, "count-boundary " );
+        }
     }
     index += snprintf( buffer + index, length - index, ")" );
     index += _ompi_dump_data_flags( pData->super.flags, buffer + index, length - index );

@@ -15,6 +15,7 @@
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -176,6 +177,9 @@ void opal_datatype_dump(const opal_datatype_t *pData)
         }
         if (pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
             index += snprintf(buffer + index, length - index, "contiguous ");
+        }
+        if (pData->flags & OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE) {
+            index += snprintf(buffer + index, length - index, "count-boundary ");
         }
     }
     index += snprintf(buffer + index, length - index, ")");
