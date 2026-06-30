@@ -93,6 +93,7 @@ libopalutil_la_SOURCES = \
         $(headers) \
 	ethtool.c \
 	event.c \
+	evthread.c \
         if.c \
         net.c \
         info_subscriber.c \
