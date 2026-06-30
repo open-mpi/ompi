@@ -302,6 +302,33 @@ AM_CONDITIONAL(SPC_ENABLE, test "$SPC_ENABLE" = "1")
 
 AS_IF([test "$enable_spc" != "no"], [project_spc_amc=true], [project_spc_amc=false])
 
+# Enable/Disable Hardware-Based Performance Counters Capability for HPE's Cassini (CXI) Devices
+AC_MSG_CHECKING([if want hardware-based performance counters for Cassini (HWPC_CXI)])
+
+AC_ARG_ENABLE([hwpc-cxi],
+    [AS_HELP_STRING([--enable-hwpc-cxi],
+    [Enable hardware-based performance counters capability for HPE's Cassini devices (default: disabled)])],
+    [enable_hwpc_cxi=`echo "$enableval" | tr '[:upper:]' '[:lower:]'`],
+    [enable_hwpc_cxi=no])
+
+AS_CASE([$enable_hwpc_cxi],
+        [yes|y|true|1], [enable_hwpc_cxi=yes],
+        [no|n|false|0], [enable_hwpc_cxi=no],
+        [AC_MSG_ERROR([--enable-hwpc-cxi expects yes|y|true|1 or no|n|false|0])])
+
+AS_IF([test "$enable_hwpc_cxi" = "yes"],
+      [AC_MSG_RESULT([yes])
+       HWPC_CXI_ENABLE=1],
+      [AC_MSG_RESULT([no])
+       HWPC_CXI_ENABLE=0])
+
+AC_DEFINE_UNQUOTED([HWPC_CXI_ENABLE],
+                   [$HWPC_CXI_ENABLE],
+                   [If the hardware-based performance counters capability for HPE's Cassini devices should be enabled.])
+AM_CONDITIONAL(HWPC_CXI_ENABLE, test "$HWPC_CXI_ENABLE" = "1")
+
+AS_IF([test "$enable_hwpc_cxi" = "yes"], [project_hwpc_cxi_amc=true], [project_hwpc_cxi_amc=false])
+
 if test "$enable_binaries" = "no" && test "$enable_dist" = "yes"; then
     AC_MSG_WARN([--disable-binaries is incompatible with --enable dist])
     AC_MSG_ERROR([Cannot continue])
@@ -1544,7 +1571,7 @@ AC_CONFIG_FILES([
     test/util/Makefile
 ])
 
-m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile test/mpi/Makefile test/mpi/t/Makefile])])
+m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile test/mpi/Makefile test/mpi/t/Makefile test/hwpc_cxi/Makefile])])
 
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])
