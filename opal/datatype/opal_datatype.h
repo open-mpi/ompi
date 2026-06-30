@@ -41,6 +41,7 @@
 
 #include "opal_config.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "opal/class/opal_object.h"
@@ -161,6 +162,9 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_datatype_t);
 OPAL_DECLSPEC extern const opal_datatype_t
     *opal_datatype_basicDatatypes[OPAL_DATATYPE_MAX_PREDEFINED];
 OPAL_DECLSPEC extern const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
+
+/* Set before datatype commit; false forces mixed optimized regions to use OPAL_DATATYPE_UINT1. */
+OPAL_DECLSPEC extern bool opal_datatype_optimize_preserve_type;
 
 /* Local Architecture as provided by opal_arch_compute_local_id() */
 OPAL_DECLSPEC extern uint32_t opal_local_arch;

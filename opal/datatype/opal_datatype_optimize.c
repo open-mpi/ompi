@@ -24,6 +24,7 @@
 
 #include "opal_config.h"
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -108,24 +109,137 @@ static void opal_datatype_opt_collapse_elem(ddt_elem_desc_t *elem)
     }
 }
 
+static bool opal_datatype_opt_is_aligned(ptrdiff_t value, size_t alignment)
+{
+    return 0 == ((uintptr_t) value & (alignment - 1));
+}
+
+static uint16_t opal_datatype_opt_promoted_uint_type(ptrdiff_t disp, ptrdiff_t extent, uint32_t count,
+                                                     ptrdiff_t bytes)
+{
+    static const uint16_t candidates[] = {OPAL_DATATYPE_UINT8, OPAL_DATATYPE_UINT4, OPAL_DATATYPE_UINT2};
+
+    for (size_t i = 0; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
+        uint16_t type = candidates[i];
+        size_t type_size = opal_datatype_basicDatatypes[type]->size;
+
+        if (opal_datatype_basicDatatypes[type]->flags & OPAL_DATATYPE_FLAG_UNAVAILABLE) {
+            continue;
+        }
+        if (0 != ((size_t) bytes % type_size)) {
+            continue;
+        }
+        if (!opal_datatype_opt_is_aligned(disp, type_size)) {
+            continue;
+        }
+        if ((1 < count) && !opal_datatype_opt_is_aligned(extent, type_size)) {
+            continue;
+        }
+        return type;
+    }
+
+    return OPAL_DATATYPE_UINT1;
+}
+
+static uint64_t opal_datatype_opt_type_mask(uint16_t type)
+{
+    if (64 <= type) {
+        return 0;
+    }
+
+    return UINT64_C(1) << type;
+}
+
+static uint64_t opal_datatype_opt_type_pair_mask(uint16_t type1, uint16_t type2)
+{
+    return opal_datatype_opt_type_mask(type1) | opal_datatype_opt_type_mask(type2);
+}
+
+static uint16_t opal_datatype_opt_promoted_type(ptrdiff_t disp, ptrdiff_t extent, uint32_t count,
+                                                ptrdiff_t bytes,
+                                                uint64_t type_mask)
+{
+    uint16_t selected_type = OPAL_DATATYPE_UNAVAILABLE;
+    size_t selected_size = 0;
+
+    if (!opal_datatype_optimize_preserve_type) {
+        return OPAL_DATATYPE_UINT1;
+    }
+
+    /*
+     * Prefer one of the original participating types, using the widest type that fits the merged byte range and
+     * alignment.
+     */
+    for (uint16_t type = OPAL_DATATYPE_FIRST_TYPE; type < OPAL_DATATYPE_UNAVAILABLE; ++type) {
+        size_t type_size;
+
+        if (0 == (type_mask & opal_datatype_opt_type_mask(type))) {
+            continue;
+        }
+        if (opal_datatype_basicDatatypes[type]->flags & OPAL_DATATYPE_FLAG_UNAVAILABLE) {
+            continue;
+        }
+
+        type_size = opal_datatype_basicDatatypes[type]->size;
+        if (0 != ((size_t) bytes % type_size)) {
+            continue;
+        }
+        if (!opal_datatype_opt_is_aligned(disp, type_size)) {
+            continue;
+        }
+        if ((1 < count) && !opal_datatype_opt_is_aligned(extent, type_size)) {
+            continue;
+        }
+        if (type_size > selected_size) {
+            selected_type = type;
+            selected_size = type_size;
+        }
+    }
+
+    if (OPAL_DATATYPE_UNAVAILABLE != selected_type) {
+        return selected_type;
+    }
+
+    return opal_datatype_opt_promoted_uint_type(disp, extent, count, bytes);
+}
+
+/*
+ * Mixed-type contiguous regions cannot keep the original typemap in the optimized descriptor. Keep them
+ * homogeneous-only, but preserve as much copy width as the byte layout allows by reusing one of the
+ * original types when possible. Neutral unsigned integer types are only a fallback.
+ */
+static void opal_datatype_opt_set_mixed_region(ddt_elem_desc_t *elem, ptrdiff_t bytes, uint32_t count,
+                                               ptrdiff_t disp, ptrdiff_t extent,
+                                               uint64_t type_mask)
+{
+    uint16_t type = opal_datatype_opt_promoted_type(disp, extent, count, bytes, type_mask);
+    size_t type_size = opal_datatype_basicDatatypes[type]->size;
+
+    elem->common.type = type;
+    elem->common.flags = OPAL_DATATYPE_FLAG_BASIC | OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED;
+    elem->blocklen = bytes / type_size;
+    elem->count = count;
+    elem->disp = disp;
+    elem->extent = extent;
+}
+
 static bool opal_datatype_opt_item_as_elem(const dt_elem_desc_t *desc, int32_t pos_desc,
                                            uint32_t item, ddt_elem_desc_t *elem);
 
 /*
- * Summarize a contiguous nested loop as one data-like element so that an
- * enclosing loop can test adjacency across its iteration boundary. If every
- * item in the loop body resolves to the same predefined type, keep that type
- * in the summary. Only mixed or opaque regions are represented as UINT1 and
- * marked restricted for homogeneous-only use.
+ * Summarize a contiguous nested loop as one data-like element so that an enclosing loop can test adjacency
+ * across its iteration boundary. If every item in the loop body resolves to the same predefined type, keep
+ * that type in the summary. Mixed or opaque regions are promoted to the widest participating type allowed by
+ * the block size and alignment, and are marked restricted for homogeneous-only use.
  */
-static bool opal_datatype_opt_compress_contiguous_loop(const dt_elem_desc_t *desc,
-                                                       int32_t pos_desc,
+static bool opal_datatype_opt_compress_contiguous_loop(const dt_elem_desc_t *desc, int32_t pos_desc,
                                                        ddt_elem_desc_t *elem)
 {
     const ddt_loop_desc_t *loop = &desc[pos_desc].loop;
     const ddt_endloop_desc_t *end_loop = &desc[pos_desc + loop->items].end_loop;
     uint16_t common_type = OPAL_DATATYPE_UNAVAILABLE;
     uint16_t common_flags = OPAL_DATATYPE_FLAG_BASIC;
+    uint64_t type_mask = 0;
     size_t common_blocklen = 0;
     bool homogeneous = true;
     bool have_item = false;
@@ -134,8 +248,7 @@ static bool opal_datatype_opt_compress_contiguous_loop(const dt_elem_desc_t *des
         return false;
     }
 
-    for (uint32_t i = 1; i < loop->items;
-         i = opal_datatype_opt_next_item(desc, pos_desc, i)) {
+    for (uint32_t i = 1; i < loop->items; i = opal_datatype_opt_next_item(desc, pos_desc, i)) {
         ddt_elem_desc_t current;
 
         have_item = true;
@@ -143,11 +256,12 @@ static bool opal_datatype_opt_compress_contiguous_loop(const dt_elem_desc_t *des
             homogeneous = false;
             break;
         }
+        type_mask |= opal_datatype_opt_type_mask(current.common.type);
 
         if (OPAL_DATATYPE_UNAVAILABLE == common_type) {
             common_type = current.common.type;
             common_blocklen = current.blocklen;
-            common_flags |= current.common.flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+            common_flags |= current.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED;
             continue;
         }
 
@@ -156,7 +270,7 @@ static bool opal_datatype_opt_compress_contiguous_loop(const dt_elem_desc_t *des
             break;
         }
         common_blocklen += current.blocklen;
-        common_flags |= current.common.flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+        common_flags |= current.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED;
     }
 
     if (!have_item) {
@@ -177,14 +291,15 @@ static bool opal_datatype_opt_compress_contiguous_loop(const dt_elem_desc_t *des
     }
 
     if (!homogeneous) {
-        elem->common.type = OPAL_DATATYPE_UINT1;
-        elem->common.flags = OPAL_DATATYPE_FLAG_BASIC | OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
-        elem->blocklen = end_loop->size;
+        opal_datatype_opt_set_mixed_region(elem, end_loop->size, loop->loops, end_loop->first_elem_disp,
+                                           loop->extent, type_mask);
     }
 
-    elem->count = loop->loops;
-    elem->extent = loop->extent;
-    elem->disp = end_loop->first_elem_disp;
+    if (homogeneous) {
+        elem->count = loop->loops;
+        elem->extent = loop->extent;
+        elem->disp = end_loop->first_elem_disp;
+    }
     opal_datatype_opt_collapse_elem(elem);
     return true;
 }
@@ -215,13 +330,15 @@ static bool opal_datatype_opt_item_as_elem(const dt_elem_desc_t *desc, int32_t p
 
 /*
  * Fuse the last fragment of one loop iteration with the first fragment of the
- * next iteration when they are byte-adjacent. Different basic types are fused as
- * UINT1 and force the optimized description to be restricted.
+ * next iteration when they are byte-adjacent. Different basic types use the
+ * widest participating copy type compatible with the merged layout.
  */
 static bool opal_datatype_opt_fuse_tail_head(opal_datatype_t *pData,
                                              const ddt_elem_desc_t *tail,
                                              const ddt_elem_desc_t *head,
                                              ptrdiff_t head_disp_delta,
+                                             uint32_t repeat_count,
+                                             ptrdiff_t repeat_extent,
                                              ddt_elem_desc_t *fused)
 {
     ptrdiff_t tail_size, head_size;
@@ -242,14 +359,15 @@ static bool opal_datatype_opt_fuse_tail_head(opal_datatype_t *pData,
     if (tail->common.type == head->common.type) {
         fused->common.flags = OPAL_DATATYPE_FLAG_BASIC
                               | ((tail->common.flags | head->common.flags)
-                                 & OPAL_DATATYPE_OPTIMIZED_RESTRICTED);
+                                 & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED);
         fused->blocklen += head->blocklen;
     } else {
-        fused->common.type = OPAL_DATATYPE_UINT1;
-        fused->common.flags = OPAL_DATATYPE_FLAG_BASIC | OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
-        fused->blocklen = tail_size + head_size;
+        uint64_t type_mask = opal_datatype_opt_type_pair_mask(tail->common.type, head->common.type);
+
+        opal_datatype_opt_set_mixed_region(fused, tail_size + head_size, repeat_count, tail->disp,
+                                           repeat_extent, type_mask);
     }
-    if (fused->common.flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
+    if (fused->common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED) {
         pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
     }
 
@@ -305,7 +423,8 @@ static bool opal_datatype_optimize_loop_boundary(opal_datatype_t *pData,
 
     first = &first_elem;
     last = &last_elem;
-    if (!opal_datatype_opt_fuse_tail_head(pData, last, first, loop->extent, &fused)) {
+    if (!opal_datatype_opt_fuse_tail_head(pData, last, first, loop->extent, loop->loops - 1,
+                                          loop->extent, &fused)) {
         return false;
     }
 
@@ -361,6 +480,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
     int32_t nbElems = 0;
     ptrdiff_t total_disp = 0;
     ddt_elem_desc_t last = {.common.flags = 0xFFFF /* all on */, .count = 0, .disp = 0}, compress;
+    ddt_elem_desc_t current_elem;
     ddt_elem_desc_t *current;
 
     pOrigStack = pStack = (dt_stack_t *) malloc(sizeof(dt_stack_t) * (pData->loops + 2));
@@ -379,7 +499,10 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
             == pData->desc.desc[pos_desc].elem.common.type) { /* end of the current loop */
             ddt_endloop_desc_t *end_loop = &(pData->desc.desc[pos_desc].end_loop);
             if (0 != last.count) {
-                CREATE_ELEM(pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC, last.blocklen,
+                CREATE_ELEM(pElemDesc, last.common.type,
+                            OPAL_DATATYPE_FLAG_BASIC
+                                | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
+                            last.blocklen,
                             last.count, last.disp, last.extent);
                 pElemDesc++;
                 nbElems++;
@@ -405,7 +528,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
             if (loop->common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
                 if (opal_datatype_opt_compress_contiguous_loop(pData->desc.desc, pos_desc,
                                                                &compress)) {
-                    if (compress.common.flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
+                    if (compress.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED) {
                         pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                     }
                     /**
@@ -426,7 +549,10 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
              */
 
             if (0 != last.count) { /* Generate the pending element */
-                CREATE_ELEM(pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC, last.blocklen,
+                CREATE_ELEM(pElemDesc, last.common.type,
+                            OPAL_DATATYPE_FLAG_BASIC
+                                | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
+                            last.blocklen,
                             last.count, last.disp, last.extent);
                 pElemDesc++;
                 nbElems++;
@@ -440,7 +566,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
                 for (uint32_t i = 0; i < loop->loops; i++) {
                     for (uint32_t j = 0; j < (loop->items - 1); j++) {
                         current = &pData->desc.desc[pos_desc + index + j].elem;
-                        CREATE_ELEM(pElemDesc, current->common.type, current->common.flags,
+                        CREATE_ELEM(pElemDesc, current->common.type, OPAL_DATATYPE_FLAG_BASIC,
                                     current->blocklen, current->count, current->disp + elem_displ,
                                     current->extent);
                         pElemDesc++;
@@ -476,73 +602,76 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
         }
         while (pData->desc.desc[pos_desc].elem.common.flags
                & OPAL_DATATYPE_FLAG_DATA) { /* go over all basic datatype elements */
-            current = &pData->desc.desc[pos_desc].elem;
+            current_elem = pData->desc.desc[pos_desc].elem;
+            current_elem.common.flags = OPAL_DATATYPE_FLAG_BASIC;
+            current = &current_elem;
             pos_desc++; /* point to the next element as current points to the current one */
 
         fuse_loops:
             if (0 == last.count) { /* first data of the datatype */
                 last = *current;
                 continue; /* next data */
-            } else {      /* can we merge it in order to decrease count */
-                if ((ptrdiff_t) last.blocklen
-                        * (ptrdiff_t) opal_datatype_basicDatatypes[last.common.type]->size
-                    == last.extent) {
-                    last.extent *= last.count;
-                    last.blocklen *= last.count;
-                    last.count = 1;
-                }
             }
+            /* can we merge it in order to decrease count */
+            if ((ptrdiff_t) last.blocklen
+                    * (ptrdiff_t) opal_datatype_basicDatatypes[last.common.type]->size
+                == last.extent) {
+                last.extent *= last.count;
+                last.blocklen *= last.count;
+                last.count = 1;
+            }
+
+            ptrdiff_t last_block_size = opal_datatype_opt_elem_size(&last);
+            ptrdiff_t current_block_size = opal_datatype_opt_elem_size(current);
 
             /* are the two elements compatible: aka they have very similar values and they
              * can be merged together by increasing the count, and/or changing the extent.
              */
-            if ((last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size)
-                == (current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size)) {
-                ddt_elem_desc_t save = last; /* safekeep the type and blocklen */
-                if (last.common.type != current->common.type) {
-                    last.blocklen *= opal_datatype_basicDatatypes[last.common.type]->size;
-                    last.common.type   = OPAL_DATATYPE_UINT1;
-                    last.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
-                    pData->flags      |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+            if (last_block_size == current_block_size) {
+                bool mixed_types = (last.common.type != current->common.type);
+                ptrdiff_t merged_extent = last.extent;
+                uint32_t merged_count = last.count + current->count;
+                bool can_merge = false;
+
+                if (((last.extent * (ptrdiff_t) last.count + last.disp) == current->disp)
+                    && ((1 == current->count) || (last.extent == current->extent))) {
+                    can_merge = true;
+                } else if ((1 == last.count)
+                           && ((1 == current->count)
+                               || ((last.disp + current->extent) == current->disp))) {
+                    /* Ignore a count-1 extent, or use current's extent if it lands on current's displacement. */
+                    merged_extent = (1 == current->count) ? current->disp - last.disp : current->extent;
+                    can_merge = true;
                 }
 
-                if ((last.extent * (ptrdiff_t) last.count + last.disp) == current->disp) {
-                    if (1 == current->count) {
-                        last.count++;
-                        continue;
+                if (can_merge) {
+                    if (mixed_types) {
+                        uint64_t type_mask =
+                            opal_datatype_opt_type_pair_mask(last.common.type, current->common.type);
+
+                        opal_datatype_opt_set_mixed_region(&last, last_block_size, merged_count, last.disp,
+                                                           merged_extent, type_mask);
+                        pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                    } else {
+                        last.common.flags |= current->common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED;
+                        last.extent = merged_extent;
+                        last.count = merged_count;
                     }
-                    if (last.extent == current->extent) {
-                        last.count += current->count;
-                        continue;
-                    }
+                    continue;
                 }
-                if (1 == last.count) {
-                    /* we can ignore the extent of the element with count == 1 and merge them
-                     * together if their displacements match */
-                    if (1 == current->count) {
-                        last.extent = current->disp - last.disp;
-                        last.count++;
-                        continue;
-                    }
-                    /* can we compute a matching displacement ? */
-                    if ((last.disp + current->extent) == current->disp) {
-                        last.extent = current->extent;
-                        last.count = current->count + last.count;
-                        continue;
-                    }
-                }
-                last.blocklen = save.blocklen;
-                last.common.type = save.common.type;
                 /* try other optimizations */
             }
             /* are the elements fusionable such that we can fusion the last blocklen of one with the
              * first blocklen of the other.
              */
-            if ((ptrdiff_t)(last.disp + (last.count - 1) * last.extent
-                            + last.blocklen * opal_datatype_basicDatatypes[last.common.type]->size)
+            if ((ptrdiff_t) (last.disp + (last.count - 1) * last.extent + last_block_size)
                 == current->disp) {
+                ptrdiff_t fused_extent = last.extent + current->extent;
+
                 if (last.count != 1) {
-                    CREATE_ELEM(pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
+                    CREATE_ELEM(pElemDesc, last.common.type,
+                                OPAL_DATATYPE_FLAG_BASIC
+                                    | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
                                 last.blocklen, last.count - 1, last.disp, last.extent);
                     pElemDesc++;
                     nbElems++;
@@ -550,20 +679,21 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
                     last.count = 1;
                 }
                 if (last.common.type == current->common.type) {
+                    last.common.flags |= current->common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED;
                     last.blocklen += current->blocklen;
                 } else {
-                    last.blocklen = ((last.blocklen
-                                      * opal_datatype_basicDatatypes[last.common.type]->size)
-                                     + (current->blocklen
-                                        * opal_datatype_basicDatatypes[current->common.type]
-                                              ->size));
-                    last.common.type   = OPAL_DATATYPE_UINT1;
-                    last.common.flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
-                    pData->flags      |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+                    uint64_t type_mask =
+                        opal_datatype_opt_type_pair_mask(last.common.type, current->common.type);
+
+                    opal_datatype_opt_set_mixed_region(&last, last_block_size + current_block_size, 1,
+                                                       last.disp, fused_extent, type_mask);
+                    pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                 }
-                last.extent += current->extent;
+                last.extent = fused_extent;
                 if (current->count != 1) {
-                    CREATE_ELEM(pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC,
+                    CREATE_ELEM(pElemDesc, last.common.type,
+                                OPAL_DATATYPE_FLAG_BASIC
+                                    | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
                                 last.blocklen, last.count, last.disp, last.extent);
                     pElemDesc++;
                     nbElems++;
@@ -573,7 +703,10 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
                 }
                 continue;
             }
-            CREATE_ELEM(pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC, last.blocklen,
+            CREATE_ELEM(pElemDesc, last.common.type,
+                        OPAL_DATATYPE_FLAG_BASIC
+                            | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
+                        last.blocklen,
                         last.count, last.disp, last.extent);
             pElemDesc++;
             nbElems++;
@@ -582,7 +715,10 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData, size_t count
     }
 
     if (0 != last.count) {
-        CREATE_ELEM(pElemDesc, last.common.type, OPAL_DATATYPE_FLAG_BASIC, last.blocklen,
+        CREATE_ELEM(pElemDesc, last.common.type,
+                    OPAL_DATATYPE_FLAG_BASIC
+                        | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
+                    last.blocklen,
                     last.count, last.disp, last.extent);
         pElemDesc++;
         nbElems++;

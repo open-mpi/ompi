@@ -48,6 +48,7 @@ bool opal_ddt_position_debug = false;
 bool opal_ddt_copy_debug = false;
 bool opal_ddt_raw_debug = false;
 int opal_ddt_verbose = -1; /* Has the datatype verbose it's own output stream */
+OPAL_DECLSPEC bool opal_datatype_optimize_preserve_type = true;
 
 /* Using this macro implies that at this point _all_ information needed
  * to fill up the datatype are known.

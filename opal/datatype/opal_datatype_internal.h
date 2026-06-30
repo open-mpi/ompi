@@ -296,6 +296,9 @@ static inline int GET_FIRST_NON_LOOP(const union dt_elem_desc *_pElem)
             (COUNTER) = (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen; \
     } while (0)
 
+/* The optimizer changed this element's predefined type while preserving its byte layout. */
+#define OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED 0x0200
+
 OPAL_DECLSPEC int opal_datatype_contain_basic_datatypes(const struct opal_datatype_t *pData,
                                                         char *ptr, size_t length);
 OPAL_DECLSPEC int opal_datatype_dump_data_flags(unsigned short usflags, char *ptr, size_t length);

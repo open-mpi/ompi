@@ -103,6 +103,9 @@ int opal_datatype_dump_data_flags(unsigned short usflags, char *ptr, size_t leng
     } else if (usflags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
         ptr[9] = 'H';  /* optimized description restricted to homogeneous cases */
     }
+    if (usflags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED) {
+        ptr[10] = 'T'; /* optimized descriptor changed this element's copy type */
+    }
     /* We know nothing about the upper level language or flags! */
     /* ... */
     return index;
@@ -180,6 +183,9 @@ void opal_datatype_dump(const opal_datatype_t *pData)
         }
         if (pData->flags & OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE) {
             index += snprintf(buffer + index, length - index, "count-boundary ");
+        }
+        if (pData->flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
+            index += snprintf(buffer + index, length - index, "restricted ");
         }
     }
     index += snprintf(buffer + index, length - index, ")");
