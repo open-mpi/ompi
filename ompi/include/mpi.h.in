@@ -923,6 +923,17 @@ enum {
 };
 
 /*
+ * MPI_T event "model" values (Open MPI extension): which MPI model an
+ * instance-lifecycle event (the ompi.mpi.initialization / ompi.mpi.finalization
+ * MPI_T events) describes -- the world model (MPI_Init / MPI_Finalize) or the
+ * session model (MPI_Session_init / MPI_Session_finalize).
+ */
+enum {
+  OMPI_T_MODEL_WORLD,
+  OMPI_T_MODEL_SESSION
+};
+
+/*
  * MPIT pvar classes
  */
 enum {

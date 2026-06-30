@@ -476,6 +476,16 @@ test/mpool/mpool_memkind
 
 test/mpi/environment/chello
 
+test/mpi/t/mpi_t_category_get_events
+test/mpi/t/mpi_t_event_selftest
+test/mpi/t/mpi_t_errcodes
+test/mpi/t/mpi_t_event_inert_ok
+test/mpi/t/mpi_t_event_smoke
+test/mpi/t/mpi_t_event_14019
+test/mpi/t/mpi_t_event_producers
+test/mpi/t/mpi_t_event_reinit
+test/mpi/t/mpi_t_event_world
+
 test/runtime/parse_context
 test/runtime/sigchld
 test/runtime/start_shut
@@ -490,6 +500,7 @@ test/threads/opal_atomic_thread_bench
 
 test/util/aaa
 test/util/test_session_dir_out
+test/util/mca_base_event_test
 test/util/opal_os_path
 test/util/opal_argv
 test/util/opal_os_create_dirpath

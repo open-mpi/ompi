@@ -33,3 +33,5 @@ ERRORS
 
 .. seealso::
    * :ref:`MPI_T_event_read`
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`

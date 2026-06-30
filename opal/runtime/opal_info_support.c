@@ -43,6 +43,7 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "opal/mca/base/mca_base_pvar.h"
+#include "opal/mca/base/mca_base_event.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
 #include "opal/util/cmd_line.h"
@@ -152,6 +153,8 @@ int opal_info_init(int argc, char **argv, opal_cmd_line_t *opal_info_cmd_line)
                             "Show configuration options");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 't', NULL, "type", 1,
                             "Show internal MCA parameters with the type specified in parameter.");
+    opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "event", 0,
+                            "Show registered MPI_T event sources and event types.");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'h', NULL, "help", 0, "Show this help message");
     opal_cmd_line_make_opt3(opal_info_cmd_line, '\0', NULL, "pretty-print", 0,
                             "When used in conjunction with other parameters, the output is "
@@ -168,7 +171,8 @@ int opal_info_init(int argc, char **argv, opal_cmd_line_t *opal_info_cmd_line)
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'a', NULL, "all", 0,
                             "Show all configuration options and MCA parameters");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 'l', NULL, "level", 1,
-                            "Show only variables with at most this level (1-9)");
+                            "Show only variables and MPI_T event types with at most this "
+                            "level (1-9)");
     opal_cmd_line_make_opt3(opal_info_cmd_line, 's', NULL, "selected-only", 0,
                             "Show only variables from selected components");
     opal_cmd_line_make_opt3(
@@ -815,6 +819,104 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group,
         opal_info_show_mca_group_params(group, max_level, want_internal);
     }
     free(component_msg);
+}
+
+/* Parse the --level option (1-9) into an internal max verbosity, exiting on a
+   malformed value, exactly as opal_info_do_params/opal_info_do_type do.  With
+   no --level given, default to showing everything when want_all is set,
+   otherwise only the most basic (level 1) items. */
+static mca_base_var_info_lvl_t opal_info_max_level(opal_cmd_line_t *opal_info_cmd_line,
+                                                   bool want_all)
+{
+    mca_base_var_info_lvl_t max_level = OPAL_INFO_LVL_1;
+    char *str, *tmp;
+
+    if (NULL != (str = opal_cmd_line_get_param(opal_info_cmd_line, "level", 0, 0))) {
+        errno = 0;
+        max_level = strtol(str, &tmp, 10) + OPAL_INFO_LVL_1 - 1;
+        if (0 != errno || '\0' != tmp[0] || max_level < OPAL_INFO_LVL_1
+            || max_level > OPAL_INFO_LVL_9) {
+            char *usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
+            opal_show_help("help-opal_info.txt", "invalid-level", true, str);
+            free(usage);
+            exit(1);
+        }
+    } else if (want_all) {
+        max_level = OPAL_INFO_LVL_9;
+    }
+
+    return max_level;
+}
+
+void opal_info_do_event(bool want_all, opal_cmd_line_t *opal_info_cmd_line)
+{
+    mca_base_var_dump_type_t dump_type = (!opal_info_pretty
+                                              ? MCA_BASE_VAR_DUMP_PARSABLE
+                                              : (opal_info_color ? MCA_BASE_VAR_DUMP_READABLE_COLOR
+                                                                 : MCA_BASE_VAR_DUMP_READABLE));
+    /* For --event, default to showing all event-type levels unless the user
+       narrowed it with --level: every built-in event type registers at level
+       2-4, so a level-1 default (as --param uses) would hide ALL types and make
+       a plain "ompi_info --event" print only sources, contradicting the option's
+       help text.  An explicit --level still narrows the set. */
+    bool level_given = (NULL != opal_cmd_line_get_param(opal_info_cmd_line, "level", 0, 0));
+    mca_base_var_info_lvl_t max_level = opal_info_max_level(opal_info_cmd_line,
+                                                            want_all || !level_given);
+    bool printed_sources_header = false;
+    bool printed_types_header = false;
+    int count = 0, i, j, ret;
+    char **strings;
+
+    /* Event sources are always shown (a source has no verbosity level, so the
+       --level filter does not apply to them), but defer the section header until
+       the first source actually prints, so a build with the producers disabled
+       does not emit an empty, dangling header -- matching the event-types half
+       below. */
+    (void) mca_base_event_source_get_count(&count);
+    for (i = 0; i < count; ++i) {
+        ret = mca_base_event_source_dump(i, &strings, dump_type);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
+        if (opal_info_pretty && !printed_sources_header) {
+            opal_info_out("MPI_T event sources", "mpi_t_event:sources",
+                          "---------------------------------------------------");
+            printed_sources_header = true;
+        }
+        for (j = 0; strings[j]; ++j) {
+            opal_info_out("", "", strings[j]);
+            free(strings[j]);
+        }
+        free(strings);
+    }
+
+    /* Event types are filtered by --level against the event's verbosity,
+       mirroring the MCA parameter path.  Defer the section header until the
+       first type passes, so a fully-filtered run prints no empty header. */
+    count = 0;
+    (void) mca_base_event_get_count(&count);
+    for (i = 0; i < count; ++i) {
+        mca_base_event_t *event;
+
+        if (OPAL_SUCCESS != mca_base_event_get_by_index(i, &event)
+            || max_level < event->verbosity) {
+            continue;
+        }
+        if (opal_info_pretty && !printed_types_header) {
+            opal_info_out("MPI_T event types", "mpi_t_event:types",
+                          "---------------------------------------------------");
+            printed_types_header = true;
+        }
+        ret = mca_base_event_dump(i, &strings, dump_type);
+        if (OPAL_SUCCESS != ret) {
+            continue;
+        }
+        for (j = 0; strings[j]; ++j) {
+            opal_info_out("", "", strings[j]);
+            free(strings[j]);
+        }
+        free(strings);
+    }
 }
 
 void opal_info_show_mca_params(const char *type, const char *component,

@@ -30,6 +30,7 @@
  * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -74,6 +75,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/runtime/ompi_mpit_events.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/errhandler/errhandler.h"
@@ -102,6 +104,19 @@
 #include "ompi/mpiext/mpiext.h"
 #include "ompi/mca/hook/base/base.h"
 #include "ompi/util/timings.h"
+#include "opal/types.h"
+
+/* opal_count_t is the layer-safe backing type for MPI_Count: both are derived
+   from a single configure-computed value (OPAL_FIND_COUNT_TYPE), so OPAL code
+   can manipulate counts without referencing any MPI type.  Guarantee at build
+   time that the two stay the same width. */
+_Static_assert(sizeof(opal_count_t) == sizeof(MPI_Count),
+               "opal_count_t and MPI_Count must be the same size");
+/* opal_count_t must be signed: later code (e.g. the mca_base_event drop
+   accounting) saturates against OPAL_COUNT_MAX and relies on negative values
+   being representable / detectable. */
+_Static_assert((opal_count_t) -1 < 0,
+               "opal_count_t must be a signed type");
 
 /* newer versions of gcc have poisoned this deprecated feature */
 #ifdef HAVE___MALLOC_INITIALIZE_HOOK
@@ -658,6 +673,28 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     OMPI_TIMING_FINALIZE;
 
     ompi_hook_base_mpi_init_bottom(argc, argv, requested, provided);
+
+    /* Raise the MPI_T initialization event for the world model now that init is
+       complete and MPI_COMM_WORLD exists, so the payload can carry this process'
+       rank and the world size (the session model raises its own initialization
+       event from ompi_mpi_instance_init(), with world_rank/size = -1).  No-op
+       when no tool is listening or the producer is disabled. */
+    if (NULL != ompi_event_initialization) {
+        /* The world model exposes no user-facing instance handle (MPI_Init
+           returns none), so instance_id is purely an internal correlation token
+           (init<->finalize) and is ABI-independent -- unlike the session model,
+           where instance_id is the MPI_Session handle and is ABI-gated. */
+        struct {
+            int32_t  model;
+            int32_t  thread_level;
+            int32_t  world_rank;
+            int32_t  world_size;
+            uint64_t instance_id;
+        } payload = {OMPI_T_MODEL_WORLD, (int32_t) *provided,
+                     ompi_comm_rank(MPI_COMM_WORLD), ompi_comm_size(MPI_COMM_WORLD),
+                     (uint64_t) (uintptr_t) ompi_mpi_instance_default};
+        mca_base_event_raise(ompi_event_initialization, NULL, &payload);
+    }
 
     return MPI_SUCCESS;
 }

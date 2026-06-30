@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,16 @@
 #if OPAL_ENABLE_DEBUG
 #    include "opal/util/output.h"
 #endif
+
+/*
+ * opal_count_t: a signed integer "count" type whose backing C type is chosen
+ * once at configure time (OPAL_FIND_COUNT_TYPE); OPAL_COUNT_MAX is its maximum
+ * value.  It is the layer-safe backing type for MPI_Count -- when OMPI is
+ * built, MPI_Count is derived from the same configure-computed value, so the
+ * two are guaranteed to be the same width (enforced by a _Static_assert in
+ * OMPI).  OPAL code must use opal_count_t and must NOT reference MPI_Count.
+ */
+typedef OPAL_COUNT_TYPE opal_count_t;
 
 /*
  * portable assignment of pointer to int

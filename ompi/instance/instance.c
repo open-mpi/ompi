@@ -10,6 +10,7 @@
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * Copyright (c) 2026      BULL S.A.S.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +29,7 @@
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/ompi_mpit_events.h"
 
 #include "ompi/interlib/interlib.h"
 #include "ompi/communicator/communicator.h"
@@ -913,6 +915,38 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
     *instance = new_instance;
     opal_mutex_unlock (&instance_lock);
 
+    /* Raise the MPI_T initialization event after dropping instance_lock (no-op
+       when no tool is listening or the producer is disabled).  This common path
+       serves BOTH MPI models; the world model (whose instance storage is the
+       ompi_mpi_instance_default global) instead raises from ompi_mpi_init() once
+       MPI_COMM_WORLD exists and world_rank/size are known, so raise here only
+       for the session model.  A process has no rank in a session, so world_rank
+       and world_size are reported as -1. */
+    if (instance != &ompi_mpi_instance_default && NULL != ompi_event_initialization) {
+        struct {
+            int32_t  model;
+            int32_t  thread_level;
+            int32_t  world_rank;
+            int32_t  world_size;
+            uint64_t instance_id;
+        } payload;
+        payload.model = OMPI_T_MODEL_SESSION;
+        payload.thread_level = (int32_t) ts_level;
+        payload.world_rank = -1;
+        payload.world_size = -1;
+        /* For the session model the instance is the MPI_Session, so instance_id
+           is its handle.  XXX ABI: it must match the registering MPI_T tool's
+           ABI (ompi_mpit_callback_abi). */
+        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+            payload.instance_id = (uint64_t) (uintptr_t) new_instance;
+        } else {
+            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
+               session new_instance. */
+            payload.instance_id = 0;
+        }
+        mca_base_event_raise(ompi_event_initialization, NULL, &payload);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -1017,6 +1051,31 @@ static int ompi_mpi_instance_finalize_common (void)
 int ompi_mpi_instance_finalize (ompi_instance_t **instance)
 {
     int ret = OMPI_SUCCESS;
+
+    /* Raise the MPI_T finalization event before teardown (no-op when no tool is
+       listening or the producer is disabled).  As with initialization, the world
+       model raises from ompi_mpi_finalize() (where MPI_COMM_WORLD still exists),
+       so raise here only for the session model; world_rank is -1 (no rank in a
+       session). */
+    if (instance != &ompi_mpi_instance_default && NULL != ompi_event_finalization) {
+        struct {
+            int32_t  model;
+            int32_t  world_rank;
+            uint64_t instance_id;
+        } payload;
+        payload.model = OMPI_T_MODEL_SESSION;
+        payload.world_rank = -1;
+        /* instance_id is the MPI_Session handle.  XXX ABI: it must match the
+           registering MPI_T tool's ABI (ompi_mpit_callback_abi). */
+        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+            payload.instance_id = (uint64_t) (uintptr_t) *instance;
+        } else {
+            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
+               session *instance. */
+            payload.instance_id = 0;
+        }
+        mca_base_event_raise(ompi_event_finalization, NULL, &payload);
+    }
 
     OBJ_RELEASE(*instance);
 
