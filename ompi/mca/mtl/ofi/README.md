@@ -187,7 +187,7 @@ approach also favours only creating as many contexts as needed.
        Number of threads = Number of communicators = Number of contexts
 
      For example, when using PSM2 provider, the number of contexts is
-     dictated by the Intel Omni-Path HFI1 driver module.
+     dictated by the Cornelis Networks Omni-Path HFI1 driver module.
 
    * OPAL layer allows for multiple threads to enter progress
      simultaneously. To enable this feature, user needs to set MCA
