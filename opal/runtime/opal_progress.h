@@ -142,7 +142,7 @@ OPAL_DECLSPEC void opal_progress_set_event_poll_rate(int microseconds);
  *
  * Prototype for the a progress function callback.  Progress function
  * callbacks can be registered with opal_progress_register() and
- * deregistered with opal_progress_deregister().  It should be noted
+ * deregistered with opal_progress_unregister().  It should be noted
  * that either registering or deregistering a function callback is an
  * extraordinarily expensive operation and should not be used for
  * potentially short callback lifetimes.
@@ -194,6 +194,9 @@ static inline bool opal_progress_spin(volatile bool *complete)
 
     return false;
 }
+
+/* shutdown the async progress thread. Do nothing if disabled */
+OPAL_DECLSPEC void opal_progress_shutdown_async_progress_thread(void);
 
 END_C_DECLS
 
