@@ -205,6 +205,7 @@ AC_DEFUN([_OPAL_CONFIG_LIBEVENT_INTERNAL], [
     OPAL_VAR_SCOPE_PUSH(subconfig_happy subconfig_prefix internal_libevent_location)
 
     AS_IF([test ! -z $prefix], [subconfig_prefix="--prefix=$prefix"])
+    AS_IF([test ! -z $libdir], [subconfig_prefix="--libdir=$libdir"])
 
     # Note: To update the version of libevent shipped, update the
     # constant in autogen.pl.

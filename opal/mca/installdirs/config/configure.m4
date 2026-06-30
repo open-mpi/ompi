@@ -24,6 +24,6 @@ AC_DEFUN([MCA_opal_installdirs_config_COMPILE_MODE], [
 # ------------------------------------------------
 AC_DEFUN([MCA_opal_installdirs_config_CONFIG],[
     AC_CONFIG_FILES([opal/mca/installdirs/config/Makefile
-                     opal/mca/installdirs/config/install_dirs.h])
+                     opal/mca/installdirs/install_dirs.h])
 ])
 
