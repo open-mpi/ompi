@@ -31,8 +31,8 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype.h"
-#include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_constructors.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/types.h"
 
 /*

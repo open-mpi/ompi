@@ -39,28 +39,14 @@
 #    define DO_DEBUG(INST)
 #endif /* OPAL_ENABLE_DEBUG */
 
-#include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_pack.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
-
-#if defined(CHECKSUM)
-#    define opal_pack_homogeneous_contig_function opal_pack_homogeneous_contig_checksum
-#    define opal_pack_homogeneous_contig_with_gaps_function \
-        opal_pack_homogeneous_contig_with_gaps_checksum
-#    define opal_generic_simple_pack_function opal_generic_simple_pack_checksum
-#    define opal_pack_general_function        opal_pack_general_checksum
-#else
-#    define opal_pack_homogeneous_contig_function           opal_pack_homogeneous_contig
-#    define opal_pack_homogeneous_contig_with_gaps_function opal_pack_homogeneous_contig_with_gaps
-#    define opal_generic_simple_pack_function               opal_generic_simple_pack
-#    define opal_pack_general_function                      opal_pack_general
-#endif /* defined(CHECKSUM) */
 
 /* the contig versions does not use the stack. They can easily retrieve
  * the status with just the information from pConvertor->bConverted.
  */
-int32_t opal_pack_homogeneous_contig_function(opal_convertor_t *pConv, struct iovec *iov,
-                                              uint32_t *out_size, size_t *max_data)
+int32_t opal_pack_homogeneous_contig(opal_convertor_t *pConv, struct iovec *iov,
+                                     uint32_t *out_size, size_t *max_data)
 {
     dt_stack_t *pStack = pConv->pStack;
     unsigned char *source_base = NULL;
@@ -81,12 +67,11 @@ int32_t opal_pack_homogeneous_contig_function(opal_convertor_t *pConv, struct io
         }
         if (iov[iov_count].iov_base == NULL) {
             iov[iov_count].iov_base = (IOVBASE_TYPE *) source_base;
-            COMPUTE_CSUM(iov[iov_count].iov_base, iov[iov_count].iov_len, pConv);
         } else {
             /* contiguous data just memcpy the smallest data in the user buffer */
             OPAL_DATATYPE_SAFEGUARD_POINTER(source_base, iov[iov_count].iov_len, pConv->pBaseBuf,
                                             pConv->pDesc, pConv->count);
-            MEMCPY_CSUM(iov[iov_count].iov_base, source_base, iov[iov_count].iov_len, pConv);
+            pConv->cbmemcpy(iov[iov_count].iov_base, source_base, iov[iov_count].iov_len, pConv);
         }
         length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
@@ -104,8 +89,8 @@ int32_t opal_pack_homogeneous_contig_function(opal_convertor_t *pConv, struct io
     return 0;
 }
 
-int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv, struct iovec *iov,
-                                                        uint32_t *out_size, size_t *max_data)
+int32_t opal_pack_homogeneous_contig_with_gaps(opal_convertor_t *pConv, struct iovec *iov,
+                                               uint32_t *out_size, size_t *max_data)
 {
     size_t remaining, length, initial_bytes_converted = pConv->bConverted;
     const opal_datatype_t *pData = pConv->pDesc;
@@ -134,7 +119,6 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
         for (idx = 0; (idx < (*out_size)) && stack[0].count; idx++) {
             iov[idx].iov_base = user_memory + stack[0].disp + stack[1].disp;
             iov[idx].iov_len = stack[1].count;
-            COMPUTE_CSUM(iov[idx].iov_base, iov[idx].iov_len, pConv);
 
             pConv->bConverted += stack[1].count;
 
@@ -174,7 +158,7 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
                                             pConv->count);
             DO_DEBUG(opal_output(0, "pack dest %p src %p length %" PRIsize_t " [prologue]\n",
                                  (void *) user_memory, (void *) packed_buffer, length););
-            MEMCPY_CSUM(packed_buffer, user_memory, length, pConv);
+            pConv->cbmemcpy(packed_buffer, user_memory, length, pConv);
             packed_buffer += length;
             remaining -= length;
             stack[1].count -= length;
@@ -199,7 +183,7 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
                                  "/%" PRIsize_t "\n",
                                  (void *) user_memory, (void *) packed_buffer, pData->size,
                                  remaining, iov[idx].iov_len););
-            MEMCPY_CSUM(packed_buffer, user_memory, pData->size, pConv);
+            pConv->cbmemcpy(packed_buffer, user_memory, pData->size, pConv);
             packed_buffer += pData->size;
             user_memory += extent;
             remaining -= pData->size;
@@ -213,7 +197,7 @@ int32_t opal_pack_homogeneous_contig_with_gaps_function(opal_convertor_t *pConv,
                                             pConv->count);
             DO_DEBUG(opal_output(0, "4. pack dest %p src %p length %" PRIsize_t "\n",
                                  (void *) user_memory, (void *) packed_buffer, remaining););
-            MEMCPY_CSUM(packed_buffer, user_memory, remaining, pConv);
+            pConv->cbmemcpy(packed_buffer, user_memory, remaining, pConv);
             stack[1].count -= remaining;
             stack[1].disp += remaining; /* keep the += in case we are copying less that the datatype
                                            size */
@@ -243,8 +227,8 @@ update_status_and_return:
  * is contiguous but with a gap in the beginning or at the end.
  * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
  */
-int32_t opal_generic_simple_pack_function(opal_convertor_t *pConvertor, struct iovec *iov,
-                                          uint32_t *out_size, size_t *max_data)
+int32_t opal_generic_simple_pack(opal_convertor_t *pConvertor, struct iovec *iov,
+                                 uint32_t *out_size, size_t *max_data)
 {
     dt_stack_t *pStack;      /* pointer to the position on the stack */
     uint32_t pos_desc;       /* actual position in the description of the derived datatype */
@@ -482,8 +466,8 @@ update_and_return:
     *(packed) = _packed;
 }
 
-int32_t opal_pack_general_function(opal_convertor_t *pConvertor, struct iovec *iov,
-                                   uint32_t *out_size, size_t *max_data)
+int32_t opal_pack_general(opal_convertor_t *pConvertor, struct iovec *iov,
+                          uint32_t *out_size, size_t *max_data)
 {
     dt_stack_t *pStack;      /* pointer to the position on the stack */
     uint32_t pos_desc;       /* actual position in the description of the derived datatype */

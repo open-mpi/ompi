@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020-2021 IBM Corporation. All rights reserved.
@@ -21,13 +21,6 @@
 
 #include "opal_config.h"
 #include "opal/datatype/opal_datatype_pack_unpack_predefined.h"
-
-#if !defined(CHECKSUM)
-/* Make use of existing macro to do device style memcpy */
-#    undef MEMCPY_CSUM
-#    define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR) \
-        CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
-#endif
 
 /**
  * This function deals only with partial elements. The COUNT points however to
@@ -72,7 +65,7 @@ static inline int unpack_partial_blocklen(opal_convertor_t *CONVERTOR, const dt_
     DO_DEBUG( opal_output( 0, "unpack memcpy( %p [%ld], %p, %lu ) => space %lu [prolog]\n",
                            (void*)_memory, _memory - CONVERTOR->pBaseBuf,
                            (void*)_packed, (unsigned long)do_now_bytes, (unsigned long)(*(SPACE)) ); );
-    MEMCPY_CSUM( _memory, _packed, do_now_bytes, (CONVERTOR) );
+    (CONVERTOR)->cbmemcpy(_memory, _packed, do_now_bytes, (CONVERTOR));
     *(memory)     += (ptrdiff_t)do_now_bytes;
     if( do_now == left_in_block )  /* compensate if completed a blocklen */
         *(memory) += _elem->extent - (_elem->blocklen * opal_datatype_basicDatatypes[_elem->common.type]->size);
@@ -120,7 +113,7 @@ static inline void unpack_predefined_data(opal_convertor_t *CONVERTOR, const dt_
                                    (void*)_memory, _memory - CONVERTOR->pBaseBuf,
                                    (void*)_packed, _packed - *packed,
                                    (unsigned long)blocklen_bytes, (unsigned long)(*(SPACE) - (_packed - *(packed))) ); );
-            MEMCPY_CSUM( _memory, _packed, blocklen_bytes, (CONVERTOR) );
+            (CONVERTOR)->cbmemcpy(_memory, _packed, blocklen_bytes, (CONVERTOR));
             _packed     += blocklen_bytes;
             _memory     += _elem->extent;
         }
@@ -137,7 +130,7 @@ static inline void unpack_predefined_data(opal_convertor_t *CONVERTOR, const dt_
                                    (void*)_memory, _memory - CONVERTOR->pBaseBuf,
                                    (void*)_packed, _packed - *packed,
                                    (unsigned long)blocklen_bytes, (unsigned long)(*(SPACE) - (_packed - *(packed))) ); );
-            MEMCPY_CSUM( _memory, _packed, blocklen_bytes, (CONVERTOR) );
+            (CONVERTOR)->cbmemcpy(_memory, _packed, blocklen_bytes, (CONVERTOR));
             _packed     += blocklen_bytes;
             _memory     += _elem->extent;
             cando_count -= _elem->blocklen;
@@ -157,7 +150,7 @@ static inline void unpack_predefined_data(opal_convertor_t *CONVERTOR, const dt_
                                (void*)_memory, _memory - CONVERTOR->pBaseBuf,
                                (void*)_packed, _packed - *packed,
                                (unsigned long)do_now_bytes, (unsigned long)(*(SPACE) - (_packed - *(packed))) ); );
-        MEMCPY_CSUM( _memory, _packed, do_now_bytes, (CONVERTOR) );
+        (CONVERTOR)->cbmemcpy(_memory, _packed, do_now_bytes, (CONVERTOR));
         _memory   += do_now_bytes;
         _packed   += do_now_bytes;
     }
@@ -185,7 +178,7 @@ static inline void unpack_contiguous_loop(opal_convertor_t *CONVERTOR, const dt_
         DO_DEBUG(opal_output(0, "unpack 3. memcpy( %p, %p, %lu ) => space %lu\n", (void *) _memory,
                              (void *) *(packed), (unsigned long) _end_loop->size,
                              (unsigned long) (*(SPACE) -_i * _end_loop->size)););
-        MEMCPY_CSUM(_memory, *(packed), _end_loop->size, (CONVERTOR));
+        (CONVERTOR)->cbmemcpy(_memory, *(packed), _end_loop->size, (CONVERTOR));
         *(packed) += _end_loop->size;
         _memory += _loop->extent;
     }
