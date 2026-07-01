@@ -92,18 +92,18 @@ static inline void unpack_predefined_data(opal_convertor_t *CONVERTOR, const dt_
     if ((blocklen_bytes * cando_count) > *(SPACE))
         cando_count = (*SPACE) / blocklen_bytes;
 
-    /* preemptively update the number of COUNT we will return. */
-    *(COUNT) -= cando_count;
-
     if (_elem->blocklen < 9) {
-        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR)
-            && OPAL_LIKELY(OPAL_SUCCESS
-                           == opal_datatype_unpack_predefined_element(&_packed, &_memory,
-                                                                      cando_count, _elem))) {
+        if (OPAL_LIKELY(OPAL_SUCCESS
+                        == opal_datatype_unpack_predefined_element(&_packed, &_memory,
+                                                                   cando_count, _elem))) {
+            *(COUNT) -= cando_count;
             goto update_and_return;
         }
         /* else unrecognized _elem->common.type, use the memcpy path */
     }
+
+    /* preemptively update the number of COUNT we will return. */
+    *(COUNT) -= cando_count;
 
     if (1 == _elem->blocklen) {  /* Do as many full blocklen as possible */
         for (; cando_count > 0; cando_count--) {
