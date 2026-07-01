@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2025 Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2023-2026 Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,7 @@ PROTOTYPE ERROR_CLASS abi_get_info(INFO_OUT info)
     newinfo = ompi_info_allocate();
     if (NULL == newinfo) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
-                                      "MPI_Info_dup");
+                                      "MPI_Abi_get_info");
     }
 
     snprintf(tmp, 16, "%" PRIsize_t, sizeof(MPI_Aint));
