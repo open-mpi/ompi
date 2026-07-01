@@ -49,6 +49,8 @@ bool opal_ddt_copy_debug = false;
 bool opal_ddt_raw_debug = false;
 int opal_ddt_verbose = -1; /* Has the datatype verbose it's own output stream */
 OPAL_DECLSPEC bool opal_datatype_optimize_preserve_type = true;
+/* The missed-optimization check walks optimized descriptions and is meant for tuning diagnostics. */
+bool opal_datatype_check_missed_optimizations = false;
 
 /* Using this macro implies that at this point _all_ information needed
  * to fill up the datatype are known.
@@ -180,9 +182,9 @@ OPAL_DECLSPEC const opal_datatype_t *opal_datatype_basicDatatypes[OPAL_DATATYPE_
 
 int opal_datatype_register_params(void)
 {
-#if OPAL_ENABLE_DEBUG
     int ret;
 
+#if OPAL_ENABLE_DEBUG
     ret = mca_base_var_register(
         "opal", "mpi", NULL, "ddt_unpack_debug",
         "Whether to output debugging information in the ddt unpack functions (nonzero = enabled)",
@@ -237,6 +239,15 @@ int opal_datatype_register_params(void)
     }
 
 #endif /* OPAL_ENABLE_DEBUG */
+
+    ret = mca_base_var_register(
+        "opal", "opal", NULL, "datatype_check_missed_optimizations",
+        "Whether to scan committed datatypes for copy ranges that the optimizer did not merge",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
+        MCA_BASE_VAR_SCOPE_LOCAL, &opal_datatype_check_missed_optimizations);
+    if (0 > ret) {
+        return ret;
+    }
 
     return OPAL_SUCCESS;
 }

@@ -753,15 +753,15 @@ int ompi_datatype_safeguard_pointer_debug_breakpoint( const void* actual_ptr, in
  * Data dumping functions
  ********************************************************/
 
-static int _ompi_dump_data_flags( unsigned short usflags, char* ptr, size_t length )
+static int _ompi_dump_data_flags(uint32_t flags, char *ptr, size_t length)
 {
     int index = 0;
     if( length < 22 ) return 0;
     /* The lower-level part is the responsibility of opal_datatype_dump_data_flags */
-    index += opal_datatype_dump_data_flags (usflags, ptr, length);
+    index += opal_datatype_dump_data_flags(flags, ptr, length);
 
     /* Which kind of datatype is that */
-    switch( usflags & OMPI_DATATYPE_FLAG_DATA_LANGUAGE ) {
+    switch( flags & OMPI_DATATYPE_FLAG_DATA_LANGUAGE ) {
     case OMPI_DATATYPE_FLAG_DATA_C:
         ptr[12] = ' '; ptr[13] = 'C'; ptr[14] = ' '; break;
     case OMPI_DATATYPE_FLAG_DATA_CPP:
@@ -769,11 +769,11 @@ static int _ompi_dump_data_flags( unsigned short usflags, char* ptr, size_t leng
     case OMPI_DATATYPE_FLAG_DATA_FORTRAN:
         ptr[12] = 'F'; ptr[13] = '7'; ptr[14] = '7'; break;
     default:
-        if( usflags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
+        if( flags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
             ptr[12] = 'E'; ptr[13] = 'R'; ptr[14] = 'R'; break;
         }
     }
-    switch( usflags & OMPI_DATATYPE_FLAG_DATA_TYPE ) {
+    switch( flags & OMPI_DATATYPE_FLAG_DATA_TYPE ) {
     case OMPI_DATATYPE_FLAG_DATA_INT:
         ptr[17] = 'I'; ptr[18] = 'N'; ptr[19] = 'T'; break;
     case OMPI_DATATYPE_FLAG_DATA_FLOAT:
@@ -781,7 +781,7 @@ static int _ompi_dump_data_flags( unsigned short usflags, char* ptr, size_t leng
     case OMPI_DATATYPE_FLAG_DATA_COMPLEX:
         ptr[17] = 'C'; ptr[18] = 'P'; ptr[19] = 'L'; break;
     default:
-        if( usflags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
+        if( flags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
             ptr[17] = 'E'; ptr[18] = 'R'; ptr[19] = 'R'; break;
         }
     }
@@ -806,7 +806,7 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
                        pData->super.size, pData->super.align, (uint32_t)pData->super.id, pData->super.desc.length, pData->super.desc.used,
                        pData->super.true_lb, pData->super.true_ub, pData->super.true_ub - pData->super.true_lb,
                        pData->super.lb, pData->super.ub, pData->super.ub - pData->super.lb,
-                       pData->super.nbElems, pData->super.loops, (int)pData->super.flags );
+                       pData->super.nbElems, pData->super.loops, (unsigned int) pData->super.flags );
     /* dump the flags */
     if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );

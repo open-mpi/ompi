@@ -67,43 +67,43 @@ int opal_datatype_contain_basic_datatypes(const opal_datatype_t *pData, char *pt
     return index;
 }
 
-int opal_datatype_dump_data_flags(unsigned short usflags, char *ptr, size_t length)
+int opal_datatype_dump_data_flags(uint32_t flags, char *ptr, size_t length)
 {
     int index = 0;
     if (length < 22) {
         return 0;
     }
     index = snprintf(ptr, 22, "-----------[---][---]"); /* set everything to - */
-    if (usflags & OPAL_DATATYPE_FLAG_COMMITTED) {
+    if (flags & OPAL_DATATYPE_FLAG_COMMITTED) {
         ptr[1] = 'c';
     }
-    if (usflags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+    if (flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
         ptr[2] = 'C';
     }
-    if (usflags & OPAL_DATATYPE_FLAG_OVERLAP) {
+    if (flags & OPAL_DATATYPE_FLAG_OVERLAP) {
         ptr[3] = 'o';
     }
-    if (usflags & OPAL_DATATYPE_FLAG_USER_LB) {
+    if (flags & OPAL_DATATYPE_FLAG_USER_LB) {
         ptr[4] = 'l';
     }
-    if (usflags & OPAL_DATATYPE_FLAG_USER_UB) {
+    if (flags & OPAL_DATATYPE_FLAG_USER_UB) {
         ptr[5] = 'u';
     }
-    if (usflags & OPAL_DATATYPE_FLAG_PREDEFINED) {
+    if (flags & OPAL_DATATYPE_FLAG_PREDEFINED) {
         ptr[6] = 'P';
     }
-    if (!(usflags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
+    if (!(flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
         ptr[7] = 'G';
     }
-    if (usflags & OPAL_DATATYPE_FLAG_DATA) {
+    if (flags & OPAL_DATATYPE_FLAG_DATA) {
         ptr[8] = 'D';
     }
-    if ((usflags & OPAL_DATATYPE_FLAG_BASIC) == OPAL_DATATYPE_FLAG_BASIC) {
+    if ((flags & OPAL_DATATYPE_FLAG_BASIC) == OPAL_DATATYPE_FLAG_BASIC) {
         ptr[9] = 'B';
-    } else if (usflags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
+    } else if (flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
         ptr[9] = 'H';  /* optimized description restricted to homogeneous cases */
     }
-    if (usflags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED) {
+    if (flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED) {
         ptr[10] = 'T'; /* optimized descriptor changed this element's copy type */
     }
     /* We know nothing about the upper level language or flags! */
@@ -170,7 +170,7 @@ void opal_datatype_dump(const opal_datatype_t *pData)
                       (void *) pData, pData->name, pData->size, pData->align, (uint32_t) pData->id,
                       pData->desc.length, pData->desc.used, pData->true_lb, pData->true_ub,
                       pData->true_ub - pData->true_lb, pData->lb, pData->ub, pData->ub - pData->lb,
-                      pData->nbElems, pData->loops, (int) pData->flags);
+                      pData->nbElems, pData->loops, (unsigned int) pData->flags);
     /* dump the flags */
     if (pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED) {
         index += snprintf(buffer + index, length - index, "predefined ");
