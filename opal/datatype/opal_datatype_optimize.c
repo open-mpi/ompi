@@ -1110,6 +1110,104 @@ static int32_t opal_datatype_optimize_short_restart(opal_datatype_t *pData,
     return OPAL_SUCCESS;
 }
 
+int32_t opal_datatype_optimize_from_contiguous(opal_datatype_t *pData,
+                                               const opal_datatype_t *oldType,
+                                               size_t count,
+                                               uint32_t optimization_mask)
+{
+    const dt_type_desc_t *body_desc;
+    dt_type_desc_t input_desc = {0};
+    dt_type_desc_t optimized_desc = {0};
+    ptrdiff_t extent = oldType->ub - oldType->lb;
+    ptrdiff_t first_elem_disp = 0;
+    uint16_t loop_flags = (uint16_t) ((oldType->flags & 0xffffu)
+                                      & ~OPAL_DATATYPE_FLAG_COMMITTED);
+    uint32_t loop_markers;
+    bool need_commit = !(pData->flags & OPAL_DATATYPE_FLAG_COMMITTED);
+    int rc;
+
+    /*
+     * This helper is for datatypes created by contiguous(count, oldType).
+     * Keep pData->desc as the real contiguous-constructor description so the
+     * datatype still carries the full original layout information.  Only
+     * pData->opt_desc is built from the already-optimized oldType body.
+     */
+    /*
+     * The temporary input below wraps oldType's optimized body in a single
+     * LOOP entry, whose repetition count is stored in ddt_loop_desc_t.loops
+     * as a uint32_t.  If count does not fit there, leave pData unchanged
+     * instead of truncating the loop count.
+     */
+    if ((count < 2) || (UINT32_MAX < count)) {
+        return OPAL_SUCCESS;
+    }
+
+    body_desc = (0 != oldType->opt_desc.used) ? &oldType->opt_desc : &oldType->desc;
+    if ((0 == body_desc->used) || (NULL == body_desc->desc)) {
+        return OPAL_SUCCESS;
+    }
+
+    input_desc.used = body_desc->used + 2;
+    input_desc.length = input_desc.used + 1;
+    input_desc.desc = (dt_elem_desc_t *) malloc(sizeof(dt_elem_desc_t) * input_desc.length);
+    if (NULL == input_desc.desc) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    /*
+     * Build a temporary optimization input equivalent to:
+     *
+     *   LOOP count times over oldType->opt_desc
+     *
+     * Restrict loop-boundary expansion to this outer loop.  The wrapped body
+     * came from an already optimized datatype, so re-expanding its internal
+     * loop boundaries would only redo work that has already been accepted or
+     * rejected for oldType.
+     */
+    CREATE_LOOP_START(&input_desc.desc[0], count, body_desc->used + 1, extent, loop_flags);
+    memcpy(&input_desc.desc[1], body_desc->desc, sizeof(dt_elem_desc_t) * body_desc->used);
+
+    if (0 != oldType->size) {
+        int index = GET_FIRST_NON_LOOP(input_desc.desc);
+
+        assert(input_desc.desc[index].elem.common.flags & OPAL_DATATYPE_FLAG_DATA);
+        first_elem_disp = input_desc.desc[index].elem.disp;
+    }
+    CREATE_LOOP_END(&input_desc.desc[input_desc.used - 1], body_desc->used + 1,
+                    first_elem_disp, oldType->size, loop_flags);
+    opal_datatype_opt_set_fake_end_loop(&input_desc, first_elem_disp, pData->size);
+
+    rc = opal_datatype_optimize_short_restart(pData, &input_desc, &optimized_desc,
+                                              optimization_mask, true);
+    free(input_desc.desc);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    /*
+     * pData->opt_desc is built from oldType's optimized descriptor, so it
+     * inherits any homogeneous-only restriction already present there.
+     */
+    pData->flags |= oldType->flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
+
+    if ((NULL != pData->opt_desc.desc) && (pData->opt_desc.desc != pData->desc.desc)) {
+        opal_datatype_opt_free_desc(&pData->opt_desc);
+    }
+    pData->opt_desc = optimized_desc;
+    if (0 != pData->opt_desc.used) {
+        opal_datatype_opt_set_fake_end_loop(&pData->opt_desc, first_elem_disp, pData->size);
+        loop_markers = opal_datatype_opt_count_loop_markers(&pData->opt_desc);
+        if (loop_markers > pData->loops) {
+            pData->loops = loop_markers;
+        }
+    }
+    if (need_commit) {
+        (void) opal_datatype_commit_description(pData);
+    }
+
+    return OPAL_SUCCESS;
+}
+
 /*
  * Follow the basic pack traversal without copying data. Consecutive copy
  * regions are compared and the descriptor entry that could absorb its
