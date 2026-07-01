@@ -37,7 +37,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS allgather(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
+PROTOTYPE ERROR_CLASS allgather(BUFFER_CONST sendbuf, COUNT sendcount, DATATYPE sendtype,
                                 BUFFER_OUT recvbuf, COUNT recvcount, DATATYPE recvtype,
                                 COMM comm)
 {

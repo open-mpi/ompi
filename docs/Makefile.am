@@ -69,6 +69,7 @@ EXTRA_DIST         = \
         generate-llm-docs.py \
         validate-llm-docs.py \
         ompi_docs_common.py \
+        mpi-standard-abi.json \
         mpi-standard-apis.json \
         llms-src/openmpi-mpi-api.schema.json \
         llms-src/openmpi-docs-manifest.schema.json \
@@ -100,6 +101,12 @@ OMPI_MAN1 = \
         opal_wrapper.1
 
 OMPI_MAN3 = \
+        MPI_Abi_get_fortran_booleans.3 \
+        MPI_Abi_get_fortran_info.3 \
+        MPI_Abi_get_info.3 \
+        MPI_Abi_get_version.3 \
+        MPI_Abi_set_fortran_booleans.3 \
+        MPI_Abi_set_fortran_info.3 \
         MPI_Abort.3 \
         MPI_Accumulate.3 \
         MPI_Add_error_class.3 \
@@ -164,6 +171,7 @@ OMPI_MAN3 = \
         MPI_Comm_flush_buffer.3 \
         MPI_Comm_free.3 \
         MPI_Comm_free_keyval.3 \
+        MPI_Comm_fromint.3 \
         MPI_Comm_get_attr.3 \
         MPI_Comm_get_errhandler.3 \
         MPI_Comm_get_info.3 \
@@ -187,6 +195,7 @@ OMPI_MAN3 = \
         MPI_Comm_split.3 \
         MPI_Comm_split_type.3 \
         MPI_Comm_test_inter.3 \
+        MPI_Comm_toint.3 \
         MPI_Compare_and_swap.3 \
         MPI_Dims_create.3 \
         MPI_Dist_graph_create.3 \
@@ -195,8 +204,10 @@ OMPI_MAN3 = \
         MPI_Dist_graph_neighbors_count.3 \
         MPI_Errhandler_create.3 \
         MPI_Errhandler_free.3 \
+        MPI_Errhandler_fromint.3 \
         MPI_Errhandler_get.3 \
         MPI_Errhandler_set.3 \
+        MPI_Errhandler_toint.3 \
         MPI_Error_class.3 \
         MPI_Error_string.3 \
         MPI_Errors.3 \
@@ -210,6 +221,7 @@ OMPI_MAN3 = \
         MPI_File_create_errhandler.3 \
         MPI_File_delete.3 \
         MPI_File_f2c.3 \
+        MPI_File_fromint.3 \
         MPI_File_get_amode.3 \
         MPI_File_get_atomicity.3 \
         MPI_File_get_byte_offset.3 \
@@ -253,6 +265,7 @@ OMPI_MAN3 = \
         MPI_File_set_size.3 \
         MPI_File_set_view.3 \
         MPI_File_sync.3 \
+        MPI_File_toint.3 \
         MPI_File_write.3 \
         MPI_File_write_all.3 \
         MPI_File_write_all_begin.3 \
@@ -296,6 +309,7 @@ OMPI_MAN3 = \
         MPI_Group_excl.3 \
         MPI_Group_f2c.3 \
         MPI_Group_free.3 \
+        MPI_Group_fromint.3 \
         MPI_Group_from_session_pset.3 \
         MPI_Group_incl.3 \
         MPI_Group_intersection.3 \
@@ -303,6 +317,7 @@ OMPI_MAN3 = \
         MPI_Group_range_incl.3 \
         MPI_Group_rank.3 \
         MPI_Group_size.3 \
+        MPI_Group_toint.3 \
         MPI_Group_translate_ranks.3 \
         MPI_Group_union.3 \
         MPI_Iallgather.3 \
@@ -331,12 +346,14 @@ OMPI_MAN3 = \
         MPI_Info_env.3 \
         MPI_Info_f2c.3 \
         MPI_Info_free.3 \
+        MPI_Info_fromint.3 \
         MPI_Info_get.3 \
         MPI_Info_get_nkeys.3 \
         MPI_Info_get_nthkey.3 \
         MPI_Info_get_string.3 \
         MPI_Info_get_valuelen.3 \
         MPI_Info_set.3 \
+        MPI_Info_toint.3 \
         MPI_Init.3 \
         MPI_Initialized.3 \
         MPI_Init_thread.3 \
@@ -362,6 +379,8 @@ OMPI_MAN3 = \
         MPI_Lookup_name.3 \
         MPI_Message_c2f.3 \
         MPI_Message_f2c.3 \
+        MPI_Message_fromint.3 \
+        MPI_Message_toint.3 \
         MPI_Mprobe.3 \
         MPI_Mrecv.3 \
         MPI_Neighbor_allgather.3 \
@@ -380,6 +399,8 @@ OMPI_MAN3 = \
         MPI_Open_port.3 \
         MPI_Op_f2c.3 \
         MPI_Op_free.3 \
+        MPI_Op_fromint.3 \
+        MPI_Op_toint.3 \
         MPI_Pack.3 \
         MPI_Pack_external.3 \
         MPI_Pack_external_size.3 \
@@ -412,10 +433,12 @@ OMPI_MAN3 = \
         MPI_Request_c2f.3 \
         MPI_Request_f2c.3 \
         MPI_Request_free.3 \
+        MPI_Request_fromint.3 \
         MPI_Request_get_status.3 \
         MPI_Request_get_status_all.3 \
         MPI_Request_get_status_any.3 \
         MPI_Request_get_status_some.3 \
+        MPI_Request_toint.3 \
         MPI_Rget.3 \
         MPI_Rget_accumulate.3 \
         MPI_Rput.3 \
@@ -437,12 +460,14 @@ OMPI_MAN3 = \
         MPI_Session_f2c.3 \
         MPI_Session_finalize.3 \
         MPI_Session_flush_buffer.3 \
+        MPI_Session_fromint.3 \
         MPI_Session_get_info.3 \
         MPI_Session_get_nth_pset.3 \
         MPI_Session_get_num_psets.3 \
         MPI_Session_get_pset_info.3 \
         MPI_Session_iflush_buffer.3 \
         MPI_Session_init.3 \
+        MPI_Session_toint.3 \
         MPI_Sizeof.3 \
         MPI_Ssend.3 \
         MPI_Ssend_init.3 \
@@ -454,6 +479,7 @@ OMPI_MAN3 = \
         MPI_Status_f082f.3 \
         MPI_Status_f2c.3 \
         MPI_Status_f2f08.3 \
+        MPI_Status_fromint.3 \
         MPI_Status_get_error.3 \
         MPI_Status_get_source.3 \
         MPI_Status_get_tag.3 \
@@ -463,6 +489,7 @@ OMPI_MAN3 = \
         MPI_Status_set_error.3 \
         MPI_Status_set_source.3 \
         MPI_Status_set_tag.3 \
+        MPI_Status_toint.3 \
         MPI_T.3 \
         MPI_T_category_changed.3 \
         MPI_T_category_get_categories.3 \
@@ -542,6 +569,7 @@ OMPI_MAN3 = \
         MPI_Type_f2c.3 \
         MPI_Type_free.3 \
         MPI_Type_free_keyval.3 \
+        MPI_Type_fromint.3 \
         MPI_Type_get_attr.3 \
         MPI_Type_get_contents.3 \
         MPI_Type_get_envelope.3 \
@@ -561,6 +589,7 @@ OMPI_MAN3 = \
         MPI_Type_size.3 \
         MPI_Type_size_x.3 \
         MPI_Type_struct.3 \
+        MPI_Type_toint.3 \
         MPI_Type_ub.3 \
         MPI_Type_vector.3 \
         MPI_Unpack.3 \
@@ -590,6 +619,7 @@ OMPI_MAN3 = \
         MPI_Win_flush_local_all.3 \
         MPI_Win_free.3 \
         MPI_Win_free_keyval.3 \
+        MPI_Win_fromint.3 \
         MPI_Win_get_attr.3 \
         MPI_Win_get_errhandler.3 \
         MPI_Win_get_group.3 \
@@ -606,6 +636,7 @@ OMPI_MAN3 = \
         MPI_Win_start.3 \
         MPI_Win_sync.3 \
         MPI_Win_test.3 \
+        MPI_Win_toint.3 \
         MPI_Win_unlock.3 \
         MPI_Win_unlock_all.3 \
         MPI_Win_wait.3 \
@@ -920,7 +951,9 @@ OSHMEM_MAN3_INSTALL_FROM = $(OSHMEM_MAN3:%.3=$(MAN_INSTALL_FROM)/%.3)
 # distribution tarballs).  We'll decide later whether we install each
 # of these (e.g., if configure did not find a C++ compiler, we won't
 # install mpic++.1).
-OMPI_MAN1_C_REDIRECTS = man-openmpi/man1/mpicc.1
+OMPI_MAN1_C_REDIRECTS = \
+        man-openmpi/man1/mpicc.1 \
+        man-openmpi/man1/mpicc_abi.1
 OMPI_MAN1_CXX_REDIRECTS = \
         man-openmpi/man1/mpicxx.1 \
         man-openmpi/man1/mpic++.1

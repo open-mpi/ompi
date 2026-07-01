@@ -15,7 +15,7 @@
 #
 
 if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32 large_data partial ompi_datatype_bigcount mpi_datatype_bigcount
+    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32 large_data partial ompi_datatype_bigcount mpi_datatype_bigcount sizedtypes
     MPI_CHECKS = to_self reduce_local
 endif
 TESTS = opal_datatype_test opal_datatype_bigcount unpack_hetero $(MPI_TESTS)
@@ -122,6 +122,12 @@ reduce_local_LDADD = \
 partial_SOURCES = partial.c
 partial_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 partial_LDADD = \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+
+sizedtypes_SOURCES = sizedtypes.c
+sizedtypes_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+sizedtypes_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 

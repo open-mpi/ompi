@@ -78,7 +78,7 @@ else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 if OPAL_INSTALL_BINARIES
 
-nodist_ompidata_DATA = mpicc-wrapper-data.txt
+nodist_ompidata_DATA = mpicc-wrapper-data.txt mpicc_abi-wrapper-data.txt
 
 if OMPI_HAVE_CXX_COMPILER
 nodist_ompidata_DATA += mpic++-wrapper-data.txt
@@ -91,6 +91,7 @@ endif
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc$(EXEEXT))
+	(cd $(DESTDIR)$(bindir); rm -f mpicc_abi$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc_abi$(EXEEXT))
 if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpic++$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicxx$(EXEEXT))

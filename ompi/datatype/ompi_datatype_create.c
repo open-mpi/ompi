@@ -118,8 +118,8 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
 
     char *new_name;
     opal_asprintf(&new_name, "Dup %s", oldType->name);
-    opal_string_copy(new_ompi_datatype->name, new_name, MPI_MAX_OBJECT_NAME);
-    new_ompi_datatype->name[MPI_MAX_OBJECT_NAME - 1] = '\0';
+    opal_string_copy(new_ompi_datatype->name, new_name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
+    new_ompi_datatype->name[OMPI_MPI_MAX_OBJECT_NAME_ABI - 1] = '\0';
     free(new_name);
 
     return OMPI_SUCCESS;

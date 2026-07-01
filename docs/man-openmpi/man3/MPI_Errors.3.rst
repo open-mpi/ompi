@@ -348,11 +348,15 @@ Standard error return classes for Open MPI:
      - Value is too large to store.
 
    * - MPI_ERR_ERRHANDLER
-     - 89
+     - 80
      - Invalid error handler handle.
 
+   * - MPI_ERR_ABI
+     - 83
+     - Invalid use of ABI method.
+
    * - MPI_ERR_LASTCODE
-     - 93
+     - 92
      - Last error code.
 
 .. seealso:: :ref:`MPI_T` :ref:`mpirun(1) <man1-mpirun>` :ref:`mpiexec(1)

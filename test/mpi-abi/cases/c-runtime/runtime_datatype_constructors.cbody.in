@@ -1,0 +1,273 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise datatype constructors, commit/free, naming, extent, size,
+ *   match-size, F90 constructors, and envelope/contents introspection.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+MPI_Datatype contig = MPI_DATATYPE_NULL;
+ret = MPI_Type_contiguous(2, MPI_INT, &contig);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == contig) {
+    return 2;
+}
+ret = MPI_Type_commit(&contig);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+int size = -1;
+ret = MPI_Type_size(contig, &size);
+if (MPI_SUCCESS != ret || size != 2 * (int) sizeof(int)) {
+    return 4;
+}
+MPI_Count size_x = -1;
+ret = MPI_Type_size_x(contig, &size_x);
+if (MPI_SUCCESS != ret || size_x != 2 * (MPI_Count) sizeof(int)) {
+    return 5;
+}
+MPI_Aint lb = -1;
+MPI_Aint extent = -1;
+ret = MPI_Type_get_extent(contig, &lb, &extent);
+if (MPI_SUCCESS != ret || 0 != lb ||
+    extent < 2 * (MPI_Aint) sizeof(int)) {
+    return 6;
+}
+MPI_Count lb_x = -1;
+MPI_Count extent_x = -1;
+ret = MPI_Type_get_extent_x(contig, &lb_x, &extent_x);
+if (MPI_SUCCESS != ret || 0 != lb_x ||
+    extent_x < 2 * (MPI_Count) sizeof(int)) {
+    return 7;
+}
+ret = MPI_Type_get_true_extent(contig, &lb, &extent);
+if (MPI_SUCCESS != ret || 0 != lb ||
+    extent < 2 * (MPI_Aint) sizeof(int)) {
+    return 8;
+}
+ret = MPI_Type_get_true_extent_x(contig, &lb_x, &extent_x);
+if (MPI_SUCCESS != ret || 0 != lb_x ||
+    extent_x < 2 * (MPI_Count) sizeof(int)) {
+    return 9;
+}
+ret = MPI_Type_set_name(contig, "abi-runtime-type");
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+char name[MPI_MAX_OBJECT_NAME];
+int name_len = -1;
+ret = MPI_Type_get_name(contig, name, &name_len);
+if (MPI_SUCCESS != ret || 16 != name_len ||
+    0 != strcmp(name, "abi-runtime-type")) {
+    return 11;
+}
+int nints = -1;
+int nadds = -1;
+int ntypes = -1;
+int combiner = -1;
+/*
+ * Query the envelope, then read the constructor arguments back with
+ * MPI_Type_get_contents.  contig is CONTIGUOUS(2, MPI_INT): expect one
+ * integer argument (count == 2) and one datatype argument (MPI_INT).
+ */
+ret = MPI_Type_get_envelope(contig, &nints, &nadds, &ntypes,
+                            &combiner);
+if (MPI_SUCCESS != ret || nints < 1 || ntypes < 1) {
+    return 12;
+}
+if (nints > 8 || nadds > 8 || ntypes > 8) {
+    return 46;
+}
+int contents_ints[8];
+MPI_Aint contents_adds[8];
+MPI_Datatype contents_types[8];
+ret = MPI_Type_get_contents(contig, nints, nadds, ntypes,
+                            contents_ints, contents_adds, contents_types);
+if (MPI_SUCCESS != ret || 2 != contents_ints[0] ||
+    MPI_INT != contents_types[0]) {
+    return 47;
+}
+
+MPI_Datatype dup = MPI_DATATYPE_NULL;
+ret = MPI_Type_dup(contig, &dup);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == dup) {
+    return 13;
+}
+ret = MPI_Type_free(&dup);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != dup) {
+    return 14;
+}
+
+MPI_Datatype vector = MPI_DATATYPE_NULL;
+ret = MPI_Type_vector(2, 1, 2, MPI_INT, &vector);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == vector) {
+    return 15;
+}
+ret = MPI_Type_size(vector, &size);
+if (MPI_SUCCESS != ret || size != 2 * (int) sizeof(int)) {
+    return 16;
+}
+ret = MPI_Type_free(&vector);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != vector) {
+    return 17;
+}
+int blocklens[2] = {1, 1};
+int displs[2] = {0, 2};
+MPI_Datatype indexed = MPI_DATATYPE_NULL;
+ret = MPI_Type_indexed(2, blocklens, displs, MPI_INT, &indexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == indexed) {
+    return 18;
+}
+ret = MPI_Type_size(indexed, &size);
+if (MPI_SUCCESS != ret || size != 2 * (int) sizeof(int)) {
+    return 19;
+}
+ret = MPI_Type_free(&indexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != indexed) {
+    return 20;
+}
+ret = MPI_Type_create_indexed_block(2, 1, displs, MPI_INT,
+                                    &indexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == indexed) {
+    return 21;
+}
+ret = MPI_Type_free(&indexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != indexed) {
+    return 22;
+}
+
+MPI_Aint hdispls[2] = {0, 2 * (MPI_Aint) sizeof(int)};
+MPI_Datatype hvector = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_hvector(2, 1, 2 * (MPI_Aint) sizeof(int),
+                              MPI_INT, &hvector);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == hvector) {
+    return 23;
+}
+ret = MPI_Type_free(&hvector);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != hvector) {
+    return 24;
+}
+MPI_Datatype hindexed = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_hindexed(2, blocklens, hdispls, MPI_INT,
+                               &hindexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == hindexed) {
+    return 25;
+}
+ret = MPI_Type_free(&hindexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != hindexed) {
+    return 26;
+}
+ret = MPI_Type_create_hindexed_block(2, 1, hdispls, MPI_INT,
+                                     &hindexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == hindexed) {
+    return 27;
+}
+ret = MPI_Type_free(&hindexed);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != hindexed) {
+    return 28;
+}
+
+MPI_Datatype struct_type = MPI_DATATYPE_NULL;
+MPI_Datatype struct_types[2] = {MPI_INT, MPI_INT};
+ret = MPI_Type_create_struct(2, blocklens, hdispls, struct_types,
+                             &struct_type);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == struct_type) {
+    return 29;
+}
+ret = MPI_Type_size(struct_type, &size);
+if (MPI_SUCCESS != ret || size != 2 * (int) sizeof(int)) {
+    return 30;
+}
+MPI_Datatype resized = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_resized(struct_type, 0, 4 * sizeof(int),
+                              &resized);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == resized) {
+    return 31;
+}
+ret = MPI_Type_free(&resized);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != resized) {
+    return 32;
+}
+ret = MPI_Type_free(&struct_type);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != struct_type) {
+    return 33;
+}
+
+int sizes[2] = {4, 4};
+int subsizes[2] = {2, 2};
+int starts[2] = {0, 0};
+MPI_Datatype subarray = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_subarray(2, sizes, subsizes, starts,
+                               MPI_ORDER_C, MPI_INT, &subarray);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == subarray) {
+    return 34;
+}
+ret = MPI_Type_size(subarray, &size);
+if (MPI_SUCCESS != ret || size != 4 * (int) sizeof(int)) {
+    return 35;
+}
+ret = MPI_Type_free(&subarray);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != subarray) {
+    return 36;
+}
+int distribs[2] = {MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_BLOCK};
+int dargs[2] = {MPI_DISTRIBUTE_DFLT_DARG,
+                MPI_DISTRIBUTE_DFLT_DARG};
+int psizes[2] = {1, 1};
+MPI_Datatype darray = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_darray(1, 0, 2, sizes, distribs, dargs,
+                              psizes, MPI_ORDER_C, MPI_INT,
+                              &darray);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == darray) {
+    return 37;
+}
+ret = MPI_Type_free(&darray);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != darray) {
+    return 38;
+}
+
+MPI_Datatype matched = MPI_DATATYPE_NULL;
+ret = MPI_Type_match_size(MPI_TYPECLASS_INTEGER, sizeof(int),
+                          &matched);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == matched) {
+    return 39;
+}
+MPI_Datatype f90_integer = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_f90_integer(9, &f90_integer);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == f90_integer) {
+    return 40;
+}
+MPI_Datatype f90_real = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_f90_real(6, 37, &f90_real);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == f90_real) {
+    return 41;
+}
+MPI_Datatype f90_complex = MPI_DATATYPE_NULL;
+ret = MPI_Type_create_f90_complex(6, 37, &f90_complex);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == f90_complex) {
+    return 42;
+}
+MPI_Datatype pair_type = MPI_DATATYPE_NULL;
+ret = MPI_Type_get_value_index(MPI_INT, MPI_INT, &pair_type);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL == pair_type) {
+    return 43;
+}
+
+ret = MPI_Type_free(&contig);
+if (MPI_SUCCESS != ret || MPI_DATATYPE_NULL != contig) {
+    return 44;
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 45;
+}

@@ -26,6 +26,7 @@
 # Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
@@ -147,6 +148,7 @@ OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
+          AC_SUBST(libmpi_abi_so_version)
           AC_SUBST(libmpi_mpifh_so_version)
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
@@ -1218,6 +1220,11 @@ AC_SUBST(OPAL_3RDPARTY_DISTCLEAN_DIRS)
 OPAL_SETUP_FT
 
 ##################################
+# MPI Forum values
+##################################
+OMPI_GET_FORUM_ABI_VALUES
+
+##################################
 # MCA
 ##################################
 
@@ -1544,7 +1551,7 @@ AC_CONFIG_FILES([
     test/util/Makefile
 ])
 
-m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile test/mpi/Makefile test/mpi/t/Makefile])])
+m4_ifdef([project_ompi], [AC_CONFIG_FILES([test/monitoring/Makefile test/spc/Makefile test/mpi/Makefile test/mpi/t/Makefile test/mpi-abi/Makefile])])
 
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],
                 [chmod +x contrib/dist/mofed/debian/rules])

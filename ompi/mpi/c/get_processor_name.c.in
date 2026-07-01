@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -56,8 +56,8 @@ PROTOTYPE ERROR_CLASS get_processor_name(STRING_OUT name, INT_OUT resultlen)
        Guard against gethostname() returning a *really long* hostname
        and not null-terminating the string.  The Fortran API version
        will pad to the right if necessary. */
-    gethostname(name, (MPI_MAX_PROCESSOR_NAME - 1));
-    name[MPI_MAX_PROCESSOR_NAME - 1] = '\0';
+    gethostname(name, (@MPI_MAX_PROCESSOR_NAME@ - 1));
+    name[@MPI_MAX_PROCESSOR_NAME@ - 1] = '\0';
     *resultlen = (int) strlen(name);
 
     return MPI_SUCCESS;
