@@ -32,6 +32,7 @@
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 
+// rank is INT (not SOURCE) because MPI_Win_lock does not accept MPI_PROC_NULL
 PROTOTYPE ERROR_CLASS win_lock(WIN_LOCK lock_type, INT rank, RMA_MODE_BITS mpi_assert, WIN win)
 {
     int rc;

@@ -38,7 +38,7 @@
  * or free should be executed on the request(s).
  */
 PROTOTYPE ERROR_CLASS request_get_status_some(INT incount, REQUEST_CONST requests:incount, INT_OUT outcount,
-                                              INT_OUT indices,  STATUS_OUT statuses:incount)
+                                              INT_OUT indices,  STATUS_OUT statuses:incount:*outcount)
 {
 
     MEMCHECKER(
