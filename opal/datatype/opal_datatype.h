@@ -275,6 +275,17 @@ OPAL_DECLSPEC int32_t opal_datatype_clone(const opal_datatype_t *src_type,
  */
 OPAL_DECLSPEC int32_t opal_datatype_create_contiguous(int count, const opal_datatype_t *oldType,
                                                       opal_datatype_t **newType);
+/*
+ * Build the optimized descriptor for a datatype created by
+ * opal_datatype_create_contiguous(count, oldType), using oldType's already
+ * optimized descriptor as the loop body.  The regular descriptor is left as
+ * the true contiguous-constructor description.  optimization_mask controls
+ * which transforms are allowed while building the optimized descriptor.
+ */
+OPAL_DECLSPEC int32_t opal_datatype_optimize_from_contiguous(opal_datatype_t *pData,
+                                                             const opal_datatype_t *oldType,
+                                                             size_t count,
+                                                             uint32_t optimization_mask);
 /**
  * Add a new datatype to the base type description. The count is the number
  * repetitions of the same element to be added, and the extent is the extent

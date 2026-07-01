@@ -36,6 +36,7 @@
 #include <stdio.h>
 
 #include "opal/datatype/opal_convertor_internal.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
 #include "opal/class/opal_pointer_array.h"
@@ -54,6 +55,9 @@ static int ompi_datatype_finalize (void);
  * as it include all the optional datatypes (such as MPI_INTEGER?, MPI_REAL?).
  */
 int32_t ompi_datatype_number_of_predefined_data = 0;
+
+/* Empirical count/datatype consolidation crossover used by MPI_Pack/Unpack. */
+int ompi_datatype_consolidate_threshold = 250;
 
 /*
  * The following initialization of C, C++ and Fortran types is fairly complex,
@@ -501,6 +505,13 @@ int32_t ompi_datatype_init( void )
     int ret = OMPI_SUCCESS;
 
     opal_datatype_init();
+
+    (void) mca_base_var_register(
+        "ompi", "datatype", NULL, "consolidate_threshold",
+        "Minimum count for MPI_Pack and MPI_Unpack to consolidate count/datatype into a "
+        "temporary contiguous datatype",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_datatype_consolidate_threshold);
 
     /* Create the f2c translation table */
     OBJ_CONSTRUCT(&ompi_datatype_f_to_c_table, opal_pointer_array_t);
