@@ -249,10 +249,9 @@
         dest_base = (unsigned char *) _dest;                                                  \
     }
 
-static inline int opal_datatype_unpack_predefined_element(unsigned char **rtn_src,
-                                                          unsigned char **rtn_dest,
-                                                          size_t cando_count,
-                                                          const ddt_elem_desc_t *elem)
+__opal_attribute_always_inline__ static inline int
+opal_datatype_unpack_predefined_element(unsigned char **rtn_src, unsigned char **rtn_dest,
+                                        size_t cando_count, const ddt_elem_desc_t *elem)
 {
     size_t blocklen;
     int id;
@@ -378,10 +377,9 @@ static inline int opal_datatype_unpack_predefined_element(unsigned char **rtn_sr
     return OPAL_SUCCESS;
 }
 
-static inline int opal_datatype_pack_predefined_element(unsigned char **rtn_src,
-                                                        unsigned char **rtn_dest,
-                                                        size_t cando_count,
-                                                        const ddt_elem_desc_t *elem)
+__opal_attribute_always_inline__ static inline int
+opal_datatype_pack_predefined_element(unsigned char **rtn_src, unsigned char **rtn_dest,
+                                      size_t cando_count, const ddt_elem_desc_t *elem)
 {
     size_t blocklen;
     int id;
