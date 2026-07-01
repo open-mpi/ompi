@@ -301,7 +301,7 @@ static inline int GET_FIRST_NON_LOOP(const union dt_elem_desc *_pElem)
 
 OPAL_DECLSPEC int opal_datatype_contain_basic_datatypes(const struct opal_datatype_t *pData,
                                                         char *ptr, size_t length);
-OPAL_DECLSPEC int opal_datatype_dump_data_flags(unsigned short usflags, char *ptr, size_t length);
+OPAL_DECLSPEC int opal_datatype_dump_data_flags(uint32_t flags, char *ptr, size_t length);
 OPAL_DECLSPEC int opal_datatype_dump_data_desc(union dt_elem_desc *pDesc, int nbElems, char *ptr,
                                                size_t length);
 
@@ -310,6 +310,7 @@ extern bool opal_ddt_copy_debug;
 extern bool opal_ddt_unpack_debug;
 extern bool opal_ddt_pack_debug;
 extern bool opal_ddt_raw_debug;
+extern bool opal_datatype_check_missed_optimizations;
 
 END_C_DECLS
 #endif /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */
