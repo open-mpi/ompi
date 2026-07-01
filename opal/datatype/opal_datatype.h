@@ -43,6 +43,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "opal/class/opal_object.h"
 
@@ -67,18 +68,18 @@ BEGIN_C_DECLS
 
 /* flags for the datatypes. */
 #define OPAL_DATATYPE_FLAG_UNAVAILABLE \
-    0x0001 /**< datatypes unavailable on the build (OS or compiler dependant) */
+    0x00000001u /**< datatypes unavailable on the build (OS or compiler dependant) */
 #define OPAL_DATATYPE_FLAG_PREDEFINED \
-    0x0002 /**< cannot be removed: initial and predefined datatypes */
-#define OPAL_DATATYPE_FLAG_COMMITTED  0x0004 /**< ready to be used for a send/recv operation */
-#define OPAL_DATATYPE_FLAG_OVERLAP    0x0008 /**< datatype is unpropper for a recv operation */
-#define OPAL_DATATYPE_FLAG_CONTIGUOUS 0x0010 /**< contiguous datatype */
+    0x00000002u /**< cannot be removed: initial and predefined datatypes */
+#define OPAL_DATATYPE_FLAG_COMMITTED  0x00000004u /**< ready to be used for a send/recv operation */
+#define OPAL_DATATYPE_FLAG_OVERLAP    0x00000008u /**< datatype is unpropper for a recv operation */
+#define OPAL_DATATYPE_FLAG_CONTIGUOUS 0x00000010u /**< contiguous datatype */
 #define OPAL_DATATYPE_FLAG_NO_GAPS                                                                \
-    0x0020 /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size \
+    0x00000020u /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size \
             */
-#define OPAL_DATATYPE_FLAG_USER_LB 0x0040 /**< has a user defined LB */
-#define OPAL_DATATYPE_FLAG_USER_UB 0x0080 /**< has a user defined UB */
-#define OPAL_DATATYPE_FLAG_DATA    0x0100 /**< data or control structure */
+#define OPAL_DATATYPE_FLAG_USER_LB 0x00000040u /**< has a user defined LB */
+#define OPAL_DATATYPE_FLAG_USER_UB 0x00000080u /**< has a user defined UB */
+#define OPAL_DATATYPE_FLAG_DATA    0x00000100u /**< data or control structure */
 /*
  * We should make the difference here between the predefined contiguous and non contiguous
  * datatypes. The OPAL_DATATYPE_FLAG_BASIC is held by all predefined contiguous datatypes.
@@ -89,18 +90,26 @@ BEGIN_C_DECLS
 /*
  * If during the datatype optimization process we collapse contiguous elements with
  * different types, we cannot use this optimized description for any communication
- * in a heterogeneous setting, especially not for the exteranl32 support.
+ * in a heterogeneous setting, especially not for the external32 support.
  *
  * A datatype with this flag cannot use the optimized description in heterogeneous
  * setups.
  */
-#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED  0x1000
+#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED 0x00010000u
 /*
  * The last fragment of one full datatype instance is adjacent to the first
  * fragment of the next instance. Commit-time optimization cannot fold this into
  * a count-1 description, but convertor setup can use the hint for count > 1.
  */
-#define OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE 0x2000
+#define OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE 0x00020000u
+
+/*
+ * Optimization controls.  Keep these as a mask so upper layers can disable
+ * transformations whose cost model differs for a given pack/unpack path.
+ */
+#define OPAL_DATATYPE_OPTIMIZE_ADJACENT_FUSION 0x00000001u
+#define OPAL_DATATYPE_OPTIMIZE_LOOP_BOUNDARY   0x00000002u
+#define OPAL_DATATYPE_OPTIMIZE_ALL             UINT32_MAX
 
 /**
  * The number of supported entries in the data-type definition and the
@@ -123,8 +132,7 @@ typedef struct dt_type_desc_t dt_type_desc_t;
  */
 struct opal_datatype_t {
     opal_object_t super; /**< basic superclass */
-    uint16_t flags;      /**< the flags */
-    uint16_t id;         /**< data id, normally the index in the data array. */
+    uint32_t flags;      /**< datatype flags, including shape hints above bit 15 */
     uint32_t bdt_used;   /**< bitset of which basic datatypes are used in the data description */
     size_t size;         /**< total size in bytes of the memory used by the data if
                               the data is put on a contiguous buffer */
@@ -134,8 +142,9 @@ struct opal_datatype_t {
     ptrdiff_t ub;        /**< upper bound in memory */
     /* --- cacheline 1 boundary (64 bytes) --- */
     size_t nbElems; /**< total number of elements inside the datatype */
-    uint32_t align; /**< data should be aligned to */
-    uint32_t loops; /**< number of loops on the iternal type stack */
+    uint16_t id;    /**< data id, normally the index in the data array. */
+    uint16_t align; /**< data should be aligned to */
+    uint32_t loops; /**< number of loops on the internal type stack */
 
     /* Attribute fields */
     char name[OPAL_MAX_OBJECT_NAME]; /**< name of the datatype */
@@ -149,10 +158,15 @@ struct opal_datatype_t {
                          all language interfaces (because Fortran is not known at the OPAL
                          layer). This field should never be initialized in homogeneous
                          environments */
-    /* --- cacheline 5 boundary (320 bytes) was 32-36 bytes ago --- */
 
-    /* size: 352, cachelines: 6, members: 15 */
-    /* last cacheline: 28-32 bytes */
+    /*
+     * Layout note for the default LP64 configuration with
+     * OPAL_MAX_OBJECT_NAME == 64: this struct is 200 bytes, aligned to 8
+     * bytes, and ptypes ends at offset 200.  The 32-bit flags field is paid
+     * for by keeping id and align as adjacent 16-bit fields, so there is no
+     * trailing padding in the C object to reuse; the object only occupies the
+     * first 8 bytes of its fourth 64-byte cacheline.
+     */
 };
 
 typedef struct opal_datatype_t opal_datatype_t;
