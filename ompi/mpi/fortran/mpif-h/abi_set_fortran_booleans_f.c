@@ -13,6 +13,8 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,12 +75,10 @@ void ompi_abi_set_fortran_booleans_f(MPI_Fint *logical_size,
                                      ompi_fortran_logical_t *logical_false,
                                      MPI_Fint *ierr)
 {
-    int c_ierr, c_logical_true, c_logical_false;
+    int c_ierr;
 
-    c_logical_true = OMPI_LOGICAL_2_INT(*logical_true);
-    c_logical_false = OMPI_LOGICAL_2_INT(*logical_false);
     c_ierr = PMPI_Abi_set_fortran_booleans(OMPI_FINT_2_INT(*logical_size), 
-                                           (void *)&c_logical_true,
-                                           (void *)&c_logical_false);
+                                           (void *)logical_true,
+                                           (void *)logical_false);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }
