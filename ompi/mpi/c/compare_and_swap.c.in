@@ -37,7 +37,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 
 PROTOTYPE ERROR_CLASS compare_and_swap(BUFFER_CONST origin_addr, BUFFER_CONST compare_addr, BUFFER_OUT result_addr,
-                                       DATATYPE datatype, INT target_rank, AINT target_disp, WIN win)
+                                       DATATYPE datatype, SOURCE target_rank, AINT target_disp, WIN win)
 {
     int rc;
 

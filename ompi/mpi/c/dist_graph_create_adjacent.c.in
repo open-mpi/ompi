@@ -34,9 +34,9 @@
 #include "ompi/mca/topo/base/base.h"
 
 PROTOTYPE ERROR_CLASS dist_graph_create_adjacent(COMM comm_old,
-                                                 INT indegree, INT_ARRAY sources,
+                                                 INT indegree, SOURCE_ARRAY sources,
                                                  WEIGHTS sourceweights, INT outdegree,
-                                                 INT_ARRAY destinations, WEIGHTS destweights,
+                                                 SOURCE_ARRAY destinations, WEIGHTS destweights,
                                                  INFO info, INT reorder,
                                                  COMM_OUT comm_dist_graph)
 {

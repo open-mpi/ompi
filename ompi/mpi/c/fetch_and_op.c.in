@@ -36,7 +36,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 
 PROTOTYPE ERROR_CLASS fetch_and_op(BUFFER_CONST origin_addr, BUFFER_OUT result_addr, DATATYPE datatype,
-                                   INT target_rank, AINT target_disp, OP op, WIN win)
+                                   SOURCE target_rank, AINT target_disp, OP op, WIN win)
 {
     int rc;
 

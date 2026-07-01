@@ -44,7 +44,7 @@
 PROTOTYPE ERROR_CLASS comm_spawn_multiple(INT count, STRING_ARRAY array_of_commands, ARGV array_of_argv,
                                           INT_ARRAY array_of_maxprocs:count, INFO_ARRAY array_of_info:count,
                                           ROOT root, COMM comm, COMM_OUT intercomm,
-                                          INT_ARRAY_OUT array_of_errcodes:count)
+                                          INT_ARRAY_OUT array_of_errcodes)
 {
     int i=0, rc=0, rank=0, size=0, flag;
     ompi_communicator_t *newcomp=MPI_COMM_NULL;

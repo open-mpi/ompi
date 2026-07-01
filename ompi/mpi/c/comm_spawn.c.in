@@ -43,7 +43,7 @@
 
 PROTOTYPE ERROR_CLASS comm_spawn(STRING command, STRING_ARRAY argv, INT maxprocs, INFO info,
                                  ROOT root, COMM comm, COMM_OUT intercomm,
-                                 INT_OUT array_of_errcodes)
+                                 INT_ARRAY_OUT array_of_errcodes:maxprocs)
 {
     int rank, rc=OMPI_SUCCESS, i, flag;
     bool send_first = false; /* we wait to be contacted */
