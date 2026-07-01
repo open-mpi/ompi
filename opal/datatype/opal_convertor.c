@@ -83,6 +83,11 @@ static opal_convertor_master_t *opal_convertor_master_list = NULL;
 extern conversion_fct_t opal_datatype_heterogeneous_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED];
 extern conversion_fct_t opal_datatype_copy_functions[OPAL_DATATYPE_MAX_PREDEFINED];
 
+int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec *iov,
+                                     uint32_t *out_size, size_t *max_data);
+int32_t opal_unpack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec *iov,
+                                       uint32_t *out_size, size_t *max_data);
+
 void opal_convertor_destroy_masters(void)
 {
     opal_convertor_master_t *master = opal_convertor_master_list;
@@ -511,7 +516,8 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         convertor->flags |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS);                          \
                                                                                                 \
         convertor->remote_size = convertor->local_size;                                         \
-        if (OPAL_LIKELY(convertor->remoteArch == opal_local_arch)) {                            \
+        if (OPAL_LIKELY(convertor->remoteArch == opal_local_arch)                               \
+            && !(convertor->flags & CONVERTOR_ACCELERATOR)) {                                   \
             if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                \
                 || ((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && (1 == count))) {      \
                 return OPAL_SUCCESS;                                                            \
@@ -522,7 +528,8 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         opal_convertor_compute_remote_size(convertor);                                          \
         assert(NULL != convertor->use_desc->desc);                                              \
         /* For predefined datatypes (contiguous) do nothing more */                             \
-        if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                    \
+        if (!(convertor->flags & CONVERTOR_ACCELERATOR)                                        \
+            && (convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                  \
             && ((convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))                   \
                 == (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {                                 \
             return OPAL_SUCCESS;                                                                \
@@ -574,6 +581,8 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
 
     if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
         convertor->fAdvance = opal_unpack_general;
+    } else if (convertor->flags & CONVERTOR_ACCELERATOR) {
+        convertor->fAdvance = opal_unpack_accelerator_simple;
     } else {
         if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
             convertor->fAdvance = opal_unpack_homogeneous_contig;
@@ -598,6 +607,8 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
     if (CONVERTOR_SEND_CONVERSION
         == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
         convertor->fAdvance = opal_pack_general;
+    } else if (convertor->flags & CONVERTOR_ACCELERATOR) {
+        convertor->fAdvance = opal_pack_accelerator_simple;
     } else {
         if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
             if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)

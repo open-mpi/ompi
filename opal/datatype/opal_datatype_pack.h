@@ -79,9 +79,9 @@ static inline int pack_partial_blocklen(opal_convertor_t *CONVERTOR, const dt_el
  * Pack entire blocks, plus a possible remainder if SPACE is constrained to less than COUNT
  * elements.
  */
-static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_elem_desc_t *ELEM,
-                                        size_t *COUNT, unsigned char **memory,
-                                        unsigned char **packed, size_t *SPACE)
+__opal_attribute_always_inline__ static inline void
+pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_elem_desc_t *ELEM, size_t *COUNT,
+                     unsigned char **memory, unsigned char **packed, size_t *SPACE)
 {
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
     size_t blocklen_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
@@ -95,12 +95,12 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
     if ((blocklen_bytes * cando_count) > *(SPACE))
         cando_count = (*SPACE) / blocklen_bytes;
 
-    /* preemptively update the number of COUNT we will return. */
+    /* Every path below consumes the same number of elements.  Update the caller's progress before
+     * entering the large inline mover so the compiler does not keep COUNT live across the copy. */
     *(COUNT) -= cando_count;
 
     if (_elem->blocklen < 9) {
-        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR)
-            && OPAL_LIKELY(
+        if (OPAL_LIKELY(
                 OPAL_SUCCESS
                 == opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem))) {
             goto update_and_return;

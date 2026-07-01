@@ -60,9 +60,11 @@ libdatatype_la_SOURCES = \
         opal_datatype_monotonic.c \
         opal_datatype_optimize.c \
         opal_datatype_pack.c \
+        opal_datatype_pack_accelerator.c \
         opal_datatype_position.c \
         opal_datatype_resize.c \
-        opal_datatype_unpack.c
+        opal_datatype_unpack.c \
+        opal_datatype_unpack_accelerator.c
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
