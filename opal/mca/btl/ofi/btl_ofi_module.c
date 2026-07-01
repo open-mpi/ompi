@@ -41,6 +41,63 @@
 #include "btl_ofi_endpoint.h"
 #include "btl_ofi_frag.h"
 
+/**
+ * Populate this module's AV with all peer module addresses from the modex blob.
+ * The blob is untrusted input: validate every read stays within blob_len.
+ * Returns 1 if the default (module-paired) peer address was inserted successfully, 0 otherwise.
+ */
+static int mca_btl_ofi_populate_av(mca_btl_ofi_module_t *ofi_btl,
+                                   mca_btl_base_endpoint_t *endpoint,
+                                   void *ep_name, size_t blob_len)
+{
+    uint8_t *p = (uint8_t *) ep_name;
+    uint8_t *end = p + blob_len;
+    uint32_t nm = 0;
+
+    if (blob_len < sizeof(uint32_t)) {
+        return 0;
+    }
+    memcpy(&nm, p, sizeof(uint32_t));
+    p += sizeof(uint32_t);
+
+    /* Cap nm so a corrupt count can't drive an unbounded allocation.
+     * Each entry needs at least a uint32 length prefix. */
+    if (0 == nm || nm > (blob_len - sizeof(uint32_t)) / sizeof(uint32_t)) {
+        return 0;
+    }
+
+    fi_addr_t *addrs = (fi_addr_t *) calloc(nm, sizeof(fi_addr_t));
+    if (NULL == addrs) {
+        return 0;
+    }
+
+    for (uint32_t k = 0; k < nm; k++) {
+        uint32_t nl = 0;
+        if (p + sizeof(uint32_t) > end) {
+            free(addrs);
+            return 0;
+        }
+        memcpy(&nl, p, sizeof(uint32_t));
+        p += sizeof(uint32_t);
+        if (nl > (size_t)(end - p)) {
+            free(addrs);
+            return 0;
+        }
+        int cnt = fi_av_insert(ofi_btl->av, p, 1, &addrs[k], 0, NULL);
+        if (cnt != 1) {
+            addrs[k] = FI_ADDR_NOTAVAIL;
+        }
+        p += nl;
+    }
+
+    /* Default peer_addr = the rail paired by module index (for send) */
+    int my_target = ofi_btl->module_index % (int) nm;
+    endpoint->peer_addr = addrs[my_target];
+    endpoint->peer_addrs = addrs;
+    endpoint->num_peer_addrs = (int) nm;
+    return (addrs[my_target] != FI_ADDR_NOTAVAIL) ? 1 : 0;
+}
+
 static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
                                  opal_proc_t **opal_procs, mca_btl_base_endpoint_t **peers,
                                  opal_bitmap_t *reachable)
@@ -79,7 +136,7 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
 
             /* Add this endpoint to the lookup table */
             (void) opal_hash_table_set_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) proc,
-                                                    (void **) &ep);
+                                                    (void *) peers[i]);
         }
 
         OPAL_MODEX_RECV(rc, &mca_btl_ofi_component.super.btl_version, &peers[i]->ep_proc->proc_name,
@@ -89,14 +146,8 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             MCA_BTL_OFI_ABORT();
         }
 
-        /* get peer fi_addr */
-        count = fi_av_insert(ofi_btl->av,          /* Address vector to insert */
-                             ep_name,              /* peer name */
-                             1,                    /* amount to insert */
-                             &peers[i]->peer_addr, /* return peer address here */
-                             0,                    /* flags */
-                             NULL);                /* context */
-
+        count = mca_btl_ofi_populate_av(ofi_btl, peers[i], ep_name, namelen);
+        free(ep_name);
         /* if succeed, add this proc and mark reachable */
         if (count == 1) { /* we inserted 1 address. */
             opal_list_append(&ofi_btl->endpoints, &peers[i]->super);
@@ -123,12 +174,18 @@ static int mca_btl_ofi_del_procs(mca_btl_base_module_t *btl, size_t nprocs, opal
                                                   (void **) &ep);
 
             if (OPAL_SUCCESS == rc) {
-                /* remove the address from AV. */
-                rc = fi_av_remove(ofi_btl->av, &peers[i]->peer_addr, 1, 0);
-                if (rc < 0) {
-                    /* remove failed. this should not happen. */
-                    /* Lets not crash because we failed to remove an address. */
-                    BTL_ERROR(("fi_av_remove failed with error %d:%s", rc, fi_strerror(-rc)));
+                /* remove all peer addresses from AV (multi-rail inserts one per peer module) */
+                if (NULL != peers[i]->peer_addrs) {
+                    for (int k = 0; k < peers[i]->num_peer_addrs; k++) {
+                        if (peers[i]->peer_addrs[k] != FI_ADDR_NOTAVAIL) {
+                            (void) fi_av_remove(ofi_btl->av, &peers[i]->peer_addrs[k], 1, 0);
+                        }
+                    }
+                } else {
+                    rc = fi_av_remove(ofi_btl->av, &peers[i]->peer_addr, 1, 0);
+                    if (rc < 0) {
+                        BTL_ERROR(("fi_av_remove failed with error %d:%s", rc, fi_strerror(-rc)));
+                    }
                 }
 
                 /* remove and free MPI endpoint from the list. */
@@ -329,6 +386,7 @@ int mca_btl_ofi_reg_mem(void *reg_data, void *base, size_t size,
 
     ur->handle.rkey = fi_mr_key(ur->ur_mr);
     ur->handle.desc = fi_mr_desc(ur->ur_mr);
+    ur->handle.module_index = btl->module_index;
 
     /* In case the provider doesn't support FI_MR_VIRT_ADDR,
      * we need to reference the remote address by the distance from base registered
@@ -386,6 +444,12 @@ int mca_btl_ofi_finalize(mca_btl_base_module_t *btl)
         mca_btl_ofi_context_finalize(&ofi_btl->contexts[i], ofi_btl->is_scalable_ep);
     }
     free(ofi_btl->contexts);
+    if (NULL != ofi_btl->ep_name) {
+        free(ofi_btl->ep_name);
+    }
+    if (NULL != ofi_btl->linux_device_name) {
+        free(ofi_btl->linux_device_name);
+    }
 
     if (NULL != ofi_btl->ofi_endpoint) {
         fi_close(&ofi_btl->ofi_endpoint->fid);
@@ -481,6 +545,10 @@ mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode)
          */
         module->super.btl_flags |= MCA_BTL_FLAGS_ATOMIC_FOPS | MCA_BTL_FLAGS_ATOMIC_OPS
                                    | MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION;
+
+        if (mca_btl_ofi_component.max_modules > 1) {
+            module->super.btl_flags |= MCA_BTL_FLAGS_MULTI_RAIL;
+        }
 
         module->super.btl_atomic_flags = MCA_BTL_ATOMIC_SUPPORTS_ADD | MCA_BTL_ATOMIC_SUPPORTS_SWAP
                                          | MCA_BTL_ATOMIC_SUPPORTS_CSWAP

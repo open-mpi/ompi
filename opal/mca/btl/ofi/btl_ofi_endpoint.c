@@ -18,12 +18,19 @@
 static void mca_btl_ofi_endpoint_construct(mca_btl_ofi_endpoint_t *endpoint)
 {
     endpoint->peer_addr = 0;
+    endpoint->peer_addrs = NULL;
+    endpoint->num_peer_addrs = 0;
     OBJ_CONSTRUCT(&endpoint->ep_lock, opal_mutex_t);
 }
 
 static void mca_btl_ofi_endpoint_destruct(mca_btl_ofi_endpoint_t *endpoint)
 {
     endpoint->peer_addr = 0;
+    if (NULL != endpoint->peer_addrs) {
+        free(endpoint->peer_addrs);
+        endpoint->peer_addrs = NULL;
+    }
+    endpoint->num_peer_addrs = 0;
 
     /* set to null, we will free ofi endpoint in module */
     endpoint->ofi_endpoint = NULL;

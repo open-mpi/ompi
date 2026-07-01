@@ -81,9 +81,14 @@ int mca_btl_ofi_afop(struct mca_btl_base_module_t *btl, struct mca_btl_base_endp
 
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
+    fi_addr_t target_addr = btl_endpoint->peer_addr;
+    if (NULL != btl_endpoint->peer_addrs && remote_handle->module_index >= 0
+        && remote_handle->module_index < btl_endpoint->num_peer_addrs) {
+        target_addr = btl_endpoint->peer_addrs[remote_handle->module_index];
+    }
     rc = fi_fetch_atomic(ofi_context->tx_ctx, (void *) &comp->operand, 1, NULL, /* operand */
                          local_address, local_handle->desc,                     /* results */
-                         btl_endpoint->peer_addr,                               /* remote addr */
+                         target_addr,                                           /* remote addr */
                          remote_address, remote_handle->rkey,                   /* remote buffer */
                          fi_datatype, fi_op, &comp->comp_ctx);
 
@@ -132,8 +137,13 @@ int mca_btl_ofi_aop(struct mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *
 
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
+    fi_addr_t target_addr = btl_endpoint->peer_addr;
+    if (NULL != btl_endpoint->peer_addrs && remote_handle->module_index >= 0
+        && remote_handle->module_index < btl_endpoint->num_peer_addrs) {
+        target_addr = btl_endpoint->peer_addrs[remote_handle->module_index];
+    }
     rc = fi_atomic(ofi_context->tx_ctx, (void *) &comp->operand, 1, NULL, /* operand */
-                   btl_endpoint->peer_addr,                               /* remote addr */
+                   target_addr,                                           /* remote addr */
                    remote_address, remote_handle->rkey,                   /* remote buffer */
                    fi_datatype, fi_op, &comp->comp_ctx);
 
@@ -185,9 +195,14 @@ int mca_btl_ofi_acswap(struct mca_btl_base_module_t *btl, struct mca_btl_base_en
     remote_address = (remote_address - (uint64_t) remote_handle->base_addr);
 
     /* perform atomic */
+    fi_addr_t target_addr = btl_endpoint->peer_addr;
+    if (NULL != btl_endpoint->peer_addrs && remote_handle->module_index >= 0
+        && remote_handle->module_index < btl_endpoint->num_peer_addrs) {
+        target_addr = btl_endpoint->peer_addrs[remote_handle->module_index];
+    }
     rc = fi_compare_atomic(ofi_context->tx_ctx, (void *) &comp->operand, 1, NULL,
                            (void *) &comp->compare, NULL, local_address, local_handle->desc,
-                           btl_endpoint->peer_addr, remote_address, remote_handle->rkey,
+                           target_addr, remote_address, remote_handle->rkey,
                            fi_datatype, FI_CSWAP, &comp->comp_ctx);
 
     if (rc == -FI_EAGAIN) {

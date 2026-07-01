@@ -179,6 +179,17 @@ static int mca_btl_ofi_component_register(void)
         MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_btl_ofi_component.num_contexts_per_module);
 
+    mca_btl_ofi_component.max_modules = 1;
+    (void) mca_base_component_var_register(
+        &mca_btl_ofi_component.super.btl_version, "max_modules",
+        "Maximum number of OFI BTL modules (NICs) to instantiate per process. "
+        "Values > 1 enable multi-rail: a single process creates one module per "
+        "distinct NIC (domain), up to this many, allowing the ob1 PML to stripe "
+        "a single rank across multiple NICs. Default 1 preserves the legacy "
+        "one-NIC-per-process behavior.",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_btl_ofi_component.max_modules);
+
     disable_sep = false;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version, "disable_sep",
                                            "force btl/ofi to never use scalable endpoint.",
@@ -447,38 +458,97 @@ no_hmem:
 
     info = info_list;
 
-    while (info) {
-        rc = validate_info(info, required_caps, include_list, exclude_list);
-        if (OPAL_SUCCESS == rc) {
-            /* Device passed sanity check, let's make a module.
-             *
-             * The initial fi_getinfo() call will return a list of providers
-             * available for this process. once a provider is selected from the
-             * list, we will cycle through the remaining list to identify NICs
-             * serviced by this provider, and try to pick one on the same NUMA
-             * node as this process. If there are no NICs on the same NUMA node,
-             * we pick one in a manner which allows all ranks to make balanced
-             * use of available NICs on the system.
-             *
-             * Most providers give a separate fi_info object for each NIC,
-             * however some may have multiple info objects with different
-             * attributes for the same NIC. The initial provider attributes
-             * are used to ensure that all NICs we return provide the same
-             * capabilities as the initial one.
-             */
-            selected_info = opal_common_ofi_select_provider(info, &opal_process_info);
-            rc = mca_btl_ofi_init_device(selected_info);
+    /* Multi-rail: when btl_ofi_max_modules > 1, create one OFI BTL module per
+     * distinct NIC (domain), up to that many, so the ob1 PML can stripe a single
+     * rank across multiple NICs. The default (1) preserves the legacy behavior of
+     * selecting a single NUMA-local NIC per process. */
+    int max_modules = mca_btl_ofi_component.max_modules;
+    if (max_modules < 1) {
+        max_modules = 1;
+    }
+    if (max_modules > MCA_BTL_OFI_MAX_MODULES) {
+        max_modules = MCA_BTL_OFI_MAX_MODULES;
+    }
+
+    if (1 == max_modules) {
+        /* Legacy: select a single NUMA-local NIC. */
+        while (info) {
+            rc = validate_info(info, required_caps, include_list, exclude_list);
             if (OPAL_SUCCESS == rc) {
-                info = selected_info;
-                break;
+                selected_info = opal_common_ofi_select_provider(info, &opal_process_info);
+                rc = mca_btl_ofi_init_device(selected_info);
+                if (OPAL_SUCCESS == rc) {
+                    info = selected_info;
+                    break;
+                }
             }
+            info = info->next;
         }
-        info = info->next;
+    } else {
+        /* Multi-rail: one module per distinct NIC/domain, up to max_modules.
+         * Pin to a single provider (the first that validates) so all rails share
+         * one provider and address format; mixing providers would make peer
+         * fi_av_insert of foreign addresses fail. */
+        const char *selected_prov = NULL;
+        while (info && mca_btl_ofi_component.module_count < max_modules) {
+            rc = validate_info(info, required_caps, include_list, exclude_list);
+            if (OPAL_SUCCESS == rc) {
+                const char *prov = (NULL != info->fabric_attr)
+                                   ? info->fabric_attr->prov_name : NULL;
+                if (NULL == selected_prov) {
+                    selected_prov = prov;   /* pin on first valid provider */
+                }
+                bool same_prov = (NULL != selected_prov && NULL != prov
+                                  && 0 == strcmp(selected_prov, prov));
+                if (same_prov) {
+                    bool dup = false;
+                    for (int m = 0; m < mca_btl_ofi_component.module_count; m++) {
+                        if (NULL != mca_btl_ofi_component.modules[m]->linux_device_name
+                            && NULL != info->domain_attr->name
+                            && 0 == strcmp(mca_btl_ofi_component.modules[m]->linux_device_name,
+                                           info->domain_attr->name)) {
+                            dup = true;
+                            break;
+                        }
+                    }
+                    if (!dup) {
+                        (void) mca_btl_ofi_init_device(info);
+                    }
+                }
+            }
+            info = info->next;
+        }
+        /* Keep the post-loop NULL check meaningful: non-NULL iff a module was made. */
+        info = (mca_btl_ofi_component.module_count > 0) ? info_list : NULL;
     }
 
     if (NULL == info) {
         BTL_VERBOSE(("No provider is selected"));
         goto out;
+    }
+
+    /* Multi-rail: publish ALL module endpoint names in a single modex blob so
+     * peers can pair rails by module index. Layout:
+     *   uint32 nmodules, then per module: uint32 namelen, namelen bytes. */
+    size_t total = sizeof(uint32_t);
+    for (int mi = 0; mi < mca_btl_ofi_component.module_count; mi++) {
+        total += sizeof(uint32_t) + mca_btl_ofi_component.modules[mi]->ep_namelen;
+    }
+    uint8_t *blob = (uint8_t *) malloc(total);
+    if (NULL != blob) {
+        uint8_t *p = blob;
+        uint32_t nm = (uint32_t) mca_btl_ofi_component.module_count;
+        memcpy(p, &nm, sizeof(uint32_t));
+        p += sizeof(uint32_t);
+        for (int mi = 0; mi < mca_btl_ofi_component.module_count; mi++) {
+            uint32_t nl = (uint32_t) mca_btl_ofi_component.modules[mi]->ep_namelen;
+            memcpy(p, &nl, sizeof(uint32_t));
+            p += sizeof(uint32_t);
+            memcpy(p, mca_btl_ofi_component.modules[mi]->ep_name, nl);
+            p += nl;
+        }
+        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, blob, total);
+        free(blob);
     }
 
     /* pass module array back to caller */
@@ -564,7 +634,13 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
                      fi_strerror(-rc)));
     }
 
-    linux_device_name = info->domain_attr->name;
+    /* fi_info is freed after init; keep a persistent copy. Assign into the
+     * module immediately so it is released via the fail: cleanup on any error. */
+    linux_device_name = strdup(info->domain_attr->name);
+    if (NULL == linux_device_name) {
+        goto fail;
+    }
+    module->linux_device_name = linux_device_name;
     BTL_VERBOSE(
         ("initializing dev:%s provider:%s", linux_device_name, info->fabric_attr->prov_name));
 
@@ -669,7 +745,6 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->domain = domain;
     module->av = av;
     module->ofi_endpoint = ep;
-    module->linux_device_name = linux_device_name;
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
     module->use_fi_mr_bind = false;
@@ -720,10 +795,13 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         }
     }
 
-    /* post our endpoint name so peer can use it to connect to us */
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, ep_name, namelen);
+    /* Store our endpoint name; the full set of module names is published once
+     * (packed) after all modules are created, so peers can pair rails by module
+     * index (see mca_btl_ofi_component_init). */
+    module->ep_name = ep_name;          /* ownership transferred to module */
+    module->ep_namelen = namelen;
+    module->module_index = *module_count;
     mca_btl_ofi_component.namelen = namelen;
-    free(ep_name);
 
     /* add this module to the list */
     mca_btl_ofi_component.modules[(*module_count)++] = module;
@@ -765,6 +843,7 @@ fail:
     if (NULL != fabric) {
         opal_common_ofi_fabric_release(fabric);
     }
+    free(module->linux_device_name);
     free(module);
 
     if (NULL != ep_name) {

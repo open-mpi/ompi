@@ -737,6 +737,33 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc);
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 
+    /* Multi-rail: when using per-domain memory registration, the peer RDMA
+     * registration handle carries the module (rail) index it was registered on.
+     * Select the local rdma btl with the matching index so the local registration
+     * and the remote key live on corresponding rails. Only active for BTLs that
+     * set MCA_BTL_FLAGS_MULTI_RAIL. */
+    if (NULL != rdma_bml
+        && mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma) > 1
+        && (btl->btl_flags & MCA_BTL_FLAGS_MULTI_RAIL)) {
+        /* module_index is the last int of the registration handle. Copy it out
+         * with memcpy to avoid unaligned/aliased access, and only when the
+         * handle is large enough to contain it. */
+        size_t off = sizeof(uint64_t) + 2 * sizeof(void *);
+        if (btl->btl_registration_handle_size >= off + sizeof(int)) {
+            int rmod = 0;
+            memcpy(&rmod, (char *) (hdr + 1) + off, sizeof(int));
+            if (rmod >= 0) {
+                size_t rdma_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
+                size_t idx = (size_t) rmod % rdma_size;
+                mca_bml_base_btl_t *_m =
+                    mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma, idx);
+                if (NULL != _m) {
+                    rdma_bml = _m;
+                }
+            }
+        }
+    }
+
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
             mca_bml_base_btl_t *bml_btl;
