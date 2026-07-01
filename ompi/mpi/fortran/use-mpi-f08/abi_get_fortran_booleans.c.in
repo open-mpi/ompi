@@ -19,8 +19,25 @@
  * 3. The C wrapper passes that void* unchanged to the inner C implementation
  * 4. After the call, copies the temporary back to the actual output parameter
  *
- * This is different from mpif-h where LOGICAL values are converted to/from integers.
- * The F08 bindings use direct memory access to preserve the exact bit patterns.
+ * Equivalence with mpif-h bindings:
+ * The bindings generator handles LOGICALs using integers when interfacing to the
+ * C wrapper functions in use-mpi-f08/base/api_f08_generated.c (see the generated
+ * Fortran code in use-mpi-f08/api_f08_generated.f90). Despite the different
+ * approaches, both mpif-h and mpi_f08 layers are equivalent and both call the
+ * internal ompi_abi_get_fortran_booleans function:
+ *
+ * - mpif-h: Uses Fortran pass-by-reference to pass pointers to logical_true and
+ *   logical_false arguments directly through to the internal C function.
+ *
+ * - mpi_f08: Uses C_LOC from ISO_C_BINDING to pass addresses of temporary LOGICAL
+ *   variables in the generated Fortran binding code to this C wrapper, which then
+ *   passes them unchanged as void* pointers to the internal C function. Upon
+ *   return from ompi_abi_get_fortran_booleans_wrapper_f08, the values in these
+ *   temporary variables are copied into the actual logical_true and logical_false
+ *   output arguments passed to MPI_Abi_get_fortran_booleans_f08.
+ *
+ * Both approaches preserve the exact bit patterns of Fortran LOGICAL values as
+ * required by the MPI ABI specification.
  */
 
 PROTOTYPE VOID abi_get_fortran_booleans(INT logical_size, LOGICAL_PTR_OUT logical_true,
