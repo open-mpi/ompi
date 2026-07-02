@@ -39,8 +39,15 @@
 #    include <alloca.h>
 #endif
 
+/*
+ * The loop-unrolling limits are a provisional cost model derived from FLOAT4 pack measurements on
+ * an Apple M3 Pro. Revisit both limits after collecting equivalent data on other architectures and
+ * for unpack and heterogeneous conversion. Keeping them here makes the temporary policy explicit.
+ */
 enum {
-    OPAL_DATATYPE_OPT_MAX_DESC_GROWTH = 10
+    OPAL_DATATYPE_OPT_MAX_DESC_GROWTH = 10,
+    OPAL_DATATYPE_OPT_LOOP_UNROLL_MAX_ITEMS = 8,
+    OPAL_DATATYPE_OPT_LOOP_UNROLL_MAX_DATA_BYTES = 128
 };
 
 typedef struct {
@@ -60,6 +67,139 @@ static uint32_t opal_datatype_opt_next_item(const dt_elem_desc_t *desc, int32_t 
     }
 
     return item + 1;
+}
+
+/*
+ * Select the measured unrolling factor for a noncontiguous loop containing only DATA descriptors.
+ * Each DATA mover must remain below the measured byte limit. The factor grows the body to at most
+ * eight entries and retains at least two loop iterations; any remainder is emitted afterward.
+ */
+static uint32_t opal_datatype_opt_loop_unroll_factor(const dt_elem_desc_t *desc, int32_t pos_desc)
+{
+    const ddt_loop_desc_t *loop = &desc[pos_desc].loop;
+    const ddt_endloop_desc_t *end_loop = &desc[pos_desc + loop->items].end_loop;
+    uint32_t body_items, factor, loop_factor;
+
+    if ((4 > loop->loops) || (2 > loop->items)
+        || (loop->common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)
+        || (OPAL_DATATYPE_END_LOOP != end_loop->common.type)) {
+        return 1;
+    }
+
+    body_items = loop->items - 1;
+    if (OPAL_DATATYPE_OPT_LOOP_UNROLL_MAX_ITEMS < body_items) {
+        return 1;
+    }
+    for (uint32_t item = 0; item < body_items; ++item) {
+        const ddt_elem_desc_t *elem = &desc[pos_desc + item + 1].elem;
+        size_t type_size, block_bytes;
+
+        if (!(elem->common.flags & OPAL_DATATYPE_FLAG_DATA)) {
+            return 1;
+        }
+        type_size = opal_datatype_basicDatatypes[elem->common.type]->size;
+        if ((0 == type_size) || (0 == elem->blocklen)
+            || (elem->blocklen > OPAL_DATATYPE_OPT_LOOP_UNROLL_MAX_DATA_BYTES / type_size)) {
+            return 1;
+        }
+        block_bytes = elem->blocklen * type_size;
+        if (elem->count > OPAL_DATATYPE_OPT_LOOP_UNROLL_MAX_DATA_BYTES / block_bytes) {
+            return 1;
+        }
+    }
+
+    factor = OPAL_DATATYPE_OPT_LOOP_UNROLL_MAX_ITEMS / body_items;
+    loop_factor = loop->loops / 2;
+    factor = factor < loop_factor ? factor : loop_factor;
+    return 1 < factor ? factor : 1;
+}
+
+/*
+ * Account for the DATA entries introduced by eligible loops before allocating the optimized
+ * description. The normal optimizer reserves twice the input length for fusion; unrolling needs
+ * this additional exact growth because one input DATA entry can become several output entries.
+ */
+static size_t opal_datatype_opt_loop_unroll_growth(const dt_type_desc_t *input_desc,
+                                                   uint32_t optimization_mask)
+{
+    size_t growth = 0;
+
+    if (!(optimization_mask & OPAL_DATATYPE_OPTIMIZE_LOOP_UNROLL)) {
+        return 0;
+    }
+
+    for (size_t pos = 0; pos < input_desc->used; ++pos) {
+        if (OPAL_DATATYPE_LOOP == input_desc->desc[pos].elem.common.type) {
+            const ddt_loop_desc_t *loop = &input_desc->desc[pos].loop;
+            uint32_t factor = opal_datatype_opt_loop_unroll_factor(input_desc->desc, (int32_t) pos);
+
+            if (1 < factor) {
+                size_t body_items = loop->items - 1;
+                size_t replicas = factor + loop->loops % factor - 1;
+                size_t extra;
+
+                if (body_items > (SIZE_MAX - growth) / replicas) {
+                    return SIZE_MAX;
+                }
+                extra = body_items * replicas;
+                growth += extra;
+            }
+        }
+    }
+    return growth;
+}
+
+/*
+ * Replace one cheap, flat DATA loop with a loop over unrolled groups followed by straight-line
+ * residual groups. Displacements remain relative to the enclosing loop or datatype, preserving
+ * typemap order without flattening the surrounding description.
+ */
+static void opal_datatype_opt_emit_unrolled_loop(dt_elem_desc_t **pElemDesc, int32_t *nbElems,
+                                                 const dt_elem_desc_t *desc, int32_t pos_desc,
+                                                 uint32_t factor)
+{
+    const ddt_loop_desc_t *loop = &desc[pos_desc].loop;
+    const ddt_endloop_desc_t *end_loop = &desc[pos_desc + loop->items].end_loop;
+    const uint32_t body_items = loop->items - 1;
+    const uint32_t iterations = loop->loops / factor;
+    const uint32_t tail = loop->loops % factor;
+    const uint32_t unrolled_items = body_items * factor;
+
+    CREATE_LOOP_START(*pElemDesc, iterations, unrolled_items + 1, loop->extent * factor,
+                      loop->common.flags);
+    (*pElemDesc)++;
+    (*nbElems)++;
+    for (uint32_t iteration = 0; iteration < factor; ++iteration) {
+        for (uint32_t item = 0; item < body_items; ++item) {
+            const ddt_elem_desc_t *elem = &desc[pos_desc + item + 1].elem;
+            uint16_t elem_flags = OPAL_DATATYPE_FLAG_BASIC
+                                  | (elem->common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED);
+
+            CREATE_ELEM(*pElemDesc, elem->common.type, elem_flags, elem->blocklen, elem->count,
+                        elem->disp + (ptrdiff_t) iteration * loop->extent, elem->extent);
+            (*pElemDesc)++;
+            (*nbElems)++;
+        }
+    }
+    CREATE_LOOP_END(*pElemDesc, unrolled_items + 1, end_loop->first_elem_disp,
+                    end_loop->size * factor, end_loop->common.flags);
+    (*pElemDesc)++;
+    (*nbElems)++;
+
+    for (uint32_t iteration = 0; iteration < tail; ++iteration) {
+        ptrdiff_t displacement = (ptrdiff_t) (iterations * factor + iteration) * loop->extent;
+
+        for (uint32_t item = 0; item < body_items; ++item) {
+            const ddt_elem_desc_t *elem = &desc[pos_desc + item + 1].elem;
+            uint16_t elem_flags = OPAL_DATATYPE_FLAG_BASIC
+                                  | (elem->common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED);
+
+            CREATE_ELEM(*pElemDesc, elem->common.type, elem_flags, elem->blocklen, elem->count,
+                        elem->disp + displacement, elem->extent);
+            (*pElemDesc)++;
+            (*nbElems)++;
+        }
+    }
 }
 
 /*
@@ -725,6 +865,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
     ddt_elem_desc_t last = {.common.flags = 0xFFFF /* all on */, .count = 0, .disp = 0}, compress;
     ddt_elem_desc_t current_elem;
     const ddt_elem_desc_t *current;
+    size_t unroll_growth;
 
     if (NULL != loop_boundary_expanded) {
         *loop_boundary_expanded = false;
@@ -736,8 +877,14 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
     }
     SAVE_STACK(pStack, -1, 0, count, 0);
 
-    output_desc->length = 2 * input_desc->used
-                        + 1 /* for the fake OPAL_DATATYPE_END_LOOP at the end */;
+    unroll_growth = opal_datatype_opt_loop_unroll_growth(input_desc, optimization_mask);
+    if ((SIZE_MAX == unroll_growth)
+        || (input_desc->used > (SIZE_MAX - unroll_growth - 1) / 2)) {
+        free(pOrigStack);
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    output_desc->length = 2 * input_desc->used + unroll_growth
+                          + 1 /* for the fake OPAL_DATATYPE_END_LOOP at the end */;
     output_desc->desc = pElemDesc = (dt_elem_desc_t *) malloc(sizeof(dt_elem_desc_t)
                                                               * output_desc->length);
     if (NULL == output_desc->desc) {
@@ -814,7 +961,23 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 last.common.type = OPAL_DATATYPE_LOOP;
             }
 
-            /* Can we unroll the loop? */
+            /*
+             * Cheap flat DATA loops benefit from fewer END_LOOP visits. Keep a shortened loop and
+             * emit non-divisible iterations afterward so arbitrary loop counts preserve their exact
+             * typemap order.
+             */
+            uint32_t unroll_factor =
+                (optimization_mask & OPAL_DATATYPE_OPTIMIZE_LOOP_UNROLL)
+                    ? opal_datatype_opt_loop_unroll_factor(desc, pos_desc)
+                    : 1;
+            if (1 < unroll_factor) {
+                opal_datatype_opt_emit_unrolled_loop(&pElemDesc, &nbElems, desc, pos_desc,
+                                                     unroll_factor);
+                pos_desc += loop->items + 1;
+                goto complete_loop;
+            }
+
+            /* Fully expand the legacy tiny-loop cases. */
             if ((loop->items <= 3) && (loop->loops <= 2)) {
                 ptrdiff_t elem_displ = 0;
                 for (uint32_t i = 0; i < loop->loops; i++) {
