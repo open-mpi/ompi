@@ -6,6 +6,7 @@
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -119,6 +120,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
     dt_elem_desc_t *description;
     dt_elem_desc_t *pElem;
     size_t iov_len_local;
+    ptrdiff_t local_disp;
     unsigned char *source = (unsigned char *) source_base,
                   *destination = (unsigned char *) destination_base;
 
@@ -187,6 +189,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
 
     while (1) {
         while (OPAL_LIKELY(pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA)) {
+        process_data:
             /* now here we have a basic datatype */
             _predefined_data(pElem, datatype, (unsigned char *) source_base, count, count_desc,
                              source, destination, &iov_len_local);
@@ -194,6 +197,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
             UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
         }
         if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) { /* end of the current loop */
+        process_end_loop:
             DO_DEBUG(opal_output(0,
                                  "copy end_loop count %" PRIsize_t
                                  " stack_pos %d pos_desc %d disp %ld space %lu\n",
@@ -218,15 +222,16 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
             }
             source = (unsigned char *) source_base + pStack->disp;
             destination = (unsigned char *) destination_base + pStack->disp;
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             DO_DEBUG(opal_output(0,
                                  "copy new_loop count %" PRIsize_t
                                  " stack_pos %d pos_desc %d disp %ld space %lu\n",
                                  pStack->count, stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
         }
         if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
-            ptrdiff_t local_disp = (ptrdiff_t) source;
+        process_loop:
+            local_disp = (ptrdiff_t) source;
             if (pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
                 _contiguous_loop(pElem, datatype, (unsigned char *) source_base, count, count_desc,
                                  source, destination, &iov_len_local);
@@ -240,9 +245,8 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
         update_loop_description: /* update the current state */
             source = (unsigned char *) source_base + pStack->disp;
             destination = (unsigned char *) destination_base + pStack->disp;
+            DDT_DUMP_STACK(pStack, stack_pos, &description[pos_desc], "advance loop");
             UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-            DDT_DUMP_STACK(pStack, stack_pos, pElem, "advance loop");
-            continue;
         }
     }
 }

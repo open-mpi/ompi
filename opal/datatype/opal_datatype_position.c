@@ -14,6 +14,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -166,6 +167,7 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
     dt_elem_desc_t *pElem; /* current position */
     unsigned char *base_pointer = pConvertor->pBaseBuf;
     ptrdiff_t extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
+    ptrdiff_t local_disp;
 
     DUMP("opal_convertor_generic_simple_position( %p, &%ld )\n", (void *) pConvertor,
          (long) *position);
@@ -232,6 +234,7 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
     while (1) {
         if (OPAL_DATATYPE_END_LOOP
             == pElem->elem.common.type) { /* end of the the entire datatype */
+        process_end_loop:
             DO_DEBUG(opal_output(0,
                                  "position end_loop count %" PRIsize_t
                                  " stack_pos %d pos_desc %d disp %lx space %lu\n",
@@ -257,15 +260,16 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
                 }
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             DO_DEBUG(opal_output(0,
                                  "position new_loop count %" PRIsize_t
                                  " stack_pos %d pos_desc %d disp %lx space %lu\n",
                                  pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
         }
         if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
-            ptrdiff_t local_disp = (ptrdiff_t) base_pointer;
+        process_loop:
+            local_disp = (ptrdiff_t) base_pointer;
             ddt_endloop_desc_t *end_loop = (ddt_endloop_desc_t *) (pElem + pElem->loop.items);
             size_t full_loops = iov_len_local / end_loop->size;
             full_loops = count_desc <= full_loops ? count_desc : full_loops;
@@ -286,16 +290,17 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
             pos_desc++;
         update_loop_description: /* update the current state */
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-            DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop");
+            DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, &description[pos_desc],
+                           "advance loop");
             DO_DEBUG(opal_output(0,
                                  "position set loop count %" PRIsize_t
                                  " stack_pos %d pos_desc %d disp %lx space %lu\n",
                                  pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
-            continue;
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
         }
         while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+        process_data:
             /* now here we have a basic datatype */
             position_predefined_data(pConvertor, pElem, &count_desc, &base_pointer, &iov_len_local);
             if (0 != count_desc) { /* completed */
@@ -304,12 +309,12 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             pos_desc++; /* advance to the next data */
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             DO_DEBUG(opal_output(0,
                                  "position set loop count %" PRIsize_t
                                  " stack_pos %d pos_desc %d disp %lx space %lu\n",
                                  pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
         }
     }
 complete_loop:
