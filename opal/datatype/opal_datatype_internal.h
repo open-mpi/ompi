@@ -101,6 +101,9 @@ extern int opal_datatype_dfd;
 #define OPAL_DATATYPE_FLOAT128_COMPLEX    27
 #define OPAL_DATATYPE_UNAVAILABLE         28
 
+/* Predefined movers inline blocks through this length; larger blocks use the generic copy path. */
+#define OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN 8
+
 #ifndef OPAL_DATATYPE_MAX_PREDEFINED
 #    define OPAL_DATATYPE_MAX_PREDEFINED (OPAL_DATATYPE_UNAVAILABLE + 1)
 #elif OPAL_DATATYPE_MAX_PREDEFINED <= OPAL_DATATYPE_UNAVAILABLE

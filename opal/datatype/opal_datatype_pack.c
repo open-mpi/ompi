@@ -145,7 +145,7 @@ int32_t opal_pack_homogeneous_contig_with_gaps(opal_convertor_t *pConv, struct i
     model = &pData->opt_desc.desc[0].elem;
 
     /* A counted entry or a large block cannot use the predefined inline mover efficiently. */
-    if ((1 != model->count) || (8 < model->blocklen)) {
+    if ((1 != model->count) || (OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN < model->blocklen)) {
         goto memcpy_path;
     }
 

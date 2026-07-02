@@ -92,7 +92,7 @@ static inline void unpack_predefined_data(opal_convertor_t *CONVERTOR, const dt_
     if ((blocklen_bytes * cando_count) > *(SPACE))
         cando_count = (*SPACE) / blocklen_bytes;
 
-    if (_elem->blocklen < 9) {
+    if (_elem->blocklen <= OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN) {
         if (OPAL_LIKELY(OPAL_SUCCESS
                         == opal_datatype_unpack_predefined_element(&_packed, &_memory,
                                                                    cando_count, _elem))) {
