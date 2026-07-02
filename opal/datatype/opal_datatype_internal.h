@@ -287,13 +287,23 @@ static inline int GET_FIRST_NON_LOOP(const union dt_elem_desc *_pElem)
     return element_index;
 }
 
-#define UPDATE_INTERNAL_COUNTERS(DESCRIPTION, POSITION, ELEMENT, COUNTER) \
-    do {                                                                  \
-        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                         \
-        if (OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type)            \
-            (COUNTER) = (ELEMENT)->loop.loops;                            \
-        else                                                              \
-            (COUNTER) = (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen; \
+/*
+ * Load a new descriptor and dispatch directly to the matching interpreter handler. Every caller
+ * must provide process_data, process_end_loop, and process_loop labels; this macro never returns.
+ */
+#define UPDATE_INTERNAL_COUNTERS(DESCRIPTION, POSITION, ELEMENT, COUNTER)                    \
+    do {                                                                                     \
+        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                                            \
+        if ((ELEMENT)->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {                        \
+            (COUNTER) = (size_t) (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen;            \
+            goto process_data;                                                               \
+        }                                                                                    \
+        if (OPAL_DATATYPE_END_LOOP == (ELEMENT)->elem.common.type) {                          \
+            goto process_end_loop;                                                           \
+        }                                                                                    \
+        assert(OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type);                            \
+        (COUNTER) = (ELEMENT)->loop.loops;                                                    \
+        goto process_loop;                                                                   \
     } while (0)
 
 /* The optimizer changed this element's predefined type while preserving its byte layout. */

@@ -189,6 +189,7 @@ int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec 
 
         while (1) {
             while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            process_data:
                 if (0 == opal_pack_accelerator_predefined_data(pConvertor, pElem, &count_desc,
                                                                &conv_ptr, &iov_ptr,
                                                                &iov_len_local)) {
@@ -202,6 +203,7 @@ int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec 
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             }
             if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) {
+            process_end_loop:
                 if (0 == --(pStack->count)) {
                     if (0 == pConvertor->stack_pos) {
                         *out_size = iov_count;
@@ -223,6 +225,7 @@ int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec 
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             }
             if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
+            process_loop:
                 PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP,
                            count_desc, pStack->disp);
                 pos_desc++;

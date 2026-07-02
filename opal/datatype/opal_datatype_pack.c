@@ -14,6 +14,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -314,18 +315,35 @@ update_status_and_return:
     return 0;
 }
 
-/* The pack/unpack functions need a cleanup. I have to create a proper interface to access
- * all basic functionalities, hence using them as basic blocks for all conversion functions.
+/*
+ * Performance-critical homogeneous pack/unpack backend.
  *
- * But first let's make some global assumptions:
+ * The inlined pack and unpack functions deliberately keep descriptor traversal, partial-element
+ * handling, loop-stack management, and predefined data movement in one large function. The
+ * PACK_PREDEFINED_DATATYPE and UNPACK_PREDEFINED_DATATYPE macros reach header-resident inline
+ * helpers, allowing the compiler to fold the homogeneous path into the interpreter. Small
+ * blocklengths then expand into type-aware scalar movers, while larger blocks retain the inline
+ * control path around the convertor memcpy callback. UPDATE_INTERNAL_COUNTERS similarly expands
+ * direct jumps to the DATA, LOOP, and END_LOOP handlers without a separate dispatcher call.
+ *
+ * This structure is intentionally sensitive to compiler decisions, code layout, and architecture.
+ * Every change must be evaluated for correctness with full and fragmented buffers and benchmarked
+ * across representative datatypes, message sizes, compilers, and architectures. Generated code
+ * should also be inspected whenever control flow or inlining changes.
+ *
+ * The implementation relies on these descriptor invariants:
  * - a datatype (with the flag DT_DATA set) will have the contiguous flags set if and only if
  *   the data is really contiguous (extent equal with size)
  * - for the OPAL_DATATYPE_LOOP type the DT_CONTIGUOUS flag set means that the content of the loop
  * is contiguous but with a gap in the beginning or at the end.
  * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
+ *
+ * The descriptor interpreter uses direct jumps between DATA, LOOP, and END_LOOP handlers. Each
+ * transition keeps its small dispatch sequence local because routing through a shared dispatcher
+ * adds an unconditional branch to the critical path.
  */
-int32_t opal_generic_simple_pack(opal_convertor_t *pConvertor, struct iovec *iov,
-                                 uint32_t *out_size, size_t *max_data)
+int32_t opal_generic_inlined_pack(opal_convertor_t *pConvertor, struct iovec *iov,
+                                  uint32_t *out_size, size_t *max_data)
 {
     dt_stack_t *pStack;      /* pointer to the position on the stack */
     uint32_t pos_desc;       /* actual position in the description of the derived datatype */
@@ -336,18 +354,17 @@ int32_t opal_generic_simple_pack(opal_convertor_t *pConvertor, struct iovec *iov
     const opal_datatype_t *pData = pConvertor->pDesc;
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
+    ptrdiff_t local_disp;
     uint32_t iov_count;
 
-    DO_DEBUG(opal_output(0, "opal_convertor_generic_simple_pack( %p:%p, {%p, %lu}, %d )\n",
+    DO_DEBUG(opal_output(0, "opal_convertor_generic_inlined_pack( %p:%p, {%p, %lu}, %d )\n",
                          (void *) pConvertor, (void *) pConvertor->pBaseBuf,
                          (void *) iov[0].iov_base, (unsigned long) iov[0].iov_len, *out_size););
 
     description = pConvertor->use_desc->desc;
 
-    /* For the first step we have to add both displacement to the source. After in the
-     * main while loop we will set back the conv_ptr to the correct value. This is
-     * due to the fact that the convertor can stop in the middle of a data with a count
-     */
+    /* The first step adds both displacements to the source. Subsequent descriptor transitions
+     * restore conv_ptr from the stack because conversion can stop in the middle of a DATA entry. */
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc = pStack->index;
     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
@@ -382,19 +399,26 @@ int32_t opal_generic_simple_pack(opal_convertor_t *pConvertor, struct iovec *iov
             }
         }
 
+        /* Keep the per-iovec entry structured. Direct jumps here cause the compiler to reshape
+         * the complete interpreter and regress otherwise unrelated datatype layouts. */
         while (1) {
-            while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
-                /* we have a basic datatype (working on full blocks) */
+            if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            process_data:
+                /* Pack one DATA descriptor. A partial output buffer exits with count_desc
+                 * preserving the exact position. */
                 PACK_PREDEFINED_DATATYPE(pConvertor, pElem, count_desc, conv_ptr, iov_ptr,
                                          iov_len_local);
-                if (0 != count_desc) { /* completed? */
+                if (0 != count_desc) {
                     goto complete_loop;
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                pos_desc++; /* advance to the next data */
+                pos_desc++;
+                /* Keep dispatch local to each transition. Sharing it through another label would
+                 * add an unconditional branch before the descriptor-type branch. */
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             }
-            if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) { /* end of the current loop */
+            if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) {
+            process_end_loop:
                 DO_DEBUG(opal_output(0,
                                      "pack end_loop count %" PRIsize_t " stack_pos %d"
                                      " pos_desc %d disp %ld space %lu\n",
@@ -419,15 +443,16 @@ int32_t opal_generic_simple_pack(opal_convertor_t *pConvertor, struct iovec *iov
                     }
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
                 DO_DEBUG(opal_output(0,
                                      "pack new_loop count %" PRIsize_t " stack_pos %d pos_desc %d"
-                                     " count_desc %" PRIsize_t " disp %ld space %lu\n",
-                                     pStack->count, pConvertor->stack_pos, pos_desc, count_desc,
-                                     pStack->disp, (unsigned long) iov_len_local););
+                                     " disp %ld space %lu\n",
+                                     pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
+                                     (unsigned long) iov_len_local););
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             }
             if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
-                ptrdiff_t local_disp = (ptrdiff_t) conv_ptr;
+            process_loop:
+                local_disp = (ptrdiff_t) conv_ptr;
                 if (pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
                     PACK_CONTIGUOUS_LOOP(pConvertor, pElem, count_desc, conv_ptr, iov_ptr,
                                          iov_len_local);
@@ -441,12 +466,14 @@ int32_t opal_generic_simple_pack(opal_convertor_t *pConvertor, struct iovec *iov
                 PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                            pStack->disp + local_disp);
                 pos_desc++;
-            update_loop_description: /* update the current state */
+            update_loop_description:
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, &description[pos_desc],
+                               "advance loop");
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop");
             }
         }
+
     complete_loop:
         iov[iov_count].iov_len -= iov_len_local; /* update the amount of valid data */
         total_packed += iov[iov_count].iov_len;
@@ -528,6 +555,7 @@ int32_t opal_pack_general(opal_convertor_t *pConvertor, struct iovec *iov,
     const opal_datatype_t *pData = pConvertor->pDesc;
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
+    ptrdiff_t local_disp;
     uint32_t iov_count;
 
     DO_DEBUG(opal_output(0, "opal_convertor_general_pack( %p:%p, {%p, %lu}, %d )\n",
@@ -559,6 +587,7 @@ int32_t opal_pack_general(opal_convertor_t *pConvertor, struct iovec *iov,
         iov_len_local = iov[iov_count].iov_len;
         while (1) {
             while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            process_data:
                 /* now here we have a basic datatype */
                 DO_DEBUG(opal_output(0, "pack (%p:%ld, %" PRIsize_t ", %ld) -> (%p, %ld) type %s\n",
                                      (void *) pConvertor->pBaseBuf,
@@ -576,11 +605,11 @@ int32_t opal_pack_general(opal_convertor_t *pConvertor, struct iovec *iov,
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++; /* advance to the next data */
                     UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                    continue;
                 }
                 goto complete_loop;
             }
             if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) { /* end of the current loop */
+            process_end_loop:
                 DO_DEBUG(opal_output(0,
                                      "pack end_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %lu\n",
                                      pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
@@ -606,15 +635,16 @@ int32_t opal_pack_general(opal_convertor_t *pConvertor, struct iovec *iov,
                     }
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
                 DO_DEBUG(opal_output(0,
                                      "pack new_loop count %" PRIsize_t " stack_pos %d pos_desc %d"
-                                     " count_desc %" PRIsize_t " disp %ld space %lu\n",
-                                     pStack->count, pConvertor->stack_pos, pos_desc, count_desc,
-                                     pStack->disp, (unsigned long) iov_len_local););
+                                     " disp %ld space %lu\n",
+                                     pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
+                                     (unsigned long) iov_len_local););
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             }
             if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
-                ptrdiff_t local_disp = (ptrdiff_t) conv_ptr;
+            process_loop:
+                local_disp = (ptrdiff_t) conv_ptr;
 #if 0
                 if( pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS ) {
                     PACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
@@ -634,9 +664,9 @@ int32_t opal_pack_general(opal_convertor_t *pConvertor, struct iovec *iov,
             update_loop_description:  /* update the current state */
 #endif /* in a heterogeneous environment we can't handle the contiguous loops */
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos,
+                               &description[pos_desc], "advance loop");
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop");
-                continue;
             }
         }
     complete_loop:

@@ -73,6 +73,14 @@ BEGIN_C_DECLS
     0x00000002u /**< cannot be removed: initial and predefined datatypes */
 #define OPAL_DATATYPE_FLAG_COMMITTED  0x00000004u /**< ready to be used for a send/recv operation */
 #define OPAL_DATATYPE_FLAG_OVERLAP    0x00000008u /**< datatype is unpropper for a recv operation */
+/*
+ * For datatype descriptors this flag describes the whole datatype layout.  A
+ * LOOP descriptor may also carry it, but that is a construction artifact: in a
+ * homogeneous optimized descriptor such loops should have been collapsed
+ * already, and in a heterogeneous path the loop body typemap must still be
+ * traversed. Do not use a contiguous LOOP marker as a generic byte-copy
+ * optimization.
+ */
 #define OPAL_DATATYPE_FLAG_CONTIGUOUS 0x00000010u /**< contiguous datatype */
 #define OPAL_DATATYPE_FLAG_NO_GAPS                                                                \
     0x00000020u /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size \
