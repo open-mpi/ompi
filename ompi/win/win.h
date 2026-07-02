@@ -15,7 +15,7 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -81,7 +81,7 @@ struct ompi_win_t {
 
     opal_mutex_t  w_lock;
 
-    char w_name[MPI_MAX_OBJECT_NAME];
+    char *w_name;
   
     /* Group associated with this window. */
     ompi_group_t *w_group;
