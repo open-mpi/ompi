@@ -1891,10 +1891,24 @@ typedef uint64_t test_mask_t;
 #define MIN_GOOD_TIMERS 5
 #define MIN_LENGTH 1024
 #define MAX_LENGTH (1024 * 1024)
+#define MAX_TIMER_SIZE_POINTS 32
 static int cycles = 100;
 static int trials = 20;
 static int warmups = 2;
 static int min_work_bytes = 0;
+static int raw_timers = 0;
+
+typedef struct {
+    const char *operation;
+    double seconds;
+    int length;
+    int trial;
+    int retained;
+} raw_timer_record_t;
+
+static raw_timer_record_t *raw_timer_records = NULL;
+static size_t raw_timer_count = 0;
+static size_t raw_timer_capacity = 0;
 
 typedef struct {
     const char *name;
@@ -1962,7 +1976,8 @@ static void print_usage(FILE *stream, const char *program_name)
 #if TO_SELF_HAVE_OMPI_INTERNALS
     fprintf(stream, " [--dump]");
 #endif
-    fprintf(stream, " [--cycles=N] [--trials=N] [--warmups=N] [--min-work-bytes=N]\n");
+    fprintf(stream,
+            " [--cycles=N] [--trials=N] [--warmups=N] [--min-work-bytes=N] [--raw-timers]\n");
     fprintf(stream,
             "Defaults: --check=all --data=all --cycles=%d --trials=%d --warmups=%d "
             "--min-work-bytes=%d\n",
@@ -1970,6 +1985,7 @@ static void print_usage(FILE *stream, const char *program_name)
 #if TO_SELF_HAVE_OMPI_INTERNALS
     fprintf(stream, "--dump prints committed datatype internals\n");
 #endif
+    fprintf(stream, "--raw-timers prints every trial after timing and whether the summary retained it\n");
     print_options(stream, "--check", check_options, sizeof(check_options) / sizeof(check_options[0]),
                   0);
     print_options(stream, "--data", data_options, sizeof(data_options) / sizeof(data_options[0]),
@@ -2237,6 +2253,8 @@ static int parse_args(int argc, char *argv[], test_mask_t *run_tests)
             if (0 != parse_integer_option("--min-work-bytes", argv[i], 0, &min_work_bytes)) {
                 return -1;
             }
+        } else if (0 == strcmp(argv[i], "--raw-timers")) {
+            raw_timers = 1;
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             print_usage(stderr, argv[0]);
@@ -2248,26 +2266,67 @@ static int parse_args(int argc, char *argv[], test_mask_t *run_tests)
     return 0;
 }
 
+/* Preallocate raw timer storage so instrumentation performs no I/O or allocation between sizes. */
+static int prepare_raw_timer_records(test_mask_t run_tests)
+{
+    size_t datatype_count = 0, operation_count = 0, result_count;
+
+    if (!raw_timers) {
+        return 0;
+    }
+    for (size_t i = 0; i < sizeof(data_options) / sizeof(data_options[0]); ++i) {
+        datatype_count += !!(run_tests & data_options[i].flag);
+    }
+    for (size_t i = 0; i < sizeof(check_options) / sizeof(check_options[0]); ++i) {
+        operation_count += !!(run_tests & check_options[i].flag);
+    }
+
+    result_count = datatype_count * operation_count * MAX_TIMER_SIZE_POINTS;
+    if ((0 == result_count) || ((size_t) trials > SIZE_MAX / result_count)
+        || ((size_t) trials * result_count > SIZE_MAX / sizeof(*raw_timer_records))) {
+        return -1;
+    }
+    raw_timer_capacity = (size_t) trials * result_count;
+    raw_timer_records = (raw_timer_record_t *) malloc(raw_timer_capacity * sizeof(*raw_timer_records));
+    return (NULL == raw_timer_records) ? -1 : 0;
+}
+
+/* Emit buffered trials only after every selected benchmark has completed. */
+static void print_raw_timer_records(void)
+{
+    for (size_t i = 0; i < raw_timer_count; ++i) {
+        const raw_timer_record_t *record = &raw_timer_records[i];
+
+        printf("# raw-timer\t%s\t%d\t%d\t%.17g\t%d\n", record->operation, record->length,
+               record->trial, record->seconds, record->retained);
+    }
+}
+
 /*
  * Sort timing samples, remove Tukey-IQR outliers, and report bandwidth with
  * min/max/stddev over the retained samples.
  */
-static void print_result(int length, int num_trials, const double *timers)
+static void print_result(const char *operation, int length, int num_trials, const double *timers)
 {
     double bandwidth, clock_prec, temp, q1, q3, iqr, lower_bound, upper_bound;
     double min_time, max_time, average, std_dev = 0.0;
     double ordered[num_trials];
+    int order[num_trials], retained[num_trials];
     int t, pos, quartile_start, quartile_end, good_start = -1, good_end = -1;
     int good_count = 0, filtered_count = 0, fallback = 0;
 
     for (t = 0; t < num_trials; t++) {
+        int trial = t;
+
         temp = timers[t];
         pos = t;
         while ((pos > 0) && (ordered[pos - 1] > temp)) {
             ordered[pos] = ordered[pos - 1];
+            order[pos] = order[pos - 1];
             --pos;
         }
         ordered[pos] = temp;
+        order[pos] = trial;
     }
 
     /*
@@ -2300,6 +2359,29 @@ static void print_result(int length, int num_trials, const double *timers)
     }
 
     good_count = good_end - good_start;
+    memset(retained, 0, sizeof(retained));
+    for (t = good_start; t < good_end; ++t) {
+        retained[order[t]] = 1;
+    }
+
+    /* Preserve raw trials without adding I/O between this result and the next measured size. */
+    if (raw_timers) {
+        for (t = 0; t < num_trials; ++t) {
+            raw_timer_record_t *record;
+
+            if (raw_timer_count == raw_timer_capacity) {
+                fprintf(stderr, "Raw timer buffer capacity exceeded\n");
+                abort();
+            }
+            record = &raw_timer_records[raw_timer_count++];
+            record->operation = operation;
+            record->seconds = timers[t];
+            record->length = length;
+            record->trial = t;
+            record->retained = retained[t];
+        }
+    }
+
     clock_prec = MPI_Wtick();
     min_time = ordered[good_start];
     max_time = ordered[good_end - 1];
@@ -2349,7 +2431,7 @@ static int pack(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, void *
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(outsize, trials, timers);
+    print_result("pack", outsize, trials, timers);
     return 0;
 }
 
@@ -2378,7 +2460,7 @@ static int unpack(int num_cycles, void *packed_buf, MPI_Datatype rdt, int rcount
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(insize, trials, timers);
+    print_result("unpack", insize, trials, timers);
     return 0;
 }
 
@@ -2408,7 +2490,7 @@ static int run_pack_byhand(int num_cycles, byhand_copy_fn_t pack_byhand_fn, MPI_
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(outsize, trials, timers);
+    print_result("pack_byhand", outsize, trials, timers);
     return 0;
 }
 
@@ -2438,7 +2520,7 @@ static int run_unpack_byhand(int num_cycles, byhand_copy_fn_t unpack_byhand_fn, 
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(insize, trials, timers);
+    print_result("unpack_byhand", insize, trials, timers);
     return 0;
 }
 
@@ -2466,7 +2548,7 @@ static int isend_recv(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, 
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result("isend_recv", rlength, trials, timers);
     return 0;
 }
 
@@ -2494,7 +2576,7 @@ static int irecv_send(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, 
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result("irecv_send", rlength, trials, timers);
     return 0;
 }
 
@@ -2522,7 +2604,7 @@ static int isend_irecv_wait(int num_cycles, MPI_Datatype sdt, int scount, void *
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result("isend_irecv", rlength, trials, timers);
     return 0;
 }
 
@@ -2550,7 +2632,7 @@ static int irecv_isend_wait(int num_cycles, MPI_Datatype sdt, int scount, void *
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
-    print_result(rlength, trials, timers);
+    print_result("irecv_isend", rlength, trials, timers);
     return 0;
 }
 
@@ -2712,6 +2794,11 @@ int main(int argc, char *argv[])
     if (rank != 0) {
         MPI_Finalize();
         exit(0);
+    }
+
+    if (0 != prepare_raw_timer_records(run_tests)) {
+        fprintf(stderr, "Unable to allocate raw timer records\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (run_tests & DO_CONTIG) {
@@ -2941,6 +3028,8 @@ int main(int argc, char *argv[])
         MPI_Type_free(&ddt);
     }
 
+    print_raw_timer_records();
+    free(raw_timer_records);
     MPI_Finalize();
     exit(0);
 }
