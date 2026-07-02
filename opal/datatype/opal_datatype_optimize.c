@@ -114,6 +114,19 @@ static uint32_t opal_datatype_opt_loop_unroll_factor(const dt_elem_desc_t *desc,
     return 1 < factor ? factor : 1;
 }
 
+/* Return true when a loop body contains DATA entries but no nested LOOP descriptor. */
+static bool opal_datatype_opt_loop_is_innermost(const dt_elem_desc_t *desc, int32_t pos_desc)
+{
+    const ddt_loop_desc_t *loop = &desc[pos_desc].loop;
+
+    for (uint32_t item = 1; item < loop->items; ++item) {
+        if (OPAL_DATATYPE_LOOP == desc[pos_desc + item].elem.common.type) {
+            return false;
+        }
+    }
+    return true;
+}
+
 /*
  * Account for the DATA entries introduced by eligible loops before allocating the optimized
  * description. The normal optimizer reserves twice the input length for fusion; unrolling needs
@@ -853,11 +866,14 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                                             uint32_t optimization_mask,
                                             bool enable_loop_boundary,
                                             bool top_loop_boundary_only,
-                                            bool *loop_boundary_expanded)
+                                            bool *loop_boundary_expanded,
+                                            bool *reevaluate)
 {
     const dt_elem_desc_t *desc = input_desc->desc;
     dt_elem_desc_t *pElemDesc;
     dt_stack_t *pOrigStack, *pStack; /* pointer to the position on the stack */
+    bool *innermost_stack;
+    size_t stack_length = input_desc->used + 2;
     int32_t pos_desc = 0; /* actual position in the description of the derived datatype */
     int32_t stack_pos = 0;
     int32_t nbElems = 0;
@@ -870,11 +886,20 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
     if (NULL != loop_boundary_expanded) {
         *loop_boundary_expanded = false;
     }
+    if (NULL != reevaluate) {
+        *reevaluate = false;
+    }
 
-    pOrigStack = pStack = (dt_stack_t *) malloc(sizeof(dt_stack_t) * (input_desc->used + 2));
+    /* The parallel scope markers share the existing stack allocation and add no allocator call to
+     * MPI_Pack's temporary-datatype path. A DATA fusion requests reevaluation only in the active
+     * innermost loop; removing a child loop lets the next pass reconsider its parent. */
+    pOrigStack = pStack = (dt_stack_t *) malloc(stack_length
+                                                * (sizeof(dt_stack_t) + sizeof(bool)));
     if (NULL == pOrigStack) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
+    innermost_stack = (bool *) (pOrigStack + stack_length);
+    innermost_stack[0] = false;
     SAVE_STACK(pStack, -1, 0, count, 0);
 
     unroll_growth = opal_datatype_opt_loop_unroll_growth(input_desc, optimization_mask);
@@ -929,6 +954,10 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
 
             if (loop->common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
                 if (opal_datatype_opt_compress_contiguous_loop(desc, pos_desc, &compress)) {
+                    /* Removing an inner loop can make its parent eligible for loop-level fusion. */
+                    if (NULL != reevaluate) {
+                        *reevaluate = true;
+                    }
                     if (compress.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED) {
                         pData->flags |= OPAL_DATATYPE_OPTIMIZED_RESTRICTED;
                     }
@@ -962,23 +991,16 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
             }
 
             /*
-             * Cheap flat DATA loops benefit from fewer END_LOOP visits. Keep a shortened loop and
-             * emit non-divisible iterations afterward so arbitrary loop counts preserve their exact
-             * typemap order.
+             * Fully expand short innermost loops. Three-DATA, two-iteration bodies are included
+             * because fusion can reduce an unrolled body to that shape; removing its loop exposes
+             * the iteration boundary and lets subsequent passes canonicalize the parent.
              */
-            uint32_t unroll_factor =
-                (optimization_mask & OPAL_DATATYPE_OPTIMIZE_LOOP_UNROLL)
-                    ? opal_datatype_opt_loop_unroll_factor(desc, pos_desc)
-                    : 1;
-            if (1 < unroll_factor) {
-                opal_datatype_opt_emit_unrolled_loop(&pElemDesc, &nbElems, desc, pos_desc,
-                                                     unroll_factor);
-                pos_desc += loop->items + 1;
-                goto complete_loop;
-            }
-
-            /* Fully expand the legacy tiny-loop cases. */
-            if ((loop->items <= 3) && (loop->loops <= 2)) {
+            if ((loop->items <= 4) && (loop->loops <= 2)
+                && opal_datatype_opt_loop_is_innermost(desc, pos_desc)) {
+                /* The parent loop must be reconsidered after these loop markers disappear. */
+                if (NULL != reevaluate) {
+                    *reevaluate = true;
+                }
                 ptrdiff_t elem_displ = 0;
                 for (uint32_t i = 0; i < loop->loops; i++) {
                     for (uint32_t j = 0; j < (loop->items - 1); j++) {
@@ -1004,7 +1026,10 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
 
             /*
              * Non-contiguous loops may still expose mergeable copy fragments at
-             * loop iteration boundaries. Try that before preserving the loop as-is.
+             * loop iteration boundaries. Boundary fusion reduces the number of
+             * memcpy fragments per iteration, so try it before the weaker unroll
+             * transform (which only trims END_LOOP bookkeeping) and before
+             * preserving the loop as-is.
              */
             if (enable_loop_boundary
                 && (optimization_mask & OPAL_DATATYPE_OPTIMIZE_LOOP_BOUNDARY)
@@ -1018,11 +1043,33 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 goto complete_loop;
             }
 
+            /*
+             * Last resort before keeping the loop verbatim: cheap flat DATA loops
+             * benefit from fewer END_LOOP visits. Unrolling is attempted only after
+             * boundary fusion has declined this loop, since fusing the iteration
+             * boundary removes actual copies while unrolling only shortens the loop
+             * bookkeeping. Keep a shortened loop and emit non-divisible iterations
+             * afterward so arbitrary loop counts preserve their exact typemap order.
+             */
+            {
+                uint32_t unroll_factor =
+                    (optimization_mask & OPAL_DATATYPE_OPTIMIZE_LOOP_UNROLL)
+                        ? opal_datatype_opt_loop_unroll_factor(desc, pos_desc)
+                        : 1;
+                if (1 < unroll_factor) {
+                    opal_datatype_opt_emit_unrolled_loop(&pElemDesc, &nbElems, desc, pos_desc,
+                                                         unroll_factor);
+                    pos_desc += loop->items + 1;
+                    goto complete_loop;
+                }
+            }
+
             CREATE_LOOP_START(pElemDesc, loop->loops, loop->items, loop->extent,
                               loop->common.flags);
             pElemDesc++;
             nbElems++;
             PUSH_STACK(pStack, stack_pos, nbElems, OPAL_DATATYPE_LOOP, loop->loops, total_disp);
+            innermost_stack[stack_pos] = opal_datatype_opt_loop_is_innermost(desc, pos_desc);
             pos_desc++;
             DDT_DUMP_STACK(pStack, stack_pos, desc, "advance loops");
 
@@ -1079,6 +1126,10 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 }
 
                 if (can_merge) {
+                    /* Two DATA descriptors become one; the new entry may merge again next pass. */
+                    if ((NULL != reevaluate) && innermost_stack[stack_pos]) {
+                        *reevaluate = true;
+                    }
                     if (mixed_types) {
                         uint64_t type_mask =
                             opal_datatype_opt_type_pair_mask(last.common.type, current->common.type);
@@ -1098,10 +1149,27 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
             /* are the elements fusionable such that we can fusion the last blocklen of one with the
              * first blocklen of the other.
              */
-            if ((optimization_mask & OPAL_DATATYPE_OPTIMIZE_ADJACENT_FUSION)
+            bool expands_inline_sequence =
+                (1 < last.count) && (1 < current->count)
+                && (last.blocklen <= OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN)
+                && (current->blocklen <= OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN);
+
+            /* Fusing two counted inline blocks replaces two DATA descriptors with a prefix, fused
+             * block, and suffix. Keep the two-entry form because it requires fewer inline mover
+             * dispatches. Fusion remains enabled if either side uses the generic copy path, where
+             * combining adjacent boundary blocks can reduce the copy overhead. */
+            if (!expands_inline_sequence
+                && (optimization_mask & OPAL_DATATYPE_OPTIMIZE_ADJACENT_FUSION)
                 && ((ptrdiff_t) (last.disp + (last.count - 1) * last.extent + last_block_size)
                     == current->disp)) {
+                bool reduces_entries = (1 == last.count) && (1 == current->count);
                 ptrdiff_t fused_extent = last.extent + current->extent;
+
+                /* Counted prefixes or suffixes retain their descriptor, so only the one-to-one
+                 * case exposes a smaller DATA sequence that merits another optimization pass. */
+                if (reduces_entries && (NULL != reevaluate) && innermost_stack[stack_pos]) {
+                    *reevaluate = true;
+                }
 
                 if (last.count != 1) {
                     CREATE_ELEM(pElemDesc, last.common.type,
@@ -1165,17 +1233,16 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
 }
 
 /*
- * Run the short-description optimizer with loop-boundary expansion enabled,
- * restarting from each expanded result while the restart keeps reducing the
- * range count.  The restart is necessary because expanding a loop boundary
- * can expose new adjacent ranges that were not visible in the previous pass.
+ * Run the short-description optimizer until loop-boundary expansion, DATA fusion, and loop
+ * removal stop exposing new opportunities. A fusion can synthesize an entry that only becomes
+ * mergeable on the next pass, while removing an inner loop can make its parent loop eligible for
+ * optimization. Unrolling alone deliberately does not request a restart because it changes loop
+ * execution without reducing the descriptor structure.
  *
- * Each restart must reduce the estimated number of copy ranges.  That gives
- * the restart loop a monotonic termination condition without imposing an
- * arbitrary pass limit.  A non-expanding optimization of the original input is
- * also built as the baseline.  The expanded candidate is accepted only if it
- * stays within the descriptor-growth limit and reduces the estimated number of
- * copy ranges.  Otherwise the baseline is returned.
+ * Loop-boundary candidates must still reduce the estimated number of copy ranges and stay within
+ * the descriptor-growth limit. A non-expanding optimization of the original input is converged
+ * under the same fusion and loop-removal rule, then retained as the baseline when expansion is not
+ * profitable.
  *
  * optimization_mask lets the caller suppress transforms whose runtime cost is
  * unfavorable for a specific pack/unpack path.  If top_loop_boundary_only is
@@ -1195,25 +1262,27 @@ static int32_t opal_datatype_optimize_short_restart(opal_datatype_t *pData,
     const uint32_t initial_flags = pData->flags & ~OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE;
     uint32_t baseline_flags, candidate_flags;
     size_t baseline_ranges, candidate_ranges;
-    bool expanded = false;
+    bool boundary_expanded, expanded = false, reevaluate = false;
     int32_t rc;
 
     pData->flags = initial_flags;
     rc = opal_datatype_optimize_short(pData, input_desc, 1, &candidate, optimization_mask, true,
-                                      top_loop_boundary_only, &expanded);
+                                      top_loop_boundary_only, &expanded, &reevaluate);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
     candidate_flags = pData->flags;
+    boundary_expanded = expanded;
 
-    if (!expanded) {
+    if (!expanded && !reevaluate) {
         *output_desc = candidate;
         opal_datatype_opt_update_count_boundary(pData, output_desc);
         return OPAL_SUCCESS;
     }
     candidate_ranges = opal_datatype_opt_count_range_groups(&candidate);
 
-    while (expanded) {
+    while (expanded || reevaluate) {
+        bool next_expanded = false, next_reevaluate = false;
         size_t next_ranges;
 
         if (candidate.used > growth_limit) {
@@ -1223,38 +1292,76 @@ static int32_t opal_datatype_optimize_short_restart(opal_datatype_t *pData,
         pData->flags = initial_flags
                        | (candidate_flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED);
         rc = opal_datatype_optimize_short(pData, &candidate, 1, &next, optimization_mask, true,
-                                          top_loop_boundary_only, &expanded);
+                                          top_loop_boundary_only, &next_expanded,
+                                          &next_reevaluate);
         if (OPAL_SUCCESS != rc) {
             opal_datatype_opt_free_desc(&candidate);
             pData->flags = initial_flags;
             return rc;
         }
         next_ranges = opal_datatype_opt_count_range_groups(&next);
-        if ((next.used > growth_limit) || (next_ranges >= candidate_ranges)) {
+        /* A structural reduction is useful even when it combines several ranges into one counted
+         * descriptor. Boundary expansion without such a reduction keeps its stricter range test. */
+        if ((next.used > growth_limit)
+            || (next_expanded && !next_reevaluate && (next_ranges >= candidate_ranges))) {
             opal_datatype_opt_free_desc(&next);
             break;
         }
 
+        boundary_expanded |= next_expanded;
         candidate_flags = pData->flags;
         opal_datatype_opt_free_desc(&candidate);
         candidate = next;
         next = (dt_type_desc_t) {0};
         candidate_ranges = next_ranges;
+        expanded = next_expanded;
+        reevaluate = next_reevaluate;
+    }
 
-        if (!expanded) {
-            break;
-        }
+    /* No loop-boundary expansion survived, so the converged fusion result needs no baseline. */
+    if (!boundary_expanded) {
+        *output_desc = candidate;
+        pData->flags = initial_flags
+                       | (candidate_flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED);
+        opal_datatype_opt_update_count_boundary(pData, output_desc);
+        return OPAL_SUCCESS;
     }
 
     pData->flags = initial_flags;
+    reevaluate = false;
     rc = opal_datatype_optimize_short(pData, input_desc, 1, &baseline, optimization_mask, false,
-                                      top_loop_boundary_only, NULL);
+                                      top_loop_boundary_only, NULL, &reevaluate);
     if (OPAL_SUCCESS != rc) {
         opal_datatype_opt_free_desc(&candidate);
         pData->flags = initial_flags;
         return rc;
     }
     baseline_flags = pData->flags;
+
+    while (reevaluate) {
+        bool next_reevaluate = false;
+
+        pData->flags = initial_flags
+                       | (baseline_flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED);
+        rc = opal_datatype_optimize_short(pData, &baseline, 1, &next, optimization_mask, false,
+                                          top_loop_boundary_only, NULL, &next_reevaluate);
+        if (OPAL_SUCCESS != rc) {
+            opal_datatype_opt_free_desc(&baseline);
+            opal_datatype_opt_free_desc(&candidate);
+            pData->flags = initial_flags;
+            return rc;
+        }
+        if (next.used > growth_limit) {
+            opal_datatype_opt_free_desc(&next);
+            break;
+        }
+
+        baseline_flags = pData->flags;
+        opal_datatype_opt_free_desc(&baseline);
+        baseline = next;
+        next = (dt_type_desc_t) {0};
+        reevaluate = next_reevaluate;
+    }
     baseline_ranges = opal_datatype_opt_count_range_groups(&baseline);
 
     if ((candidate.used <= growth_limit) && (candidate_ranges < baseline_ranges)) {
