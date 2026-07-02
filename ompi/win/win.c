@@ -17,7 +17,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2024      Advanced Micro Devices, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -129,7 +129,7 @@ int ompi_win_init (void)
     ompi_mpi_win_null.win.w_flags = OMPI_WIN_INVALID;
     ompi_mpi_win_null.win.w_group = &ompi_mpi_group_null.group;
     OBJ_RETAIN(&ompi_mpi_group_null);
-    ompi_win_set_name(&ompi_mpi_win_null.win, "MPI_WIN_NULL");
+    ompi_mpi_win_null.win.w_name = strdup ("MPI_WIN_NULL");
     opal_pointer_array_set_item(&ompi_mpi_windows, 0, &ompi_mpi_win_null.win);
 
     ret = mca_base_var_enum_create ("accumulate_ops", accumulate_ops_values, &ompi_win_accumulate_ops);
@@ -163,6 +163,13 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
     if (NULL == win) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    win->w_name = (char*) malloc (OPAL_MAX_OBJECT_NAME);
+    if (NULL == win->w_name) {
+        OBJ_RELEASE(win);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    win->w_name[0] = '\0';
 
     /* Copy the info for the info layer */
     win->super.s_info = OBJ_NEW(opal_info_t);
@@ -432,7 +439,7 @@ static void
 ompi_win_construct(ompi_win_t *win)
 {
     OBJ_CONSTRUCT(&win->w_lock, opal_mutex_t);
-    win->w_name[0] = '\0';
+    win->w_name = NULL;
     win->w_group = NULL;
     win->w_keyhash = NULL;
     win->w_f_to_c_index = 0;
@@ -462,6 +469,11 @@ ompi_win_destruct(ompi_win_t *win)
 
     if (NULL != win->w_group) {
         OBJ_RELEASE(win->w_group);
+    }
+
+    if (NULL != win->w_name) {
+        free (win->w_name);
+        win->w_name = NULL;
     }
 
     OBJ_DESTRUCT(&win->w_lock);
