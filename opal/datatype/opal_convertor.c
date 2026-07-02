@@ -587,7 +587,7 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
         if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
             convertor->fAdvance = opal_unpack_homogeneous_contig;
         } else {
-            convertor->fAdvance = opal_generic_simple_unpack;
+            convertor->fAdvance = opal_generic_inlined_unpack;
         }
     }
     return OPAL_SUCCESS;
@@ -618,7 +618,7 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
                 convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
             }
         } else {
-            convertor->fAdvance = opal_generic_simple_pack;
+            convertor->fAdvance = opal_generic_inlined_pack;
         }
     }
     return OPAL_SUCCESS;
