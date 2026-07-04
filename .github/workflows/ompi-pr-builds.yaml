@@ -110,6 +110,21 @@ jobs:
     - name: Add Open MPI to PATH
       run: echo "${PWD}/install/bin" >> "$GITHUB_PATH"
 
+    - name: Run the MPI Standard ABI test suite
+      # Run "make check-abi" after "make install": unlike the "check-fast"
+      # suite that "make check" runs above, check-abi launches real MPI jobs
+      # and so needs the installed mpirun (now on PATH).  VERBOSE=1 dumps each
+      # failing probe's command + output (Automake-style) so failures here are
+      # diagnosable from the CI log.
+      env:
+        # GitHub runners have very few cores, so the dynamic-process probes
+        # (MPI_Comm_spawn / MPI_Comm_spawn_multiple) have no free slots to
+        # spawn into ("All nodes which are allocated for this job are already
+        # filled").  Let prte oversubscribe so it can place the spawned
+        # children.
+        PRTE_MCA_rmaps_default_mapping_policy: ":OVERSUBSCRIBE"
+      run: make -C ompi/test/mpi-abi check-abi VERBOSE=1
+
     - name: Build all examples
       run: |
         cd examples

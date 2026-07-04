@@ -22,6 +22,23 @@ jobs:
   test:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
+    strategy:
+      # Run both the OMPI-native and the MPI Standard ABI legs to
+      # completion even if one fails.
+      fail-fast: false
+      matrix:
+        include:
+          # Native OMPI library: build without Fortran and test mpi4py
+          # against libmpi (the historical behavior).
+          - name: ompi
+            extra_configure: --disable-mpi-fortran
+            mpicc: mpicc
+          # MPI Standard ABI: build libmpi_abi with the Fortran bindings
+          # (so the optional Fortran datatypes are exercised) and build
+          # mpi4py against the ABI wrapper compiler so it links libmpi_abi.
+          - name: standard
+            extra_configure: --enable-mpi-abi
+            mpicc: mpicc_abi
     env:
       MPI4PY_TEST_SPAWN: true
     steps:
@@ -55,7 +72,7 @@ jobs:
               --enable-debug
               --enable-mem-debug
               --disable-sphinx
-              --disable-mpi-fortran
+              ${{ matrix.extra_configure }}
               --disable-oshmem
               --disable-silent-rules
               --prefix=/opt/openmpi
@@ -88,7 +105,7 @@ jobs:
       run:  ompi_info
 
     - name: Show MPICC
-      run:  mpicc -show
+      run:  ${{ matrix.mpicc }} -show
 
     - name: Use Python
       uses: actions/setup-python@v5
@@ -114,6 +131,7 @@ jobs:
       run:  python -m pip install .
       env:
         CFLAGS: "-O0"
+        MPICC: ${{ matrix.mpicc }}
 
     - name: Test mpi4py (singleton)
       run:  python test/main.py -v -x TestExcErrhandlerNull
