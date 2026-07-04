@@ -1,0 +1,116 @@
+name: Build everything, make check, and run examples (Linux and macOS)
+
+# Build and test Open MPI on both Linux and macOS:
+#
+#   * Remove all .opal_ignore files so that even the normally-skipped
+#     components are compiled.
+#   * Force the Sphinx docs and the Fortran bindings to be built
+#     (--enable-sphinx / --enable-mpi-fortran), installing the Python
+#     packages Sphinx needs.
+#   * Build, then "make check" (intentionally before "make install"),
+#     then install.
+#   * Build and run all of the examples in the examples/ directory.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ompi-pr-builds:
+    strategy:
+      # Run both platforms to completion even if one fails.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3
+
+    - name: Install Python packages (Sphinx and friends)
+      run: python -m pip install --upgrade pip -r docs/requirements.txt
+
+    - name: Set up macOS build dependencies
+      if: runner.os == 'macOS'
+      run: |
+        # Create a plain "gfortran" symlink (Homebrew installs it as
+        # gfortran-NN).
+        cd $(brew --prefix)/bin
+        gfortran=$(ls gfortran-* | sort | head -n 1)
+        sudo ln -s $gfortran gfortran
+        # Autotools
+        brew install autoconf automake libtool
+        # Keep Homebrew's libevent from being picked up by configure
+        brew unlink libevent || true
+
+    - name: Set up Linux build dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+            autoconf automake libtool flex gfortran
+
+    - name: Remove .opal_ignore files so that we build all components
+      run: |
+        find . -name .opal_ignore -exec rm -f {} \; -print
+
+    - name: Build Open MPI (forcing Sphinx docs and Fortran bindings)
+      run: |
+        NCPU=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
+        # Parallelize automake's Makefile.in generation during autogen.pl.
+        export AUTOMAKE_JOBS=$NCPU
+        ./autogen.pl
+        ./configure --prefix=${PWD}/install \
+            --enable-sphinx \
+            --enable-mpi-fortran \
+            --disable-silent-rules
+        make -j $NCPU
+
+    - name: Run unit tests
+      # Deliberately run "make check" BEFORE "make install".
+      # VERBOSE=1 causes logs to be cat'ed if a test fails.
+      run: make check VERBOSE=1
+
+    - name: Install Open MPI
+      run: make install
+
+    - name: Add Open MPI to PATH
+      run: echo "${PWD}/install/bin" >> "$GITHUB_PATH"
+
+    - name: Build all examples
+      run: |
+        cd examples
+        make
+
+    - name: Run all built examples
+      run: |
+        cd examples
+        status=0
+        # Run every example binary that was actually built.  Built
+        # binaries are regular, executable, and have no filename
+        # extension (this skips sources, Makefiles, and macOS .dSYM
+        # bundles).  OpenSHMEM examples are launched with oshrun; all
+        # others with mpirun.
+        for exe in *; do
+          [ -f "$exe" ] && [ -x "$exe" ] || continue
+          case "$exe" in *.*) continue ;; esac
+          case "$exe" in
+            *oshmem*|oshmem_*) launcher=oshrun ;;
+            *)                 launcher=mpirun ;;
+          esac
+          echo "==== Running $exe (via $launcher) ===="
+          if ! "$launcher" --map-by ppr:1:core "./$exe"; then
+            echo "==== $exe FAILED"
+            status=1
+          fi
+        done
+        exit $status
