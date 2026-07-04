@@ -48,7 +48,7 @@ jobs:
        submodules: recursive
 
     - name: Bootstrap Open MPI
-      run:  ./autogen.pl
+      run:  AUTOMAKE_JOBS=$(nproc) ./autogen.pl
       working-directory: mpi-build
 
     # Install into a separate directory (/opt/openmpi) so that we can
