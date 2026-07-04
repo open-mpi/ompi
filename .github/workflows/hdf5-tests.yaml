@@ -18,6 +18,7 @@ jobs:
             submodules: recursive
     - name: Build Open MPI
       run: |
+        export AUTOMAKE_JOBS=$(nproc)
         ./autogen.pl
         ./configure --prefix=/opt/openmpi --with-pmix=internal --with-prrte=internal --with-hwloc=internal --with-libevent=internal --disable-mpi-fortran --disable-oshmem
         make -j 8 && make install
