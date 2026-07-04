@@ -20,6 +20,7 @@
  *                         All Rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,6 +94,17 @@ opal_finalize_domain_t opal_init_domain = {{{0}}};
 void opal_finalize_append_cleanup(opal_cleanup_fn_t cleanup_fn, const char *fn_name,
                                   void *user_data)
 {
+    /* This may be called before opal_init_util() has established a
+     * finalize domain -- e.g., if opal_output() is used very early,
+     * before OPAL is initialized.  The first opal_output() call lazily
+     * runs opal_output_init(), which registers its finalizer here.  With
+     * no current domain, appending would dereference a NULL pointer and
+     * crash, so simply skip the registration: there is no domain to
+     * eventually run the cleanup, and OPAL is not yet up to be torn down. */
+    if (NULL == current_finalize_domain) {
+        return;
+    }
+
     opal_cleanup_fn_item_t *cleanup_item = OBJ_NEW(opal_cleanup_fn_item_t);
     assert(NULL != cleanup_item);
     cleanup_item->cleanup_fn = cleanup_fn;
