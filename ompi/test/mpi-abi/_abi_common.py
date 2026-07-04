@@ -49,6 +49,22 @@ SKIP_RMA_SUPPORT_DISABLED = "rma_support_disabled"
 SKIP_MPI_IO_SUPPORT_DISABLED = "mpi_io_support_disabled"
 SKIP_DYNAMIC_PROCESS_DISABLED = "dynamic_process_disabled"
 SKIP_DATAREP_UNSUPPORTED = "datarep_unsupported"
+
+# MPICH does not implement user-defined datarep conversions at all: its
+# MPI_Register_datarep() fails with
+#
+#   MPI_REGISTER_DATAREP(3042): Read and Write datarep conversions are
+#   currently not supported by MPI-IO
+#
+# and it reports that as error class MPI_ERR_CONVERSION rather than as
+# MPI_ERR_UNSUPPORTED_DATAREP / MPI_ERR_UNSUPPORTED_OPERATION, so the probe
+# cannot recognize it as an "unsupported" skip and exits 2 instead of 77.
+#
+# This is not a cross-ABI problem: a program compiled with MPICH's own
+# mpicc_abi and run under MPICH fails in exactly the same way.  Record it as
+# an expected failure of the MPICH *runtime* so that it stays visible instead
+# of masking a real regression.
+XFAIL_MPICH_DATAREP_UNSUPPORTED = "mpich_datarep_conversions_unsupported"
 SKIP_MPIT_EVENTS_UNAVAILABLE = "mpit_events_unavailable"
 SKIP_MPIT_EVENTS_REGISTRATION_ONLY = "mpit_events_registration_only"
 SKIP_MPIT_EVENTS_DISABLED = "mpit_events_disabled"
@@ -99,6 +115,7 @@ FORTRAN_BINDING_LANGUAGES = (
 ANSI_RED = "\033[0;31m"
 ANSI_GREEN = "\033[0;32m"
 ANSI_BLUE = "\033[1;34m"
+ANSI_YELLOW = "\033[0;33m"
 ANSI_MAGENTA = "\033[0;35m"
 ANSI_RESET = "\033[m"
 
@@ -293,6 +310,20 @@ def _skip(name, reason, **details):
     return _check_result(name, "SKIP", details, reason)
 
 
+def _xfail(name, reason, message, **details):
+    """An *expected* failure: a known limitation of the peer MPI.
+
+    Distinct from SKIP (the probe declined to run) and from FAIL (something
+    is wrong with us).  An XFAIL says: the probe ran, it genuinely failed,
+    and we know why -- the other implementation does not support what is
+    being exercised.  It is reported separately so it stays visible rather
+    than disappearing into the skip count, but it does not fail the suite.
+    """
+    payload = {"message": message}
+    payload.update(details)
+    return _check_result(name, "XFAIL", payload, reason)
+
+
 def _count_by(entries, key):
     """Tally entries by the value of one key (a missing key counts as None)."""
     counts = {}
@@ -354,6 +385,7 @@ class _Colors:
         color = {
             "PASS": ANSI_GREEN,
             "SKIP": ANSI_BLUE,
+            "XFAIL": ANSI_YELLOW,
             "FAIL": ANSI_RED,
             "ERROR": ANSI_MAGENTA,
         }.get(status)
