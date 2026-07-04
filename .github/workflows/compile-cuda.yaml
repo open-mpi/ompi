@@ -26,6 +26,7 @@ jobs:
             submodules: recursive
     - name: Build Open MPI
       run: |
+        export AUTOMAKE_JOBS=$(nproc)
         ./autogen.pl
         ./configure --prefix=${PWD}/install --with-cuda=${CUDA_PATH} --with-cuda-libdir=${CUDA_PATH}/lib64/stubs --disable-silent-rules
         make -j
