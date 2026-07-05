@@ -96,9 +96,9 @@ static MPI_Datatype create_merged_contig_with_gaps(int count) /* count of the ba
 
 /* Create a non-contiguous resized datatype */
 struct structure {
-    double not_transfered;
-    double transfered_1;
-    long   transfered_2;
+    double not_transferred;
+    double transferred_1;
+    long   transferred_2;
 };
 
 static MPI_Datatype create_struct_constant_gap_resized_ddt(
@@ -112,8 +112,8 @@ static MPI_Datatype create_struct_constant_gap_resized_ddt(
     int blocklens[2] = {1, 1};
     MPI_Aint disps[3];
 
-    MPI_Get_address(&data[0].transfered_1, &disps[0]);
-    MPI_Get_address(&data[0].transfered_2, &disps[1]);
+    MPI_Get_address(&data[0].transferred_1, &disps[0]);
+    MPI_Get_address(&data[0].transferred_2, &disps[1]);
     MPI_Get_address(&data[0], &disps[2]);
     disps[1] -= disps[2]; /*  8 */
     disps[0] -= disps[2]; /* 16 */
@@ -944,6 +944,68 @@ static MPI_Datatype create_ddtbench_wrf_subarray_ddt(void)
     return ddtbench_resize_and_commit(raw_type, (MPI_Aint) ddtbench_wrf_extent());
 }
 
+/*
+ * A single-level float-complex hvector whose block-to-block stride is a multiple of the 4-byte
+ * complex alignment but NOT of the 8-byte element size (a small trailing gap of GAP_BYTES that is
+ * not a whole element).  This is the only datatype in the suite that drives the predefined
+ * pack/unpack movers onto their byte-exact "unaligned" advance path
+ * (elem->extent % sizeof(element) != 0); every other shape here advances in whole elements.
+ * BLOCKLEN stays <= 8 so the copy goes through the unrolled predefined element mover rather than
+ * the medium/large vectorized loops.
+ */
+#define COMPLEX_HVECTOR_BLOCKS    2048
+#define COMPLEX_HVECTOR_BLOCKLEN  3
+#define COMPLEX_HVECTOR_GAP_BYTES 4
+
+static MPI_Datatype create_complex_hvector_ddt(void)
+{
+    MPI_Datatype dt;
+    MPI_Aint lb, elem_extent, stride;
+
+    MPI_Type_get_extent(MPI_C_FLOAT_COMPLEX, &lb, &elem_extent);
+    stride = (MPI_Aint) COMPLEX_HVECTOR_BLOCKLEN * elem_extent + COMPLEX_HVECTOR_GAP_BYTES;
+    MPI_Type_create_hvector(COMPLEX_HVECTOR_BLOCKS, COMPLEX_HVECTOR_BLOCKLEN, stride,
+                            MPI_C_FLOAT_COMPLEX, &dt);
+    MPI_Type_commit(&dt);
+    return dt;
+}
+
+static void pack_byhand_complex_hvector_ddt(void *dst, const void *src, int count)
+{
+    const size_t elem_size = sizeof(float _Complex);
+    const size_t block_bytes = (size_t) COMPLEX_HVECTOR_BLOCKLEN * elem_size;
+    const size_t stride = block_bytes + COMPLEX_HVECTOR_GAP_BYTES;
+    const size_t instance_extent = (size_t) (COMPLEX_HVECTOR_BLOCKS - 1) * stride + block_bytes;
+    char *d = (char *) dst;
+    const char *s = (const char *) src;
+
+    for (int c = 0; c < count; ++c) {
+        const char *row = s + (size_t) c * instance_extent;
+        for (int b = 0; b < COMPLEX_HVECTOR_BLOCKS; ++b) {
+            memcpy(d, row + (size_t) b * stride, block_bytes);
+            d += block_bytes;
+        }
+    }
+}
+
+static void unpack_byhand_complex_hvector_ddt(void *dst, const void *src, int count)
+{
+    const size_t elem_size = sizeof(float _Complex);
+    const size_t block_bytes = (size_t) COMPLEX_HVECTOR_BLOCKLEN * elem_size;
+    const size_t stride = block_bytes + COMPLEX_HVECTOR_GAP_BYTES;
+    const size_t instance_extent = (size_t) (COMPLEX_HVECTOR_BLOCKS - 1) * stride + block_bytes;
+    char *d = (char *) dst;
+    const char *s = (const char *) src;
+
+    for (int c = 0; c < count; ++c) {
+        char *row = d + (size_t) c * instance_extent;
+        for (int b = 0; b < COMPLEX_HVECTOR_BLOCKS; ++b) {
+            memcpy(row + (size_t) b * stride, s, block_bytes);
+            s += block_bytes;
+        }
+    }
+}
+
 typedef void (*byhand_copy_fn_t)(void *dst, const void *src, int count);
 
 typedef struct {
@@ -1006,7 +1068,7 @@ static void pack_byhand_create_struct_constant_gap_resized_ddt(void *dst, const 
                                                               int count)
 {
     const size_t extent = sizeof(struct structure);
-    const size_t payload_offset = offsetof(struct structure, transfered_1);
+    const size_t payload_offset = offsetof(struct structure, transferred_1);
     const size_t payload_length = sizeof(double) + sizeof(long);
     const char *input = (const char *) src;
     char *packed = (char *) dst;
@@ -1020,7 +1082,7 @@ static void unpack_byhand_create_struct_constant_gap_resized_ddt(void *dst, cons
                                                                 int count)
 {
     const size_t extent = sizeof(struct structure);
-    const size_t payload_offset = offsetof(struct structure, transfered_1);
+    const size_t payload_offset = offsetof(struct structure, transferred_1);
     const size_t payload_length = sizeof(double) + sizeof(long);
     const char *packed = (const char *) src;
     char *output = (char *) dst;
@@ -1887,6 +1949,7 @@ typedef uint64_t test_mask_t;
 #define DO_DDTBENCH_SPECFEM3D_MT          UINT64_C(0x0000000001000000)
 #define DO_DDTBENCH_WRF_VEC               UINT64_C(0x0000000002000000)
 #define DO_DDTBENCH_WRF_SUBARRAY          UINT64_C(0x0000000004000000)
+#define DO_COMPLEX_HVECTOR                UINT64_C(0x0000000008000000)
 #define DO_PACK                                     UINT64_C(0x0000000400000000)
 #define DO_UNPACK                                   UINT64_C(0x0000000800000000)
 #define DO_ISEND_RECV                               UINT64_C(0x0000001000000000)
@@ -1906,7 +1969,8 @@ typedef uint64_t test_mask_t;
      | DO_DDTBENCH_NAS_MG_X | DO_DDTBENCH_NAS_MG_Y | DO_DDTBENCH_NAS_MG_Z                    \
      | DO_DDTBENCH_LAMMPS_FULL | DO_DDTBENCH_LAMMPS_ATOMIC                                  \
      | DO_DDTBENCH_SPECFEM3D_OC | DO_DDTBENCH_SPECFEM3D_CM                                  \
-     | DO_DDTBENCH_SPECFEM3D_MT | DO_DDTBENCH_WRF_VEC | DO_DDTBENCH_WRF_SUBARRAY)
+     | DO_DDTBENCH_SPECFEM3D_MT | DO_DDTBENCH_WRF_VEC | DO_DDTBENCH_WRF_SUBARRAY                \
+     | DO_COMPLEX_HVECTOR)
 #define DO_OPERATION_TESTS                                                                 \
     (DO_PACK | DO_UNPACK | DO_PACK_BYHAND | DO_UNPACK_BYHAND | DO_ISEND_RECV               \
      | DO_ISEND_IRECV | DO_IRECV_SEND | DO_IRECV_ISEND)
@@ -1921,6 +1985,7 @@ static int trials = 20;
 static int warmups = 2;
 static int min_work_bytes = 0;
 static int raw_timers = 0;
+static int validate = 0;
 
 typedef struct {
     const char *operation;
@@ -1964,6 +2029,7 @@ static const check_option_t data_options[] = {
     {"ddtbench_specfem3d_mt", DO_DDTBENCH_SPECFEM3D_MT},
     {"ddtbench_wrf_vec", DO_DDTBENCH_WRF_VEC},
     {"ddtbench_wrf_subarray", DO_DDTBENCH_WRF_SUBARRAY},
+    {"complex_hvector", DO_COMPLEX_HVECTOR},
 };
 
 /* --check selects the operation family to run against the selected datatypes. */
@@ -2004,7 +2070,8 @@ static void print_usage(FILE *stream, const char *program_name)
     fprintf(stream, " [--dump]");
 #endif
     fprintf(stream,
-            " [--cycles=N] [--trials=N] [--warmups=N] [--min-work-bytes=N] [--raw-timers]\n");
+            " [--cycles=N] [--trials=N] [--warmups=N] [--min-work-bytes=N] [--raw-timers]"
+            " [--validate]\n");
     fprintf(stream,
             "Defaults: --check=all --data=all --cycles=%d --trials=%d --warmups=%d "
             "--min-work-bytes=%d --send=ddt --recv=ddt\n",
@@ -2013,6 +2080,8 @@ static void print_usage(FILE *stream, const char *program_name)
     fprintf(stream, "--dump prints committed datatype internals\n");
 #endif
     fprintf(stream, "--raw-timers prints every trial after timing and whether the summary retained it\n");
+    fprintf(stream, "--validate runs a short pack/unpack self-check against the by-hand reference and\n"
+                    "           prints '# VALIDATION <name> pack=PASS|FAIL|SKIP unpack=...' per datatype\n");
     print_options(stream, "--check", check_options, sizeof(check_options) / sizeof(check_options[0]),
                   0);
     print_options(stream, "--data", data_options, sizeof(data_options) / sizeof(data_options[0]),
@@ -2298,6 +2367,8 @@ static int parse_args(int argc, char *argv[], test_mask_t *run_tests)
             }
         } else if (0 == strcmp(argv[i], "--raw-timers")) {
             raw_timers = 1;
+        } else if (0 == strcmp(argv[i], "--validate")) {
+            validate = 1;
         } else if (0 == strncmp(argv[i], "--send=", strlen("--send="))) {
             if (0 != parse_endpoint_option("--send", argv[i] + strlen("--send="),
                                            &send_endpoint)) {
@@ -2596,6 +2667,90 @@ static int run_unpack_byhand(int num_cycles, byhand_copy_fn_t unpack_byhand_fn, 
     }
     print_result("unpack_byhand", insize, trials, timers);
     return 0;
+}
+
+/*
+ * A short, single-pass correctness self-check that runs before the timed loops.
+ * It compares MPI_Pack/MPI_Unpack against the datatype's by-hand reference copy
+ * so a performance analyzer can tell whether an implementation's numbers reflect
+ * a correct transfer.  A wrong result -- e.g. a mover whose stride silently drops
+ * the inter-block gaps -- is fast but meaningless; flagging it as FAIL keeps such
+ * a run from masquerading as a speedup.  The outcome is emitted as a single
+ * comment line ("# VALIDATION <name> pack=... unpack=...") so it is ignored by
+ * the timing parsers but trivially greppable.  PASS/FAIL/SKIP is reported per
+ * direction; SKIP means the datatype has no by-hand reference for that direction.
+ */
+static size_t datatype_count_span(MPI_Datatype datatype, int count);
+
+static void validate_datatype(const char *datatype_name, MPI_Datatype sddt, MPI_Datatype rddt,
+                              int count, byhand_copy_fn_t pack_byhand_fn,
+                              byhand_copy_fn_t unpack_byhand_fn)
+{
+    const char *pack_status = "SKIP";
+    const char *unpack_status = "SKIP";
+    int stype_size = 0, capacity = 0;
+    size_t packed_length, source_span, recv_span;
+    char *sbuf = NULL, *packed_mpi = NULL, *packed_ref = NULL, *rbuf_mpi = NULL, *rbuf_ref = NULL;
+
+    MPI_Type_size(sddt, &stype_size);
+    packed_length = (size_t) stype_size * (size_t) count;
+    MPI_Pack_size(count, sddt, MPI_COMM_WORLD, &capacity);
+    source_span = datatype_count_span(sddt, count);
+    recv_span = datatype_count_span(rddt, count);
+
+    sbuf = (char *) malloc(source_span);
+    packed_mpi = (char *) malloc((size_t) capacity);
+    packed_ref = (char *) malloc((size_t) capacity);
+    rbuf_mpi = (char *) malloc(recv_span);
+    rbuf_ref = (char *) malloc(recv_span);
+    if ((NULL == sbuf) || (NULL == packed_mpi) || (NULL == packed_ref) || (NULL == rbuf_mpi)
+        || (NULL == rbuf_ref)) {
+        fprintf(stderr, "Unable to allocate validation buffers for %s\n", datatype_name);
+        goto done;
+    }
+
+    /* Pack: MPI_Pack must emit exactly the same contiguous stream, and the same
+     * number of bytes, as the by-hand reference. */
+    if (NULL != pack_byhand_fn) {
+        int position = 0;
+
+        for (size_t i = 0; i < source_span; ++i) {
+            sbuf[i] = (char) (i % 251);
+        }
+        memset(packed_mpi, 0, (size_t) capacity);
+        memset(packed_ref, 0, (size_t) capacity);
+        MPI_Pack(sbuf, count, sddt, packed_mpi, capacity, &position, MPI_COMM_WORLD);
+        pack_byhand_fn(packed_ref, sbuf, count);
+        pack_status = (((size_t) position == packed_length)
+                       && (0 == memcmp(packed_mpi, packed_ref, packed_length)))
+                          ? "PASS"
+                          : "FAIL";
+    }
+
+    /* Unpack: from an identical packed image, MPI_Unpack must scatter the same
+     * bytes to the same destination offsets as the reference and leave the gaps
+     * untouched.  The 0xA5 sentinel exposes both wrong offsets and clobbered gaps. */
+    if (NULL != unpack_byhand_fn) {
+        int position = 0;
+
+        for (size_t i = 0; i < packed_length; ++i) {
+            packed_ref[i] = (char) ((i + 7) % 251);
+        }
+        memset(rbuf_mpi, 0xA5, recv_span);
+        memset(rbuf_ref, 0xA5, recv_span);
+        MPI_Unpack(packed_ref, capacity, &position, rbuf_mpi, count, rddt, MPI_COMM_WORLD);
+        unpack_byhand_fn(rbuf_ref, packed_ref, count);
+        unpack_status = (0 == memcmp(rbuf_mpi, rbuf_ref, recv_span)) ? "PASS" : "FAIL";
+    }
+
+done:
+    printf("# VALIDATION %s pack=%s unpack=%s\n", datatype_name, pack_status, unpack_status);
+    fflush(stdout);
+    free(sbuf);
+    free(packed_mpi);
+    free(packed_ref);
+    free(rbuf_mpi);
+    free(rbuf_ref);
 }
 
 /* Report the slower endpoint without including the synchronization reduction in the timing. */
@@ -3118,6 +3273,10 @@ static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rdd
         }
     }
 
+    if ((ROLE_TARGET != role) && validate) {
+        validate_datatype(datatype_name, sddt, rddt, max_count, pack_byhand_fn, unpack_byhand_fn);
+    }
+
     if ((ROLE_TARGET != role) && (doop & DO_PACK)) {
         printf("# Pack (max length %d)\n", length);
         for (i = 1; i <= max_count; i *= 2) {
@@ -3203,6 +3362,7 @@ int main(int argc, char *argv[])
         CONFIG_WARMUPS,
         CONFIG_MIN_WORK_BYTES,
         CONFIG_RAW_TIMERS,
+        CONFIG_VALIDATE,
         CONFIG_SEND_ENDPOINT,
         CONFIG_RECV_ENDPOINT,
         CONFIG_COUNT,
@@ -3240,6 +3400,7 @@ int main(int argc, char *argv[])
         config[CONFIG_WARMUPS] = warmups;
         config[CONFIG_MIN_WORK_BYTES] = min_work_bytes;
         config[CONFIG_RAW_TIMERS] = raw_timers;
+        config[CONFIG_VALIDATE] = validate;
         config[CONFIG_SEND_ENDPOINT] = (int) send_endpoint;
         config[CONFIG_RECV_ENDPOINT] = (int) recv_endpoint;
     }
@@ -3251,6 +3412,7 @@ int main(int argc, char *argv[])
         warmups = config[CONFIG_WARMUPS];
         min_work_bytes = config[CONFIG_MIN_WORK_BYTES];
         raw_timers = config[CONFIG_RAW_TIMERS];
+        validate = config[CONFIG_VALIDATE];
         send_endpoint = (endpoint_type_t) config[CONFIG_SEND_ENDPOINT];
         recv_endpoint = (endpoint_type_t) config[CONFIG_RECV_ENDPOINT];
     }
@@ -3500,6 +3662,15 @@ int main(int argc, char *argv[])
         do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
                         pack_byhand_ddtbench_wrf_subarray_ddt,
                         unpack_byhand_ddtbench_wrf_subarray_ddt);
+        MPI_Type_free(&ddt);
+    }
+
+    if (run_tests & DO_COMPLEX_HVECTOR) {
+        PRINT_DDTBENCH_TEST("complex hvector");
+        ddt = create_complex_hvector_ddt();
+        MPI_DDT_DUMP(ddt);
+        do_test_for_ddt(run_tests, "complex_hvector", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_complex_hvector_ddt, unpack_byhand_complex_hvector_ddt);
         MPI_Type_free(&ddt);
     }
 

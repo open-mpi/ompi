@@ -17,6 +17,7 @@
 # Copyright (c) 2013      Intel Corporation.  All rights reserved.
 # Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,6 +35,14 @@ endif # WANT_FT_MPI
 EXTRA_DIST = \
         completion/mpirun.sh \
         completion/mpirun.zsh \
+        datatype/README.md \
+        datatype/build_to_self_release.py \
+        datatype/plot_to_self_pack_comparison.py \
+        datatype/plot_to_self_suite_comparison.py \
+        datatype/run_pack_description_sweep.py \
+        datatype/run_to_self_pack_comparison.py \
+        datatype/run_to_self_suite_comparison.py \
+        datatype/tune_datatype.py \
 	dist/make_dist_tarball \
 	dist/make-authors.pl \
 	dist/linux/openmpi.spec \

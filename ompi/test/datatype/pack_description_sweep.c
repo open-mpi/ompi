@@ -12,7 +12,9 @@
 
 #include "mpi.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal/datatype/opal_datatype_prototypes.h"
 
 #include <errno.h>
 #include <limits.h>
@@ -27,9 +29,16 @@
  * public MPI constructions. This benchmark intentionally replaces opt_desc so exact DATA and loop
  * shapes can be compared without relying on the commit-time optimizer to produce either shape.
  */
+typedef enum {
+    BENCHMARK_BACKEND_MPI,
+    BENCHMARK_BACKEND_CURRENT,
+    BENCHMARK_BACKEND_REFERENCE,
+} benchmark_backend_t;
+
 typedef struct {
     int data_count;
     int blocklen;
+    int element_size;
     int block_gap;
     int item_gap;
     int total_items;
@@ -40,17 +49,23 @@ typedef struct {
     int warmups;
     int repetitions;
     size_t min_work_bytes;
+    size_t fragment_bytes;
+    benchmark_backend_t backend;
     int commit_description;
     int dump;
+    int unpack;
 } benchmark_config_t;
 
 static void print_usage(const char *name)
 {
     fprintf(stderr,
-            "Usage: %s [--data-count=N] [--blocklen=N] [--block-gap=N] [--item-gap=N]\n"
+            "Usage: %s [--data-count=N] [--blocklen=N] [--element-size=4|8]\n"
+            "          [--block-gap=N] [--item-gap=N]\n"
             "          [--total-items=N] [--loop-items=N]\n"
             "          [--datatype-count=N] [--cycles=N] [--trials=N] [--warmups=N]\n"
-            "          [--repetitions=N] [--min-work-bytes=N] [--commit-description] [--dump]\n",
+            "          [--repetitions=N] [--min-work-bytes=N] [--operation=pack|unpack]\n"
+            "          [--backend=mpi|current|reference] [--fragment-bytes=N]\n"
+            "          [--commit-description] [--dump]\n",
             name);
 }
 
@@ -100,6 +115,7 @@ static int parse_options(int argc, char **argv, benchmark_config_t *config)
 
         PARSE_INT_OPTION("data-count", data_count, 1)
         PARSE_INT_OPTION("blocklen", blocklen, 1)
+        PARSE_INT_OPTION("element-size", element_size, 1)
         PARSE_INT_OPTION("block-gap", block_gap, 0)
         PARSE_INT_OPTION("item-gap", item_gap, 0)
         PARSE_INT_OPTION("total-items", total_items, 1)
@@ -119,12 +135,39 @@ static int parse_options(int argc, char **argv, benchmark_config_t *config)
             }
             continue;
         }
+        if (0 == strncmp(argv[i], "--fragment-bytes=", sizeof("--fragment-bytes=") - 1)) {
+            if (0 != parse_size("--fragment-bytes", argv[i] + sizeof("--fragment-bytes=") - 1,
+                                &config->fragment_bytes)) {
+                return -1;
+            }
+            continue;
+        }
         if (0 == strcmp(argv[i], "--dump")) {
             config->dump = 1;
             continue;
         }
         if (0 == strcmp(argv[i], "--commit-description")) {
             config->commit_description = 1;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "--operation=pack")) {
+            config->unpack = 0;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "--operation=unpack")) {
+            config->unpack = 1;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "--backend=mpi")) {
+            config->backend = BENCHMARK_BACKEND_MPI;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "--backend=current")) {
+            config->backend = BENCHMARK_BACKEND_CURRENT;
+            continue;
+        }
+        if (0 == strcmp(argv[i], "--backend=reference")) {
+            config->backend = BENCHMARK_BACKEND_REFERENCE;
             continue;
         }
         if ((0 == strcmp(argv[i], "--help")) || (0 == strcmp(argv[i], "-h"))) {
@@ -139,8 +182,16 @@ static int parse_options(int argc, char **argv, benchmark_config_t *config)
         fprintf(stderr, "--loop-items cannot exceed --total-items\n");
         return -1;
     }
+    if ((4 != config->element_size) && (8 != config->element_size)) {
+        fprintf(stderr, "--element-size must be 4 or 8\n");
+        return -1;
+    }
     if (config->commit_description && (0 != config->total_items % config->loop_items)) {
         fprintf(stderr, "--loop-items must divide --total-items with --commit-description\n");
+        return -1;
+    }
+    if ((BENCHMARK_BACKEND_MPI == config->backend) && (0 != config->fragment_bytes)) {
+        fprintf(stderr, "--fragment-bytes requires the current or reference backend\n");
         return -1;
     }
     return 0;
@@ -148,10 +199,10 @@ static int parse_options(int argc, char **argv, benchmark_config_t *config)
 
 /* Install one exact synthetic DATA entry without CREATE_ELEM's contiguous-count normalization. */
 static void create_synthetic_data(dt_elem_desc_t *description, size_t blocklen, uint32_t count,
-                                  ptrdiff_t displacement, ptrdiff_t extent)
+                                  ptrdiff_t displacement, ptrdiff_t extent, uint16_t type)
 {
     description->elem.common.flags = OPAL_DATATYPE_FLAG_BASIC | OPAL_DATATYPE_FLAG_DATA;
-    description->elem.common.type = OPAL_DATATYPE_FLOAT4;
+    description->elem.common.type = type;
     description->elem.blocklen = blocklen;
     description->elem.count = count;
     description->elem.extent = extent;
@@ -173,10 +224,11 @@ static int install_synthetic_description(MPI_Datatype datatype, const benchmark_
     const size_t tail_start = loop_end + 1;
     const size_t used = tail_start + (size_t) tail_items;
     const size_t loop_size = (size_t) config->loop_items * config->data_count * config->blocklen
-                             * sizeof(float);
+                             * (size_t) config->element_size;
     const size_t datatype_size = (size_t) config->total_items * config->data_count
-                                 * config->blocklen * sizeof(float);
+                                 * config->blocklen * (size_t) config->element_size;
     const ptrdiff_t loop_extent = item_extent * config->loop_items;
+    const uint16_t type = (8 == config->element_size) ? OPAL_DATATYPE_FLOAT8 : OPAL_DATATYPE_FLOAT4;
     dt_elem_desc_t *description = (dt_elem_desc_t *) calloc(used + 1, sizeof(*description));
 
     if (NULL == description) {
@@ -186,14 +238,14 @@ static int install_synthetic_description(MPI_Datatype datatype, const benchmark_
     CREATE_LOOP_START(&description[0], iterations, config->loop_items + 1, loop_extent, 0);
     for (int item = 0; item < config->loop_items; ++item) {
         create_synthetic_data(&description[item + 1], config->blocklen, config->data_count,
-                              item_extent * item, block_stride);
+                              item_extent * item, block_stride, type);
     }
     CREATE_LOOP_END(&description[loop_end], config->loop_items + 1, 0, loop_size, 0);
     for (int item = 0; item < tail_items; ++item) {
         const ptrdiff_t displacement = loop_extent * iterations + item_extent * item;
 
         create_synthetic_data(&description[tail_start + item], config->blocklen, config->data_count,
-                              displacement, block_stride);
+                              displacement, block_stride, type);
     }
     CREATE_LOOP_END(&description[used], used, 0, datatype_size, 0);
 
@@ -219,6 +271,7 @@ static int create_synthetic_datatype(const benchmark_config_t *config, MPI_Datat
 {
     int block_stride_elements;
     ptrdiff_t block_stride, item_extent;
+    MPI_Datatype base_type = (8 == config->element_size) ? MPI_DOUBLE : MPI_FLOAT;
     MPI_Datatype vector = MPI_DATATYPE_NULL;
     MPI_Datatype record = MPI_DATATYPE_NULL;
     MPI_Datatype resized_record = MPI_DATATYPE_NULL;
@@ -231,15 +284,15 @@ static int create_synthetic_datatype(const benchmark_config_t *config, MPI_Datat
     }
     block_stride_elements = config->blocklen + config->block_gap;
 #if PTRDIFF_MAX <= INT_MAX
-    if ((PTRDIFF_MAX / (ptrdiff_t) sizeof(float) < block_stride_elements)
-        || (PTRDIFF_MAX / (ptrdiff_t) sizeof(float) < config->blocklen)
-        || (PTRDIFF_MAX / (ptrdiff_t) sizeof(float) < config->item_gap)) {
+    if ((PTRDIFF_MAX / config->element_size < block_stride_elements)
+        || (PTRDIFF_MAX / config->element_size < config->blocklen)
+        || (PTRDIFF_MAX / config->element_size < config->item_gap)) {
         fprintf(stderr, "The requested signature exceeds address displacement limits\n");
         return MPI_ERR_COUNT;
     }
 #endif
-    block_stride = (ptrdiff_t) block_stride_elements * sizeof(float);
-    item_extent = (ptrdiff_t) config->blocklen * sizeof(float);
+    block_stride = (ptrdiff_t) block_stride_elements * config->element_size;
+    item_extent = (ptrdiff_t) config->blocklen * config->element_size;
     if ((1 < config->data_count)
         && (PTRDIFF_MAX - item_extent) / block_stride < (ptrdiff_t) config->data_count - 1) {
         fprintf(stderr, "The requested signature exceeds address displacement limits\n");
@@ -247,24 +300,24 @@ static int create_synthetic_datatype(const benchmark_config_t *config, MPI_Datat
     }
     item_extent += ((ptrdiff_t) config->data_count - 1) * block_stride;
     if (PTRDIFF_MAX - item_extent
-        < (ptrdiff_t) config->item_gap * (ptrdiff_t) sizeof(float)) {
+        < (ptrdiff_t) config->item_gap * config->element_size) {
         fprintf(stderr, "The requested signature exceeds address displacement limits\n");
         return MPI_ERR_COUNT;
     }
-    item_extent += (ptrdiff_t) config->item_gap * sizeof(float);
+    item_extent += (ptrdiff_t) config->item_gap * config->element_size;
     if (config->commit_description) {
         /* Keep a trailing gap so datatype construction cannot fold all items into one vector. */
-        if (PTRDIFF_MAX - item_extent < (ptrdiff_t) sizeof(float)) {
+        if (PTRDIFF_MAX - item_extent < config->element_size) {
             fprintf(stderr, "The requested signature exceeds address displacement limits\n");
             return MPI_ERR_COUNT;
         }
-        item_extent += sizeof(float);
+        item_extent += config->element_size;
     }
     if (PTRDIFF_MAX / item_extent < config->total_items) {
         fprintf(stderr, "The requested datatype extent is too large\n");
         return MPI_ERR_COUNT;
     }
-    rc = MPI_Type_vector(config->data_count, config->blocklen, block_stride_elements, MPI_FLOAT,
+    rc = MPI_Type_vector(config->data_count, config->blocklen, block_stride_elements, base_type,
                          &vector);
     if (MPI_SUCCESS != rc) {
         return rc;
@@ -333,8 +386,9 @@ static int create_synthetic_datatype(const benchmark_config_t *config, MPI_Datat
 static void pack_reference(unsigned char *packed, const unsigned char *source,
                            const benchmark_config_t *config, MPI_Aint datatype_extent)
 {
-    const size_t block_bytes = (size_t) config->blocklen * sizeof(float);
-    const size_t block_stride = (size_t) (config->blocklen + config->block_gap) * sizeof(float);
+    const size_t block_bytes = (size_t) config->blocklen * config->element_size;
+    const size_t block_stride = (size_t) (config->blocklen + config->block_gap)
+                                * config->element_size;
     const size_t item_extent = (size_t) datatype_extent / config->total_items;
     size_t packed_offset = 0;
 
@@ -379,7 +433,114 @@ static void summarize(const double *samples, int count, double *mean, double *st
     *standard_deviation = sqrt(square_sum / (count - 1));
 }
 
-/* Validate the synthetic datatype once, then report repeated MPI_Pack timing distributions. */
+/* Return the stable output name used by the tuning driver. */
+static const char *benchmark_backend_name(benchmark_backend_t backend)
+{
+    switch (backend) {
+    case BENCHMARK_BACKEND_MPI:
+        return "mpi";
+    case BENCHMARK_BACKEND_CURRENT:
+        return "current";
+    case BENCHMARK_BACKEND_REFERENCE:
+        return "reference";
+    }
+    return "unknown";
+}
+
+/*
+ * Execute one complete conversion through a prepared convertor. The caller may bound each call to
+ * a fragment so the benchmark covers the same resumable interpreter used by transports. Selecting
+ * the reference backend changes only fAdvance after normal convertor preparation.
+ */
+static int run_convertor_once(MPI_Datatype datatype, const benchmark_config_t *config,
+                              const unsigned char *source, const unsigned char *packed,
+                              unsigned char *packed_output, unsigned char *unpacked_output,
+                              size_t packed_size)
+{
+    opal_convertor_t convertor;
+    size_t converted = 0;
+    int complete = 0;
+    int rc;
+
+    OBJ_CONSTRUCT(&convertor, opal_convertor_t);
+    if (config->unpack) {
+        rc = opal_convertor_copy_and_prepare_for_recv(ompi_mpi_local_convertor, &datatype->super,
+                                                       config->datatype_count, unpacked_output, 0,
+                                                       &convertor);
+        if (0 != rc) {
+            rc = MPI_ERR_INTERN;
+            goto out;
+        }
+        if (BENCHMARK_BACKEND_REFERENCE == config->backend) {
+            if (opal_generic_inlined_unpack != convertor.fAdvance) {
+                rc = MPI_ERR_TYPE;
+                goto out;
+            }
+            convertor.fAdvance = opal_generic_inlined_unpack_reference;
+        }
+    } else {
+        rc = opal_convertor_copy_and_prepare_for_send(ompi_mpi_local_convertor, &datatype->super,
+                                                       config->datatype_count, source, 0, &convertor);
+        if (0 != rc) {
+            rc = MPI_ERR_INTERN;
+            goto out;
+        }
+        if (BENCHMARK_BACKEND_REFERENCE == config->backend) {
+            if (opal_generic_inlined_pack != convertor.fAdvance) {
+                rc = MPI_ERR_TYPE;
+                goto out;
+            }
+            convertor.fAdvance = opal_generic_inlined_pack_reference;
+        }
+    }
+    while (converted < packed_size) {
+        struct iovec iov;
+        size_t fragment = packed_size - converted;
+        size_t max_data;
+        uint32_t iov_count = 1;
+
+        if ((0 != config->fragment_bytes) && (config->fragment_bytes < fragment)) {
+            fragment = config->fragment_bytes;
+        }
+        iov.iov_base = config->unpack ? (void *) (packed + converted)
+                                      : (void *) (packed_output + converted);
+        iov.iov_len = fragment;
+        max_data = fragment;
+        complete = config->unpack ? opal_convertor_unpack(&convertor, &iov, &iov_count, &max_data)
+                                  : opal_convertor_pack(&convertor, &iov, &iov_count, &max_data);
+        if ((0 > complete) || (0 == max_data) || (fragment < max_data)) {
+            rc = MPI_ERR_INTERN;
+            goto out;
+        }
+        converted += max_data;
+    }
+    rc = (complete && (packed_size == converted)) ? MPI_SUCCESS : MPI_ERR_INTERN;
+
+out:
+    OBJ_DESTRUCT(&convertor);
+    return rc;
+}
+
+/* Dispatch one benchmark iteration while keeping the existing MPI path as the default. */
+static int run_operation_once(MPI_Datatype datatype, const benchmark_config_t *config,
+                              const unsigned char *source, const unsigned char *reference,
+                              unsigned char *packed, unsigned char *unpacked, size_t packed_size)
+{
+    if (BENCHMARK_BACKEND_MPI == config->backend) {
+        int capacity = (int) packed_size;
+        int position = 0;
+
+        if (config->unpack) {
+            return MPI_Unpack(reference, capacity, &position, unpacked, config->datatype_count,
+                              datatype, MPI_COMM_SELF);
+        }
+        return MPI_Pack(source, config->datatype_count, datatype, packed, capacity, &position,
+                        MPI_COMM_SELF);
+    }
+    return run_convertor_once(datatype, config, source, reference, packed, unpacked, packed_size);
+}
+
+/* Validate both directions once, then time the selected pack or unpack backend. */
 static int run_benchmark(MPI_Datatype datatype, const benchmark_config_t *config)
 {
     MPI_Count datatype_size;
@@ -413,8 +574,8 @@ static int run_benchmark(MPI_Datatype datatype, const benchmark_config_t *config
         goto out;
     }
 
-    for (size_t i = 0; i < source_size / sizeof(float); ++i) {
-        ((float *) source)[i] = (float) (i % 251) / 17.0f;
+    for (size_t i = 0; i < source_size; ++i) {
+        source[i] = (unsigned char) (i % 251);
     }
     pack_reference(reference, source, config, datatype_extent);
     position = 0;
@@ -435,6 +596,20 @@ static int run_benchmark(MPI_Datatype datatype, const benchmark_config_t *config
         fprintf(stderr, "Synthetic datatype failed unpacked-data validation\n");
         rc = MPI_ERR_TYPE;
         goto out;
+    }
+    if (BENCHMARK_BACKEND_MPI != config->backend) {
+        memset(packed, 0, packed_size);
+        memset(unpacked, 0, source_size);
+        rc = run_operation_once(datatype, config, source, reference, packed, unpacked, packed_size);
+        if (config->unpack) {
+            pack_reference(packed, unpacked, config, datatype_extent);
+        }
+        if ((MPI_SUCCESS != rc) || (0 != memcmp(packed, reference, packed_size))) {
+            fprintf(stderr, "%s backend failed %s validation\n",
+                    benchmark_backend_name(config->backend), config->unpack ? "unpack" : "pack");
+            rc = MPI_ERR_TYPE;
+            goto out;
+        }
     }
 
     required_cycles = (0 == config->min_work_bytes)
@@ -457,11 +632,15 @@ static int run_benchmark(MPI_Datatype datatype, const benchmark_config_t *config
         reported_tail_items = config->total_items - reported_loop_items * reported_loop_iterations;
     }
 
-    printf("SIGNATURE data_count=%d blocklen=%d block_gap=%d item_gap=%d total_items=%d "
+    printf("SIGNATURE operation=%s backend=%s fragment_bytes=%zu element_size=%d data_count=%d "
+           "blocklen=%d block_gap=%d "
+           "item_gap=%d total_items=%d "
            "loop_items=%d loop_iterations=%d "
            "tail_items=%d description=%s datatype_count=%d packed_bytes=%zu cycles=%d trials=%d "
            "warmups=%d\n",
-           config->data_count, config->blocklen, config->block_gap, config->item_gap,
+           config->unpack ? "unpack" : "pack", benchmark_backend_name(config->backend),
+           config->fragment_bytes, config->element_size, config->data_count, config->blocklen,
+           config->block_gap, config->item_gap,
            config->total_items, reported_loop_items, reported_loop_iterations, reported_tail_items,
            config->commit_description ? "commit" : "synthetic", config->datatype_count, packed_size,
            actual_cycles, config->trials, config->warmups);
@@ -471,18 +650,16 @@ static int run_benchmark(MPI_Datatype datatype, const benchmark_config_t *config
 
         for (int warmup = 0; warmup < config->warmups; ++warmup) {
             for (int cycle = 0; cycle < actual_cycles; ++cycle) {
-                position = 0;
-                MPI_Pack(source, config->datatype_count, datatype, packed, pack_capacity, &position,
-                         MPI_COMM_SELF);
+                run_operation_once(datatype, config, source, reference, packed, unpacked,
+                                   packed_size);
             }
         }
         for (int trial = 0; trial < config->trials; ++trial) {
             const double start = MPI_Wtime();
 
             for (int cycle = 0; cycle < actual_cycles; ++cycle) {
-                position = 0;
-                MPI_Pack(source, config->datatype_count, datatype, packed, pack_capacity, &position,
-                         MPI_COMM_SELF);
+                run_operation_once(datatype, config, source, reference, packed, unpacked,
+                                   packed_size);
             }
             samples[trial] = (MPI_Wtime() - start) / actual_cycles;
         }
@@ -508,6 +685,7 @@ int main(int argc, char **argv)
     benchmark_config_t config = {
         .data_count = 2,
         .blocklen = 2,
+        .element_size = 4,
         .block_gap = 1,
         .item_gap = 1,
         .total_items = 17,
@@ -518,8 +696,11 @@ int main(int argc, char **argv)
         .warmups = 2,
         .repetitions = 5,
         .min_work_bytes = 1024 * 1024,
+        .fragment_bytes = 0,
+        .backend = BENCHMARK_BACKEND_MPI,
         .commit_description = 0,
         .dump = 0,
+        .unpack = 0,
     };
     MPI_Datatype datatype = MPI_DATATYPE_NULL;
     int parse_result, rc;
