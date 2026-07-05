@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,10 +37,14 @@ int32_t opal_pack_homogeneous_contig_with_gaps(opal_convertor_t *pConv, struct i
                                                uint32_t *out_size, size_t *max_data);
 int32_t opal_generic_inlined_pack(opal_convertor_t *pConvertor, struct iovec *iov,
                                   uint32_t *out_size, size_t *max_data);
+int32_t opal_generic_inlined_pack_reference(opal_convertor_t *pConvertor, struct iovec *iov,
+                                            uint32_t *out_size, size_t *max_data);
 int32_t opal_unpack_homogeneous_contig(opal_convertor_t *pConv, struct iovec *iov,
                                        uint32_t *out_size, size_t *max_data);
 int32_t opal_generic_inlined_unpack(opal_convertor_t *pConvertor, struct iovec *iov,
                                     uint32_t *out_size, size_t *max_data);
+int32_t opal_generic_inlined_unpack_reference(opal_convertor_t *pConvertor, struct iovec *iov,
+                                              uint32_t *out_size, size_t *max_data);
 
 END_C_DECLS
 

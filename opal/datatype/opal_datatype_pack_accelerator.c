@@ -200,7 +200,9 @@ int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec 
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                         process_loop, process_end_loop);
+                goto process_data;
             }
             if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) {
             process_end_loop:
@@ -222,14 +224,18 @@ int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec 
                     }
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                         process_loop, process_end_loop);
+                goto process_data;
             }
             if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
             process_loop:
                 PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP,
                            count_desc, pStack->disp);
                 pos_desc++;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                         process_loop, process_end_loop);
+                goto process_data;
             }
         }
 

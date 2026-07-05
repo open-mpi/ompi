@@ -185,7 +185,9 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
         description = datatype->desc.desc;
     }
 
-    UPDATE_INTERNAL_COUNTERS(description, 0, pElem, count_desc);
+    UPDATE_INTERNAL_COUNTERS(description, 0, pElem, count_desc,
+                             process_loop, process_end_loop);
+    goto process_data;
 
     while (1) {
         while (OPAL_LIKELY(pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA)) {
@@ -194,7 +196,9 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
             _predefined_data(pElem, datatype, (unsigned char *) source_base, count, count_desc,
                              source, destination, &iov_len_local);
             pos_desc++; /* advance to the next data */
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
         if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) { /* end of the current loop */
         process_end_loop:
@@ -227,7 +231,9 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
                                  " stack_pos %d pos_desc %d disp %ld space %lu\n",
                                  pStack->count, stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
         if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
         process_loop:
@@ -246,7 +252,9 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
             source = (unsigned char *) source_base + pStack->disp;
             destination = (unsigned char *) destination_base + pStack->disp;
             DDT_DUMP_STACK(pStack, stack_pos, &description[pos_desc], "advance loop");
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
     }
 }

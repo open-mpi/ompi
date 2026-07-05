@@ -291,22 +291,23 @@ static inline int GET_FIRST_NON_LOOP(const union dt_elem_desc *_pElem)
 }
 
 /*
- * Load a new descriptor and dispatch directly to the matching interpreter handler. Every caller
- * must provide process_data, process_end_loop, and process_loop labels; this macro never returns.
+ * Load a new descriptor and dispatch LOOP and END_LOOP entries directly to their handlers.
+ * DATA falls through after updating the counter so the caller can dispatch on its predefined
+ * type without loading the descriptor again.
  */
-#define UPDATE_INTERNAL_COUNTERS(DESCRIPTION, POSITION, ELEMENT, COUNTER)                    \
-    do {                                                                                     \
-        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                                            \
-        if ((ELEMENT)->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {                        \
-            (COUNTER) = (size_t) (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen;            \
-            goto process_data;                                                               \
-        }                                                                                    \
-        if (OPAL_DATATYPE_END_LOOP == (ELEMENT)->elem.common.type) {                          \
-            goto process_end_loop;                                                           \
-        }                                                                                    \
-        assert(OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type);                            \
-        (COUNTER) = (ELEMENT)->loop.loops;                                                    \
-        goto process_loop;                                                                   \
+#define UPDATE_INTERNAL_COUNTERS(DESCRIPTION, POSITION, ELEMENT, COUNTER, LOOP_LABEL,          \
+                                 END_LOOP_LABEL)                                               \
+    do {                                                                                       \
+        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                                              \
+        if (!((ELEMENT)->elem.common.flags & OPAL_DATATYPE_FLAG_DATA)) {                       \
+            if (OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type) {                           \
+                (COUNTER) = (ELEMENT)->loop.loops;                                             \
+                goto LOOP_LABEL;                                                               \
+            }                                                                                  \
+            assert(OPAL_DATATYPE_END_LOOP == (ELEMENT)->elem.common.type);                     \
+            goto END_LOOP_LABEL;                                                               \
+        }                                                                                      \
+        (COUNTER) = (size_t) (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen;                 \
     } while (0)
 
 /* The optimizer changed this element's predefined type while preserving its byte layout. */

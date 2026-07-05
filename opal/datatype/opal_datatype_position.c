@@ -265,7 +265,9 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
                                  " stack_pos %d pos_desc %d disp %lx space %lu\n",
                                  pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
         if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
         process_loop:
@@ -297,7 +299,9 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
                                  " stack_pos %d pos_desc %d disp %lx space %lu\n",
                                  pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
         while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
         process_data:
@@ -314,7 +318,9 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
                                  " stack_pos %d pos_desc %d disp %lx space %lu\n",
                                  pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
                                  (unsigned long) iov_len_local););
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
     }
 complete_loop:
