@@ -27,6 +27,7 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
+#include <string.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -34,6 +35,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include "ompi/memchecker.h"
 
 PROTOTYPE ERROR_CLASS pack(BUFFER inbuf, COUNT incount, DATATYPE datatype,
@@ -84,6 +86,33 @@ PROTOTYPE ERROR_CLASS pack(BUFFER inbuf, COUNT incount, DATATYPE datatype,
      */
     effective_datatype = datatype;
     effective_count = (size_t) incount;
+
+#if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    /*
+     * Without heterogeneous support, a no-gap datatype occupies one contiguous host region
+     * whose native representation is exactly the packed stream. Copy it directly into the
+     * output buffer instead of constructing a convertor only to reach its no-op pack path.
+     * Heterogeneous-enabled builds must retain the convertor so pack can emit the peer
+     * representation. Device and unified-memory sources also retain the accelerator-aware
+     * convertor path.
+     */
+    if ((0 < outsize) && (0 < incount) && (datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
+        const char *source = (const char *) inbuf + datatype->super.true_lb;
+        uint64_t accelerator_flags = 0;
+        int dev_id;
+
+        size = (size_t) incount * datatype->super.size;
+        if (0 == opal_accelerator.check_addr(source, &dev_id, &accelerator_flags)) {
+            if ((*position + size) > (size_t) outsize) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
+            }
+            memcpy((char *) outbuf + *position, source, size);
+            *position += size;
+            return MPI_SUCCESS;
+        }
+    }
+#endif
+
     if ((0 < incount) && (ompi_datatype_consolidate_threshold <= incount)
         && !(datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
         rc = ompi_datatype_consolidate_create(incount, datatype, &effective_datatype);

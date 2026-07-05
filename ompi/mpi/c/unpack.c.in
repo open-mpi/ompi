@@ -15,6 +15,7 @@
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,7 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
+#include <string.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -30,6 +32,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include "ompi/memchecker.h"
 
 PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf, 
@@ -88,6 +91,32 @@ PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf,
     */
     effective_datatype = datatype;
     effective_count = (size_t) outcount;
+
+#if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    /*
+     * Without heterogeneous support, a no-gap datatype maps every output byte to one contiguous
+     * host region in the packed stream's native representation. Copy it directly instead of
+     * constructing a convertor only to reach its no-op unpack path. Heterogeneous-enabled builds
+     * must retain the convertor so unpack can translate the peer representation to the local one.
+     * Device and unified-memory destinations also retain the accelerator-aware convertor path.
+     */
+    if ((0 < insize) && (0 < outcount) && (datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
+        char *destination = (char *) outbuf + datatype->super.true_lb;
+        uint64_t accelerator_flags = 0;
+        int dev_id;
+
+        size = (size_t) outcount * datatype->super.size;
+        if (0 == opal_accelerator.check_addr(destination, &dev_id, &accelerator_flags)) {
+            if ((*position + size) > (size_t) insize) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
+            }
+            memcpy(destination, (const char *) inbuf + *position, size);
+            *position += size;
+            return MPI_SUCCESS;
+        }
+    }
+#endif
+
     if ((0 < outcount) && (ompi_datatype_consolidate_threshold <= outcount)
         && !(datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
         rc = ompi_datatype_consolidate_create(outcount, datatype, &effective_datatype);
