@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2018 University of Houston. All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -138,5 +139,6 @@ int mca_fs_gpfs_module_init (ompio_file_t *file)
 
 int mca_fs_gpfs_module_finalize (ompio_file_t *file)
 {
+    mca_fs_gpfs_info_cache_free(file);
     return OMPI_SUCCESS;
 }

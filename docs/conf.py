@@ -332,8 +332,8 @@ templates_path = ['_templates']
 # html/llms/ contains generated Markdown, html/ (and man/, for symmetry) must
 # also be excluded so Sphinx does not re-parse those copies as source.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv', 'py*/**',
-                    'prrte-rst-content', 'llms-src', 'llms-build',
-                    'html', 'man' ]
+                    'tuning-apps/_include', 'prrte-rst-content',
+                    'llms-src', 'llms-build', 'html', 'man' ]
 
 
 # Clarify the language for verbatim blocks (::)
