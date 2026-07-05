@@ -40,6 +40,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* A singleton executes both endpoints; a two-rank run assigns one endpoint to each rank. */
+typedef enum {
+    ROLE_SELF,
+    ROLE_SOURCE,
+    ROLE_TARGET,
+} benchmark_role_t;
+
+/* Communication endpoints use either the committed datatype or its compact type-signature form. */
+typedef enum {
+    ENDPOINT_DDT,
+    ENDPOINT_PACKED,
+} endpoint_type_t;
+
+/* Rank zero remains the reporting process and becomes the source in a two-rank run. */
+static benchmark_role_t role = ROLE_SELF;
+static endpoint_type_t send_endpoint = ENDPOINT_DDT;
+static endpoint_type_t recv_endpoint = ENDPOINT_DDT;
+
 #if TO_SELF_HAVE_OMPI_INTERNALS
 /* Keep datatype dumps opt-in; the normal benchmark output should stay compact. */
 static int dump_datatypes = 0;
@@ -333,7 +351,12 @@ enum {
  * source version so the generated performance data is unambiguous.
  */
 #define DDTBENCH_IMPORTED_SOURCE "DDTBench 1.2.1"
-#define PRINT_DDTBENCH_TEST(name) printf("\n%s %s\n\n", DDTBENCH_IMPORTED_SOURCE, (name))
+#define PRINT_DDTBENCH_TEST(name)                                                        \
+    do {                                                                                 \
+        if (ROLE_TARGET != role) {                                                       \
+            printf("\n%s %s\n\n", DDTBENCH_IMPORTED_SOURCE, (name));                   \
+        }                                                                                \
+    } while (0)
 
 static inline size_t ddtbench_lammps_full_ax_offset(void)
 {
@@ -1887,6 +1910,7 @@ typedef uint64_t test_mask_t;
 #define DO_OPERATION_TESTS                                                                 \
     (DO_PACK | DO_UNPACK | DO_PACK_BYHAND | DO_UNPACK_BYHAND | DO_ISEND_RECV               \
      | DO_ISEND_IRECV | DO_IRECV_SEND | DO_IRECV_ISEND)
+#define DO_COMMUNICATION_TESTS (DO_ISEND_RECV | DO_ISEND_IRECV | DO_IRECV_SEND | DO_IRECV_ISEND)
 
 #define MIN_GOOD_TIMERS 5
 #define MIN_LENGTH 1024
@@ -1972,7 +1996,10 @@ static void print_options(FILE *stream, const char *option_name, const check_opt
 /* Print the command-line syntax and the valid entries for both namespaces. */
 static void print_usage(FILE *stream, const char *program_name)
 {
-    fprintf(stream, "Usage: %s [--check=list] [--data=list]", program_name);
+    fprintf(stream,
+            "Usage: %s [--check=list] [--data=list] [--send=ddt|packed] "
+            "[--recv=ddt|packed]",
+            program_name);
 #if TO_SELF_HAVE_OMPI_INTERNALS
     fprintf(stream, " [--dump]");
 #endif
@@ -1980,7 +2007,7 @@ static void print_usage(FILE *stream, const char *program_name)
             " [--cycles=N] [--trials=N] [--warmups=N] [--min-work-bytes=N] [--raw-timers]\n");
     fprintf(stream,
             "Defaults: --check=all --data=all --cycles=%d --trials=%d --warmups=%d "
-            "--min-work-bytes=%d\n",
+            "--min-work-bytes=%d --send=ddt --recv=ddt\n",
             cycles, trials, warmups, min_work_bytes);
 #if TO_SELF_HAVE_OMPI_INTERNALS
     fprintf(stream, "--dump prints committed datatype internals\n");
@@ -2048,6 +2075,22 @@ static int parse_integer_option(const char *option_name, const char *option_valu
 
     *value = (int) parsed_value;
     return 0;
+}
+
+/* Parse the representation used by one communication endpoint. */
+static int parse_endpoint_option(const char *option_name, const char *option_value,
+                                 endpoint_type_t *endpoint)
+{
+    if (0 == strcmp(option_value, "ddt")) {
+        *endpoint = ENDPOINT_DDT;
+        return 0;
+    }
+    if (0 == strcmp(option_value, "packed")) {
+        *endpoint = ENDPOINT_PACKED;
+        return 0;
+    }
+    fprintf(stderr, "%s must be either ddt or packed\n", option_name);
+    return -1;
 }
 
 /* Resolve one list token to a bit flag, with numeric indexes for --data only. */
@@ -2255,11 +2298,42 @@ static int parse_args(int argc, char *argv[], test_mask_t *run_tests)
             }
         } else if (0 == strcmp(argv[i], "--raw-timers")) {
             raw_timers = 1;
+        } else if (0 == strncmp(argv[i], "--send=", strlen("--send="))) {
+            if (0 != parse_endpoint_option("--send", argv[i] + strlen("--send="),
+                                           &send_endpoint)) {
+                return -1;
+            }
+        } else if (0 == strcmp(argv[i], "--send")) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "--send requires ddt or packed\n");
+                return -1;
+            }
+            if (0 != parse_endpoint_option("--send", argv[++i], &send_endpoint)) {
+                return -1;
+            }
+        } else if (0 == strncmp(argv[i], "--recv=", strlen("--recv="))) {
+            if (0 != parse_endpoint_option("--recv", argv[i] + strlen("--recv="),
+                                           &recv_endpoint)) {
+                return -1;
+            }
+        } else if (0 == strcmp(argv[i], "--recv")) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "--recv requires ddt or packed\n");
+                return -1;
+            }
+            if (0 != parse_endpoint_option("--recv", argv[++i], &recv_endpoint)) {
+                return -1;
+            }
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             print_usage(stderr, argv[0]);
             return -1;
         }
+    }
+
+    if ((ENDPOINT_PACKED == send_endpoint) && (ENDPOINT_PACKED == recv_endpoint)) {
+        fprintf(stderr, "At least one communication endpoint must use the derived datatype\n");
+        return -1;
     }
 
     *run_tests = data_tests | check_tests;
@@ -2524,10 +2598,25 @@ static int run_unpack_byhand(int num_cycles, byhand_copy_fn_t unpack_byhand_fn, 
     return 0;
 }
 
+/* Report the slower endpoint without including the synchronization reduction in the timing. */
+static void record_communication_timer(double elapsed, double *timer)
+{
+    if (ROLE_SELF == role) {
+        *timer = elapsed;
+    } else {
+        MPI_Reduce(&elapsed, timer, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    }
+}
+
+/*
+ * Time MPI_Isend followed by MPI_Recv. A singleton executes both operations in their historical
+ * order, while a two-rank run executes only the operation assigned to each process role.
+ */
 static int isend_recv(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                       int rcount, void *rbuf)
 {
-    int myself, tag = 0, c, t, slength, rlength;
+    int peer = (ROLE_TARGET == role) ? 0 : ((ROLE_SOURCE == role) ? 1 : 0);
+    int tag = 0, c, t, slength, rlength;
     MPI_Status status;
     MPI_Request req;
     double timers[trials];
@@ -2536,26 +2625,43 @@ static int isend_recv(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, 
     slength *= scount;
     MPI_Type_size(rdt, &rlength);
     rlength *= rcount;
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &myself);
+    if (slength != rlength) {
+        MPI_Abort(MPI_COMM_WORLD, MPI_ERR_TYPE);
+    }
 
     for (t = 0; t < trials; t++) {
-        timers[t] = MPI_Wtime();
-        for (c = 0; c < num_cycles; c++) {
-            MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &req);
-            MPI_Recv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &status);
-            MPI_Wait(&req, &status);
+        double start = MPI_Wtime();
+
+        if (ROLE_SELF == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Isend(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD, &req);
+                MPI_Recv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &status);
+                MPI_Wait(&req, &status);
+            }
+        } else if (ROLE_SOURCE == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Isend(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD, &req);
+                MPI_Wait(&req, &status);
+            }
+        } else {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Recv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &status);
+            }
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
+        record_communication_timer((MPI_Wtime() - start) / num_cycles, &timers[t]);
     }
-    print_result("isend_recv", rlength, trials, timers);
+    if (ROLE_TARGET != role) {
+        print_result("isend_recv", rlength, trials, timers);
+    }
     return 0;
 }
 
+/* Time MPI_Irecv followed by MPI_Send, or the corresponding endpoint in a two-rank run. */
 static int irecv_send(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                       int rcount, void *rbuf)
 {
-    int myself, tag = 0, c, t, slength, rlength;
+    int peer = (ROLE_TARGET == role) ? 0 : ((ROLE_SOURCE == role) ? 1 : 0);
+    int tag = 0, c, t, slength, rlength;
     MPI_Request req;
     MPI_Status status;
     double timers[trials];
@@ -2564,26 +2670,43 @@ static int irecv_send(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, 
     slength *= scount;
     MPI_Type_size(rdt, &rlength);
     rlength *= rcount;
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &myself);
+    if (slength != rlength) {
+        MPI_Abort(MPI_COMM_WORLD, MPI_ERR_TYPE);
+    }
 
     for (t = 0; t < trials; t++) {
-        timers[t] = MPI_Wtime();
-        for (c = 0; c < num_cycles; c++) {
-            MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &req);
-            MPI_Send(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD);
-            MPI_Wait(&req, &status);
+        double start = MPI_Wtime();
+
+        if (ROLE_SELF == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Irecv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &req);
+                MPI_Send(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD);
+                MPI_Wait(&req, &status);
+            }
+        } else if (ROLE_SOURCE == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Send(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD);
+            }
+        } else {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Irecv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &req);
+                MPI_Wait(&req, &status);
+            }
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
+        record_communication_timer((MPI_Wtime() - start) / num_cycles, &timers[t]);
     }
-    print_result("irecv_send", rlength, trials, timers);
+    if (ROLE_TARGET != role) {
+        print_result("irecv_send", rlength, trials, timers);
+    }
     return 0;
 }
 
+/* Time send-first nonblocking communication, keeping the singleton posting order intact. */
 static int isend_irecv_wait(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                             int rcount, void *rbuf)
 {
-    int myself, tag = 0, c, t, slength, rlength;
+    int peer = (ROLE_TARGET == role) ? 0 : ((ROLE_SOURCE == role) ? 1 : 0);
+    int tag = 0, c, t, slength, rlength;
     MPI_Request requests[2];
     MPI_Status statuses[2];
     double timers[trials];
@@ -2592,26 +2715,44 @@ static int isend_irecv_wait(int num_cycles, MPI_Datatype sdt, int scount, void *
     slength *= scount;
     MPI_Type_size(rdt, &rlength);
     rlength *= rcount;
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &myself);
+    if (slength != rlength) {
+        MPI_Abort(MPI_COMM_WORLD, MPI_ERR_TYPE);
+    }
 
     for (t = 0; t < trials; t++) {
-        timers[t] = MPI_Wtime();
-        for (c = 0; c < num_cycles; c++) {
-            MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &requests[0]);
-            MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &requests[1]);
-            MPI_Waitall(2, requests, statuses);
+        double start = MPI_Wtime();
+
+        if (ROLE_SELF == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Isend(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD, &requests[0]);
+                MPI_Irecv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &requests[1]);
+                MPI_Waitall(2, requests, statuses);
+            }
+        } else if (ROLE_SOURCE == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Isend(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD, &requests[0]);
+                MPI_Wait(&requests[0], &statuses[0]);
+            }
+        } else {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Irecv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &requests[1]);
+                MPI_Wait(&requests[1], &statuses[1]);
+            }
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
+        record_communication_timer((MPI_Wtime() - start) / num_cycles, &timers[t]);
     }
-    print_result("isend_irecv", rlength, trials, timers);
+    if (ROLE_TARGET != role) {
+        print_result("isend_irecv", rlength, trials, timers);
+    }
     return 0;
 }
 
+/* Time receive-first nonblocking communication, keeping the singleton posting order intact. */
 static int irecv_isend_wait(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, MPI_Datatype rdt,
                             int rcount, void *rbuf)
 {
-    int myself, tag = 0, c, t, slength, rlength;
+    int peer = (ROLE_TARGET == role) ? 0 : ((ROLE_SOURCE == role) ? 1 : 0);
+    int tag = 0, c, t, slength, rlength;
     MPI_Request requests[2];
     MPI_Status statuses[2];
     double timers[trials];
@@ -2620,19 +2761,35 @@ static int irecv_isend_wait(int num_cycles, MPI_Datatype sdt, int scount, void *
     slength *= scount;
     MPI_Type_size(rdt, &rlength);
     rlength *= rcount;
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &myself);
+    if (slength != rlength) {
+        MPI_Abort(MPI_COMM_WORLD, MPI_ERR_TYPE);
+    }
 
     for (t = 0; t < trials; t++) {
-        timers[t] = MPI_Wtime();
-        for (c = 0; c < num_cycles; c++) {
-            MPI_Irecv(rbuf, rcount, rdt, myself, tag, MPI_COMM_WORLD, &requests[0]);
-            MPI_Isend(sbuf, scount, sdt, myself, tag, MPI_COMM_WORLD, &requests[1]);
-            MPI_Waitall(2, requests, statuses);
+        double start = MPI_Wtime();
+
+        if (ROLE_SELF == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Irecv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &requests[0]);
+                MPI_Isend(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD, &requests[1]);
+                MPI_Waitall(2, requests, statuses);
+            }
+        } else if (ROLE_SOURCE == role) {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Isend(sbuf, scount, sdt, peer, tag, MPI_COMM_WORLD, &requests[1]);
+                MPI_Wait(&requests[1], &statuses[1]);
+            }
+        } else {
+            for (c = 0; c < num_cycles; c++) {
+                MPI_Irecv(rbuf, rcount, rdt, peer, tag, MPI_COMM_WORLD, &requests[0]);
+                MPI_Wait(&requests[0], &statuses[0]);
+            }
         }
-        timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
+        record_communication_timer((MPI_Wtime() - start) / num_cycles, &timers[t]);
     }
-    print_result("irecv_isend", rlength, trials, timers);
+    if (ROLE_TARGET != role) {
+        print_result("irecv_isend", rlength, trials, timers);
+    }
     return 0;
 }
 
@@ -2654,6 +2811,202 @@ static size_t datatype_count_span(MPI_Datatype datatype, int count)
     return (size_t) upper_bound;
 }
 
+typedef struct {
+    int used;
+    int capacity;
+    int *blocklengths;
+    MPI_Aint *displacements;
+    MPI_Datatype *datatypes;
+    MPI_Aint size;
+} packed_signature_t;
+
+/* Add a predefined type to the compact signature, merging adjacent runs of the same type. */
+static int packed_signature_append_predefined(packed_signature_t *signature, MPI_Datatype datatype,
+                                              size_t count)
+{
+    int type_size;
+
+    MPI_Type_size(datatype, &type_size);
+    if ((0 == type_size) || (0 == count)) {
+        return MPI_SUCCESS;
+    }
+
+    while (0 != count) {
+        int chunk = (count > INT_MAX) ? INT_MAX : (int) count;
+
+        if ((0 < signature->used) && (datatype == signature->datatypes[signature->used - 1])
+            && (chunk <= INT_MAX - signature->blocklengths[signature->used - 1])) {
+            signature->blocklengths[signature->used - 1] += chunk;
+        } else {
+            if (signature->used == signature->capacity) {
+                int new_capacity = (0 == signature->capacity) ? 8 : 2 * signature->capacity;
+                int *new_blocklengths = (int *) realloc(
+                    signature->blocklengths, (size_t) new_capacity * sizeof(*new_blocklengths));
+                MPI_Aint *new_displacements;
+                MPI_Datatype *new_datatypes;
+
+                if (NULL == new_blocklengths) {
+                    return MPI_ERR_NO_MEM;
+                }
+                signature->blocklengths = new_blocklengths;
+                new_displacements = (MPI_Aint *) realloc(
+                    signature->displacements, (size_t) new_capacity * sizeof(*new_displacements));
+                if (NULL == new_displacements) {
+                    return MPI_ERR_NO_MEM;
+                }
+                signature->displacements = new_displacements;
+                new_datatypes = (MPI_Datatype *) realloc(
+                    signature->datatypes, (size_t) new_capacity * sizeof(*new_datatypes));
+                if (NULL == new_datatypes) {
+                    return MPI_ERR_NO_MEM;
+                }
+                signature->datatypes = new_datatypes;
+                signature->capacity = new_capacity;
+            }
+
+            signature->blocklengths[signature->used] = chunk;
+            signature->displacements[signature->used] = signature->size;
+            signature->datatypes[signature->used] = datatype;
+            ++signature->used;
+        }
+        signature->size += (MPI_Aint) chunk * type_size;
+        count -= (size_t) chunk;
+    }
+    return MPI_SUCCESS;
+}
+
+/*
+ * Reconstruct only a datatype's basic-type signature. Constructors with one child repeat that
+ * child's signature size/type-size times; structs are the only constructors used here that must
+ * preserve an ordered list of distinct child signatures.
+ */
+static int packed_signature_append(packed_signature_t *signature, MPI_Datatype datatype,
+                                   size_t repetitions)
+{
+    int num_integers, num_addresses, num_datatypes, combiner, datatype_size;
+    int *integers = NULL;
+    MPI_Aint *addresses = NULL;
+    MPI_Datatype *datatypes = NULL;
+    int contents_available = 0, rc;
+
+    MPI_Type_size(datatype, &datatype_size);
+    if ((0 == datatype_size) || (0 == repetitions)) {
+        return MPI_SUCCESS;
+    }
+    MPI_Type_get_envelope(datatype, &num_integers, &num_addresses, &num_datatypes, &combiner);
+    if ((MPI_COMBINER_NAMED == combiner) || (0 == num_datatypes)) {
+        return packed_signature_append_predefined(signature, datatype, repetitions);
+    }
+
+    integers = (int *) malloc((size_t) num_integers * sizeof(*integers));
+    addresses = (MPI_Aint *) malloc((size_t) num_addresses * sizeof(*addresses));
+    datatypes = (MPI_Datatype *) malloc((size_t) num_datatypes * sizeof(*datatypes));
+    if (((0 < num_integers) && (NULL == integers))
+        || ((0 < num_addresses) && (NULL == addresses))
+        || ((0 < num_datatypes) && (NULL == datatypes))) {
+        rc = MPI_ERR_NO_MEM;
+        goto out;
+    }
+    rc = MPI_Type_get_contents(datatype, num_integers, num_addresses, num_datatypes, integers,
+                               addresses, datatypes);
+    if (MPI_SUCCESS != rc) {
+        goto out;
+    }
+    contents_available = 1;
+
+    if (MPI_COMBINER_STRUCT == combiner) {
+        int member_count = integers[0];
+
+        if ((member_count != num_datatypes) || (num_integers < member_count + 1)) {
+            rc = MPI_ERR_TYPE;
+            goto out;
+        }
+        for (size_t repeat = 0; repeat < repetitions; ++repeat) {
+            for (int member = 0; member < member_count; ++member) {
+                rc = packed_signature_append(signature, datatypes[member],
+                                             (size_t) integers[member + 1]);
+                if (MPI_SUCCESS != rc) {
+                    goto out;
+                }
+            }
+        }
+    } else if (1 == num_datatypes) {
+        int child_size;
+        size_t child_repetitions;
+
+        MPI_Type_size(datatypes[0], &child_size);
+        if ((0 == child_size) || (0 != datatype_size % child_size)) {
+            rc = MPI_ERR_TYPE;
+            goto out;
+        }
+        child_repetitions = (size_t) (datatype_size / child_size);
+        if ((0 != child_repetitions) && (repetitions > SIZE_MAX / child_repetitions)) {
+            rc = MPI_ERR_COUNT;
+            goto out;
+        }
+        rc = packed_signature_append(signature, datatypes[0], repetitions * child_repetitions);
+    } else {
+        rc = MPI_ERR_TYPE;
+    }
+
+out:
+    for (int i = 0; contents_available && (i < num_datatypes); ++i) {
+        int child_integers, child_addresses, child_datatypes, child_combiner;
+
+        MPI_Type_get_envelope(datatypes[i], &child_integers, &child_addresses, &child_datatypes,
+                              &child_combiner);
+        /* MPI_Type_get_contents duplicates derived child handles; release those duplicates. */
+        if ((MPI_COMBINER_NAMED != child_combiner) && (MPI_COMBINER_F90_REAL != child_combiner)
+            && (MPI_COMBINER_F90_INTEGER != child_combiner)
+            && (MPI_COMBINER_F90_COMPLEX != child_combiner)) {
+            MPI_Type_free(&datatypes[i]);
+        }
+    }
+    free(integers);
+    free(addresses);
+    free(datatypes);
+    return rc;
+}
+
+/* Build a tightly-spaced datatype with the same basic-type signature as datatype. */
+static MPI_Datatype create_packed_signature_datatype(MPI_Datatype datatype)
+{
+    packed_signature_t signature = {0};
+    MPI_Datatype packed_type = MPI_DATATYPE_NULL, temp_type = MPI_DATATYPE_NULL;
+    MPI_Aint lb, extent;
+    int datatype_size, packed_size, rc;
+
+    rc = packed_signature_append(&signature, datatype, 1);
+    if ((MPI_SUCCESS != rc) || (0 == signature.used)) {
+        fprintf(stderr, "Unable to extract the datatype signature (error %d)\n", rc);
+        MPI_Abort(MPI_COMM_WORLD, (MPI_SUCCESS == rc) ? MPI_ERR_TYPE : rc);
+    }
+
+    MPI_Type_create_struct(signature.used, signature.blocklengths, signature.displacements,
+                           signature.datatypes, &temp_type);
+    MPI_Type_get_extent(temp_type, &lb, &extent);
+    if ((0 != lb) || (signature.size != extent)) {
+        MPI_Type_create_resized(temp_type, 0, signature.size, &packed_type);
+        MPI_Type_free(&temp_type);
+    } else {
+        packed_type = temp_type;
+    }
+    MPI_Type_commit(&packed_type);
+
+    MPI_Type_size(datatype, &datatype_size);
+    MPI_Type_size(packed_type, &packed_size);
+    if (((MPI_Aint) datatype_size != signature.size) || (datatype_size != packed_size)) {
+        fprintf(stderr, "Compact signature has the wrong size (%d != %d)\n", packed_size,
+                datatype_size);
+        MPI_Abort(MPI_COMM_WORLD, MPI_ERR_TYPE);
+    }
+
+    free(signature.blocklengths);
+    free(signature.displacements);
+    free(signature.datatypes);
+    return packed_type;
+}
+
 /* Raise the cycle count for small messages without increasing large-message benchmark work. */
 static int cycles_for_packed_size(size_t packed_size)
 {
@@ -2669,12 +3022,41 @@ static int cycles_for_packed_size(size_t packed_size)
     return ((size_t) cycles < required_cycles) ? (int) required_cycles : cycles;
 }
 
+typedef int (*communication_fn_t)(int, MPI_Datatype, int, void *, MPI_Datatype, int, void *);
+
+/* Describe one selectable communication benchmark. */
+typedef struct {
+    test_mask_t flag;
+    const char *heading;
+    communication_fn_t run;
+} communication_test_t;
+
+/* Collect the buffer arguments selected for one communication endpoint. */
+typedef struct {
+    MPI_Datatype datatype;
+    int count;
+    void *buffer;
+} communication_endpoint_t;
+
+/* Keep dispatch order consistent with the historical benchmark output. */
+static const communication_test_t communication_tests[] = {
+    {DO_ISEND_RECV, "Isend recv", isend_recv},
+    {DO_ISEND_IRECV, "Isend Irecv Wait", isend_irecv_wait},
+    {DO_IRECV_SEND, "Irecv send", irecv_send},
+    {DO_IRECV_ISEND, "Irecv Isend Wait", irecv_isend_wait},
+};
+
+/* Command-line names indexed by endpoint_type_t. */
+static const char *const endpoint_type_names[] = {"ddt", "packed"};
+
+/* Run the selected local and communication benchmarks for one equivalent datatype pair. */
 static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rddt, int length,
                            byhand_copy_fn_t pack_byhand_fn,
                            byhand_copy_fn_t unpack_byhand_fn)
 {
     size_t sbuf_length, rbuf_length, packed_length, source_span, recv_span;
-    char *sbuf, *rbuf;
+    char *sbuf, *rbuf, *packed_buf;
+    MPI_Datatype packed_send_type = MPI_DATATYPE_NULL, packed_recv_type = MPI_DATATYPE_NULL;
     int i, max_count, stype_size, rtype_size;
 
     MPI_Type_size(sddt, &stype_size);
@@ -2698,20 +3080,52 @@ static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rdd
 
     sbuf = (char *) malloc(sbuf_length);
     rbuf = (char *) malloc(rbuf_length);
-    if ((NULL == sbuf) || (NULL == rbuf)) {
+    packed_buf = (char *) malloc(packed_length);
+    if ((NULL == sbuf) || (NULL == rbuf) || (NULL == packed_buf)) {
         fprintf(stderr, "Unable to allocate benchmark buffers\n");
         free(sbuf);
         free(rbuf);
+        free(packed_buf);
         MPI_Abort(MPI_COMM_WORLD, MPI_ERR_NO_MEM);
     }
-    if (doop & DO_PACK) {
+
+    /*
+     * MPI_PACKED cannot legally communicate directly with a derived datatype because their type
+     * signatures differ. Build compact, signature-equivalent endpoint types outside the timed
+     * region so the benchmark measures movement between a packed buffer and a derived layout.
+     */
+    if (doop & DO_COMMUNICATION_TESTS) {
+        if (ENDPOINT_PACKED == send_endpoint) {
+            packed_send_type = create_packed_signature_datatype(sddt);
+        }
+        if (ENDPOINT_PACKED == recv_endpoint) {
+            packed_recv_type = create_packed_signature_datatype(rddt);
+        }
+    }
+
+    /* A packed sender reuses one maximum-count depiction; smaller tests send its prefix. */
+    if ((ROLE_TARGET != role) && (ENDPOINT_PACKED == send_endpoint)
+        && (doop & DO_COMMUNICATION_TESTS)) {
+        int position = 0;
+
+        for (size_t index = 0; index < sbuf_length; ++index) {
+            sbuf[index] = (char) (index % 251);
+        }
+        MPI_Pack(sbuf, max_count, sddt, packed_buf, (int) packed_length, &position, MPI_COMM_WORLD);
+        if ((size_t) position != packed_length) {
+            fprintf(stderr, "MPI_Pack produced %d bytes, expected %zu\n", position, packed_length);
+            MPI_Abort(MPI_COMM_WORLD, MPI_ERR_INTERN);
+        }
+    }
+
+    if ((ROLE_TARGET != role) && (doop & DO_PACK)) {
         printf("# Pack (max length %d)\n", length);
         for (i = 1; i <= max_count; i *= 2) {
             pack(cycles_for_packed_size((size_t) stype_size * (size_t) i), sddt, i, sbuf, rbuf);
         }
     }
 
-    if ((doop & DO_PACK_BYHAND) && (NULL != pack_byhand_fn)) {
+    if ((ROLE_TARGET != role) && (doop & DO_PACK_BYHAND) && (NULL != pack_byhand_fn)) {
         printf("# Pack by hand (max length %d)\n", length);
         for (i = 1; i <= max_count; i *= 2) {
             run_pack_byhand(cycles_for_packed_size((size_t) stype_size * (size_t) i),
@@ -2719,14 +3133,14 @@ static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rdd
         }
     }
 
-    if (doop & DO_UNPACK) {
+    if ((ROLE_TARGET != role) && (doop & DO_UNPACK)) {
         printf("# Unpack (length %d)\n", length);
         for (i = 1; i <= max_count; i *= 2) {
             unpack(cycles_for_packed_size((size_t) rtype_size * (size_t) i), sbuf, rddt, i, rbuf);
         }
     }
 
-    if ((doop & DO_UNPACK_BYHAND) && (NULL != unpack_byhand_fn)) {
+    if ((ROLE_TARGET != role) && (doop & DO_UNPACK_BYHAND) && (NULL != unpack_byhand_fn)) {
         printf("# Unpack by hand (length %d)\n", length);
         for (i = 1; i <= max_count; i *= 2) {
             run_unpack_byhand(cycles_for_packed_size((size_t) rtype_size * (size_t) i),
@@ -2734,46 +3148,66 @@ static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rdd
         }
     }
 
-    if (doop & DO_ISEND_RECV) {
-        printf("# Isend recv (length %d)\n", length);
-        for (i = 1; i <= max_count; i *= 2) {
-            isend_recv(cycles_for_packed_size((size_t) stype_size * (size_t) i), sddt, i, sbuf,
-                       rddt, i, rbuf);
-        }
+    /* Keep source-only setup and local benchmarks out of the target's first receive sample. */
+    if ((ROLE_SELF != role) && (doop & DO_COMMUNICATION_TESTS)) {
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
-    if (doop & DO_ISEND_IRECV) {
-        printf("# Isend Irecv Wait (length %d)\n", length);
-        for (i = 1; i <= max_count; i *= 2) {
-            isend_irecv_wait(cycles_for_packed_size((size_t) stype_size * (size_t) i), sddt, i,
-                             sbuf, rddt, i, rbuf);
-        }
-    }
+    for (size_t test = 0; test < sizeof(communication_tests) / sizeof(communication_tests[0]); ++test) {
+        const communication_test_t *communication = &communication_tests[test];
 
-    if (doop & DO_IRECV_SEND) {
-        printf("# Irecv send (length %d)\n", length);
-        for (i = 1; i <= max_count; i *= 2) {
-            irecv_send(cycles_for_packed_size((size_t) stype_size * (size_t) i), sddt, i, sbuf,
-                       rddt, i, rbuf);
+        if (0 == (doop & communication->flag)) {
+            continue;
         }
-    }
-
-    if (doop & DO_IRECV_ISEND) {
-        printf("# Irecv Isend Wait (length %d)\n", length);
+        if (ROLE_TARGET != role) {
+            printf("# %s (%s to %s, length %d)\n", communication->heading,
+                   endpoint_type_names[send_endpoint], endpoint_type_names[recv_endpoint], length);
+        }
         for (i = 1; i <= max_count; i *= 2) {
-            irecv_isend_wait(cycles_for_packed_size((size_t) stype_size * (size_t) i), sddt, i,
-                             sbuf, rddt, i, rbuf);
+            int packed_count = stype_size * i;
+            communication_endpoint_t send = {
+                .datatype = (ENDPOINT_PACKED == send_endpoint) ? packed_send_type : sddt,
+                .count = i,
+                .buffer = (ENDPOINT_PACKED == send_endpoint) ? packed_buf : sbuf,
+            };
+            communication_endpoint_t recv = {
+                .datatype = (ENDPOINT_PACKED == recv_endpoint) ? packed_recv_type : rddt,
+                .count = i,
+                .buffer = (ENDPOINT_PACKED == recv_endpoint) ? packed_buf : rbuf,
+            };
+
+            communication->run(cycles_for_packed_size((size_t) packed_count), send.datatype,
+                               send.count, send.buffer, recv.datatype, recv.count, recv.buffer);
         }
     }
     free(sbuf);
     free(rbuf);
+    free(packed_buf);
+    if (MPI_DATATYPE_NULL != packed_send_type) {
+        MPI_Type_free(&packed_send_type);
+    }
+    if (MPI_DATATYPE_NULL != packed_recv_type) {
+        MPI_Type_free(&packed_recv_type);
+    }
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
     test_mask_t run_tests = DO_DATATYPE_TESTS | DO_OPERATION_TESTS;
-    int parse_result, rank, size;
+
+    /* Indices for the rank-zero configuration broadcast. */
+    enum {
+        CONFIG_CYCLES,
+        CONFIG_TRIALS,
+        CONFIG_WARMUPS,
+        CONFIG_MIN_WORK_BYTES,
+        CONFIG_RAW_TIMERS,
+        CONFIG_SEND_ENDPOINT,
+        CONFIG_RECV_ENDPOINT,
+        CONFIG_COUNT,
+    };
+    int config[CONFIG_COUNT], parse_result = 0, rank, size;
     MPI_Datatype ddt, sddt, rddt;
 
     MPI_Init(&argc, &argv);
@@ -2781,34 +3215,63 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    if ((1 != size) && (2 != size)) {
+        if (0 == rank) {
+            fprintf(stderr, "This tester supports one or two MPI processes, not %d\n", size);
+        }
+        MPI_Finalize();
+        return 1;
+    }
+    role = (1 == size) ? ROLE_SELF : ((0 == rank) ? ROLE_SOURCE : ROLE_TARGET);
+
     if (0 == rank) {
         parse_result = parse_args(argc, argv, &run_tests);
-        if (0 > parse_result) {
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        } else if (0 < parse_result) {
-            MPI_Finalize();
-            exit(0);
-        }
     }
-
-    if (rank != 0) {
+    MPI_Bcast(&parse_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (0 != parse_result) {
         MPI_Finalize();
-        exit(0);
+        return (0 > parse_result) ? 1 : 0;
     }
 
-    if (0 != prepare_raw_timer_records(run_tests)) {
+    /* Distribute the benchmark configuration parsed by rank zero. */
+    if (0 == rank) {
+        config[CONFIG_CYCLES] = cycles;
+        config[CONFIG_TRIALS] = trials;
+        config[CONFIG_WARMUPS] = warmups;
+        config[CONFIG_MIN_WORK_BYTES] = min_work_bytes;
+        config[CONFIG_RAW_TIMERS] = raw_timers;
+        config[CONFIG_SEND_ENDPOINT] = (int) send_endpoint;
+        config[CONFIG_RECV_ENDPOINT] = (int) recv_endpoint;
+    }
+    MPI_Bcast(&run_tests, (int) sizeof(run_tests), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(config, CONFIG_COUNT, MPI_INT, 0, MPI_COMM_WORLD);
+    if (0 != rank) {
+        cycles = config[CONFIG_CYCLES];
+        trials = config[CONFIG_TRIALS];
+        warmups = config[CONFIG_WARMUPS];
+        min_work_bytes = config[CONFIG_MIN_WORK_BYTES];
+        raw_timers = config[CONFIG_RAW_TIMERS];
+        send_endpoint = (endpoint_type_t) config[CONFIG_SEND_ENDPOINT];
+        recv_endpoint = (endpoint_type_t) config[CONFIG_RECV_ENDPOINT];
+    }
+
+    if ((ROLE_TARGET != role) && (0 != prepare_raw_timer_records(run_tests))) {
         fprintf(stderr, "Unable to allocate raw timer records\n");
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     if (run_tests & DO_CONTIG) {
-        printf("\ncontiguous datatype\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\ncontiguous datatype\n\n");
+        }
         do_test_for_ddt(run_tests, MPI_INT, MPI_INT, MAX_LENGTH, pack_byhand_contiguous_datatype,
                         unpack_byhand_contiguous_datatype);
     }
 
     if (run_tests & DO_INDEXED_GAP) {
-        printf("\nindexed gap\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\nindexed gap\n\n");
+        }
         ddt = create_indexed_gap_ddt();
         MPI_DDT_DUMP(ddt);
         do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_create_indexed_gap_ddt,
@@ -2817,7 +3280,9 @@ int main(int argc, char *argv[])
     }
 
     if (run_tests & DO_OPTIMIZED_INDEXED_GAP) {
-        printf("\noptimized indexed gap\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\noptimized indexed gap\n\n");
+        }
         ddt = create_indexed_gap_optimized_ddt();
         MPI_DDT_DUMP(ddt);
         do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
@@ -2827,7 +3292,9 @@ int main(int argc, char *argv[])
     }
 
     if (run_tests & DO_CONSTANT_GAP) {
-        printf("\nconstant indexed gap\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\nconstant indexed gap\n\n");
+        }
         ddt = create_indexed_constant_gap_ddt(80, 100, 1);
         MPI_DDT_DUMP(ddt);
         do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
@@ -2837,7 +3304,9 @@ int main(int argc, char *argv[])
     }
 
     if (run_tests & DO_OPTIMIZED_CONSTANT_GAP) {
-        printf("\noptimized constant indexed gap\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\noptimized constant indexed gap\n\n");
+        }
         ddt = create_optimized_indexed_constant_gap_ddt(80, 100, 1);
         MPI_DDT_DUMP(ddt);
         do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
@@ -2847,7 +3316,9 @@ int main(int argc, char *argv[])
     }
 
     if (run_tests & DO_STRUCT_CONSTANT_GAP) {
-        printf("\nstruct constant gap\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\nstruct constant gap\n\n");
+        }
         ddt = create_struct_constant_gap_ddt(80, 100, 1);
         MPI_DDT_DUMP(ddt);
         do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
@@ -2857,7 +3328,9 @@ int main(int argc, char *argv[])
     }
 
     if (run_tests & DO_STRUCT_CONSTANT_GAP_RESIZED) {
-        printf("\nstruct constant gap resized\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\nstruct constant gap resized\n\n");
+        }
         ddt = create_struct_constant_gap_resized_ddt(0 /* unused */, 0 /* unused */,
                                                      0 /* unused */);
         MPI_DDT_DUMP(ddt);
@@ -2868,7 +3341,9 @@ int main(int argc, char *argv[])
     }
 
     if (run_tests & DO_STRUCT_MERGED_WITH_GAP_RESIZED) {
-        printf("\nstruct merged with gap resized\n\n");
+        if (ROLE_TARGET != role) {
+            printf("\nstruct merged with gap resized\n\n");
+        }
         ddt = create_merged_contig_with_gaps(1);
         MPI_DDT_DUMP(ddt);
         do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
@@ -3028,7 +3503,9 @@ int main(int argc, char *argv[])
         MPI_Type_free(&ddt);
     }
 
-    print_raw_timer_records();
+    if (ROLE_TARGET != role) {
+        print_raw_timer_records();
+    }
     free(raw_timer_records);
     MPI_Finalize();
     exit(0);
