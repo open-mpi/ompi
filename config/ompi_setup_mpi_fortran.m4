@@ -255,6 +255,19 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # MPI_Status struct contains 4 C ints and a size_t.
     OMPI_FORTRAN_STATUS_SIZE=0
 
+    # The C-to-Fortran MPI_Status conversion (and other code that passes
+    # MPI values through Fortran default INTEGERs) copies C ints into
+    # INTEGER slots one-for-one.  If the Fortran default INTEGER is
+    # narrower than a C int, the public MPI_Status fields (and other
+    # values) would be silently truncated.  Refuse to build in that case
+    # rather than produce a broken Fortran MPI.  Skip the check when we
+    # are not building any Fortran bindings (e.g., --disable-mpi-fortran,
+    # or no usable Fortran compiler), in which case
+    # OMPI_SIZEOF_FORTRAN_INTEGER is 0.
+    AS_IF([test "$OMPI_SIZEOF_FORTRAN_INTEGER" -gt 0 && \
+           test "$OMPI_SIZEOF_FORTRAN_INTEGER" -lt "$ac_cv_sizeof_int"],
+          [AC_MSG_ERROR([the Fortran default INTEGER ($OMPI_SIZEOF_FORTRAN_INTEGER bytes) is smaller than a C int ($ac_cv_sizeof_int bytes).  Open MPI requires the Fortran default INTEGER to be at least as large as a C int; otherwise values such as the public MPI_Status fields would be truncated when converted between C and Fortran.  Reconfigure with a larger Fortran default INTEGER, or build with --disable-mpi-fortran.])])
+
     # Calculate how many C int's can fit in sizeof(MPI_Status).  Yes,
     # I do mean C ints -- not Fortran INTEGERS.  The reason is because
     # an mpif.h MPI_Status is an array of INTEGERS.  But these
