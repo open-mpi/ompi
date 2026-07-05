@@ -134,6 +134,51 @@ jobs:
       run: |
         cd examples
         status=0
+
+        # #####################################################################
+        # ##### TEMPORARY WORKAROUND -- DROP THIS COMMIT WHEN               #####
+        # ##### https://github.com/open-mpi/ompi/issues/14125 IS FIXED     #####
+        # #####################################################################
+        #
+        # On macOS, repeated MPI Sessions usage (MPI_Session_init after a prior
+        # MPI_Session_finalize) can deadlock: the second MPI_Session_init fails
+        # to open() its shared-memory backing file (ENOENT) and then hangs
+        # forever in the modex PMIx_Fence_nb wait.  The stock hello_sessions_c
+        # example does exactly two init/finalize cycles and trips this.  See
+        # open-mpi/ompi#14125 for the full root-cause analysis; it reproduces on
+        # a clean main, so it is NOT caused by this PR.
+        #
+        # Without a timeout, that hang wedges this entire CI job until the
+        # 6-hour GitHub Actions ceiling.  hello_sessions_c is the only affected
+        # example, so wrap ONLY that one launch in a timeout: its hang becomes a
+        # prompt, visible FAILURE (exit 124) while every other example runs
+        # exactly as before.  NOTE: macOS runners have no coreutils `timeout` /
+        # `gtimeout`, so this is a dependency-free bash version (background the
+        # launcher, poll, and SIGKILL it -- which tears down its prterun
+        # children -- on expiry).
+        #
+        # >>> To remove this workaround once #14125 is fixed: drop this commit.
+        # >>> That restores the loop to calling the launcher directly for every
+        # >>> example: if ! "$launcher" --map-by ppr:1:core "./$exe"; then
+        EXAMPLE_TIMEOUT=120
+        run_with_timeout() {
+          local limit="$1"; shift
+          "$@" &
+          local pid=$! waited=0
+          while kill -0 "$pid" 2>/dev/null; do
+            sleep 2
+            waited=$((waited + 2))
+            if [ "$waited" -ge "$limit" ]; then
+              echo "==== TIMED OUT after ${limit}s -- killing (see open-mpi/ompi#14125)"
+              kill -9 "$pid" 2>/dev/null
+              wait "$pid" 2>/dev/null
+              return 124
+            fi
+          done
+          wait "$pid"
+        }
+        # ############################ end workaround #########################
+
         # Run every example binary that was actually built.  Built
         # binaries are regular, executable, and have no filename
         # extension (this skips sources, Makefiles, and macOS .dSYM
@@ -147,7 +192,17 @@ jobs:
             *)                 launcher=mpirun ;;
           esac
           echo "==== Running $exe (via $launcher) ===="
-          if ! "$launcher" --map-by ppr:1:core "./$exe"; then
+          # WORKAROUND (open-mpi/ompi#14125): only hello_sessions_c can deadlock
+          # on macOS (repeated MPI_Session_init/finalize), so run just that one
+          # under a timeout; all other examples launch directly, unchanged.
+          if [ "$exe" = "hello_sessions_c" ]; then
+            run_with_timeout "$EXAMPLE_TIMEOUT" "$launcher" --map-by ppr:1:core "./$exe"
+            rc=$?
+          else
+            "$launcher" --map-by ppr:1:core "./$exe"
+            rc=$?
+          fi
+          if [ "$rc" -ne 0 ]; then
             echo "==== $exe FAILED"
             status=1
           fi
