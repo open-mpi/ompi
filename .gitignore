@@ -317,6 +317,8 @@ opal/tools/wrappers/opal.pc
 opal/util/show_help_content.c
 opal/util/keyval/keyval_lex.c
 
+test/mpi/t/mpi_t_category_get_events
+
 test/monitoring/aggregate_profile.pl
 test/monitoring/profile2mat.pl
 
