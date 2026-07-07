@@ -32,7 +32,7 @@
  * manually.
  */
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_AINT_DIFF = ompi_aint_diff_f
 #pragma weak pmpi_aint_diff = ompi_aint_diff_f
 #pragma weak pmpi_aint_diff_ = ompi_aint_diff_f
@@ -48,7 +48,7 @@ MPI_Aint pmpi_aint_diff__(MPI_Aint *addr1, MPI_Aint *addr2) { return pompi_aint_
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_AINT_DIFF = ompi_aint_diff_f
 #pragma weak mpi_aint_diff = ompi_aint_diff_f
 #pragma weak mpi_aint_diff_ = ompi_aint_diff_f

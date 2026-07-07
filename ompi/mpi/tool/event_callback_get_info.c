@@ -19,7 +19,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_T_event_callback_get_info = PMPI_T_event_callback_get_info
 #endif
 #define MPI_T_event_callback_get_info PMPI_T_event_callback_get_info

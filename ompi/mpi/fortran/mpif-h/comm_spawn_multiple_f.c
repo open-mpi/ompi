@@ -31,7 +31,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_COMM_SPAWN_MULTIPLE = ompi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple = ompi_comm_spawn_multiple_f
 #pragma weak pmpi_comm_spawn_multiple_ = ompi_comm_spawn_multiple_f
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_COMM_SPAWN_MULTIPLE = ompi_comm_spawn_multiple_f
 #pragma weak mpi_comm_spawn_multiple = ompi_comm_spawn_multiple_f
 #pragma weak mpi_comm_spawn_multiple_ = ompi_comm_spawn_multiple_f

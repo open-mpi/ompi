@@ -21,7 +21,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_T_pvar_session_create = PMPI_T_pvar_session_create
 #endif
 #define MPI_T_pvar_session_create PMPI_T_pvar_session_create

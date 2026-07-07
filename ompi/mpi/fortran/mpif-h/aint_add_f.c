@@ -32,7 +32,7 @@
  * manually.
  */
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_AINT_ADD = ompi_aint_add_f
 #pragma weak pmpi_aint_add = ompi_aint_add_f
 #pragma weak pmpi_aint_add_ = ompi_aint_add_f
@@ -48,7 +48,7 @@ MPI_Aint pmpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_AINT_ADD = ompi_aint_add_f
 #pragma weak mpi_aint_add = ompi_aint_add_f
 #pragma weak mpi_aint_add_ = ompi_aint_add_f

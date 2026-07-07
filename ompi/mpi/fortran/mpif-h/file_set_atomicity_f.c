@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_FILE_SET_ATOMICITY = ompi_file_set_atomicity_f
 #pragma weak pmpi_file_set_atomicity = ompi_file_set_atomicity_f
 #pragma weak pmpi_file_set_atomicity_ = ompi_file_set_atomicity_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_ATOMICITY,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_FILE_SET_ATOMICITY = ompi_file_set_atomicity_f
 #pragma weak mpi_file_set_atomicity = ompi_file_set_atomicity_f
 #pragma weak mpi_file_set_atomicity_ = ompi_file_set_atomicity_f

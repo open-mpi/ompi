@@ -28,7 +28,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_RECV = ompi_recv_f
 #pragma weak pmpi_recv = ompi_recv_f
 #pragma weak pmpi_recv_ = ompi_recv_f
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RECV,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_RECV = ompi_recv_f
 #pragma weak mpi_recv = ompi_recv_f
 #pragma weak mpi_recv_ = ompi_recv_f

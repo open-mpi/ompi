@@ -27,7 +27,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_COMM_DUP_WITH_INFO = ompi_comm_dup_with_info_f
 #pragma weak pmpi_comm_dup_with_info = ompi_comm_dup_with_info_f
 #pragma weak pmpi_comm_dup_with_info_ = ompi_comm_dup_with_info_f
@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DUP_WITH_INFO,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_COMM_DUP_WITH_INFO = ompi_comm_dup_with_info_f
 #pragma weak mpi_comm_dup_with_info = ompi_comm_dup_with_info_f
 #pragma weak mpi_comm_dup_with_info_ = ompi_comm_dup_with_info_f

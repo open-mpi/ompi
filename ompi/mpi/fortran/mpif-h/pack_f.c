@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_PACK = ompi_pack_f
 #pragma weak pmpi_pack = ompi_pack_f
 #pragma weak pmpi_pack_ = ompi_pack_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PACK,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_PACK = ompi_pack_f
 #pragma weak mpi_pack = ompi_pack_f
 #pragma weak mpi_pack_ = ompi_pack_f

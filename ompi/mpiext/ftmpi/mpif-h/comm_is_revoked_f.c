@@ -17,7 +17,7 @@
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 #include "ompi/mpiext/ftmpi/mpif-h/prototypes_mpi.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPIX_COMM_IS_REVOKED = ompix_comm_is_revoked_f
 #pragma weak pmpix_comm_is_revoked = ompix_comm_is_revoked_f
 #pragma weak pmpix_comm_is_revoked_ = ompix_comm_is_revoked_f
@@ -32,7 +32,7 @@
 #pragma weak MPIX_Comm_is_revoked_f = ompix_comm_is_revoked_f
 #pragma weak MPIX_Comm_is_revoked_f08 = ompix_comm_is_revoked_f
 
-#else /* No weak symbols */
+#else /* No weak aliases */
 OMPI_GENERATE_F77_BINDINGS(PMPIX_COMM_IS_REVOKED,
                         pmpix_comm_is_revoked,
                         pmpix_comm_is_revoked_,

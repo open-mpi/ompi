@@ -28,7 +28,7 @@
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_REDUCE_SCATTER_INIT = ompi_reduce_scatter_init_f
 #pragma weak pmpi_reduce_scatter_init = ompi_reduce_scatter_init_f
 #pragma weak pmpi_reduce_scatter_init_ = ompi_reduce_scatter_init_f
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REDUCE_SCATTER_INIT,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_REDUCE_SCATTER_INIT = ompi_reduce_scatter_init_f
 #pragma weak mpi_reduce_scatter_init = ompi_reduce_scatter_init_f
 #pragma weak mpi_reduce_scatter_init_ = ompi_reduce_scatter_init_f

@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_TYPE_FREE = ompi_type_free_f
 #pragma weak pmpi_type_free = ompi_type_free_f
 #pragma weak pmpi_type_free_ = ompi_type_free_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_FREE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_TYPE_FREE = ompi_type_free_f
 #pragma weak mpi_type_free = ompi_type_free_f
 #pragma weak mpi_type_free_ = ompi_type_free_f

@@ -31,7 +31,7 @@
 #include "ompi/mpi/fortran/base/fortran_base_topo_neighbors.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_NEIGHBOR_ALLTOALLV = ompi_neighbor_alltoallv_f
 #pragma weak pmpi_neighbor_alltoallv = ompi_neighbor_alltoallv_f
 #pragma weak pmpi_neighbor_alltoallv_ = ompi_neighbor_alltoallv_f
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLTOALLV,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_NEIGHBOR_ALLTOALLV = ompi_neighbor_alltoallv_f
 #pragma weak mpi_neighbor_alltoallv = ompi_neighbor_alltoallv_f
 #pragma weak mpi_neighbor_alltoallv_ = ompi_neighbor_alltoallv_f

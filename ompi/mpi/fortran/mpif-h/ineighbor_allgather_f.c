@@ -28,7 +28,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_INEIGHBOR_ALLGATHER = ompi_ineighbor_allgather_f
 #pragma weak pmpi_ineighbor_allgather = ompi_ineighbor_allgather_f
 #pragma weak pmpi_ineighbor_allgather_ = ompi_ineighbor_allgather_f
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INEIGHBOR_ALLGATHER,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_INEIGHBOR_ALLGATHER = ompi_ineighbor_allgather_f
 #pragma weak mpi_ineighbor_allgather = ompi_ineighbor_allgather_f
 #pragma weak mpi_ineighbor_allgather_ = ompi_ineighbor_allgather_f

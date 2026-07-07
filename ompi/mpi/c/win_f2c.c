@@ -28,7 +28,7 @@
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_Win_f2c = PMPI_Win_f2c
 #endif
 #define MPI_Win_f2c PMPI_Win_f2c

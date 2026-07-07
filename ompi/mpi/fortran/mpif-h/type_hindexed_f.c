@@ -26,7 +26,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_TYPE_HINDEXED = ompi_type_hindexed_f
 #pragma weak pmpi_type_hindexed = ompi_type_hindexed_f
 #pragma weak pmpi_type_hindexed_ = ompi_type_hindexed_f
@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_HINDEXED,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_TYPE_HINDEXED = ompi_type_hindexed_f
 #pragma weak mpi_type_hindexed = ompi_type_hindexed_f
 #pragma weak mpi_type_hindexed_ = ompi_type_hindexed_f
