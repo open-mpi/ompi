@@ -29,7 +29,7 @@
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ISCATTERV = ompi_iscatterv_f
 #pragma weak pmpi_iscatterv = ompi_iscatterv_f
 #pragma weak pmpi_iscatterv_ = ompi_iscatterv_f
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ISCATTERV,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ISCATTERV = ompi_iscatterv_f
 #pragma weak mpi_iscatterv = ompi_iscatterv_f
 #pragma weak mpi_iscatterv_ = ompi_iscatterv_f

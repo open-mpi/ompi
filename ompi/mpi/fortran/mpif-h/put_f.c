@@ -26,7 +26,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_PUT = ompi_put_f
 #pragma weak pmpi_put = ompi_put_f
 #pragma weak pmpi_put_ = ompi_put_f
@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PUT,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_PUT = ompi_put_f
 #pragma weak mpi_put = ompi_put_f
 #pragma weak mpi_put_ = ompi_put_f

@@ -29,7 +29,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_IMPROBE = ompi_improbe_f
 #pragma weak pmpi_improbe = ompi_improbe_f
 #pragma weak pmpi_improbe_ = ompi_improbe_f
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IMPROBE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_IMPROBE = ompi_improbe_f
 #pragma weak mpi_improbe = ompi_improbe_f
 #pragma weak mpi_improbe_ = ompi_improbe_f

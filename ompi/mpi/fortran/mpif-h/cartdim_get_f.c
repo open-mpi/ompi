@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_CARTDIM_GET = ompi_cartdim_get_f
 #pragma weak pmpi_cartdim_get = ompi_cartdim_get_f
 #pragma weak pmpi_cartdim_get_ = ompi_cartdim_get_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CARTDIM_GET,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_CARTDIM_GET = ompi_cartdim_get_f
 #pragma weak mpi_cartdim_get = ompi_cartdim_get_f
 #pragma weak mpi_cartdim_get_ = ompi_cartdim_get_f

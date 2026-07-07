@@ -34,7 +34,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_INTERCOMM_CREATE_FROM_GROUPS = ompi_intercomm_create_from_groups_f
 #pragma weak pmpi_intercomm_create_from_groups = ompi_intercomm_create_from_groups_f
 #pragma weak pmpi_intercomm_create_from_groups_ = ompi_intercomm_create_from_groups_f
@@ -57,7 +57,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_CREATE_FROM_GROUPS,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_INTERCOMM_CREATE_FROM_GROUPS = ompi_intercomm_create_from_groups_f
 #pragma weak mpi_intercomm_create_from_groups = ompi_intercomm_create_from_groups_f
 #pragma weak mpi_intercomm_create_from_groups_ = ompi_intercomm_create_from_groups_f

@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ALLREDUCE_INIT = ompi_allreduce_init_f
 #pragma weak pmpi_allreduce_init = ompi_allreduce_init_f
 #pragma weak pmpi_allreduce_init_ = ompi_allreduce_init_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLREDUCE_INIT,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ALLREDUCE_INIT = ompi_allreduce_init_f
 #pragma weak mpi_allreduce_init = ompi_allreduce_init_f
 #pragma weak mpi_allreduce_init_ = ompi_allreduce_init_f

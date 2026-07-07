@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_BUFFER_IFLUSH = ompi_buffer_iflush_f
 #pragma weak pmpi_buffer_iflush = ompi_buffer_iflush_f
 #pragma weak pmpi_buffer_iflush_ = ompi_buffer_iflush_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_IFLUSH,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_BUFFER_IFLUSH = ompi_buffer_iflush_f
 #pragma weak mpi_buffer_iflush = ompi_buffer_iflush_f
 #pragma weak mpi_buffer_iflush_ = ompi_buffer_iflush_f

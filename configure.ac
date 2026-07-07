@@ -581,18 +581,18 @@ AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
 # Check for other compiler characteristics
 #
 
-OPAL_C_WEAK_SYMBOLS
-OPAL_C_MACRO_WEAK_SYMBOLS
+OPAL_C_WEAK_ALIASES
+OPAL_C_MACRO_WEAK_ALIASES
 
 # If we want the profiling layer:
-# - If the C compiler has weak symbols, use those.
+# - If the C compiler has weak aliases, use those.
 # - If not, then set to compile the code again with #define's in a
 #   separate directory.
 
-if test "$WANT_WEAK_SYMBOLS" = "0"; then
-    OPAL_C_HAVE_WEAK_SYMBOLS=0
+if test "$WANT_WEAK_ALIASES" = "0"; then
+    OPAL_C_HAVE_WEAK_ALIASES=0
 fi
-if test "$OPAL_C_HAVE_WEAK_SYMBOLS" = "1"; then
+if test "$OPAL_C_HAVE_WEAK_ALIASES" = "1"; then
     OMPI_PROFILING_COMPILE_SEPARATELY=0
 else
     OMPI_PROFILING_COMPILE_SEPARATELY=1

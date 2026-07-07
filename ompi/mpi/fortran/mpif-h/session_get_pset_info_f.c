@@ -33,7 +33,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_SESSION_GET_PSET_INFO = ompi_session_get_pset_info_f
 #pragma weak pmpi_session_get_pset_info = ompi_session_get_pset_info_f
 #pragma weak pmpi_session_get_pset_info_ = ompi_session_get_pset_info_f
@@ -52,7 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_PSET_INFO,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_SESSION_GET_PSET_INFO = ompi_session_get_pset_info_f
 #pragma weak mpi_session_get_pset_info = ompi_session_get_pset_info_f
 #pragma weak mpi_session_get_pset_info_ = ompi_session_get_pset_info_f

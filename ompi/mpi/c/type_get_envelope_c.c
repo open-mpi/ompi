@@ -29,7 +29,7 @@
 #include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_Type_get_envelope_c = PMPI_Type_get_envelope_c
 #endif
 #define MPI_Type_get_envelope_c PMPI_Type_get_envelope_c

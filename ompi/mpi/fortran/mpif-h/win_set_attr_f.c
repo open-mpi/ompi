@@ -27,7 +27,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_WIN_SET_ATTR = ompi_win_set_attr_f
 #pragma weak pmpi_win_set_attr = ompi_win_set_attr_f
 #pragma weak pmpi_win_set_attr_ = ompi_win_set_attr_f
@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SET_ATTR,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_WIN_SET_ATTR = ompi_win_set_attr_f
 #pragma weak mpi_win_set_attr = ompi_win_set_attr_f
 #pragma weak mpi_win_set_attr_ = ompi_win_set_attr_f

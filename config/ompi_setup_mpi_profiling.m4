@@ -33,7 +33,7 @@ AC_DEFUN([OMPI_SETUP_MPI_PROFILING],[
     # both) these layers are built.
     # 1. MPI_* bindings are needed if:
     #    - Profiling is not required
-    #    - Profiling is required but weak symbols are not
+    #    - Profiling is required but weak aliases are not
     #      supported
     # 2. PMPI_* bindings are needed if profiling is required.  Hence we
     # define 2 conditionals which tell us whether each of these layers
@@ -45,6 +45,6 @@ AC_DEFUN([OMPI_SETUP_MPI_PROFILING],[
 
     AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
         test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
-    AC_DEFINE_UNQUOTED(OPAL_HAVE_WEAK_SYMBOLS, $OPAL_C_HAVE_WEAK_SYMBOLS,
-        [Whether we have weak symbols or not])
+    AC_DEFINE_UNQUOTED(OPAL_HAVE_WEAK_ALIASES, $OPAL_C_HAVE_WEAK_ALIASES,
+        [Whether we have weak aliases or not])
 ])

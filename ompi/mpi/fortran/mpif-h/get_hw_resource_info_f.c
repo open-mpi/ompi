@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_GET_HW_RESOURCE_INFO = ompi_get_hw_resource_info_f
 #pragma weak pmpi_get_hw_resource_info = ompi_get_hw_resource_info_f
 #pragma weak pmpi_get_hw_resource_info_ = ompi_get_hw_resource_info_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_HW_RESOURCE_INFO,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_GET_HW_RESOURCE_INFO = ompi_get_hw_resource_info_f
 #pragma weak mpi_get_hw_resource_info = ompi_get_hw_resource_info_f
 #pragma weak mpi_get_hw_resource_info_ = ompi_get_hw_resource_info_f

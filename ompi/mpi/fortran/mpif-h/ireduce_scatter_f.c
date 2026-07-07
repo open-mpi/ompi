@@ -28,7 +28,7 @@
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_IREDUCE_SCATTER = ompi_ireduce_scatter_f
 #pragma weak pmpi_ireduce_scatter = ompi_ireduce_scatter_f
 #pragma weak pmpi_ireduce_scatter_ = ompi_ireduce_scatter_f
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_IREDUCE_SCATTER = ompi_ireduce_scatter_f
 #pragma weak mpi_ireduce_scatter = ompi_ireduce_scatter_f
 #pragma weak mpi_ireduce_scatter_ = ompi_ireduce_scatter_f

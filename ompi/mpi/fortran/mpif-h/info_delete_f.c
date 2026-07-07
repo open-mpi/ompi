@@ -27,7 +27,7 @@
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_INFO_DELETE = ompi_info_delete_f
 #pragma weak pmpi_info_delete = ompi_info_delete_f
 #pragma weak pmpi_info_delete_ = ompi_info_delete_f
@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_DELETE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_INFO_DELETE = ompi_info_delete_f
 #pragma weak mpi_info_delete = ompi_info_delete_f
 #pragma weak mpi_info_delete_ = ompi_info_delete_f

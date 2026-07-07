@@ -28,7 +28,7 @@
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_PACK_EXTERNAL = ompi_pack_external_f
 #pragma weak pmpi_pack_external = ompi_pack_external_f
 #pragma weak pmpi_pack_external_ = ompi_pack_external_f
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PACK_EXTERNAL,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_PACK_EXTERNAL = ompi_pack_external_f
 #pragma weak mpi_pack_external = ompi_pack_external_f
 #pragma weak mpi_pack_external_ = ompi_pack_external_f

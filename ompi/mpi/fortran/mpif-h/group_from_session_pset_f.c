@@ -33,7 +33,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_GROUP_FROM_SESSION_PSET = ompi_group_from_session_pset_f
 #pragma weak pmpi_group_from_session_pset = ompi_group_from_session_pset_f
 #pragma weak pmpi_group_from_session_pset_ = ompi_group_from_session_pset_f
@@ -52,7 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_FROM_SESSION_PSET,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_GROUP_FROM_SESSION_PSET = ompi_group_from_session_pset_f
 #pragma weak mpi_group_from_session_pset = ompi_group_from_session_pset_f
 #pragma weak mpi_group_from_session_pset_ = ompi_group_from_session_pset_f

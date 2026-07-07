@@ -117,7 +117,7 @@ AS_IF([test "$enable_oshmem" = "no" && \
        AC_MSG_ERROR([Cannot continue])])
 
 # Cannot check if we can enable profiling because it is not yet
-# known whether the compiler supports weak symbols.
+# known whether the compiler supports weak aliases.
 
 
 #

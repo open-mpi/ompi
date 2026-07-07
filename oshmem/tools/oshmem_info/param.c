@@ -116,7 +116,7 @@ void oshmem_info_do_config(bool want_all)
     /* setup strings that require allocation */
     if (OMPI_BUILD_FORTRAN_BINDINGS >= OMPI_FORTRAN_MPIFH_BINDINGS) {
         (void)opal_asprintf(&fortran_binding, "yes (%s)",
-                       (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
+                       (OPAL_HAVE_WEAK_ALIASES ? "all" :
                         (OMPI_FORTRAN_CAPS ? "caps" :
                          (OMPI_FORTRAN_PLAIN ? "lower case" :
                           (OMPI_FORTRAN_SINGLE_UNDERSCORE ? "single underscore" : "double underscore")))));

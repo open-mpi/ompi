@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_INFO_GET_NKEYS = ompi_info_get_nkeys_f
 #pragma weak pmpi_info_get_nkeys = ompi_info_get_nkeys_f
 #pragma weak pmpi_info_get_nkeys_ = ompi_info_get_nkeys_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NKEYS,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_INFO_GET_NKEYS = ompi_info_get_nkeys_f
 #pragma weak mpi_info_get_nkeys = ompi_info_get_nkeys_f
 #pragma weak mpi_info_get_nkeys_ = ompi_info_get_nkeys_f
