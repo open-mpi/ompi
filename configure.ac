@@ -584,6 +584,7 @@ AC_DEFINE_UNQUOTED([OPAL_ALIGN_WORD_SIZE_INTEGERS], [$results],
 
 OPAL_C_WEAK_ALIASES
 OPAL_C_MACRO_WEAK_ALIASES
+OPAL_C_WEAK_SYMBOLS
 
 # If we want the profiling layer:
 # - If the C compiler has weak aliases, use those.
