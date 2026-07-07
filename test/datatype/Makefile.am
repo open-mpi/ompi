@@ -14,6 +14,9 @@
 # $HEADER$
 #
 
+# Make "make check" work in an uninstalled --enable-mca-dso build tree
+include $(top_srcdir)/test/Makefile.mca-dso-check
+
 if PROJECT_OMPI
     MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32 large_data partial ompi_datatype_bigcount mpi_datatype_bigcount
     MPI_CHECKS = to_self reduce_local
