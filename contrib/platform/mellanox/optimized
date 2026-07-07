@@ -1,6 +1,10 @@
 enable_mca_no_build=coll-ml,btl-uct
 enable_debug_symbols=yes
-enable_mpirun_prefix_by_default=yes
+# orterun/mpirun-prefix-by-default is deprecated and intentionally not replaced
+# by enable_prte_prefix_by_default here: platform variables are sourced into the
+# top-level configure and do not reach the PRRTE sub-configure, while leaving
+# the variable unset makes ompi_setup_prrte.m4 pass
+# --enable-prte-prefix-by-default to PRRTE on its own.
 with_devel_headers=yes
 enable_oshmem=yes
 enable_oshmem_fortran=yes
