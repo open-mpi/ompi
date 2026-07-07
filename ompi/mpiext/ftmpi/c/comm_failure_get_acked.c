@@ -19,7 +19,7 @@
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPIX_Comm_failure_get_acked = PMPIX_Comm_failure_get_acked
 #endif
 #define MPIX_Comm_failure_get_acked PMPIX_Comm_failure_get_acked

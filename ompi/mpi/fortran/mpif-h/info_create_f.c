@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_INFO_CREATE = ompi_info_create_f
 #pragma weak pmpi_info_create = ompi_info_create_f
 #pragma weak pmpi_info_create_ = ompi_info_create_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_CREATE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_INFO_CREATE = ompi_info_create_f
 #pragma weak mpi_info_create = ompi_info_create_f
 #pragma weak mpi_info_create_ = ompi_info_create_f

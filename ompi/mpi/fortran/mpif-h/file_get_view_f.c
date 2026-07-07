@@ -26,7 +26,7 @@
 #include "ompi/file/file.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_FILE_GET_VIEW = ompi_file_get_view_f
 #pragma weak pmpi_file_get_view = ompi_file_get_view_f
 #pragma weak pmpi_file_get_view_ = ompi_file_get_view_f
@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_VIEW,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_FILE_GET_VIEW = ompi_file_get_view_f
 #pragma weak mpi_file_get_view = ompi_file_get_view_f
 #pragma weak mpi_file_get_view_ = ompi_file_get_view_f

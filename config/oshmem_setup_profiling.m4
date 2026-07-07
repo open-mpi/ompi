@@ -16,20 +16,20 @@ AC_DEFUN([OSHMEM_SETUP_PROFILING],[
     AC_MSG_CHECKING([if pshmem will be enabled])
     AS_IF([test "$enable_oshmem" != "no" && \
            test "$enable_oshmem_profile" != "no"],
-          [AS_IF([test "$OPAL_C_HAVE_WEAK_SYMBOLS" -eq 1 && \
-                  test "$OPAL_C_HAVE_MACRO_WEAK_SYMBOLS" -eq 1],
+          [AS_IF([test "$OPAL_C_HAVE_WEAK_ALIASES" -eq 1 && \
+                  test "$OPAL_C_HAVE_MACRO_WEAK_ALIASES" -eq 1],
                  [ # We want OSHMEM and we have all the required weak
                    # symbol support
                   oshmem_profiling_support=1
-                  AC_MSG_RESULT([yes (weak symbols supported)])],
+                  AC_MSG_RESULT([yes (weak aliases supported)])],
                  [ # We want OSHMEM, but we do NOT have all the
-                   # required weak symbol support
+                   # required weak alias support
                   oshmem_profiling_support=0
-                  AC_MSG_RESULT([no (weak symbols not supported)])
-                  AS_IF([test "$OPAL_C_HAVE_WEAK_SYMBOLS" -eq 0],
-                        [AC_MSG_WARN([Weak symbols not supported by compiler])])
-                  AS_IF([test "$OPAL_C_HAVE_MACRO_WEAK_SYMBOLS" -eq 0],
-                       [AC_MSG_WARN([Macro weak symbols not supported by compiler])])
+                  AC_MSG_RESULT([no (weak aliases not supported)])
+                  AS_IF([test "$OPAL_C_HAVE_WEAK_ALIASES" -eq 0],
+                        [AC_MSG_WARN([Weak aliases not supported by compiler])])
+                  AS_IF([test "$OPAL_C_HAVE_MACRO_WEAK_ALIASES" -eq 0],
+                       [AC_MSG_WARN([Macro weak aliases not supported by compiler])])
                   AC_MSG_WARN([OpenSHMEM profiling is disabled.])
 
                   AS_IF([test "$enable_oshmem_profile" = "yes" && \

@@ -26,7 +26,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ALLTOALLW = ompi_alltoallw_f
 #pragma weak pmpi_alltoallw = ompi_alltoallw_f
 #pragma weak pmpi_alltoallw_ = ompi_alltoallw_f
@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALLW,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ALLTOALLW = ompi_alltoallw_f
 #pragma weak mpi_alltoallw = ompi_alltoallw_f
 #pragma weak mpi_alltoallw_ = ompi_alltoallw_f

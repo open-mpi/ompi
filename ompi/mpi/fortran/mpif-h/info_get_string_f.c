@@ -28,7 +28,7 @@
 #include "ompi/info/info.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_INFO_GET_STRING = ompi_info_get_string_f
 #pragma weak pmpi_info_get_string = ompi_info_get_string_f
 #pragma weak pmpi_info_get_string_ = ompi_info_get_string_f
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_STRING,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_INFO_GET_STRING = ompi_info_get_string_f
 #pragma weak mpi_info_get_string = ompi_info_get_string_f
 #pragma weak mpi_info_get_string_ = ompi_info_get_string_f

@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_SENDRECV_REPLACE = ompi_sendrecv_replace_f
 #pragma weak pmpi_sendrecv_replace = ompi_sendrecv_replace_f
 #pragma weak pmpi_sendrecv_replace_ = ompi_sendrecv_replace_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SENDRECV_REPLACE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_SENDRECV_REPLACE = ompi_sendrecv_replace_f
 #pragma weak mpi_sendrecv_replace = ompi_sendrecv_replace_f
 #pragma weak mpi_sendrecv_replace_ = ompi_sendrecv_replace_f

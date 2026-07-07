@@ -30,7 +30,7 @@
 #include "ompi/mpi/c/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_Type_struct = PMPI_Type_struct
 #endif
 /* undef before defining, to prevent possible redefinition when

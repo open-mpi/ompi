@@ -35,7 +35,7 @@
 # every MPI function twice.  We always build the profiling layer,
 # because the symbols that are always implemented as functions are the
 # PMPI_ namespace symbols.  We sometimes also build the non-profiling
-# layer, if weak symbols can't be used to alias the MPI_ namespace
+# layer, if weak aliases can't be used to alias the MPI_ namespace
 # into the PMPI_ namespace.
 
 include $(top_srcdir)/Makefile.ompi-rules

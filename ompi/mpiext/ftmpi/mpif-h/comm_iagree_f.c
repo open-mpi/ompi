@@ -15,7 +15,7 @@
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 #include "ompi/mpiext/ftmpi/mpif-h/prototypes_mpi.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPIX_COMM_IAGREE = ompix_comm_iagree_f
 #pragma weak pmpix_comm_iagree = ompix_comm_iagree_f
 #pragma weak pmpix_comm_iagree_ = ompix_comm_iagree_f
@@ -30,7 +30,7 @@
 #pragma weak MPIX_Comm_iagree_f = ompix_comm_iagree_f
 #pragma weak MPIX_Comm_iagree_f08 = ompix_comm_iagree_f
 
-#else /* No weak symbols */
+#else /* No weak aliases */
 OMPI_GENERATE_F77_BINDINGS(MPIX_COMM_IAGREE,
                         mpix_comm_iagree,
                         mpix_comm_iagree_,

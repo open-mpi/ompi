@@ -27,7 +27,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_STATUS_GET_SOURCE = ompi_status_get_source_f
 #pragma weak pmpi_status_get_source = ompi_status_get_source_f
 #pragma weak pmpi_status_get_source_ = ompi_status_get_source_f
@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_GET_SOURCE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_STATUS_GET_SOURCE = ompi_status_get_source_f
 #pragma weak mpi_status_get_source = ompi_status_get_source_f
 #pragma weak mpi_status_get_source_ = ompi_status_get_source_f

@@ -25,7 +25,7 @@
 #include "opal/runtime/opal.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_T_init_thread = PMPI_T_init_thread
 #endif
 #define MPI_T_init_thread PMPI_T_init_thread

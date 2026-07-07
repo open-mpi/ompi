@@ -27,7 +27,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_TESTALL = ompi_testall_f
 #pragma weak pmpi_testall = ompi_testall_f
 #pragma weak pmpi_testall_ = ompi_testall_f
@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTALL,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_TESTALL = ompi_testall_f
 #pragma weak mpi_testall = ompi_testall_f
 #pragma weak mpi_testall_ = ompi_testall_f

@@ -29,7 +29,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_FETCH_AND_OP = ompi_fetch_and_op_f
 #pragma weak pmpi_fetch_and_op = ompi_fetch_and_op_f
 #pragma weak pmpi_fetch_and_op_ = ompi_fetch_and_op_f
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FETCH_AND_OP,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_FETCH_AND_OP = ompi_fetch_and_op_f
 #pragma weak mpi_fetch_and_op = ompi_fetch_and_op_f
 #pragma weak mpi_fetch_and_op_ = ompi_fetch_and_op_f

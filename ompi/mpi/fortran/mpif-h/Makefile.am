@@ -48,7 +48,7 @@ AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 # to be built are:
 #
 # 1. When profiling is disabled
-# 2. When profiling is enabled but weak symbol support is absent
+# 2. When profiling is enabled but weak alias support is absent
 #
 
 lib_LTLIBRARIES =

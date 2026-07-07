@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_DIMS_CREATE = ompi_dims_create_f
 #pragma weak pmpi_dims_create = ompi_dims_create_f
 #pragma weak pmpi_dims_create_ = ompi_dims_create_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIMS_CREATE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_DIMS_CREATE = ompi_dims_create_f
 #pragma weak mpi_dims_create = ompi_dims_create_f
 #pragma weak mpi_dims_create_ = ompi_dims_create_f
