@@ -17,6 +17,7 @@
 # that they exercise.
 #
 
-# t, file, and datatype are run by "make check".  spc and monitoring
-# are multi-process tests: they are built, but not run by "make check".
-SUBDIRS = t file datatype monitoring spc
+# t, file, datatype, and general are run by "make check".  spc and
+# monitoring are multi-process tests: they are built, but not run by
+# "make check".
+SUBDIRS = t file datatype general monitoring spc
