@@ -25,7 +25,7 @@
 AM_CPPFLAGS="-I$(top_srcdir)/test/support"
 
 # Make "make check" work in an uninstalled --enable-mca-dso build tree
-include $(top_srcdir)/test/Makefile.mca-dso-check
+include $(top_srcdir)/Makefile.mca-dso-check
 
 if PROJECT_OMPI
   REQUIRES_OMPI = ompi_rb_tree
