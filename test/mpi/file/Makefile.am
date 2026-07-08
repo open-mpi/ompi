@@ -13,6 +13,10 @@
 # launcher and can run as part of 'make check'.  They exercise the OMPIO
 # MPI_Info hint reporting required by MPI-5.0 sec. 15.2.8 (Open MPI issue
 # #13367).
+
+# Make "make check" work in an uninstalled --enable-mca-dso build tree
+include $(top_srcdir)/test/Makefile.mca-dso-check
+
 if PROJECT_OMPI
     check_PROGRAMS = \
         file_info_defaults \
