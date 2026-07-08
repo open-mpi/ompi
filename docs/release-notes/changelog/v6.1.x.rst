@@ -8,6 +8,11 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Renamed the ``--enable-weak-symbols`` configure option to
+  ``--enable-weak-aliases``, which more accurately reflects the linker
+  feature (weak symbol *aliases*) that Open MPI actually tests for and
+  uses.  ``--enable-weak-symbols`` is retained as a deprecated synonym.
+
 - The documentation now publishes machine-readable, LLM-friendly
   artifacts for the public MPI APIs alongside the human-facing HTML and
   man pages: a JSONL API catalog, aggregate and per-interface Markdown

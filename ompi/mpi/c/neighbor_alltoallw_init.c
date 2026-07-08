@@ -38,7 +38,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_Neighbor_alltoallw_init = PMPI_Neighbor_alltoallw_init
 #endif
 #define MPI_Neighbor_alltoallw_init PMPI_Neighbor_alltoallw_init

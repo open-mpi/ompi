@@ -19,7 +19,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_DIST_GRAPH_NEIGHBORS_COUNT = ompi_dist_graph_neighbors_count_f
 #pragma weak pmpi_dist_graph_neighbors_count = ompi_dist_graph_neighbors_count_f
 #pragma weak pmpi_dist_graph_neighbors_count_ = ompi_dist_graph_neighbors_count_f
@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_NEIGHBORS_COUNT,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_DIST_GRAPH_NEIGHBORS_COUNT = ompi_dist_graph_neighbors_count_f
 #pragma weak mpi_dist_graph_neighbors_count = ompi_dist_graph_neighbors_count_f
 #pragma weak mpi_dist_graph_neighbors_count_ = ompi_dist_graph_neighbors_count_f

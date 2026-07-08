@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_GRAPHDIMS_GET = ompi_graphdims_get_f
 #pragma weak pmpi_graphdims_get = ompi_graphdims_get_f
 #pragma weak pmpi_graphdims_get_ = ompi_graphdims_get_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPHDIMS_GET,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_GRAPHDIMS_GET = ompi_graphdims_get_f
 #pragma weak mpi_graphdims_get = ompi_graphdims_get_f
 #pragma weak mpi_graphdims_get_ = ompi_graphdims_get_f

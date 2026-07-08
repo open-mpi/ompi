@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_REMOVE_ERROR_CODE = ompi_remove_error_code_f
 #pragma weak pmpi_remove_error_code = ompi_remove_error_code_f
 #pragma weak pmpi_remove_error_code_ = ompi_remove_error_code_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REMOVE_ERROR_CODE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_REMOVE_ERROR_CODE = ompi_remove_error_code_f
 #pragma weak mpi_remove_error_code = ompi_remove_error_code_f
 #pragma weak mpi_remove_error_code_ = ompi_remove_error_code_f

@@ -26,7 +26,7 @@
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_GATHERV_INIT = ompi_gatherv_init_f
 #pragma weak pmpi_gatherv_init = ompi_gatherv_init_f
 #pragma weak pmpi_gatherv_init_ = ompi_gatherv_init_f
@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GATHERV_INIT,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_GATHERV_INIT = ompi_gatherv_init_f
 #pragma weak mpi_gatherv_init = ompi_gatherv_init_f
 #pragma weak mpi_gatherv_init_ = ompi_gatherv_init_f

@@ -33,7 +33,7 @@
    names (MPI_WTICK_F90 and MPI_WTIME_F90 vs. MPI_WTICK and MPI_WTIME)
    so that the F90 bindings can call these functions directly.
 
-   Rather than try to be clever with weak symbols, especially since
+   Rather than try to be clever with weak aliases, especially since
    the function implementations are 1 line long, it just seemed
    simpler to provide 4 copies of each [1 line] function. */
 

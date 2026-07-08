@@ -745,7 +745,7 @@ end type test_mpi_handle],
     #     disabled
     # 1. MPI_<foo> bindings are needed if:
     #   - Profiling is not required
-    #   - Profiling is required but weak symbols are not supported
+    #   - Profiling is required but weak aliases are not supported
     # 2. PMPI_<foo> bindings are needed if profiling is required.
     #
     # Hence we define 2 conditionals which tell us whether each of
@@ -825,13 +825,13 @@ end type test_mpi_handle],
     AC_SUBST(OMPI_F08_SUFFIX)
     AC_SUBST(OMPI_F_SUFFIX)
 
-    # This is used to generate weak symbols (or not) in
+    # This is used to generate weak aliases (or not) in
     # ompi/mpi/fortran/mpif-h/<foo>_f.c, and
     # ompi/mpi/fortran/configure-fortran-output.h.
     AC_SUBST(OMPI_FORTRAN_NEED_WRAPPER_ROUTINES)
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_NEED_WRAPPER_ROUTINES,
                        [$OMPI_FORTRAN_NEED_WRAPPER_ROUTINES],
-                       [Whether the mpi_f08 implementation is using wrapper routines ("bad" Fortran compiler) or weak symbols ("good" Fortran compiler) for the F08 interface definition implementations])
+                       [Whether the mpi_f08 implementation is using wrapper routines ("bad" Fortran compiler) or weak aliases ("good" Fortran compiler) for the F08 interface definition implementations])
 
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_F08_HANDLE_SIZE,
                        $OMPI_FORTRAN_F08_HANDLE_SIZE,

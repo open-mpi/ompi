@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_IEXSCAN = ompi_iexscan_f
 #pragma weak pmpi_iexscan = ompi_iexscan_f
 #pragma weak pmpi_iexscan_ = ompi_iexscan_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IEXSCAN,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_IEXSCAN = ompi_iexscan_f
 #pragma weak mpi_iexscan = ompi_iexscan_f
 #pragma weak mpi_iexscan_ = ompi_iexscan_f

@@ -23,7 +23,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_DIST_GRAPH_CREATE_ADJACENT = ompi_dist_graph_create_adjacent_f
 #pragma weak pmpi_dist_graph_create_adjacent = ompi_dist_graph_create_adjacent_f
 #pragma weak pmpi_dist_graph_create_adjacent_ = ompi_dist_graph_create_adjacent_f
@@ -42,7 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_DIST_GRAPH_CREATE_ADJACENT,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_DIST_GRAPH_CREATE_ADJACENT = ompi_dist_graph_create_adjacent_f
 #pragma weak mpi_dist_graph_create_adjacent = ompi_dist_graph_create_adjacent_f
 #pragma weak mpi_dist_graph_create_adjacent_ = ompi_dist_graph_create_adjacent_f
@@ -61,7 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIST_GRAPH_CREATE_ADJACENT,
                             (comm_old, indegree,  sources, sourceweights, outdegree, destinations, destweights, info, reorder, comm_graph, ierr) )
 #endif
 
-#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_SYMBOLS
+#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_ALIASES
 #define ompi_dist_graph_create_adjacent_f pompi_dist_graph_create_adjacent_f
 #endif
 #endif

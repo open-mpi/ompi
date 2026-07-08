@@ -291,19 +291,29 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_PTY_SUPPORT], [$OPAL_ENABLE_PTY_SUPPORT],
 
 
 #
-# Do we want to disable weak symbols for some reason?
+# Do we want to disable weak aliases for some reason?
 #
 
-AC_MSG_CHECKING([if want weak symbol support])
+AC_ARG_ENABLE([weak-aliases],
+    [AS_HELP_STRING([--enable-weak-aliases],
+                   [use weak symbol aliases, if available (default: enabled)])])
+# --enable-weak-symbols is the historical name for this option; keep it
+# as a deprecated synonym for --enable-weak-aliases.
 AC_ARG_ENABLE([weak-symbols],
     [AS_HELP_STRING([--enable-weak-symbols],
-                   [use weak symbols, if available (default: enabled)])])
-if test "$enable_weak_symbols" != "no"; then
+                   [Deprecated synonym for --enable-weak-aliases])])
+AS_IF([test -n "$enable_weak_symbols"],
+      [AC_MSG_WARN([--enable-weak-symbols is deprecated; please use --enable-weak-aliases instead])
+       AS_IF([test -z "$enable_weak_aliases"],
+             [enable_weak_aliases=$enable_weak_symbols])])
+
+AC_MSG_CHECKING([if want weak alias support])
+if test "$enable_weak_aliases" != "no"; then
     AC_MSG_RESULT([yes])
-    WANT_WEAK_SYMBOLS=1
+    WANT_WEAK_ALIASES=1
 else
     AC_MSG_RESULT([no])
-    WANT_WEAK_SYMBOLS=0
+    WANT_WEAK_ALIASES=0
 fi
 
 

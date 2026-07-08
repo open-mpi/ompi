@@ -25,7 +25,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_TYPE_CREATE_KEYVAL = ompi_type_create_keyval_f
 #pragma weak pmpi_type_create_keyval = ompi_type_create_keyval_f
 #pragma weak pmpi_type_create_keyval_ = ompi_type_create_keyval_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_TYPE_CREATE_KEYVAL, pmpi_type_create_keyval,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_TYPE_CREATE_KEYVAL = ompi_type_create_keyval_f
 #pragma weak mpi_type_create_keyval = ompi_type_create_keyval_f
 #pragma weak mpi_type_create_keyval_ = ompi_type_create_keyval_f

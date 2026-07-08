@@ -286,7 +286,7 @@ struct MPI_Status_ABI {
 def print_profiling_header(fn_name, out):
     """Print the profiling header code."""
     out.dump('#if OMPI_BUILD_MPI_PROFILING')
-    out.dump('#if OPAL_HAVE_WEAK_SYMBOLS')
+    out.dump('#if OPAL_HAVE_WEAK_ALIASES')
     out.dump(f'#pragma weak {fn_name} = P{fn_name}')
     out.dump('#endif')
     out.dump(f'#define {fn_name} P{fn_name}')
