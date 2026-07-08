@@ -230,6 +230,29 @@ ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.h
 
 ompi/mpi/tool/profile/*.c
 
+ompi/test/t/mpi_t_category_get_events
+
+ompi/test/file/file_info_defaults
+ompi/test/file/file_info_hints
+ompi/test/file/file_info_memkind
+ompi/test/file/file_info_set_view
+
+ompi/test/datatype/checksum
+ompi/test/datatype/ddt_pack
+ompi/test/datatype/ddt_raw
+ompi/test/datatype/ddt_raw2
+ompi/test/datatype/ddt_test
+ompi/test/datatype/external32
+ompi/test/datatype/large_data
+ompi/test/datatype/mpi_datatype_bigcount
+ompi/test/datatype/ompi_datatype_bigcount
+ompi/test/datatype/partial
+ompi/test/datatype/position
+ompi/test/datatype/position_noncontig
+ompi/test/datatype/reduce_local
+ompi/test/datatype/to_self
+ompi/test/datatype/unpack_ooo
+
 ompi/mpiext/affinity/c/example
 
 ompi/mpiext/ftmpi/c/profile/pcomm_agree.c
@@ -310,8 +333,6 @@ opal/tools/wrappers/opal.pc
 
 opal/util/show_help_content.c
 opal/util/keyval/keyval_lex.c
-
-test/mpi/t/mpi_t_category_get_events
 
 test/monitoring/aggregate_profile.pl
 test/monitoring/profile2mat.pl
@@ -452,25 +473,10 @@ test/class/opal_hotel
 test/class/opal_interval_tree
 test/class/opal_ring_buffer
 
-test/datatype/ddt_test
-test/datatype/ddt_pack
-test/datatype/external32
-test/datatype/to_self
-test/datatype/checksum
-test/datatype/position
-test/datatype/ddt_raw
-test/datatype/ddt_raw2
-test/datatype/large_data
 test/datatype/opal_datatype_test
-test/datatype/partial
-test/datatype/position_noncontig
-test/datatype/reduce_local
-test/datatype/unpack_ooo
-test/datatype/unpack_hetero
 test/datatype/opal_datatype_bigcount
-test/datatype/ompi_datatype_bigcount
-test/datatype/mpi_datatype_bigcount
 test/datatype/opal_ddt_api
+test/datatype/unpack_hetero
 
 test/event/signal-test
 test/event/event-test
@@ -483,13 +489,6 @@ test/monitoring/test_overhead
 test/monitoring/test_pvar_access
 
 test/mpool/mpool_memkind
-
-test/mpi/environment/chello
-
-test/mpi/file/file_info_defaults
-test/mpi/file/file_info_hints
-test/mpi/file/file_info_memkind
-test/mpi/file/file_info_set_view
 
 test/runtime/parse_context
 test/runtime/sigchld
