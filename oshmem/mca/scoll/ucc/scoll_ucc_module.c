@@ -362,8 +362,9 @@ int mca_scoll_ucc_team_create(mca_scoll_ucc_module_t *ucc_module,
             sizeof(osh_group->proc_vpids[0]);
     map.array.map                 = (void *)osh_group->proc_vpids;
     ucc_team_params_t team_params = {
-        .mask = UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE |
-                UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_FLAGS,
+        .mask = UCC_TEAM_PARAM_FIELD_EP_MAP | UCC_TEAM_PARAM_FIELD_EP |
+                UCC_TEAM_PARAM_FIELD_EP_RANGE | UCC_TEAM_PARAM_FIELD_OOB |
+                UCC_TEAM_PARAM_FIELD_FLAGS,
         .oob =
             {
                 .allgather = oob_allgather,
