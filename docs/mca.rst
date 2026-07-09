@@ -673,23 +673,31 @@ MCA Parameter Changes Between Open MPI 4.x and newer releases
 When Open MPI :ref:`switched from using ORTE to PRRTE as its run-time
 environment, <label-running-role-of-pmix-and-prte>` some MCA
 parameters were renamed to be more consistent and/or allow more
-flexible behavior.  The deprecated Open MPI MCA parameters listed
-below are currently replaced by a corresponding new PRRTE parameter,
-but may be removed in future releases.
+flexible behavior.  The Open MPI (ORTE-era) MCA parameters in the left column below no
+longer exist; use the corresponding replacement shown in the right
+column.
 
-.. note:: In all cases listed below, the deprecated MCA parameter is
-          an Open MPI MCA parameter, meaning that its corresponding
-          environment variable was prefixed with ``OMPI_MCA_`` (e.g.,
-          ``OMPI_MCA_orte_xml_output``).  However, the corresponding
-          new MCA parameter is a PRRTE MCA parameter, meaning that its
-          corresponding environment variable is prefixed with
-          ``PRTE_MCA_`` (e.g., ``PRTE_MCA_output``).
+.. note:: The old MCA parameters in the left column were Open MPI
+          parameters, meaning that their corresponding environment
+          variables were prefixed with ``OMPI_MCA_`` (e.g.,
+          ``OMPI_MCA_orte_xml_output``).  Most of their replacements are
+          PRRTE parameters, meaning that their corresponding environment
+          variables are prefixed with ``PRTE_MCA_`` (e.g.,
+          ``PRTE_MCA_output``).  The one exception is
+          ``ompi_stream_buffering``, which remains an Open MPI parameter
+          (``OMPI_MCA_ompi_stream_buffering``).
 
           .. important:: Yes, that's a single ``R`` in the
                          ``PRTE_MCA_`` environment variable prefix.
                          `See this explanation
-                         <https://docs.prrte.org/>`_ for the when one
-                         R or two R's are used in the PRRTE name.
+                         <https://docs.prrte.org/>`_ for when one R or
+                         two R's are used in the PRRTE name.
+
+.. note:: ``mapby`` and ``bindto`` are the current names for these two
+          parameters.  The older ``rmaps_default_mapping_policy`` and
+          ``hwloc_default_binding_policy`` names still work as deprecated
+          synonyms, but new configurations should use ``mapby`` and
+          ``bindto``.
 
 
 .. list-table::
@@ -794,7 +802,7 @@ but may be removed in future releases.
       - ``rmaps_base_no_schedule_local``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``[<mapping>]:nolocal``
 
@@ -803,7 +811,7 @@ but may be removed in future releases.
       - ``rmaps_base_oversubscribe``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``[<mapping>]:oversubscribe``
 
@@ -812,7 +820,7 @@ but may be removed in future releases.
       - ``rmaps_base_no_oversubscribe``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``[<mapping>]:nooversubscribe``
 
@@ -820,7 +828,7 @@ but may be removed in future releases.
       - ``hwloc_base_use_hwthreads_as_cpus``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``[<mapping>]:hwtcpus``
 
@@ -829,23 +837,23 @@ but may be removed in future releases.
       - ``hwloc_base_cpu_set``
 
         Value: ``<value>``
-      - ``rmaps_default_mapping_policy``
+      - ``hwloc_default_cpu_list``
 
-        Value: ``pe-list=<value>``
+        Value: ``<value>``
 
     * - List of processor IDs to bind processes to
       - ``hwloc_base_cpu_list``
 
         Value: ``<value>``
-      - ``rmaps_default_mapping_policy``
+      - ``hwloc_default_cpu_list``
 
-        Value: ``pe-list=<value>``
+        Value: ``<value>``
 
     * - Bind processes to cores
       - ``hwloc_base_bind_to_core``
 
         Values: boolean
-      - ``hwloc_default_binding_policy``
+      - ``bindto``
 
         Value: ``core``
 
@@ -853,7 +861,7 @@ but may be removed in future releases.
       - ``hwloc_base_bind_to_socket``
 
         Values: boolean
-      - ``hwloc_default_binding_policy``
+      - ``bindto``
 
         Value: ``package``
 
@@ -861,7 +869,7 @@ but may be removed in future releases.
       - ``rmaps_base_bynode``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``node``
 
@@ -869,7 +877,7 @@ but may be removed in future releases.
       - ``rmaps_base_bycore``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``core``
 
@@ -877,7 +885,7 @@ but may be removed in future releases.
       - ``rmaps_base_byslot``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``slot``
 
@@ -885,7 +893,7 @@ but may be removed in future releases.
       - ``rmaps_base_cpus_per_rank``
 
         Value: ``<X>``
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``[<mapping>]:pe=<X>``
 
@@ -893,7 +901,7 @@ but may be removed in future releases.
       - ``rmaps_ppr_n_pernode``
 
         Value: ``<X>``
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``ppr:<X>:node``
 
@@ -901,7 +909,7 @@ but may be removed in future releases.
       - ``rmaps_ppr_pernode``
 
         Values: boolean
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``ppr:1:node``
 
@@ -909,7 +917,7 @@ but may be removed in future releases.
       - ``rmaps_ppr_n_persocket``
 
         Value: integer ``<X>``
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``ppr:<X>:package``
 
@@ -918,7 +926,7 @@ but may be removed in future releases.
       - ``rmaps_ppr_pattern``
 
         Value: ``<value>``
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``ppr:<value>``
 
@@ -926,7 +934,7 @@ but may be removed in future releases.
       - ``orte_rankfile``
 
         Value: ``<filename>``
-      - ``rmaps_default_mapping_policy``
+      - ``mapby``
 
         Value: ``rankfile:file=<filename>``
 
@@ -948,7 +956,7 @@ Simple values, where only the name of the MCA parameter changed
    export OMPI_MCA_orte_ess_base_stream_buffering=2
 
    # New environment variable: (integer value)
-   export PRTE_MCA_ompi_stream_buffering=2
+   export OMPI_MCA_ompi_stream_buffering=2
 
 .. code-block:: ini
 
@@ -1043,7 +1051,7 @@ Converting mapping parameters
 
 Mapping parameters were previously prefixed with ``rmaps_base_`` or ``hwloc_base_``
 (and also the ``orte_rankfile`` parameter).  These have been updated
-to the ``rmaps_default_mapping_policy`` and ``hwloc_default_binding_policy``
+to the ``mapby`` and ``bindto``
 parameters to be more consistent and indicate that they are the *default*
 mapping for processes.  Some of the old parameters are now values for a
 new parameter and some are now suffixes, as shown in the examples below.
@@ -1057,7 +1065,7 @@ parameter values:
    export OMPI_MCA_rmaps_base_bycore=1
 
    # New environment variable: (parameter value)
-   export PRTE_MCA_rmaps_default_mapping_policy=core
+   export PRTE_MCA_mapby=core
 
 .. code-block:: ini
 
@@ -1065,7 +1073,7 @@ parameter values:
    export OMPI_MCA_hwloc_base_bind_to_socket=1
 
    # New environment variable: (parameter value)
-   export PRTE_MCA_hwloc_default_binding_policy=package
+   export PRTE_MCA_bindto=package
 
 
 The examples below show conversions from old parameters that have integer or
@@ -1077,7 +1085,7 @@ string values to new parameter values with those same values:
    export OMPI_MCA_hwloc_base_cpu_set=1,3,8
 
    # New environment variable: (parameter value)
-   export PRTE_MCA_rmaps_default_mapping_policy=pe-list=1,3,8
+   export PRTE_MCA_hwloc_default_cpu_list=1,3,8
 
 .. code-block:: ini
 
@@ -1085,7 +1093,7 @@ string values to new parameter values with those same values:
    export OMPI_MCA_rmaps_ppr_n_persocket=4
 
    # New environment variable: (parameter value)
-   export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package
+   export PRTE_MCA_mapby=ppr:4:package
 
 .. code-block:: ini
 
@@ -1093,7 +1101,7 @@ string values to new parameter values with those same values:
    export OMPI_MCA_orte_rankfile=rankfile.txt
 
    # New environment variable: (parameter value)
-   export PRTE_MCA_rmaps_default_mapping_policy=rankfile:file=rankfile.txt
+   export PRTE_MCA_mapby=rankfile:file=rankfile.txt
 
 The examples below show conversions from old parameters that map to suffixes
 for new parameter values:
@@ -1104,7 +1112,7 @@ for new parameter values:
    export OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
 
    # New environment variable: (standalone suffix)
-   export PRTE_MCA_rmaps_default_mapping_policy=:hwtcpus
+   export PRTE_MCA_mapby=:hwtcpus
 
 .. code-block:: ini
 
@@ -1112,7 +1120,7 @@ for new parameter values:
    export OMPI_MCA_rmaps_base_oversubscribe=1
 
    # New environment variable: (standalone suffix)
-   export PRTE_MCA_rmaps_default_mapping_policy=:oversubscribe
+   export PRTE_MCA_mapby=:oversubscribe
 
 The examples below show conversions from old parameters that map to suffixes
 combined with parameters that have values:
@@ -1125,8 +1133,29 @@ combined with parameters that have values:
    # Old environment variable: (boolean value)
    export OMPI_MCA_rmaps_base_oversubscribe=1
 
-   # New environment variable: (suffix on value)
-   export PRTE_MCA_rmaps_default_mapping_policy=pe-list=1,3,8:oversubscribe
+   # New environment variables: (separate parameters)
+   export PRTE_MCA_hwloc_default_cpu_list=1,3,8
+   export PRTE_MCA_mapby=:oversubscribe
+
+.. note:: ``hwloc_default_cpu_list`` restricts the set of CPUs that
+          PRRTE may use; it does not bind each process to all of the
+          listed CPUs.  With the default mapping and binding policies,
+          the example above therefore places one process on CPU 1, one
+          on CPU 3, and one on CPU 8, each bound to just that one CPU.
+
+          To bind each process to *all* of the listed CPUs, use the
+          ``pe-list`` mapping directive instead:
+
+          .. code-block:: sh
+
+             shell$ mpirun --map-by pe-list=1,3,8:oversubscribe ...
+
+          Adding the ``ordered`` qualifier (``--map-by
+          pe-list=1,3,8:ordered:oversubscribe``) yields the
+          one-process-per-listed-CPU placement described above.  Note
+          that ``pe-list`` is only accepted on the command line; PRRTE
+          rejects it as a default mapping policy (i.e., as the value
+          of the ``mapby`` MCA parameter).
 
 .. code-block:: ini
 
@@ -1137,7 +1166,7 @@ combined with parameters that have values:
    export OMPI_MCA_hwloc_base_use_hwthreads_as_cpus=1
 
    # New environment variable: (suffix on value)
-   export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package:hwtcpus
+   export PRTE_MCA_mapby=ppr:4:package:hwtcpus
 
 Multiple suffixes may be appended to a mapping value:
 
@@ -1151,4 +1180,4 @@ Multiple suffixes may be appended to a mapping value:
    export OMPI_MCA_rmaps_base_oversubscribe=1
 
    # New environment variable: (suffix on value)
-   export PRTE_MCA_rmaps_default_mapping_policy=ppr:4:package:hwtcpus:oversubscribe
+   export PRTE_MCA_mapby=ppr:4:package:hwtcpus:oversubscribe
