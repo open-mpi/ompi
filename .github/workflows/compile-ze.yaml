@@ -28,6 +28,7 @@ jobs:
             submodules: recursive
     - name: Build Open MPI
       run: |
+        export AUTOMAKE_JOBS=$(nproc)
         ./autogen.pl
         ./configure --prefix=${PWD}/install --disable-mpi-fortran  --disable-oshmem --with-ze --disable-silent-rules
         make -j
