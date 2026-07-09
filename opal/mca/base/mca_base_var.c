@@ -81,6 +81,7 @@ char *mca_base_env_list = NULL;
 char *mca_base_env_list_sep = MCA_BASE_ENV_LIST_SEP_DEFAULT;
 char *mca_base_env_list_internal = NULL;
 static bool mca_base_var_suppress_override_warning = false;
+static bool mca_base_var_suppress_deprecated_warning = false;
 static opal_list_t mca_base_var_file_values;
 static opal_list_t mca_base_envar_file_values;
 static opal_list_t mca_base_var_override_values;
@@ -457,19 +458,10 @@ int mca_base_var_cache_files(bool rel_path_search)
         return ret;
     }
 
-    /* Disable reading MCA parameter files. */
+    /* Disable reading MCA parameter files. The suppression variables registered below still
+     * need to be created in this case so their values can be picked up from the environment. */
     if (0 == strcmp(mca_base_var_files, "none")) {
-        return OPAL_SUCCESS;
-    }
-
-    mca_base_var_suppress_override_warning = false;
-    ret = mca_base_var_register(
-        "opal", "mca", "base", "suppress_override_warning",
-        "Suppress warnings when attempting to set an overridden value (default: false)",
-        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_LOCAL,
-        &mca_base_var_suppress_override_warning);
-    if (0 > ret) {
-        return ret;
+        goto register_suppress;
     }
 
     /* Aggregate MCA parameter files
@@ -545,6 +537,29 @@ int mca_base_var_cache_files(bool rel_path_search)
 
     if (0 == access(mca_base_var_override_file, F_OK)) {
         read_files(mca_base_var_override_file, &mca_base_var_override_values, OPAL_ENV_SEP);
+    }
+
+register_suppress:
+    /* Register the warning-suppression variables only after the MCA parameter files have
+     * been read and cached so file-provided values are applied to the backing stores. */
+    mca_base_var_suppress_deprecated_warning = false;
+    ret = mca_base_var_register(
+        "opal", "mca", "base", "suppress_deprecated_warning",
+        "Suppress warnings when a deprecated MCA parameter is set (default: false)",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_LOCAL,
+        &mca_base_var_suppress_deprecated_warning);
+    if (0 > ret) {
+        return ret;
+    }
+
+    mca_base_var_suppress_override_warning = false;
+    ret = mca_base_var_register(
+        "opal", "mca", "base", "suppress_override_warning",
+        "Suppress warnings when attempting to set an overridden value (default: false)",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_LOCAL,
+        &mca_base_var_suppress_override_warning);
+    if (0 > ret) {
+        return ret;
     }
 
     return OPAL_SUCCESS;
@@ -1692,7 +1707,7 @@ static int var_set_from_env(mca_base_var_t *var, mca_base_var_t *original)
         }
     }
 
-    if (deprecated) {
+    if (deprecated && !mca_base_var_suppress_deprecated_warning) {
         const char *new_variable = "None (going away)";
 
         if (is_synonym) {
@@ -1769,7 +1784,7 @@ static int var_set_from_file(mca_base_var_t *var, mca_base_var_t *original,
             return OPAL_ERR_NOT_FOUND;
         }
 
-        if (deprecated) {
+        if (deprecated && !mca_base_var_suppress_deprecated_warning) {
             const char *new_variable = "None (going away)";
 
             if (is_synonym) {
