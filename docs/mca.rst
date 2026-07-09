@@ -264,8 +264,6 @@ shells):
 Tuning MCA parameter files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. error:: TODO This entire section needs to be checked for correctness.
-
 Simple text files can be used to set MCA parameter values for a
 specific application.
 
@@ -301,8 +299,9 @@ can be added to the command line as follows:
    shell$ mpirun -np 2 --tune foo.conf,bar.conf a.out
 
 The contents of tuned files consist of one or more lines, each of
-which contain zero or more `-x` and `--mca` options.  Comments are not
-allowed.  For example, the following tuned file:
+which contain zero or more ``-x`` and ``--mca`` options.  Empty lines
+and lines beginning with the ``#`` character are ignored.  For example,
+the following tuned file:
 
 .. code-block::
 
@@ -322,13 +321,11 @@ is equivalent to:
 
 Although the typical use case for tuned parameter files is to be
 specified on the command line, they can also be set as MCA parameters
-in the environment.  The MCA parameter ``mca_base_envvar_file_prefix``
+in the environment.  The MCA parameter ``mca_base_envar_file_prefix``
 contains a comma-delimited list of tuned parameter files exactly as
-they would be passed to the ``--tune`` command line option.  The MCA
-parameter ``mca_base_envvar_file_path`` specifies the path to search
-for tuned files with relative paths.
-
-.. error:: TODO Check that these MCA var names ^^ are correct.
+they would be passed to the ``--tune`` command line option.  Tuned
+files named with relative paths are resolved against the directories
+listed in the ``mca_base_param_file_path`` MCA parameter.
 
 Configuration files
 ^^^^^^^^^^^^^^^^^^^
@@ -361,9 +358,9 @@ By default, two files are searched (in order):
 #. ``$prefix/etc/openmpi-mca-params.conf``: The system-supplied set
    of values has a lower precedence.
 
-More specifically, the MCA parameter ``mca_param_files`` specifies a
-colon-delimited path of files to search for MCA parameters.  Files to
-the left have lower precedence; files to the right are higher
+More specifically, the MCA parameter ``mca_base_param_files`` specifies
+a comma-delimited list of files to search for MCA parameters.  Files to
+the left have *higher* precedence; files to the right have lower
 precedence.
 
 .. note:: Keep in mind that, just like components, these parameter
@@ -379,8 +376,6 @@ precedence.
           customization, which is especially relevant in heterogeneous
           environments.
 
-.. error:: TODO This table needs to be checked for correctness.
-
 .. warning:: Setting Open MPI MCA parameters via configuration files
              entails editing (by default) the ``mca-params.conf`` or
              ``openmpi-mca-params.conf`` files.  When setting PMIx-
@@ -392,11 +387,22 @@ precedence.
              |          | ``$prefix/etc/openmpi-mca-params.conf``  |
              +----------+------------------------------------------+
              | PMIx     | ``$HOME/.pmix/mca-params.conf`` or       |
-             |          | ``$prefix/etc/openpmix-mca-params.conf`` |
+             |          | ``$prefix/etc/pmix-mca-params.conf``     |
              +----------+------------------------------------------+
-             | PRRTE    | ``$HOME/.prrte/mca-params.conf`` or      |
+             | PRRTE    | ``$HOME/.prte/mca-params.conf`` or       |
              |          | ``$prefix/etc/prte-mca-params.conf``     |
              +----------+------------------------------------------+
+
+.. note:: By default, PRRTE and PMIx read only their own configuration
+          files (the PMIx and PRRTE rows above), not Open MPI's
+          ``openmpi-mca-params.conf``.  If you set the ``OMPIHOME``
+          environment variable, however, the runtime will additionally
+          read ``$OMPIHOME/etc/openmpi-mca-params.conf`` and apply any
+          PRRTE- and PMIx-related MCA parameters it finds there.  This
+          is a convenient way to keep the PRRTE and PMIx settings for a
+          given Open MPI installation alongside the Open MPI settings in
+          a single file.  Values already set in the environment take
+          precedence and are not overwritten.
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -463,7 +469,7 @@ instead of being printed to stdout.  For example:
 .. code-block:: sh
 
    shell$ mpirun --mca mpi_show_mca_params enviro \
-       --mca mpi_show_mca_param_file /tmp/foo.txt hello_c
+       --mca mpi_show_mca_params_file /tmp/foo.txt hello_c
    Hello, World, I am 0 of 1
    shell$ cat /tmp/foo.txt
    #
