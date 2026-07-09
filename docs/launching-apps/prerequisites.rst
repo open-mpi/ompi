@@ -249,8 +249,3 @@ uses ``--prefix``:
 .. code-block::
 
    shell$ /opt/openmpi-VERSION/bin/mpirun -n 4 a.out
-
-.. error:: TODO Josh H points out that we might also want to mention
-           ``OMPIHOME`` for PRRTE's ``.ini`` file here.  Leaving this
-           as a future to-do item, since PRRTE's ``.ini`` file support
-           does not exist yet.
