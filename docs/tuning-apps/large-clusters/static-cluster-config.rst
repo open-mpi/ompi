@@ -1,43 +1,57 @@
 Static cluster configurations
 =============================
 
-.. error:: This entire section needs to be checked.
-
 Clusters rarely change from day-to-day, and large clusters rarely
 change at all.  If you know your cluster's configuration, there are
 several steps you can take to both reduce Open MPI's memory footprint
 and reduce the launch time of large-scale applications.  These steps
 use a combination of build-time configuration options to eliminate
-components |mdash| thus eliminating their libraries and avoiding
-unnecessary component open/close operations |mdash| as well as
-run-time MCA parameters to specify what modules to use by default for
-most users.
+components |mdash| making Open MPI's libraries smaller and avoiding the
+work of registering and querying components that will never be used
+|mdash| as well as run-time MCA parameters to select the components to
+use by default for most users.
 
-One way to save memory is to avoid building components that will
-actually never be selected by the system. Unless MCA parameters
-specify which components to open, built components are always opened
-and tested as to whether or not they should be selected for use. If
-you know that a component can build on your system, but due to your
-cluster's configuration will never actually be selected, then it is
-best to simply configure OMPI to not build that component by using the
-``--enable-mca-no-build`` configure option.
+.. note:: Since Open MPI v5.0, components are, by default, compiled
+   directly into Open MPI's core libraries (for example,
+   ``libopen-pal`` and ``libmpi``) rather than being built as separate
+   dynamically-loaded plugins (DSOs).  Even when a component is compiled
+   in this way, it is still registered and queried at run time so that
+   each framework can decide which of its components to use.  The
+   techniques on this page |mdash| not building components you do not
+   need, and choosing framework defaults up front |mdash| therefore
+   still reduce both memory footprint and startup work.  See
+   :ref:`Components ("plugins"): static or DSO?
+   <label-install-packagers-dso-or-not>` for more about the static and
+   DSO build models and how to select between them.
 
-For example, if you know that your system will only utilize the
-``ob1`` component of the PML framework, then you can ``no_build`` all
-the others. This not only reduces memory in the libraries, but also
-reduces memory footprint that is consumed by Open MPI opening all the
-built components to see which of them can be selected to run.
+One way to save memory is to avoid building components that will never
+be selected on your system.  Every component that is built into Open
+MPI is registered and tested at run time to decide whether it should be
+selected, unless MCA parameters restrict which components are
+considered.  If you know that a component can build on your system but,
+due to your cluster's configuration, will never actually be selected,
+then it is best to configure Open MPI to not build that component by
+using the ``--enable-mca-no-build`` configure option.
 
-In some cases, however, a user may optionally choose to use a
-component other than the default.  For example, you may want to build
-all of the PRRTE ``routed`` framework components, even though the vast
-majority of users will simply use the default ``debruijn``
+For example, if you know that your system will only use the ``ob1``
+component of the PML framework, then you can ``no_build`` all the
+others.  This both makes the resulting libraries smaller and avoids the
+startup cost of registering and querying components that would never be
+used.
+
+In some cases, however, you may want to keep a framework's other
+components built |mdash| so that users retain the option to select them
+|mdash| even though most users will use a single default.  For example,
+you may want to keep all of the ``pml`` framework's components built (so
+that users can still select ``ucx`` or ``cm`` when appropriate), even
+though the vast majority of users will use the default ``ob1``
 component.  This means you have to allow the system to build the other
 components, even though they may rarely be used.
 
 You can still save launch time and memory, though, by setting the
-``routed=debruijn`` MCA parameter in the default MCA parameter file.
-This causes OMPI to not open the other components during startup, but
-allows users to override this on their command line or in their
-environment so no functionality is lost |mdash| you just save some
+``pml = ob1`` MCA parameter in the default MCA parameter file.  This
+tells Open MPI to consider only the ``ob1`` component at startup, rather
+than registering and querying every ``pml`` component, but still allows
+users to override the setting on their command line or in their
+environment |mdash| so no functionality is lost, and you save some
 memory and time.
