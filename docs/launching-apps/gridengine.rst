@@ -177,9 +177,7 @@ like this batch script can be used:
    #$ -pe ompi 16
    #$ -j y
    #$ -l h_rt=00:20:00
-   mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
-
-.. error:: Ralph: Does ``orte_forward_job_control`` still exist?
+   mpirun -n 16 mpi-hello-world
 
 However, one has to make one of two changes to this script for things
 to work properly.  By default, a SIGUSR1 signal will kill a shell
@@ -196,7 +194,7 @@ to handle it:
    #$ -pe ompi 16
    #$ -j y
    #$ -l h_rt=00:20:00
-   exec mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
+   exec mpirun -n 16 mpi-hello-world
 
 Alternatively, one can catch the signals in the script instead of doing
 an exec on the mpirun:
@@ -225,7 +223,7 @@ an exec on the mpirun:
    trap sigusr1handler SIGUSR1
    trap sigusr2handler SIGUSR2
 
-   mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
+   mpirun -n 16 mpi-hello-world
 
 Grid Engine job suspend / resume support
 ----------------------------------------
@@ -236,16 +234,14 @@ To suspend the job, you send a SIGTSTP (not SIGSTOP) signal to
 a SIGCONT signal to :ref:`mpirun(1) <man1-mpirun>` which will be caught and forwarded to
 the ``mpi-hello-world``.
 
-By default, this feature is not enabled.  This means that both the
-SIGTSTP and SIGCONT signals will simply be consumed by the :ref:`mpirun(1) <man1-mpirun>`
-process.  To have them forwarded, you have to run the job with ``--mca
-orte_forward_job_control 1``.  Here is an example on Solaris:
-
-.. error:: TODO Ralph: does ``orte_forward_job_control`` still exist?
+By default, ``mpirun`` forwards the SIGTSTP and SIGCONT signals to the
+application processes (delivering SIGTSTP as SIGSTOP so the processes
+suspend), so no special option is required to enable this behavior.
+Here is an example on Solaris:
 
 .. code-block:: sh
 
-   shell$ mpirun -mca orte_forward_job_control 1 -n 2 mpi-hello-world
+   shell$ mpirun -n 2 mpi-hello-world
 
 In another window, we suspend and continue the job:
 
