@@ -1,8 +1,6 @@
 Reducing startup time for jobs
 ==============================
 
-.. error:: TODO This whole section needs to be checked.
-
 There are several ways to reduce the startup time on large
 clusters. Some of them are described on this page. We continue to work
 on making startup even faster, especially on the large clusters coming
