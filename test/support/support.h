@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,9 +51,10 @@ void test_fail_stop(const char *msg, int status);
 #define test_verify(MESSAGE, EXPR)                                                         \
     do {                                                                                   \
         if (!(EXPR)) {                                                                     \
-            char s[256];                                                                   \
-            snprintf(s, sizeof(s), "%s:%d: %s: %s\n", __FILE__, __LINE__, MESSAGE, #EXPR); \
-            test_failure(s);                                                               \
+            char test_verify_msgbuf_[256];                                                 \
+            snprintf(test_verify_msgbuf_, sizeof(test_verify_msgbuf_),                      \
+                     "%s:%d: %s: %s\n", __FILE__, __LINE__, MESSAGE, #EXPR);               \
+            test_failure(test_verify_msgbuf_);                                             \
         } else {                                                                           \
             test_success();                                                                \
         }                                                                                  \

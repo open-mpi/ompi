@@ -447,6 +447,10 @@ test/class/opal_pointer_array
 test/class/opal_proc_table
 test/class/opal_tree
 test/class/opal_value_array
+test/class/opal_graph
+test/class/opal_hotel
+test/class/opal_interval_tree
+test/class/opal_ring_buffer
 
 test/datatype/ddt_test
 test/datatype/ddt_pack
@@ -466,6 +470,7 @@ test/datatype/unpack_hetero
 test/datatype/opal_datatype_bigcount
 test/datatype/ompi_datatype_bigcount
 test/datatype/mpi_datatype_bigcount
+test/datatype/opal_ddt_api
 
 test/event/signal-test
 test/event/event-test
@@ -521,6 +526,28 @@ test/util/opal_bit_ops
 test/util/bipartite_graph
 test/util/opal_sha256
 test/util/opal_json
+test/util/opal_alfg
+test/util/opal_arch
+test/util/opal_cmd_line
+test/util/opal_crc
+test/util/opal_environ
+test/util/opal_fd
+test/util/opal_few
+test/util/opal_getcwd
+test/util/opal_info
+test/util/opal_info_subscriber
+test/util/opal_keyval_parse
+test/util/opal_malloc
+test/util/opal_net
+test/util/opal_os_dirpath
+test/util/opal_output
+test/util/opal_path
+test/util/opal_printf
+test/util/opal_proc
+test/util/opal_qsort
+test/util/opal_string_copy
+test/util/opal_sys_limits
+test/util/opal_uri
 
 opal/test/reachable/reachable_netlink
 opal/test/reachable/reachable_weighted
