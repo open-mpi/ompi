@@ -1,13 +1,13 @@
 Launching with Grid Engine
 ==========================
 
-Open MPI supports the family of run-time schedulers including the Sun
-Grid Engine (SGE), Oracle Grid Engine (OGE), Grid Engine (GE), Son of
-Grid Engine, and others.
+Open MPI supports the Grid Engine family of run-time schedulers.  This
+family traces back to Sun Grid Engine (SGE) and includes its many
+descendants |mdash| among them Oracle Grid Engine, Son of Grid Engine,
+Univa Grid Engine (now Altair Grid Engine), and Open Cluster Scheduler.
 
-This documentation will collectively refer to all of them as "Grid
-Engine", unless a referring to a specific flavor of the Grid Engine
-family.
+This documentation collectively refers to all of them as "Grid Engine",
+unless referring to a specific member of the family.
 
 Verify Grid Engine support
 --------------------------
@@ -52,11 +52,11 @@ that were allocated by Grid Engine:
 
    # Get the environment variables for Grid Engine
 
-   # (Assuming Grid Engine is installed at /opt/sge and $Grid
-   # Engine_CELL is 'default' in your environment)
+   # (Assuming Grid Engine is installed at /opt/sge and $SGE_CELL
+   # is 'default' in your environment)
    shell$ . /opt/sge/default/common/settings.sh
 
-   # Allocate an Grid Engine interactive job with 4 slots from a
+   # Allocate a Grid Engine interactive job with 4 slots from a
    # parallel environment (PE) named 'ompi' and run a 4-process Open
    # MPI job
    shell$ qrsh -pe ompi 4 -b y mpirun -n 4 mpi-hello-world
@@ -130,18 +130,11 @@ that is used to send parallel tasks to the remote Grid Engine
 execution hosts. It will show whether the connections to the remote
 hosts are established successfully or not.
 
-.. error:: TODO is this site still live?  Doesn't look like it..  Jeff
-   emailed Dave Love on 31 Dec 2021 to ask if this is still the
-   correct URL.
-
-   Update March 2022: it doesn't look like this web site is good any
-   more.  Perhaps use https://github.com/grisu48/gridengine instead...?
-
-Various Grid Engine documentation with pointers to more is available
-at `the Son of GridEngine site <http://arc.liv.ac.uk/sge/>`_, and
-configuration instructions can be found at `the Son of GridEngine
-configuration how-to site
-<http://arc.liv.ac.uk/SGE/howto/sge-configs.html>`_.
+For more information about Grid Engine, see the actively-maintained
+open-source `Open Cluster Scheduler
+<https://github.com/hpc-gridware/clusterscheduler>`_ project |mdash|
+the current successor to Sun Grid Engine, Univa Grid Engine, and Son of
+Grid Engine |mdash| and its documentation.
 
 Grid Engine tight integration support of the ``qsub -notify`` flag
 ------------------------------------------------------------------
@@ -177,9 +170,7 @@ like this batch script can be used:
    #$ -pe ompi 16
    #$ -j y
    #$ -l h_rt=00:20:00
-   mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
-
-.. error:: Ralph: Does ``orte_forward_job_control`` still exist?
+   mpirun -n 16 mpi-hello-world
 
 However, one has to make one of two changes to this script for things
 to work properly.  By default, a SIGUSR1 signal will kill a shell
@@ -196,7 +187,7 @@ to handle it:
    #$ -pe ompi 16
    #$ -j y
    #$ -l h_rt=00:20:00
-   exec mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
+   exec mpirun -n 16 mpi-hello-world
 
 Alternatively, one can catch the signals in the script instead of doing
 an exec on the mpirun:
@@ -225,7 +216,7 @@ an exec on the mpirun:
    trap sigusr1handler SIGUSR1
    trap sigusr2handler SIGUSR2
 
-   mpirun -n 16 -mca orte_forward_job_control 1 mpi-hello-world
+   mpirun -n 16 mpi-hello-world
 
 Grid Engine job suspend / resume support
 ----------------------------------------
@@ -236,16 +227,14 @@ To suspend the job, you send a SIGTSTP (not SIGSTOP) signal to
 a SIGCONT signal to :ref:`mpirun(1) <man1-mpirun>` which will be caught and forwarded to
 the ``mpi-hello-world``.
 
-By default, this feature is not enabled.  This means that both the
-SIGTSTP and SIGCONT signals will simply be consumed by the :ref:`mpirun(1) <man1-mpirun>`
-process.  To have them forwarded, you have to run the job with ``--mca
-orte_forward_job_control 1``.  Here is an example on Solaris:
-
-.. error:: TODO Ralph: does ``orte_forward_job_control`` still exist?
+By default, ``mpirun`` forwards the SIGTSTP and SIGCONT signals to the
+application processes (delivering SIGTSTP as SIGSTOP so the processes
+suspend), so no special option is required to enable this behavior.
+Here is an example on Solaris:
 
 .. code-block:: sh
 
-   shell$ mpirun -mca orte_forward_job_control 1 -n 2 mpi-hello-world
+   shell$ mpirun -n 2 mpi-hello-world
 
 In another window, we suspend and continue the job:
 

@@ -249,8 +249,6 @@ of the following additional information:
 #. If you are experiencing networking problems, include detailed
    information about your network.
 
-   .. error:: TODO Update link to IB FAQ entry.
-
    #. For RoCE- or InfiniBand-based networks, include the information
       :ref:`in this FAQ entry <faq-ib-troubleshoot-label>`.
 
