@@ -31,7 +31,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 include $(top_srcdir)/Makefile.mca-dso-check
 
 #check_PROGRAMS = \
-#        ompi_numtostr \
+#        opal_numtostr \
 #        opal_error \
 #        opal_if \
 #        opal_os_path \
@@ -50,7 +50,7 @@ check_PROGRAMS = \
         opal_sha256 \
 	opal_timer \
 	opal_string_copy \
-	ompi_numtostr \
+	opal_numtostr \
 	opal_basename \
 	opal_os_path \
 	opal_getcwd \
@@ -90,9 +90,9 @@ opal_string_copy_SOURCES = opal_string_copy.c
 opal_string_copy_LDADD = $(opal_test_ldadd)
 opal_string_copy_DEPENDENCIES = $(opal_test_ldadd)
 
-ompi_numtostr_SOURCES = ompi_numtostr.c
-ompi_numtostr_LDADD = $(opal_test_ldadd)
-ompi_numtostr_DEPENDENCIES = $(opal_test_ldadd)
+opal_numtostr_SOURCES = opal_numtostr.c
+opal_numtostr_LDADD = $(opal_test_ldadd)
+opal_numtostr_DEPENDENCIES = $(opal_test_ldadd)
 
 opal_basename_SOURCES = opal_basename.c
 opal_basename_LDADD = $(opal_test_ldadd)
@@ -198,11 +198,11 @@ opal_output_SOURCES = opal_output.c
 opal_output_LDADD = $(opal_test_ldadd)
 opal_output_DEPENDENCIES = $(opal_test_ldadd)
 
-#ompi_numtostr_SOURCES = ompi_numtostr.c
-#ompi_numtostr_LDADD = \
+#opal_numtostr_SOURCES = opal_numtostr.c
+#opal_numtostr_LDADD = \
 #        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
 #        $(top_builddir)/test/support/libsupport.a
-#ompi_numtostr_DEPENDENCIES = $(ompi_numtostr_LDADD)
+#opal_numtostr_DEPENDENCIES = $(opal_numtostr_LDADD)
 
 #opal_error_SOURCES = opal_error.c
 #opal_error_LDADD = \

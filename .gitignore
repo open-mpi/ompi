@@ -491,7 +491,7 @@ test/class/*.txt
 test/class/ompi_bitmap_test_out.txt
 test/class/ompi_circular_buffer_fifo
 test/class/ompi_fifo
-test/class/ompi_rb_tree
+test/class/opal_rb_tree
 test/class/ompi_bitmap
 test/class/opal_bitmap
 test/class/opal_fifo
@@ -542,7 +542,7 @@ test/util/orte_session_dir
 test/util/orte_sys_info
 test/util/orte_universe_setup_file_io
 test/util/opal_basename
-test/util/ompi_numtostr
+test/util/opal_numtostr
 test/util/ompi_pack
 test/util/test-file
 test/util/opal_sos
