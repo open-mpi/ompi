@@ -253,6 +253,14 @@ ompi/test/datatype/reduce_local
 ompi/test/datatype/to_self
 ompi/test/datatype/unpack_ooo
 
+ompi/test/monitoring/monitoring_test
+ompi/test/monitoring/check_monitoring
+ompi/test/monitoring/example_reduce_count
+ompi/test/monitoring/test_overhead
+ompi/test/monitoring/test_pvar_access
+
+ompi/test/spc/spc_test
+
 ompi/mpiext/affinity/c/example
 
 ompi/mpiext/ftmpi/c/profile/pcomm_agree.c
@@ -333,9 +341,6 @@ opal/tools/wrappers/opal.pc
 
 opal/util/show_help_content.c
 opal/util/keyval/keyval_lex.c
-
-test/monitoring/aggregate_profile.pl
-test/monitoring/profile2mat.pl
 
 test/simple/abort
 test/simple/accept
@@ -482,12 +487,6 @@ test/event/signal-test
 test/event/event-test
 test/event/time-test
 
-test/monitoring/monitoring_test
-test/monitoring/check_monitoring
-test/monitoring/example_reduce_count
-test/monitoring/test_overhead
-test/monitoring/test_pvar_access
-
 test/mpool/mpool_memkind
 
 test/runtime/parse_context
@@ -495,8 +494,6 @@ test/runtime/sigchld
 test/runtime/start_shut
 test/runtime/opal_init_finalize
 test/runtime/orte_init_finalize
-
-test/spc/spc_test
 
 test/threads/opal_condition
 test/threads/opal_thread
