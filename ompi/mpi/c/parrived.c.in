@@ -56,7 +56,8 @@ PROTOTYPE ERROR_CLASS parrived(REQUEST request, INT partition, INT_OUT flag)
             rc = MPI_ERR_ARG;
         } else if (NULL == request ||
                    (MPI_REQUEST_NULL != request &&
-                    OMPI_REQUEST_PART != request->req_type)) {
+                    OMPI_REQUEST_PART != request->req_type &&
+                    OMPI_REQUEST_NOOP != request->req_type)) {
             rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
@@ -69,6 +70,18 @@ PROTOTYPE ERROR_CLASS parrived(REQUEST request, INT partition, INT_OUT flag)
             *flag = 1;
             return MPI_SUCCESS;
         }
+    }
+
+    // MPI-5.0 sec 3.10 (p.110): a receive from MPI_PROC_NULL "succeeds and
+    // returns as soon as possible", so every partition of a partitioned
+    // receive from MPI_PROC_NULL (a persistent no-op request; see
+    // MPI_Precv_init) has trivially arrived.  This is checked
+    // unconditionally: such a request is not a partitioned request, so it
+    // must never be handed to the part framework, and -- once started -- it
+    // is active, so the inactive short circuit above does not cover it.
+    if (OMPI_REQUEST_NOOP == request->req_type) {
+        *flag = 1;
+        return MPI_SUCCESS;
     }
 
     rc = mca_part.part_parrived(partition, partition, flag, request);

@@ -34,6 +34,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/part/part.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/request/request.h"
 #include "ompi/runtime/ompi_spc.h"
 
 PROTOTYPE ERROR_CLASS precv_init(BUFFER_OUT buf, INT partitions, PARTITIONED_COUNT count,
@@ -52,6 +53,16 @@ PROTOTYPE ERROR_CLASS precv_init(BUFFER_OUT buf, INT partitions, PARTITIONED_COU
             rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    // MPI-5.0 sec 3.10 (p.110): MPI_PROC_NULL may be used wherever a source
+    // or destination rank is required, and "a communication with
+    // MPI_PROC_NULL has no effect."  Hand back the same persistent no-op
+    // request that MPI_Recv_init does, rather than passing MPI_PROC_NULL
+    // down to the PML as if it were a real peer rank.
+    if (MPI_PROC_NULL == source) {
+        rc = ompi_request_persistent_noop_create(request);
+        OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
 
     rc = mca_part.part_precv_init(buf, partitions, count, datatype, source, tag, comm, info, request);
