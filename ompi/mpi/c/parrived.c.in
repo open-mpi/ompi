@@ -45,23 +45,30 @@ PROTOTYPE ERROR_CLASS parrived(REQUEST request, INT partition, INT_OUT flag)
         rc = OMPI_SUCCESS;
 
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        // MPI-5.0 sec 4.2.2 (p.119): MPI_Parrived on a null or inactive
-        // request returns flag = true.  Handle these before the
-        // request-type check so MPI_REQUEST_NULL (req_type ==
-        // OMPI_REQUEST_NULL) and a never-started inactive partitioned
-        // receive request are not rejected with MPI_ERR_REQUEST.
-        if (NULL == request || MPI_REQUEST_NULL == request) {
-            *flag = 1;
-            return MPI_SUCCESS;
-        }
-        if (OMPI_REQUEST_INACTIVE == request->req_state) {
-            *flag = 1;
-            return MPI_SUCCESS;
-        }
-        if (OMPI_REQUEST_PART != request->req_type) {
+        // MPI-5.0 sec 4.2.2 (p.119) explicitly permits a null request
+        // here, so MPI_REQUEST_NULL must survive the request type check:
+        // its req_type is OMPI_REQUEST_NULL, not OMPI_REQUEST_PART.  Any
+        // other type of request is erroneous ("Calling MPI_PARRIVED on a
+        // request that does not correspond to a partitioned receive
+        // operation is erroneous"), including an inactive one, so this
+        // check must precede the inactive check below.
+        if (NULL == flag) {
+            rc = MPI_ERR_ARG;
+        } else if (NULL == request ||
+                   (MPI_REQUEST_NULL != request &&
+                    OMPI_REQUEST_PART != request->req_type)) {
             rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+
+        // MPI-5.0 sec 4.2.2 (p.119): "MPI_PARRIVED may be called with a
+        // null or inactive request argument.  In either case, the
+        // operation returns with flag = true."
+        if (MPI_REQUEST_NULL == request ||
+            OMPI_REQUEST_INACTIVE == request->req_state) {
+            *flag = 1;
+            return MPI_SUCCESS;
+        }
     }
 
     rc = mca_part.part_parrived(partition, partition, flag, request);
