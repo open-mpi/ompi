@@ -16,6 +16,14 @@ Open MPI version v6.1.0
     a null request and returned ``flag = false`` for a partitioned
     receive request that had never been started.
 
+  - ``MPI_Psend_init`` and ``MPI_Precv_init`` now accept
+    ``MPI_PROC_NULL`` as the peer rank, per MPI-5.0 section 3.10.  Such
+    a request completes as soon as it is started, ``MPI_Pready`` on it
+    has no effect, and ``MPI_Parrived`` reports every partition as
+    arrived.  Previously, ``MPI_PROC_NULL`` was passed down as if it
+    were a real peer rank, reading outside the communicator's process
+    array.
+
   - Freeing a partitioned communication request that was never started
     no longer leaves its internal setup receive posted.  Such a stale
     receive could consume the setup message of the next partitioned

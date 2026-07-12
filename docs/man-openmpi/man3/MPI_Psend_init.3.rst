@@ -27,6 +27,14 @@ OUTPUT PARAMETERS
 * ``request``: Communication request (handle).
 * ``ierror``: Fortran only: Error status (integer).
 
+DESCRIPTION
+-----------
+
+``dest`` may be ``MPI_PROC_NULL``, in which case the communication has no
+effect: the resulting request completes as soon as it is started, and
+:ref:`MPI_Pready` (and its variants) on that request succeeds without
+transferring anything.
+
 ERRORS
 ------
 

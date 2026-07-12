@@ -45,10 +45,21 @@ PROTOTYPE ERROR_CLASS pready_list(INT length, INT_ARRAY partitions, REQUEST requ
         rc = OMPI_SUCCESS;
 
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == request || OMPI_REQUEST_PART != request->req_type) {
+        if (NULL == request ||
+            (OMPI_REQUEST_PART != request->req_type &&
+             OMPI_REQUEST_NOOP != request->req_type)) {
             rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    // MPI-5.0 sec 3.10 (p.110): "a communication with MPI_PROC_NULL has no
+    // effect", so there is nothing to mark ready on a partitioned send to
+    // MPI_PROC_NULL (a persistent no-op request; see MPI_Psend_init).  This
+    // is checked unconditionally: such a request is not a partitioned
+    // request, so it must never be handed to the part framework.
+    if (OMPI_REQUEST_NOOP == request->req_type) {
+        return MPI_SUCCESS;
     }
 
     for(int i = 0; i < length && OMPI_SUCCESS == rc; i++) {

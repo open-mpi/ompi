@@ -26,7 +26,8 @@ DESCRIPTION
 -----------
 
 ``request`` may be a null request (``MPI_REQUEST_NULL``) or an inactive
-request, in which case ``flag`` is set to true.
+request, in which case ``flag`` is set to true.  A request created with
+``MPI_PROC_NULL`` is likewise always reported as arrived.
 
 Calling :ref:`MPI_Parrived` on a request that does not correspond to a
 partitioned receive operation is erroneous.
