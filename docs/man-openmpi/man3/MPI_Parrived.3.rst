@@ -22,6 +22,15 @@ OUTPUT PARAMETERS
 * ``flag``: True if partition is completed.
 * ``ierror``: Fortran only: Error status (integer).
 
+DESCRIPTION
+-----------
+
+``request`` may be a null request (``MPI_REQUEST_NULL``) or an inactive
+request, in which case ``flag`` is set to true.
+
+Calling :ref:`MPI_Parrived` on a request that does not correspond to a
+partitioned receive operation is erroneous.
+
 ERRORS
 ------
 

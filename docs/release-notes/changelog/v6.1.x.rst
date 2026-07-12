@@ -10,6 +10,12 @@ Open MPI version v6.1.0
 
 - Partitioned communication fixes:
 
+  - ``MPI_Parrived`` now returns ``flag = true`` for a null request
+    (``MPI_REQUEST_NULL``) and for an inactive request, as required by
+    MPI-5.0 section 4.2.2.  It previously raised ``MPI_ERR_REQUEST`` for
+    a null request and returned ``flag = false`` for a partitioned
+    receive request that had never been started.
+
   - Freeing a partitioned communication request that was never started
     no longer leaves its internal setup receive posted.  Such a stale
     receive could consume the setup message of the next partitioned
