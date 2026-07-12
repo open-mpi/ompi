@@ -96,10 +96,14 @@ mca_part_persist_free_req(struct mca_part_persist_request_t* req)
     opal_list_remove_item(ompi_part_persist.progress_list, (opal_list_item_t*)req->progress_elem);
     OBJ_RELEASE(req->progress_elem);
 
-    for(i = 0; i < req->real_parts; i++) {
-        ompi_request_free(&(req->persist_reqs[i]));
+    /* The per-partition requests are only created once the setup handshake
+     * has completed, so an uninitialized request has none. */
+    if(NULL != req->persist_reqs) {
+        for(i = 0; i < req->real_parts; i++) {
+            ompi_request_free(&(req->persist_reqs[i]));
+        }
+        free(req->persist_reqs);
     }
-    free(req->persist_reqs);
     free(req->flags);
 
     if( MCA_PART_PERSIST_REQUEST_PRECV == req->req_type ) {
@@ -221,6 +225,18 @@ mca_part_persist_progress(void)
     OPAL_LIST_FOREACH(current, ompi_part_persist.progress_list, mca_part_persist_list_t) {
         mca_part_persist_request_t *req = (mca_part_persist_request_t *) current->item;
 
+        /* A request that MPI_Request_free has been called on is reclaimed
+         * once it is inactive.  This is checked before anything else, and
+         * for uninitialized requests as well as initialized ones: a request
+         * that was never started never completes its lazy setup handshake,
+         * so it would otherwise be left on the progress list forever.  Its
+         * handshake was already cancelled by mca_part_persist_free, so it
+         * must not be run through the setup path below. */
+        if(true == req->req_free_called && true == req->req_part_complete && REQUEST_COMPLETED == req->req_ompi.req_complete &&  OMPI_REQUEST_INACTIVE == req->req_ompi.req_state) {
+            to_delete = req;
+            continue;
+        }
+
         /* Check to see if request is initilaized */
         if(false == req->initialized) {
             int done = 0; 
@@ -316,11 +332,7 @@ mca_part_persist_progress(void)
                 {
                     req->first_send = false;
                     mca_part_persist_complete(req);
-                } 
-            }
-
-            if(true == req->req_free_called && true == req->req_part_complete && REQUEST_COMPLETED == req->req_ompi.req_complete &&  OMPI_REQUEST_INACTIVE == req->req_ompi.req_state) {
-                to_delete = req;
+                }
             }
         }
 
@@ -370,11 +382,15 @@ mca_part_persist_precv_init(void *buf,
 
     mca_part_persist_request_t *req = (mca_part_persist_request_t *) recvreq;
 
-    /* Set lazy initializion flags */
+    /* Set lazy initializion flags.  real_parts and persist_reqs are not
+     * known until the setup handshake completes; keep them empty so that
+     * freeing a request that was never started is safe. */
     req->initialized = false;
-    req->first_send  = true; 
+    req->first_send  = true;
     req->flag_post_setup_recv = false;
     req->flags = NULL;
+    req->persist_reqs = NULL;
+    req->real_parts = 0;
     /* Non-blocking receive on setup info */
     err	= MCA_PML_CALL(irecv(&req->setup_info[1], sizeof(struct ompi_mca_persist_setup_t), MPI_BYTE, src, tag, comm, &req->setup_req[1])); 
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
@@ -434,10 +450,14 @@ mca_part_persist_psend_init(const void* buf,
                                     datatype, buf, parts, count, flags);
     mca_part_persist_request_t *req = (mca_part_persist_request_t *) sendreq;
 
-    /* Set lazy initialization variables */
+    /* Set lazy initialization variables.  The per-partition sends are not
+     * created until the setup handshake completes; keep the array empty so
+     * that freeing a request that was never started is safe. */
     req->initialized = false;
-    req->first_send  = true; 
-    
+    req->first_send  = true;
+    req->persist_reqs = NULL;
+
+
 
     /* Determine total bytes to send. */
     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
@@ -609,6 +629,28 @@ mca_part_persist_free(ompi_request_t** request)
 
     if(true == req->req_free_called) return OMPI_ERROR;
     req->req_free_called = true;
+
+    /* If this request never completed its lazy setup handshake, its setup
+     * requests are still outstanding against req->setup_info[], which will
+     * be recycled when the request is reclaimed.  The setup receive is
+     * posted on the user's communicator with the user's peer and tag, so if
+     * it is left posted it will also match -- and consume -- the setup
+     * message of the next partitioned operation that uses that same
+     * communicator, peer, and tag; that operation would then never be set up
+     * and would never complete.  Cancel the handshake here rather than when
+     * the request is reclaimed in the progress engine: the next partitioned
+     * operation can be initialized before the progress engine runs again. */
+    if(false == req->initialized &&
+       OMPI_REQUEST_INACTIVE == req->req_ompi.req_state) {
+        if(false == req->flag_post_setup_recv) {
+            ompi_request_cancel(req->setup_req[1]);
+            ompi_request_wait(&(req->setup_req[1]), MPI_STATUS_IGNORE);
+        }
+        if(MCA_PART_PERSIST_REQUEST_PSEND == req->req_type) {
+            ompi_request_cancel(req->setup_req[0]);
+            ompi_request_wait(&(req->setup_req[0]), MPI_STATUS_IGNORE);
+        }
+    }
 
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;

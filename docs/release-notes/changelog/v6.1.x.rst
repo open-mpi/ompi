@@ -8,6 +8,14 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Partitioned communication fixes:
+
+  - Freeing a partitioned communication request that was never started
+    no longer leaves its internal setup receive posted.  Such a stale
+    receive could consume the setup message of the next partitioned
+    operation using the same communicator, peer, and tag, which then
+    never completed.
+
 - Renamed the ``--enable-weak-symbols`` configure option to
   ``--enable-weak-aliases``, which more accurately reflects the linker
   feature (weak symbol *aliases*) that Open MPI actually tests for and
