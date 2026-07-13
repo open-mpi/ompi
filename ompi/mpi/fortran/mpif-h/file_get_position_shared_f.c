@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_POSITION_SHARED,
                            pmpi_file_get_position_shared,
                            pmpi_file_get_position_shared_,
                            pmpi_file_get_position_shared__,
-                           pompi_file_get_position_shared_f,
+                           ompi_file_get_position_shared_f,
                            (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr),
                            (fh, offset, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_POSITION_SHARED,
 #pragma weak MPI_File_get_position_shared_f = ompi_file_get_position_shared_f
 #pragma weak MPI_File_get_position_shared_f08 = ompi_file_get_position_shared_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_POSITION_SHARED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_GET_POSITION_SHARED,
                            mpi_file_get_position_shared,
                            mpi_file_get_position_shared_,
                            mpi_file_get_position_shared__,
                            ompi_file_get_position_shared_f,
                            (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr),
                            (fh, offset, ierr) )
-#else
-#define ompi_file_get_position_shared_f pompi_file_get_position_shared_f
-#endif
 #endif
 
 

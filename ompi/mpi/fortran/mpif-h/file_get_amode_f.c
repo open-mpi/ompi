@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_AMODE,
                            pmpi_file_get_amode,
                            pmpi_file_get_amode_,
                            pmpi_file_get_amode__,
-                           pompi_file_get_amode_f,
+                           ompi_file_get_amode_f,
                            (MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr),
                            (fh, amode, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_AMODE,
 #pragma weak MPI_File_get_amode_f = ompi_file_get_amode_f
 #pragma weak MPI_File_get_amode_f08 = ompi_file_get_amode_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_AMODE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_GET_AMODE,
                            mpi_file_get_amode,
                            mpi_file_get_amode_,
                            mpi_file_get_amode__,
                            ompi_file_get_amode_f,
                            (MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr),
                            (fh, amode, ierr) )
-#else
-#define ompi_file_get_amode_f pompi_file_get_amode_f
-#endif
 #endif
 
 

@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLREDUCE,
                            pmpi_allreduce,
                            pmpi_allreduce_,
                            pmpi_allreduce__,
-                           pompi_allreduce_f,
+                           ompi_allreduce_f,
                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, recvbuf, count, datatype, op, comm, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLREDUCE,
 #pragma weak MPI_Allreduce_f = ompi_allreduce_f
 #pragma weak MPI_Allreduce_f08 = ompi_allreduce_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ALLREDUCE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_ALLREDUCE,
                            mpi_allreduce,
                            mpi_allreduce_,
                            mpi_allreduce__,
                            ompi_allreduce_f,
                            (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, recvbuf, count, datatype, op, comm, ierr) )
-#else
-#define ompi_allreduce_f pompi_allreduce_f
-#endif
 #endif
 
 

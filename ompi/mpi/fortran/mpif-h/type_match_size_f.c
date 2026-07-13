@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_MATCH_SIZE,
                            pmpi_type_match_size,
                            pmpi_type_match_size_,
                            pmpi_type_match_size__,
-                           pompi_type_match_size_f,
+                           ompi_type_match_size_f,
                            (MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, MPI_Fint *ierr),
                            (typeclass, size, type, ierr) )
 #endif
@@ -59,17 +59,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_MATCH_SIZE,
 #pragma weak MPI_Type_match_size_f = ompi_type_match_size_f
 #pragma weak MPI_Type_match_size_f08 = ompi_type_match_size_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
                            mpi_type_match_size,
                            mpi_type_match_size_,
                            mpi_type_match_size__,
                            ompi_type_match_size_f,
                            (MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, MPI_Fint *ierr),
                            (typeclass, size, type, ierr) )
-#else
-#define ompi_type_match_size_f pompi_type_match_size_f
-#endif
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_match_size_f";

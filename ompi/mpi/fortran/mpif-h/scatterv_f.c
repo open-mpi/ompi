@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTERV,
                            pmpi_scatterv,
                            pmpi_scatterv_,
                            pmpi_scatterv__,
-                           pompi_scatterv_f,
+                           ompi_scatterv_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCATTERV,
 #pragma weak MPI_Scatterv_f = ompi_scatterv_f
 #pragma weak MPI_Scatterv_f08 = ompi_scatterv_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_SCATTERV,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_SCATTERV,
                            mpi_scatterv,
                            mpi_scatterv_,
                            mpi_scatterv__,
                            ompi_scatterv_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, ierr) )
-#else
-#define ompi_scatterv_f pompi_scatterv_f
-#endif
 #endif
 
 

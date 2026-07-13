@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_SIZE,
                            pmpi_file_get_size,
                            pmpi_file_get_size_,
                            pmpi_file_get_size__,
-                           pompi_file_get_size_f,
+                           ompi_file_get_size_f,
                            (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr),
                            (fh, size, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_SIZE,
 #pragma weak MPI_File_get_size_f = ompi_file_get_size_f
 #pragma weak MPI_File_get_size_f08 = ompi_file_get_size_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_SIZE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_GET_SIZE,
                            mpi_file_get_size,
                            mpi_file_get_size_,
                            mpi_file_get_size__,
                            ompi_file_get_size_f,
                            (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr),
                            (fh, size, ierr) )
-#else
-#define ompi_file_get_size_f pompi_file_get_size_f
-#endif
 #endif
 
 

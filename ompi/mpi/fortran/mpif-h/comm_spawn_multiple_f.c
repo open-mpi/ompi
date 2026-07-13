@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
                            pmpi_comm_spawn_multiple,
                            pmpi_comm_spawn_multiple_,
                            pmpi_comm_spawn_multiple__,
-                           pompi_comm_spawn_multiple_f,
+                           ompi_comm_spawn_multiple_f,
                            (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
                            (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
 #endif
@@ -59,17 +59,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPAWN_MULTIPLE,
 #pragma weak MPI_Comm_spawn_multiple_f = ompi_comm_spawn_multiple_f
 #pragma weak MPI_Comm_spawn_multiple_f08 = ompi_comm_spawn_multiple_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
                            mpi_comm_spawn_multiple,
                            mpi_comm_spawn_multiple_,
                            mpi_comm_spawn_multiple__,
                            ompi_comm_spawn_multiple_f,
                            (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_string_len, int argv_string_len),
                            (count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, intercomm, array_of_errcodes, ierr, cmd_string_len, argv_string_len) )
-#else
-#define ompi_comm_spawn_multiple_f pompi_comm_spawn_multiple_f
-#endif
 #endif
 
 

@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INITIALIZED,
                            pmpi_initialized,
                            pmpi_initialized_,
                            pmpi_initialized__,
-                           pompi_initialized_f,
+                           ompi_initialized_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INITIALIZED,
 #pragma weak MPI_Initialized_f = ompi_initialized_f
 #pragma weak MPI_Initialized_f08 = ompi_initialized_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_INITIALIZED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_INITIALIZED,
                            mpi_initialized,
                            mpi_initialized_,
                            mpi_initialized__,
                            ompi_initialized_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
-#else
-#define ompi_initialized_f pompi_initialized_f
-#endif
 #endif
 
 

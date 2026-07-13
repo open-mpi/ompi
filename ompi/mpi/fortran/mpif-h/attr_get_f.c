@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_GET,
                            pmpi_attr_get,
                            pmpi_attr_get_,
                            pmpi_attr_get__,
-                           pompi_attr_get_f,
+                           ompi_attr_get_f,
                            (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, flag, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_GET,
 #pragma weak MPI_Attr_get_f = ompi_attr_get_f
 #pragma weak MPI_Attr_get_f08 = ompi_attr_get_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_GET,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_ATTR_GET,
                            mpi_attr_get,
                            mpi_attr_get_,
                            mpi_attr_get__,
                            ompi_attr_get_f,
                            (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, flag, ierr) )
-#else
-#define ompi_attr_get_f pompi_attr_get_f
-#endif
 #endif
 
 void ompi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,

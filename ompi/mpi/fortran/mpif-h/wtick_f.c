@@ -41,10 +41,10 @@
 #pragma weak PMPI_Wtick_f = ompi_wtick_f
 #pragma weak PMPI_Wtick_f08 = ompi_wtick_f
 #else
-double PMPI_WTICK(void) { return pompi_wtick_f(); }
-double pmpi_wtick(void) { return pompi_wtick_f(); }
-double pmpi_wtick_(void) { return pompi_wtick_f(); }
-double pmpi_wtick__(void) { return pompi_wtick_f(); }
+double PMPI_WTICK(void) { return ompi_wtick_f(); }
+double pmpi_wtick(void) { return ompi_wtick_f(); }
+double pmpi_wtick_(void) { return ompi_wtick_f(); }
+double pmpi_wtick__(void) { return ompi_wtick_f(); }
 #endif
 #endif
 
@@ -57,14 +57,10 @@ double pmpi_wtick__(void) { return pompi_wtick_f(); }
 #pragma weak MPI_Wtick_f = ompi_wtick_f
 #pragma weak MPI_Wtick_f08 = ompi_wtick_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-double MPI_WTICK(void) { return ompi_wtick_f(); }
-double mpi_wtick(void) { return ompi_wtick_f(); }
-double mpi_wtick_(void) { return ompi_wtick_f(); }
-double mpi_wtick__(void) { return ompi_wtick_f(); }
-#else
-#define ompi_wtick_f pompi_wtick_f
-#endif
+__opal_attribute_weak__ double MPI_WTICK(void) { return ompi_wtick_f(); }
+__opal_attribute_weak__ double mpi_wtick(void) { return ompi_wtick_f(); }
+__opal_attribute_weak__ double mpi_wtick_(void) { return ompi_wtick_f(); }
+__opal_attribute_weak__ double mpi_wtick__(void) { return ompi_wtick_f(); }
 #endif
 
 

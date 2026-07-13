@@ -42,10 +42,11 @@ include $(top_srcdir)/Makefile.ompi-rules
 
 SUFFIXES= _ompi_generated.c _abi_generated.c .c.in .c.in_obc .c.in_nbc
 
+# The C bindings are compiled exactly once: the profiling compile emits both
+# the strong PMPI_* symbols and the weak MPI_* symbols (via a weak alias
+# where the platform has them, and via a weak forwarding definition where it
+# does not).  There is therefore no second, non-profiling compile.
 noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
-if BUILD_MPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_c_noprofile.la
-endif
 
 headers = bindings.h \
           abi.h \
@@ -536,11 +537,12 @@ libmpi_c_la_SOURCES = \
         ompi_abi_fortran.c
 
 libmpi_c_la_LIBADD = libmpi_c_profile.la
-if BUILD_MPI_BINDINGS_LAYER
-libmpi_c_la_LIBADD += libmpi_c_noprofile.la
-endif
 
+# Only install (and build) the MPI Forum ABI header when the ABI
+# library it targets is actually built.
+if OMPI_STANDARD_ABI
 nobase_include_HEADERS = standard_abi/mpi.h
+endif
 
 #
 # List of all C files that have profile versions (*_generated.c files were
@@ -1070,8 +1072,6 @@ deprecated_interface_profile_sources = \
 libmpi_c_profile_la_SOURCES = $(interface_profile_sources) $(extra_interface_profile_sources) $(deprecated_interface_profile_sources)
 libmpi_c_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources) $(extra_interface_profile_sources)  $(deprecated_interface_profile_sources)
-libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
 if OMPI_GENERATE_BINDINGS
 # The generated bindings depend on the generator itself, not just on the
@@ -1134,24 +1134,26 @@ type_get_envelope_c_ompi_generated.c: type_get_envelope_c.c.in_obc
 	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope_c.c.in_obc
 
 # Non-mangled version of mpi.h
-standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py
+standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/docs/mpi-standard-abi.json $(top_srcdir)/ompi/mpi/bindings/c_header.py $(top_srcdir)/ompi/mpi/c/abi.h.in
 	mkdir -p standard_abi
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
-	--pympistd $(top_srcdir)/3rd-party/pympistandard \
+	--apis-json $(top_srcdir)/docs/mpi-standard-apis.json \
+	--pympistd-dir $(top_srcdir)/3rd-party/pympistandard \
 	--output $@
 
 # Mangled version of mpi.h (abi.h)
-abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/ompi/mpi/bindings/c_header.py abi.h.in
+abi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/docs/mpi-standard-abi.json $(top_srcdir)/ompi/mpi/bindings/c_header.py $(top_srcdir)/ompi/mpi/c/abi.h.in
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
 	--output $@ \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
+	--apis-json $(top_srcdir)/docs/mpi-standard-apis.json \
 	--pympistd-dir $(top_srcdir)/3rd-party/pympistandard \
 	--mangle-names
 
-abi_converters.h: abi.h
+abi_converters.h: abi.h $(OMPI_BINDINGS_GENERATOR)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
@@ -1160,7 +1162,7 @@ abi_converters.h: abi.h
 	    converters \
             --type include_file
 
-abi_converters.c: abi.h abi_converters.h
+abi_converters.c: abi.h abi_converters.h $(OMPI_BINDINGS_GENERATOR)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \

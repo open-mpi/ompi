@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FREE_KEYVAL,
                            pmpi_win_free_keyval,
                            pmpi_win_free_keyval_,
                            pmpi_win_free_keyval__,
-                           pompi_win_free_keyval_f,
+                           ompi_win_free_keyval_f,
                            (MPI_Fint *win_keyval, MPI_Fint *ierr),
                            (win_keyval, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FREE_KEYVAL,
 #pragma weak MPI_Win_free_keyval_f = ompi_win_free_keyval_f
 #pragma weak MPI_Win_free_keyval_f08 = ompi_win_free_keyval_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FREE_KEYVAL,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_FREE_KEYVAL,
                            mpi_win_free_keyval,
                            mpi_win_free_keyval_,
                            mpi_win_free_keyval__,
                            ompi_win_free_keyval_f,
                            (MPI_Fint *win_keyval, MPI_Fint *ierr),
                            (win_keyval, ierr) )
-#else
-#define ompi_win_free_keyval_f pompi_win_free_keyval_f
-#endif
 #endif
 
 

@@ -138,6 +138,8 @@ def parse_args():
     parser.add_argument("--mangle-names", help="enable name mangling for constants and datatypes", action="store_true")
     parser.add_argument("--no-mangle", help="disable name mangling (default)", action="store_true")
     parser.add_argument("--pympistd-dir", type=str, required=True, help="directory for the pympistandard library")
+    parser.add_argument("--apis-json", type=str, required=True,
+                        help="path to the MPI standard APIs JSON file (mpi-standard-apis.json)")
     return parser.parse_args()
 
 
@@ -239,7 +241,10 @@ def main():
             output.append(line)
 
     # ========================= Function Prototypes ============================
-    std.use_api_version()
+    # Pin the API database to the file the build declares as this rule's
+    # input; a bare use_api_version() would silently prefer a stray
+    # MPISTANDARD environment variable or the pympistandard-bundled data.
+    std.use_api_version(1, given_path=args.apis_json)
 
     output.append("\n")
     output.append("/* Callback functions */\n")

@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DELETE_ATTR,
                            pmpi_comm_delete_attr,
                            pmpi_comm_delete_attr_,
                            pmpi_comm_delete_attr__,
-                           pompi_comm_delete_attr_f,
+                           ompi_comm_delete_attr_f,
                            (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr),
                            (comm, comm_keyval, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DELETE_ATTR,
 #pragma weak MPI_Comm_delete_attr_f = ompi_comm_delete_attr_f
 #pragma weak MPI_Comm_delete_attr_f08 = ompi_comm_delete_attr_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DELETE_ATTR,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_DELETE_ATTR,
                            mpi_comm_delete_attr,
                            mpi_comm_delete_attr_,
                            mpi_comm_delete_attr__,
                            ompi_comm_delete_attr_f,
                            (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr),
                            (comm, comm_keyval, ierr) )
-#else
-#define ompi_comm_delete_attr_f pompi_comm_delete_attr_f
-#endif
 #endif
 
 

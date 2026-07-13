@@ -41,7 +41,6 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/mpi/c/Makefile
         ompi/mpi/fortran/base/Makefile
         ompi/mpi/fortran/mpif-h/Makefile
-        ompi/mpi/fortran/mpif-h/profile/Makefile
         ompi/mpi/fortran/use-mpi/Makefile
         ompi/mpi/fortran/use-mpi/mpi-types.F90
         ompi/mpi/fortran/use-mpi-ignore-tkr/Makefile

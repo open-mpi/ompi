@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
                            pmpi_finalize,
                            pmpi_finalize_,
                            pmpi_finalize__,
-                           pompi_finalize_f,
+                           ompi_finalize_f,
                            (MPI_Fint *ierr),
                            (ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FINALIZE,
 #pragma weak MPI_Finalize_f = ompi_finalize_f
 #pragma weak MPI_Finalize_f08 = ompi_finalize_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FINALIZE,
                            mpi_finalize,
                            mpi_finalize_,
                            mpi_finalize__,
                            ompi_finalize_f,
                            (MPI_Fint *ierr),
                            (ierr) )
-#else
-#define ompi_finalize_f pompi_finalize_f
-#endif
 #endif
 
 

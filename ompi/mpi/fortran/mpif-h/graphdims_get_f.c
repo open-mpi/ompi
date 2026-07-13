@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPHDIMS_GET,
                            pmpi_graphdims_get,
                            pmpi_graphdims_get_,
                            pmpi_graphdims_get__,
-                           pompi_graphdims_get_f,
+                           ompi_graphdims_get_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr),
                            (comm, nnodes, nedges, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPHDIMS_GET,
 #pragma weak MPI_Graphdims_get_f = ompi_graphdims_get_f
 #pragma weak MPI_Graphdims_get_f08 = ompi_graphdims_get_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GRAPHDIMS_GET,
                            mpi_graphdims_get,
                            mpi_graphdims_get_,
                            mpi_graphdims_get__,
                            ompi_graphdims_get_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr),
                            (comm, nnodes, nedges, ierr) )
-#else
-#define ompi_graphdims_get_f pompi_graphdims_get_f
-#endif
 #endif
 
 

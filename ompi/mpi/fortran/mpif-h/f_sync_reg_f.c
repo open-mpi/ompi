@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_F_SYNC_REG,
                            pmpi_f_sync_reg,
                            pmpi_f_sync_reg_,
                            pmpi_f_sync_reg__,
-                           pompi_f_sync_reg_f,
+                           ompi_f_sync_reg_f,
                            (char *buf),
                            (buf) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_F_SYNC_REG,
 #pragma weak MPI_F_sync_reg_f = ompi_f_sync_reg_f
 #pragma weak MPI_F_sync_reg_f08 = ompi_f_sync_reg_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_F_SYNC_REG,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_F_SYNC_REG,
                            mpi_f_sync_reg,
                            mpi_f_sync_reg_,
                            mpi_f_sync_reg__,
                            ompi_f_sync_reg_f,
                            (char *buf),
                            (buf) )
-#else
-#define ompi_f_sync_reg_f pompi_f_sync_reg_f
-#endif
 #endif
 
 void ompi_f_sync_reg_f(char *buf)

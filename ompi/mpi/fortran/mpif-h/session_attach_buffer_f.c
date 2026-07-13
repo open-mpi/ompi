@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_ATTACH_BUFFER,
                            pmpi_session_attach_buffer,
                            pmpi_session_attach_buffer_,
                            pmpi_session_attach_buffer__,
-                           pompi_session_attach_buffer_f,
+                           ompi_session_attach_buffer_f,
                            (MPI_Fint *session, char *buffer, MPI_Fint *size, MPI_Fint *ierr),
                            (session, buffer, size, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_ATTACH_BUFFER,
 #pragma weak MPI_Session_attach_buffer_f = ompi_session_attach_buffer_f
 #pragma weak MPI_Session_attach_buffer_f08 = ompi_session_attach_buffer_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_SESSION_ATTACH_BUFFER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_SESSION_ATTACH_BUFFER,
                            mpi_session_attach_buffer,
                            mpi_session_attach_buffer_,
                            mpi_session_attach_buffer__,
                            ompi_session_attach_buffer_f,
                            (MPI_Fint *session, char *buffer, MPI_Fint *size, MPI_Fint *ierr),
                            (session, buffer, size, ierr) )
-#else
-#define ompi_session_attach_buffer_f pompi_session_attach_buffer_f
-#endif
 #endif
 
 
