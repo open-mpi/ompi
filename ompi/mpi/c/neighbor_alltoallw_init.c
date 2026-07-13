@@ -42,17 +42,6 @@
 #pragma weak MPI_Neighbor_alltoallw_init = PMPI_Neighbor_alltoallw_init
 #endif
 #define MPI_Neighbor_alltoallw_init PMPI_Neighbor_alltoallw_init
-#else
-/*
- * Emit the public MPI_* symbol as a *weak* definition.  Where weak aliases
- * are available the alias above is already weak; where they are not, the
- * bindings are compiled a second time to produce MPI_*, and this is that
- * copy -- so mark it weak here.
- *
- * Weak MPI_* is what lets a profiling library provide a strong MPI_* that
- * overrides ours, and it is what the MPI Forum ABI requires of libmpi_abi.
- */
-#pragma weak MPI_Neighbor_alltoallw_init
 #endif
 
 static const char FUNC_NAME[] = "MPI_Neighbor_alltoallw_init";
@@ -169,3 +158,21 @@ int MPI_Neighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], con
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_Neighbor_alltoallw_init
+__opal_attribute_weak__ int MPI_Neighbor_alltoallw_init(const void *sendbuf, const int sendcounts[], const MPI_Aint sdispls[],
+                                const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[],
+                                const MPI_Aint rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm,
+                                MPI_Info info, MPI_Request *request)
+{
+    return PMPI_Neighbor_alltoallw_init(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, info, request);
+}
+#endif

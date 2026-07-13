@@ -35,17 +35,6 @@
 #pragma weak MPI_Pcontrol = PMPI_Pcontrol
 #endif
 #define MPI_Pcontrol PMPI_Pcontrol
-#else
-/*
- * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
- * definitions.  An application built against another implementation's
- * libmpi_abi imports them as weak definitions, and (at least on macOS)
- * the loader will only satisfy such an import from another weak
- * definition -- a strong one is rejected.  When the bindings are compiled
- * separately (i.e., when weak aliases are unavailable), this is the only
- * definition of MPI_Pcontrol in libmpi_abi, so mark it weak here.
- */
-#pragma weak MPI_Pcontrol
 #endif
 
 static const char FUNC_NAME[] = "MPI_Pcontrol";
@@ -69,3 +58,17 @@ int MPI_Pcontrol(const int level, ...)
     return MPI_SUCCESS;
 }
 
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * See the comment above about weak aliases.  MPI_Pcontrol is variadic, so its
+ * arguments cannot be forwarded to PMPI_Pcontrol.  Open MPI's implementation
+ * ignores them and simply returns MPI_SUCCESS (see the body above), and
+ * MPICH's weak MPI_Pcontrol does the same, so do that here.
+ */
+#undef MPI_Pcontrol
+__opal_attribute_weak__ int MPI_Pcontrol(const int level, ...)
+{
+    (void) level;
+    return MPI_SUCCESS;
+}
+#endif

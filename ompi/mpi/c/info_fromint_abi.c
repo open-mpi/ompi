@@ -39,17 +39,6 @@
 #pragma weak MPI_Info_fromint = PMPI_Info_fromint
 #endif
 #define MPI_Info_fromint PMPI_Info_fromint
-#else
-/*
- * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
- * definitions.  An application built against another implementation's
- * libmpi_abi imports them as weak definitions, and (at least on macOS)
- * the loader will only satisfy such an import from another weak
- * definition -- a strong one is rejected.  When the bindings are compiled
- * separately (i.e., when weak aliases are unavailable), this is the only
- * definition of the MPI_* symbol, so mark it weak here.
- */
-#pragma weak MPI_Info_fromint
 #endif
 
 static const char __opal_attribute_unused__ FUNC_NAME[] = "MPI_Info_fromint";
@@ -71,3 +60,19 @@ MPI_Info_ABI_INTERNAL MPI_Info_fromint(int info)
 
     return (MPI_Info_ABI_INTERNAL)opal_pointer_array_get_item(&ompi_info_f_to_c_table, o_index);
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_Info_fromint
+__opal_attribute_weak__ MPI_Info_ABI_INTERNAL MPI_Info_fromint(int info)
+{
+    return PMPI_Info_fromint(info);
+}
+#endif

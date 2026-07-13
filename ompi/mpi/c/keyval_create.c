@@ -36,17 +36,6 @@
 #pragma weak MPI_Keyval_create = PMPI_Keyval_create
 #endif
 #define MPI_Keyval_create PMPI_Keyval_create
-#else
-/*
- * Emit the public MPI_* symbol as a *weak* definition.  Where weak aliases
- * are available the alias above is already weak; where they are not, the
- * bindings are compiled a second time to produce MPI_*, and this is that
- * copy -- so mark it weak here.
- *
- * Weak MPI_* is what lets a profiling library provide a strong MPI_* that
- * overrides ours, and it is what the MPI Forum ABI requires of libmpi_abi.
- */
-#pragma weak MPI_Keyval_create
 #endif
 int MPI_Keyval_create(MPI_Copy_function * copy_attr_fn, MPI_Delete_function * delete_attr_fn, int *keyval, void * extra_state)
 {
@@ -72,3 +61,19 @@ int MPI_Keyval_create(MPI_Copy_function * copy_attr_fn, MPI_Delete_function * de
                                   del_fn, keyval, extra_state, 0, NULL);
     OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, "MPI_Keyval_create");
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_Keyval_create
+__opal_attribute_weak__ int MPI_Keyval_create(MPI_Copy_function * copy_attr_fn, MPI_Delete_function * delete_attr_fn, int *keyval, void * extra_state)
+{
+    return PMPI_Keyval_create(copy_attr_fn, delete_attr_fn, keyval, extra_state);
+}
+#endif

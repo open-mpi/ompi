@@ -28,17 +28,6 @@
 #pragma weak MPI_T_category_get_info = PMPI_T_category_get_info
 #endif
 #define MPI_T_category_get_info PMPI_T_category_get_info
-#else
-/*
- * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
- * definitions.  An application built against another implementation's
- * libmpi_abi imports them as weak definitions, and (at least on macOS)
- * the loader will only satisfy such an import from another weak
- * definition -- a strong one is rejected.  When the bindings are compiled
- * separately (i.e., when weak aliases are unavailable), this is the only
- * definition of the symbol in libmpi_abi, so mark it weak here.
- */
-#pragma weak MPI_T_category_get_info
 #endif
 
 int MPI_T_category_get_info(int cat_index, char *name, int *name_len,
@@ -81,3 +70,21 @@ int MPI_T_category_get_info(int cat_index, char *name, int *name_len,
 
     return rc;
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_T_category_get_info
+__opal_attribute_weak__ int MPI_T_category_get_info(int cat_index, char *name, int *name_len,
+                            char *desc, int *desc_len, int *num_cvars,
+                            int *num_pvars, int *num_categories)
+{
+    return PMPI_T_category_get_info(cat_index, name, name_len, desc, desc_len, num_cvars, num_pvars, num_categories);
+}
+#endif

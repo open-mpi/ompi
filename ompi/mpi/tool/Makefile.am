@@ -30,9 +30,6 @@ include $(top_srcdir)/Makefile.ompi-rules
 SUFFIXES= _ompi_generated.c _abi_generated.c .c.in
 
 noinst_LTLIBRARIES = libmpi_mpit.la libmpi_mpit_profile.la
-if BUILD_MPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_mpit_noprofile.la
-endif
 
 headers = mpit-internal.h
 
@@ -41,9 +38,6 @@ headers = mpit-internal.h
 libmpi_mpit_la_SOURCES = \
 	mpit_common.c
 libmpi_mpit_la_LIBADD = libmpi_mpit_profile.la
-if BUILD_MPI_BINDINGS_LAYER
-libmpi_mpit_la_LIBADD += libmpi_mpit_noprofile.la
-endif
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
@@ -197,8 +191,6 @@ endif
 libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources) $(interface_profile_sources_np)
 libmpi_mpit_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_mpit_noprofile_la_SOURCES = $(interface_profile_sources) $(interface_profile_sources_np)
-libmpi_mpit_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
 EXTRA_DIST = $(prototype_sources)
 

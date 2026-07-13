@@ -42,17 +42,6 @@
  */
 #undef MPI_Address
 #define MPI_Address PMPI_Address
-#else
-/*
- * Emit the public MPI_* symbol as a *weak* definition.  Where weak aliases
- * are available the alias above is already weak; where they are not, the
- * bindings are compiled a second time to produce MPI_*, and this is that
- * copy -- so mark it weak here.
- *
- * Weak MPI_* is what lets a profiling library provide a strong MPI_* that
- * overrides ours, and it is what the MPI Forum ABI requires of libmpi_abi.
- */
-#pragma weak MPI_Address
 #endif
 
 static const char FUNC_NAME[] = "MPI_Address";
@@ -70,3 +59,19 @@ int MPI_Address(void *location, MPI_Aint *address)
     *address = (MPI_Aint)location;
     return MPI_SUCCESS;
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_Address
+__opal_attribute_weak__ int MPI_Address(void *location, MPI_Aint *address)
+{
+    return PMPI_Address(location, address);
+}
+#endif

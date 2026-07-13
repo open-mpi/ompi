@@ -911,6 +911,42 @@ def generate_replacements(mangle_names=False):
         replacements[key] = val
     return replacements
 
+def print_weak_mpi_wrapper(prototype, fn_name, out, abi_type='ompi',
+                           enable_count=False):
+    """Emit a weak MPI_* definition forwarding to the strong PMPI_* one.
+
+    Only needed where weak *aliases* are unavailable.  Mach-O cannot express a
+    weak alias at all -- there is no way to mark a ".set" alias as a weak
+    definition -- so on such platforms the public MPI_* symbol has to be a real
+    (weak) function that tail-calls PMPI_*.  This is the same scheme MPICH
+    uses, and it is what lets the bindings be compiled exactly once: the
+    profiling compile emits both PMPI_* (strong) and MPI_* (weak).
+
+    Where weak aliases *are* available, the alias emitted by
+    print_profiling_header() already is the weak MPI_* definition, and this
+    wrapper would be a duplicate symbol -- hence the OPAL_HAVE_WEAK_ALIASES
+    guard.
+    """
+    out.dump('#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES')
+    # The body above was compiled as PMPI_*, courtesy of the #define; undo it
+    # so that the name below really is the public MPI_* symbol.
+    out.dump(f'#undef {fn_name}')
+    signature = prototype.signature(fn_name, abi_type=abi_type,
+                                    enable_count=enable_count)
+    return_type = prototype.return_type.construct(
+        abi_type=abi_type).type_text(enable_count=enable_count)
+    args = ', '.join(param.name for param in prototype.params)
+    out.dump(f'__opal_attribute_weak__ {signature}')
+    out.dump('{')
+    call = f'P{fn_name}({args})'
+    if return_type.strip() == 'void':
+        out.dump(f'    {call};')
+    else:
+        out.dump(f'    return {call};')
+    out.dump('}')
+    out.dump('#endif')
+
+
 def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
     """Generate the OMPI ABI functions."""
     template.print_header(out)
@@ -921,6 +957,8 @@ def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
         out.dump(template.prototype.signature(base_name, abi_type='ompi'))
         template.print_body(func_name=base_name, out=out,
                             replacements=generate_replacements(mangle_names=False))
+        print_weak_mpi_wrapper(template.prototype, base_name, out,
+                               abi_type='ompi')
     # Check if we need to generate the bigcount interface
     if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
         # there are some special cases where we need to explicitly define the bigcount functions in the template file
@@ -934,6 +972,8 @@ def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
         out.dump(template.prototype.signature(base_name_c, abi_type='ompi', enable_count=True))
         template.print_body(func_name=base_name_c, out=out,
                             replacements=generate_replacements(mangle_names=False))
+        print_weak_mpi_wrapper(template.prototype, base_name_c, out,
+                               abi_type='ompi', enable_count=True)
 
 ABI_INTERNAL_HEADER = 'ompi/mpi/c/abi.h'
 ABI_INTERNAL_CONVERTOR = 'ompi/mpi/c/abi_converters.h'
@@ -1005,6 +1045,8 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         for line in lines:
             out.dump(line)
         out.dump('}')
+        print_weak_mpi_wrapper(prototype, fn_name, out, abi_type='standard',
+                               enable_count=enable_count)
 
     if suppress_nbc == False:
         internal_name = f'ompi_abi_{template.prototype.name}'

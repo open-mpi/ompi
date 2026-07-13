@@ -42,10 +42,11 @@ include $(top_srcdir)/Makefile.ompi-rules
 
 SUFFIXES= _ompi_generated.c _abi_generated.c .c.in .c.in_obc .c.in_nbc
 
+# The C bindings are compiled exactly once: the profiling compile emits both
+# the strong PMPI_* symbols and the weak MPI_* symbols (via a weak alias
+# where the platform has them, and via a weak forwarding definition where it
+# does not).  There is therefore no second, non-profiling compile.
 noinst_LTLIBRARIES = libmpi_c.la libmpi_c_profile.la
-if BUILD_MPI_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_c_noprofile.la
-endif
 
 headers = bindings.h \
           abi.h \
@@ -536,9 +537,6 @@ libmpi_c_la_SOURCES = \
         ompi_abi_fortran.c
 
 libmpi_c_la_LIBADD = libmpi_c_profile.la
-if BUILD_MPI_BINDINGS_LAYER
-libmpi_c_la_LIBADD += libmpi_c_noprofile.la
-endif
 
 nobase_include_HEADERS = standard_abi/mpi.h
 
@@ -1070,8 +1068,6 @@ deprecated_interface_profile_sources = \
 libmpi_c_profile_la_SOURCES = $(interface_profile_sources) $(extra_interface_profile_sources) $(deprecated_interface_profile_sources)
 libmpi_c_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
-libmpi_c_noprofile_la_SOURCES = $(interface_profile_sources) $(extra_interface_profile_sources)  $(deprecated_interface_profile_sources)
-libmpi_c_noprofile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
 
 if OMPI_GENERATE_BINDINGS
 # The generated bindings depend on the generator itself, not just on the
