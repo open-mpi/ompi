@@ -29,11 +29,8 @@
 #pragma weak MPI_T_finalize = PMPI_T_finalize
 #endif
 #define MPI_T_finalize PMPI_T_finalize
-#elif defined(OMPI_NO_MPI_PROTOTYPES)
+#else
 /*
- * This file is compiled into both libmpi and libmpi_abi;
- * OMPI_NO_MPI_PROTOTYPES is defined only for the libmpi_abi compiles.
- *
  * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
  * definitions.  An application built against another implementation's
  * libmpi_abi imports them as weak definitions, and (at least on macOS)

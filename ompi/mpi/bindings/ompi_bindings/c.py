@@ -869,12 +869,18 @@ def print_profiling_header(fn_name, out, weak_mpi_symbol=False):
     MPI_* symbol (the one built with OMPI_BUILD_MPI_PROFILING=0, which is only
     built when weak aliases are unavailable) is marked *weak*.
 
-    The MPI Forum ABI requires the public MPI_* symbols to be weak
-    definitions: an application built against another implementation's
-    libmpi_abi imports them as weak definitions, and (at least on macOS) the
-    loader will only satisfy such an import from another weak definition -- a
-    strong one is rejected.  Where weak aliases *are* available, the alias
-    below is already a weak definition, so nothing extra is needed.
+    The public MPI_* symbols must be weak definitions:
+
+    * The MPI Forum ABI requires it.  An application built against another
+      implementation's libmpi_abi imports MPI_* as weak definitions, and (at
+      least on macOS) the loader will only satisfy such an import from another
+      weak definition -- a strong one is rejected outright.
+
+    * It is what lets a PMPI profiling library supply a strong MPI_* that
+      overrides ours while still reaching the back end through PMPI_*.
+
+    Where weak aliases *are* available, the alias emitted below is already a
+    weak definition, so nothing extra is needed there.
     """
     out.dump('#if OMPI_BUILD_MPI_PROFILING')
     out.dump('#if OPAL_HAVE_WEAK_ALIASES')
@@ -909,7 +915,7 @@ def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
     """Generate the OMPI ABI functions."""
     template.print_header(out)
     if suppress_nbc == False:
-        print_profiling_header(base_name, out)
+        print_profiling_header(base_name, out, weak_mpi_symbol=True)
         print_cdefs_for_bigcount(out)
         print_cdefs_for_abi(out)
         out.dump(template.prototype.signature(base_name, abi_type='ompi'))
@@ -922,7 +928,7 @@ def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
             base_name_c = f'{base_name}'
         else:
             base_name_c = f'{base_name}_c'
-        print_profiling_header(base_name_c, out)
+        print_profiling_header(base_name_c, out, weak_mpi_symbol=True)
         print_cdefs_for_bigcount(out, enable_count=True)
         print_cdefs_for_abi(out)
         out.dump(template.prototype.signature(base_name_c, abi_type='ompi', enable_count=True))

@@ -43,6 +43,17 @@
  */
 #undef MPI_Type_lb
 #define MPI_Type_lb PMPI_Type_lb
+#else
+/*
+ * Emit the public MPI_* symbol as a *weak* definition.  Where weak aliases
+ * are available the alias above is already weak; where they are not, the
+ * bindings are compiled a second time to produce MPI_*, and this is that
+ * copy -- so mark it weak here.
+ *
+ * Weak MPI_* is what lets a profiling library provide a strong MPI_* that
+ * overrides ours, and it is what the MPI Forum ABI requires of libmpi_abi.
+ */
+#pragma weak MPI_Type_lb
 #endif
 
 static const char FUNC_NAME[] = "MPI_Type_lb";
