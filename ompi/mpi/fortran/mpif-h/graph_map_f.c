@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_MAP,
                            pmpi_graph_map,
                            pmpi_graph_map_,
                            pmpi_graph_map__,
-                           pompi_graph_map_f,
+                           ompi_graph_map_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *indx, MPI_Fint *edges, MPI_Fint *newrank, MPI_Fint *ierr),
                            (comm, nnodes, indx, edges, newrank, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_MAP,
 #pragma weak MPI_Graph_map_f = ompi_graph_map_f
 #pragma weak MPI_Graph_map_f08 = ompi_graph_map_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_MAP,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GRAPH_MAP,
                            mpi_graph_map,
                            mpi_graph_map_,
                            mpi_graph_map__,
                            ompi_graph_map_f,
                            (MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *indx, MPI_Fint *edges, MPI_Fint *newrank, MPI_Fint *ierr),
                            (comm, nnodes, indx, edges, newrank, ierr) )
-#else
-#define ompi_graph_map_f pompi_graph_map_f
-#endif
 #endif
 
 

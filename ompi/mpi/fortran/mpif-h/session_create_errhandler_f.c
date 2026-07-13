@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_CREATE_ERRHANDLER,
                            pmpi_session_create_errhandler,
                            pmpi_session_create_errhandler_,
                            pmpi_session_create_errhandler__,
-                           pompi_session_create_errhandler_f,
+                           ompi_session_create_errhandler_f,
                            (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_CREATE_ERRHANDLER,
 #pragma weak MPI_Session_create_errhandler_f = ompi_session_create_errhandler_f
 #pragma weak MPI_Session_create_errhandler_f08 = ompi_session_create_errhandler_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_SESSION_CREATE_ERRHANDLER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_SESSION_CREATE_ERRHANDLER,
                            mpi_session_create_errhandler,
                            mpi_session_create_errhandler_,
                            mpi_session_create_errhandler__,
                            ompi_session_create_errhandler_f,
                            (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
-#else
-#define ompi_session_create_errhandler_f pompi_session_create_errhandler_f
-#endif
 #endif
 
 static const char FUNC_NAME[] = "MPI_SESSION_CREATE_ERRHANDLER";

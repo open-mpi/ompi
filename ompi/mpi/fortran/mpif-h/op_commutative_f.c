@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_COMMUTATIVE,
                            pmpi_op_commutative,
                            pmpi_op_commutative_,
                            pmpi_op_commutative__,
-                           pompi_op_commutative_f,
+                           ompi_op_commutative_f,
                            (MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr),
                            (op, commute, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_COMMUTATIVE,
 #pragma weak MPI_Op_commutative_f = ompi_op_commutative_f
 #pragma weak MPI_Op_commutative_f08 = ompi_op_commutative_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_OP_COMMUTATIVE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_OP_COMMUTATIVE,
                            mpi_op_commutative,
                            mpi_op_commutative_,
                            mpi_op_commutative__,
                            ompi_op_commutative_f,
                            (MPI_Fint *op, MPI_Fint *commute, MPI_Fint *ierr),
                            (op, commute, ierr) )
-#else
-#define ompi_op_commutative_f pompi_op_commutative_f
-#endif
 #endif
 
 

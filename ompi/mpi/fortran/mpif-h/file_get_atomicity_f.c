@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_ATOMICITY,
                            pmpi_file_get_atomicity,
                            pmpi_file_get_atomicity_,
                            pmpi_file_get_atomicity__,
-                           pompi_file_get_atomicity_f,
+                           ompi_file_get_atomicity_f,
                            (MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (fh, flag, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_ATOMICITY,
 #pragma weak MPI_File_get_atomicity_f = ompi_file_get_atomicity_f
 #pragma weak MPI_File_get_atomicity_f08 = ompi_file_get_atomicity_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_ATOMICITY,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_GET_ATOMICITY,
                            mpi_file_get_atomicity,
                            mpi_file_get_atomicity_,
                            mpi_file_get_atomicity__,
                            ompi_file_get_atomicity_f,
                            (MPI_Fint *fh, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (fh, flag, ierr) )
-#else
-#define ompi_file_get_atomicity_f pompi_file_get_atomicity_f
-#endif
 #endif
 
 

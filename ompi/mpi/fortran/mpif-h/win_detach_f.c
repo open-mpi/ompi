@@ -26,7 +26,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_DETACH,
                            pmpi_win_detach,
                            pmpi_win_detach_,
                            pmpi_win_detach__,
-                           pompi_win_detach_f,
+                           ompi_win_detach_f,
                            (MPI_Fint *win, char *base, MPI_Fint *ierr),
                            (win, base, ierr) )
 #endif
@@ -41,17 +41,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_DETACH,
 #pragma weak MPI_Win_detach_f = ompi_win_detach_f
 #pragma weak MPI_Win_detach_f08 = ompi_win_detach_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_DETACH,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_DETACH,
                            mpi_win_detach,
                            mpi_win_detach_,
                            mpi_win_detach__,
                            ompi_win_detach_f,
                            (MPI_Fint *win, char *base, MPI_Fint *ierr),
                            (win, base, ierr) )
-#else
-#define ompi_win_detach_f pompi_win_detach_f
-#endif
 #endif
 
 

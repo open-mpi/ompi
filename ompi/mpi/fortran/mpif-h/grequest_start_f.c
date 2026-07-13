@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_START,
                            pmpi_grequest_start,
                            pmpi_grequest_start_,
                            pmpi_grequest_start__,
-                           pompi_grequest_start_f,
+                           ompi_grequest_start_f,
                            (MPI_F_Grequest_query_function* query_fn, MPI_F_Grequest_free_function* free_fn, MPI_F_Grequest_cancel_function* cancel_fn, MPI_Aint *extra_state, MPI_Fint *request, MPI_Fint *ierr),
                            (query_fn, free_fn, cancel_fn, extra_state, request, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_START,
 #pragma weak MPI_Grequest_start_f = ompi_grequest_start_f
 #pragma weak MPI_Grequest_start_f08 = ompi_grequest_start_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GREQUEST_START,
                            mpi_grequest_start,
                            mpi_grequest_start_,
                            mpi_grequest_start__,
                            ompi_grequest_start_f,
                            (MPI_F_Grequest_query_function* query_fn, MPI_F_Grequest_free_function* free_fn, MPI_F_Grequest_cancel_function* cancel_fn, MPI_Aint *extra_state, MPI_Fint *request, MPI_Fint *ierr),
                            (query_fn, free_fn, cancel_fn, extra_state, request, ierr) )
-#else
-#define ompi_grequest_start_f pompi_grequest_start_f
-#endif
 #endif
 
 

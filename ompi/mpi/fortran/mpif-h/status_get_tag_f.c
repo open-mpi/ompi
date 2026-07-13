@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_GET_TAG,
                            pmpi_status_get_tag,
                            pmpi_status_get_tag_,
                            pmpi_status_get_tag__,
-                           pompi_status_get_tag_f,
+                           ompi_status_get_tag_f,
                            (MPI_Fint *status, MPI_Fint *tag, MPI_Fint *ierr),
                            (status, tag, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_GET_TAG,
 #pragma weak MPI_Status_get_tag_f = ompi_status_get_tag_f
 #pragma weak MPI_Status_get_tag_f08 = ompi_status_get_tag_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_GET_TAG,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_STATUS_GET_TAG,
                            mpi_status_get_tag,
                            mpi_status_get_tag_,
                            mpi_status_get_tag__,
                            ompi_status_get_tag_f,
                            (MPI_Fint *status, MPI_Fint *tag, MPI_Fint *ierr),
                            (status, tag, ierr) )
-#else
-#define ompi_status_get_tag_f pompi_status_get_tag_f
-#endif
 #endif
 
 

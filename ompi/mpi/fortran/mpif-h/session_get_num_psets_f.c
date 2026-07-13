@@ -42,7 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_NUM_PSETS,
                             pmpi_session_get_num_psets,
                             pmpi_session_get_num_psets_,
                             pmpi_session_get_num_psets__,
-                            pompi_session_get_num_psets_f,
+                            ompi_session_get_num_psets_f,
                             (MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, MPI_Fint *ierr),
                             (session, info, npset_names, ierr) )
 #endif
@@ -57,17 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_NUM_PSETS,
 #pragma weak MPI_Session_get_num_psets_f = ompi_session_get_num_psets_f
 #pragma weak MPI_Session_get_num_psets_f08 = ompi_session_get_num_psets_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_SESSION_GET_NUM_PSETS,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_SESSION_GET_NUM_PSETS,
                             mpi_session_get_num_psets,
                             mpi_session_get_num_psets_,
                             mpi_session_get_num_psets__,
                             ompi_session_get_num_psets_f,
                             (MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, MPI_Fint *ierr),
                             (session, info, npset_names, ierr) )
-#else
-#define ompi_session_get_num_psets_f pompi_session_get_num_psets_f
-#endif
 #endif
 
 void ompi_session_get_num_psets_f(MPI_Fint *session, MPI_Fint *info, MPI_Fint *npset_names, MPI_Fint *ierr)

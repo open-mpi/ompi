@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_LIBRARY_VERSION,
                             pmpi_get_library_version,
                             pmpi_get_library_version_,
                             pmpi_get_library_version__,
-                            pompi_get_library_version_f,
+                            ompi_get_library_version_f,
                             (char *version, MPI_Fint *resultlen, MPI_Fint *ierr, MPI_Fint version_len),
                             (version, resultlen, ierr, version_len) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_LIBRARY_VERSION,
 #pragma weak MPI_Get_library_version_f = ompi_get_library_version_f
 #pragma weak MPI_Get_library_version_f08 = ompi_get_library_version_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GET_LIBRARY_VERSION,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GET_LIBRARY_VERSION,
                             mpi_get_library_version,
                             mpi_get_library_version_,
                             mpi_get_library_version__,
                             ompi_get_library_version_f,
                             (char *version, MPI_Fint *resultlen, MPI_Fint *ierr, MPI_Fint version_len),
                             (version, resultlen, ierr, version_len) )
-#else
-#define ompi_get_library_version_f pompi_get_library_version_f
-#endif
 #endif
 
 

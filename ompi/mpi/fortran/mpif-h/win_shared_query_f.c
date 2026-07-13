@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SHARED_QUERY,
                             pmpi_win_shared_query,
                             pmpi_win_shared_query_,
                             pmpi_win_shared_query__,
-                            pompi_win_shared_query_f,
+                            ompi_win_shared_query_f,
                             (MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
                              MPI_Fint *disp_unit, char *baseptr,
                              MPI_Fint *ierr),
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SHARED_QUERY_CPTR,
                             pmpi_win_shared_query_cptr,
                             pmpi_win_shared_query_cptr_,
                             pmpi_win_shared_query_cptr__,
-                            pompi_win_shared_query_cptr_f,
+                            ompi_win_shared_query_cptr_f,
                             (MPI_Fint *win, MPI_Fint *rank, MPI_Aint *size,
                              MPI_Fint *disp_unit, char *baseptr,
                              MPI_Fint *ierr),
@@ -80,8 +80,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SHARED_QUERY_CPTR,
 #pragma weak MPI_Win_shared_query_cptr_f = ompi_win_shared_query_f
 #pragma weak MPI_Win_shared_query_cptr_f08 = ompi_win_shared_query_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SHARED_QUERY,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_SHARED_QUERY,
                             mpi_win_shared_query,
                             mpi_win_shared_query_,
                             mpi_win_shared_query__,
@@ -91,7 +90,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SHARED_QUERY,
                              MPI_Fint *ierr),
                             (win, rank, size, disp_unit, baseptr, ierr) )
 
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SHARED_QUERY_CPTR,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_SHARED_QUERY_CPTR,
                             mpi_win_shared_query_cptr,
                             mpi_win_shared_query_cptr_,
                             mpi_win_shared_query_cptr__,
@@ -100,10 +99,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SHARED_QUERY_CPTR,
                              MPI_Fint *disp_unit, char *baseptr,
                              MPI_Fint *ierr),
                             (win, rank, size, disp_unit, baseptr, ierr) )
-#else
-#define ompi_win_shared_query_f pompi_win_shared_query_f
-#define ompi_win_shared_query_cptr_f pompi_win_shared_query_cptr_f
-#endif
 #endif
 
 

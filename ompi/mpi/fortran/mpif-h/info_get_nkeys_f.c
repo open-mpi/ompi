@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NKEYS,
                            pmpi_info_get_nkeys,
                            pmpi_info_get_nkeys_,
                            pmpi_info_get_nkeys__,
-                           pompi_info_get_nkeys_f,
+                           ompi_info_get_nkeys_f,
                            (MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr),
                            (info, nkeys, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NKEYS,
 #pragma weak MPI_Info_get_nkeys_f = ompi_info_get_nkeys_f
 #pragma weak MPI_Info_get_nkeys_f08 = ompi_info_get_nkeys_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_INFO_GET_NKEYS,
                            mpi_info_get_nkeys,
                            mpi_info_get_nkeys_,
                            mpi_info_get_nkeys__,
                            ompi_info_get_nkeys_f,
                            (MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr),
                            (info, nkeys, ierr) )
-#else
-#define ompi_info_get_nkeys_f pompi_info_get_nkeys_f
-#endif
 #endif
 
 

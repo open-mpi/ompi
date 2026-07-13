@@ -29,7 +29,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ABI_GET_FORTRAN_INFO,
                            pmpi_abi_get_fortran_info,
                            pmpi_abi_get_fortran_info_,
                            pmpi_abi_get_fortran_info__,
-                           pompi_abi_get_fortran_info_f,
+                           ompi_abi_get_fortran_info_f,
                            (MPI_Fint *info, MPI_Fint *ierr),
                            (info, ierr) )
 #endif
@@ -44,17 +44,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ABI_GET_FORTRAN_INFO,
 #pragma weak MPI_Abi_get_fortran_info_f = ompi_abi_get_fortran_info_f
 #pragma weak MPI_Abi_get_fortran_info_f08 = ompi_abi_get_fortran_info_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ABI_GET_FORTRAN_INFO,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_ABI_GET_FORTRAN_INFO,
                            mpi_abi_get_fortran_info,
                            mpi_abi_get_fortran_info_,
                            mpi_abi_get_fortran_info__,
                            ompi_abi_get_fortran_info_f,
                            (MPI_Fint *info, MPI_Fint *ierr),
                            (info, ierr) )
-#else
-#define ompi_abi_get_fortran_info_f pompi_abi_get_fortran_info_f
-#endif
 #endif
 
 

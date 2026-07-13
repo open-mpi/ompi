@@ -2,6 +2,7 @@
  * Copyright (c) 2018-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,3 +53,10 @@ int MPIX_Comm_ishrink(MPI_Comm comm, MPI_Comm* newcomm, MPI_Request *request)
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+#undef MPIX_Comm_ishrink
+__opal_attribute_weak__ int MPIX_Comm_ishrink(MPI_Comm comm, MPI_Comm* newcomm, MPI_Request *request)
+{
+    return PMPIX_Comm_ishrink(comm, newcomm, request);
+}
+#endif

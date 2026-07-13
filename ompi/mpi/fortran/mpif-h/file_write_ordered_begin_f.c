@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ORDERED_BEGIN,
                            pmpi_file_write_ordered_begin,
                            pmpi_file_write_ordered_begin_,
                            pmpi_file_write_ordered_begin__,
-                           pompi_file_write_ordered_begin_f,
+                           ompi_file_write_ordered_begin_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr),
                            (fh, buf, count, datatype, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ORDERED_BEGIN,
 #pragma weak MPI_File_write_ordered_begin_f = ompi_file_write_ordered_begin_f
 #pragma weak MPI_File_write_ordered_begin_f08 = ompi_file_write_ordered_begin_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ORDERED_BEGIN,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_WRITE_ORDERED_BEGIN,
                            mpi_file_write_ordered_begin,
                            mpi_file_write_ordered_begin_,
                            mpi_file_write_ordered_begin__,
                            ompi_file_write_ordered_begin_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr),
                            (fh, buf, count, datatype, ierr) )
-#else
-#define ompi_file_write_ordered_begin_f pompi_file_write_ordered_begin_f
-#endif
 #endif
 
 

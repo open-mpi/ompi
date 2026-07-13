@@ -3,7 +3,7 @@
 # Copyright (c) 2016-2022 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025-2026 Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -11,16 +11,14 @@
 # $HEADER$
 #
 
-SUBDIRS = profile
-
 headers = \
     mpiext_ftmpi_c.h
 
-# OMPI_BUILD_MPI_PROFILING is enabled when we want our generated MPI_* symbols
-# to be replaced by PMPI_*.
-# In this directory, we need it to be 0
-
-AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=0
+# The bindings are compiled exactly once, with OMPI_BUILD_MPI_PROFILING=1:
+# that compile emits the strong PMPIX_* entry points and the weak MPIX_*
+# entry points (via a weak alias where the platform has them, and via a
+# weak forwarding definition where it does not).
+AM_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
 noinst_LTLIBRARIES = libmpiext_ftmpi_c.la
 
@@ -35,12 +33,8 @@ libmpiext_ftmpi_c_la_SOURCES = \
     comm_ack_failed.c \
     comm_agree.c \
     comm_iagree.c
-libmpiext_ftmpi_c_la_LIBADD = \
-    profile/libpmpiext_ftmpi_c.la
 
 EXTRA_DIST = help-mpi-ft.txt
 
 ompidir = $(ompiincludedir)/mpiext/
 ompi_HEADERS = $(headers)
-
-MAINTAINERCLEANFILES = $(nodist_libmpiext_ftmpi_c_la_SOURCES)

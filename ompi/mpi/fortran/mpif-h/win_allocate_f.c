@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE,
                             pmpi_win_allocate,
                             pmpi_win_allocate_,
                             pmpi_win_allocate__,
-                            pompi_win_allocate_f,
+                            ompi_win_allocate_f,
                             (MPI_Aint *size, MPI_Fint *disp_unit,
                              MPI_Fint *info, MPI_Fint *comm, char *baseptr,
                              MPI_Fint *win, MPI_Fint *ierr),
@@ -55,7 +55,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_CPTR,
                             pmpi_win_allocate_cptr,
                             pmpi_win_allocate_cptr_,
                             pmpi_win_allocate_cptr__,
-                            pompi_win_allocate_cptr_f,
+                            ompi_win_allocate_cptr_f,
                             (MPI_Aint *size, MPI_Fint *disp_unit,
                              MPI_Fint *info, MPI_Fint *comm, char *baseptr,
                              MPI_Fint *win, MPI_Fint *ierr),
@@ -80,8 +80,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_ALLOCATE_CPTR,
 #pragma weak MPI_Win_allocate_cptr_f = ompi_win_allocate_f
 #pragma weak MPI_Win_allocate_cptr_f08 = ompi_win_allocate_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_ALLOCATE,
                             mpi_win_allocate,
                             mpi_win_allocate_,
                             mpi_win_allocate__,
@@ -91,7 +90,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE,
                              MPI_Fint *win, MPI_Fint *ierr),
                             (size, disp_unit, info, comm, baseptr, win, ierr) )
 
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_CPTR,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_ALLOCATE_CPTR,
                             mpi_win_allocate_cptr,
                             mpi_win_allocate_cptr_,
                             mpi_win_allocate_cptr__,
@@ -100,10 +99,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_ALLOCATE_CPTR,
                              MPI_Fint *info, MPI_Fint *comm, char *baseptr,
                              MPI_Fint *win, MPI_Fint *ierr),
                             (size, disp_unit, info, comm, baseptr, win, ierr) )
-#else
-#define ompi_win_allocate_f pompi_win_allocate_f
-#define ompi_win_allocate_cptr_f pompi_win_allocate_cptr_f
-#endif
 #endif
 
 
