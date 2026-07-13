@@ -1,419 +1,443 @@
 /*
- * Testcase for bitmap
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2014 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Unit test for opal_bitmap_t.  Exercises the full public API with
+ * self-checking assertions (via the support harness).  Note: the
+ * library is compiled with -DNDEBUG, so assert() is a no-op here --
+ * all verification must go through test_verify()/test_failure().
  */
 
 #include "opal_config.h"
 
-#include "support.h"
 #include <stdio.h>
+
+#include "support.h"
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/constants.h"
 
-#define BSIZE            26
-#define OPAL_INVALID_BIT -1
-#define ERR_CODE         -2
+#define BSIZE 26
 
-#define PRINT_VALID_ERR                                        \
-    fprintf(error_out, "================================ \n"); \
-    fprintf(error_out, "This is supposed to throw error  \n"); \
-    fprintf(error_out, "================================ \n")
+/* Number of bits per underlying array element (mirrors the value used
+   internally by opal_bitmap.c). */
+#define BITS_PER_ELEMENT 64
 
-static void test_bitmap_set(opal_bitmap_t *bm);
-static void test_bitmap_clear(opal_bitmap_t *bm);
-static void test_bitmap_is_set(opal_bitmap_t *bm);
-static void test_bitmap_clear_all(opal_bitmap_t *bm);
-static void test_bitmap_set_all(opal_bitmap_t *bm);
-static void test_bitmap_find_and_set(opal_bitmap_t *bm);
-static void test_bitmap_num_set_bits(opal_bitmap_t *bm);
-
-static int set_bit(opal_bitmap_t *bm, int bit);
-static int clear_bit(opal_bitmap_t *bm, int bit);
-static int is_set_bit(opal_bitmap_t *bm, int bit);
-static int clear_all(opal_bitmap_t *bm);
-static int set_all(opal_bitmap_t *bm);
-static int find_and_set(opal_bitmap_t *bm, int bit);
-
-#define WANT_PRINT_BITMAP 0
-#if WANT_PRINT_BITMAP
-static void print_bitmap(opal_bitmap_t *bm);
-#endif
-
-static FILE *error_out = NULL;
+static void test_init_errors(void);
+static void test_set_and_is_set(void);
+static void test_clear(void);
+static void test_clear_and_set_all(void);
+static void test_find_and_set(void);
+static void test_num_bits(void);
+static void test_bitwise_ops(void);
+static void test_are_different(void);
+static void test_get_string(void);
+static void test_copy(void);
+static void test_max_size(void);
+static void test_size_accessor(void);
 
 int main(int argc, char *argv[])
 {
-    /* Local variables */
-    opal_bitmap_t bm;
-    int err;
-
-    /* Perform overall test initialization */
     test_init("opal_bitmap_t");
 
-#ifdef STANDALONE
-    error_out = stderr;
-#else
-    error_out = fopen("./opal_bitmap_test_out.txt", "w");
-    if (error_out == NULL)
-        error_out = stderr;
-#endif
+    test_init_errors();
+    test_set_and_is_set();
+    test_clear();
+    test_clear_and_set_all();
+    test_find_and_set();
+    test_num_bits();
+    test_bitwise_ops();
+    test_are_different();
+    test_get_string();
+    test_copy();
+    test_max_size();
+    test_size_accessor();
 
-    /* Initialize bitmap  */
+    /* test_finalize() returns non-zero if any check failed, which
+       becomes this program's exit status for "make check". */
+    return test_finalize();
+}
+
+static void test_init_errors(void)
+{
+    opal_bitmap_t bm;
     OBJ_CONSTRUCT(&bm, opal_bitmap_t);
-    PRINT_VALID_ERR;
-    err = opal_bitmap_init(NULL, 2);
-    if (err == OPAL_ERR_BAD_PARAM)
-        fprintf(error_out, "ERROR: Initialization of bitmap failed\n\n");
 
-    PRINT_VALID_ERR;
-    err = opal_bitmap_init(&bm, -1);
-    if (err == OPAL_ERR_BAD_PARAM)
-        fprintf(error_out, "ERROR: Initialization of bitmap failed \n\n");
+    /* NULL bitmap is rejected */
+    test_verify("init(NULL) rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_init(NULL, 2));
+    /* non-positive sizes are rejected */
+    test_verify("init(size=-1) rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_init(&bm, -1));
+    test_verify("init(size=0) rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_init(&bm, 0));
+    /* valid size succeeds and rounds up to a whole element */
+    test_verify("init(BSIZE) ok", OPAL_SUCCESS == opal_bitmap_init(&bm, BSIZE));
+    test_verify("init rounds up to one element", BITS_PER_ELEMENT == opal_bitmap_size(&bm));
+    /* a freshly initialized bitmap is entirely clear */
+    test_verify("fresh bitmap is clear", opal_bitmap_is_clear(&bm));
 
-    err = opal_bitmap_init(&bm, BSIZE);
-    if (0 > err) {
-        fprintf(error_out, "Error in bitmap create -- aborting \n");
-        exit(-1);
+    OBJ_DESTRUCT(&bm);
+}
+
+static void test_set_and_is_set(void)
+{
+    opal_bitmap_t bm;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
+    opal_bitmap_init(&bm, BSIZE);
+
+    /* Set bits at element boundaries and beyond the initial size (which
+       must auto-expand the bitmap). */
+    int bits[] = {0, 1, 7, 8, 24, 31, 32, 44, 63, 64, 82};
+    int nbits = (int) (sizeof(bits) / sizeof(bits[0]));
+    for (int i = 0; i < nbits; ++i) {
+        test_verify("set_bit ok", OPAL_SUCCESS == opal_bitmap_set_bit(&bm, bits[i]));
+    }
+    for (int i = 0; i < nbits; ++i) {
+        test_verify("set bit reads back set", opal_bitmap_is_set_bit(&bm, bits[i]));
     }
 
-    fprintf(error_out, "\nTesting bitmap set... \n");
-    test_bitmap_set(&bm);
+    /* Setting bit 82 must have grown the bitmap past 82 bits. */
+    test_verify("set_bit auto-expanded", opal_bitmap_size(&bm) > 82);
 
-    fprintf(error_out, "\nTesting bitmap clear ... \n");
-    test_bitmap_clear(&bm);
+    /* Bits we never set must read as unset. */
+    test_verify("unset bit 2 reads clear", !opal_bitmap_is_set_bit(&bm, 2));
+    test_verify("unset bit 30 reads clear", !opal_bitmap_is_set_bit(&bm, 30));
 
-    fprintf(error_out, "\nTesting bitmap is_set ... \n");
-    test_bitmap_is_set(&bm);
+    /* Out-of-range / negative indices: set is rejected, is_set is false. */
+    test_verify("set_bit(-1) rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_set_bit(&bm, -1));
+    test_verify("is_set_bit(-1) false", !opal_bitmap_is_set_bit(&bm, -1));
+    test_verify("is_set_bit(huge) false", !opal_bitmap_is_set_bit(&bm, 1000000));
 
-    fprintf(error_out, "\nTesting bitmap clear_all... \n");
-    test_bitmap_clear_all(&bm);
-
-    fprintf(error_out, "\nTesting bitmap set_all... \n");
-    test_bitmap_set_all(&bm);
-
-    fprintf(error_out, "\nTesting bitmap find_and_set... \n");
-    test_bitmap_find_and_set(&bm);
-
-    fprintf(error_out, "\nTesting bitmap num_set_bits... \n");
-    test_bitmap_num_set_bits(&bm);
-
-    fprintf(error_out, "\n~~~~~~     Testing complete     ~~~~~~ \n\n");
-
-    test_finalize();
-#ifndef STANDALONE
-    fclose(error_out);
-#endif
-
-    return 0;
+    OBJ_DESTRUCT(&bm);
 }
 
-void test_bitmap_set(opal_bitmap_t *bm)
+static void test_clear(void)
 {
-    int result = 0;
+    opal_bitmap_t bm;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
+    opal_bitmap_init(&bm, BSIZE);
 
-    /* start of bitmap and boundaries */
-    set_bit(bm, 0);
-    set_bit(bm, 1);
-    set_bit(bm, 7);
-    set_bit(bm, 8);
-    /* middle of bitmap  */
-    set_bit(bm, 24);
+    opal_bitmap_set_bit(&bm, 5);
+    test_verify("bit 5 set", opal_bitmap_is_set_bit(&bm, 5));
+    test_verify("clear_bit ok", OPAL_SUCCESS == opal_bitmap_clear_bit(&bm, 5));
+    test_verify("bit 5 now clear", !opal_bitmap_is_set_bit(&bm, 5));
 
-    /* end of bitmap initial size */
-    set_bit(bm, 31);
-    set_bit(bm, 32);
+    /* Negative and out-of-range bits are rejected (clear does not grow). */
+    test_verify("clear_bit(-1) rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_clear_bit(&bm, -1));
+    test_verify("clear_bit(out of range) rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_clear_bit(&bm, opal_bitmap_size(&bm)));
 
-    /* beyond bitmap -- this is valid */
-    set_bit(bm, 44);
-    set_bit(bm, 82);
-
-    /* invalid bit */
-    PRINT_VALID_ERR;
-    result = set_bit(bm, -1);
-    TEST_AND_REPORT(result, ERR_CODE, "opal_bitmap_set_bit");
+    OBJ_DESTRUCT(&bm);
 }
 
-void test_bitmap_clear(opal_bitmap_t *bm)
+static void test_clear_and_set_all(void)
 {
-    int result = 0;
+    opal_bitmap_t bm;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
+    opal_bitmap_init(&bm, 128);
+    int size = opal_bitmap_size(&bm);
 
-    /* Valid set bits  */
-    clear_bit(bm, 29);
-    clear_bit(bm, 31);
-    clear_bit(bm, 33);
-    clear_bit(bm, 32);
-    clear_bit(bm, 0);
+    test_verify("set_all ok", OPAL_SUCCESS == opal_bitmap_set_all_bits(&bm));
+    test_verify("set_all -> not clear", !opal_bitmap_is_clear(&bm));
+    test_verify("set_all -> all bits set", size == opal_bitmap_num_set_bits(&bm, size));
+    test_verify("set_all -> no unset bits", 0 == opal_bitmap_num_unset_bits(&bm, size));
+    test_verify("set_all -> first bit set", opal_bitmap_is_set_bit(&bm, 0));
+    test_verify("set_all -> last bit set", opal_bitmap_is_set_bit(&bm, size - 1));
 
-    /* invalid bit */
-    PRINT_VALID_ERR;
-    result = clear_bit(bm, -1);
-    TEST_AND_REPORT(result, ERR_CODE, "opal_bitmap_clear_bit");
-    PRINT_VALID_ERR;
-    result = clear_bit(bm, 142);
-    TEST_AND_REPORT(result, ERR_CODE, "opal_bitmap_clear_bit");
+    test_verify("clear_all ok", OPAL_SUCCESS == opal_bitmap_clear_all_bits(&bm));
+    test_verify("clear_all -> is_clear", opal_bitmap_is_clear(&bm));
+    test_verify("clear_all -> zero set bits", 0 == opal_bitmap_num_set_bits(&bm, size));
+
+    /* NULL handling */
+    test_verify("set_all(NULL) rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_set_all_bits(NULL));
+    test_verify("clear_all(NULL) rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_clear_all_bits(NULL));
+
+    OBJ_DESTRUCT(&bm);
 }
 
-void test_bitmap_is_set(opal_bitmap_t *bm)
+static void test_find_and_set(void)
 {
-    int result = 0;
+    opal_bitmap_t bm;
+    int pos;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
+    opal_bitmap_init(&bm, BSIZE);
+    opal_bitmap_clear_all_bits(&bm);
 
-    /* First set some bits */
-    test_bitmap_set(bm);
-    is_set_bit(bm, 0);
-    is_set_bit(bm, 1);
-    is_set_bit(bm, 31);
-    is_set_bit(bm, 32);
-
-    result = is_set_bit(bm, 1122);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_is_set_bit");
-    is_set_bit(bm, -33);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_is_set_bit");
-    is_set_bit(bm, -1);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_is_set_bit");
-}
-
-void test_bitmap_find_and_set(opal_bitmap_t *bm)
-{
-    int bsize;
-    int result = 0;
-
-    opal_bitmap_clear_all_bits(bm);
-    result = find_and_set(bm, 0);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-    result = find_and_set(bm, 1);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-    result = find_and_set(bm, 2);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-    result = find_and_set(bm, 3);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-
-    result = opal_bitmap_set_bit(bm, 5);
-    result = find_and_set(bm, 4);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-
-    result = opal_bitmap_set_bit(bm, 6);
-    result = opal_bitmap_set_bit(bm, 7);
-
-    /* Setting beyond a char boundary */
-    result = find_and_set(bm, 8);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-    opal_bitmap_set_bit(bm, 9);
-    result = find_and_set(bm, 10);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-
-    /* Setting beyond the current size of bitmap  */
-    opal_bitmap_set_all_bits(bm);
-    bsize = opal_bitmap_size(bm);
-    result = find_and_set(bm, bsize);
-    TEST_AND_REPORT(result, 0, "opal_bitmap_find_and_set_first_unset_bit");
-}
-
-void test_bitmap_clear_all(opal_bitmap_t *bm)
-{
-    int result = clear_all(bm);
-    TEST_AND_REPORT(result, 0, " error in opal_bitmap_clear_all_bits");
-}
-
-void test_bitmap_set_all(opal_bitmap_t *bm)
-{
-    int result = set_all(bm);
-    TEST_AND_REPORT(result, 0, " error in opal_bitmap_set_ala_bitsl");
-}
-
-void test_bitmap_num_set_bits(opal_bitmap_t *bm)
-{
-    int result, expected;
-
-    /* Test 1: Clear all bits and count - should be 0 */
-    opal_bitmap_clear_all_bits(bm);
-    result = opal_bitmap_num_set_bits(bm, 64);
-    expected = 0;
-    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: cleared bitmap");
-
-    /* Test 2: Set specific bits and count within first 64 bits */
-    opal_bitmap_set_bit(bm, 0);
-    opal_bitmap_set_bit(bm, 1);
-    opal_bitmap_set_bit(bm, 5);
-    opal_bitmap_set_bit(bm, 63);
-    result = opal_bitmap_num_set_bits(bm, 64);
-    expected = 4;
-    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: 4 bits in first 64");
-
-    /* Test 3: Count partial element (len not a multiple of 64) */
-    /* Count only first 10 bits - should be 3 (bits 0, 1, 5) */
-    result = opal_bitmap_num_set_bits(bm, 10);
-    expected = 3;
-    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: partial element (10 bits)");
-
-    /* Test 4: Count up to bit 63 - should include bit 63 */
-    result = opal_bitmap_num_set_bits(bm, 64);
-    expected = 4;
-    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: up to bit 63");
-
-    /* Test 5: Set bits across multiple array elements */
-    opal_bitmap_set_bit(bm, 64);
-    opal_bitmap_set_bit(bm, 65);
-    opal_bitmap_set_bit(bm, 100);
-    opal_bitmap_set_bit(bm, 127);
-
-    /* Count across 128 bits (2 full elements) */
-    result = opal_bitmap_num_set_bits(bm, 128);
-    expected = 8; /* 4 from first element + 4 from second element */
-    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: across 2 elements (128 bits)");
-
-    /* Test 6: Count partial second element (130 bits = 2 elements + 2 bits) */
-    result = opal_bitmap_num_set_bits(bm, 130);
-    expected = 8; /* Should still be 8, as bits 128-129 are not set */
-    TEST_AND_REPORT(result, expected,
-                    "opal_bitmap_num_set_bits: partial second element (130 bits)");
-
-    /* Test 7: Verify len is treated as bits, not array indices
-     * Set bit 200 and count up to 201 bits (not 201 array elements) */
-    opal_bitmap_clear_all_bits(bm);
-    opal_bitmap_set_bit(bm, 200);
-    result = opal_bitmap_num_set_bits(bm, 201);
-    expected = 1;
-    TEST_AND_REPORT(result, expected,
-                    "opal_bitmap_num_set_bits: len treated as bits (201 bits)");
-
-    /* Test 8: Count up to 200 should not include bit 200 */
-    result = opal_bitmap_num_set_bits(bm, 200);
-    expected = 0;
-    TEST_AND_REPORT(result, expected,
-                    "opal_bitmap_num_set_bits: len boundary not included (200 bits)");
-
-    /* Test 9: Set all bits in first element and count partial */
-    opal_bitmap_clear_all_bits(bm);
-    for (int i = 0; i < 64; ++i) {
-        opal_bitmap_set_bit(bm, i);
-    }
-    /* Count only first 50 bits - should be 50 */
-    result = opal_bitmap_num_set_bits(bm, 50);
-    expected = 50;
-    TEST_AND_REPORT(result, expected,
-                    "opal_bitmap_num_set_bits: partial full element (50 of 64 bits)");
-
-    /* Test 10: Edge case - count exactly one full element */
-    result = opal_bitmap_num_set_bits(bm, 64);
-    expected = 64;
-    TEST_AND_REPORT(result, expected,
-                    "opal_bitmap_num_set_bits: exactly one element (64 bits)");
-
-    /* Test 11: Test opal_bitmap_num_unset_bits consistency */
-    opal_bitmap_clear_all_bits(bm);
-    opal_bitmap_set_bit(bm, 5);
-    opal_bitmap_set_bit(bm, 10);
-    opal_bitmap_set_bit(bm, 15);
-    result = opal_bitmap_num_set_bits(bm, 64);
-    expected = 3;
-    TEST_AND_REPORT(result, expected, "opal_bitmap_num_set_bits: 3 set bits in 64");
-
-    result = opal_bitmap_num_unset_bits(bm, 64);
-    expected = 61; /* 64 - 3 = 61 */
-    TEST_AND_REPORT(result, expected, "opal_bitmap_num_unset_bits: 61 unset bits in 64");
-}
-
-int set_bit(opal_bitmap_t *bm, int bit)
-{
-    int err = opal_bitmap_set_bit(bm, bit);
-    if (err != 0 || !opal_bitmap_is_set_bit(bm, bit)) {
-        fprintf(error_out, "ERROR: set_bit for bit = %d\n\n", bit);
-        return ERR_CODE;
-    }
-    return 0;
-}
-
-int clear_bit(opal_bitmap_t *bm, int bit)
-{
-    int err = opal_bitmap_clear_bit(bm, bit);
-    if ((err != 0) || opal_bitmap_is_set_bit(bm, bit)) {
-        fprintf(error_out, "ERROR: clear_bit for bit = %d \n\n", bit);
-        return ERR_CODE;
+    /* Repeatedly find-and-set the first unset bit: should yield 0,1,2,3 */
+    for (int expected = 0; expected < 4; ++expected) {
+        test_verify("find_and_set ok",
+                    OPAL_SUCCESS == opal_bitmap_find_and_set_first_unset_bit(&bm, &pos));
+        test_verify("find_and_set returns next free bit", pos == expected);
     }
 
-    return 0;
+    /* Pre-set bit 5; the next find should skip it and return 4, then 6. */
+    opal_bitmap_set_bit(&bm, 5);
+    opal_bitmap_find_and_set_first_unset_bit(&bm, &pos);
+    test_verify("find_and_set returns 4", 4 == pos);
+    opal_bitmap_find_and_set_first_unset_bit(&bm, &pos);
+    test_verify("find_and_set skips pre-set bit 5", 6 == pos);
+
+    /* When an element is completely full, find_and_set must expand and
+       return the first bit of the new element. */
+    opal_bitmap_set_all_bits(&bm);
+    int old_size = opal_bitmap_size(&bm);
+    test_verify("find_and_set on full bitmap ok",
+                OPAL_SUCCESS == opal_bitmap_find_and_set_first_unset_bit(&bm, &pos));
+    test_verify("find_and_set expands at boundary", pos == old_size);
+
+    test_verify("find_and_set(NULL) rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_find_and_set_first_unset_bit(NULL, &pos));
+
+    OBJ_DESTRUCT(&bm);
 }
 
-int is_set_bit(opal_bitmap_t *bm, int bit)
+static void test_num_bits(void)
 {
-    bool result = opal_bitmap_is_set_bit(bm, bit);
+    opal_bitmap_t bm;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
+    opal_bitmap_init(&bm, 256);
 
-    if (result) {
-        if (bit < 0) {
-            fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n", bit);
-            return ERR_CODE;
+    opal_bitmap_clear_all_bits(&bm);
+    test_verify("num_set on cleared == 0", 0 == opal_bitmap_num_set_bits(&bm, 64));
+
+    opal_bitmap_set_bit(&bm, 0);
+    opal_bitmap_set_bit(&bm, 1);
+    opal_bitmap_set_bit(&bm, 5);
+    opal_bitmap_set_bit(&bm, 63);
+    test_verify("num_set in first 64 == 4", 4 == opal_bitmap_num_set_bits(&bm, 64));
+    /* Partial element: only the first 10 bits -> bits 0,1,5 -> 3 */
+    test_verify("num_set partial element == 3", 3 == opal_bitmap_num_set_bits(&bm, 10));
+
+    /* Spread bits across multiple elements. */
+    opal_bitmap_set_bit(&bm, 64);
+    opal_bitmap_set_bit(&bm, 100);
+    opal_bitmap_set_bit(&bm, 200);
+    test_verify("num_set across 256 == 7", 7 == opal_bitmap_num_set_bits(&bm, 256));
+    test_verify("num_unset across 256 == 249", 249 == opal_bitmap_num_unset_bits(&bm, 256));
+
+    /* len is measured in bits, not elements: counting up to 200 excludes
+       bit 200 itself. */
+    test_verify("num_set up to 200 excludes bit 200", 6 == opal_bitmap_num_set_bits(&bm, 200));
+    test_verify("num_set up to 201 includes bit 200", 7 == opal_bitmap_num_set_bits(&bm, 201));
+
+    OBJ_DESTRUCT(&bm);
+}
+
+/* Initialize a bitmap to a given size with a caller-supplied 64-bit
+   pattern in its first element. */
+static void fill_pattern(opal_bitmap_t *bm, int size, uint64_t pattern)
+{
+    opal_bitmap_init(bm, size);
+    opal_bitmap_clear_all_bits(bm);
+    for (int b = 0; b < 64; ++b) {
+        if (pattern & (1UL << b)) {
+            opal_bitmap_set_bit(bm, b);
         }
-        return 0;
     }
+}
 
-    if (!result) {
-        if (0 <= bit && bit <= bm->array_size && !opal_bitmap_is_set_bit(bm, bit)) {
-            fprintf(error_out, "ERROR: is_set_bit for bit = %d \n\n", bit);
-            return ERR_CODE;
+static void test_bitwise_ops(void)
+{
+    opal_bitmap_t a, b;
+    OBJ_CONSTRUCT(&a, opal_bitmap_t);
+    OBJ_CONSTRUCT(&b, opal_bitmap_t);
+
+    /* AND */
+    fill_pattern(&a, 64, 0xF0F0UL);
+    fill_pattern(&b, 64, 0xFF00UL);
+    test_verify("and ok", OPAL_SUCCESS == opal_bitmap_bitwise_and_inplace(&a, &b));
+    test_verify("and result bit 12 set", opal_bitmap_is_set_bit(&a, 12)); /* 0xF000 */
+    test_verify("and result bit 4 clear", !opal_bitmap_is_set_bit(&a, 4));
+
+    /* OR */
+    fill_pattern(&a, 64, 0x0F0FUL);
+    fill_pattern(&b, 64, 0xF0F0UL);
+    test_verify("or ok", OPAL_SUCCESS == opal_bitmap_bitwise_or_inplace(&a, &b));
+    test_verify("or result == 0xFFFF (16 bits)", 16 == opal_bitmap_num_set_bits(&a, 16));
+
+    /* XOR */
+    fill_pattern(&a, 64, 0xFF00UL);
+    fill_pattern(&b, 64, 0x0FF0UL);
+    test_verify("xor ok", OPAL_SUCCESS == opal_bitmap_bitwise_xor_inplace(&a, &b));
+    test_verify("xor result bit 4 set", opal_bitmap_is_set_bit(&a, 4));   /* 0xF0F0 */
+    test_verify("xor result bit 8 clear", !opal_bitmap_is_set_bit(&a, 8));
+
+    /* Error paths: NULL operands and mismatched sizes. */
+    test_verify("and(NULL) rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_bitwise_and_inplace(&a, NULL));
+    test_verify("or(NULL) rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_bitwise_or_inplace(NULL, &b));
+    test_verify("xor(NULL) rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_bitwise_xor_inplace(&a, NULL));
+
+    opal_bitmap_t big;
+    OBJ_CONSTRUCT(&big, opal_bitmap_t);
+    opal_bitmap_init(&big, 256);
+    test_verify("and size mismatch rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_bitwise_and_inplace(&a, &big));
+    OBJ_DESTRUCT(&big);
+
+    OBJ_DESTRUCT(&a);
+    OBJ_DESTRUCT(&b);
+}
+
+static void test_are_different(void)
+{
+    opal_bitmap_t a, b;
+    OBJ_CONSTRUCT(&a, opal_bitmap_t);
+    OBJ_CONSTRUCT(&b, opal_bitmap_t);
+
+    fill_pattern(&a, 64, 0xABCDUL);
+    fill_pattern(&b, 64, 0xABCDUL);
+    test_verify("equal bitmaps not different", !opal_bitmap_are_different(&a, &b));
+
+    opal_bitmap_set_bit(&b, 40);
+    test_verify("differing content is different", opal_bitmap_are_different(&a, &b));
+
+    opal_bitmap_t big;
+    OBJ_CONSTRUCT(&big, opal_bitmap_t);
+    opal_bitmap_init(&big, 256);
+    test_verify("differing size is different", opal_bitmap_are_different(&a, &big));
+    OBJ_DESTRUCT(&big);
+
+    OBJ_DESTRUCT(&a);
+    OBJ_DESTRUCT(&b);
+}
+
+static void test_get_string(void)
+{
+    opal_bitmap_t bm;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
+    opal_bitmap_init(&bm, 64);
+    opal_bitmap_clear_all_bits(&bm);
+    opal_bitmap_set_bit(&bm, 0);
+    opal_bitmap_set_bit(&bm, 3);
+
+    char *s = opal_bitmap_get_string(&bm);
+    test_verify("get_string non-NULL", NULL != s);
+    if (NULL != s) {
+        test_verify("get_string length == size", (int) strlen(s) == opal_bitmap_size(&bm));
+        test_verify("get_string marks set bit 0", 'X' == s[0]);
+        test_verify("get_string marks unset bit 1", '_' == s[1]);
+        test_verify("get_string marks set bit 3", 'X' == s[3]);
+        free(s);
+    }
+    test_verify("get_string(NULL) == NULL", NULL == opal_bitmap_get_string(NULL));
+
+    OBJ_DESTRUCT(&bm);
+}
+
+static void test_copy(void)
+{
+    opal_bitmap_t src, dst;
+    OBJ_CONSTRUCT(&src, opal_bitmap_t);
+    OBJ_CONSTRUCT(&dst, opal_bitmap_t);
+
+    opal_bitmap_init(&src, 128);
+    opal_bitmap_clear_all_bits(&src);
+    opal_bitmap_set_bit(&src, 1);
+    opal_bitmap_set_bit(&src, 70);
+
+    /* Copy into a fresh (smaller/empty) destination -- exercises the
+       (re)allocation path. */
+    opal_bitmap_copy(&dst, &src);
+    test_verify("copy into empty dst matches src", !opal_bitmap_are_different(&dst, &src));
+    test_verify("copy preserved bit 1", opal_bitmap_is_set_bit(&dst, 1));
+    test_verify("copy preserved bit 70", opal_bitmap_is_set_bit(&dst, 70));
+
+    /* Copy again into an already-large-enough destination -- exercises the
+       no-realloc path. */
+    opal_bitmap_clear_all_bits(&src);
+    opal_bitmap_set_bit(&src, 5);
+    opal_bitmap_copy(&dst, &src);
+    test_verify("second copy matches src", !opal_bitmap_are_different(&dst, &src));
+    test_verify("second copy preserved bit 5", opal_bitmap_is_set_bit(&dst, 5));
+    test_verify("second copy cleared old bit 70", !opal_bitmap_is_set_bit(&dst, 70));
+
+    OBJ_DESTRUCT(&src);
+    OBJ_DESTRUCT(&dst);
+}
+
+static void test_max_size(void)
+{
+    opal_bitmap_t bm;
+    opal_bitmap_t cap65;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
+
+    test_verify("set_max_size(NULL) rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_set_max_size(NULL, 64));
+
+    /* Cap the bitmap at 64 bits, then ask for more -> rejected. */
+    test_verify("set_max_size ok", OPAL_SUCCESS == opal_bitmap_set_max_size(&bm, 64));
+    test_verify("init beyond max rejected", OPAL_ERR_BAD_PARAM == opal_bitmap_init(&bm, 65));
+    test_verify("init within max ok", OPAL_SUCCESS == opal_bitmap_init(&bm, 64));
+
+    OBJ_DESTRUCT(&bm);
+
+    /*
+     * The cap is enforced in bits, not rounded up to a 64-bit word.  With
+     * a non-word-aligned cap of 65 bits, a request for 128 bits -- which
+     * rounds to the same 2-word allocation -- must still be rejected, and
+     * bit indices at or beyond the cap must be refused.
+     */
+    OBJ_CONSTRUCT(&cap65, opal_bitmap_t);
+    test_verify("set_max_size(65) ok", OPAL_SUCCESS == opal_bitmap_set_max_size(&cap65, 65));
+    test_verify("init(128) beyond 65-bit cap rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_init(&cap65, 128));
+    test_verify("init(66) beyond 65-bit cap rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_init(&cap65, 66));
+    test_verify("init(65) at cap ok", OPAL_SUCCESS == opal_bitmap_init(&cap65, 65));
+    test_verify("set_bit(64) within 65-bit cap ok",
+                OPAL_SUCCESS == opal_bitmap_set_bit(&cap65, 64));
+    test_verify("set_bit(65) at cap rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_set_bit(&cap65, 65));
+    test_verify("set_bit(100) beyond cap rejected",
+                OPAL_ERR_BAD_PARAM == opal_bitmap_set_bit(&cap65, 100));
+
+    /*
+     * find_and_set must honor the bit cap as well.  Fill every valid bit
+     * [0, 65); a further find_and_set then has no room and must refuse,
+     * rather than handing back an out-of-cap bit (e.g. bit 65) from the
+     * unused tail of the last allocated word.  (Regression: the within-word
+     * fast path used to set the bit without checking max_size.)
+     */
+    {
+        int pos = -1;
+        for (int b = 0; b < 65; b++) {
+            (void) opal_bitmap_set_bit(&cap65, b);
         }
-        return 0;
+        test_verify("find_and_set on a full 65-bit bitmap is refused",
+                    OPAL_SUCCESS != opal_bitmap_find_and_set_first_unset_bit(&cap65, &pos));
+        test_verify("find_and_set did not set an out-of-cap bit",
+                    !opal_bitmap_is_set_bit(&cap65, 65));
     }
 
-    return 0;
+    OBJ_DESTRUCT(&cap65);
 }
 
-int find_and_set(opal_bitmap_t *bm, int bit)
+static void test_size_accessor(void)
 {
-    int ret, pos;
-    /* bit here is the bit that should be found and set, in the top
-       level stub, this function will be called in sequence to test */
+    opal_bitmap_t bm;
+    OBJ_CONSTRUCT(&bm, opal_bitmap_t);
 
-    ret = opal_bitmap_find_and_set_first_unset_bit(bm, &pos);
-    if (ret != OPAL_SUCCESS)
-        return ret;
+    test_verify("size(NULL) == 0", 0 == opal_bitmap_size(NULL));
+    opal_bitmap_init(&bm, 100);
+    /* 100 bits rounds up to 2 elements -> 128 bits. */
+    test_verify("size rounds up to element multiple", 128 == opal_bitmap_size(&bm));
 
-    if (pos != bit) {
-        fprintf(error_out, "ERROR: find_and_set: expected to find_and_set %d\n\n", bit);
-        return ERR_CODE;
-    }
-
-    return 0;
+    OBJ_DESTRUCT(&bm);
 }
-
-int clear_all(opal_bitmap_t *bm)
-{
-    int i;
-    if (OPAL_SUCCESS != opal_bitmap_clear_all_bits(bm)) {
-        return ERR_CODE;
-    }
-    for (i = 0; i < bm->array_size; ++i)
-        if (bm->bitmap[i] != 0) {
-            fprintf(error_out, "ERROR: clear_all for bitmap array entry %d\n\n", i);
-            return ERR_CODE;
-        }
-    return 0;
-}
-
-int set_all(opal_bitmap_t *bm)
-{
-    int i;
-    if (OPAL_SUCCESS != opal_bitmap_set_all_bits(bm)) {
-        return ERR_CODE;
-    }
-    for (i = 0; i < bm->array_size; ++i)
-        if (bm->bitmap[i] != 0xffffffffffffffffUL) {
-            fprintf(error_out, "ERROR: set_all for bitmap array entry %d\n\n", i);
-            return ERR_CODE;
-        }
-    return 0;
-}
-
-#if WANT_PRINT_BITMAP
-void print_bitmap(opal_bitmap_t *bm)
-{
-    /* Accessing the fields within the structure, since its not an
-       opaque structure  */
-
-    int i;
-    for (i = 0; i < bm->array_size; ++i) {
-        fprintf(error_out, "---\n bitmap[%d] = %x \n---\n\n", i, (bm->bitmap[i] & 0xff));
-    }
-    fprintf(error_out, "========================= \n");
-    return;
-}
-#endif
