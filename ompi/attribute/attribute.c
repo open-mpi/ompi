@@ -136,8 +136,9 @@
  *          -> *ret will equal 7.
  *
  * 5. Fortran MPI-1 reads the attribute value.  The C int value is
- *    cast to a fortran INTEGER (i.e., MPI_Fint) -- potentially being
- *    truncated if sizeof(int) > sizeof(INTEGER).
+ *    cast to a fortran INTEGER (i.e., MPI_Fint).  configure requires
+ *    sizeof(INTEGER) >= sizeof(int) (see OMPI_SETUP_MPI_FORTRAN), so
+ *    this conversion is always exact.
  *
  * Example: INTEGER ret
  *          CALL MPI_ATTR_GET(..., ret, ierr)
