@@ -42,7 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS_ALL,
                            pmpi_request_get_status_all,
                            pmpi_request_get_status_all_,
                            pmpi_request_get_status_all__,
-                           pompi_request_get_status_all_f,
+                           ompi_request_get_status_all_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_logical_t *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, flag, array_of_statuses, ierr) )
 #endif
@@ -57,17 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS_ALL,
 #pragma weak MPI_Request_get_status_all_f = ompi_request_get_status_all_f
 #pragma weak MPI_Request_get_status_all_f08 = ompi_request_get_status_all_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS_ALL,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_REQUEST_GET_STATUS_ALL,
                            mpi_request_get_status_all,
                            mpi_request_get_status_all_,
                            mpi_request_get_status_all__,
                            ompi_request_get_status_all_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, ompi_fortran_logical_t *flag, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (count, array_of_requests, flag, array_of_statuses, ierr) )
-#else
-#define ompi_request_get_status_all_f pompi_request_get_status_all_f
-#endif
 #endif
 
 

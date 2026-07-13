@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_SIZE,
                            pmpi_group_size,
                            pmpi_group_size_,
                            pmpi_group_size__,
-                           pompi_group_size_f,
+                           ompi_group_size_f,
                            (MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr),
                            (group, size, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_SIZE,
 #pragma weak MPI_Group_size_f = ompi_group_size_f
 #pragma weak MPI_Group_size_f08 = ompi_group_size_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_SIZE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GROUP_SIZE,
                            mpi_group_size,
                            mpi_group_size_,
                            mpi_group_size__,
                            ompi_group_size_f,
                            (MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr),
                            (group, size, ierr) )
-#else
-#define ompi_group_size_f pompi_group_size_f
-#endif
 #endif
 
 

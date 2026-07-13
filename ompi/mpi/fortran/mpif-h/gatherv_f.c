@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GATHERV,
                            pmpi_gatherv,
                            pmpi_gatherv_,
                            pmpi_gatherv__,
-                           pompi_gatherv_f,
+                           ompi_gatherv_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GATHERV,
 #pragma weak MPI_Gatherv_f = ompi_gatherv_f
 #pragma weak MPI_Gatherv_f08 = ompi_gatherv_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GATHERV,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GATHERV,
                            mpi_gatherv,
                            mpi_gatherv_,
                            mpi_gatherv__,
                            ompi_gatherv_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, ierr) )
-#else
-#define ompi_gatherv_f pompi_gatherv_f
-#endif
 #endif
 
 

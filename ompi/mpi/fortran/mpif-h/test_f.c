@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TEST,
                            pmpi_test,
                            pmpi_test_,
                            pmpi_test__,
-                           pompi_test_f,
+                           ompi_test_f,
                            (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TEST,
 #pragma weak MPI_Test_f = ompi_test_f
 #pragma weak MPI_Test_f08 = ompi_test_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TEST,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TEST,
                            mpi_test,
                            mpi_test_,
                            mpi_test__,
                            ompi_test_f,
                            (MPI_Fint *request, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
                            (request, flag, status, ierr) )
-#else
-#define ompi_test_f pompi_test_f
-#endif
 #endif
 
 

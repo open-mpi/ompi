@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_AT_ALL,
                            pmpi_file_write_at_all,
                            pmpi_file_write_at_all_,
                            pmpi_file_write_at_all__,
-                           pompi_file_write_at_all_f,
+                           ompi_file_write_at_all_f,
                            (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, status, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_AT_ALL,
 #pragma weak MPI_File_write_at_all_f = ompi_file_write_at_all_f
 #pragma weak MPI_File_write_at_all_f08 = ompi_file_write_at_all_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL,
                            mpi_file_write_at_all,
                            mpi_file_write_at_all_,
                            mpi_file_write_at_all__,
                            ompi_file_write_at_all_f,
                            (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, status, ierr) )
-#else
-#define ompi_file_write_at_all_f pompi_file_write_at_all_f
-#endif
 #endif
 
 

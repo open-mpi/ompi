@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_SIZE,
                            pmpi_type_size,
                            pmpi_type_size_,
                            pmpi_type_size__,
-                           pompi_type_size_f,
+                           ompi_type_size_f,
                            (MPI_Fint *type, MPI_Fint *size, MPI_Fint *ierr),
                            (type, size, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_SIZE,
 #pragma weak MPI_Type_size_f = ompi_type_size_f
 #pragma weak MPI_Type_size_f08 = ompi_type_size_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SIZE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_SIZE,
                            mpi_type_size,
                            mpi_type_size_,
                            mpi_type_size__,
                            ompi_type_size_f,
                            (MPI_Fint *type, MPI_Fint *size, MPI_Fint *ierr),
                            (type, size, ierr) )
-#else
-#define ompi_type_size_f pompi_type_size_f
-#endif
 #endif
 
 

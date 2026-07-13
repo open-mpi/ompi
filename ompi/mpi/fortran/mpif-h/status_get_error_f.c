@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_GET_ERROR,
                            pmpi_status_get_error,
                            pmpi_status_get_error_,
                            pmpi_status_get_error__,
-                           pompi_status_get_error_f,
+                           ompi_status_get_error_f,
                            (MPI_Fint *status, MPI_Fint *err, MPI_Fint *ierr),
                            (status, err, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_GET_ERROR,
 #pragma weak MPI_Status_get_error_f = ompi_status_get_error_f
 #pragma weak MPI_Status_get_error_f08 = ompi_status_get_error_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_GET_ERROR,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_STATUS_GET_ERROR,
                            mpi_status_get_error,
                            mpi_status_get_error_,
                            mpi_status_get_error__,
                            ompi_status_get_error_f,
                            (MPI_Fint *status, MPI_Fint *err, MPI_Fint *ierr),
                            (status, err, ierr) )
-#else
-#define ompi_status_get_error_f pompi_status_get_error_f
-#endif
 #endif
 
 

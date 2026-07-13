@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_CLOSE,
                            pmpi_file_close,
                            pmpi_file_close_,
                            pmpi_file_close__,
-                           pompi_file_close_f,
+                           ompi_file_close_f,
                            (MPI_Fint *fh, MPI_Fint *ierr),
                            (fh, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_CLOSE,
 #pragma weak MPI_File_close_f = ompi_file_close_f
 #pragma weak MPI_File_close_f08 = ompi_file_close_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_CLOSE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_CLOSE,
                            mpi_file_close,
                            mpi_file_close_,
                            mpi_file_close__,
                            ompi_file_close_f,
                            (MPI_Fint *fh, MPI_Fint *ierr),
                            (fh, ierr) )
-#else
-#define ompi_file_close_f pompi_file_close_f
-#endif
 #endif
 
 

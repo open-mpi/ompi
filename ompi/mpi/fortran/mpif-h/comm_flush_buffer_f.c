@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_FLUSH_BUFFER,
                            pmpi_comm_flush_buffer,
                            pmpi_comm_flush_buffer_,
                            pmpi_comm_flush_buffer__,
-                           pompi_comm_flush_buffer_f,
+                           ompi_comm_flush_buffer_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_FLUSH_BUFFER,
 #pragma weak MPI_Comm_flush_buffer_f = ompi_comm_flush_buffer_f
 #pragma weak MPI_Comm_flush_buffer_f08 = ompi_comm_flush_buffer_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_FLUSH_BUFFER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_FLUSH_BUFFER,
                            mpi_comm_flush_buffer,
                            mpi_comm_flush_buffer_,
                            mpi_comm_flush_buffer__,
                            ompi_comm_flush_buffer_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
-#else
-#define ompi_comm_flush_buffer_f pompi_comm_flush_buffer_f
-#endif
 #endif
 
 

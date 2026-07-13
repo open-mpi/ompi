@@ -1078,6 +1078,10 @@ def _fortran_mpifh_helper_checks(srcdir, builddir, manifest):
                       language="mpif.h")]
 
     base_relative = Path("ompi") / "mpi" / "fortran" / "mpif-h"
+    # The mpif.h bindings are compiled exactly once, in mpif-h/ (with
+    # OMPI_BUILD_MPI_PROFILING=1); that compile emits both the strong
+    # PMPI_* entry points and the weak MPI_* ones, so every helper's
+    # source is listed in this one Makefile.am.
     makefile = _first_existing_build_source_path(
         srcdir, builddir, base_relative / "Makefile.am")
     prototypes = _first_existing_build_source_path(

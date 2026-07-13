@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPLIT_TYPE,
                             pmpi_comm_split_type,
                             pmpi_comm_split_type_,
                             pmpi_comm_split_type__,
-                            pompi_comm_split_type_f,
+                            ompi_comm_split_type_f,
                             (MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr),
                             (comm, split_type, key, info, newcomm, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPLIT_TYPE,
 #pragma weak MPI_Comm_split_type_f = ompi_comm_split_type_f
 #pragma weak MPI_Comm_split_type_f08 = ompi_comm_split_type_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT_TYPE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_SPLIT_TYPE,
                             mpi_comm_split_type,
                             mpi_comm_split_type_,
                             mpi_comm_split_type__,
                             ompi_comm_split_type_f,
                             (MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr),
                             (comm, split_type, key, info, newcomm, ierr) )
-#else
-#define ompi_comm_split_type_f pompi_comm_split_type_f
-#endif
 #endif
 
 

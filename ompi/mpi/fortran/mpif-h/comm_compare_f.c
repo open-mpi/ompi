@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_COMPARE,
                            pmpi_comm_compare,
                            pmpi_comm_compare_,
                            pmpi_comm_compare__,
-                           pompi_comm_compare_f,
+                           ompi_comm_compare_f,
                            (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
                            (comm1, comm2, result, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_COMPARE,
 #pragma weak MPI_Comm_compare_f = ompi_comm_compare_f
 #pragma weak MPI_Comm_compare_f08 = ompi_comm_compare_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_COMPARE,
                            mpi_comm_compare,
                            mpi_comm_compare_,
                            mpi_comm_compare__,
                            ompi_comm_compare_f,
                            (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr),
                            (comm1, comm2, result, ierr) )
-#else
-#define ompi_comm_compare_f pompi_comm_compare_f
-#endif
 #endif
 
 

@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_EXTENT,
                            pmpi_type_get_extent,
                            pmpi_type_get_extent_,
                            pmpi_type_get_extent__,
-                           pompi_type_get_extent_f,
+                           ompi_type_get_extent_f,
                            (MPI_Fint *type, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *ierr),
                            (type, lb, extent, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_EXTENT,
 #pragma weak MPI_Type_get_extent_f = ompi_type_get_extent_f
 #pragma weak MPI_Type_get_extent_f08 = ompi_type_get_extent_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_EXTENT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_GET_EXTENT,
                            mpi_type_get_extent,
                            mpi_type_get_extent_,
                            mpi_type_get_extent__,
                            ompi_type_get_extent_f,
                            (MPI_Fint *type, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *ierr),
                            (type, lb, extent, ierr) )
-#else
-#define ompi_type_get_extent_f pompi_type_get_extent_f
-#endif
 #endif
 
 

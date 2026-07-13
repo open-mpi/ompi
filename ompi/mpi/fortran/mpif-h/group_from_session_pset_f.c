@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_FROM_SESSION_PSET,
                             pmpi_group_from_session_pset,
                             pmpi_group_from_session_pset_,
                             pmpi_group_from_session_pset__,
-                            pompi_group_from_session_pset_f,
+                            ompi_group_from_session_pset_f,
                             (MPI_Fint *session, char *pset_name, MPI_Fint *newgroup, MPI_Fint *ierr, int name_len),
                             (session, pset_name, newgroup, ierr, name_len) )
 #endif
@@ -61,17 +61,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_FROM_SESSION_PSET,
 #pragma weak MPI_Group_from_session_pset_f = ompi_group_from_session_pset_f
 #pragma weak MPI_Group_from_session_pset_f08 = ompi_group_from_session_pset_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_FROM_SESSION_PSET,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GROUP_FROM_SESSION_PSET,
                             mpi_group_from_session_pset,
                             mpi_group_from_session_pset_,
                             mpi_group_from_session_pset__,
                             ompi_group_from_session_pset_f,
                             (MPI_Fint *session, char *pset_name, MPI_Fint *newgroup, MPI_Fint *ierr, int name_len),
                             (session, pset_name, newgroup, ierr, name_len) )
-#else
-#define ompi_group_from_session_pset_f pompi_group_from_session_pset_f
-#endif
 #endif
 
 void ompi_group_from_session_pset_f(MPI_Fint *session,char *pset_name, MPI_Fint *newgroup, MPI_Fint *ierr, int name_len)

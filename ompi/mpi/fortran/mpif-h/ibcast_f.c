@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IBCAST,
                             pmpi_ibcast,
                             pmpi_ibcast_,
                             pmpi_ibcast__,
-                            pompi_ibcast_f,
+                            ompi_ibcast_f,
                             (char *buffer, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (buffer, count, datatype, root, comm, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IBCAST,
 #pragma weak MPI_Ibcast_f = ompi_ibcast_f
 #pragma weak MPI_Ibcast_f08 = ompi_ibcast_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_IBCAST,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_IBCAST,
                             mpi_ibcast,
                             mpi_ibcast_,
                             mpi_ibcast__,
                             ompi_ibcast_f,
                             (char *buffer, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (buffer, count, datatype, root, comm, request, ierr) )
-#else
-#define ompi_ibcast_f pompi_ibcast_f
-#endif
 #endif
 
 

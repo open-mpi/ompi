@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_TEST_INTER,
                            pmpi_comm_test_inter,
                            pmpi_comm_test_inter_,
                            pmpi_comm_test_inter__,
-                           pompi_comm_test_inter_f,
+                           ompi_comm_test_inter_f,
                            (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, flag, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_TEST_INTER,
 #pragma weak MPI_Comm_test_inter_f = ompi_comm_test_inter_f
 #pragma weak MPI_Comm_test_inter_f08 = ompi_comm_test_inter_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_TEST_INTER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_TEST_INTER,
                            mpi_comm_test_inter,
                            mpi_comm_test_inter_,
                            mpi_comm_test_inter__,
                            ompi_comm_test_inter_f,
                            (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (comm, flag, ierr) )
-#else
-#define ompi_comm_test_inter_f pompi_comm_test_inter_f
-#endif
 #endif
 
 

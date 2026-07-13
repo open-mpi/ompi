@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IREAD_AT,
                             pmpi_file_iread_at,
                             pmpi_file_iread_at_,
                             pmpi_file_iread_at__,
-                            pompi_file_iread_at_f,
+                            ompi_file_iread_at_f,
                             (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr),
                             (fh, offset, buf, count, datatype, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IREAD_AT,
 #pragma weak MPI_File_iread_at_f = ompi_file_iread_at_f
 #pragma weak MPI_File_iread_at_f08 = ompi_file_iread_at_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-   OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IREAD_AT,
+   OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_IREAD_AT,
                                mpi_file_iread_at,
                                mpi_file_iread_at_,
                                mpi_file_iread_at__,
                                ompi_file_iread_at_f,
                                (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr),
                                (fh, offset, buf, count, datatype, request, ierr) )
-#else
-#define ompi_file_iread_at_f pompi_file_iread_at_f
-#endif
 #endif
 
 

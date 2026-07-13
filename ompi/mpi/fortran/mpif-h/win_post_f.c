@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_POST,
                            pmpi_win_post,
                            pmpi_win_post_,
                            pmpi_win_post__,
-                           pompi_win_post_f,
+                           ompi_win_post_f,
                            (MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr),
                            (group, assert, win, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_POST,
 #pragma weak MPI_Win_post_f = ompi_win_post_f
 #pragma weak MPI_Win_post_f08 = ompi_win_post_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_POST,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_POST,
                            mpi_win_post,
                            mpi_win_post_,
                            mpi_win_post__,
                            ompi_win_post_f,
                            (MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr),
                            (group, assert, win, ierr) )
-#else
-#define ompi_win_post_f pompi_win_post_f
-#endif
 #endif
 
 

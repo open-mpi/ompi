@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_CREATE,
                            pmpi_graph_create,
                            pmpi_graph_create_,
                            pmpi_graph_create__,
-                           pompi_graph_create_f,
+                           ompi_graph_create_f,
                            (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *indx, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
                            (comm_old, nnodes, indx, edges, reorder, comm_graph, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_CREATE,
 #pragma weak MPI_Graph_create_f = ompi_graph_create_f
 #pragma weak MPI_Graph_create_f08 = ompi_graph_create_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_CREATE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GRAPH_CREATE,
                            mpi_graph_create,
                            mpi_graph_create_,
                            mpi_graph_create__,
                            ompi_graph_create_f,
                            (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *indx, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
                            (comm_old, nnodes, indx, edges, reorder, comm_graph, ierr) )
-#else
-#define ompi_graph_create_f pompi_graph_create_f
-#endif
 #endif
 
 

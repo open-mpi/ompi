@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PREADY_RANGE,
                            pmpi_pready_range,
                            pmpi_pready_range_,
                            pmpi_pready_range__,
-                           pompi_pready_range_f,
+                           ompi_pready_range_f,
                            (MPI_Fint *partition_low, MPI_Fint *partition_high, MPI_Fint *request, MPI_Fint *ierr),
                            (partition_low, partition_high, request, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PREADY_RANGE,
 #pragma weak MPI_Pready_range_f = ompi_pready_range_f
 #pragma weak MPI_Pready_range_f08 = ompi_pready_range_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_PREADY_RANGE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_PREADY_RANGE,
                            mpi_pready_range,
                            mpi_pready_range_,
                            mpi_pready_range__,
                            ompi_pready_range_f,
                            (MPI_Fint *partition_low, MPI_Fint *partition_high, MPI_Fint *request, MPI_Fint *ierr),
                            (partition_low, partition_high, request, ierr) )
-#else
-#define ompi_pready_range_f pompi_pready_range_f
-#endif
 #endif
 
 

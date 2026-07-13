@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FLUSH_LOCAL_ALL,
                            pmpi_win_flush_local_all,
                            pmpi_win_flush_local_all_,
                            pmpi_win_flush_local_all__,
-                           pompi_win_flush_local_all_f,
+                           ompi_win_flush_local_all_f,
                            (MPI_Fint *win, MPI_Fint *ierr),
                            (win, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FLUSH_LOCAL_ALL,
 #pragma weak MPI_Win_flush_local_all_f = ompi_win_flush_local_all_f
 #pragma weak MPI_Win_flush_local_all_f08 = ompi_win_flush_local_all_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FLUSH_LOCAL_ALL,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_FLUSH_LOCAL_ALL,
                            mpi_win_flush_local_all,
                            mpi_win_flush_local_all_,
                            mpi_win_flush_local_all__,
                            ompi_win_flush_local_all_f,
                            (MPI_Fint *win, MPI_Fint *ierr),
                            (win, ierr) )
-#else
-#define ompi_win_flush_local_all_f pompi_win_flush_local_all_f
-#endif
 #endif
 
 

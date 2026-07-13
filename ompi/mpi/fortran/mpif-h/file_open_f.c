@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
                            pmpi_file_open,
                            pmpi_file_open_,
                            pmpi_file_open__,
-                           pompi_file_open_f,
+                           ompi_file_open_f,
                            (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len),
                            (comm, filename, amode, info, fh, ierr, name_len) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_OPEN,
 #pragma weak MPI_File_open_f = ompi_file_open_f
 #pragma weak MPI_File_open_f08 = ompi_file_open_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_OPEN,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_OPEN,
                            mpi_file_open,
                            mpi_file_open_,
                            mpi_file_open__,
                            ompi_file_open_f,
                            (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len),
                            (comm, filename, amode, info, fh, ierr, name_len) )
-#else
-#define ompi_file_open_f pompi_file_open_f
-#endif
 #endif
 
 

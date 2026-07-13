@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SEND_INIT,
                            pmpi_send_init,
                            pmpi_send_init_,
                            pmpi_send_init__,
-                           pompi_send_init_f,
+                           ompi_send_init_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SEND_INIT,
 #pragma weak MPI_Send_init_f = ompi_send_init_f
 #pragma weak MPI_Send_init_f08 = ompi_send_init_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_SEND_INIT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_SEND_INIT,
                            mpi_send_init,
                            mpi_send_init_,
                            mpi_send_init__,
                            ompi_send_init_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, request, ierr) )
-#else
-#define ompi_send_init_f pompi_send_init_f
-#endif
 #endif
 
 

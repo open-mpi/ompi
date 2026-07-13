@@ -204,8 +204,7 @@ ompi/mpi/fortran/mpiext-use-mpi-f08/mpi-f08-ext-module.F90
 ompi/mpi/fortran/use-mpi-f08/psizeof_f08.f90
 
 ompi/mpi/fortran/mpif-h/sizeof_f.f90
-ompi/mpi/fortran/mpif-h/profile/p*.c
-ompi/mpi/fortran/mpif-h/profile/psizeof_f.f90
+ompi/mpi/fortran/mpif-h/psizeof_f.f90
 
 ompi/mpi/fortran/use-mpi/mpi-types.F90
 

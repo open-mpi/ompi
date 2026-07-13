@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DETACH_BUFFER,
                            pmpi_comm_detach_buffer,
                            pmpi_comm_detach_buffer_,
                            pmpi_comm_detach_buffer__,
-                           pompi_comm_detach_buffer_f,
+                           ompi_comm_detach_buffer_f,
                            (MPI_Fint *comm, char *buffer, MPI_Fint *size, MPI_Fint *ierr),
                            (comm, buffer, size, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DETACH_BUFFER,
 
 #pragma weak MPI_Comm_detach_buffer_ = ompi_comm_detach_buffer_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DETACH_BUFFER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_DETACH_BUFFER,
                            mpi_comm_detach_buffer,
                            mpi_comm_detach_buffer_,
                            mpi_comm_detach_buffer__,
                            ompi_comm_detach_buffer_f,
                            (MPI_Fint *comm, char *buffer, MPI_Fint *size, MPI_Fint *ierr),
                            (comm, buffer, size, ierr) )
-#else
-#define ompi_comm_detach_buffer_f pompi_comm_detach_buffer_f
-#endif
 #endif
 
 /*

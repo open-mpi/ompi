@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BSEND,
                            pmpi_bsend,
                            pmpi_bsend_,
                            pmpi_bsend__,
-                           pompi_bsend_f,
+                           ompi_bsend_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BSEND,
 #pragma weak MPI_Bsend_f = ompi_bsend_f
 #pragma weak MPI_Bsend_f08 = ompi_bsend_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_BSEND,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_BSEND,
                            mpi_bsend,
                            mpi_bsend_,
                            mpi_bsend__,
                            ompi_bsend_f,
                            (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr),
                            (buf, count, datatype, dest, tag, comm, ierr) )
-#else
-#define ompi_bsend_f pompi_bsend_f
-#endif
 #endif
 
 

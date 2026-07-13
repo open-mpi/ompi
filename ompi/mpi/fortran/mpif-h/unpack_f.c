@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_UNPACK,
                            pmpi_unpack,
                            pmpi_unpack_,
                            pmpi_unpack__,
-                           pompi_unpack_f,
+                           ompi_unpack_f,
                            (char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *ierr),
                            (inbuf, insize, position, outbuf, outcount, datatype, comm, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_UNPACK,
 #pragma weak MPI_Unpack_f = ompi_unpack_f
 #pragma weak MPI_Unpack_f08 = ompi_unpack_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_UNPACK,
                            mpi_unpack,
                            mpi_unpack_,
                            mpi_unpack__,
                            ompi_unpack_f,
                            (char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *ierr),
                            (inbuf, insize, position, outbuf, outcount, datatype, comm, ierr) )
-#else
-#define ompi_unpack_f pompi_unpack_f
-#endif
 #endif
 
 

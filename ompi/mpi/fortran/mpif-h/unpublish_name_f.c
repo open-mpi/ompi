@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_UNPUBLISH_NAME,
                            pmpi_unpublish_name,
                            pmpi_unpublish_name_,
                            pmpi_unpublish_name__,
-                           pompi_unpublish_name_f,
+                           ompi_unpublish_name_f,
                            (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len),
                            (service_name, info, port_name, ierr, service_name_len, port_name_len) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_UNPUBLISH_NAME,
 #pragma weak MPI_Unpublish_name_f = ompi_unpublish_name_f
 #pragma weak MPI_Unpublish_name_f08 = ompi_unpublish_name_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_UNPUBLISH_NAME,
                            mpi_unpublish_name,
                            mpi_unpublish_name_,
                            mpi_unpublish_name__,
                            ompi_unpublish_name_f,
                            (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len),
                            (service_name, info, port_name, ierr, service_name_len, port_name_len) )
-#else
-#define ompi_unpublish_name_f pompi_unpublish_name_f
-#endif
 #endif
 
 

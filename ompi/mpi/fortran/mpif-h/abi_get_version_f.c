@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ABI_GET_VERSION,
                            pmpi_abi_get_version,
                            pmpi_abi_get_version_,
                            pmpi_abi_get_version__,
-                           pompi_abi_get_version_f,
+                           ompi_abi_get_version_f,
                            (MPI_Fint *abi_major, MPI_Fint *abi_minor, MPI_Fint *ierr),
                            (abi_major, abi_minor, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ABI_GET_VERSION,
 #pragma weak MPI_Abi_get_version_f = ompi_abi_get_version_f
 #pragma weak MPI_Abi_get_version_f08 = ompi_abi_get_version_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ABI_GET_VERSION,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_ABI_GET_VERSION,
                            mpi_abi_get_version,
                            mpi_abi_get_version_,
                            mpi_abi_get_version__,
                            ompi_abi_get_version_f,
                            (MPI_Fint *abi_major, MPI_Fint *abi_minor, MPI_Fint *ierr),
                            (abi_major, abi_minor, ierr) )
-#else
-#define ompi_abi_get_version_f pompi_abi_get_version_f
-#endif
 #endif
 
 

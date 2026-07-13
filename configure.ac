@@ -564,19 +564,30 @@ OPAL_C_WEAK_ALIASES
 OPAL_C_MACRO_WEAK_ALIASES
 OPAL_C_WEAK_SYMBOLS
 
-# If we want the profiling layer:
-# - If the C compiler has weak aliases, use those.
-# - If not, then set to compile the code again with #define's in a
-#   separate directory.
+# The profiling layer:
+#
+# - Where the C compiler has weak aliases, the public MPI_* symbol is a weak
+#   alias of the strong PMPI_* one.
+#
+# - Where it does not (notably Mach-O, which cannot express a weak alias at
+#   all), the public MPI_* symbol is a *weak definition* that forwards to the
+#   strong PMPI_* one.
+#
+# Either way the bindings are compiled exactly once.  Open MPI used to compile
+# them a second time, with #defines, purely to emit the MPI_* symbols on
+# platforms with no weak aliases; that is no longer necessary, and weak symbols
+# are now required.
 
 if test "$WANT_WEAK_ALIASES" = "0"; then
     OPAL_C_HAVE_WEAK_ALIASES=0
 fi
-if test "$OPAL_C_HAVE_WEAK_ALIASES" = "1"; then
-    OMPI_PROFILING_COMPILE_SEPARATELY=0
-else
-    OMPI_PROFILING_COMPILE_SEPARATELY=1
-fi
+AS_IF([test "$OPAL_C_HAVE_WEAK_ALIASES" != "1" && \
+       test "$OPAL_C_HAVE_WEAK_SYMBOLS" != "1"],
+      [AC_MSG_ERROR([Open MPI requires a C compiler with support for weak
+symbols (__attribute__((weak))) or weak aliases; this compiler has neither.
+The MPI profiling interface cannot be built without one of them.])])
+
+OMPI_PROFILING_COMPILE_SEPARATELY=0
 
 # Check if we support the offsetof compiler directive
 

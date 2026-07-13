@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_UNLOCK,
                            pmpi_win_unlock,
                            pmpi_win_unlock_,
                            pmpi_win_unlock__,
-                           pompi_win_unlock_f,
+                           ompi_win_unlock_f,
                            (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
                            (rank, win, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_UNLOCK,
 #pragma weak MPI_Win_unlock_f = ompi_win_unlock_f
 #pragma weak MPI_Win_unlock_f08 = ompi_win_unlock_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_UNLOCK,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_UNLOCK,
                            mpi_win_unlock,
                            mpi_win_unlock_,
                            mpi_win_unlock__,
                            ompi_win_unlock_f,
                            (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
                            (rank, win, ierr) )
-#else
-#define ompi_win_unlock_f pompi_win_unlock_f
-#endif
 #endif
 
 

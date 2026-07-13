@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_CONTENTS,
                            pmpi_type_get_contents,
                            pmpi_type_get_contents_,
                            pmpi_type_get_contents__,
-                           pompi_type_get_contents_f,
+                           ompi_type_get_contents_f,
                            (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Aint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr),
                            (mtype, max_integers, max_addresses, max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_CONTENTS,
 #pragma weak MPI_Type_get_contents_f = ompi_type_get_contents_f
 #pragma weak MPI_Type_get_contents_f08 = ompi_type_get_contents_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
                            mpi_type_get_contents,
                            mpi_type_get_contents_,
                            mpi_type_get_contents__,
                            ompi_type_get_contents_f,
                            (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Aint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr),
                            (mtype, max_integers, max_addresses, max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes, ierr) )
-#else
-#define ompi_type_get_contents_f pompi_type_get_contents_f
-#endif
 #endif
 
 

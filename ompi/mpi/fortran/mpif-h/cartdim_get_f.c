@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CARTDIM_GET,
                            pmpi_cartdim_get,
                            pmpi_cartdim_get_,
                            pmpi_cartdim_get__,
-                           pompi_cartdim_get_f,
+                           ompi_cartdim_get_f,
                            (MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr),
                            (comm, ndims, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CARTDIM_GET,
 #pragma weak MPI_Cartdim_get_f = ompi_cartdim_get_f
 #pragma weak MPI_Cartdim_get_f08 = ompi_cartdim_get_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_CARTDIM_GET,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_CARTDIM_GET,
                            mpi_cartdim_get,
                            mpi_cartdim_get_,
                            mpi_cartdim_get__,
                            ompi_cartdim_get_f,
                            (MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr),
                            (comm, ndims, ierr) )
-#else
-#define ompi_cartdim_get_f pompi_cartdim_get_f
-#endif
 #endif
 
 
