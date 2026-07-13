@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _abi_common import (
     SKIP_DATAREP_UNSUPPORTED, SKIP_MPIT_EVENTS_REGISTRATION_ONLY,
+    XFAIL_MPICH_DATAREP_UNSUPPORTED,
     SKIP_MPIT_EVENTS_UNAVAILABLE)
 
 
@@ -1351,6 +1352,15 @@ INSTALLED_C_CALLBACK_PROBES = (
         "requires_feature": "mpi_io",
         "skip_exit_codes": {
             77: SKIP_DATAREP_UNSUPPORTED,
+        },
+        # MPICH does not implement user-defined datarep conversions, and does
+        # not report that as an "unsupported" error class, so the probe exits
+        # 2 rather than 77.  Expected failure when MPICH provides the runtime.
+        # See XFAIL_MPICH_DATAREP_UNSUPPORTED.
+        "xfail_run_implementation_exit_codes": {
+            "mpich": {
+                2: XFAIL_MPICH_DATAREP_UNSUPPORTED,
+            },
         },
         "prologue_file": "cases/c-callback/callback_datarep.prologue.in",
         "body_file": "cases/c-callback/callback_datarep.cbody.in",

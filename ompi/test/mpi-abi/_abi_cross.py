@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _abi_common import (
     MPI_REMOVED_LEGACY_C_NAMES, SKIP_CROSS_PROBES_NOT_PASSED,
     SKIP_FORTRAN_BINDINGS_DISABLED, _append_check, _check_counts,
-    _env_positive_int, _extend_checks, _fail, _pass, _skip, _write_text)
+    _env_positive_int, _extend_checks, _fail, _pass, _skip, _write_text, _xfail)
 from _abi_tables import (
     INSTALLED_C_ABI_PROBES, INSTALLED_C_CALLBACK_PROBES,
     INSTALLED_C_RUNTIME_API_PROBES)
@@ -728,6 +728,27 @@ def _run_cross_direction_probe_cases(srcdir, manifest, tools, dirs,
                 returncode=run_result["returncode"],
                 compile_log=compile_result["log"],
                 run_log=run_result["log"],
+                **base), progress)
+            continue
+        # A known limitation of the *runtime* implementation, rather than a
+        # regression on our side: record it as an expected failure so it stays
+        # visible without failing the suite.
+        xfail_reason = case.get(
+            "xfail_run_implementation_exit_codes", {}).get(
+                run_implementation, {}).get(run_result["returncode"])
+        if xfail_reason is not None:
+            _append_check(checks, _xfail(
+                check_name,
+                xfail_reason,
+                "cross C ABI probe hit a known {0} limitation".format(
+                    run_implementation),
+                phase="run",
+                rank_count=rank_count,
+                command=run_result["command"],
+                returncode=run_result["returncode"],
+                compile_log=compile_result["log"],
+                run_log=run_result["log"],
+                runtime_linkage=rewrite_result["details"],
                 **base), progress)
             continue
         if run_result["returncode"] != 0:
