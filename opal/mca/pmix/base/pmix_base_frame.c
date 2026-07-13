@@ -4,6 +4,7 @@
  * Copyright (c) 2022      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,8 +36,7 @@
 bool opal_pmix_collect_all_data = true;
 int opal_pmix_verbose_output = -1;
 bool opal_pmix_base_async_modex = false;
-opal_pmix_base_t opal_pmix_base = {.evbase = NULL,
-                                   .timeout = 0,
+opal_pmix_base_t opal_pmix_base = {.timeout = 0,
                                    .initialized = 0,
                                    .lock = {.mutex = OPAL_MUTEX_STATIC_INIT,
                                             .cond = OPAL_PMIX_CONDITION_STATIC_INIT,
@@ -103,8 +103,6 @@ static int opal_pmix_base_frame_open(mca_base_open_flag_t flags)
 
     /* Open up all available components */
     rc = mca_base_framework_components_open(&opal_pmix_base_framework, flags);
-    /* default to the OPAL event base */
-    opal_pmix_base.evbase = opal_sync_event_base;
     /* pass across the verbosity */
     opal_pmix_verbose_output = opal_pmix_base_framework.framework_output;
     /* Set the distributed name service via PMIx */
