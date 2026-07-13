@@ -31,6 +31,20 @@
 #pragma weak MPI_T_category_get_events = PMPI_T_category_get_events
 #endif
 #define MPI_T_category_get_events PMPI_T_category_get_events
+#elif defined(OMPI_NO_MPI_PROTOTYPES)
+/*
+ * This file is compiled into both libmpi and libmpi_abi;
+ * OMPI_NO_MPI_PROTOTYPES is defined only for the libmpi_abi compiles.
+ *
+ * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
+ * definitions.  An application built against another implementation's
+ * libmpi_abi imports them as weak definitions, and (at least on macOS)
+ * the loader will only satisfy such an import from another weak
+ * definition -- a strong one is rejected.  When the bindings are compiled
+ * separately (i.e., when weak aliases are unavailable), this is the only
+ * definition of the symbol in libmpi_abi, so mark it weak here.
+ */
+#pragma weak MPI_T_category_get_events
 #endif
 
 int MPI_T_category_get_events(int cat_index, int len, int indices[])

@@ -862,13 +862,28 @@ extern "C" {
         #
         self.generate_errhandler_args_convert_fn_intern_to_abi()
 
-def print_profiling_header(fn_name, out):
-    """Print the profiling header code."""
+def print_profiling_header(fn_name, out, weak_mpi_symbol=False):
+    """Print the profiling header code.
+
+    When weak_mpi_symbol is set, the separately-compiled copy of the public
+    MPI_* symbol (the one built with OMPI_BUILD_MPI_PROFILING=0, which is only
+    built when weak aliases are unavailable) is marked *weak*.
+
+    The MPI Forum ABI requires the public MPI_* symbols to be weak
+    definitions: an application built against another implementation's
+    libmpi_abi imports them as weak definitions, and (at least on macOS) the
+    loader will only satisfy such an import from another weak definition -- a
+    strong one is rejected.  Where weak aliases *are* available, the alias
+    below is already a weak definition, so nothing extra is needed.
+    """
     out.dump('#if OMPI_BUILD_MPI_PROFILING')
     out.dump('#if OPAL_HAVE_WEAK_ALIASES')
     out.dump(f'#pragma weak {fn_name} = P{fn_name}')
     out.dump('#endif')
     out.dump(f'#define {fn_name} P{fn_name}')
+    if weak_mpi_symbol:
+        out.dump('#else')
+        out.dump(f'#pragma weak {fn_name}')
     out.dump('#endif')
 
 
@@ -956,7 +971,11 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
 
     def generate_function(prototype, fn_name, internal_fn, out, enable_count=False):
         """Generate a function for the standard ABI."""
-        print_profiling_header(fn_name,out)
+        # The MPI Forum ABI requires the public MPI_* symbols to be weak
+        # definitions, so that an application built against another
+        # implementation's libmpi_abi (which exports them weak) can bind to
+        # ours.  See print_profiling_header().
+        print_profiling_header(fn_name, out, weak_mpi_symbol=True)
 
         # Handle type conversions and arguments
         params = [param.construct(abi_type='standard') for param in prototype.params]

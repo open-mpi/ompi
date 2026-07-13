@@ -32,6 +32,20 @@
 #pragma weak MPI_T_init_thread = PMPI_T_init_thread
 #endif
 #define MPI_T_init_thread PMPI_T_init_thread
+#elif defined(OMPI_NO_MPI_PROTOTYPES)
+/*
+ * This file is compiled into both libmpi and libmpi_abi;
+ * OMPI_NO_MPI_PROTOTYPES is defined only for the libmpi_abi compiles.
+ *
+ * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
+ * definitions.  An application built against another implementation's
+ * libmpi_abi imports them as weak definitions, and (at least on macOS)
+ * the loader will only satisfy such an import from another weak
+ * definition -- a strong one is rejected.  When the bindings are compiled
+ * separately (i.e., when weak aliases are unavailable), this is the only
+ * definition of the symbol in libmpi_abi, so mark it weak here.
+ */
+#pragma weak MPI_T_init_thread
 #endif
 
 extern opal_mutex_t ompi_mpit_big_lock;

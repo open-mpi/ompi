@@ -37,6 +37,17 @@
 #pragma weak MPI_Request_toint = PMPI_Request_toint
 #endif
 #define MPI_Request_toint PMPI_Request_toint
+#else
+/*
+ * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
+ * definitions.  An application built against another implementation's
+ * libmpi_abi imports them as weak definitions, and (at least on macOS)
+ * the loader will only satisfy such an import from another weak
+ * definition -- a strong one is rejected.  When the bindings are compiled
+ * separately (i.e., when weak aliases are unavailable), this is the only
+ * definition of the MPI_* symbol, so mark it weak here.
+ */
+#pragma weak MPI_Request_toint
 #endif
 
 static const char FUNC_NAME[] = "MPI_Request_toint";

@@ -28,6 +28,20 @@
 #pragma weak MPI_T_cvar_get_num = PMPI_T_cvar_get_num
 #endif
 #define MPI_T_cvar_get_num PMPI_T_cvar_get_num
+#elif defined(OMPI_NO_MPI_PROTOTYPES)
+/*
+ * This file is compiled into both libmpi and libmpi_abi;
+ * OMPI_NO_MPI_PROTOTYPES is defined only for the libmpi_abi compiles.
+ *
+ * The MPI Forum ABI requires that the public MPI_* symbols be *weak*
+ * definitions.  An application built against another implementation's
+ * libmpi_abi imports them as weak definitions, and (at least on macOS)
+ * the loader will only satisfy such an import from another weak
+ * definition -- a strong one is rejected.  When the bindings are compiled
+ * separately (i.e., when weak aliases are unavailable), this is the only
+ * definition of the symbol in libmpi_abi, so mark it weak here.
+ */
+#pragma weak MPI_T_cvar_get_num
 #endif
 
 int MPI_T_cvar_get_num (int *num_cvar) {
