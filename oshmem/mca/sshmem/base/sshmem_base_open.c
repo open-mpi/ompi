@@ -31,7 +31,7 @@
  * globals
  */
 
-void *mca_sshmem_base_start_address = (void *)UINTPTR_MAX;
+void *mca_sshmem_base_start_address = NULL;
 
 char * mca_sshmem_base_backing_file_dir = NULL;
 
