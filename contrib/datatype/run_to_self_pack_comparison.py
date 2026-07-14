@@ -29,6 +29,9 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from datatype_bench_common import cpu_description, sha256  # noqa: E402
+
 
 DATA_RE = re.compile(r"(?:^|,\s*)(\d+)=([a-z0-9_]+)")
 RESULT_RE = re.compile(
@@ -167,37 +170,6 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def cpu_description() -> str:
-    """Return a useful processor name on Linux and macOS without external Python packages."""
-    if sys.platform == "darwin":
-        result = subprocess.run(
-            ["sysctl", "-n", "machdep.cpu.brand_string"], text=True, capture_output=True
-        )
-        if 0 == result.returncode and result.stdout.strip():
-            return result.stdout.strip()
-        result = subprocess.run(
-            ["system_profiler", "SPHardwareDataType"], text=True, capture_output=True
-        )
-        if 0 == result.returncode:
-            for line in result.stdout.splitlines():
-                if line.strip().startswith("Chip:"):
-                    return line.split(":", 1)[1].strip()
-    cpuinfo = Path("/proc/cpuinfo")
-    if cpuinfo.exists():
-        for line in cpuinfo.read_text(errors="replace").splitlines():
-            if line.lower().startswith("model name"):
-                return line.split(":", 1)[1].strip()
-    return platform.processor() or "unknown"
-
-
 def compile_benchmark(
     args: argparse.Namespace, key: str, label: str, mpicc: Path
 ) -> Path:
@@ -217,15 +189,23 @@ def compile_benchmark(
         "mpicc_sha256": sha256(mpicc),
         "cflags": args.cflags,
     }
-    if not args.force and (output.exists() or metadata_path.exists()):
-        if output.is_file() and metadata_path.is_file():
-            previous = json.loads(metadata_path.read_text())
-            if all(previous.get(name) == value for name, value in build_identity.items()):
-                return output.resolve()
-        raise RuntimeError(
-            f"existing build configuration differs or is incomplete: {metadata_path}; "
-            "use --force or a new output directory"
+    if not args.force and output.is_file() and metadata_path.is_file():
+        previous = json.loads(metadata_path.read_text())
+        identity_matches = all(
+            previous.get(name) == value for name, value in build_identity.items()
         )
+        if 0 == previous.get("returncode") and identity_matches:
+            return output.resolve()
+        if 0 == previous.get("returncode"):
+            # A successful build for a *different* configuration lives here; do
+            # not silently overwrite it.
+            raise RuntimeError(
+                f"existing build configuration differs: {metadata_path}; "
+                "use --force or a new output directory"
+            )
+    # A missing binary or a recorded failed build (metadata but no usable
+    # to_self) falls through and is rebuilt in place.  --force is deliberately
+    # not required here: it would also discard every cached measurement .out.
     command = [
         str(mpicc), "-std=gnu11", *shlex.split(args.cflags), str(source), "-lm", "-o", str(output),
     ]
@@ -243,12 +223,53 @@ def compile_benchmark(
 
 
 def resolve_launcher(mpicc: Path) -> Path | None:
-    """Find the mpirun or mpiexec installed beside one compiler wrapper."""
-    for name in ("mpirun", "mpiexec"):
-        candidate = mpicc.parent / name
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return candidate.resolve()
+    """Find the mpirun or mpiexec installed beside one compiler wrapper.
+
+    Debian/Fedora "alternatives" layouts keep several MPIs in a single bin/ with
+    suffixed wrappers (mpicc.mpich, mpicc.openmpi) while the unsuffixed mpirun is
+    a symlink to whichever MPI is currently selected.  When the wrapper carries a
+    suffix, prefer the matching suffixed launcher so a comparison never launches
+    a different MPI than the one that compiled the benchmark.
+    """
+    _, dot, suffix = mpicc.name.partition(".")
+    for base in ("mpirun", "mpiexec"):
+        names = (f"{base}.{suffix}", base) if dot else (base,)
+        for name in names:
+            candidate = mpicc.parent / name
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return candidate.resolve()
     return None
+
+
+def build_identity(implementation: Implementation) -> str:
+    """Identify the MPI under test by the version string compiled into its library.
+
+    The benchmark binary is frequently a libtool wrapper script whose contents never change
+    across rebuilds, and the pack/unpack code under test lives in the separately loaded
+    libmpi/libopen-pal -- so hashing anything on disk is a poor rebuild detector.  Instead ask the
+    benchmark to print MPI_Get_library_version(), which reports the repo revision compiled into the
+    actually-linked library (and works for any MPI-3 implementation).  When the binary predates the
+    --library-version flag we cannot identify the build, so fall back to the wall-clock time: that
+    makes every run compare as a distinct build and keeps cached measurements from being blended.
+    """
+    result = subprocess.run(
+        [str(implementation.executable), "--library-version"],
+        env=benchmark_environment(1), text=True, capture_output=True,
+    )
+    identity = result.stdout.strip()
+    if 0 == result.returncode and identity:
+        return identity
+    return f"unidentified build at {datetime.now(timezone.utc).isoformat()}"
+
+
+def to_self_supports_cli(executable: Path) -> bool:
+    """Report whether a prebuilt to_self understands the options this tool needs."""
+    result = subprocess.run(
+        [str(executable), "--help"], env=benchmark_environment(1), text=True,
+        capture_output=True,
+    )
+    help_text = result.stdout + result.stderr
+    return all(option in help_text for option in ("--data", "--trials", "--raw-timers"))
 
 
 def resolve_benchmark(
@@ -275,6 +296,11 @@ def resolve_benchmark(
     ):
         candidate = path / relative
         if candidate.is_file() and os.access(candidate, os.X_OK):
+            if not to_self_supports_cli(candidate):
+                # Too old to accept --data/--trials/--raw-timers; prefer recompiling
+                # from a compiler wrapper in the same tree over failing outright.
+                stale_to_self = candidate
+                break
             launcher = next(
                 (
                     item.resolve()
@@ -290,6 +316,12 @@ def resolve_benchmark(
             return compile_benchmark(args, key, label, candidate.absolute()), resolve_launcher(
                 candidate.absolute()
             )
+    if stale_to_self is not None:
+        raise RuntimeError(
+            f"{label}: {stale_to_self} predates the options this comparison requires "
+            "(--data/--trials/--raw-timers) and no mpicc wrapper was found beside it to "
+            "recompile the current benchmark source; provide that MPI's mpicc instead"
+        )
     raise RuntimeError(
         f"{label} path contains neither to_self nor an MPI compiler wrapper: {path}"
     )
@@ -490,12 +522,16 @@ def write_run_config(
     """Refuse to resume into a directory created with incompatible benchmark controls."""
     config_path = args.output / "run_config.json"
     config = {
+        # Host identity is part of the resume contract: reusing cached .out files
+        # from another machine would silently blend measurements from two hosts.
+        "hostname": platform.node(),
+        "machine": platform.machine(),
         "implementations": [
             {
                 "key": implementation.key,
                 "label": implementation.label,
                 "executable": str(implementation.executable),
-                "sha256": sha256(implementation.executable),
+                "library_version": build_identity(implementation),
                 "launcher": str(implementation.launcher) if implementation.launcher else None,
                 "operation": implementation.operation,
             }
@@ -518,8 +554,19 @@ def write_run_config(
     }
     if config_path.exists() and not args.force:
         previous = json.loads(config_path.read_text())
-        if previous != config:
-            raise RuntimeError(f"existing configuration differs: {config_path}; use a new output directory")
+        # Only keys present in both configs need to agree.  Comparing just the
+        # intersection lets a directory written by an older version (which may
+        # lack keys added since, such as hostname/machine) still resume when
+        # every shared setting is unchanged, while a genuine conflict (including
+        # a host change once both configs record it) still fails.
+        differing = sorted(
+            key for key in previous.keys() & config.keys() if previous[key] != config[key]
+        )
+        if differing:
+            raise RuntimeError(
+                f"existing configuration differs ({', '.join(differing)}): {config_path}; "
+                "use --force or a new output directory"
+            )
     config_path.write_text(json.dumps(config, indent=2, sort_keys=True) + "\n")
 
 
@@ -541,7 +588,7 @@ def write_manifest(
                 f"{implementation.key}_label={implementation.label}",
                 f"{implementation.key}_operation={implementation.operation}",
                 f"{implementation.key}_executable={implementation.executable}",
-                f"{implementation.key}_sha256={sha256(implementation.executable)}",
+                f"{implementation.key}_library_version={build_identity(implementation)}",
                 f"{implementation.key}_launcher={implementation.launcher or 'none'}",
             )
         )

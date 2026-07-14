@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import itertools
 import json
 import math
@@ -28,6 +27,9 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from datatype_bench_common import cpu_description, sha256  # noqa: E402
 
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2]
@@ -140,30 +142,6 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def sha256(path: Path) -> str:
-    """Hash a benchmark binary so measurements can be tied to exact code."""
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def cpu_description() -> str:
-    """Read a useful processor name without requiring third-party Python modules."""
-    if sys.platform == "darwin":
-        for key in ("machdep.cpu.brand_string", "hw.model"):
-            result = subprocess.run(["sysctl", "-n", key], text=True, capture_output=True)
-            if 0 == result.returncode and result.stdout.strip():
-                return result.stdout.strip()
-    cpuinfo = Path("/proc/cpuinfo")
-    if cpuinfo.exists():
-        for line in cpuinfo.read_text(errors="replace").splitlines():
-            if line.lower().startswith("model name"):
-                return line.split(":", 1)[1].strip()
-    return platform.processor() or "unknown"
-
-
 def cache_description() -> dict[str, int | str]:
     """Record cache information used to interpret fragment crossover measurements."""
     result: dict[str, int | str] = {"line_bytes": "unknown", "l1_data_bytes": "unknown"}
@@ -252,6 +230,30 @@ def parse_record(line: str, prefix: str) -> dict[str, str] | None:
             raise RuntimeError(f"malformed {prefix} field: {field}")
         record[key] = value
     return record
+
+
+def largest_safe_cutoff(rows: list[dict[str, object]], key: str, minimum: int,
+                        noise_pct: float) -> int:
+    """Return the largest ``key`` value that is safe to use as a MAX_* cutoff.
+
+    A MAX_* threshold forces the vectorized path on *every* shape whose ``key``
+    is at or below the cutoff, so a value is only safe if no smaller measured
+    shape regressed.  Walk the measured values ascending, stop at the first
+    regressor (aggregate slowdown beyond the noise band), and return the largest
+    value that is itself consistently beneficial before that point.  This avoids
+    recommending, for example, 64 when 16 regresses in between.
+    """
+    recommended = 0
+    for row in sorted(rows, key=lambda entry: int(entry[key])):
+        value = int(row[key])
+        if value <= minimum:
+            continue
+        geomean = float(row["geomean_speedup_pct"])
+        if geomean < -noise_pct:
+            break
+        if geomean > noise_pct and int(row["regressions"]) <= max(1, int(row["samples"]) // 10):
+            recommended = value
+    return recommended
 
 
 def geometric_mean(values: Iterable[float]) -> float:
@@ -381,10 +383,16 @@ def parse_to_self(stdout: str, threshold: int) -> list[dict[str, object]]:
     timing = re.compile(r"^\s*(\d+)\s+([0-9.eE+-]+)\s+([0-9.eE+-]+)\s+MB/s")
     for line in stdout.splitlines():
         stripped = line.strip()
-        if stripped.startswith("# Pack "):
+        if stripped.startswith("# Pack by hand") or stripped.startswith("# Unpack by hand"):
+            # to_self also emits hand-written baseline sections whose headers
+            # start with "# Pack "/"# Unpack "; tag them so their timing rows are
+            # not folded into the convertor pack/unpack measurements below.
+            operation = "byhand"
+            continue
+        if stripped.startswith("# Pack ("):
             operation = "pack"
             continue
-        if stripped.startswith("# Unpack "):
+        if stripped.startswith("# Unpack ("):
             operation = "unpack"
             continue
         match = timing.match(line)
@@ -617,13 +625,9 @@ def analyze_movers(rows: list[dict[str, object]], noise_pct: float) -> dict[str,
                     "samples": len(samples),
                 }
             )
-        eligible = [row for row in by_block if 8 < int(row["blocklen"])
-                    and float(row["geomean_speedup_pct"]) > noise_pct
-                    and int(row["regressions"]) <= max(1, int(row["samples"]) // 10)]
         analysis[operation] = {
-            "largest_consistently_beneficial_blocklen": max(
-                (int(row["blocklen"]) for row in eligible), default=0
-            ),
+            "largest_consistently_beneficial_blocklen":
+                largest_safe_cutoff(by_block, "blocklen", 8, noise_pct),
             "by_blocklen": by_block,
         }
         by_bytes: list[dict[str, object]] = []
@@ -641,11 +645,8 @@ def analyze_movers(rows: list[dict[str, object]], noise_pct: float) -> dict[str,
                     "samples": len(samples),
                 }
             )
-        eligible_bytes = [row for row in by_bytes if 32 < int(row["block_bytes"])
-                          and float(row["geomean_speedup_pct"]) > noise_pct
-                          and int(row["regressions"]) <= max(1, int(row["samples"]) // 10)]
-        analysis[operation]["largest_consistently_beneficial_block_bytes"] = max(
-            (int(row["block_bytes"]) for row in eligible_bytes), default=0
+        analysis[operation]["largest_consistently_beneficial_block_bytes"] = (
+            largest_safe_cutoff(by_bytes, "block_bytes", 32, noise_pct)
         )
         analysis[operation]["by_block_bytes"] = by_bytes
     return analysis
@@ -848,7 +849,9 @@ def main() -> int:
         recommendations["movers"] = analyze_movers(summaries, args.noise_pct)
 
     parameters: dict[str, int] = {}
-    if "consolidation" in recommendations:
+    # analyze_corpus() returns an empty mapping when there was nothing comparable
+    # to measure; only emit the parameter when a candidate was actually chosen.
+    if recommendations.get("consolidation"):
         parameters["ompi_datatype_consolidate_threshold"] = int(
             recommendations["consolidation"]["candidate_threshold"]
         )

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import itertools
 import json
 import math
@@ -25,6 +24,9 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from datatype_bench_common import cpu_description, sha256  # noqa: E402
 
 
 DEFAULT_DATA_COUNTS = "1,2,4,8,16"
@@ -112,38 +114,6 @@ def parse_args() -> argparse.Namespace:
             "--equivalent-elements requires --block-gap=0 and a nonzero --item-gap"
         )
     return args
-
-
-def sha256(path: Path) -> str:
-    """Return a stable executable identity for the result manifest."""
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def cpu_description() -> str:
-    """Return a useful processor name on macOS and Linux without external packages."""
-    if sys.platform == "darwin":
-        result = subprocess.run(
-            ["sysctl", "-n", "machdep.cpu.brand_string"], text=True, capture_output=True
-        )
-        if 0 == result.returncode and result.stdout.strip():
-            return result.stdout.strip()
-        result = subprocess.run(
-            ["system_profiler", "SPHardwareDataType"], text=True, capture_output=True
-        )
-        if 0 == result.returncode:
-            for line in result.stdout.splitlines():
-                if line.strip().startswith("Chip:"):
-                    return line.split(":", 1)[1].strip()
-    cpuinfo = Path("/proc/cpuinfo")
-    if cpuinfo.exists():
-        for line in cpuinfo.read_text(errors="replace").splitlines():
-            if line.lower().startswith("model name"):
-                return line.split(":", 1)[1].strip()
-    return platform.processor() or "unknown"
 
 
 def parse_record(line: str, prefix: str) -> dict[str, str] | None:
@@ -432,6 +402,8 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as error:
+        # ValueError covers summarize()'s explicit raise plus statistics/float()
+        # conversion failures on malformed tester output.
         print(f"error: {error}", file=sys.stderr)
         sys.exit(1)

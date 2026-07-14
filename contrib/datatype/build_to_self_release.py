@@ -45,6 +45,10 @@ def makefile_variable(makefile: Path, name: str) -> str:
         while value.endswith("\\"):
             value = value[:-1].rstrip() + " "
             position += 1
+            if position >= len(lines):
+                raise RuntimeError(
+                    f"{name} in {makefile} ends with a dangling continuation backslash"
+                )
             value += lines[position].strip()
         return value
     raise RuntimeError(f"unable to find {name} in {makefile}")

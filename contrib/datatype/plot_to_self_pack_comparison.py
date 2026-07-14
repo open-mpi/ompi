@@ -233,9 +233,17 @@ def save_combined_graph(
         row, column = divmod(position, columns)
         axes[row][column].set_visible(False)
 
-    handles, labels = axes[0][0].get_legend_handles_labels()
+    # A later datatype may carry a comparison series the first subplot lacks, so
+    # collect labels from every axis (dedup by label) rather than just axes[0][0].
+    handles_by_label: dict[str, object] = {}
+    for axis_row in axes:
+        for axis in axis_row:
+            for handle, label in zip(*axis.get_legend_handles_labels()):
+                handles_by_label.setdefault(label, handle)
+    handles = list(handles_by_label.values())
+    labels = list(handles_by_label.keys())
     figure.legend(
-        handles, labels, loc="upper center", ncol=min(4, len(labels)), fontsize=9,
+        handles, labels, loc="upper center", ncol=max(1, min(4, len(labels))), fontsize=9,
         bbox_to_anchor=(0.5, 1.0 - 0.55 / figure_height),
     )
     convention = (

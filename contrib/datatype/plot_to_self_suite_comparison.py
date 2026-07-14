@@ -157,10 +157,18 @@ def save_graphs(input_path: Path, output: Path, noise: float, statistic: str) ->
         for position in range(len(scenarios), rows * columns):
             row, column = divmod(position, columns)
             axes[row][column].set_visible(False)
-        handles, legend_labels = axes[0][0].get_legend_handles_labels()
+        # A later scenario may carry a comparison series the first subplot lacks,
+        # so collect labels from every axis (dedup by label), not just axes[0][0].
+        handles_by_label: dict[str, object] = {}
+        for axis_row in axes:
+            for axis in axis_row:
+                for handle, label in zip(*axis.get_legend_handles_labels()):
+                    handles_by_label.setdefault(label, handle)
+        handles = list(handles_by_label.values())
+        legend_labels = list(handles_by_label.keys())
         figure.legend(
             handles, legend_labels, loc="upper center", bbox_to_anchor=(0.5, 0.99),
-            ncol=len(handles), fontsize=9,
+            ncol=max(1, len(handles)), fontsize=9,
         )
         figure.supxlabel("Payload bytes (log2 scale)", fontsize=10)
         figure.supylabel(f"Speedup relative to {baseline} (%)", fontsize=10)

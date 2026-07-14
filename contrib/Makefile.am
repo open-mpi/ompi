@@ -37,6 +37,8 @@ EXTRA_DIST = \
         completion/mpirun.zsh \
         datatype/README.md \
         datatype/build_to_self_release.py \
+        datatype/compare_pack_runs.py \
+        datatype/datatype_bench_common.py \
         datatype/plot_to_self_pack_comparison.py \
         datatype/plot_to_self_suite_comparison.py \
         datatype/run_pack_description_sweep.py \

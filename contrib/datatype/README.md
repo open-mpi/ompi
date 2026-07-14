@@ -112,6 +112,17 @@ recorded in a `valid` column in `measurements.tsv`, summarized per datatype/impl
 `validation.tsv`, and any `FAIL` is called out loudly on the console; a failing implementation's
 timings must not be read as a speedup.
 
+Each implementation is identified by the string returned from `to_self --library-version`
+(`MPI_Get_library_version()`), which reports the repo revision compiled into the *linked* MPI
+library -- the code actually under test. This is recorded per implementation in `run_config.json`
+and `manifest.txt`, and a resume into an existing output directory is refused when it changes.
+Hashing the on-disk binary is deliberately avoided: an in-tree `to_self` is a libtool wrapper whose
+contents are constant across rebuilds, and the pack/unpack code lives in the separately loaded
+`libopen-pal`, so a binary hash would not move when only the library is rebuilt. If a `to_self`
+predates the `--library-version` flag, the identity falls back to the run's wall-clock time, so such
+a run always compares as a distinct build and cached `.out` files are never blended; use `--force`
+or a fresh `--output` directory to resume in that case.
+
 ## `plot_to_self_pack_comparison.py`
 
 Regenerate graphs from one `summary.tsv` produced by `run_to_self_pack_comparison.py`. It creates a
@@ -128,6 +139,60 @@ python3 contrib/datatype/plot_to_self_pack_comparison.py \
 
 Use `--exclude-hand-made` to omit the base-versus-hand-written series while retaining comparisons
 against the named MPI implementations.
+
+## `compare_pack_runs.py`
+
+Compute performance regressions between two runs that were already collected by
+`run_to_self_pack_comparison.py`. Where the runner compares implementations launched side by side in
+one collection, this tool compares two saved result directories -- typically the same benchmark
+before and after a code change -- and reports, per implementation, datatype, and size, whether the
+candidate regressed against the baseline.
+
+It reads each run's per-trial samples (`trials.tsv`), so the comparison uses the raw measurements
+rather than pre-reduced medians. Because the two runs are independent (not trial-paired), the
+estimator is an unpaired ratio of medians with a deterministic percentile bootstrap confidence
+interval, matching the runner's bootstrap. Only implementation keys present in both runs are
+compared, and only datatype/size points present in both.
+
+The output is written in the same schema the runner emits (`summary.tsv` and
+`datatype_summary.tsv`), so `plot_to_self_pack_comparison.py` renders it: a positive `speedup_pct`
+means the candidate is faster than the baseline, and a negative value is a regression. This tool
+invokes the plotter in `--regression-only` mode, so the rendered graphs draw the median line (and
+its markers) only where the candidate regresses beyond the noise band; the confidence band is still
+shown for every point, keeping the picture quiet everywhere except the regressions.
+
+```sh
+python3 contrib/datatype/compare_pack_runs.py \
+  --baseline-run /tmp/to-self-pack-before \
+  --candidate-run /tmp/to-self-pack-after \
+  --baseline-label before \
+  --candidate-label after \
+  --output /tmp/to-self-pack-regression
+```
+
+The two runs must have measured the same work: `compare_pack_runs.py` refuses to run when the
+`run_config.json` controls (operation, cycles, trials, warmups, minimum work bytes, datatype
+selection, endpoints, and process count) differ, and warns when the recorded machine identity in
+`manifest.txt` differs. Binary identity is intentionally *not* required, since a regression check
+expects two different executables. Pass `--allow-mismatch` to downgrade the control mismatch to a
+warning and `--no-plot` to skip rendering. A regression check usually cares about a single
+implementation, so when both runs contain more than one the tool compares just one by default
+(preferring `base`) and prints which it chose; use `--implementation KEY` (repeatable) to pick
+another or `--all-implementations` to compare every implementation common to both runs. Pass
+`--implementation list` to print the implementation keys common to both runs (with their labels) and
+exit without comparing. A single comparison covers one operation, since the plotter refuses to mix
+them; when a `trials.tsv` records more than one (for example a `pack` run that also keeps a
+`pack_byhand` series, or a combined `--check=all` collection) the tool compares just one by default
+(preferring `pack`) and prints which it chose. Use `--operation OP` to select `pack`, `unpack`, or a
+communication operation such as `isend_recv`, or `--operation list` to print the operations common to
+both runs and exit. The output
+directory also contains `comparison_config.json`, which records the two source runs, labels, the
+compared operation, any mismatch notices, and points skipped for lack of data in one run.
+
+The comparison is post-processing only, but it bootstraps every datatype/size point, so a full
+corpus can take tens of seconds. Pass `-v`/`--verbose` to print per-point progress. The bootstrap is
+vectorized with numpy when it is installed and falls back to pure Python otherwise; `--bootstrap N`
+lowers the resample count (default 10000) to trade confidence-interval precision for speed.
 
 ## `run_to_self_suite_comparison.py`
 
