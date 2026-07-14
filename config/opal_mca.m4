@@ -338,15 +338,62 @@ AC_DEFUN([MCA_CONFIGURE_PROJECT],[
     AC_SUBST(MCA_$1_FRAMEWORK_CORE_LIBS)
 ])
 
+# _MCA_TRACK_PRIORITY_RANGE(priority)
+# -----------------------------------
+# Fold the given priority into the running
+# mca_component_max_priority / mca_component_min_priority values.  Both
+# must be defined (to the empty string, if this is the first priority
+# seen) before invoking this macro.
+m4_define([_MCA_TRACK_PRIORITY_RANGE],
+    [m4_ifval(mca_component_max_priority,
+         [m4_if(m4_eval([$1] > mca_component_max_priority), [1],
+                [m4_define([mca_component_max_priority], [$1])])dnl
+          m4_if(m4_eval([$1] < mca_component_min_priority), [1],
+                [m4_define([mca_component_min_priority], [$1])])],
+         [m4_define([mca_component_max_priority], [$1])dnl
+          m4_define([mca_component_min_priority], [$1])])])
+
+# _MCA_EMIT_COMPONENT_IF_PRIORITY(project_name, framework_name,
+#                                 component_name, priority)
+# -------------------------------------------------------------
+# Emit component_name (preceded by a separator, if it is not the first
+# component emitted) if and only if its priority is the given priority.
+# mca_component_separator must be defined to the empty string before
+# the first invocation of this macro.
+m4_define([_MCA_EMIT_COMPONENT_IF_PRIORITY],
+    [m4_if(m4_eval(OPAL_EVAL_ARG([MCA_]$1[_]$2[_]$3[_PRIORITY]) == [$4]), [1],
+           [mca_component_separator[]$3[]m4_define([mca_component_separator], [, ])])])
+
 # MCA_ORDER_COMPONENT_LIST(project_name, framework_name)
+# ------------------------------------------------------
+# Define component_list to be the framework's m4-configure component
+# list, ordered from highest to lowest
+# MCA_<project>_<framework>_<component>_PRIORITY.  Every component in
+# the list must have a priority.
 AC_DEFUN([MCA_ORDER_COMPONENT_LIST], [
     m4_foreach(mca_component, [mca_$1_$2_m4_config_component_list],
                [m4_ifval(mca_component,
                     [m4_ifdef([MCA_]$1[_]$2[_]mca_component[_PRIORITY], [],
                          [m4_fatal([MCA_$1_$2_]mca_component[_PRIORITY not found, but required.])])])])
+dnl Find the highest and lowest priorities in the framework.
+    m4_define([mca_component_max_priority], [])dnl
+    m4_define([mca_component_min_priority], [])dnl
+    m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
+               [m4_ifval(mca_component,
+                    [_MCA_TRACK_PRIORITY_RANGE(OPAL_EVAL_ARG([MCA_]$1[_]$2[_]mca_component[_PRIORITY]))])])dnl
+dnl Walk the priorities from highest to lowest, emitting the components
+dnl that have each priority.  Walking the priorities (vs. sorting the
+dnl components) means that components of equal priority are emitted in
+dnl the same relative order in which they appear in the original list.
+    m4_define([mca_component_separator], [])dnl
     m4_define([component_list],
-              [esyscmd([config/opal_mca_priority_sort.pl] m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
-                        [m4_ifval(mca_component, [mca_component ]OPAL_EVAL_ARG([MCA_]$1[_]$2[_]mca_component[_PRIORITY ]))]))])
+        m4_dquote(m4_ifval(mca_component_max_priority,
+            [m4_for([mca_component_priority],
+                    mca_component_max_priority, mca_component_min_priority, -1,
+                [m4_foreach([mca_component], [mca_$1_$2_m4_config_component_list],
+                    [m4_ifval(mca_component,
+                         [_MCA_EMIT_COMPONENT_IF_PRIORITY($1, $2, mca_component,
+                                                          mca_component_priority)])])])])))
 ])
 
 AC_DEFUN([MCA_CHECK_IGNORED_PRIORITY], [
