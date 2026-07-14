@@ -722,6 +722,7 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
                               &use_numa, &use_socket, &use_shm, &lin_0,
                               &lin_1, &lin_2, num_nodes, acoll_module, subc);
     no_sg = (sg_cnt == node_size) ? 1 : 0;
+    int use_shm_bcast = use_shm ? 1 : 0;
 
     /* Disable shm based bcast if: */
     /* - datatype is not a predefined type */
@@ -732,6 +733,19 @@ int mca_coll_acoll_bcast(void *buff, size_t count, struct ompi_datatype_t *datat
         if (!ompi_datatype_is_predefined(datatype)
             || (0 < opal_accelerator.check_addr(buff, &dev_id, &flags))) {
             use_shm = 0;
+        }
+    }
+
+    /* Ensure all ranks agree on use_shm to handle heterogeneous cases
+     * (e.g., mixed GPU/non-GPU buffers across ranks).
+     */
+    if (mca_coll_acoll_is_heterogeneous_case && use_shm_bcast) {
+        int use_shm_final;
+        err = ompi_coll_base_allreduce_intra_recursivedoubling(&use_shm, &use_shm_final, 1,
+                                                               MPI_INT, MPI_BAND,
+                                                               subc->local_comm, module);
+        if (MPI_SUCCESS == err) {
+            use_shm = use_shm_final;
         }
     }
 
