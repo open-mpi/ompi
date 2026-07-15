@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Musawer Ahmad Saqif.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,8 +27,71 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/communicator/comm_split_type.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
+
+#include "opal/mca/hwloc/base/base.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
+
+/*
+ * Return this process' current CPU binding. Query hwloc at call time so
+ * affinity changes made after MPI_Init are reflected in the result. The
+ * cached Open MPI binding and the topology root are fallbacks for platforms
+ * that cannot query process binding directly.
+ */
+static int ompi_get_hw_resource_process_cpuset(hwloc_cpuset_t cpuset)
+{
+    if (0 == hwloc_get_cpubind(opal_hwloc_topology, cpuset, HWLOC_CPUBIND_PROCESS)
+        && !hwloc_bitmap_iszero(cpuset)) {
+        return OMPI_SUCCESS;
+    }
+
+    if (NULL != opal_hwloc_my_cpuset && !hwloc_bitmap_iszero(opal_hwloc_my_cpuset)) {
+        hwloc_bitmap_copy(cpuset, opal_hwloc_my_cpuset);
+        return OMPI_SUCCESS;
+    }
+
+    hwloc_obj_t root = hwloc_get_root_obj(opal_hwloc_topology);
+    if (NULL != root && NULL != root->cpuset && !hwloc_bitmap_iszero(root->cpuset)) {
+        hwloc_bitmap_copy(cpuset, root->cpuset);
+        return OMPI_SUCCESS;
+    }
+
+    return OMPI_ERR_NOT_FOUND;
+}
+
+/*
+ * A process is restricted to one instance of a resource type when its entire
+ * CPU binding is contained in one hwloc object of that type. Return false
+ * when hwloc cannot associate the resource type with CPUs; such resources
+ * are omitted from the MPI_Info object.
+ */
+static bool ompi_get_hw_resource_restriction(hwloc_const_cpuset_t cpuset,
+                                             hwloc_obj_type_t type, bool *restricted)
+{
+    int count = hwloc_get_nbobjs_by_type(opal_hwloc_topology, type);
+    if (0 >= count) {
+        return false;
+    }
+
+    bool has_cpuset = false;
+    *restricted = false;
+    for (int i = 0; i < count; ++i) {
+        hwloc_obj_t object = hwloc_get_obj_by_type(opal_hwloc_topology, type, i);
+        if (NULL == object || NULL == object->cpuset || hwloc_bitmap_iszero(object->cpuset)) {
+            continue;
+        }
+
+        has_cpuset = true;
+        if (hwloc_bitmap_isincluded(cpuset, object->cpuset)) {
+            *restricted = true;
+            break;
+        }
+    }
+
+    return has_cpuset;
+}
 
 /**
  * Create a info object holding local hardware resource info.
@@ -50,16 +114,54 @@ PROTOTYPE ERROR_CLASS get_hw_resource_info(INFO_OUT info)
         }
     }
 
-    /* 
-     * Just allocate an info object.  No resources currently being
-     * specified so just return empty info object.
-     */
-     
     *info = ompi_info_allocate ();
     if (NULL == (*info)) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);
     }
+
+    /*
+     * Launcher-started processes normally receive a topology through PMIx.
+     * Singletons do not, so discover it here when necessary.
+     */
+    if (NULL == opal_hwloc_topology
+        && OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+        return MPI_SUCCESS;
+    }
+
+    hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
+    if (NULL == cpuset) {
+        ompi_info_free(info);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+    }
+
+    if (OMPI_SUCCESS != ompi_get_hw_resource_process_cpuset(cpuset)) {
+        hwloc_bitmap_free(cpuset);
+        return MPI_SUCCESS;
+    }
+
+    for (int i = 0; NULL != ompi_comm_split_type_hw_guided_support[i].info_value; ++i) {
+        const ompi_comm_split_type_hw_guided_t *resource
+            = &ompi_comm_split_type_hw_guided_support[i];
+        if (!resource->report_in_hw_resource_info) {
+            continue;
+        }
+
+        bool restricted;
+        if (!ompi_get_hw_resource_restriction(cpuset, resource->hwloc_type, &restricted)) {
+            continue;
+        }
+
+        int rc = ompi_info_set(*info, resource->hwloc_uri,
+                               restricted ? "true" : "false");
+        if (OMPI_SUCCESS != rc) {
+            hwloc_bitmap_free(cpuset);
+            ompi_info_free(info);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+        }
+    }
+
+    hwloc_bitmap_free(cpuset);
 
     return MPI_SUCCESS;
 }

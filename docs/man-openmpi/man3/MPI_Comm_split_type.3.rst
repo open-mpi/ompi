@@ -56,6 +56,14 @@ MPI_COMM_TYPE_RESOURCE_GUIDED
    to the resource type specified by the ``mpi_hw_resource_type``
    or ``mpi_pset_name`` info key.
 
+For ``MPI_COMM_TYPE_HW_GUIDED`` and ``MPI_COMM_TYPE_RESOURCE_GUIDED``,
+``mpi_hw_resource_type`` accepts the hwloc URI values returned by
+:ref:`MPI_Get_hw_resource_info`: ``hwloc://NUMANode``,
+``hwloc://Package``, ``hwloc://L3Cache``, ``hwloc://L2Cache``,
+``hwloc://L1Cache``, ``hwloc://Core``, and ``hwloc://PU``. The existing
+Open MPI-specific values ``numanode``, ``socket``, ``l3cache``, ``l2cache``,
+``l1cache``, ``core``, and ``hwthread`` are also accepted.
+
 OMPI_COMM_TYPE_NODE
    Synonym for MPI_COMM_TYPE_SHARED.
 
@@ -130,3 +138,4 @@ ERRORS
    * :ref:`MPI_Comm_dup`
    * :ref:`MPI_Comm_free`
    * :ref:`MPI_Comm_split`
+   * :ref:`MPI_Get_hw_resource_info`
