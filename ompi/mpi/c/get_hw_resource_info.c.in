@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Musawer Ahmad Saqif.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/communicator/comm_split_type.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
 
@@ -50,16 +52,56 @@ PROTOTYPE ERROR_CLASS get_hw_resource_info(INFO_OUT info)
         }
     }
 
-    /* 
-     * Just allocate an info object.  No resources currently being
-     * specified so just return empty info object.
-     */
-     
     *info = ompi_info_allocate ();
     if (NULL == (*info)) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
                                       FUNC_NAME);
     }
+
+    /*
+     * MPI_Get_hw_resource_info is callable before MPI_Init and after
+     * MPI_Finalize. Return the required info object without consulting OPAL
+     * state outside the active MPI lifetime.
+     */
+    int32_t state = ompi_mpi_state;
+    if (OMPI_MPI_STATE_INIT_COMPLETED != state) {
+        return MPI_SUCCESS;
+    }
+
+    hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
+    if (NULL == cpuset) {
+        ompi_info_free(info);
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+    }
+
+    if (OMPI_SUCCESS != ompi_comm_split_type_hwloc_get_process_cpuset(cpuset)) {
+        hwloc_bitmap_free(cpuset);
+        return MPI_SUCCESS;
+    }
+
+    for (int i = 0; NULL != ompi_comm_split_type_hw_guided_support[i].info_value; ++i) {
+        const ompi_comm_split_type_hw_guided_t *resource
+            = &ompi_comm_split_type_hw_guided_support[i];
+        if (!resource->report_in_hw_resource_info) {
+            continue;
+        }
+
+        hwloc_obj_t resource_object;
+        if (!ompi_comm_split_type_hwloc_get_object(cpuset, resource->hwloc_type,
+                                                   &resource_object)) {
+            continue;
+        }
+
+        int rc = ompi_info_set(*info, resource->hwloc_uri,
+                               NULL != resource_object ? "true" : "false");
+        if (OMPI_SUCCESS != rc) {
+            hwloc_bitmap_free(cpuset);
+            ompi_info_free(info);
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM, FUNC_NAME);
+        }
+    }
+
+    hwloc_bitmap_free(cpuset);
 
     return MPI_SUCCESS;
 }
