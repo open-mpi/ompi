@@ -1383,9 +1383,54 @@ m4_ifdef([project_ompi],[CXXCPPFLAGS="$CXX_INCLUDES $CXXCPPFLAGS"])
 
 m4_ifdef([project_ompi], [OMPI_SETUP_DEBUGGER_FLAGS])
 
-# Find the linker flag (if any) that makes an unresolved symbol in a
-# shared library a hard error, so that a layering violation in
+############################################################################
+# Symbol re-export detection for libmpi backward compatibility
+############################################################################
+# Detect platform-specific linker support for re-exporting symbols from
+# libopen_mpi through libmpi to maintain v5.x binary compatibility.
+#
+# This is only needed on macOS, where the two-level namespace records
+# which library each symbol was found in at link time: a v5.x-built
+# binary looked up the predefined MPI handle symbols (e.g.,
+# ompi_mpi_comm_world) in libmpi, so libmpi must re-export them now
+# that they live in libopen_mpi.  On ELF platforms the global symbol
+# namespace is flat: libmpi's DT_NEEDED dependency on libopen_mpi is
+# sufficient for a v5.x binary's references to resolve at run time,
+# so no re-export mechanism is required at all.
+m4_ifdef([project_ompi], [
+    AC_MSG_CHECKING([for linker symbol re-export support])
+    ompi_reexport_method="none"
+
+    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
+
+    # Save current LDFLAGS
+    LDFLAGS_save="$LDFLAGS"
+
+    case $host_os in
+    darwin* | rhapsody*)
+        # macOS: Test -reexport_library flag
+        LDFLAGS="$LDFLAGS_save -Wl,-reexport_library,/usr/lib/libSystem.dylib"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+                       [ompi_reexport_method=macos],
+                       [AC_MSG_WARN([macOS linker does not support -reexport flag])])
+        ;;
+    *)
+        ;;
+    esac
+
+    # Restore LDFLAGS
+    LDFLAGS="$LDFLAGS_save"
+    OPAL_VAR_SCOPE_POP
+
+    AC_MSG_RESULT([$ompi_reexport_method])
+
+    AM_CONDITIONAL([OMPI_REEXPORT_MACOS],
+                   [test "$ompi_reexport_method" = "macos"])
+])
+
 # libopen_mpi fails at link time.
+# See https://github.com/open-mpi/ompi/issues/2956
+# but the check does not seem to work on all architectures.
 m4_ifdef([project_ompi], [OMPI_SETUP_LAYERING_CHECKS])
 
 #
