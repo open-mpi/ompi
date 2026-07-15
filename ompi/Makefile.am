@@ -175,7 +175,35 @@ libopen_mpi_la_LDFLAGS = \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
 # Build the main MPI library
+#lib@OMPI_LIBMPI_NAME@_la_SOURCES = \
+#        mpi/c/predefined_symbols_shim.c
 lib@OMPI_LIBMPI_NAME@_la_SOURCES =
+
+if OMPI_REEXPORT_MACOS
+# On macOS, libopen_mpi is linked (and re-exported) via the
+# -reexport-lopen_mpi flag below, NOT via LIBADD: if libopen_mpi.la
+# also appeared in LIBADD, ld64 would record an ordinary LC_LOAD_DYLIB
+# reference and drop the LC_REEXPORT_DYLIB attribute that provides
+# v5.x binary compatibility.  But the flag is invisible to libtool, so
+# libtool would not record libopen_mpi's own dependencies in
+# libmpi.la; list libopen-pal.la explicitly so that uninstalled
+# programs linking only libmpi.la still get opal/.libs in their
+# runtime search path (otherwise "make check" before "make install"
+# cannot load libopen-pal).
+lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
+        mpi/c/libmpi_c.la \
+        mpi/tool/libmpi_mpit.la \
+        $(c_mpi_lib) \
+        $(c_pmpi_lib) \
+        $(OMPI_MPIEXT_C_LIBS) \
+        $(mpi_fortran_base_lib) \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+# libopen_mpi.la is not in LIBADD (see above), but libmpi cannot link
+# until it exists; keep it in DEPENDENCIES.
+lib@OMPI_LIBMPI_NAME@_la_DEPENDENCIES = \
+	libopen_mpi.la \
+	$(lib@OMPI_LIBMPI_NAME@_la_LIBADD)
+else
 lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
 	libopen_mpi.la \
         mpi/c/libmpi_c.la \
@@ -185,10 +213,22 @@ lib@OMPI_LIBMPI_NAME@_la_LIBADD = \
         $(OMPI_MPIEXT_C_LIBS) \
         $(mpi_fortran_base_lib)
 lib@OMPI_LIBMPI_NAME@_la_DEPENDENCIES = $(lib@OMPI_LIBMPI_NAME@_la_LIBADD)
+endif
 
 lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
+
+# On macOS, use -reexport-l to re-export symbols from libopen_mpi
+# This also serves as the link dependency (removed from LIBADD above)
+# On Linux, use --version-script (handled via OMPI_LIBMPI_REEXPORT_LDFLAGS)
+if OMPI_REEXPORT_MACOS
+lib@OMPI_LIBMPI_NAME@_la_LDFLAGS += -L$(abs_builddir)/.libs -Wl,-reexport-lopen_mpi
+endif
+
+if OMPI_REEXPORT_VERSION_SCRIPT
+lib@OMPI_LIBMPI_NAME@_la_LDFLAGS += $(OMPI_LIBMPI_REEXPORT_LDFLAGS)
+endif
 
 # The MPI Standard ABI library
 libmpi_abi_la_SOURCES =

@@ -1375,9 +1375,66 @@ m4_ifdef([project_ompi],[CXXCPPFLAGS="$CXX_INCLUDES $CXXCPPFLAGS"])
 
 m4_ifdef([project_ompi], [OMPI_SETUP_DEBUGGER_FLAGS])
 
-# Find the linker flag (if any) that makes an unresolved symbol in a
-# shared library a hard error, so that a layering violation in
+############################################################################
+# Symbol re-export detection for libmpi backward compatibility
+############################################################################
+# Detect platform-specific linker support for re-exporting symbols from
+# libopen_mpi through libmpi to maintain v5.x binary compatibility
+m4_ifdef([project_ompi], [
+    AC_MSG_CHECKING([for linker symbol re-export support])
+    ompi_reexport_method="none"
+    OMPI_LIBMPI_REEXPORT_LDFLAGS=""
+
+    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
+
+    # Save current LDFLAGS
+    LDFLAGS_save="$LDFLAGS"
+
+    # Test platform-specific re-export mechanisms
+    case $host_os in
+    darwin* | rhapsody*)
+        # macOS: Test -reexport_library flag
+        LDFLAGS="$LDFLAGS_save -Wl,-reexport_library,/usr/lib/libSystem.dylib"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+                       [ompi_reexport_method=macos],
+                       [AC_MSG_WARN([macOS linker does not support -reexport flag])])
+        ;;
+    linux* | gnu*)
+        # Linux/ELF: Test --version-script support
+        # Create a temporary empty version script for testing
+        cat > conftest.ver <<EOF
+{ global: *; };
+EOF
+        LDFLAGS="$LDFLAGS_save -Wl,--version-script=conftest.ver"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+                       [ompi_reexport_method=version_script
+                        OMPI_LIBMPI_REEXPORT_LDFLAGS="-Wl,--version-script=\$(top_srcdir)/ompi/mpi/libmpi_symbol_exports.ver"],
+                       [AC_MSG_WARN([Linker does not support symbol re-export])])
+        rm -f conftest.ver
+        ;;
+    *)
+        ;;
+    esac
+
+    # Restore LDFLAGS
+    LDFLAGS="$LDFLAGS_save"
+    OPAL_VAR_SCOPE_POP
+
+
+    AC_MSG_RESULT([$ompi_reexport_method])
+
+    # Set up Automake conditionals
+    AM_CONDITIONAL([OMPI_REEXPORT_MACOS],
+                   [test "$ompi_reexport_method" = "macos"])
+    AM_CONDITIONAL([OMPI_REEXPORT_VERSION_SCRIPT],
+                   [test "$ompi_reexport_method" = "version_script"])
+
+    AC_SUBST(OMPI_LIBMPI_REEXPORT_LDFLAGS)
+])
+
 # libopen_mpi fails at link time.
+# See https://github.com/open-mpi/ompi/issues/2956
+# but the check does not seem to work on all architectures.
 m4_ifdef([project_ompi], [OMPI_SETUP_LAYERING_CHECKS])
 
 #

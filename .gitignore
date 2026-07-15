@@ -281,6 +281,8 @@ ompi/test/general/request
 ompi/test/general/seq_tracker
 ompi/test/general/win
 
+ompi/test/reexport/test_symbol_resolution
+
 ompi/test/monitoring/monitoring_test
 ompi/test/monitoring/check_monitoring
 ompi/test/monitoring/example_reduce_count

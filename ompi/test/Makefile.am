@@ -19,7 +19,7 @@
 # the MPI Standard ABI (see its check-local target).
 #
 
-# t, file, datatype, general, mpi-abi, and bindings-generator are run by
+# t, file, datatype, general, mpi-abi, reexport, and bindings-generator are run by
 # "make check".  spc and monitoring are multi-process tests: they are
 # built, but not run by "make check".
-SUBDIRS = t file datatype general monitoring spc mpi-abi bindings-generator
+SUBDIRS = t file datatype general monitoring spc mpi-abi reexport bindings-generator

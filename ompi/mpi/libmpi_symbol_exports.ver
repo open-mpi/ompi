@@ -1,0 +1,161 @@
+# Version script for GNU ld to re-export MPI predefined symbols from libopen_mpi
+#
+# This script makes libmpi.so re-export the 138 predefined MPI symbols
+# (communicators, datatypes, operations, etc.) that moved from libmpi to
+# libopen_mpi in Open MPI v6.0, ensuring backward compatibility with
+# v5.x applications that link with -lmpi.
+#
+# See: https://github.com/open-mpi/ompi/issues/XXXXX
+
+OMPI_6.0 {
+    global:
+        # Communicators
+        ompi_mpi_comm_world;
+        ompi_mpi_comm_self;
+        ompi_mpi_comm_null;
+
+        # Groups
+        ompi_mpi_group_empty;
+        ompi_mpi_group_null;
+
+        # Datatypes - C types
+        ompi_mpi_char;
+        ompi_mpi_signed_char;
+        ompi_mpi_unsigned_char;
+        ompi_mpi_byte;
+        ompi_mpi_short;
+        ompi_mpi_unsigned_short;
+        ompi_mpi_int;
+        ompi_mpi_unsigned;
+        ompi_mpi_long;
+        ompi_mpi_unsigned_long;
+        ompi_mpi_long_long_int;
+        ompi_mpi_unsigned_long_long;
+        ompi_mpi_float;
+        ompi_mpi_double;
+        ompi_mpi_long_double;
+        ompi_mpi_wchar;
+        ompi_mpi_packed;
+
+        # Datatypes - C99 types
+        ompi_mpi_int8_t;
+        ompi_mpi_uint8_t;
+        ompi_mpi_int16_t;
+        ompi_mpi_uint16_t;
+        ompi_mpi_int32_t;
+        ompi_mpi_uint32_t;
+        ompi_mpi_int64_t;
+        ompi_mpi_uint64_t;
+        ompi_mpi_aint;
+        ompi_mpi_offset;
+        ompi_mpi_count;
+        ompi_mpi_c_bool;
+        ompi_mpi_c_float_complex;
+        ompi_mpi_c_complex;
+        ompi_mpi_c_double_complex;
+        ompi_mpi_c_long_double_complex;
+
+        # Datatypes - MPI-3 types
+        ompi_mpi_c_short_float_complex;
+
+        # Datatypes - Fortran types
+        ompi_mpi_character;
+        ompi_mpi_logical;
+        ompi_mpi_logical1;
+        ompi_mpi_logical2;
+        ompi_mpi_logical4;
+        ompi_mpi_logical8;
+        ompi_mpi_integer;
+        ompi_mpi_integer1;
+        ompi_mpi_integer2;
+        ompi_mpi_integer4;
+        ompi_mpi_integer8;
+        ompi_mpi_integer16;
+        ompi_mpi_real;
+        ompi_mpi_real2;
+        ompi_mpi_real4;
+        ompi_mpi_real8;
+        ompi_mpi_real16;
+        ompi_mpi_dblprec;
+        ompi_mpi_cplex;
+        ompi_mpi_complex8;
+        ompi_mpi_complex16;
+        ompi_mpi_complex32;
+        ompi_mpi_dblcplx;
+
+        # Datatypes - reduction types
+        ompi_mpi_2int;
+        ompi_mpi_2integer;
+        ompi_mpi_2real;
+        ompi_mpi_2dblprec;
+        ompi_mpi_2complex;
+        ompi_mpi_2dblcplx;
+        ompi_mpi_float_int;
+        ompi_mpi_double_int;
+        ompi_mpi_longdbl_int;
+        ompi_mpi_long_int;
+        ompi_mpi_short_int;
+
+        # Datatypes - special types
+        ompi_mpi_ub;
+        ompi_mpi_lb;
+        ompi_mpi_datatype_null;
+        ompi_mpi_cxx_bool;
+        ompi_mpi_cxx_cplex;
+        ompi_mpi_cxx_dblcplex;
+        ompi_mpi_cxx_ldblcplex;
+
+        # Operations
+        ompi_mpi_op_null;
+        ompi_mpi_op_max;
+        ompi_mpi_op_min;
+        ompi_mpi_op_sum;
+        ompi_mpi_op_prod;
+        ompi_mpi_op_land;
+        ompi_mpi_op_band;
+        ompi_mpi_op_lor;
+        ompi_mpi_op_bor;
+        ompi_mpi_op_lxor;
+        ompi_mpi_op_bxor;
+        ompi_mpi_op_maxloc;
+        ompi_mpi_op_minloc;
+        ompi_mpi_op_replace;
+        ompi_mpi_op_no_op;
+
+        # Error handlers
+        ompi_mpi_errors_are_fatal;
+        ompi_mpi_errors_return;
+        ompi_mpi_errors_abort;
+        ompi_mpi_errhandler_null;
+
+        # Requests
+        ompi_request_null;
+        ompi_message_null;
+        ompi_message_no_proc;
+
+        # Info
+        ompi_mpi_info_null;
+        ompi_mpi_info_env;
+
+        # Window
+        ompi_mpi_win_null;
+
+        # File
+        ompi_mpi_file_null;
+
+        # Status
+        ompi_mpi_status_ignore;
+        ompi_mpi_statuses_ignore;
+
+        # In-place indicator
+        ompi_mpi_in_place;
+        ompi_mpi_bottom;
+        ompi_mpi_argv_null;
+        ompi_mpi_argvs_null;
+        ompi_mpi_errcodes_ignore;
+        ompi_mpi_unweighted;
+        ompi_mpi_weights_empty;
+
+    local:
+        *;
+};
