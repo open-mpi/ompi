@@ -16,6 +16,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      Musawer Ahmad Saqif.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,13 +28,14 @@
 
 headers += \
         communicator/communicator.h \
-	communicator/comm_request.h
+        communicator/comm_split_type.h \
+        communicator/comm_request.h
 
 libopen_mpi_la_SOURCES += \
         communicator/comm_init.c \
-	communicator/comm.c \
-	communicator/comm_cid.c \
-	communicator/comm_request.c
+        communicator/comm.c \
+        communicator/comm_cid.c \
+        communicator/comm_request.c
 
 if WANT_FT_MPI
 libopen_mpi_la_SOURCES += \
