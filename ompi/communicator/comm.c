@@ -29,6 +29,7 @@
  * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2025      BULL S.A.S. All rights reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Musawer Ahmad Saqif.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,38 +59,48 @@
 
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/communicator/comm_split_type.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
 #include "ompi/info/info_memkind.h"
 
 #include "ompi/runtime/params.h"
 
-struct ompi_comm_split_type_hw_guided_t {
-    const char *info_value;
-    int split_type;
-    bool use_for_unguided;
-};
-typedef struct ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_t;
-
 /*
  * The ompi_comm_split_unguided function uses this array to determine the next
  * topology to test for a MPI_COMM_TYPE_HW_UNGUIDED communicator split. Therefore,
  * the order in this array must be from largest topology class to smallest.
  */
-static const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[] = {
-    {.info_value = "cluster",  .split_type = OMPI_COMM_TYPE_CLUSTER,  .use_for_unguided = false},
-    {.info_value = "nvlink",   .split_type = OMPI_COMM_TYPE_NVLINK,   .use_for_unguided = false},
-    {.info_value = "cu",       .split_type = OMPI_COMM_TYPE_CU,       .use_for_unguided = true},
-    {.info_value = "host",     .split_type = OMPI_COMM_TYPE_HOST,     .use_for_unguided = true},
-    {.info_value = "mpi_shared_memory", .split_type = MPI_COMM_TYPE_SHARED, .use_for_unguided = true},
-    {.info_value = "board",    .split_type = OMPI_COMM_TYPE_BOARD,    .use_for_unguided = true},
-    {.info_value = "numanode", .split_type = OMPI_COMM_TYPE_NUMA,     .use_for_unguided = true},
-    {.info_value = "socket",   .split_type = OMPI_COMM_TYPE_SOCKET,   .use_for_unguided = true},
-    {.info_value = "l3cache",  .split_type = OMPI_COMM_TYPE_L3CACHE,  .use_for_unguided = true},
-    {.info_value = "l2cache",  .split_type = OMPI_COMM_TYPE_L2CACHE,  .use_for_unguided = true},
-    {.info_value = "l1cache",  .split_type = OMPI_COMM_TYPE_L1CACHE,  .use_for_unguided = true},
-    {.info_value = "core",     .split_type = OMPI_COMM_TYPE_CORE,     .use_for_unguided = true},
-    {.info_value = "hwthread", .split_type = OMPI_COMM_TYPE_HWTHREAD, .use_for_unguided = true},
+const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[] = {
+    {.info_value = "cluster", .split_type = OMPI_COMM_TYPE_CLUSTER, .use_for_unguided = false},
+    {.info_value = "nvlink", .split_type = OMPI_COMM_TYPE_NVLINK, .use_for_unguided = false},
+    {.info_value = "cu", .split_type = OMPI_COMM_TYPE_CU, .use_for_unguided = true},
+    {.info_value = "host", .hwloc_uri = "hwloc://Machine", .split_type = OMPI_COMM_TYPE_HOST,
+     .use_for_unguided = true},
+    {.info_value = "mpi_shared_memory", .split_type = MPI_COMM_TYPE_SHARED,
+     .use_for_unguided = true},
+    {.info_value = "board", .split_type = OMPI_COMM_TYPE_BOARD, .use_for_unguided = true},
+    {.info_value = "numanode", .hwloc_uri = "hwloc://NUMANode",
+     .hwloc_type = HWLOC_OBJ_NUMANODE, .split_type = OMPI_COMM_TYPE_NUMA,
+     .use_for_unguided = true, .report_in_hw_resource_info = true},
+    {.info_value = "socket", .hwloc_uri = "hwloc://Package",
+     .hwloc_type = HWLOC_OBJ_PACKAGE, .split_type = OMPI_COMM_TYPE_SOCKET,
+     .use_for_unguided = true, .report_in_hw_resource_info = true},
+    {.info_value = "l3cache", .hwloc_uri = "hwloc://L3Cache",
+     .hwloc_type = HWLOC_OBJ_L3CACHE, .split_type = OMPI_COMM_TYPE_L3CACHE,
+     .use_for_unguided = true, .report_in_hw_resource_info = true},
+    {.info_value = "l2cache", .hwloc_uri = "hwloc://L2Cache",
+     .hwloc_type = HWLOC_OBJ_L2CACHE, .split_type = OMPI_COMM_TYPE_L2CACHE,
+     .use_for_unguided = true, .report_in_hw_resource_info = true},
+    {.info_value = "l1cache", .hwloc_uri = "hwloc://L1Cache",
+     .hwloc_type = HWLOC_OBJ_L1CACHE, .split_type = OMPI_COMM_TYPE_L1CACHE,
+     .use_for_unguided = true, .report_in_hw_resource_info = true},
+    {.info_value = "core", .hwloc_uri = "hwloc://Core", .hwloc_type = HWLOC_OBJ_CORE,
+     .split_type = OMPI_COMM_TYPE_CORE, .use_for_unguided = true,
+     .report_in_hw_resource_info = true},
+    {.info_value = "hwthread", .hwloc_uri = "hwloc://PU", .hwloc_type = HWLOC_OBJ_PU,
+     .split_type = OMPI_COMM_TYPE_HWTHREAD, .use_for_unguided = true,
+     .report_in_hw_resource_info = true},
     {.info_value = NULL},
 };
 
@@ -1489,9 +1500,14 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
          */
         flag = 0;
         for (int i = 0; NULL != ompi_comm_split_type_hw_guided_support[i].info_value; ++i) {
-            if (0 == strncasecmp(value->string,
-                                 ompi_comm_split_type_hw_guided_support[i].info_value,
-                                 strlen(ompi_comm_split_type_hw_guided_support[i].info_value))) {
+            bool legacy_match
+                = 0 == strncasecmp(value->string,
+                                   ompi_comm_split_type_hw_guided_support[i].info_value,
+                                   strlen(ompi_comm_split_type_hw_guided_support[i].info_value));
+            bool uri_match = NULL != ompi_comm_split_type_hw_guided_support[i].hwloc_uri
+                             && 0 == strcasecmp(value->string,
+                                                ompi_comm_split_type_hw_guided_support[i].hwloc_uri);
+            if (legacy_match || uri_match) {
                 split_type = ompi_comm_split_type_hw_guided_support[i].split_type;
                 flag = 1;
                 break;
