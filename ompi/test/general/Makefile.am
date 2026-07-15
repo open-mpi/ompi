@@ -46,7 +46,8 @@ check_PROGRAMS = \
 	instance \
 	file \
 	message \
-	abi_fortran
+	abi_fortran \
+	hw_resource_info
 
 TESTS = $(check_PROGRAMS)
 
@@ -131,6 +132,10 @@ message_DEPENDENCIES = $(ompi_test_ldadd)
 abi_fortran_SOURCES = abi_fortran.c
 abi_fortran_LDADD = $(ompi_test_ldadd)
 abi_fortran_DEPENDENCIES = $(ompi_test_ldadd)
+
+hw_resource_info_SOURCES = hw_resource_info.c
+hw_resource_info_LDADD = $(ompi_test_ldadd)
+hw_resource_info_DEPENDENCIES = $(ompi_test_ldadd)
 
 # The Fortran attribute test drives the Fortran attribute back-end
 # (ompi_attr_create_keyval_fint / set_fint / get_fint), which is only
