@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2022 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -747,7 +748,7 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
             }
             temp_count *= target_count;
         }
-        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
+        ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
         temp_addr = free_ptr = malloc(temp_extent * temp_count);
         if (temp_addr == NULL) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -1124,7 +1125,7 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, size
             }
             temp_count *= target_count;
         }
-        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
+        ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
         temp_addr = free_ptr = malloc(temp_extent * temp_count);
         if (temp_addr == NULL) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -1382,7 +1383,7 @@ int get_accumulate_req(const void *origin_addr, size_t origin_count,
                 }
                 temp_count *= target_count;
             }
-            ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
+            ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
             temp_addr = free_addr = malloc(temp_extent * temp_count);
             if (temp_addr == NULL) {
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -1836,7 +1837,7 @@ void ompi_osc_ucx_req_completion(void *request) {
                     } else {
                         int i;
                         void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
+                        ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
                         for (i = 0; i < (int)temp_count; i++) {
                             ompi_op_reduce(op, curr_origin_addr,
                                            (void *)((char *)temp_addr + i * temp_extent),
