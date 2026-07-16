@@ -13,6 +13,7 @@
  * Copyright (c) 2015-2018 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,8 @@
 
 #include "ompi_config.h"
 #include "sharedfp_individual.h"
+
+#include <stdlib.h>
 
 #include "mpi.h"
 #include "ompi/constants.h"
@@ -81,7 +84,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     snprintf(datafilename, len, "%s%s%d",filename,".data.",fh->f_rank);
 
 
-    datafilehandle = (ompio_file_t *)malloc(sizeof(ompio_file_t));
+    datafilehandle = (ompio_file_t *) calloc(1, sizeof(ompio_file_t));
     if ( NULL == datafilehandle ) {
         opal_output(0, "mca_sharedfp_individual_file_open: unable to allocate memory\n");
         free ( sh );
@@ -130,7 +133,7 @@ int mca_sharedfp_individual_file_open (struct ompi_communicator_t *comm,
     }
     snprintf ( metadatafilename, len, "%s%s%d", filename, ".metadata.",fh->f_rank);
 
-    metadatafilehandle = (ompio_file_t *)malloc(sizeof(ompio_file_t));
+    metadatafilehandle = (ompio_file_t *) calloc(1, sizeof(ompio_file_t));
     if ( NULL == metadatafilehandle ) {
         free (sh);
         free (datafilename);

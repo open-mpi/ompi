@@ -14,6 +14,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2015 Mellanox Technologies, Inc.
  *                         All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -242,6 +243,212 @@ static void test_static(void)
     OBJ_DESTRUCT(&table);
 }
 
+/* Values used by uint64 and ptr key family tests.  These are mutable
+ * char arrays (rather than char * to string literals) so the build stays
+ * warning-free under -Wwrite-strings; the tests only use them as opaque
+ * pointers. */
+static char val_a[] = "alpha";
+static char val_b[] = "beta";
+static char val_c[] = "gamma";
+
+static void test_uint64_keys(void)
+{
+    opal_hash_table_t table;
+    uint64_t key;
+    void *value;
+    void *node;
+    int rc;
+    size_t count;
+
+    fprintf(error_out, "\nTesting uint64 key family...\n");
+
+    OBJ_CONSTRUCT(&table, opal_hash_table_t);
+    opal_hash_table_init(&table, 8);
+
+    /* basic set / get */
+    rc = opal_hash_table_set_value_uint64(&table, UINT64_C(0xDEADBEEF00000001), val_a);
+    test_verify("set uint64 key 1 succeeds", OPAL_SUCCESS == rc);
+
+    rc = opal_hash_table_set_value_uint64(&table, UINT64_C(0xDEADBEEF00000002), val_b);
+    test_verify("set uint64 key 2 succeeds", OPAL_SUCCESS == rc);
+
+    rc = opal_hash_table_set_value_uint64(&table, UINT64_C(0xDEADBEEF00000003), val_c);
+    test_verify("set uint64 key 3 succeeds", OPAL_SUCCESS == rc);
+
+    test_verify("get_size after 3 inserts", 3 == opal_hash_table_get_size(&table));
+
+    rc = opal_hash_table_get_value_uint64(&table, UINT64_C(0xDEADBEEF00000001), &value);
+    test_verify("get uint64 key 1 found", OPAL_SUCCESS == rc);
+    test_verify("get uint64 key 1 value correct", value == val_a);
+
+    rc = opal_hash_table_get_value_uint64(&table, UINT64_C(0xDEADBEEF00000002), &value);
+    test_verify("get uint64 key 2 found", OPAL_SUCCESS == rc);
+    test_verify("get uint64 key 2 value correct", value == val_b);
+
+    /* get non-existent key */
+    rc = opal_hash_table_get_value_uint64(&table, UINT64_C(0xFFFFFFFFFFFFFFFF), &value);
+    test_verify("get uint64 missing key returns not-found", OPAL_ERR_NOT_FOUND == rc);
+
+    /* overwrite existing key */
+    rc = opal_hash_table_set_value_uint64(&table, UINT64_C(0xDEADBEEF00000001), val_c);
+    test_verify("overwrite uint64 key 1 succeeds", OPAL_SUCCESS == rc);
+    rc = opal_hash_table_get_value_uint64(&table, UINT64_C(0xDEADBEEF00000001), &value);
+    test_verify("get uint64 key 1 after overwrite", OPAL_SUCCESS == rc);
+    test_verify("value after overwrite is new value", value == val_c);
+    /* size stays the same after overwrite */
+    test_verify("get_size unchanged after overwrite", 3 == opal_hash_table_get_size(&table));
+
+    /* remove one key and verify */
+    rc = opal_hash_table_remove_value_uint64(&table, UINT64_C(0xDEADBEEF00000002));
+    test_verify("remove uint64 key 2 succeeds", OPAL_SUCCESS == rc);
+    test_verify("get_size after remove", 2 == opal_hash_table_get_size(&table));
+    rc = opal_hash_table_get_value_uint64(&table, UINT64_C(0xDEADBEEF00000002), &value);
+    test_verify("removed uint64 key 2 not found", OPAL_ERR_NOT_FOUND == rc);
+
+    /* remove non-existent key */
+    rc = opal_hash_table_remove_value_uint64(&table, UINT64_C(0xDEADBEEF00000002));
+    test_verify("remove non-existent uint64 key returns error", OPAL_SUCCESS != rc);
+
+    /* traversal: get_first / get_next */
+    count = 0;
+    for (rc = opal_hash_table_get_first_key_uint64(&table, &key, &value, &node);
+         OPAL_SUCCESS == rc;
+         rc = opal_hash_table_get_next_key_uint64(&table, &key, &value, node, &node)) {
+        count++;
+    }
+    test_verify("uint64 traversal ends in OPAL_ERROR", OPAL_ERROR == rc);
+    test_verify("uint64 traversal visits all remaining keys", count == opal_hash_table_get_size(&table));
+
+    OBJ_DESTRUCT(&table);
+}
+
+/* Key buffers for ptr-key tests -- must outlive the table */
+static const char ptr_key1[] = "ptr-key-one";
+static const char ptr_key2[] = "ptr-key-two";
+static const char ptr_key3[] = "ptr-key-three";
+
+static void test_ptr_keys(void)
+{
+    opal_hash_table_t table;
+    void *key;
+    size_t key_size;
+    void *value;
+    void *node;
+    int rc;
+    size_t count;
+
+    fprintf(error_out, "\nTesting ptr key family (full)...\n");
+
+    OBJ_CONSTRUCT(&table, opal_hash_table_t);
+    opal_hash_table_init(&table, 8);
+
+    /* set */
+    rc = opal_hash_table_set_value_ptr(&table, ptr_key1, strlen(ptr_key1), val_a);
+    test_verify("set ptr key1 succeeds", OPAL_SUCCESS == rc);
+    rc = opal_hash_table_set_value_ptr(&table, ptr_key2, strlen(ptr_key2), val_b);
+    test_verify("set ptr key2 succeeds", OPAL_SUCCESS == rc);
+    rc = opal_hash_table_set_value_ptr(&table, ptr_key3, strlen(ptr_key3), val_c);
+    test_verify("set ptr key3 succeeds", OPAL_SUCCESS == rc);
+    test_verify("get_size after 3 ptr inserts", 3 == opal_hash_table_get_size(&table));
+
+    /* get */
+    rc = opal_hash_table_get_value_ptr(&table, ptr_key1, strlen(ptr_key1), &value);
+    test_verify("get ptr key1 found", OPAL_SUCCESS == rc);
+    test_verify("get ptr key1 value correct", value == val_a);
+
+    rc = opal_hash_table_get_value_ptr(&table, ptr_key2, strlen(ptr_key2), &value);
+    test_verify("get ptr key2 found", OPAL_SUCCESS == rc);
+    test_verify("get ptr key2 value correct", value == val_b);
+
+    /* get missing key */
+    rc = opal_hash_table_get_value_ptr(&table, "no-such-key", 11, &value);
+    test_verify("get missing ptr key returns not-found", OPAL_ERR_NOT_FOUND == rc);
+
+    /* overwrite */
+    rc = opal_hash_table_set_value_ptr(&table, ptr_key1, strlen(ptr_key1), val_b);
+    test_verify("overwrite ptr key1 succeeds", OPAL_SUCCESS == rc);
+    rc = opal_hash_table_get_value_ptr(&table, ptr_key1, strlen(ptr_key1), &value);
+    test_verify("get ptr key1 after overwrite", OPAL_SUCCESS == rc);
+    test_verify("ptr key1 value after overwrite is correct", value == val_b);
+    test_verify("size unchanged after ptr overwrite", 3 == opal_hash_table_get_size(&table));
+
+    /* remove */
+    rc = opal_hash_table_remove_value_ptr(&table, ptr_key2, strlen(ptr_key2));
+    test_verify("remove ptr key2 succeeds", OPAL_SUCCESS == rc);
+    test_verify("get_size after ptr remove", 2 == opal_hash_table_get_size(&table));
+    rc = opal_hash_table_get_value_ptr(&table, ptr_key2, strlen(ptr_key2), &value);
+    test_verify("removed ptr key2 not found", OPAL_ERR_NOT_FOUND == rc);
+
+    /* remove non-existent */
+    rc = opal_hash_table_remove_value_ptr(&table, ptr_key2, strlen(ptr_key2));
+    test_verify("remove non-existent ptr key returns error", OPAL_SUCCESS != rc);
+
+    /* traversal: get_first_key_ptr / get_next_key_ptr */
+    count = 0;
+    for (rc = opal_hash_table_get_first_key_ptr(&table, &key, &key_size, &value, &node);
+         OPAL_SUCCESS == rc;
+         rc = opal_hash_table_get_next_key_ptr(&table, &key, &key_size, &value, node, &node)) {
+        count++;
+    }
+    test_verify("ptr traversal ends in OPAL_ERROR", OPAL_ERROR == rc);
+    test_verify("ptr traversal visits all remaining keys",
+                count == opal_hash_table_get_size(&table));
+
+    /* remove_all then verify size */
+    opal_hash_table_remove_all(&table);
+    test_verify("get_size 0 after remove_all on ptr table", 0 == opal_hash_table_get_size(&table));
+
+    OBJ_DESTRUCT(&table);
+}
+
+static void test_init2_and_growth(void)
+{
+    opal_hash_table_t table;
+    size_t old_cap;
+    int i, rc;
+    char key_buf[64];
+    void *value;
+    int num_inserts = 200; /* enough to trigger at least one growth */
+
+    fprintf(error_out, "\nTesting opal_hash_table_init2 and table growth...\n");
+
+    OBJ_CONSTRUCT(&table, opal_hash_table_t);
+    /* non-default density: 3/4, growth factor: 2/1 */
+    rc = opal_hash_table_init2(&table, 8, 3, 4, 2, 1);
+    test_verify("opal_hash_table_init2 succeeds", OPAL_SUCCESS == rc);
+    test_verify("get_size after init2 is 0", 0 == opal_hash_table_get_size(&table));
+
+    old_cap = table.ht_capacity;
+
+    /* Insert enough uint64 keys to force growth */
+    for (i = 0; i < num_inserts; i++) {
+        rc = opal_hash_table_set_value_uint64(&table, (uint64_t) i, val_a);
+        test_verify("insert uint64 key during growth test", OPAL_SUCCESS == rc);
+    }
+    test_verify("get_size correct after many inserts",
+                (size_t) num_inserts == opal_hash_table_get_size(&table));
+    test_verify("capacity grew at least once", table.ht_capacity > old_cap);
+
+    /* verify all keys still retrievable */
+    for (i = 0; i < num_inserts; i++) {
+        rc = opal_hash_table_get_value_uint64(&table, (uint64_t) i, &value);
+        if (OPAL_SUCCESS != rc) {
+            snprintf(key_buf, sizeof(key_buf), "key %d not found after growth", i);
+            test_failure(key_buf);
+            break;
+        }
+    }
+    if (i == num_inserts) {
+        test_success();
+    }
+
+    /* remove_all */
+    opal_hash_table_remove_all(&table);
+    test_verify("get_size 0 after remove_all", 0 == opal_hash_table_get_size(&table));
+
+    OBJ_DESTRUCT(&table);
+}
+
 int main(int argc, char **argv)
 {
     int rc;
@@ -265,6 +472,9 @@ int main(int argc, char **argv)
 
     test_dynamic();
     test_static();
+    test_uint64_keys();
+    test_ptr_keys();
+    test_init2_and_growth();
 #ifndef STANDALONE
     fclose(error_out);
 #endif

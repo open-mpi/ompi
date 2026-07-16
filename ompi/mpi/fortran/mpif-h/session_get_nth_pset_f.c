@@ -32,7 +32,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_SESSION_GET_NTH_PSET = ompi_session_get_nth_pset_f
 #pragma weak pmpi_session_get_nth_pset = ompi_session_get_nth_pset_f
 #pragma weak pmpi_session_get_nth_pset_ = ompi_session_get_nth_pset_f
@@ -51,7 +51,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_NTH_PSET,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_SESSION_GET_NTH_PSET = ompi_session_get_nth_pset_f
 #pragma weak mpi_session_get_nth_pset = ompi_session_get_nth_pset_f
 #pragma weak mpi_session_get_nth_pset_ = ompi_session_get_nth_pset_f

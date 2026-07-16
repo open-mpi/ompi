@@ -48,7 +48,7 @@ void monitoring_prof_mpi_finalize_f2c( MPI_Fint *ierr ) {
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 }
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_INIT = monitoring_prof_mpi_init_f2c
 #pragma weak mpi_init = monitoring_prof_mpi_init_f2c
 #pragma weak mpi_init_ = monitoring_prof_mpi_init_f2c

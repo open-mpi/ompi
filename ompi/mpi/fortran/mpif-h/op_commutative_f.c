@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_OP_COMMUTATIVE = ompi_op_commutative_f
 #pragma weak pmpi_op_commutative = ompi_op_commutative_f
 #pragma weak pmpi_op_commutative_ = ompi_op_commutative_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OP_COMMUTATIVE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_OP_COMMUTATIVE = ompi_op_commutative_f
 #pragma weak mpi_op_commutative = ompi_op_commutative_f
 #pragma weak mpi_op_commutative_ = ompi_op_commutative_f

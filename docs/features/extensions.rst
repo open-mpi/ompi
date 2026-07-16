@@ -20,37 +20,74 @@ to MPI applications.
 Available extensions
 --------------------
 
-The following extensions are included in this version of Open MPI:
+The following extensions are included in this version of Open MPI.
+Follow the link on each name for a full description of what it
+provides, when it is built, when it is available at run time, and the
+functions it offers:
 
-#. ``shortfloat``: Provides MPI datatypes ``MPIX_C_FLOAT16``,
-   ``MPIX_SHORT_FLOAT``, ``MPIX_SHORT_FLOAT``, and
-   ``MPIX_CXX_SHORT_FLOAT_COMPLEX`` if corresponding language types are
-   available. See ``ompi/mpiext/shortfloat/README.txt`` for details.
-#. ``affinity``: Provides the ``OMPI_Affinity_str()`` API, which returns
-   a string indicating the resources which a process is bound. For
-   more details, see its man page.
-#. ``cuda``: When the library is compiled with CUDA-aware support, it
-   provides two things.  First, a macro
-   ``MPIX_CUDA_AWARE_SUPPORT``. Secondly, the function
-   ``MPIX_Query_cuda_support()`` that can be used to query for support.
-#. ``example``: A non-functional extension; its only purpose is to
-   provide an example for how to create other extensions.
-#. ``ftmpi``: An implementation of the User Level Fault Mitigation
-   (ULFM) proposal.  :ref:`See its documentation section <ulfm-label>`
-   for more details.
+* :doc:`affinity </features/extension-affinity>`: Provides the
+  ``OMPI_Affinity_str()`` API, which returns human-readable strings
+  describing how the calling process is bound to processor resources.
+
+* :doc:`cuda </tuning-apps/accelerators/cuda>`: Provides the
+  ``MPIX_CUDA_AWARE_SUPPORT`` compile-time macro and the
+  ``MPIX_Query_cuda_support()`` run-time function for detecting whether
+  the library has NVIDIA CUDA-aware support.
+
+* :doc:`rocm </tuning-apps/accelerators/rocm>`: Provides the
+  ``MPIX_ROCM_AWARE_SUPPORT`` compile-time macro and the
+  ``MPIX_Query_rocm_support()`` run-time function for detecting whether
+  the library has AMD ROCm-aware support.
+
+* :doc:`ftmpi </features/ulfm>`: An implementation of the MPI Forum's
+  User-Level Failure Mitigation (ULFM) proposal, providing the
+  ``MPIX_Comm_*`` functions and ``MPIX_ERR_*`` error codes for writing
+  fault-tolerant MPI applications.
+
+* :doc:`shortfloat </features/extension-shortfloat>`: Provides MPI
+  datatypes corresponding to short / half-precision floating point C
+  and C++ language types, when such types are available.
+
+* :doc:`example </features/extension-example>`: A non-functional
+  extension whose only purpose is to demonstrate how to create a new
+  Open MPI extension.
+
+.. toctree::
+   :hidden:
+
+   extension-affinity
+   extension-shortfloat
+   extension-example
 
 Compiling the extensions
 ------------------------
 
-Open MPI extensions are all enabled by default; they can be disabled
-via the ``--disable-mpi-ext`` command line switch.
+Most Open MPI extensions are enabled by default; the exceptions are
+extensions that require functionality not present in your build
+environment (for example, ``shortfloat`` is only built when the
+compiler provides a suitable short / half-precision floating point
+type) and the developer-only ``example`` extension (which is only
+built when explicitly requested).
 
-Since extensions are meant to be used by advanced users only, this
-file does not document which extensions are available or what they do.
-Look in the ``ompi/mpiext`` directory in a distribution Open MPI
-tarball to see the extensions; each subdirectory of that directory
-contains an extension.  Each has a ``README`` file that describes what
-it does.
+The set of extensions to build is selected at configure time:
+
+* ``--enable-mpi-ext`` (the default) builds all available extensions.
+* ``--enable-mpi-ext=LIST`` builds only the comma-separated extensions
+  named in ``LIST`` |mdash| for example,
+  ``--enable-mpi-ext=cuda,rocm``.
+* ``--disable-mpi-ext`` builds none of the extensions.
+
+Each extension's own page (linked above) documents any additional
+build-time prerequisites and the configure options needed to satisfy
+them.
+
+You can confirm which extensions were compiled into a given Open MPI
+installation with ``ompi_info``:
+
+.. code-block:: sh
+
+   shell$ ompi_info | grep "MPI extensions"
+          MPI extensions: affinity, cuda, ftmpi, rocm
 
 Using the extensions
 --------------------
@@ -75,7 +112,7 @@ prototypes, constant declarations, etc.  For example:
        char exists[OMPI_AFFINITY_STRING_MAX];
 
        OMPI_Affinity_str(OMPI_AFFINITY_LAYOUT_FMT, ompi_bound,
-                         current_bindings, exists);
+                         current_binding, exists);
    #endif
 
        MPI_Finalize();
@@ -84,6 +121,15 @@ prototypes, constant declarations, etc.  For example:
 
 Notice that the Open MPI-specific code is surrounded by the ``#if``
 statement to ensure that it is only ever compiled by Open MPI.
+
+Including ``<mpi-ext.h>`` defines the preprocessor macro
+``OMPI_HAVE_MPI_EXT`` to ``1``.  In addition, for each extension that
+is present, it defines a macro named ``OMPI_HAVE_MPI_EXT_<NAME>`` (with
+``<NAME>`` being the uppercased extension name, e.g.,
+``OMPI_HAVE_MPI_EXT_AFFINITY``) to ``1``.  Applications can test these
+macros to portably guard their use of a given extension |mdash| both
+against Open MPI builds that omitted the extension and against other
+MPI implementations that do not provide ``<mpi-ext.h>`` at all.
 
 The Open MPI wrapper compilers (``mpicc`` and friends) should
 automatically insert all relevant compiler and linker flags necessary

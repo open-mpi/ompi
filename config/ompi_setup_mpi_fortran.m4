@@ -255,6 +255,19 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # MPI_Status struct contains 4 C ints and a size_t.
     OMPI_FORTRAN_STATUS_SIZE=0
 
+    # The C-to-Fortran MPI_Status conversion (and other code that passes
+    # MPI values through Fortran default INTEGERs) copies C ints into
+    # INTEGER slots one-for-one.  If the Fortran default INTEGER is
+    # narrower than a C int, the public MPI_Status fields (and other
+    # values) would be silently truncated.  Refuse to build in that case
+    # rather than produce a broken Fortran MPI.  Skip the check when we
+    # are not building any Fortran bindings (e.g., --disable-mpi-fortran,
+    # or no usable Fortran compiler), in which case
+    # OMPI_SIZEOF_FORTRAN_INTEGER is 0.
+    AS_IF([test "$OMPI_SIZEOF_FORTRAN_INTEGER" -gt 0 && \
+           test "$OMPI_SIZEOF_FORTRAN_INTEGER" -lt "$ac_cv_sizeof_int"],
+          [AC_MSG_ERROR([the Fortran default INTEGER ($OMPI_SIZEOF_FORTRAN_INTEGER bytes) is smaller than a C int ($ac_cv_sizeof_int bytes).  Open MPI requires the Fortran default INTEGER to be at least as large as a C int; otherwise values such as the public MPI_Status fields would be truncated when converted between C and Fortran.  Reconfigure with a larger Fortran default INTEGER, or build with --disable-mpi-fortran.])])
+
     # Calculate how many C int's can fit in sizeof(MPI_Status).  Yes,
     # I do mean C ints -- not Fortran INTEGERS.  The reason is because
     # an mpif.h MPI_Status is an array of INTEGERS.  But these
@@ -745,7 +758,7 @@ end type test_mpi_handle],
     #     disabled
     # 1. MPI_<foo> bindings are needed if:
     #   - Profiling is not required
-    #   - Profiling is required but weak symbols are not supported
+    #   - Profiling is required but weak aliases are not supported
     # 2. PMPI_<foo> bindings are needed if profiling is required.
     #
     # Hence we define 2 conditionals which tell us whether each of
@@ -825,13 +838,13 @@ end type test_mpi_handle],
     AC_SUBST(OMPI_F08_SUFFIX)
     AC_SUBST(OMPI_F_SUFFIX)
 
-    # This is used to generate weak symbols (or not) in
+    # This is used to generate weak aliases (or not) in
     # ompi/mpi/fortran/mpif-h/<foo>_f.c, and
     # ompi/mpi/fortran/configure-fortran-output.h.
     AC_SUBST(OMPI_FORTRAN_NEED_WRAPPER_ROUTINES)
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_NEED_WRAPPER_ROUTINES,
                        [$OMPI_FORTRAN_NEED_WRAPPER_ROUTINES],
-                       [Whether the mpi_f08 implementation is using wrapper routines ("bad" Fortran compiler) or weak symbols ("good" Fortran compiler) for the F08 interface definition implementations])
+                       [Whether the mpi_f08 implementation is using wrapper routines ("bad" Fortran compiler) or weak aliases ("good" Fortran compiler) for the F08 interface definition implementations])
 
     AC_DEFINE_UNQUOTED(OMPI_FORTRAN_F08_HANDLE_SIZE,
                        $OMPI_FORTRAN_F08_HANDLE_SIZE,

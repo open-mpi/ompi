@@ -33,7 +33,7 @@
 #include "ompi/file/file.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_REGISTER_DATAREP = ompi_register_datarep_f
 #pragma weak pmpi_register_datarep = ompi_register_datarep_f
 #pragma weak pmpi_register_datarep_ = ompi_register_datarep_f
@@ -52,7 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_REGISTER_DATAREP = ompi_register_datarep_f
 #pragma weak mpi_register_datarep = ompi_register_datarep_f
 #pragma weak mpi_register_datarep_ = ompi_register_datarep_f
@@ -100,7 +100,7 @@ typedef struct intercept_extra_state {
 
 OBJ_CLASS_DECLARATION(ompi_intercept_extra_state_t);
 
-#if !OMPI_BUILD_MPI_PROFILING || OPAL_HAVE_WEAK_SYMBOLS
+#if !OMPI_BUILD_MPI_PROFILING || OPAL_HAVE_WEAK_ALIASES
 static void intercept_extra_state_constructor(ompi_intercept_extra_state_t *obj)
 {
     obj->read_fn_f77 = NULL;

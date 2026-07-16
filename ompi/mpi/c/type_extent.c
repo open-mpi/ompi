@@ -35,7 +35,7 @@
 #include "ompi/memchecker.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_Type_extent = PMPI_Type_extent
 #endif
 /* undef before defining, to prevent possible redefinition when

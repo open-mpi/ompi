@@ -29,7 +29,7 @@
 
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_COMPARE_AND_SWAP = ompi_compare_and_swap_f
 #pragma weak pmpi_compare_and_swap = ompi_compare_and_swap_f
 #pragma weak pmpi_compare_and_swap_ = ompi_compare_and_swap_f
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMPARE_AND_SWAP,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_COMPARE_AND_SWAP = ompi_compare_and_swap_f
 #pragma weak mpi_compare_and_swap = ompi_compare_and_swap_f
 #pragma weak mpi_compare_and_swap_ = ompi_compare_and_swap_f

@@ -29,7 +29,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_REQUEST_GET_STATUS_ALL = ompi_request_get_status_all_f
 #pragma weak pmpi_request_get_status_all = ompi_request_get_status_all_f
 #pragma weak pmpi_request_get_status_all_ = ompi_request_get_status_all_f
@@ -48,7 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS_ALL,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_REQUEST_GET_STATUS_ALL = ompi_request_get_status_all_f
 #pragma weak mpi_request_get_status_all = ompi_request_get_status_all_f
 #pragma weak mpi_request_get_status_all_ = ompi_request_get_status_all_f

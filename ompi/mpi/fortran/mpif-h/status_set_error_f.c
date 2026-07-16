@@ -27,7 +27,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_STATUS_SET_ERROR = ompi_status_set_error_f
 #pragma weak pmpi_status_set_error = ompi_status_set_error_f
 #pragma weak pmpi_status_set_error_ = ompi_status_set_error_f
@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ERROR,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_STATUS_SET_ERROR = ompi_status_set_error_f
 #pragma weak mpi_status_set_error = ompi_status_set_error_f
 #pragma weak mpi_status_set_error_ = ompi_status_set_error_f

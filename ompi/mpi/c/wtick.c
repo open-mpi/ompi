@@ -37,7 +37,7 @@
 #include "opal/util/clock_gettime.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_Wtick = PMPI_Wtick
 #endif
 #define MPI_Wtick PMPI_Wtick

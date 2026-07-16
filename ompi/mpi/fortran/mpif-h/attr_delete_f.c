@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ATTR_DELETE = ompi_attr_delete_f
 #pragma weak pmpi_attr_delete = ompi_attr_delete_f
 #pragma weak pmpi_attr_delete_ = ompi_attr_delete_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_DELETE,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ATTR_DELETE = ompi_attr_delete_f
 #pragma weak mpi_attr_delete = ompi_attr_delete_f
 #pragma weak mpi_attr_delete_ = ompi_attr_delete_f

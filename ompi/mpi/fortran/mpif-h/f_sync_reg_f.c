@@ -26,7 +26,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_F_SYNC_REG = ompi_f_sync_reg_f
 #pragma weak pmpi_f_sync_reg = ompi_f_sync_reg_f
 #pragma weak pmpi_f_sync_reg_ = ompi_f_sync_reg_f
@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_F_SYNC_REG,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_F_SYNC_REG = ompi_f_sync_reg_f
 #pragma weak mpi_f_sync_reg = ompi_f_sync_reg_f
 #pragma weak mpi_f_sync_reg_ = ompi_f_sync_reg_f

@@ -140,6 +140,7 @@ jobs:
         if: matrix.build-mode == 'manual'
         shell: bash
         run: |
+          export AUTOMAKE_JOBS=$(nproc)
           ./autogen.pl
           ./configure
           make -j $(nproc)
@@ -256,6 +257,7 @@ jobs:
         if: matrix.build-mode == 'manual'
         shell: bash
         run: |
+          export AUTOMAKE_JOBS=$(nproc)
           ./autogen.pl
           ./configure
           make -j $(nproc)

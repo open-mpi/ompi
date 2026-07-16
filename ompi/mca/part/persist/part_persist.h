@@ -242,7 +242,7 @@ mca_part_persist_progress(void)
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
                     if(OMPI_SUCCESS != err) return OMPI_ERROR;
-                    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
+                    dt_size = (dt_size_ > (size_t) UINT_MAX) ? (uint32_t)MPI_UNDEFINED : (uint32_t) dt_size_;
                     uint32_t bytes = req->real_count * dt_size;
 
                     /* Set up persistent sends */
@@ -263,7 +263,7 @@ mca_part_persist_progress(void)
 
                     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
                     if(OMPI_SUCCESS != err) return OMPI_ERROR;
-                    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
+                    dt_size = (dt_size_ > (size_t) UINT_MAX) ? (uint32_t)MPI_UNDEFINED : (uint32_t) dt_size_;
                     uint32_t bytes = req->real_count * dt_size;
 
 
@@ -382,7 +382,7 @@ mca_part_persist_precv_init(void *buf,
     /* Compute total number of bytes */
     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
-    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
+    dt_size = (dt_size_ > (size_t) UINT_MAX) ? (uint32_t)MPI_UNDEFINED : (uint32_t) dt_size_;
     req->req_bytes = parts * count * dt_size;
 
     /* Set ompi request initial values */
@@ -442,7 +442,7 @@ mca_part_persist_psend_init(const void* buf,
     /* Determine total bytes to send. */
     err = opal_datatype_type_size(&(req->req_datatype->super), &dt_size_);
     if(OMPI_SUCCESS != err) return OMPI_ERROR;
-    dt_size = (dt_size_ > (size_t) UINT_MAX) ? MPI_UNDEFINED : (uint32_t) dt_size_;
+    dt_size = (dt_size_ > (size_t) UINT_MAX) ? (uint32_t)MPI_UNDEFINED : (uint32_t) dt_size_;
     req->req_bytes = parts * count * dt_size;
 
     /* non-blocking send set-up data */
@@ -566,6 +566,13 @@ mca_part_persist_parrived(size_t min_part,
     size_t i;
     int _flag = false;
     mca_part_persist_request_t *req = (mca_part_persist_request_t *)request;
+
+    // An inactive (never-started) precv request has no flags array yet.
+    // MPI-5.0 sec 4.2.2 (p.119): an inactive request is trivially arrived.
+    if(NULL == req->flags && OMPI_REQUEST_INACTIVE == request->req_state) {
+        *flag = 1;
+        return err;
+    }
 
     if(0 != req->flags) {
         _flag = 1;

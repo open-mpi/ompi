@@ -25,7 +25,7 @@
 #include "ompi/group/group.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_GROUP_RANGE_EXCL = ompi_group_range_excl_f
 #pragma weak pmpi_group_range_excl = ompi_group_range_excl_f
 #pragma weak pmpi_group_range_excl_ = ompi_group_range_excl_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANGE_EXCL,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_GROUP_RANGE_EXCL = ompi_group_range_excl_f
 #pragma weak mpi_group_range_excl = ompi_group_range_excl_f
 #pragma weak mpi_group_range_excl_ = ompi_group_range_excl_f

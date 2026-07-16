@@ -15,7 +15,7 @@
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 #include "ompi/mpiext/ftmpi/mpif-h/prototypes_mpi.h"
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPIX_COMM_FAILURE_ACK = ompix_comm_failure_ack_f
 #pragma weak pmpix_comm_failure_ack = ompix_comm_failure_ack_f
 #pragma weak pmpix_comm_failure_ack_ = ompix_comm_failure_ack_f
@@ -30,7 +30,7 @@
 #pragma weak MPIX_Comm_failure_ack_f = ompix_comm_failure_ack_f
 #pragma weak MPIX_Comm_failure_ack_f08 = ompix_comm_failure_ack_f
 
-#else /* No weak symbols */
+#else /* No weak aliases */
 OMPI_GENERATE_F77_BINDINGS(PMPIX_COMM_FAILURE_ACK,
                         pmpix_comm_failure_ack,
                         pmpix_comm_failure_ack_,

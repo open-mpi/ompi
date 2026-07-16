@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/base/fortran_base_strings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_LOOKUP_NAME = ompi_lookup_name_f
 #pragma weak pmpi_lookup_name = ompi_lookup_name_f
 #pragma weak pmpi_lookup_name_ = ompi_lookup_name_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_LOOKUP_NAME,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_LOOKUP_NAME = ompi_lookup_name_f
 #pragma weak mpi_lookup_name = ompi_lookup_name_f
 #pragma weak mpi_lookup_name_ = ompi_lookup_name_f

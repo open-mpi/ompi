@@ -25,7 +25,7 @@
 #include "ompi/errhandler/errhandler.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ERRHANDLER_SET = ompi_errhandler_set_f
 #pragma weak pmpi_errhandler_set = ompi_errhandler_set_f
 #pragma weak pmpi_errhandler_set_ = ompi_errhandler_set_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_SET,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ERRHANDLER_SET = ompi_errhandler_set_f
 #pragma weak mpi_errhandler_set = ompi_errhandler_set_f
 #pragma weak mpi_errhandler_set_ = ompi_errhandler_set_f

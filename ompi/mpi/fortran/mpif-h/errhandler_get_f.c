@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ERRHANDLER_GET = ompi_errhandler_get_f
 #pragma weak pmpi_errhandler_get = ompi_errhandler_get_f
 #pragma weak pmpi_errhandler_get_ = ompi_errhandler_get_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_GET,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ERRHANDLER_GET = ompi_errhandler_get_f
 #pragma weak mpi_errhandler_get = ompi_errhandler_get_f
 #pragma weak mpi_errhandler_get_ = ompi_errhandler_get_f

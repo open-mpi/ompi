@@ -26,7 +26,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ISCATTER = ompi_iscatter_f
 #pragma weak pmpi_iscatter = ompi_iscatter_f
 #pragma weak pmpi_iscatter_ = ompi_iscatter_f
@@ -45,7 +45,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ISCATTER,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ISCATTER = ompi_iscatter_f
 #pragma weak mpi_iscatter = ompi_iscatter_f
 #pragma weak mpi_iscatter_ = ompi_iscatter_f

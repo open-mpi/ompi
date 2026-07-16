@@ -100,7 +100,7 @@ The rationale was threefold:
    answer").  But since the `MPIX_Foo` -> `MPI_Foo` change is
    inevitable, it just ends up annoying users.
 1. Once OMPI introduces `MPIX_` symbols, if we want to *not* annoy
-   users, we'll likely have weak symbols / aliased versions of both
+   users, we'll likely have weak aliases / aliased versions of both
    `MPIX_Foo` and `MPI_Foo` once the Foo functionality is included in
    a published MPI specification.  However, when can we delete the
    `MPIX_Foo` symbol?  It becomes a continuing annoyance of backwards

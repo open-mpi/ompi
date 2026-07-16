@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_TYPE_GET_VALUE_INDEX = ompi_type_get_value_index_f
 #pragma weak pmpi_type_get_value_index = ompi_type_get_value_index_f
 #pragma weak pmpi_type_get_value_index_ = ompi_type_get_value_index_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_VALUE_INDEX,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_TYPE_GET_VALUE_INDEX = ompi_type_get_value_index_f
 #pragma weak mpi_type_get_value_index = ompi_type_get_value_index_f
 #pragma weak mpi_type_get_value_index_ = ompi_type_get_value_index_f

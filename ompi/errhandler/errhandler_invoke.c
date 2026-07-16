@@ -85,13 +85,17 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         comm = (ompi_communicator_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
+            if (NULL != errhandler->eh_comm_fn) {
+                errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
-            fortran_handle = OMPI_INT_2_FINT(comm->c_f_to_c_index);
-            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
-            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            if (NULL != errhandler->eh_fort_fn) {
+                fortran_handle = OMPI_INT_2_FINT(comm->c_f_to_c_index);
+                errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+                err_code = OMPI_FINT_2_INT(fortran_err_code);
+            }
             break;
         }
         break;
@@ -100,13 +104,17 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         win = (ompi_win_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_win_fn(&win, &err_code, message, NULL);
+            if (NULL != errhandler->eh_win_fn) {
+                errhandler->eh_win_fn(&win, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
-            fortran_handle = OMPI_INT_2_FINT(win->w_f_to_c_index);
-            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
-            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            if (NULL != errhandler->eh_fort_fn) {
+                fortran_handle = OMPI_INT_2_FINT(win->w_f_to_c_index);
+                errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+                err_code = OMPI_FINT_2_INT(fortran_err_code);
+            }
             break;
         }
         break;
@@ -115,13 +123,17 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         file = (ompi_file_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_file_fn(&file, &err_code, message, NULL);
+            if (NULL != errhandler->eh_file_fn) {
+                errhandler->eh_file_fn(&file, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
-            fortran_handle = OMPI_INT_2_FINT(file->f_f_to_c_index);
-            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
-            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            if (NULL != errhandler->eh_fort_fn) {
+                fortran_handle = OMPI_INT_2_FINT(file->f_f_to_c_index);
+                errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+                err_code = OMPI_FINT_2_INT(fortran_err_code);
+            }
             break;
         }
         break;
@@ -130,13 +142,17 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         instance = (ompi_instance_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_instance_fn(&instance, &err_code, message, NULL);
+            if (NULL != errhandler->eh_instance_fn) {
+                errhandler->eh_instance_fn(&instance, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
-            fortran_handle = OMPI_INT_2_FINT(instance->i_f_to_c_index);
-            errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
-            err_code = OMPI_FINT_2_INT(fortran_err_code);
+            if (NULL != errhandler->eh_fort_fn) {
+                fortran_handle = OMPI_INT_2_FINT(instance->i_f_to_c_index);
+                errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
+                err_code = OMPI_FINT_2_INT(fortran_err_code);
+            }
             break;
         }
         break;

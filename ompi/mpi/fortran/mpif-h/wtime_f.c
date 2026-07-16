@@ -32,7 +32,7 @@
  * manually.
  */
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_WTIME = ompi_wtime_f
 #pragma weak pmpi_wtime = ompi_wtime_f
 #pragma weak pmpi_wtime_ = ompi_wtime_f
@@ -48,7 +48,7 @@ double pmpi_wtime__(void) { return pompi_wtime_f(); }
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_WTIME = ompi_wtime_f
 #pragma weak mpi_wtime = ompi_wtime_f
 #pragma weak mpi_wtime_ = ompi_wtime_f

@@ -17,6 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2025-2026 Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,19 +61,16 @@ typedef struct __dt_args {
 } ompi_datatype_args_t;
 
 /**
- * Some architectures really don't like having unaligned
- * accesses.  We'll be int aligned, because any sane system will
- * require that.  But we might not be long aligned, and some
- * architectures will complain if a long is accessed on int
- * alignment (but not long alignment).  On those architectures,
- * copy the buffer into an aligned buffer first.
+ * The packed datatype description interleaves 32-bit ints with word-size
+ * (size_t / ptrdiff_t) values.  After writing an int the running pointer is
+ * only int-aligned, so accessing the following word-size value through it is
+ * an unaligned access -- which is undefined behavior and faults on
+ * strict-alignment architectures (e.g. RISC-V).  Realign the pointer up to
+ * word size before every word-size access.  The pack and unpack paths apply
+ * this identically, so the on-the-wire layout stays consistent.
  */
-#if OPAL_ALIGN_WORD_SIZE_INTEGERS
 #define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE) \
     (PTR) = OPAL_ALIGN_PTR((PTR), sizeof(ptrdiff_t), TYPE)
-#else
-#define OMPI_DATATYPE_ALIGN_PTR(PTR, TYPE)
-#endif  /* OPAL_ALIGN_WORD_SIZE_INTEGERS */
 
 /**
  * Copies count elements from the given count array into either
@@ -238,6 +236,13 @@ int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
         break;
 
     case MPI_COMBINER_RESIZED:
+        /* The large-count interface passes lb and extent as two MPI_Count
+         * values in counts[0]; the classic interface passes them through
+         * the displacement array instead (cl == 0 here, handled by the
+         * generic MPI_Aint copy below). */
+        if (cl > 0) {
+            copy_count_array(2, &pi, &pl, counts[0]);
+        }
         break;
 
     case MPI_COMBINER_HINDEXED_BLOCK:
@@ -514,8 +519,10 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     next_packed += sizeof(int) * args->cd;
 
     /* copy the array of 32bit counts at the end */
-    memcpy( next_packed, args->i, sizeof(int) * args->ci );
-    next_packed += args->ci * sizeof(int);
+    if( 0 < args->ci ) {
+        memcpy( next_packed, args->i, sizeof(int) * args->ci );
+        next_packed += args->ci * sizeof(int);
+    }
 
     /* copy the rest of the data */
     for( i = 0; i < args->cd; i++ ) {
@@ -1017,8 +1024,18 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
         break;
         /******************************************************************/
     case MPI_COMBINER_RESIZED:
-        ompi_datatype_create_resized(d[0], a[0], a[1], &datatype);
-        ompi_datatype_set_args( datatype, 0, 0, NULL, 2, disp_array, 1, d, MPI_COMBINER_RESIZED );
+        if (NULL == l) {
+            /* classic: lb/extent were stored as MPI_Aint displacements */
+            ompi_datatype_create_resized(d[0], a[0], a[1], &datatype);
+            ompi_datatype_set_args( datatype, 0, 0, NULL, 2, disp_array, 1, d, MPI_COMBINER_RESIZED );
+        } else {
+            /* large count: lb/extent were stored as MPI_Count large counts.
+             * lb may be negative; the size_t -> ptrdiff_t cast restores the
+             * signed value via a two's-complement round-trip. */
+            ompi_count_array_t a_i[1] = {OMPI_COUNT_ARRAY_CREATE(l)};
+            ompi_datatype_create_resized(d[0], (ptrdiff_t) l[0], (ptrdiff_t) l[1], &datatype);
+            ompi_datatype_set_args( datatype, 0, 2, a_i, 0, OMPI_DISP_ARRAY_NULL, 1, d, MPI_COMBINER_RESIZED );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_HINDEXED_BLOCK:
@@ -1027,7 +1044,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
             size_t ca;
             opal_disp_array_t displacements; // for create_hindexed_block
             opal_disp_array_t disp_args; // for set_args
-            opal_count_array_t a_i[3];// = {OMPI_COUNT_ARRAY_CREATE(&count), OMPI_COUNT_ARRAY_CREATE(&bLength)};
+            opal_count_array_t a_i[3];
             if (l == NULL) {
                 count = i[0];
                 bLength = i[1];
@@ -1043,7 +1060,10 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
                 a_i[0] = OMPI_COUNT_ARRAY_CREATE(l);
                 a_i[1] = OMPI_COUNT_ARRAY_CREATE(l + 1);
                 a_i[2] = OMPI_COUNT_ARRAY_CREATE(l + 2);
-                cl = 3;
+                /* count + blocklength + count displacements; hardcoding 3
+                 * here (the count == 1 case) under-allocates the large-count
+                 * array in set_args and corrupts the envelope. */
+                cl = 2 + count;
                 displacements = OMPI_DISP_ARRAY_CREATE(l + 2); // displacements are MPI_Count
                 disp_args = OMPI_DISP_ARRAY_NULL;
                 ca = 0;
@@ -1061,6 +1081,15 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( const int* i, const si
     return datatype;
 }
 
+/*
+ * Note: *packed_buffer must be at least word-size (sizeof(ptrdiff_t))
+ * aligned.  The description interleaves 32-bit ints with word-size values
+ * and the unpack code realigns the running pointer to word size before each
+ * word-size access (see OMPI_DATATYPE_ALIGN_PTR); that realignment is
+ * relative to the buffer base, so the base must itself be word aligned for
+ * the reads to land on the same offsets the packer wrote.  Buffers produced
+ * by ompi_datatype_get_pack_description() (malloc'd) satisfy this.
+ */
 ompi_datatype_t* ompi_datatype_create_from_packed_description( void** packed_buffer,
                                                                struct ompi_proc_t* remote_processor )
 {

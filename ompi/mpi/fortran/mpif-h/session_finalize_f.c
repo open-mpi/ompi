@@ -29,7 +29,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_SESSION_FINALIZE = ompi_session_finalize_f
 #pragma weak pmpi_session_finalize = ompi_session_finalize_f
 #pragma weak pmpi_session_finalize_ = ompi_session_finalize_f
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_FINALIZE,
 #endif
 
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_SESSION_FINALIZE = ompi_session_finalize_f
 #pragma weak mpi_session_finalize = ompi_session_finalize_f
 #pragma weak mpi_session_finalize_ = ompi_session_finalize_f

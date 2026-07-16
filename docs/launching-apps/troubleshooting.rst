@@ -61,9 +61,11 @@ why this can happen.
     linker is smart enough to not load ``libmpi`` twice |mdash| but it
     does keeps ``libmpi`` in a public scope.
   * Use the ``--disable-dlopen`` or ``--disable-mca-dso`` options to
-    Open MPI's ``configure`` script (see this TODO NONEXISTENT FAQ entry
-    for more details on these
-    options).  These options slurp all of Open MPI's plugins up in to
+    Open MPI's ``configure`` script (see the
+    :ref:`--disable-dlopen <building-ompi-cli-options-disable-dlopen-label>`
+    and :ref:`--enable-mca-dso / --enable-mca-static
+    <building-ompi-cli-options-mca-dso-label>` option descriptions for
+    more details).  These options slurp all of Open MPI's plugins up in to
     ``libmpi`` |mdash| meaning that the plugins physically reside in
     ``libmpi`` and will not be dynamically opened at run time.
   * Build Open MPI as a static library by configuring Open MPI with

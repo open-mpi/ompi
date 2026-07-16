@@ -24,7 +24,7 @@
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_ABORT = ompi_abort_f
 #pragma weak pmpi_abort = ompi_abort_f
 #pragma weak pmpi_abort_ = ompi_abort_f
@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_ABORT,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_ABORT = ompi_abort_f
 #pragma weak mpi_abort = ompi_abort_f
 #pragma weak mpi_abort_ = ompi_abort_f

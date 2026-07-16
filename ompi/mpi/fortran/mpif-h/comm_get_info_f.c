@@ -16,7 +16,7 @@
 #include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_COMM_GET_INFO = ompi_comm_get_info_f
 #pragma weak pmpi_comm_get_info = ompi_comm_get_info_f
 #pragma weak pmpi_comm_get_info_ = ompi_comm_get_info_f
@@ -35,7 +35,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_GET_INFO,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_COMM_GET_INFO = ompi_comm_get_info_f
 #pragma weak mpi_comm_get_info = ompi_comm_get_info_f
 #pragma weak mpi_comm_get_info_ = ompi_comm_get_info_f

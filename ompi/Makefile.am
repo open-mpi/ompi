@@ -94,6 +94,12 @@ SUBDIRS = \
         mpi/fortran/mpiext-use-mpi-f08 \
         $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 
+# Unit tests for the OMPI layer.  Placed at the end of SUBDIRS so that
+# libmpi (built by the "." entry above) exists before the test programs
+# are linked during "make check".
+SUBDIRS += \
+        test
+
 # The ordering of the DIST_SUBDIRS isn't as important, but note that
 # its contents *are* different than SUBDIRS.  In particular, the
 # MPIEXT subdirs has a different value that is *not* equivalent to the
@@ -116,6 +122,7 @@ DIST_SUBDIRS = \
         mpi/fortran/use-mpi-f08/mod \
         mpi/fortran/use-mpi-f08/bindings \
         mpi/fortran/mpiext-use-mpi-f08 \
+        test \
         $(OMPI_MPIEXT_ALL_SUBDIRS) \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)

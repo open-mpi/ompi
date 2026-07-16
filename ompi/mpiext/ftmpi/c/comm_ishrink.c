@@ -18,7 +18,7 @@
 #include "ompi/op/op.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPIX_Comm_ishrink = PMPIX_Comm_ishrink
 #endif
 #define MPIX_Comm_ishrink PMPIX_Comm_ishrink

@@ -92,6 +92,15 @@ and [`docs/contributing.rst`](docs/contributing.rst):
 - **Include `<level>_config.h` first** — `opal_config.h`,
   `ompi_config.h`, or `oshmem_config.h` for the layer you're in — as the
   very first `#include`, before any system header.
+- **Use the `__opal_attribute_*__` macros for compiler attributes.**
+  [`opal/include/opal_config_bottom.h`](opal/include/opal_config_bottom.h),
+  pulled in transitively by `opal_config.h`, defines portable wrappers —
+  `__opal_attribute_unused__`, `__opal_attribute_noreturn__`,
+  `__opal_attribute_format__`, `__opal_attribute_deprecated__`, and many
+  more — that expand to the appropriate `__attribute__((...))` on
+  compilers that support it and to nothing elsewhere. Reach for these
+  (for example, to mark an unused function parameter) rather than writing
+  a bare `__attribute__` or leaving a warning unaddressed.
 - **MPI back-end code must never call public `MPI_*()` APIs.** The
   bindings are thin wrappers; call the internal `ompi_*` routines, not
   the user-facing entry points.
@@ -110,6 +119,16 @@ and [`docs/contributing.rst`](docs/contributing.rst):
   style — match the surrounding code.
 - **Stay compiler-warning-free.** Open MPI strives to build with zero
   compiler warnings. Do not introduce code that adds new warnings.
+- **Ignore new build products; never commit them.** If your change makes
+  the build emit something new — a test binary, a generated source or
+  header, a wrapper data file — add it to the top-level
+  [`.gitignore`](.gitignore), in the block for its directory, matching
+  the surrounding path style (repo-root-relative, no leading slash).
+  Open MPI keeps essentially all ignores in that one file; per-directory
+  `.gitignore` files are a rare exception, so don't create one. After a
+  clean build, `git status` must be clean — an untracked generated file
+  means you missed an entry, and committing the artifact itself is never
+  the fix.
 
 ## Generated code: edit the source, not the output
 

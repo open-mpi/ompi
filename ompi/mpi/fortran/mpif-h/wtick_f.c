@@ -32,7 +32,7 @@
  * manually.
  */
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_WTICK = ompi_wtick_f
 #pragma weak pmpi_wtick = ompi_wtick_f
 #pragma weak pmpi_wtick_ = ompi_wtick_f
@@ -48,7 +48,7 @@ double pmpi_wtick__(void) { return pompi_wtick_f(); }
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_WTICK = ompi_wtick_f
 #pragma weak mpi_wtick = ompi_wtick_f
 #pragma weak mpi_wtick_ = ompi_wtick_f

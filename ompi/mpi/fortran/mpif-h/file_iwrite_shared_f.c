@@ -25,7 +25,7 @@
 #include "ompi/mpi/fortran/base/constants.h"
 
 #if OMPI_BUILD_MPI_PROFILING
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak PMPI_FILE_IWRITE_SHARED = ompi_file_iwrite_shared_f
 #pragma weak pmpi_file_iwrite_shared = ompi_file_iwrite_shared_f
 #pragma weak pmpi_file_iwrite_shared_ = ompi_file_iwrite_shared_f
@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_SHARED,
 #endif
 #endif
 
-#if OPAL_HAVE_WEAK_SYMBOLS
+#if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPI_FILE_IWRITE_SHARED = ompi_file_iwrite_shared_f
 #pragma weak mpi_file_iwrite_shared = ompi_file_iwrite_shared_f
 #pragma weak mpi_file_iwrite_shared_ = ompi_file_iwrite_shared_f

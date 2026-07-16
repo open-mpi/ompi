@@ -1,0 +1,93 @@
+# -*- makefile -*-
+#
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# Shared Automake fragment for "make check" unit tests that initialize
+# OPAL (via opal_init() / opal_init_util()) or MPI (via MPI_Init(),
+# which additionally pulls in OMPI-level frameworks such as pml).
+#
+# When Open MPI is configured with --enable-mca-dso, MCA components are
+# built as standalone DSOs that are dlopen'ed at run time.  In an
+# installed tree they live in $libdir/openmpi; but "make check" runs
+# before "make install", so at test time they are scattered through the
+# build tree under libtool ".libs" directories.  Two things are needed
+# to make such tests work in an uninstalled --enable-mca-dso tree:
+#
+# 1. Point the Open MPI and PMIx MCA component search paths at the
+#    build-tree ".libs" directories that hold the freshly-built
+#    component DSOs, so opal_init() / MPI_Init() can find them.  A
+#    single Open MPI MCA search path (opal_mca_base_component_path)
+#    serves all of the Open MPI layers, so it lists the ".libs" dirs
+#    under opal/mca, ompi/mca, and oshmem/mca -- not just opal/mca.  The
+#    corresponding PMIx parameter uses PMIx's own "PMIX_MCA_" prefix and
+#    is named mca_base_component_path (no "opal_").  These are computed
+#    at test-run time (shell backquotes), not at Makefile-parse time,
+#    because the DSOs do not exist until the "all" prerequisite of "make
+#    check" has completed.
+#
+#    The PMIx search path is only set when Open MPI was built against its
+#    internal (bundled) PMIx (OPAL_USING_INTERNAL_PMIX); with an external
+#    PMIx there are no PMIx component DSOs to find under 3rd-party, and a
+#    stale internal-PMIx build left over in the tree must not be pointed
+#    at by a run that actually links the external PMIx library.
+#
+# 2. Make each component DSO's own load-time dependencies resolvable.
+#    Some components link against an "mca_common" shared library shared
+#    by a family of sibling components (e.g. io/ompio, fcoll/*, fbtl/*,
+#    and sharedfp/* all depend on libmca_common_ompio).  Those common
+#    libraries live under <project>/mca/common/<name>/.libs, which is
+#    NOT on the runtime library search path baked into the libtool test
+#    wrapper scripts: the wrapper only lists <project>/.libs (home of
+#    libopen-pal / libmpi / liboshmem).  On macOS this cannot be worked
+#    around via DYLD_LIBRARY_PATH in AM_TESTS_ENVIRONMENT, because
+#    System Integrity Protection strips DYLD_* when the /bin/sh wrapper
+#    is exec'ed.  So, before the tests run, symlink each project's
+#    mca_common shared libraries into that project's own .libs
+#    directory, which the wrapper already searches.
+#
+# Both mechanisms are harmless for a static (non-DSO) build: the symlink
+# step finds nothing to link, and although the component-search-path
+# variables may still be exported (libtool creates ".libs" dirs for
+# static convenience libraries too), they point at directories with no
+# loadable components, so nothing is dlopen'ed.  They are likewise
+# harmless for tests that never open a framework.  The symlinks live in
+# build-tree ".libs" directories and are removed automatically by
+# libtool's "clean-libtool" rule (rm -rf .libs).
+#
+# Note: the env var prefix really is "OMPI_MCA_" even for OPAL-level
+# parameters (OPAL_MCA_PREFIX == "OMPI_MCA_"); the full parameter name
+# is opal_mca_base_component_path.
+#
+# NOTE: this fragment defines an "all-local" rule.  Automake forbids two
+# definitions of the same *-local target in one Makefile.am, so a
+# Makefile.am that includes this fragment must NOT define its own
+# "all-local"; instead, add prerequisites to the mca-common-dso-symlinks
+# target below.
+
+AM_TESTS_ENVIRONMENT = \
+	ompi_mca_path="`find $(abs_top_builddir)/opal/mca $(abs_top_builddir)/ompi/mca $(abs_top_builddir)/oshmem/mca -type d -name .libs 2>/dev/null | sort | tr '\n' ':'`"; \
+	if test -n "$$ompi_mca_path"; then OMPI_MCA_opal_mca_base_component_path="$$ompi_mca_path"; export OMPI_MCA_opal_mca_base_component_path; fi; \
+	if test "@OPAL_USING_INTERNAL_PMIX@" = "1"; then \
+	  pmix_mca_path="`find $(abs_top_builddir)/3rd-party/openpmix/src/mca -type d -name .libs 2>/dev/null | sort | tr '\n' ':'`"; \
+	  if test -n "$$pmix_mca_path"; then PMIX_MCA_mca_base_component_path="$$pmix_mca_path"; export PMIX_MCA_mca_base_component_path; fi; \
+	fi;
+
+# See item 2 above.  Symlink each project's mca_common DSOs into that
+# project's own .libs directory (which the libtool wrappers already put
+# on the runtime library search path) so dlopen'ed components can
+# resolve their load-time dependencies.  Created "if missing" so
+# concurrent invocations (parallel "make check") never leave a symlink
+# transiently absent.
+all-local: mca-common-dso-symlinks
+.PHONY: mca-common-dso-symlinks
+mca-common-dso-symlinks:
+	$(AM_V_at)for proj in opal ompi oshmem; do \
+	  libs="$(abs_top_builddir)/$$proj/.libs"; test -d "$$libs" || continue; \
+	  find "$(abs_top_builddir)/$$proj/mca/common" \( -name 'lib*mca_common_*.dylib' -o -name 'lib*mca_common_*.so' -o -name 'lib*mca_common_*.so.*' \) 2>/dev/null | \
+	  while read lib; do base=`basename "$$lib"`; test -e "$$libs/$$base" || ln -s "$$lib" "$$libs/$$base" 2>/dev/null || true; done; \
+	done

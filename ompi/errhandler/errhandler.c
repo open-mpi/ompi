@@ -202,6 +202,7 @@ int ompi_errhandler_init(void)
   ompi_mpi_errors_abort.eh.eh_comm_fn = ompi_mpi_errors_abort_comm_handler;
   ompi_mpi_errors_abort.eh.eh_file_fn = ompi_mpi_errors_abort_file_handler;
   ompi_mpi_errors_abort.eh.eh_win_fn  = ompi_mpi_errors_abort_win_handler ;
+  ompi_mpi_errors_abort.eh.eh_instance_fn = ompi_mpi_errors_abort_instance_handler;
   ompi_mpi_errors_abort.eh.eh_fort_fn = NULL;
   opal_string_copy(ompi_mpi_errors_abort.eh.eh_name,
                    "MPI_ERRORS_ABORT",
