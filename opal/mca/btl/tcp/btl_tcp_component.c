@@ -20,7 +20,7 @@
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -475,6 +475,7 @@ static int mca_btl_tcp_component_open(void)
 static int mca_btl_tcp_component_close(void)
 {
     mca_btl_tcp_event_t *event, *next;
+    bool free_event_base = false;
 
     /**
      * If we have a progress thread we should shut it down before
@@ -496,8 +497,10 @@ static int mca_btl_tcp_component_close(void)
             assert(-1 == mca_btl_tcp_progress_thread_trigger);
         }
         opal_event_del(&mca_btl_tcp_component.tcp_recv_thread_async_event);
-        opal_event_base_free(mca_btl_tcp_event_base);
-        mca_btl_tcp_event_base = NULL;
+        /* This private base still hosts the listening-socket events, the
+           pending tcp_events, and the endpoint events, all deleted below --
+           it cannot be freed until they are gone.  Just note that we own it. */
+        free_event_base = true;
 
         /* Close the remaining pipes */
         if (-1 != mca_btl_tcp_pipe_to_progress[0]) {
@@ -546,6 +549,21 @@ static int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
     OPAL_LIST_DESTRUCT(&mca_btl_tcp_component.local_ifs);
+
+    /* Every event this component registered has now been deleted, so a
+       private (progress thread) base can finally be freed. */
+    if (free_event_base) {
+        opal_event_base_free(mca_btl_tcp_event_base);
+    }
+    /* Drop the alias on every close path, owned base or not.  OPAL may free
+       and recreate the shared base between this close and a future open of
+       this component (MPI Sessions closes and re-opens the btl framework),
+       and mca_btl_tcp_component_create_listen() decides whether it still
+       needs a progress-thread base by NULL-checking this pointer -- which
+       mca_btl_tcp_component_open() never resets.  A stale alias would make
+       the next open skip base creation and register events on a base from a
+       dead generation. */
+    mca_btl_tcp_event_base = NULL;
 
     return OPAL_SUCCESS;
 }
