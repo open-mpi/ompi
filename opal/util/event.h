@@ -67,6 +67,16 @@ OPAL_DECLSPEC opal_event_base_t *opal_event_base_create(void);
 
 OPAL_DECLSPEC int opal_event_register_params(void);
 
+/* Initialize / finalize the shared event base (opal_sync_event_base).
+   Reference counted so nested lifetimes share one base -- OPAL itself
+   holds a reference across opal_init()/opal_finalize(), and an MPI_T
+   epoch that outlives MPI holds one across its deferred framework
+   closes.  These are NOT internally synchronized: the reference count
+   is a plain int, and the create/free of the base straddles its 0<->1
+   transition, so the caller must serialize all opal_event_init() and
+   opal_event_finalize() calls against each other.  Every caller does --
+   opal_init_util(), MPI_T_init_thread(), and ompi_mpi_instance_init()
+   each invoke these while holding a lock. */
 OPAL_DECLSPEC int opal_event_init(void);
 
 OPAL_DECLSPEC int opal_event_finalize(void);
@@ -85,7 +95,15 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 #define opal_event_set_priority(x, n) event_priority_set((x), (n))
 
 /* thread support APIs */
-#define opal_event_use_threads() evthread_use_pthreads()
+/* Declare intent to use threads with libevent.  This configures
+   process-global libevent state that persists across full OPAL
+   init/finalize cycles -- and once event debug mode is active, libevent
+   aborts on a repeat call after any event base has ever existed -- so
+   the implementation latches: only the first call in the life of the
+   process does anything.  Every caller (including component progress
+   threads) must use this wrapper rather than evthread_use_pthreads()
+   directly, or that latch is bypassed. */
+OPAL_DECLSPEC void opal_event_use_threads(void);
 
 /* Basic event APIs */
 #define opal_event_enable_debug_mode() event_enable_debug_mode()

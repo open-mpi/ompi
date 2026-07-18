@@ -70,6 +70,11 @@ int mca_base_framework_register(struct mca_base_framework_t *framework,
         return OPAL_SUCCESS;
     }
 
+    /* From here down, any failure must unwind the reference taken above
+       (and the lists constructed below): a framework left with a bumped
+       refcnt but no REGISTERED flag can never be closed, and would leak
+       the caller's reference forever. */
+
     OBJ_CONSTRUCT(&framework->framework_components, opal_list_t);
     OBJ_CONSTRUCT(&framework->framework_failed_components, opal_list_t);
 
@@ -82,7 +87,7 @@ int mca_base_framework_register(struct mca_base_framework_t *framework,
         ret = mca_base_var_group_register(framework->framework_project, framework->framework_name,
                                           NULL, framework->framework_description);
         if (0 > ret) {
-            return ret;
+            goto register_error;
         }
 
         opal_asprintf(&desc,
@@ -95,14 +100,15 @@ int mca_base_framework_register(struct mca_base_framework_t *framework,
                                     MCA_BASE_VAR_SCOPE_ALL_EQ, &framework->framework_selection);
         free(desc);
         if (0 > ret) {
-            return ret;
+            goto register_error;
         }
 
         /* register a verbosity variable for this framework */
         ret = opal_asprintf(&desc, "Verbosity level for the %s framework (default: 0)",
                             framework->framework_name);
         if (0 > ret) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
+            ret = OPAL_ERR_OUT_OF_RESOURCE;
+            goto register_error;
         }
 
         framework->framework_verbose = MCA_BASE_VERBOSE_ERROR;
@@ -113,7 +119,7 @@ int mca_base_framework_register(struct mca_base_framework_t *framework,
                                               &framework->framework_verbose);
         free(desc);
         if (0 > ret) {
-            return ret;
+            goto register_error;
         }
 
         /* check the initial verbosity and open the output if necessary. we
@@ -124,14 +130,14 @@ int mca_base_framework_register(struct mca_base_framework_t *framework,
         if (NULL != framework->framework_register) {
             ret = framework->framework_register(flags);
             if (OPAL_SUCCESS != ret) {
-                return ret;
+                goto register_error;
             }
         }
 
         /* register components variables */
         ret = mca_base_framework_components_register(framework, flags);
         if (OPAL_SUCCESS != ret) {
-            return ret;
+            goto register_error;
         }
     }
 
@@ -139,6 +145,38 @@ int mca_base_framework_register(struct mca_base_framework_t *framework,
 
     /* framework did not provide a register function */
     return OPAL_SUCCESS;
+
+register_error:
+    /* Mirror the teardown mca_base_framework_close() performs for a
+       framework that is registered but not open: unload any components
+       the partial registration found, drop the variable group, and close
+       the output stream, so a failed registration leaves no trace. */
+    {
+        opal_list_item_t *item;
+        int group_id;
+
+        while (NULL
+               != (item = opal_list_remove_first(&framework->framework_components))) {
+            mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) item;
+            mca_base_component_unload(cli->cli_component, framework->framework_output);
+            OBJ_RELEASE(item);
+        }
+        while (NULL
+               != (item = opal_list_remove_first(&framework->framework_failed_components))) {
+            OBJ_RELEASE(item);
+        }
+
+        group_id = mca_base_var_group_find(framework->framework_project,
+                                           framework->framework_name, NULL);
+        if (0 <= group_id) {
+            (void) mca_base_var_group_deregister(group_id);
+        }
+    }
+    OBJ_DESTRUCT(&framework->framework_components);
+    OBJ_DESTRUCT(&framework->framework_failed_components);
+    framework_close_output(framework);
+    framework->framework_refcnt--;
+    return ret;
 }
 
 int mca_base_framework_register_list(mca_base_framework_t **frameworks,
