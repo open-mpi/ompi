@@ -85,7 +85,15 @@ OPAL_DECLSPEC int opal_event_finalize(void);
 #define opal_event_set_priority(x, n) event_priority_set((x), (n))
 
 /* thread support APIs */
-#define opal_event_use_threads() evthread_use_pthreads()
+/* Declare intent to use threads with libevent.  This configures
+   process-global libevent state that persists across full OPAL
+   init/finalize cycles -- and once event debug mode is active, libevent
+   aborts on a repeat call after any event base has ever existed -- so
+   the implementation latches: only the first call in the life of the
+   process does anything.  Every caller (including component progress
+   threads) must use this wrapper rather than evthread_use_pthreads()
+   directly, or that latch is bypassed. */
+OPAL_DECLSPEC void opal_event_use_threads(void);
 
 /* Basic event APIs */
 #define opal_event_enable_debug_mode() event_enable_debug_mode()

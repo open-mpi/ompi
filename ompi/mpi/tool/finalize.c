@@ -6,6 +6,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "ompi/runtime/ompi_info_support.h"
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
+#include "opal/util/event.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
@@ -39,6 +41,14 @@ int MPI_T_finalize (void)
 
     if (0 == --ompi_mpit_init_count) {
         (void) ompi_info_close_components ();
+
+        /* Release the reference on the shared event base taken in
+           MPI_T_init_thread(), now that the framework closes just
+           above have run -- they may have been the *true* closes
+           (component_close() deleting events from the base) if we were
+           the last framework reference holder.  If MPI is still
+           initialized, its own reference keeps the base alive. */
+        (void) opal_event_finalize ();
 
         int32_t state = ompi_mpi_state;
         if ((state < OMPI_MPI_STATE_INIT_COMPLETED ||
