@@ -72,6 +72,7 @@
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/instance/instance.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
@@ -392,9 +393,25 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     }
 #endif
 
+    /* Publish the world thread level (and ompi_mpi_main_thread) under
+       the instance lock: MPI_T_finalize() reads ompi_mpi_main_thread
+       under that lock, and must either see it not yet set (and leave it
+       alone because ompi_mpi_state is already INIT_STARTED) or see a
+       fully published value.
+
+       Hold the lock across the instance initialization as well (it is
+       recursive), so that the level decided above and the process-wide
+       thread-flag ratchet inside ompi_mpi_instance_init() happen in ONE
+       critical section.  Otherwise a concurrent MPI_Session_init() could
+       slip between the two acquisitions, become the first instance
+       without engaging the flags, and leave a THREAD_MULTIPLE world
+       running with its granted level already decided but the threaded
+       code paths never enabled. */
+    ompi_mpi_instance_lock ();
     ompi_mpi_thread_level(requested, provided);
 
     ret = ompi_mpi_instance_init (*provided, &ompi_mpi_info_null.info.super, MPI_ERRORS_ARE_FATAL, &ompi_mpi_instance_default, argc, argv);
+    ompi_mpi_instance_unlock ();
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         error = "ompi_mpi_init: ompi_mpi_instance_init failed";
         goto error;
