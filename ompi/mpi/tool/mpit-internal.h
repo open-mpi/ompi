@@ -45,7 +45,7 @@ typedef struct ompi_mpit_cvar_handle_t {
 void ompi_mpit_lock (void);
 void ompi_mpit_unlock (void);
 
-extern volatile uint32_t ompi_mpit_init_count;
+OMPI_DECLSPEC extern volatile uint32_t ompi_mpit_init_count;
 
 /* The thread level of the MPI tool information interface itself, pinned
    for one init epoch: established by the first MPI_T_init_thread() of the
