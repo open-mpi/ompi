@@ -22,6 +22,7 @@
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/event.h"
+#include "ompi/instance/instance.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
@@ -33,8 +34,16 @@
 int MPI_T_finalize (void)
 {
     ompi_mpit_lock ();
+    /* Serialize against instance (world/session) init and teardown: the
+       last MPI_T_finalize() performs the deferred true component closes
+       and releases OPAL references, which share unlocked state with a
+       concurrent instance bring-up or teardown on another thread.  Lock
+       ordering: the MPI_T lock above always comes first; see
+       ompi_mpi_instance_lock() in instance.c. */
+    ompi_mpi_instance_lock ();
 
     if (!mpit_is_initialized ()) {
+        ompi_mpi_instance_unlock ();
         ompi_mpit_unlock ();
         return MPI_T_ERR_NOT_INITIALIZED;
     }
@@ -51,11 +60,16 @@ int MPI_T_finalize (void)
         (void) opal_event_finalize ();
 
         int32_t state = ompi_mpi_state;
-        if ((state < OMPI_MPI_STATE_INIT_COMPLETED ||
+        if ((state < OMPI_MPI_STATE_INIT_STARTED ||
              state >= OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT) &&
             (NULL != ompi_mpi_main_thread)) {
-            /* we are not between MPI_Init and MPI_Finalize so we
-             * have to free the ompi_mpi_main_thread */
+            /* We are not between MPI_Init and MPI_Finalize, so we have
+             * to free the ompi_mpi_main_thread.  "Between" includes an
+             * MPI_Init() in progress on another thread
+             * (OMPI_MPI_STATE_INIT_STARTED): it has already published
+             * ompi_mpi_main_thread, and releasing it out from under
+             * that thread would break MPI_Is_thread_main() and leave a
+             * dangling thread object. */
             OBJ_RELEASE(ompi_mpi_main_thread);
             ompi_mpi_main_thread = NULL;
         }
@@ -63,6 +77,7 @@ int MPI_T_finalize (void)
         (void) opal_finalize_util ();
     }
 
+    ompi_mpi_instance_unlock ();
     ompi_mpit_unlock ();
 
     return MPI_SUCCESS;
