@@ -438,7 +438,7 @@ if OMPI_FORTRAN_HAVE_TS
 gen_ts = --generate-ts-suffix
 endif
 
-api_f08_generated.F90: $(template_files)
+api_f08_generated.F90: $(template_files) $(OMPI_BINDINGS_GENERATOR)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
