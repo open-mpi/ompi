@@ -194,8 +194,6 @@ ompi/mca/sharedfp/addproc/mca_sharedfp_addproc_control
 
 ompi/mca/topo/treematch/config.h
 
-ompi/mpi/c/profile/p*.c
-
 ompi/mpi/fortran/configure-fortran-output.h
 ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
@@ -212,8 +210,6 @@ ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-constants.h
 ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces.h
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.f90
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.h
-ompi/mpi/fortran/use-mpi-f08/profile/psizeof_f08.f90
-ompi/mpi/fortran/use-mpi-f08/profile/*.F90
 
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
@@ -226,8 +222,6 @@ ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
 ompi/mpi/fortran/use-mpi-tkr/mpi_kinds.ompi_module
 ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.f90
 ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.h
-
-ompi/mpi/tool/profile/*.c
 
 ompi/test/t/mpi_t_category_get_events
 
@@ -292,17 +286,6 @@ ompi/test/monitoring/test_pvar_access
 ompi/test/spc/spc_test
 
 ompi/mpiext/affinity/c/example
-
-ompi/mpiext/ftmpi/c/profile/pcomm_agree.c
-ompi/mpiext/ftmpi/c/profile/pcomm_failure_ack.c
-ompi/mpiext/ftmpi/c/profile/pcomm_failure_get_acked.c
-ompi/mpiext/ftmpi/c/profile/pcomm_iagree.c
-ompi/mpiext/ftmpi/c/profile/pcomm_is_revoked.c
-ompi/mpiext/ftmpi/c/profile/pcomm_revoke.c
-ompi/mpiext/ftmpi/c/profile/pcomm_shrink.c
-ompi/mpiext/ftmpi/c/profile/pcomm_ack_failed.c
-ompi/mpiext/ftmpi/c/profile/pcomm_get_failed.c
-ompi/mpiext/ftmpi/c/profile/pcomm_ishrink.c
 
 ompi/mpiext/example/tests/progress_c
 ompi/mpiext/example/tests/progress_mpifh

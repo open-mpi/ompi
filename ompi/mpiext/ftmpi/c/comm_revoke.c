@@ -2,6 +2,7 @@
  * Copyright (c) 2013-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,3 +45,10 @@ int MPIX_Comm_revoke(MPI_Comm comm)
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+#undef MPIX_Comm_revoke
+__opal_attribute_weak__ int MPIX_Comm_revoke(MPI_Comm comm)
+{
+    return PMPIX_Comm_revoke(comm);
+}
+#endif
