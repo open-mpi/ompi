@@ -52,7 +52,7 @@ endif
 include ../Makefile.prototype_files
 template_files =${prototype_files:%=$(abs_top_srcdir)/ompi/mpi/fortran/use-mpi-f08/%}
 
-api_f08_generated.c: $(template_files)
+api_f08_generated.c: $(template_files) $(OMPI_BINDINGS_GENERATOR)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \

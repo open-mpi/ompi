@@ -87,7 +87,7 @@ gen_ts = --generate-ts-suffix
 endif
 
 
-mpi-f08-interfaces-generated.h: $(template_files)
+mpi-f08-interfaces-generated.h: $(template_files) $(OMPI_BINDINGS_GENERATOR)
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/bindings.py \
 	    --builddir $(abs_top_builddir) \
 	    --srcdir $(abs_top_srcdir) \
