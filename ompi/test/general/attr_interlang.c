@@ -635,20 +635,26 @@ static void c_check_mpi1_backend(MPI_Fint *key, MPI_Fint *value)
             exit(1);
         }
     } else {
-        void *bogus = (void*) 1;
-        MPI_Fint *p = (MPI_Fint*) &bogus;
+        /* Type-pun through a union: reading a void* through a cast
+           MPI_Fint* violates strict-aliasing rules, so optimizing
+           compilers are free to miscompile it. */
+        union {
+            void *ptr;
+            MPI_Fint f[sizeof(void*) / sizeof(MPI_Fint)];
+        } probe;
         int pos;
 
-        for (pos = 0; pos < (sizeof(void*) / sizeof(MPI_Fint));
+        probe.ptr = (void*) 1;
+        for (pos = 0; pos < (int) (sizeof(void*) / sizeof(MPI_Fint));
              ++pos) {
-            if (p[pos] == 1) {
+            if (probe.f[pos] == 1) {
                 break;
             }
         }
-        p = (MPI_Fint *) &v;
-        if (p[pos] != *value) {
+        probe.ptr = (void*) v;
+        if (probe.f[pos] != *value) {
             printf("Checking MPI-2 C attribute value backend (truncate), got value=%x; expected %x\n",
-                   (int)(uintptr_t) xlate.c_ptr, p[pos]);
+                   (int)(uintptr_t) xlate.c_ptr, (int) probe.f[pos]);
             exit(1);
         }
     }
