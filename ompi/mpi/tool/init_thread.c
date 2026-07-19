@@ -25,6 +25,7 @@
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/event.h"
+#include "ompi/instance/instance.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
@@ -51,6 +52,13 @@ int MPI_T_init_thread (int required, int *provided)
     int rc = MPI_SUCCESS;
 
     ompi_mpit_lock ();
+    /* Also serialize against instance (world/session) init and teardown:
+       a first MPI_T initialization shares unlocked state (OPAL init
+       counters, the shared event base refcount, MCA variable and
+       framework registration) with instance bring-up on other threads.
+       Lock ordering: the MPI_T lock above always comes first; see
+       ompi_mpi_instance_lock() in instance.c. */
+    ompi_mpi_instance_lock ();
 
     do {
         if (ompi_mpit_init_failed) {
@@ -131,6 +139,7 @@ int MPI_T_init_thread (int required, int *provided)
         ompi_mpi_thread_level (required, provided);
     } while (0);
 
+    ompi_mpi_instance_unlock ();
     ompi_mpit_unlock ();
 
     return rc;

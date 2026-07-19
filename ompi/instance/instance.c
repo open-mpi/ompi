@@ -6,7 +6,7 @@
  * Copyright (c) 2022      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * Copyright (c) 2026      BULL S.A.S.  All rights reserved.
@@ -75,6 +75,26 @@ __opal_attribute_constructor__ static void instance_lock_init(void) {
 #else
 #error "No support for recursive mutexes available on this platform."
 #endif  /* defined(OPAL_RECURSIVE_MUTEX_STATIC_INIT) */
+
+/* MPI_T_init_thread()/MPI_T_finalize() serialize themselves with the same
+   lock that serializes instance (world and session) initialization and
+   teardown.  The two families share unlocked under-layers -- the
+   opal_init_util()/opal_init() reference counters, the shared event base
+   reference count, MCA variable registration, and every framework's
+   refcnt -- so a first MPI_T initialization racing a session (or world)
+   initialization on another thread would corrupt that state.  Lock
+   ordering: MPI_T takes its own serializing lock (ompi_mpit_big_lock)
+   first, then this one; nothing on the instance side ever takes the MPI_T
+   lock, so the ordering cannot invert. */
+void ompi_mpi_instance_lock (void)
+{
+    opal_mutex_lock (&instance_lock);
+}
+
+void ompi_mpi_instance_unlock (void)
+{
+    opal_mutex_unlock (&instance_lock);
+}
 
 /** MPI_Init instance */
 ompi_instance_t *ompi_mpi_instance_default = NULL;
