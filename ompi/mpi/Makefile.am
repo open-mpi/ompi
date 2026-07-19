@@ -32,8 +32,7 @@ EXTRA_DIST += \
         mpi/bindings/ompi_bindings/fortran.py \
         mpi/bindings/ompi_bindings/fortran_type.py \
         mpi/bindings/ompi_bindings/parser.py \
-        mpi/bindings/ompi_bindings/util.py \
-        mpi/libmpi_symbol_exports.ver
+        mpi/bindings/ompi_bindings/util.py
 
 #
 # attr_fn.c needs to be slurped into libopen_mpi

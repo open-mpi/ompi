@@ -219,15 +219,13 @@ lib@OMPI_LIBMPI_NAME@_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \
         $(OMPI_LIBMPI_EXTRA_LDFLAGS)
 
-# On macOS, use -reexport-l to re-export symbols from libopen_mpi
-# This also serves as the link dependency (removed from LIBADD above)
-# On Linux, use --version-script (handled via OMPI_LIBMPI_REEXPORT_LDFLAGS)
+# On macOS, use -reexport-l to re-export symbols from libopen_mpi;
+# this also serves as the link dependency (removed from LIBADD above).
+# ELF platforms need no re-export mechanism: the flat namespace
+# resolves a v5.x binary's references from libopen_mpi via libmpi's
+# DT_NEEDED dependency on it.
 if OMPI_REEXPORT_MACOS
 lib@OMPI_LIBMPI_NAME@_la_LDFLAGS += -L$(abs_builddir)/.libs -Wl,-reexport-lopen_mpi
-endif
-
-if OMPI_REEXPORT_VERSION_SCRIPT
-lib@OMPI_LIBMPI_NAME@_la_LDFLAGS += $(OMPI_LIBMPI_REEXPORT_LDFLAGS)
 endif
 
 # The MPI Standard ABI library

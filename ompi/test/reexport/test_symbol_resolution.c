@@ -14,11 +14,14 @@
 #include <string.h>
 
 /*
- * Test that verifies symbol resolution between libmpi.so/dylib and libopen_mpi.so/dylib
- * when OMPI_LIBMPI_REEXPORT_LDFLAGS is enabled.
- *
- * This test checks that ompi_* symbols can be found in libmpi when symbol re-export
- * is enabled, which is necessary for proper dynamic linking on macOS and other platforms.
+ * Test that verifies symbol resolution between libmpi.so/dylib and
+ * libopen_mpi.so/dylib: the predefined MPI handle symbols (e.g.,
+ * ompi_mpi_comm_world) that moved into libopen_mpi must still be
+ * reachable through libmpi, so that binaries built against Open MPI
+ * v5.x continue to run.  On macOS this requires libmpi to re-export
+ * libopen_mpi (LC_REEXPORT_DYLIB); on ELF platforms the flat
+ * namespace resolves the symbols through libmpi's DT_NEEDED
+ * dependency on libopen_mpi with no re-export mechanism at all.
  *
  * The test returns:
  *   0  - Success: symbols resolved correctly
