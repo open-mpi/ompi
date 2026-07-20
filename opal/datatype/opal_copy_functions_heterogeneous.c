@@ -622,6 +622,50 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
 #endif  /* defined(HAVE__FLOAT128) || defined(HAVE___FLOAT128) */
 }
 
+/*
+ * Walk `copied` logical elements as extent-strided blocks, then a packed leftover.
+ * from_elem_size / to_elem_size may differ (bool, long). `units` is 1, or 2 for
+ * two-same-type complexes so countperblock is in TYPE units. BODY sees
+ * countperblock, _from, and _to.
+ */
+#define OPAL_COPY_FOREACH_STRIDED_BLOCK(copied, blocklen, elem_count, from_elem_size,     \
+                                        to_elem_size, units, from_extent, to_extent,      \
+                                        _from, _to, BODY)                                 \
+    do {                                                                                  \
+        size_t block_count = 0, leftover, countperblock;                                  \
+        ptrdiff_t from_advance, to_advance;                                               \
+        if ((1 == (blocklen)) || ((1 < (elem_count)) && ((blocklen) <= (copied)))) {      \
+            const size_t from_block_bytes = (blocklen) * (from_elem_size);                \
+            const size_t to_block_bytes = (blocklen) * (to_elem_size);                    \
+            block_count = (copied) / (blocklen);                                          \
+            if (((from_extent) == (ptrdiff_t) from_block_bytes)                           \
+                && ((to_extent) == (ptrdiff_t) to_block_bytes)) {                         \
+                block_count = 0;                                                          \
+            }                                                                             \
+        }                                                                                 \
+        leftover = (copied) - block_count * (blocklen);                                   \
+        if (0 != block_count) {                                                           \
+            countperblock = (blocklen) * (units);                                         \
+            from_advance = (from_extent);                                                 \
+            to_advance = (to_extent);                                                     \
+        }                                                                                 \
+        while ((0 != block_count) || (0 != leftover)) {                                   \
+            if (0 == block_count) {                                                       \
+                countperblock = leftover * (units);                                       \
+                from_advance = leftover * (from_elem_size);                               \
+                to_advance = leftover * (to_elem_size);                                   \
+                leftover = 0;                                                             \
+            } else {                                                                      \
+                block_count--;                                                            \
+            }                                                                             \
+            do {                                                                          \
+                BODY                                                                      \
+            } while (0);                                                                  \
+            (_from) += from_advance;                                                      \
+            (_to) += to_advance;                                                          \
+        }                                                                                 \
+    } while (0)
+
 /**
  * BEWARE: Do not use the following macro with composed types such as
  * complex. As the swap is done using the entire type sizeof, the
@@ -672,11 +716,11 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
                                                   char **to, size_t to_length,                    \
                                                   ptrdiff_t to_extent)                            \
     {                                                                                             \
-        size_t copied = count, block_count = 0, leftover;                                         \
+        size_t copied = count;                                                                    \
         const size_t type_size = sizeof(TYPE);                                                    \
         char *_from = *from, *_to = *to;                                                          \
         int from_arch, to_arch;                                                                   \
-        if (pConvertor->flags & CONVERTOR_SEND_CONVERSION) { /* pack */                          \
+        if (pConvertor->flags & CONVERTOR_SEND) { /* pack */                                      \
             from_arch = opal_local_arch;                                                          \
             to_arch = pConvertor->remoteArch;                                                     \
         } else { /* unpack */                                                                     \
@@ -688,29 +732,8 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
         if (0 == copied) {                                                                        \
             return 0;                                                                             \
         }                                                                                         \
-        if ((1 == blocklen) || ((1 < elem_count) && (blocklen <= copied))) {                      \
-            const size_t block_bytes = blocklen * type_size;                                      \
-            block_count = copied / blocklen;                                                      \
-            if ((from_extent == (ptrdiff_t) block_bytes)                                         \
-                && (to_extent == (ptrdiff_t) block_bytes)) {                                     \
-                block_count = 0;                                                                  \
-            }                                                                                     \
-        }                                                                                         \
-        leftover = copied - block_count * blocklen;                                               \
-        while ((0 != block_count) || (0 != leftover)) {                                           \
-            size_t countperblock;                                                                 \
-            ptrdiff_t from_advance, to_advance;                                                   \
-            if (0 != block_count) {                                                               \
-                countperblock = blocklen;                                                         \
-                from_advance = from_extent;                                                       \
-                to_advance = to_extent;                                                           \
-                block_count--;                                                                    \
-            } else {                                                                              \
-                countperblock = leftover;                                                         \
-                from_advance = countperblock * type_size;                                         \
-                to_advance = countperblock * type_size;                                           \
-                leftover = 0;                                                                     \
-            }                                                                                     \
+        OPAL_COPY_FOREACH_STRIDED_BLOCK(copied, blocklen, elem_count, type_size, type_size, 1,    \
+                                        from_extent, to_extent, _from, _to,                       \
             if (!(LONG_DOUBLE) || ((from_arch & LDBL_INFO_MASK) == (to_arch & LDBL_INFO_MASK))) { \
                 if ((from_arch & OPAL_ARCH_ISBIGENDIAN)                                           \
                     != (to_arch & OPAL_ARCH_ISBIGENDIAN)) {                                       \
@@ -744,9 +767,7 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
                     }                                                                             \
                 }                                                                                 \
             }                                                                                     \
-            _to += to_advance;                                                                    \
-            _from += from_advance;                                                                \
-        }                                                                                         \
+        );                                                                                        \
         *from = _from;                                                                            \
         *to = _to;                                                                                \
         return copied;                                                                            \
@@ -762,11 +783,11 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
                                                   char **to, size_t to_length,                    \
                                                   ptrdiff_t to_extent)                            \
     {                                                                                             \
-        size_t copied = count, block_count = 0, leftover;                                         \
+        size_t copied = count;                                                                    \
         const size_t elem_size = 2 * sizeof(TYPE);                                                \
         char *_from = *from, *_to = *to;                                                          \
         int from_arch, to_arch;                                                                   \
-        if (pConvertor->flags & CONVERTOR_SEND_CONVERSION) { /* pack */                          \
+        if (pConvertor->flags & CONVERTOR_SEND) { /* pack */                                      \
             from_arch = opal_local_arch;                                                          \
             to_arch = pConvertor->remoteArch;                                                     \
         } else { /* unpack */                                                                     \
@@ -778,29 +799,8 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
         if (0 == copied) {                                                                        \
             return 0;                                                                             \
         }                                                                                         \
-        if ((1 == blocklen) || ((1 < elem_count) && (blocklen <= copied))) {                      \
-            const size_t block_bytes = blocklen * elem_size;                                      \
-            block_count = copied / blocklen;                                                      \
-            if ((from_extent == (ptrdiff_t) block_bytes)                                         \
-                && (to_extent == (ptrdiff_t) block_bytes)) {                                     \
-                block_count = 0;                                                                  \
-            }                                                                                     \
-        }                                                                                         \
-        leftover = copied - block_count * blocklen;                                               \
-        while ((0 != block_count) || (0 != leftover)) {                                           \
-            size_t countperblock;                                                                 \
-            ptrdiff_t from_advance, to_advance;                                                   \
-            if (0 != block_count) {                                                               \
-                countperblock = blocklen * 2;                                                     \
-                from_advance = from_extent;                                                       \
-                to_advance = to_extent;                                                           \
-                block_count--;                                                                    \
-            } else {                                                                              \
-                countperblock = leftover * 2;                                                     \
-                from_advance = leftover * elem_size;                                              \
-                to_advance = leftover * elem_size;                                                \
-                leftover = 0;                                                                     \
-            }                                                                                     \
+        OPAL_COPY_FOREACH_STRIDED_BLOCK(copied, blocklen, elem_count, elem_size, elem_size, 2,    \
+                                        from_extent, to_extent, _from, _to,                       \
             if (!(LONG_DOUBLE) || ((from_arch & LDBL_INFO_MASK) == (to_arch & LDBL_INFO_MASK))) { \
                 if ((from_arch & OPAL_ARCH_ISBIGENDIAN)                                           \
                     != (to_arch & OPAL_ARCH_ISBIGENDIAN)) {                                       \
@@ -834,9 +834,7 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
                     }                                                                             \
                 }                                                                                 \
             }                                                                                     \
-            _to += to_advance;                                                                    \
-            _from += from_advance;                                                                \
-        }                                                                                         \
+        );                                                                                        \
         *from = _from;                                                                            \
         *to = _to;                                                                                \
         return copied;                                                                            \
@@ -849,11 +847,11 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
                                                   ptrdiff_t from_extent, char **to,            \
                                                   size_t to_length, ptrdiff_t to_extent)       \
     {                                                                                          \
-        size_t copied = count, block_count = 0, leftover;                                      \
+        size_t copied = count;                                                                 \
         const size_t elem_size = sizeof(TYPE1) + sizeof(TYPE2);                                \
         char *_from = *from, *_to = *to;                                                       \
         int from_arch, to_arch;                                                                \
-        if (pConvertor->flags & CONVERTOR_SEND_CONVERSION) { /* pack */                       \
+        if (pConvertor->flags & CONVERTOR_SEND) { /* pack */                                   \
             from_arch = opal_local_arch;                                                       \
             to_arch = pConvertor->remoteArch;                                                  \
         } else { /* unpack */                                                                  \
@@ -865,29 +863,8 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
         if (0 == copied) {                                                                     \
             return 0;                                                                          \
         }                                                                                      \
-        if ((1 == blocklen) || ((1 < elem_count) && (blocklen <= copied))) {                   \
-            const size_t block_bytes = blocklen * elem_size;                                   \
-            block_count = copied / blocklen;                                                   \
-            if ((from_extent == (ptrdiff_t) block_bytes)                                      \
-                && (to_extent == (ptrdiff_t) block_bytes)) {                                  \
-                block_count = 0;                                                               \
-            }                                                                                  \
-        }                                                                                      \
-        leftover = copied - block_count * blocklen;                                            \
-        while ((0 != block_count) || (0 != leftover)) {                                        \
-            size_t countperblock;                                                              \
-            ptrdiff_t from_advance, to_advance;                                                \
-            if (0 != block_count) {                                                            \
-                countperblock = blocklen;                                                      \
-                from_advance = from_extent;                                                    \
-                to_advance = to_extent;                                                        \
-                block_count--;                                                                 \
-            } else {                                                                           \
-                countperblock = leftover;                                                      \
-                from_advance = leftover * elem_size;                                           \
-                to_advance = leftover * elem_size;                                             \
-                leftover = 0;                                                                  \
-            }                                                                                  \
+        OPAL_COPY_FOREACH_STRIDED_BLOCK(copied, blocklen, elem_count, elem_size, elem_size, 1, \
+                                        from_extent, to_extent, _from, _to,                    \
             if ((from_arch & OPAL_ARCH_ISBIGENDIAN) != (to_arch & OPAL_ARCH_ISBIGENDIAN)) {    \
                 for (size_t i = 0; i < countperblock; i++) {                                   \
                     TYPE1 *to_1 = (TYPE1 *) (_to + i * elem_size);                             \
@@ -900,9 +877,7 @@ f128_to_ldbl(unsigned char *ldbl_buf_to, const unsigned char *f128_buf_from, ssi
             } else {                                                                           \
                 MEMCPY(_to, _from, countperblock * elem_size);                                 \
             }                                                                                  \
-            _to += to_advance;                                                                 \
-            _from += from_advance;                                                             \
-        }                                                                                      \
+        );                                                                                     \
         *from = _from;                                                                         \
         *to = _to;                                                                             \
         return copied;                                                                         \
@@ -946,11 +921,11 @@ static size_t copy_cxx_bool_heterogeneous(opal_convertor_t *pConvertor, size_t c
                                           ptrdiff_t from_extent, char **to,
                                           size_t to_length, ptrdiff_t to_extent)
 {
-    const size_t remote_bool_size = pConvertor->master->remote_sizes[OPAL_DATATYPE_BOOL];
+    const size_t remote_bool_size = pConvertor->sizes[OPAL_DATATYPE_BOOL];
     const bool is_pack = !!(pConvertor->flags & CONVERTOR_SEND);
     const size_t from_elem_size = is_pack ? sizeof(bool) : remote_bool_size;
     const size_t to_elem_size = is_pack ? remote_bool_size : sizeof(bool);
-    size_t copied = count, block_count = 0, leftover;
+    size_t copied = count;
     char *_from = *from, *_to = *to;
 
     datatype_check("bool", sizeof(bool), remote_bool_size, &copied, _from, from_len,
@@ -959,31 +934,8 @@ static size_t copy_cxx_bool_heterogeneous(opal_convertor_t *pConvertor, size_t c
         return 0;
     }
 
-    if ((1 == blocklen) || ((1 < elem_count) && (blocklen <= copied))) {
-        const size_t from_block_bytes = blocklen * from_elem_size;
-        const size_t to_block_bytes = blocklen * to_elem_size;
-        block_count = copied / blocklen;
-        if ((from_extent == (ptrdiff_t) from_block_bytes)
-            && (to_extent == (ptrdiff_t) to_block_bytes)) {
-            block_count = 0;
-        }
-    }
-    leftover = copied - block_count * blocklen;
-    while ((0 != block_count) || (0 != leftover)) {
-        size_t countperblock;
-        ptrdiff_t from_advance, to_advance;
-        if (0 != block_count) {
-            countperblock = blocklen;
-            from_advance = from_extent;
-            to_advance = to_extent;
-            block_count--;
-        } else {
-            countperblock = leftover;
-            from_advance = countperblock * from_elem_size;
-            to_advance = countperblock * to_elem_size;
-            leftover = 0;
-        }
-
+    OPAL_COPY_FOREACH_STRIDED_BLOCK(copied, blocklen, elem_count, from_elem_size, to_elem_size, 1,
+                                    from_extent, to_extent, _from, _to,
         if (sizeof(bool) == remote_bool_size) {
             MEMCPY(_to, _from, countperblock * sizeof(bool));
         } else if (is_pack) {
@@ -1011,9 +963,7 @@ static size_t copy_cxx_bool_heterogeneous(opal_convertor_t *pConvertor, size_t c
                 break;
             }
         }
-        _from += from_advance;
-        _to += to_advance;
-    }
+    );
 
     *from = _from;
     *to = _to;
@@ -1248,11 +1198,11 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count, size_t block
                         ptrdiff_t from_extent, char **to, size_t to_length,
                         ptrdiff_t to_extent)
 {
-    const size_t remote_long_size = pConvertor->master->remote_sizes[OPAL_DATATYPE_LONG];
+    const size_t remote_long_size = pConvertor->sizes[OPAL_DATATYPE_LONG];
     const bool is_pack = !!(pConvertor->flags & CONVERTOR_SEND);
     const size_t from_elem_size = is_pack ? sizeof(long) : remote_long_size;
     const size_t to_elem_size = is_pack ? remote_long_size : sizeof(long);
-    size_t copied = count, block_count = 0, leftover;
+    size_t copied = count;
     char *_from = *from, *_to = *to;
 
     datatype_check("long", sizeof(long), remote_long_size, &copied, _from, from_len,
@@ -1261,37 +1211,11 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count, size_t block
         return 0;
     }
 
-    if ((1 == blocklen) || ((1 < elem_count) && (blocklen <= copied))) {
-        const size_t from_block_bytes = blocklen * from_elem_size;
-        const size_t to_block_bytes = blocklen * to_elem_size;
-        block_count = copied / blocklen;
-        if ((from_extent == (ptrdiff_t) from_block_bytes)
-            && (to_extent == (ptrdiff_t) to_block_bytes)) {
-            block_count = 0;
-        }
-    }
-    leftover = copied - block_count * blocklen;
-
-    while ((0 != block_count) || (0 != leftover)) {
-        size_t countperblock;
-        ptrdiff_t from_advance, to_advance;
-        if (0 != block_count) {
-            countperblock = blocklen;
-            from_advance = from_extent;
-            to_advance = to_extent;
-            block_count--;
-        } else {
-            countperblock = leftover;
-            from_advance = countperblock * from_elem_size;
-            to_advance = countperblock * to_elem_size;
-            leftover = 0;
-        }
-
+    OPAL_COPY_FOREACH_STRIDED_BLOCK(copied, blocklen, elem_count, from_elem_size, to_elem_size, 1,
+                                    from_extent, to_extent, _from, _to,
         copy_long_heterogeneous_block(pConvertor, countperblock, _from, from_elem_size, _to,
                                       to_elem_size);
-        _from += from_advance;
-        _to += to_advance;
-    }
+    );
 
     *from = _from;
     *to = _to;
@@ -1405,11 +1329,11 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count, siz
                                  ptrdiff_t from_extent, char **to, size_t to_length,
                                  ptrdiff_t to_extent)
 {
-    const size_t remote_long_size = pConvertor->master->remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG];
+    const size_t remote_long_size = pConvertor->sizes[OPAL_DATATYPE_UNSIGNED_LONG];
     const bool is_pack = !!(pConvertor->flags & CONVERTOR_SEND);
     const size_t from_elem_size = is_pack ? sizeof(unsigned long) : remote_long_size;
     const size_t to_elem_size = is_pack ? remote_long_size : sizeof(unsigned long);
-    size_t copied = count, block_count = 0, leftover;
+    size_t copied = count;
     char *_from = *from, *_to = *to;
 
     datatype_check("unsigned long", sizeof(unsigned long), remote_long_size, &copied, _from,
@@ -1418,37 +1342,11 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count, siz
         return 0;
     }
 
-    if ((1 == blocklen) || ((1 < elem_count) && (blocklen <= copied))) {
-        const size_t from_block_bytes = blocklen * from_elem_size;
-        const size_t to_block_bytes = blocklen * to_elem_size;
-        block_count = copied / blocklen;
-        if ((from_extent == (ptrdiff_t) from_block_bytes)
-            && (to_extent == (ptrdiff_t) to_block_bytes)) {
-            block_count = 0;
-        }
-    }
-    leftover = copied - block_count * blocklen;
-
-    while ((0 != block_count) || (0 != leftover)) {
-        size_t countperblock;
-        ptrdiff_t from_advance, to_advance;
-        if (0 != block_count) {
-            countperblock = blocklen;
-            from_advance = from_extent;
-            to_advance = to_extent;
-            block_count--;
-        } else {
-            countperblock = leftover;
-            from_advance = countperblock * from_elem_size;
-            to_advance = countperblock * to_elem_size;
-            leftover = 0;
-        }
-
+    OPAL_COPY_FOREACH_STRIDED_BLOCK(copied, blocklen, elem_count, from_elem_size, to_elem_size, 1,
+                                    from_extent, to_extent, _from, _to,
         copy_unsigned_long_heterogeneous_block(pConvertor, countperblock, _from, from_elem_size,
                                                _to, to_elem_size);
-        _from += from_advance;
-        _to += to_advance;
-    }
+    );
 
     *from = _from;
     *to = _to;

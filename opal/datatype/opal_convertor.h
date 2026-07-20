@@ -53,6 +53,15 @@ BEGIN_C_DECLS
  * convertor, so no convertor word ever carries an upper-layer meaning.
  */
 #define CONVERTOR_DATATYPE_MASK          0x0000FFFF
+/*
+ * Set when the packed (remote) representation of at least one predefined type in this convertor's
+ * datatype has a different size than the local one (e.g. a 4- vs 8-byte long, or a 1/2/4-byte bool
+ * across mismatched architectures). Such a conversion is not a byte permutation, so a predefined
+ * element cannot be split across a fragment boundary and later reassembled: the pack side must stop
+ * only on whole predefined-element boundaries ("unsafe to split"). Homogeneous and same-size
+ * byte-swap conversions do not set this flag and remain free to split anywhere.
+ */
+#define CONVERTOR_UNSAFE_SPLIT           0x00100000
 #define CONVERTOR_SEND_CONVERSION        0x00200000
 #define CONVERTOR_RECV                   0x00400000
 #define CONVERTOR_SEND                   0x00800000
@@ -81,9 +90,9 @@ BEGIN_C_DECLS
 _Static_assert(0
                    == ((CONVERTOR_SEND_CONVERSION | CONVERTOR_RECV | CONVERTOR_SEND
                         | CONVERTOR_HOMOGENEOUS | CONVERTOR_NO_OP | CONVERTOR_COMPLETED
-                        | CONVERTOR_HAS_REMOTE_SIZE | CONVERTOR_ACCELERATOR
-                        | CONVERTOR_ACCELERATOR_ASYNC | CONVERTOR_ACCELERATOR_UNIFIED
-                        | CONVERTOR_SKIP_ACCELERATOR_INIT)
+                        | CONVERTOR_HAS_REMOTE_SIZE | CONVERTOR_UNSAFE_SPLIT
+                        | CONVERTOR_ACCELERATOR | CONVERTOR_ACCELERATOR_ASYNC
+                        | CONVERTOR_ACCELERATOR_UNIFIED | CONVERTOR_SKIP_ACCELERATOR_INIT)
                        & (OPAL_DATATYPE_OPTIMIZED_RESTRICTED | OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE)),
                "datatype shape-hint flags must not alias a convertor control flag");
 
@@ -92,6 +101,7 @@ typedef struct opal_convertor_t opal_convertor_t;
 
 typedef int32_t (*convertor_advance_fct_t)(opal_convertor_t *pConvertor, struct iovec *iov,
                                            uint32_t *out_size, size_t *max_data);
+typedef int32_t (*convertor_position_fct_t)(opal_convertor_t *pConvertor, size_t *position);
 typedef void *(*memalloc_fct_t)(size_t *pLength, void *userdata);
 typedef void *(*memcpy_fct_t)(void *dest, const void *src, size_t n, opal_convertor_t *pConvertor);
 
@@ -121,7 +131,7 @@ struct opal_convertor_t {
     opal_datatype_count_t count;    /**< the total number of full datatype elements */
     size_t remote_size;             /**< overall length data on the remote machine */
     struct opal_convertor_master_t *master; /**< the master convertor */
-    convertor_advance_fct_t fAdvance;       /**< pointer to the pack/unpack functions */
+    convertor_advance_fct_t fAdvance;       /**< pack/unpack; paired with fPosition at prepare */
 
     /* --- cacheline boundary (64 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
     /* Keep mutable runtime state together on the cache line used by pack and unpack. */
@@ -137,11 +147,39 @@ struct opal_convertor_t {
     uint32_t remoteArch;         /**< the remote architecture */
 
     /* --- cacheline boundary (128 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
+    /**
+     * Per predefined type, the size of one element in the packed stream this convertor reads from
+     * or writes to: the master's remote_sizes for a receive convertor (or a send convertor doing
+     * the conversion, CONVERTOR_SEND_CONVERSION), the local sizes otherwise. Conversion and
+     * positioning code denominates its packed-stream byte accounting in these sizes; the in-memory
+     * layout still uses the local basic-type sizes and the datatype extent. Only read on the
+     * heterogeneous and repositioning paths, so it is kept off the two hot pack/unpack cachelines
+     * above.
+     */
+    const size_t *sizes;
+    /**
+     * set_position helper paired with fAdvance at prepare time. NULL means CONVERTOR_NO_OP:
+     * set_position updates bConverted only, with no call. Kept off the pack/unpack cachelines:
+     * repositioning is a rendezvous/retransmit path. Wrappers that replace fAdvance (e.g.
+     * vprotocol) must leave this pointing at the original mover's positioner.
+     */
+    convertor_position_fct_t fPosition;
     dt_stack_t static_stack[DT_STATIC_STACK_SIZE]; /**< local stack for small datatypes */
 
     opal_accelerator_stream_t *stream; /**< accelerator stream for async copy */
 };
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_convertor_t);
+
+/**
+ * Positioners selected at prepare time and stored in convertor->fPosition. NULL means
+ * CONVERTOR_NO_OP: set_position writes bConverted directly. Tests that override fAdvance
+ * (for example to force the general interpreter) must assign the matching positioner as
+ * well. Wrappers that only interpose on pack/unpack must not.
+ */
+OPAL_DECLSPEC int32_t opal_convertor_position_contig(opal_convertor_t *convertor,
+                                                     size_t *position);
+OPAL_DECLSPEC int32_t opal_convertor_position_generic(opal_convertor_t *convertor,
+                                                      size_t *position);
 
 /*
  *
@@ -177,6 +215,7 @@ static inline int opal_convertor_cleanup(opal_convertor_t *convertor)
     convertor->pDesc = NULL;
     convertor->stack_pos = 0;
     convertor->flags = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
+    convertor->fPosition = NULL;
 
     return OPAL_SUCCESS;
 }
@@ -234,10 +273,16 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConv);
 static inline void
 opal_convertor_get_packed_size(const opal_convertor_t *pConv, size_t *pSize)
 {
-    *pSize = pConv->local_size;
-    if ((pConv->flags & CONVERTOR_HOMOGENEOUS) ||
-        ((pConv->flags & CONVERTOR_SEND) && !(pConv->flags & CONVERTOR_SEND_CONVERSION)) ||
-        ((pConv->flags & CONVERTOR_RECV) && (pConv->flags & CONVERTOR_SEND_CONVERSION))) {
+    /* Same rule as OPAL_CONVERTOR_PREPARE's convertor->sizes selection: the
+     * packed stream is in remote units when this convertor touches the wire
+     * representation (RECV, or SEND_CONVERSION), and in local units otherwise
+     * (a send that leaves conversion to the receiver). Homogeneous convertors
+     * have local_size == remote_size. A RECV convertor that also carries
+     * SEND_CONVERSION (external32 pack-size, some hetero tests) is still a
+     * receive of the wire representation, so it uses remote units. */
+    if ((pConv->flags & CONVERTOR_HOMOGENEOUS)
+        || (0 == (pConv->flags & (CONVERTOR_RECV | CONVERTOR_SEND_CONVERSION)))) {
+        *pSize = pConv->local_size;
         return;
     }
     if (0 == (CONVERTOR_HAS_REMOTE_SIZE & pConv->flags)) {
@@ -309,20 +354,24 @@ OPAL_DECLSPEC int32_t opal_convertor_raw(opal_convertor_t *convertor, /* [IN/OUT
                                          uint32_t *iov_count,         /* [IN/OUT] */
                                          size_t *length);             /* [OUT]    */
 
-/*
- * Upper level does not need to call the _nocheck function directly.
- */
-OPAL_DECLSPEC int32_t opal_convertor_set_position_nocheck(opal_convertor_t *convertor,
-                                                          size_t *position);
 static inline int32_t opal_convertor_set_position(opal_convertor_t *convertor, size_t *position)
 {
+    size_t packed_size;
+
     /*
-     * Do not allow the convertor to go outside the data boundaries. This test include
-     * the check for datatype with size zero as well as for convertors with a count of zero.
+     * Do not allow the convertor to go outside the packed-stream boundaries. This
+     * test includes datatypes with size zero as well as convertors with a count of
+     * zero. *position and bConverted are packed-stream byte offsets, so the limit
+     * is the size opal_convertor_get_packed_size() reports: remote_size for a
+     * receive or a converting send, local_size otherwise (including a
+     * heterogeneous plain send, where the sender packs its native representation).
+     * Using remote_size unconditionally would truncate that send when remote_size
+     * < local_size, and would miss end-of-stream when remote_size > local_size.
      */
-    if (OPAL_UNLIKELY(convertor->local_size <= *position)) {
+    opal_convertor_get_packed_size(convertor, &packed_size);
+    if (OPAL_UNLIKELY(packed_size <= *position)) {
         convertor->flags |= CONVERTOR_COMPLETED;
-        convertor->bConverted = convertor->local_size;
+        convertor->bConverted = packed_size;
         *position = convertor->bConverted;
         return OPAL_SUCCESS;
     }
@@ -330,20 +379,18 @@ static inline int32_t opal_convertor_set_position(opal_convertor_t *convertor, s
     /*
      * If the convertor is already at the correct position we are happy.
      */
-    if (OPAL_LIKELY((*position) == convertor->bConverted))
+    if (OPAL_LIKELY((*position) == convertor->bConverted)) {
         return OPAL_SUCCESS;
+    }
 
     /* Remove the completed flag if it's already set */
     convertor->flags &= ~CONVERTOR_COMPLETED;
 
-    if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)
-        && (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {
-        /* Contiguous and no checkpoint and no homogeneous unpack */
+    if (OPAL_LIKELY(NULL == convertor->fPosition)) {
         convertor->bConverted = *position;
         return OPAL_SUCCESS;
     }
-
-    return opal_convertor_set_position_nocheck(convertor, position);
+    return convertor->fPosition(convertor, position);
 }
 
 OPAL_DECLSPEC int opal_convertor_clone(const opal_convertor_t *source,

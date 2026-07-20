@@ -31,7 +31,7 @@ static int32_t opal_datatype_create_indexed(int count, const int *pBlockLength, 
                                             opal_datatype_t **newType);
 static int32_t opal_datatype_create_hindexed(int count, const int *pBlockLength,
                                              const ptrdiff_t *pDisp, const opal_datatype_t *oldType,
-                                             opal_datatype_t **newType);
+                                             opal_datatype_t **newType) __opal_attribute_unused__;
 static int32_t opal_datatype_create_struct(int count, const int *pBlockLength,
                                            const ptrdiff_t *pDisp, opal_datatype_t **pTypes,
                                            opal_datatype_t **newType);
@@ -40,7 +40,7 @@ static int32_t opal_datatype_create_vector(int count, int bLength, int stride,
                                            opal_datatype_t **newType);
 static int32_t opal_datatype_create_hvector(int count, int bLength, ptrdiff_t stride,
                                             const opal_datatype_t *oldType,
-                                            opal_datatype_t **newType);
+                                            opal_datatype_t **newType) __opal_attribute_unused__;
 
 /**
  * Cache cleanup.

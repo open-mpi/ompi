@@ -345,7 +345,7 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
         pdtBase->desc.used++;
     } else {
         /* keep trace of the total number of basic datatypes in the datatype definition */
-        pdtBase->loops += pdtAdd->loops;
+        pdtBase->stack_depth += pdtAdd->stack_depth;
         pdtBase->flags |= (pdtAdd->flags & OPAL_DATATYPE_FLAG_USER_LB);
         pdtBase->flags |= (pdtAdd->flags & OPAL_DATATYPE_FLAG_USER_UB);
         if ((NULL != pdtBase->ptypes) && (NULL != pdtAdd->ptypes)) {
@@ -407,7 +407,7 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
                                   (pdtAdd->flags
                                    & (OPAL_DATATYPE_FLAG_ELEM_MASK
                                       & ~OPAL_DATATYPE_FLAG_COMMITTED)));
-                pdtBase->loops += 2;
+                pdtBase->stack_depth += 2;
                 pdtBase->desc.used += 2;
                 pLast++;
             }
