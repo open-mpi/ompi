@@ -171,7 +171,7 @@ void mca_btl_ofi_rcache_init(mca_btl_ofi_module_t *module)
                                 fi_strerror(-ret));
         }
 
-        (void) opal_asprintf(&tmp, "ofi.%s", module->linux_device_name);
+        (void) opal_asprintf(&tmp, "ofi.%s", module->domain_name);
 
         rcache_resources.cache_name = tmp;
         rcache_resources.reg_data = (void *) module;
