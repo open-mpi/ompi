@@ -39,7 +39,8 @@ TESTS = \
         large_data \
         partial \
         ompi_datatype_bigcount \
-        mpi_datatype_bigcount
+        mpi_datatype_bigcount \
+        sizedtypes
 
 MPI_CHECKS = to_self reduce_local
 
@@ -109,6 +110,10 @@ reduce_local_LDADD = $(common_ldadd)
 partial_SOURCES = partial.c
 partial_LDFLAGS = $(common_ldflags)
 partial_LDADD = $(common_ldadd)
+
+sizedtypes_SOURCES = sizedtypes.c
+sizedtypes_LDFLAGS = $(common_ldflags)
+sizedtypes_LDADD = $(common_ldadd)
 
 distclean-local:
 	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile
