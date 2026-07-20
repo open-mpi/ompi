@@ -60,6 +60,12 @@ static char *ofi_progress_mode;
 static bool disable_sep;
 static int mca_btl_ofi_init_device(struct fi_info *info);
 
+/* qsort comparator for an array of domain name strings */
+static int domain_name_compare(const void *a, const void *b)
+{
+    return strcmp(*(const char *const *) a, *(const char *const *) b);
+}
+
 /* validate information returned from fi_getinfo().
  * return OPAL_ERROR if we dont have what we need. */
 static int validate_info(struct fi_info *info, uint64_t required_caps, char **include_list,
@@ -244,6 +250,8 @@ static int mca_btl_ofi_component_close(void)
 {
     int ret;
     ret = opal_common_ofi_close();
+    free(mca_btl_ofi_component.modules);
+    mca_btl_ofi_component.modules = NULL;
     /* If we don't sleep, sockets provider freaks out. Ummm this is a scary comment */
     sleep(1);
     return ret;
@@ -285,7 +293,8 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
         return NULL;
     }
 
-    struct fi_info *info, *info_list = NULL, *selected_info = NULL;
+    struct fi_info *info, *info_list = NULL;
+    const char **unique_domains = NULL;
     struct fi_info hints = {0};
     struct fi_ep_attr ep_attr = {0};
     struct fi_rx_attr rx_attr = {0};
@@ -447,38 +456,128 @@ no_hmem:
 
     info = info_list;
 
-    while (info) {
-        rc = validate_info(info, required_caps, include_list, exclude_list);
-        if (OPAL_SUCCESS == rc) {
-            /* Device passed sanity check, let's make a module.
-             *
-             * The initial fi_getinfo() call will return a list of providers
-             * available for this process. once a provider is selected from the
-             * list, we will cycle through the remaining list to identify NICs
-             * serviced by this provider, and try to pick one on the same NUMA
-             * node as this process. If there are no NICs on the same NUMA node,
-             * we pick one in a manner which allows all ranks to make balanced
-             * use of available NICs on the system.
-             *
-             * Most providers give a separate fi_info object for each NIC,
-             * however some may have multiple info objects with different
-             * attributes for the same NIC. The initial provider attributes
-             * are used to ensure that all NICs we return provide the same
-             * capabilities as the initial one.
-             */
-            selected_info = opal_common_ofi_select_provider(info, &opal_process_info);
-            rc = mca_btl_ofi_init_device(selected_info);
-            if (OPAL_SUCCESS == rc) {
-                info = selected_info;
+    /* Count unique NIC domains for the selected provider to determine how many
+     * modules this process should create. This avoids creating resources that
+     * will never be used. We match by both provider name and domain name to
+     * avoid double-counting entries that share a physical NIC but differ in
+     * provider variant (e.g., efa vs efa-direct) or attributes. */
+    int num_nics = 0;
+    const char *first_prov = NULL;
+    if (resource_count > 0) {
+        unique_domains = (const char **) calloc(resource_count, sizeof(const char *));
+    }
+    {
+        struct fi_info *tmp = info_list;
+        while (tmp && NULL != unique_domains) {
+            if (OPAL_SUCCESS == validate_info(tmp, required_caps, include_list, exclude_list)) {
+                const char *p = (NULL != tmp->fabric_attr) ? tmp->fabric_attr->prov_name : NULL;
+                const char *d = (NULL != tmp->domain_attr) ? tmp->domain_attr->name : NULL;
+                if (NULL == first_prov) first_prov = p;
+                if (NULL != first_prov && NULL != p && 0 == strcmp(first_prov, p) && NULL != d) {
+                    /* Only count unique domain names */
+                    bool dup = false;
+                    for (int i = 0; i < num_nics; i++) {
+                        if (0 == strcmp(unique_domains[i], d)) { dup = true; break; }
+                    }
+                    if (!dup) {
+                        unique_domains[num_nics] = d;
+                        num_nics++;
+                    }
+                }
+            }
+            tmp = tmp->next;
+        }
+    }
+    /* Sort the unique domain names so the list order is deterministic and
+     * identical on every process regardless of how the provider ordered
+     * its fi_getinfo() results. */
+    if (1 < num_nics) {
+        qsort(unique_domains, num_nics, sizeof(unique_domains[0]),
+              domain_name_compare);
+    }
+
+    /* Distribute NICs evenly across local processes */
+    int num_local_procs = (int)(opal_process_info.num_local_peers + 1);
+    int modules_per_proc = (num_nics > num_local_procs) ? (num_nics / num_local_procs) : 1;
+
+    /* Each local process takes a disjoint, contiguous slice of the sorted
+     * unique NIC (domain) list so that local processes do not collapse
+     * onto the same NICs. The list order is identical on all processes on
+     * a node, so slices are disjoint whenever there are at least as many
+     * NICs as local processes. */
+    int slice_start = 0;
+    if (0 < num_nics) {
+        slice_start = ((int) opal_process_info.my_local_rank * modules_per_proc) % num_nics;
+    }
+
+    /* Allocate the modules array dynamically based on actual need */
+    mca_btl_ofi_component.modules = (mca_btl_ofi_module_t **)
+        calloc(modules_per_proc, sizeof(mca_btl_ofi_module_t *));
+    if (NULL == mca_btl_ofi_component.modules) {
+        goto out;
+    }
+    mca_btl_ofi_component.modules_allocated = modules_per_proc;
+
+    /* Create one module per NIC (domain) in this process' slice of the
+     * unique-domain list. Pin to a single provider (the first valid one)
+     * so all modules share one address format. */
+    for (int mi = 0; mi < modules_per_proc && 0 < num_nics; mi++) {
+        const char *want = unique_domains[(slice_start + mi) % num_nics];
+        for (info = info_list; NULL != info; info = info->next) {
+            if (OPAL_SUCCESS != validate_info(info, required_caps, include_list, exclude_list)) {
+                continue;
+            }
+            const char *prov = (NULL != info->fabric_attr)
+                               ? info->fabric_attr->prov_name : NULL;
+            const char *d = (NULL != info->domain_attr) ? info->domain_attr->name : NULL;
+            if (NULL != first_prov && NULL != prov && NULL != d
+                && 0 == strcmp(first_prov, prov) && 0 == strcmp(want, d)) {
+                (void) mca_btl_ofi_init_device(info);
                 break;
             }
         }
-        info = info->next;
     }
 
-    if (NULL == info) {
+    if (0 == mca_btl_ofi_component.module_count) {
         BTL_VERBOSE(("No provider is selected"));
         goto out;
+    }
+
+    /* Publish all module endpoint names in a single modex blob so peers can
+     * pair modules by index. Layout: uint32 nmodules, then per module:
+     * uint32 namelen, namelen bytes. */
+    {
+        size_t total = sizeof(uint32_t);
+        for (int mi = 0; mi < mca_btl_ofi_component.module_count; mi++) {
+            total += sizeof(uint32_t) + mca_btl_ofi_component.modules[mi]->ep_namelen;
+        }
+        uint8_t *blob = (uint8_t *) malloc(total);
+        if (NULL == blob) {
+            BTL_ERROR(("failed to allocate modex blob"));
+            goto out;
+        }
+        uint8_t *p = blob;
+        uint32_t nm = (uint32_t) mca_btl_ofi_component.module_count;
+        memcpy(p, &nm, sizeof(uint32_t));
+        p += sizeof(uint32_t);
+        for (int mi = 0; mi < mca_btl_ofi_component.module_count; mi++) {
+            uint32_t nl = (uint32_t) mca_btl_ofi_component.modules[mi]->ep_namelen;
+            memcpy(p, &nl, sizeof(uint32_t));
+            p += sizeof(uint32_t);
+            memcpy(p, mca_btl_ofi_component.modules[mi]->ep_name, nl);
+            p += nl;
+        }
+        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, blob, total);
+        free(blob);
+        if (OPAL_SUCCESS != rc) {
+            BTL_ERROR(("modex send failed"));
+            goto out;
+        }
+        /* ep_name copies no longer needed after packing into blob */
+        for (int mi = 0; mi < mca_btl_ofi_component.module_count; mi++) {
+            free(mca_btl_ofi_component.modules[mi]->ep_name);
+            mca_btl_ofi_component.modules[mi]->ep_name = NULL;
+        }
     }
 
     /* pass module array back to caller */
@@ -496,6 +595,7 @@ no_hmem:
     *num_btl_modules = mca_btl_ofi_component.module_count;
 
 out:
+    free(unique_domains);
     if (include_list) {
         opal_argv_free(include_list);
     }
@@ -724,12 +824,12 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         }
     }
 
-    /* post our endpoint name so peer can use it to connect to us */
-    OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_btl_ofi_component.super.btl_version, ep_name, namelen);
-    mca_btl_ofi_component.namelen = namelen;
-    free(ep_name);
+    /* Save endpoint name on the module; modex send happens after all modules are created */
+    module->ep_name = ep_name;
+    module->ep_namelen = namelen;
 
     /* add this module to the list */
+    module->module_index = *module_count;
     mca_btl_ofi_component.modules[(*module_count)++] = module;
 
     return OPAL_SUCCESS;

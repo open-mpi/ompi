@@ -46,7 +46,7 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
                                  opal_bitmap_t *reachable)
 {
     int rc;
-    int count;
+    int count = 0;
     char *ep_name = NULL;
     size_t namelen = mca_btl_ofi_component.namelen;
 
@@ -89,20 +89,43 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             MCA_BTL_OFI_ABORT();
         }
 
-        /* get peer fi_addr */
-        count = fi_av_insert(ofi_btl->av,          /* Address vector to insert */
-                             ep_name,              /* peer name */
-                             1,                    /* amount to insert */
-                             &peers[i]->peer_addr, /* return peer address here */
-                             0,                    /* flags */
-                             NULL);                /* context */
+        /* The modex blob is packed as: uint32 nmodules, then per module:
+         * uint32 namelen, namelen bytes. Insert only this module's paired peer
+         * (by module_index) into the AV. */
+        {
+            uint8_t *p = (uint8_t *) ep_name;
+            uint32_t nm = 0;
+            memcpy(&nm, p, sizeof(uint32_t));
+            p += sizeof(uint32_t);
+
+            if (0 == nm) {
+                free(ep_name);
+                BTL_VERBOSE(("peer published 0 modules"));
+                MCA_BTL_OFI_ABORT();
+            }
+
+            int target = ofi_btl->module_index % (int) nm;
+            fi_addr_t peer_addr = FI_ADDR_NOTAVAIL;
+
+            for (int k = 0; k <= target && k < (int) nm; k++) {
+                uint32_t nl = 0;
+                memcpy(&nl, p, sizeof(uint32_t));
+                p += sizeof(uint32_t);
+                if (k == target) {
+                    count = fi_av_insert(ofi_btl->av, p, 1, &peer_addr, 0, NULL);
+                }
+                p += nl;
+            }
+            peers[i]->peer_addr = peer_addr;
+        }
+        free(ep_name);
 
         /* if succeed, add this proc and mark reachable */
-        if (count == 1) { /* we inserted 1 address. */
+        if (peers[i]->peer_addr != FI_ADDR_NOTAVAIL && count == 1) {
             opal_list_append(&ofi_btl->endpoints, &peers[i]->super);
             opal_bitmap_set_bit(reachable, i);
         } else {
-            BTL_VERBOSE(("fi_av_insert failed with rc = %d", count));
+            BTL_VERBOSE(("fi_av_insert failed for module %d", ofi_btl->module_index));
             MCA_BTL_OFI_ABORT();
         }
     }
@@ -419,6 +442,7 @@ int mca_btl_ofi_finalize(mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&ofi_btl->module_lock);
 
     free(ofi_btl->domain_name);
+    free(ofi_btl->ep_name);
     free(btl);
 
     return OPAL_SUCCESS;
