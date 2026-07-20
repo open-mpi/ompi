@@ -4,7 +4,7 @@ License
 Open MPI license
 ----------------
 
-The Open MPI license is as follows:
+The `Open MPI license <https://spdx.org/licenses/BSD-3-Clause-Open-MPI.html>`_  is as follows:
 
 .. literalinclude:: ompi.txt
    :language: text
