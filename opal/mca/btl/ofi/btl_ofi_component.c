@@ -516,7 +516,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     size_t namelen;
     size_t num_contexts_to_create;
 
-    char *linux_device_name;
+    char *domain_name;
     void *ep_name = NULL;
 
     struct fi_info *ofi_info;
@@ -564,21 +564,21 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
                      fi_strerror(-rc)));
     }
 
-    linux_device_name = info->domain_attr->name;
+    domain_name = info->domain_attr->name;
     BTL_VERBOSE(
-        ("initializing dev:%s provider:%s", linux_device_name, info->fabric_attr->prov_name));
+        ("initializing dev:%s provider:%s", domain_name, info->fabric_attr->prov_name));
 
     /* fabric */
     rc = opal_common_ofi_fi_fabric(ofi_info->fabric_attr, &fabric);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_fabric with err=%s", linux_device_name, fi_strerror(-rc)));
+        BTL_VERBOSE(("%s failed fi_fabric with err=%s", domain_name, fi_strerror(-rc)));
         goto fail;
     }
 
     /* domain */
     rc = opal_common_ofi_fi_domain(fabric, ofi_info, &domain);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_domain with err=%s", linux_device_name, fi_strerror(-rc)));
+        BTL_VERBOSE(("%s failed fi_domain with err=%s", domain_name, fi_strerror(-rc)));
         goto fail;
     }
 
@@ -591,7 +591,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     av_attr.type = FI_AV_MAP;
     rc = fi_av_open(domain, &av_attr, &av, NULL);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_av_open with err=%s", linux_device_name, fi_strerror(-rc)));
+        BTL_VERBOSE(("%s failed fi_av_open with err=%s", domain_name, fi_strerror(-rc)));
         goto fail;
     }
 
@@ -616,7 +616,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         rc = fi_scalable_ep(domain, ofi_info, &ep, NULL);
         if (0 != rc) {
             BTL_VERBOSE(
-                ("%s failed fi_scalable_ep with err=%s", linux_device_name, fi_strerror(-rc)));
+                ("%s failed fi_scalable_ep with err=%s", domain_name, fi_strerror(-rc)));
             goto fail;
         }
 
@@ -639,7 +639,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
         rc = fi_endpoint(domain, ofi_info, &ep, NULL);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_endpoint with err=%s", linux_device_name, fi_strerror(-rc)));
+            BTL_VERBOSE(("%s failed fi_endpoint with err=%s", domain_name, fi_strerror(-rc)));
             goto fail;
         }
 
@@ -658,7 +658,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     /* enable the endpoint for using */
     rc = fi_enable(ep);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_enable with err=%s", linux_device_name, fi_strerror(-rc)));
+        BTL_VERBOSE(("%s failed fi_enable with err=%s", domain_name, fi_strerror(-rc)));
         goto fail;
     }
 
@@ -669,7 +669,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     module->domain = domain;
     module->av = av;
     module->ofi_endpoint = ep;
-    module->linux_device_name = linux_device_name;
+    module->domain_name = domain_name;
     module->outstanding_rdma = 0;
     module->use_virt_addr = false;
     module->use_fi_mr_bind = false;
@@ -704,7 +704,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
                                      &ep_name,
                                      &namelen);
     if (OPAL_SUCCESS != rc) {
-        BTL_VERBOSE(("%s failed opal_common_ofi_fi_getname  with err=%d", linux_device_name, rc));
+        BTL_VERBOSE(("%s failed opal_common_ofi_fi_getname  with err=%d", domain_name, rc));
         goto fail;
     }
 

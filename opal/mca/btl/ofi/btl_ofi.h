@@ -121,7 +121,7 @@ struct mca_btl_ofi_module_t {
     int num_contexts;
     mca_btl_ofi_context_t *contexts;
 
-    char *linux_device_name;
+    char *domain_name;
 
     /** whether the module has been fully initialized or not */
     bool initialized;
