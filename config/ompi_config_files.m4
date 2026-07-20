@@ -26,6 +26,14 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/datatype/Makefile
         ompi/debuggers/Makefile
 
+        ompi/test/Makefile
+        ompi/test/t/Makefile
+        ompi/test/file/Makefile
+        ompi/test/datatype/Makefile
+        ompi/test/general/Makefile
+        ompi/test/monitoring/Makefile
+        ompi/test/spc/Makefile
+
         ompi/mpi/c/Makefile
         ompi/mpi/fortran/base/Makefile
         ompi/mpi/fortran/mpif-h/Makefile

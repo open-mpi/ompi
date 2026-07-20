@@ -25,16 +25,13 @@
 AM_CPPFLAGS="-I$(top_srcdir)/test/support"
 
 # Make "make check" work in an uninstalled --enable-mca-dso build tree
-include $(top_srcdir)/test/Makefile.mca-dso-check
-
-if PROJECT_OMPI
-  REQUIRES_OMPI = ompi_rb_tree
-endif
+include $(top_srcdir)/Makefile.mca-dso-check
 
 check_PROGRAMS = \
-	$(REQUIRES_OMPI) opal_bitmap \
+	opal_bitmap \
 	opal_hash_table \
 	opal_proc_table \
+	opal_rb_tree \
 	opal_list \
 	opal_value_array \
 	opal_pointer_array \
@@ -77,11 +74,9 @@ opal_value_array_SOURCES = opal_value_array.c
 opal_value_array_LDADD = $(opal_test_ldadd)
 opal_value_array_DEPENDENCIES = $(opal_test_ldadd)
 
-ompi_rb_tree_SOURCES = ompi_rb_tree.c
-ompi_rb_tree_LDADD = \
-	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-	$(opal_test_ldadd)
-ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
+opal_rb_tree_SOURCES = opal_rb_tree.c
+opal_rb_tree_LDADD = $(opal_test_ldadd)
+opal_rb_tree_DEPENDENCIES = $(opal_test_ldadd)
 
 opal_lifo_SOURCES = opal_lifo.c
 opal_lifo_LDADD = $(opal_test_ldadd)

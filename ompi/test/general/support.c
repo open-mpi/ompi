@@ -1,0 +1,162 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2024      Amazon.com, Inc. or its affiliates.
+ *                         All Rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+#include <assert.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "support.h"
+
+#define test_verify_number(T, specifier)                                           \
+    int test_verify_##T(T expected_result, T test_result)                          \
+    {                                                                              \
+        int return_value;                                                          \
+        return_value = 1;                                                          \
+        if (expected_result != test_result) {                                      \
+            test_failure("Comparison failure");                                    \
+            fprintf(stderr, " Expected result: " specifier "\n", expected_result); \
+            fprintf(stderr, " Test result: " specifier "\n", test_result);         \
+            fflush(stderr);                                                        \
+            return_value = 0;                                                      \
+        } else {                                                                   \
+            test_success();                                                        \
+        }                                                                          \
+        return return_value;                                                       \
+    }
+
+test_verify_number(int, "%d")
+test_verify_number(int64_t, "%" PRId64)
+test_verify_number(size_t, "%zu")
+test_verify_number(double, "%lf")
+
+/**
+ * A testing support library to provide uniform reporting output
+ */
+
+static int opal_n_tests;
+static int opal_n_success;
+static int opal_n_failures;
+static char *opal_description;
+
+void test_init(const char *a)
+{
+    /* local variables */
+    size_t len;
+
+    /* save the descriptive string.  Do not rely on assert() here: the
+     * tests are compiled with -DNDEBUG, so assert() is a no-op and an
+     * allocation failure would otherwise fall through to a NULL deref in
+     * strcpy(). */
+    len = strlen(a);
+    opal_description = (char *) malloc(len + 1);
+    if (NULL == opal_description) {
+        fprintf(stderr, "test_init: out of memory\n");
+        exit(1);
+    }
+
+    strcpy(opal_description, a);
+
+    /* initialize counters */
+    opal_n_tests = 0;
+    opal_n_success = 0;
+    opal_n_failures = 0;
+
+    return;
+}
+
+void test_success(void)
+{
+    opal_n_tests++;
+    opal_n_success++;
+}
+
+void test_failure(const char *a)
+{
+    opal_n_tests++;
+    opal_n_failures++;
+
+    fprintf(stderr, " Failure : ");
+    fprintf(stderr, "%s", a);
+    fprintf(stderr, "\n");
+    fflush(stderr);
+}
+
+int test_verify_str(const char *expected_result, const char *test_result)
+{
+    size_t len_expect, len_result;
+    int return_value;
+
+    return_value = 1;
+    len_expect = expected_result ? strlen(expected_result) : 0;
+    len_result = test_result ? strlen(test_result) : 0;
+
+    if ((!(len_expect == len_result)) || (0 != strcmp(expected_result, test_result))) {
+        test_failure("Comparison failure");
+        fprintf(stderr, " Expected result: %s\n", expected_result);
+        fprintf(stderr, " Test result: %s\n", test_result);
+        fflush(stderr);
+        return_value = 0;
+    } else {
+        test_success();
+    }
+
+    return return_value;
+}
+
+int test_finalize(void)
+{
+    int return_value;
+
+    return_value = 0;
+
+    if (opal_n_tests == opal_n_success) {
+        fprintf(stderr, "SUPPORT: OMPI Test Passed: %s: (%d tests)\n", opal_description,
+                opal_n_tests);
+        fflush(stderr);
+    } else {
+        fprintf(stderr, "SUPPORT: OMPI Test failed: %s (%d of %d failed)\n", opal_description,
+                opal_n_failures, opal_n_tests);
+        fflush(stderr);
+        return_value = 1;
+    }
+
+    if (NULL != opal_description)
+        free(opal_description);
+
+    return return_value;
+}
+
+/* note this is for additional output that does NOT go to STDERR but STDOUT */
+void test_comment(const char *userstr)
+{
+    fprintf(stdout, "%s:%s\n", opal_description, userstr);
+}
+
+void test_fail_stop(const char *msg, int status)
+{
+    test_failure(msg);
+    test_finalize();
+    exit(status);
+}

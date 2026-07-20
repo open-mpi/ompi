@@ -14,89 +14,20 @@
 #
 # $HEADER$
 #
+# OPAL-level datatype tests: these link only against libopen-pal.  The
+# tests of the OMPI datatype engine and the MPI datatype API live in
+# ompi/test/datatype.
+#
 
 AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
-# Make "make check" work in an uninstalled --enable-mca-dso build tree
-include $(top_srcdir)/test/Makefile.mca-dso-check
+# These tests call opal_init().  Make "make check" work in an
+# uninstalled --enable-mca-dso build tree.
+include $(top_srcdir)/Makefile.mca-dso-check
 
-if PROJECT_OMPI
-    MPI_TESTS = checksum position position_noncontig ddt_test ddt_raw ddt_raw2 unpack_ooo ddt_pack external32 large_data partial ompi_datatype_bigcount mpi_datatype_bigcount
-    MPI_CHECKS = to_self reduce_local
-endif
-TESTS = opal_datatype_test opal_datatype_bigcount unpack_hetero opal_ddt_api $(MPI_TESTS)
+TESTS = opal_datatype_test opal_datatype_bigcount unpack_hetero opal_ddt_api
 
-check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
-
-unpack_ooo_SOURCES = unpack_ooo.c ddt_lib.c ddt_lib.h
-unpack_ooo_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-unpack_ooo_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-ddt_test_SOURCES = ddt_test.c ddt_lib.c ddt_lib.h
-ddt_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-ddt_test_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-ddt_raw_SOURCES = ddt_raw.c ddt_lib.c ddt_lib.h
-ddt_raw_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-ddt_raw_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-ddt_raw2_SOURCES = ddt_raw2.c ddt_lib.c ddt_lib.h
-ddt_raw2_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-ddt_raw2_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-ddt_pack_SOURCES = ddt_pack.c
-ddt_pack_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-ddt_pack_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-checksum_SOURCES = checksum.c
-checksum_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-checksum_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-position_SOURCES = position.c
-position_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-position_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-position_noncontig_SOURCES = position_noncontig.c
-position_noncontig_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-position_noncontig_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-to_self_SOURCES = to_self.c
-to_self_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-to_self_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
-
-large_data_SOURCES = large_data.c
-large_data_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-large_data_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-ompi_datatype_bigcount_SOURCES = ompi_datatype_bigcount.c
-ompi_datatype_bigcount_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-ompi_datatype_bigcount_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-mpi_datatype_bigcount_SOURCES = mpi_datatype_bigcount.c
-mpi_datatype_bigcount_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-mpi_datatype_bigcount_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+check_PROGRAMS = $(TESTS)
 
 opal_datatype_test_SOURCES = opal_datatype_test.c opal_ddt_lib.c opal_ddt_lib.h
 opal_datatype_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
@@ -106,12 +37,6 @@ opal_datatype_test_LDADD = \
 opal_datatype_bigcount_SOURCES = opal_datatype_bigcount.c
 opal_datatype_bigcount_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 opal_datatype_bigcount_LDADD = \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-external32_SOURCES = external32.c
-external32_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-external32_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 unpack_hetero_SOURCES = unpack_hetero.c
@@ -124,18 +49,6 @@ opal_ddt_api_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 opal_ddt_api_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
-
-reduce_local_SOURCES = reduce_local.c
-reduce_local_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-reduce_local_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
-
-partial_SOURCES = partial.c
-partial_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-partial_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
-        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 distclean-local:
 	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile
