@@ -38,8 +38,6 @@
 #if defined(VERBOSE)
 #    include "opal/util/output.h"
 
-extern int opal_datatype_dfd;
-
 #    define DDT_DUMP_STACK(PSTACK, STACK_POS, PDESC, NAME) \
         opal_datatype_dump_stack((PSTACK), (STACK_POS), (PDESC), (NAME))
 
@@ -325,6 +323,52 @@ extern bool opal_ddt_unpack_debug;
 extern bool opal_ddt_pack_debug;
 extern bool opal_ddt_raw_debug;
 extern bool opal_datatype_check_missed_optimizations;
+extern int opal_datatype_dfd;
+
+/*
+ * Runtime-tunable pack/unpack/optimize policy thresholds.
+ *
+ * The medium-block typed pack/unpack movers choose between a typed copy loop and the generic
+ * predefined mover, and the descriptor optimizer decides how far to unroll and grow a datatype
+ * description, based on these thresholds. They are exposed as expert MCA parameters
+ * (opal_datatype_{pack,unpack,optimize}_*) so they can be retuned at launch without recompiling.
+ *
+ * The pack/unpack thresholds are read once per block run (not per element), and the optimize
+ * thresholds are read at datatype-commit time, so the runtime indirection is off the pack/unpack
+ * hot path.
+ *
+ * The default values, and the caveats about where they came from, are documented at the
+ * opal_datatype_config definition in opal_datatype_module.c.
+ */
+typedef struct opal_datatype_config_t {
+    struct {
+        size_t max_vectorized_blocklen;
+        size_t l1_cache_lines;
+        /* Contiguous per-block byte size below which a strided pack uses the byte memcpy
+         * path instead of the typed inline mover. Small strided blocks are faster through a tuned
+         * memcpy than through a runtime-count typed loop on some microarchitectures (notably
+         * x86); 0 disables the gate (typed mover always eligible). */
+        size_t min_typed_block_bytes;
+    } pack;
+    struct {
+        size_t max_vectorized_block_bytes;
+        size_t always_typed_block_bytes;
+        size_t compact_memcpy_max_bytes;
+        size_t min_scatter_gap_bytes;
+        size_t small_fragment_bytes;
+        size_t large_fragment_bytes;
+    } unpack;
+    struct {
+        size_t max_desc_growth;
+        size_t loop_unroll_max_items;
+        size_t loop_unroll_max_data_bytes;
+        /* Read before datatype commit; when false, mixed optimized regions are forced to
+         * OPAL_DATATYPE_UINT1 instead of a wider promoted integer type. */
+        bool preserve_type;
+    } optimize;
+} opal_datatype_config_t;
+
+extern opal_datatype_config_t opal_datatype_config;
 
 END_C_DECLS
 #endif /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */

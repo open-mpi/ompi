@@ -7,6 +7,7 @@
  * Copyright (c) 2020      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2024      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,29 +91,29 @@ static void print_status(char *op, char *type, int type_size, int count, int max
 }
 
 static int do_ops_built = 0;
-static int build_do_ops(char *optarg, int *do_ops)
+static int build_do_ops(char *ops_spec, int *ops)
 {
     int i;
-    if (0 == strcmp(optarg, "all")) {
+    if (0 == strcmp(ops_spec, "all")) {
         for (i = 0; NULL != array_of_ops[i].name; i++) {
-            do_ops[i] = i;
+            ops[i] = i;
         }
-        do_ops[i] = -1; /* stop */
+        ops[i] = -1; /* stop */
     } else {
         int n, idx = 0;
-        char *token, *arg = optarg;
+        char *token, *arg = ops_spec;
         while ((token = strsep(&arg, ",")) != NULL) {
             for (i = 0; NULL != array_of_ops[i].name; i++) { /* find the op */
                 if (0 == strcmp(array_of_ops[i].name, token)) {
                     /* check if the op was not already selected */
                     for (n = 0; n < idx; n++) {
-                        if (i == do_ops[n]) {
+                        if (i == ops[n]) {
                             break;
                         }
                     }
                     if (n >= idx) {
-                        do_ops[idx++] = i;
-                        do_ops[idx] = -1;
+                        ops[idx++] = i;
+                        ops[idx] = -1;
                     }
                     break;
                 }

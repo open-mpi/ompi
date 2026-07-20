@@ -32,6 +32,7 @@ headers = \
         opal_datatype_internal.h \
         opal_datatype_copy.h \
         opal_datatype_memcpy.h \
+        opal_datatype_accelerator_copy.h \
         opal_datatype_pack_unpack_predefined.h \
         opal_datatype_pack.h \
         opal_datatype_prototypes.h \

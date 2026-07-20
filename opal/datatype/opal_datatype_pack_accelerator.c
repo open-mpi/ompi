@@ -18,101 +18,8 @@
 
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype_internal.h"
-
-int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec *iov,
-                                     uint32_t *out_size, size_t *max_data);
-
-typedef size_t (*opal_datatype_accelerator_copy_function_t)(
-    opal_convertor_t *pConvertor, size_t count, size_t blocklen, size_t elem_count, char **from,
-    size_t from_len, ptrdiff_t from_extent, char **to, size_t to_len, ptrdiff_t to_extent);
-
-static size_t opal_datatype_accelerator_copy_by_size(opal_convertor_t *pConvertor,
-                                                     size_t elem_size, size_t count,
-                                                     size_t blocklen, size_t elem_count,
-                                                     char **from, size_t from_len,
-                                                     ptrdiff_t from_extent, char **to,
-                                                     size_t to_len, ptrdiff_t to_extent)
-{
-    size_t block_count = 0, leftover;
-    char *_from = *from, *_to = *to;
-
-    (void) from_len;
-    (void) to_len;
-
-    assert(0 != elem_size);
-    assert(0 != blocklen);
-
-    if (0 == count) {
-        return 0;
-    }
-
-    if ((1 == blocklen) || ((1 < elem_count) && (blocklen <= count))) {
-        const size_t block_bytes = blocklen * elem_size;
-
-        block_count = count / blocklen;
-        if ((from_extent == (ptrdiff_t) block_bytes) && (to_extent == (ptrdiff_t) block_bytes)) {
-            pConvertor->cbmemcpy(_to, _from, block_count * block_bytes, pConvertor);
-            _to += block_count * block_bytes;
-            _from += block_count * block_bytes;
-        } else {
-            for (size_t i = 0; i < block_count; i++) {
-                pConvertor->cbmemcpy(_to, _from, block_bytes, pConvertor);
-                _to += to_extent;
-                _from += from_extent;
-            }
-        }
-    }
-
-    leftover = count - block_count * blocklen;
-    if (0 != leftover) {
-        const size_t leftover_bytes = leftover * elem_size;
-
-        pConvertor->cbmemcpy(_to, _from, leftover_bytes, pConvertor);
-        _to += leftover_bytes;
-        _from += leftover_bytes;
-    }
-
-    *from = _from;
-    *to = _to;
-    return count;
-}
-
-#define OPAL_DATATYPE_ACCELERATOR_COPY_BYTES(SIZE)                                             \
-    static size_t opal_datatype_accelerator_copy_bytes_##SIZE(                                 \
-        opal_convertor_t *pConvertor, size_t count, size_t blocklen, size_t elem_count,        \
-        char **from, size_t from_len, ptrdiff_t from_extent, char **to, size_t to_len,         \
-        ptrdiff_t to_extent)                                                                   \
-    {                                                                                          \
-        return opal_datatype_accelerator_copy_by_size(pConvertor, (SIZE), count, blocklen,     \
-                                                      elem_count, from, from_len, from_extent, \
-                                                      to, to_len, to_extent);                  \
-    }
-
-OPAL_DATATYPE_ACCELERATOR_COPY_BYTES(1)
-OPAL_DATATYPE_ACCELERATOR_COPY_BYTES(2)
-OPAL_DATATYPE_ACCELERATOR_COPY_BYTES(4)
-OPAL_DATATYPE_ACCELERATOR_COPY_BYTES(8)
-OPAL_DATATYPE_ACCELERATOR_COPY_BYTES(16)
-
-static opal_datatype_accelerator_copy_function_t
-    opal_datatype_accelerator_copy_functions[17] = {
-        [1] = opal_datatype_accelerator_copy_bytes_1,
-        [2] = opal_datatype_accelerator_copy_bytes_2,
-        [4] = opal_datatype_accelerator_copy_bytes_4,
-        [8] = opal_datatype_accelerator_copy_bytes_8,
-        [16] = opal_datatype_accelerator_copy_bytes_16,
-    };
-
-static inline opal_datatype_accelerator_copy_function_t
-opal_datatype_accelerator_copy_function_for_size(size_t elem_size)
-{
-    if ((elem_size < (sizeof(opal_datatype_accelerator_copy_functions)
-                      / sizeof(opal_datatype_accelerator_copy_functions[0])))
-        && (NULL != opal_datatype_accelerator_copy_functions[elem_size])) {
-        return opal_datatype_accelerator_copy_functions[elem_size];
-    }
-    return NULL;
-}
+#include "opal/datatype/opal_datatype_prototypes.h"
+#include "opal/datatype/opal_datatype_accelerator_copy.h"
 
 static inline size_t opal_pack_accelerator_predefined_data(opal_convertor_t *pConvertor,
                                                            const dt_elem_desc_t *pElem,
@@ -125,7 +32,6 @@ static inline size_t opal_pack_accelerator_predefined_data(opal_convertor_t *pCo
     const size_t elem_size = opal_datatype_basicDatatypes[elem->common.type]->size;
     const size_t block_bytes = elem_size * elem->blocklen;
     size_t copy_count = *count, copied;
-    opal_datatype_accelerator_copy_function_t copy_function;
     char *from, *to;
 
     assert(0 != elem_size);
@@ -142,15 +48,9 @@ static inline size_t opal_pack_accelerator_predefined_data(opal_convertor_t *pCo
 
     from = (char *) (*memory + elem->disp);
     to = (char *) *packed;
-    copy_function = opal_datatype_accelerator_copy_function_for_size(elem_size);
-    if (NULL == copy_function) {
-        copied = opal_datatype_accelerator_copy_by_size(
-            pConvertor, elem_size, copy_count, elem->blocklen, elem->count, &from, *space,
-            elem->extent, &to, *space, block_bytes);
-    } else {
-        copied = copy_function(pConvertor, copy_count, elem->blocklen, elem->count, &from, *space,
-                               elem->extent, &to, *space, block_bytes);
-    }
+    copied = opal_datatype_accelerator_copy_by_size(pConvertor, elem_size, copy_count,
+                                                    elem->blocklen, elem->count, &from, *space,
+                                                    elem->extent, &to, *space, block_bytes);
 
     assert(copied == copy_count);
     *count -= copied;
@@ -158,6 +58,52 @@ static inline size_t opal_pack_accelerator_predefined_data(opal_convertor_t *pCo
     *space -= copied * elem_size;
     *packed = (unsigned char *) to;
     return copied * elem_size;
+}
+
+/**
+ * Pack a contiguous loop: its body is a single contiguous run of end_loop->size bytes, repeated
+ * loop->loops times with stride loop->extent. Only whole iterations are copied here; a body that
+ * does not fit the remaining packed buffer is left untouched so the caller descends into the
+ * element path, which still makes element-granular progress. When the iterations are back-to-back
+ * (extent == size) the whole run collapses into a single device copy, which is the point of this
+ * fast path: on accelerator memory every cbmemcpy is a device transfer with high fixed latency.
+ */
+static inline void opal_pack_accelerator_contiguous_loop(opal_convertor_t *pConvertor,
+                                                         const dt_elem_desc_t *pElem,
+                                                         size_t *count,
+                                                         unsigned char **memory,
+                                                         unsigned char **packed,
+                                                         size_t *space)
+{
+    const ddt_loop_desc_t *loop = &pElem->loop;
+    const ddt_endloop_desc_t *end_loop = (const ddt_endloop_desc_t *) (pElem + loop->items);
+    unsigned char *from = *memory + end_loop->first_elem_disp;
+    unsigned char *to = *packed;
+    size_t copy_loops = *count;
+
+    /* Whole iterations only: never split the contiguous body across a fragment boundary here. */
+    if ((copy_loops * end_loop->size) > *space) {
+        copy_loops = *space / end_loop->size;
+    }
+    if (0 == copy_loops) {
+        return;
+    }
+
+    if (loop->extent == (ptrdiff_t) end_loop->size) {
+        /* Iterations are contiguous in device memory: one transfer for the whole run. */
+        pConvertor->cbmemcpy(to, from, copy_loops * end_loop->size, pConvertor);
+    } else {
+        for (size_t i = 0; i < copy_loops; i++) {
+            pConvertor->cbmemcpy(to, from, end_loop->size, pConvertor);
+            to += end_loop->size;
+            from += loop->extent;
+        }
+    }
+
+    *packed += copy_loops * end_loop->size;
+    *memory += (ptrdiff_t) copy_loops * loop->extent; /* base advances by the whole iterations copied */
+    *space -= copy_loops * end_loop->size;
+    *count -= copy_loops;
 }
 
 int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec *iov,
@@ -172,7 +118,14 @@ int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec 
     const opal_datatype_t *pData = pConvertor->pDesc;
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
+    ptrdiff_t local_disp;
     uint32_t iov_count;
+
+    /* Accelerator movers only ever run on homogeneous convertors: a device copy moves raw
+     * bytes and can neither byte-swap nor resize a predefined type, so the completion test
+     * below (bConverted == remote_size) is only meaningful when the local and remote sizes
+     * agree. A heterogeneous convertor must take the generic host path. */
+    assert(pConvertor->flags & CONVERTOR_HOMOGENEOUS);
 
     description = pConvertor->use_desc->desc;
     pStack = pConvertor->pStack + pConvertor->stack_pos;
@@ -230,9 +183,23 @@ int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec 
             }
             if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
             process_loop:
+                local_disp = (ptrdiff_t) conv_ptr;
+                if (pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+                    opal_pack_accelerator_contiguous_loop(pConvertor, pElem, &count_desc,
+                                                          &conv_ptr, &iov_ptr, &iov_len_local);
+                    if (0 == count_desc) { /* whole loop packed: skip past its descriptor entries */
+                        pos_desc += pElem->loop.items + 1;
+                        goto update_loop_description;
+                    }
+                    /* count_desc != 0: the buffer filled or the body did not fit; descend so the
+                     * element path makes element-granular progress (never a zero-progress spin). */
+                }
+                local_disp = (ptrdiff_t) conv_ptr - local_disp;
                 PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP,
-                           count_desc, pStack->disp);
+                           count_desc, pStack->disp + local_disp);
                 pos_desc++;
+            update_loop_description:
+                conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                 UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
                                          process_loop, process_end_loop);
                 goto process_data;

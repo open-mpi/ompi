@@ -72,22 +72,35 @@ int main(int argc, char *argv[])
         return OPAL_ERROR;
     }
 
+    /* The pack/unpack calls perform the actual conversion and advance the
+     * convertor, so they must run in every build.  Keep them out of assert()
+     * (which expands to nothing under -DNDEBUG) and validate the outcome with
+     * explicit checks instead. */
     a.iov_base = packed;
     a.iov_len = sizeof(sbuf[0]) - 1;
     iov_count = 1;
     max_data = sizeof(sbuf[0]) - 1;
-    assert(0 == opal_pack_general(pConv, &a, &iov_count, &max_data));
-    assert(0 == max_data);
+    if (0 != opal_pack_general(pConv, &a, &iov_count, &max_data) || 0 != max_data) {
+        printf("packing a partial element must not make progress\n");
+        return OPAL_ERROR;
+    }
 
     for (size_t i = 0; i < 2; ++i) {
         a.iov_base = packed + i * sizeof(sbuf[0]);
         a.iov_len = sizeof(sbuf[0]);
         iov_count = 1;
         max_data = sizeof(sbuf[0]);
-        assert((int) i == opal_pack_general(pConv, &a, &iov_count, &max_data));
-        assert(sizeof(sbuf[0]) == max_data);
+        /* The convertor reports completion (1) only on the final element. */
+        if ((int) i != opal_pack_general(pConv, &a, &iov_count, &max_data)
+            || sizeof(sbuf[0]) != max_data) {
+            printf("packing element %" PRIsize_t " produced unexpected state\n", i);
+            return OPAL_ERROR;
+        }
     }
-    assert(0 == memcmp(packed, expected, sizeof(packed)));
+    if (0 != memcmp(packed, expected, sizeof(packed))) {
+        printf("packed bytes do not match the expected byte-swapped layout\n");
+        return OPAL_ERROR;
+    }
     OBJ_RELEASE(pConv);
 
     printf("\n\n#\n * TEST UNPACKING 1 int out of 1\n#\n\n");
@@ -106,8 +119,10 @@ int main(int argc, char *argv[])
     max_data = 4;
     opal_unpack_general(pConv, &a, &iov_count, &max_data);
 
-    assert(1 == rbuf[0]);
-    assert(-1 == rbuf[1]);
+    if (1 != rbuf[0] || -1 != rbuf[1]) {
+        printf("unpacking 1 int out of 1 produced unexpected result\n");
+        return OPAL_ERROR;
+    }
     OBJ_RELEASE(pConv);
 
     printf("\n\n#\n * TEST UNPACKING 2 ints ONE BYTE AT A TIME\n#\n\n");
@@ -125,11 +140,16 @@ int main(int argc, char *argv[])
         iov_count = 1;
         max_data = 1;
         opal_unpack_general(pConv, &a, &iov_count, &max_data);
-        assert(1 == max_data);
+        if (1 != max_data) {
+            printf("unpacking byte %" PRIsize_t " did not consume exactly one byte\n", i);
+            return OPAL_ERROR;
+        }
     }
 
-    assert(1 == rbuf[0]);
-    assert(2 == rbuf[1]);
+    if (1 != rbuf[0] || 2 != rbuf[1]) {
+        printf("unpacking 2 ints one byte at a time produced unexpected result\n");
+        return OPAL_ERROR;
+    }
     OBJ_RELEASE(pConv);
 
     printf("\n\n#\n * TEST UNPACKING 1 int out of 2\n#\n\n");
@@ -147,8 +167,10 @@ int main(int argc, char *argv[])
     max_data = 4;
     opal_unpack_general(pConv, &a, &iov_count, &max_data);
 
-    assert(1 == rbuf[0]);
-    assert(-1 == rbuf[1]);
+    if (1 != rbuf[0] || -1 != rbuf[1]) {
+        printf("unpacking 1 int out of 2 produced unexpected result\n");
+        return OPAL_ERROR;
+    }
     OBJ_RELEASE(pConv);
 
     /* clean-ups all data allocations */

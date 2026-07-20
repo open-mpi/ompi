@@ -206,4 +206,122 @@ static inline void unpack_contiguous_loop(opal_convertor_t *CONVERTOR, const dt_
 #define UNPACK_CONTIGUOUS_LOOP(CONVERTOR, ELEM, COUNT, PACKED, MEMORY, SPACE) \
     unpack_contiguous_loop((CONVERTOR), (ELEM), &(COUNT), &(PACKED), &(MEMORY), &(SPACE))
 
+/**
+ * This function handle partial types. Depending on the send operation it might happens
+ * that we receive only a partial type (always predefined type). In fact the outcome is
+ * that the unpack has to be done in 2 steps. As there is no way to know if the other
+ * part of the datatype is already received, we need to use a trick to handle this special
+ * case. The trick is to fill the missing part with some well known value, unpack the data
+ * as if it was completely received, and then move into the user memory only the bytes
+ * that don't match the well known value. This approach work as long as there is no need
+ * for more than structural changes. They will not work for cases where we will have to
+ * change the content of the data (as in all conversions that require changing the size
+ * of the exponent or mantissa).
+ *
+ * This helper is shared between the production unpacker in opal_datatype_unpack.c and the
+ * reference interpreter used by the pack_description_sweep benchmark; both include this
+ * header after the datatype, convertor, memcpy, and accelerator base headers that provide
+ * the symbols referenced below.
+ */
+static inline void
+opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_t *pElem,
+                               size_t *COUNT, unsigned char **packed,
+                               unsigned char **memory, size_t *SPACE)
+{
+    char unused_byte = 0x7F, saved_data[OPAL_DATATYPE_MAX_PREDEFINED_SIZE];
+    unsigned char temporary[OPAL_DATATYPE_MAX_PREDEFINED_SIZE], *temporary_buffer = temporary;
+    unsigned char *user_data = *memory + pElem->elem.disp;
+    size_t data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
+    unsigned char *partial_data = *packed;
+    ptrdiff_t start_position = pConvertor->partial_length;
+    size_t length = data_length - start_position;
+    size_t count_desc = 1;
+    dt_elem_desc_t single_elem = { .elem = { .common = pElem->elem.common, .count = 1, .blocklen = 1,
+                                   .extent = data_length,  /* advance by a full data element */
+                                   .disp = 0  /* right where the pointer is */ } };
+    if( *SPACE < length ) {
+        length = *SPACE;
+    }
+
+    DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
+                           "\tbConverted %lu total_length %lu count %ld\n",
+                           (unsigned long)start_position, (unsigned long)start_position + length,
+                           (unsigned long)data_length, (void*)*memory,
+                           (unsigned long)pConvertor->bConverted,
+                           (unsigned long)pConvertor->local_size, pConvertor->count ); );
+    /* Find a byte value that is not used in the partial buffer. We use it as a marker
+     * to identify what has not been modified by the unpack call. */
+ find_unused_byte:
+    for (size_t i = 0; i < length; i++ ) {
+        if( unused_byte == partial_data[i] ) {
+            unused_byte--;
+            goto find_unused_byte;
+        }
+    }
+
+    /* Prepare an full element of the predefined type, by populating an entire type
+     * with the unused byte and then put the partial data at the right position. */
+    memset( temporary, unused_byte, data_length );
+    MEMCPY( temporary + start_position, partial_data, length );
+
+    /* Save the original content of the user memory */
+    /* In the case where the data is being unpacked from device memory, need to
+     * use the special host to device memory copy. */
+    pConvertor->cbmemcpy(saved_data, user_data, data_length, pConvertor );
+
+    /* Then unpack the data into the user memory. Heterogeneous conversion must use the same
+     * predefined-type callback as the general unpacker; the homogeneous mover only copies bytes. */
+    if (pConvertor->flags & CONVERTOR_HOMOGENEOUS) {
+        UNPACK_PREDEFINED_DATATYPE(pConvertor, &single_elem, count_desc, temporary_buffer, user_data,
+                                   data_length);
+    } else {
+        const size_t remote_length = pConvertor->master->remote_sizes[pElem->elem.common.type];
+        char *from = (char *) temporary_buffer;
+        char *to = (char *) user_data;
+        size_t copied;
+
+        /* Partial conversion supports structural transformations such as byte swapping, for which
+         * the local and remote predefined representations have the same size. */
+        assert(remote_length == data_length);
+        copied = pConvertor->master->pFunctions[pElem->elem.common.type](
+            pConvertor, 1, 1, 1, &from, remote_length, remote_length, &to, data_length, data_length);
+        assert(1 == copied);
+        (void) copied;
+    }
+
+    /* reload the length and user buffer as they have been updated by the macro */
+    data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
+    user_data = *memory + pElem->elem.disp;
+
+    /* Rebuild the data by pulling back the unmodified bytes from the original
+     * content in the user memory. */
+    /* Need to copy the modified user_data again so we can see which
+     * bytes need to be converted back to their original values. */
+    if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
+        char resaved_data[OPAL_DATATYPE_MAX_PREDEFINED_SIZE];
+        pConvertor->cbmemcpy(resaved_data, user_data, data_length, pConvertor);
+        for (size_t i = 0; i < data_length; i++) {
+            if (unused_byte == resaved_data[i])
+                pConvertor->cbmemcpy(&user_data[i], &saved_data[i], 1, pConvertor);
+        }
+    } else {
+        for (size_t i = 0; i < data_length; i++) {
+            if (unused_byte == user_data[i]) {
+                user_data[i] = saved_data[i];
+            }
+        }
+    }
+
+    pConvertor->partial_length = (pConvertor->partial_length + length) % data_length;
+    *SPACE  -= length;
+    *packed += length;
+    if (0 == pConvertor->partial_length) {
+        (*COUNT)--;  /* we have enough to complete one full predefined type */
+        *memory += data_length;
+        if (0 == (*COUNT % pElem->elem.blocklen)) {
+            *memory += pElem->elem.extent - (pElem->elem.blocklen * data_length);
+        }
+    }
+}
+
 #endif /* OPAL_DATATYPE_UNPACK_H_HAS_BEEN_INCLUDED */

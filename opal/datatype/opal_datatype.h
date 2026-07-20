@@ -59,6 +59,15 @@ BEGIN_C_DECLS
 #    define OPAL_DATATYPE_MAX_PREDEFINED 29
 #endif
 /*
+ * Size (in bytes) of the largest predefined datatype element. The partial-element staging buffers
+ * in opal_unpack_partial_predefined() (opal_datatype_unpack.h) are sized to this bound so a
+ * fragment boundary landing inside a predefined element can be staged on the stack. The widest
+ * predefined types are the 32-byte complex forms (long double _Complex, _Float128 _Complex); a
+ * _Static_assert next to opal_datatype_local_sizes[] in opal_datatype_module.c enforces at compile
+ * time that no predefined type exceeds this value.
+ */
+#define OPAL_DATATYPE_MAX_PREDEFINED_SIZE 32
+/*
  * Upper limit of the number of _Basic_ datatypes supported (in order to
  * not change setup and usage of the predefined datatypes).
  *
@@ -68,7 +77,7 @@ BEGIN_C_DECLS
 
 /* flags for the datatypes. */
 #define OPAL_DATATYPE_FLAG_UNAVAILABLE \
-    0x00000001u /**< datatypes unavailable on the build (OS or compiler dependant) */
+    0x00000001u /**< datatypes unavailable on the build (OS or compiler dependent) */
 #define OPAL_DATATYPE_FLAG_PREDEFINED \
     0x00000002u /**< cannot be removed: initial and predefined datatypes */
 #define OPAL_DATATYPE_FLAG_COMMITTED  0x00000004u /**< ready to be used for a send/recv operation */
@@ -82,9 +91,7 @@ BEGIN_C_DECLS
  * optimization.
  */
 #define OPAL_DATATYPE_FLAG_CONTIGUOUS 0x00000010u /**< contiguous datatype */
-#define OPAL_DATATYPE_FLAG_NO_GAPS                                                                \
-    0x00000020u /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size \
-            */
+#define OPAL_DATATYPE_FLAG_NO_GAPS    0x00000020u /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size */
 #define OPAL_DATATYPE_FLAG_USER_LB 0x00000040u /**< has a user defined LB */
 #define OPAL_DATATYPE_FLAG_USER_UB 0x00000080u /**< has a user defined UB */
 #define OPAL_DATATYPE_FLAG_DATA    0x00000100u /**< data or control structure */
@@ -208,9 +215,6 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_datatype_t);
 OPAL_DECLSPEC extern const opal_datatype_t
     *opal_datatype_basicDatatypes[OPAL_DATATYPE_MAX_PREDEFINED];
 OPAL_DECLSPEC extern const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
-
-/* Set before datatype commit; false forces mixed optimized regions to use OPAL_DATATYPE_UINT1. */
-OPAL_DECLSPEC extern bool opal_datatype_optimize_preserve_type;
 
 /* Local Architecture as provided by opal_arch_compute_local_id() */
 OPAL_DECLSPEC extern uint32_t opal_local_arch;

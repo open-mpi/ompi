@@ -30,6 +30,7 @@
 #    define TO_SELF_HAVE_OMPI_INTERNALS 0
 #endif
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -77,17 +78,46 @@ static int dump_datatypes = 0;
     } while (0)
 #endif
 
+/*
+ * The layout mirrored by pack_byhand_create_merged_contig_with_gaps(): an
+ * MPI_DOUBLE, an MPI_LONG and an MPI_CHAR laid out exactly like this C struct.
+ * Deriving the MPI displacements and the extent from the struct (rather than
+ * hard-coding {0, 8, 16} and sizeof(long) == 8) keeps the datatype and its
+ * by-hand baseline in sync on ABIs where sizeof(long) != 8 (ILP32, LLP64, ...).
+ */
+struct merged_contig_with_gaps {
+    double d;
+    long l;
+    char c;
+};
+
 static MPI_Datatype create_merged_contig_with_gaps(int count) /* count of the basic datatype */
 {
+    struct merged_contig_with_gaps data[1];
     int array_of_blocklengths[] = {1, 1, 1};
-    MPI_Aint array_of_displacements[] = {0, 8, 16};
+    MPI_Aint array_of_displacements[3];
     MPI_Datatype array_of_types[] = {MPI_DOUBLE, MPI_LONG, MPI_CHAR};
-    MPI_Datatype type;
+    MPI_Datatype type, temp;
+    MPI_Aint base;
 
-    MPI_Type_create_struct(3, array_of_blocklengths, array_of_displacements, array_of_types, &type);
+    MPI_Get_address(&data[0], &base);
+    MPI_Get_address(&data[0].d, &array_of_displacements[0]);
+    MPI_Get_address(&data[0].l, &array_of_displacements[1]);
+    MPI_Get_address(&data[0].c, &array_of_displacements[2]);
+    array_of_displacements[0] -= base;
+    array_of_displacements[1] -= base;
+    array_of_displacements[2] -= base;
+
+    MPI_Type_create_struct(3, array_of_blocklengths, array_of_displacements, array_of_types,
+                           &temp);
+    /* Force the extent to the C struct size so the by-hand baseline can stride
+     * by sizeof(struct merged_contig_with_gaps) on every ABI. */
+    MPI_Type_create_resized(temp, 0, sizeof(data[0]), &type);
+    MPI_Type_free(&temp);
     if (1 < count) {
-        MPI_Datatype temp = type;
+        temp = type;
         MPI_Type_contiguous(count, temp, &type);
+        MPI_Type_free(&temp);
     }
     MPI_Type_commit(&type);
     MPI_DDT_DUMP(type);
@@ -115,8 +145,8 @@ static MPI_Datatype create_struct_constant_gap_resized_ddt(
     MPI_Get_address(&data[0].transferred_1, &disps[0]);
     MPI_Get_address(&data[0].transferred_2, &disps[1]);
     MPI_Get_address(&data[0], &disps[2]);
-    disps[1] -= disps[2]; /*  8 */
-    disps[0] -= disps[2]; /* 16 */
+    disps[1] -= disps[2]; /* 16 */
+    disps[0] -= disps[2]; /*  8 */
 
     MPI_Type_create_struct(2, blocklens, disps, types, &temp_type);
     MPI_Type_create_resized(temp_type, 0, sizeof(data[0]), &struct_type);
@@ -822,11 +852,13 @@ static MPI_Datatype create_ddtbench_wrf_vec_ddt(void)
     MPI_Type_vector(DDTBENCH_WRF_SUB_DIM3, DDTBENCH_WRF_SUB_DIM1, DDTBENCH_WRF_DIM1,
                     MPI_FLOAT, &temp_2d_type);
     for (int i = 0; i < DDTBENCH_WRF_NUMBER_2D; ++i) {
-        displacements[counter] = (MPI_Aint) ((i * ddtbench_wrf_2d_array_floats()
-                                              + ddtbench_idx2d(DDTBENCH_WRF_IS,
-                                                               DDTBENCH_WRF_JS,
-                                                               DDTBENCH_WRF_DIM1))
-                                             * sizeof(float));
+        const MPI_Aint array_offset = (MPI_Aint) (i * ddtbench_wrf_2d_array_floats()
+                                                  * sizeof(float));
+
+        displacements[counter] = array_offset
+                                 + (MPI_Aint) ddtbench_idx2d(DDTBENCH_WRF_IS, DDTBENCH_WRF_JS,
+                                                             DDTBENCH_WRF_DIM1)
+                                       * (MPI_Aint) sizeof(float);
         oldtypes[counter++] = temp_2d_type;
     }
 
@@ -836,32 +868,34 @@ static MPI_Datatype create_ddtbench_wrf_vec_ddt(void)
     MPI_Type_create_hvector(DDTBENCH_WRF_SUB_DIM3, 1, stride, temp_type, &temp_3d_type);
     MPI_Type_free(&temp_type);
     for (int i = 0; i < DDTBENCH_WRF_NUMBER_3D; ++i) {
-        displacements[counter] = (MPI_Aint) ddtbench_wrf_3d_arrays_offset()
-                                 + (MPI_Aint) ((i * ddtbench_wrf_3d_array_floats()
-                                                + ddtbench_idx3d(DDTBENCH_WRF_IS,
-                                                                 DDTBENCH_WRF_KS,
-                                                                 DDTBENCH_WRF_JS,
-                                                                 DDTBENCH_WRF_DIM1,
-                                                                 DDTBENCH_WRF_DIM2))
-                                               * sizeof(float));
+        const MPI_Aint array_offset = (MPI_Aint) (ddtbench_wrf_3d_arrays_offset()
+                                                  + i * ddtbench_wrf_3d_array_floats()
+                                                        * sizeof(float));
+
+        displacements[counter] = array_offset
+                                 + (MPI_Aint) ddtbench_idx3d(DDTBENCH_WRF_IS, DDTBENCH_WRF_KS,
+                                                             DDTBENCH_WRF_JS, DDTBENCH_WRF_DIM1,
+                                                             DDTBENCH_WRF_DIM2)
+                                       * (MPI_Aint) sizeof(float);
         oldtypes[counter++] = temp_3d_type;
     }
 
     stride *= DDTBENCH_WRF_DIM3;
     for (int i = 0; i < DDTBENCH_WRF_NUMBER_4D; ++i) {
         MPI_Datatype temp_4d_type;
+        const MPI_Aint array_offset = (MPI_Aint) (ddtbench_wrf_4d_arrays_offset()
+                                                  + i * ddtbench_wrf_4d_array_floats()
+                                                        * sizeof(float));
 
         MPI_Type_create_hvector(DDTBENCH_WRF_LIMIT_4D - DDTBENCH_WRF_PARAM_FIRST_SCALAR, 1,
                                 stride, temp_3d_type, &temp_4d_type);
-        displacements[counter] = (MPI_Aint) ddtbench_wrf_4d_arrays_offset()
-                                 + (MPI_Aint) ((i * ddtbench_wrf_4d_array_floats()
-                                                + ddtbench_idx4d(
-                                                      DDTBENCH_WRF_IS, DDTBENCH_WRF_KS,
-                                                      DDTBENCH_WRF_JS,
-                                                      DDTBENCH_WRF_PARAM_FIRST_SCALAR,
-                                                      DDTBENCH_WRF_DIM1, DDTBENCH_WRF_DIM2,
-                                                      DDTBENCH_WRF_DIM3))
-                                               * sizeof(float));
+        displacements[counter] = array_offset
+                                 + (MPI_Aint) ddtbench_idx4d(DDTBENCH_WRF_IS, DDTBENCH_WRF_KS,
+                                                             DDTBENCH_WRF_JS,
+                                                             DDTBENCH_WRF_PARAM_FIRST_SCALAR,
+                                                             DDTBENCH_WRF_DIM1, DDTBENCH_WRF_DIM2,
+                                                             DDTBENCH_WRF_DIM3)
+                                       * (MPI_Aint) sizeof(float);
         oldtypes[counter++] = temp_4d_type;
     }
 
@@ -902,8 +936,10 @@ static MPI_Datatype create_ddtbench_wrf_subarray_ddt(void)
     MPI_Type_create_subarray(2, &arraysize[2], &subarraysize[2], &subarraystart[2],
                              MPI_ORDER_C, MPI_FLOAT, &temp_2d_type);
     for (int i = 0; i < DDTBENCH_WRF_NUMBER_2D; ++i) {
-        displacements[counter] = (MPI_Aint) (i * ddtbench_wrf_2d_array_floats()
-                                             * sizeof(float));
+        const MPI_Aint array_offset = (MPI_Aint) (i * ddtbench_wrf_2d_array_floats()
+                                                  * sizeof(float));
+
+        displacements[counter] = array_offset;
         oldtypes[counter++] = temp_2d_type;
     }
 
@@ -919,9 +955,11 @@ static MPI_Datatype create_ddtbench_wrf_subarray_ddt(void)
     MPI_Type_create_subarray(3, &arraysize[1], &subarraysize[1], &subarraystart[1],
                              MPI_ORDER_C, MPI_FLOAT, &temp_3d_type);
     for (int i = 0; i < DDTBENCH_WRF_NUMBER_3D; ++i) {
-        displacements[counter] = (MPI_Aint) ddtbench_wrf_3d_arrays_offset()
-                                 + (MPI_Aint) (i * ddtbench_wrf_3d_array_floats()
-                                               * sizeof(float));
+        const MPI_Aint array_offset = (MPI_Aint) (ddtbench_wrf_3d_arrays_offset()
+                                                  + i * ddtbench_wrf_3d_array_floats()
+                                                        * sizeof(float));
+
+        displacements[counter] = array_offset;
         oldtypes[counter++] = temp_3d_type;
     }
 
@@ -940,9 +978,11 @@ static MPI_Datatype create_ddtbench_wrf_subarray_ddt(void)
     MPI_Type_create_subarray(4, arraysize, subarraysize, subarraystart, MPI_ORDER_C,
                              MPI_FLOAT, &temp_4d_type);
     for (int i = 0; i < DDTBENCH_WRF_NUMBER_4D; ++i) {
-        displacements[counter] = (MPI_Aint) ddtbench_wrf_4d_arrays_offset()
-                                 + (MPI_Aint) (i * ddtbench_wrf_4d_array_floats()
-                                               * sizeof(float));
+        const MPI_Aint array_offset = (MPI_Aint) (ddtbench_wrf_4d_arrays_offset()
+                                                  + i * ddtbench_wrf_4d_array_floats()
+                                                        * sizeof(float));
+
+        displacements[counter] = array_offset;
         oldtypes[counter++] = temp_4d_type;
     }
 
@@ -1017,12 +1057,6 @@ static void unpack_byhand_complex_hvector_ddt(void *dst, const void *src, int co
 
 typedef void (*byhand_copy_fn_t)(void *dst, const void *src, int count);
 
-typedef struct {
-    double d;
-    long l;
-    char c;
-} byhand_merged_contig_with_gaps_layout_t;
-
 static inline void byhand_pack_region(char **packed, const char *base, size_t displacement,
                                       size_t length)
 {
@@ -1049,9 +1083,8 @@ static void unpack_byhand_contiguous_datatype(void *dst, const void *src, int co
 
 static void pack_byhand_create_merged_contig_with_gaps(void *dst, const void *src, int count)
 {
-    const size_t extent = sizeof(byhand_merged_contig_with_gaps_layout_t);
-    const size_t payload_length = offsetof(byhand_merged_contig_with_gaps_layout_t, c)
-                                  + sizeof(char);
+    const size_t extent = sizeof(struct merged_contig_with_gaps);
+    const size_t payload_length = offsetof(struct merged_contig_with_gaps, c) + sizeof(char);
     const char *input = (const char *) src;
     char *packed = (char *) dst;
 
@@ -1062,9 +1095,8 @@ static void pack_byhand_create_merged_contig_with_gaps(void *dst, const void *sr
 
 static void unpack_byhand_create_merged_contig_with_gaps(void *dst, const void *src, int count)
 {
-    const size_t extent = sizeof(byhand_merged_contig_with_gaps_layout_t);
-    const size_t payload_length = offsetof(byhand_merged_contig_with_gaps_layout_t, c)
-                                  + sizeof(char);
+    const size_t extent = sizeof(struct merged_contig_with_gaps);
+    const size_t payload_length = offsetof(struct merged_contig_with_gaps, c) + sizeof(char);
     const char *packed = (const char *) src;
     char *output = (char *) dst;
 
@@ -1788,15 +1820,15 @@ static void pack_byhand_ddtbench_wrf_layout(void *dst, const void *src, int coun
         const char *base = input + (size_t) datatype * ddtbench_wrf_extent();
 
         for (int array = 0; array < DDTBENCH_WRF_NUMBER_2D; ++array) {
-            const size_t array_offset = array * ddtbench_wrf_2d_array_floats();
+            const size_t array_offset = array * ddtbench_wrf_2d_array_floats() * sizeof(float);
 
             for (int z = 0; z < DDTBENCH_WRF_SUB_DIM3; ++z) {
                 byhand_pack_region(&packed, base,
-                                   (array_offset
-                                    + ddtbench_idx2d(DDTBENCH_WRF_IS,
-                                                     DDTBENCH_WRF_JS + z,
-                                                     DDTBENCH_WRF_DIM1))
-                                       * sizeof(float),
+                                   array_offset
+                                       + (size_t) ddtbench_idx2d(DDTBENCH_WRF_IS,
+                                                                 DDTBENCH_WRF_JS + z,
+                                                                 DDTBENCH_WRF_DIM1)
+                                             * sizeof(float),
                                    row_bytes);
             }
         }
@@ -1854,15 +1886,15 @@ static void unpack_byhand_ddtbench_wrf_layout(void *dst, const void *src, int co
         char *base = output + (size_t) datatype * ddtbench_wrf_extent();
 
         for (int array = 0; array < DDTBENCH_WRF_NUMBER_2D; ++array) {
-            const size_t array_offset = array * ddtbench_wrf_2d_array_floats();
+            const size_t array_offset = array * ddtbench_wrf_2d_array_floats() * sizeof(float);
 
             for (int z = 0; z < DDTBENCH_WRF_SUB_DIM3; ++z) {
                 byhand_unpack_region(base,
-                                     (array_offset
-                                      + ddtbench_idx2d(DDTBENCH_WRF_IS,
-                                                       DDTBENCH_WRF_JS + z,
-                                                       DDTBENCH_WRF_DIM1))
-                                         * sizeof(float),
+                                     array_offset
+                                         + (size_t) ddtbench_idx2d(DDTBENCH_WRF_IS,
+                                                                   DDTBENCH_WRF_JS + z,
+                                                                   DDTBENCH_WRF_DIM1)
+                                               * sizeof(float),
                                      &packed, row_bytes);
             }
         }
@@ -1989,6 +2021,18 @@ typedef uint64_t test_mask_t;
 #define MIN_LENGTH 1024
 #define MAX_LENGTH (1024 * 1024)
 #define MAX_TIMER_SIZE_POINTS 32
+
+/*
+ * prepare_raw_timer_records() budgets MAX_TIMER_SIZE_POINTS size-points for every
+ * (datatype, operation) pair. Each measured size doubles from 1 up to max_count
+ * (<= MAX_LENGTH), so a pair records at most floor(log2(MAX_LENGTH)) + 1 size-points.
+ * Enforce at compile time that this can never exceed the per-pair budget, which -- with
+ * the exact per-datatype / per-operation accounting in prepare_raw_timer_records() -- makes
+ * a raw_timer buffer overflow impossible without a runtime check.
+ */
+_Static_assert(MAX_LENGTH <= (1ULL << (MAX_TIMER_SIZE_POINTS - 1)),
+               "MAX_TIMER_SIZE_POINTS must cover every doubling size-point up to MAX_LENGTH");
+
 static int cycles = 100;
 static int trials = 20;
 static int warmups = 2;
@@ -1997,6 +2041,7 @@ static int raw_timers = 0;
 static int validate = 0;
 
 typedef struct {
+    const char *datatype;
     const char *operation;
     double seconds;
     int length;
@@ -2007,6 +2052,13 @@ typedef struct {
 static raw_timer_record_t *raw_timer_records = NULL;
 static size_t raw_timer_count = 0;
 static size_t raw_timer_capacity = 0;
+
+/*
+ * The datatype currently under test. do_test_for_ddt() updates it before every
+ * measurement so each buffered raw-timer record carries the datatype it came
+ * from; without it, rows sharing an (operation, length) pair are ambiguous.
+ */
+static const char *current_datatype_name = "unknown";
 
 typedef struct {
     const char *name;
@@ -2091,6 +2143,7 @@ static void print_usage(FILE *stream, const char *program_name)
     fprintf(stream, "--raw-timers prints every trial after timing and whether the summary retained it\n");
     fprintf(stream, "--validate runs a short pack/unpack self-check against the by-hand reference and\n"
                     "           prints '# VALIDATION <name> pack=PASS|FAIL|SKIP unpack=...' per datatype\n");
+    fprintf(stream, "--library-version prints MPI_Get_library_version() and exits (no launcher required)\n");
     print_options(stream, "--check", check_options, sizeof(check_options) / sizeof(check_options[0]),
                   0);
     print_options(stream, "--data", data_options, sizeof(data_options) / sizeof(data_options[0]),
@@ -2179,6 +2232,14 @@ static int option_name_to_flag(const char *name, const check_option_t *options, 
         name += 3;
     }
 
+    /* A token that is empty after stripping the optional "do_" prefix (e.g.
+     * "--data=do_" or "--data=") names no test.  Reject it here: the caller's
+     * empty guard tests the unstripped pointer, and strtol("") below would
+     * otherwise parse it as index 0 and silently select the first test. */
+    if ('\0' == name[0]) {
+        return -1;
+    }
+
     if (0 == strcmp(name, "all")) {
         *flag = all_flags;
         return 0;
@@ -2190,7 +2251,8 @@ static int option_name_to_flag(const char *name, const check_option_t *options, 
 
         errno = 0;
         index = strtol(name, &end, 10);
-        if ((0 == errno) && ('\0' == *end) && (0 <= index) && ((size_t) index < option_count)) {
+        if ((0 == errno) && (end != name) && ('\0' == *end) && (0 <= index)
+            && ((size_t) index < option_count)) {
             *flag = options[(size_t) index].flag;
             return 0;
         }
@@ -2451,8 +2513,8 @@ static void print_raw_timer_records(void)
     for (size_t i = 0; i < raw_timer_count; ++i) {
         const raw_timer_record_t *record = &raw_timer_records[i];
 
-        printf("# raw-timer\t%s\t%d\t%d\t%.17g\t%d\n", record->operation, record->length,
-               record->trial, record->seconds, record->retained);
+        printf("# raw-timer\t%s\t%s\t%d\t%d\t%.17g\t%d\n", record->datatype, record->operation,
+               record->length, record->trial, record->seconds, record->retained);
     }
 }
 
@@ -2521,13 +2583,14 @@ static void print_result(const char *operation, int length, int num_trials, cons
     /* Preserve raw trials without adding I/O between this result and the next measured size. */
     if (raw_timers) {
         for (t = 0; t < num_trials; ++t) {
-            raw_timer_record_t *record;
-
-            if (raw_timer_count == raw_timer_capacity) {
-                fprintf(stderr, "Raw timer buffer capacity exceeded\n");
-                abort();
-            }
-            record = &raw_timer_records[raw_timer_count++];
+            /* In bounds by construction: the _Static_assert on MAX_LENGTH caps the number
+             * of size-points per (datatype, operation) at MAX_TIMER_SIZE_POINTS, which is
+             * exactly what prepare_raw_timer_records() reserved for each pair. The assert
+             * catches drift if a future operation reaches print_result() without a matching
+             * check_options entry (which would under-count operation_count). */
+            assert(raw_timer_count < raw_timer_capacity);
+            raw_timer_record_t *record = &raw_timer_records[raw_timer_count++];
+            record->datatype = current_datatype_name;
             record->operation = operation;
             record->seconds = timers[t];
             record->length = length;
@@ -2562,18 +2625,22 @@ static void print_result(const char *operation, int length, int num_trials, cons
 
 static int pack(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, void *packed_buf)
 {
-    int position, myself, c, t, outsize;
+    int position, myself, c, t, outsize, capacity;
     double timers[trials];
 
+    /* outsize is the logical data volume we report as moved; capacity is the MPI-guaranteed upper
+     * bound on the packed footprint (MPI_Pack_size), which is what MPI_Pack must be told the output
+     * buffer holds.  They are equal for homogeneous packing but the standard does not require it. */
     MPI_Type_size(sdt, &outsize);
     outsize *= scount;
+    MPI_Pack_size(scount, sdt, MPI_COMM_WORLD, &capacity);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
     for (t = 0; t < warmups; t++) {
         for (c = 0; c < num_cycles; c++) {
             position = 0;
-            MPI_Pack(sbuf, scount, sdt, packed_buf, outsize, &position, MPI_COMM_WORLD);
+            MPI_Pack(sbuf, scount, sdt, packed_buf, capacity, &position, MPI_COMM_WORLD);
         }
     }
 
@@ -2581,7 +2648,7 @@ static int pack(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, void *
         timers[t] = MPI_Wtime();
         for (c = 0; c < num_cycles; c++) {
             position = 0;
-            MPI_Pack(sbuf, scount, sdt, packed_buf, outsize, &position, MPI_COMM_WORLD);
+            MPI_Pack(sbuf, scount, sdt, packed_buf, capacity, &position, MPI_COMM_WORLD);
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
@@ -2591,18 +2658,23 @@ static int pack(int num_cycles, MPI_Datatype sdt, int scount, void *sbuf, void *
 
 static int unpack(int num_cycles, void *packed_buf, MPI_Datatype rdt, int rcount, void *rbuf)
 {
-    int position, myself, c, t, insize;
+    int position, myself, c, t, insize, capacity;
     double timers[trials];
 
+    /* insize is the logical data volume we report as moved; capacity is the MPI-guaranteed upper
+     * bound on the packed footprint (MPI_Pack_size), which is what MPI_Unpack must be told the
+     * input buffer holds.  They are equal for homogeneous data but the standard does not require
+     * it, and passing capacity keeps MPI_Unpack from reading past a too-small declared size. */
     MPI_Type_size(rdt, &insize);
     insize *= rcount;
+    MPI_Pack_size(rcount, rdt, MPI_COMM_WORLD, &capacity);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myself);
 
     for (t = 0; t < warmups; t++) {
         for (c = 0; c < num_cycles; c++) {
             position = 0;
-            MPI_Unpack(packed_buf, insize, &position, rbuf, rcount, rdt, MPI_COMM_WORLD);
+            MPI_Unpack(packed_buf, capacity, &position, rbuf, rcount, rdt, MPI_COMM_WORLD);
         }
     }
 
@@ -2610,7 +2682,7 @@ static int unpack(int num_cycles, void *packed_buf, MPI_Datatype rdt, int rcount
         timers[t] = MPI_Wtime();
         for (c = 0; c < num_cycles; c++) {
             position = 0;
-            MPI_Unpack(packed_buf, insize, &position, rbuf, rcount, rdt, MPI_COMM_WORLD);
+            MPI_Unpack(packed_buf, capacity, &position, rbuf, rcount, rdt, MPI_COMM_WORLD);
         }
         timers[t] = (MPI_Wtime() - timers[t]) / num_cycles;
     }
@@ -3214,14 +3286,17 @@ static const communication_test_t communication_tests[] = {
 static const char *const endpoint_type_names[] = {"ddt", "packed"};
 
 /* Run the selected local and communication benchmarks for one equivalent datatype pair. */
-static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rddt, int length,
-                           byhand_copy_fn_t pack_byhand_fn,
+static int do_test_for_ddt(test_mask_t doop, const char *datatype_name, MPI_Datatype sddt,
+                           MPI_Datatype rddt, int length, byhand_copy_fn_t pack_byhand_fn,
                            byhand_copy_fn_t unpack_byhand_fn)
 {
-    size_t sbuf_length, rbuf_length, packed_length, source_span, recv_span;
+    size_t sbuf_length, rbuf_length, packed_length, packed_capacity, source_span, recv_span;
+    int send_capacity = 0, recv_capacity = 0;
     char *sbuf, *rbuf, *packed_buf;
     MPI_Datatype packed_send_type = MPI_DATATYPE_NULL, packed_recv_type = MPI_DATATYPE_NULL;
     int i, max_count, stype_size, rtype_size;
+
+    current_datatype_name = datatype_name;
 
     MPI_Type_size(sddt, &stype_size);
     MPI_Type_size(rddt, &rtype_size);
@@ -3236,15 +3311,22 @@ static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rdd
         max_count = 1;
     }
 
+    /* packed_length is the logical data volume; packed_capacity is the MPI-guaranteed upper bound
+     * on the packed footprint (MPI_Pack_size).  Size every buffer that may hold a packed image to
+     * the capacity so MPI_Pack/MPI_Unpack can never overrun even if an implementation adds framing
+     * overhead; the two are equal for the homogeneous to_self case on Open MPI. */
     packed_length = (size_t) stype_size * (size_t) max_count;
+    MPI_Pack_size(max_count, sddt, MPI_COMM_WORLD, &send_capacity);
+    MPI_Pack_size(max_count, rddt, MPI_COMM_WORLD, &recv_capacity);
+    packed_capacity = (size_t) ((send_capacity > recv_capacity) ? send_capacity : recv_capacity);
     source_span = datatype_count_span(sddt, max_count);
     recv_span = datatype_count_span(rddt, max_count);
-    sbuf_length = (source_span > packed_length) ? source_span : packed_length;
-    rbuf_length = (recv_span > packed_length) ? recv_span : packed_length;
+    sbuf_length = (source_span > packed_capacity) ? source_span : packed_capacity;
+    rbuf_length = (recv_span > packed_capacity) ? recv_span : packed_capacity;
 
     sbuf = (char *) malloc(sbuf_length);
     rbuf = (char *) malloc(rbuf_length);
-    packed_buf = (char *) malloc(packed_length);
+    packed_buf = (char *) malloc(packed_capacity);
     if ((NULL == sbuf) || (NULL == rbuf) || (NULL == packed_buf)) {
         fprintf(stderr, "Unable to allocate benchmark buffers\n");
         free(sbuf);
@@ -3275,9 +3357,15 @@ static int do_test_for_ddt(test_mask_t doop, MPI_Datatype sddt, MPI_Datatype rdd
         for (size_t index = 0; index < sbuf_length; ++index) {
             sbuf[index] = (char) (index % 251);
         }
-        MPI_Pack(sbuf, max_count, sddt, packed_buf, (int) packed_length, &position, MPI_COMM_WORLD);
+        MPI_Pack(sbuf, max_count, sddt, packed_buf, (int) packed_capacity, &position,
+                 MPI_COMM_WORLD);
+        /* The packed endpoint communicates with a signature-equivalent type sized to the logical
+         * volume, so the packed-sender mode requires MPI_Pack to add no overhead. That holds for
+         * the homogeneous to_self case; abort clearly rather than send a malformed buffer if some
+         * implementation ever packs a different number of bytes. */
         if ((size_t) position != packed_length) {
-            fprintf(stderr, "MPI_Pack produced %d bytes, expected %zu\n", position, packed_length);
+            fprintf(stderr, "MPI_Pack produced %d bytes, expected %zu; packed-endpoint "
+                    "communication requires no MPI_Pack overhead\n", position, packed_length);
             MPI_Abort(MPI_COMM_WORLD, MPI_ERR_INTERN);
         }
     }
@@ -3379,6 +3467,22 @@ int main(int argc, char *argv[])
     int config[CONFIG_COUNT], parse_result = 0, rank, size;
     MPI_Datatype ddt, sddt, rddt;
 
+    /* Answer --library-version before MPI_Init so the benchmarking harness can identify the
+     * linked MPI without a launcher. MPI_Get_library_version() is valid before MPI_Init (MPI-3)
+     * and reports the version -- including the repo revision -- compiled into the library that is
+     * actually loaded, which is the code under test. A libtool wrapper or the on-disk binary hash
+     * would not move when only the shared library is rebuilt, so this is the reliable identity. */
+    for (int i = 1; i < argc; i++) {
+        if (0 == strcmp(argv[i], "--library-version")) {
+            char version[MPI_MAX_LIBRARY_VERSION_STRING];
+            int version_len = 0;
+
+            MPI_Get_library_version(version, &version_len);
+            printf("%s\n", version);
+            return 0;
+        }
+    }
+
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -3435,8 +3539,8 @@ int main(int argc, char *argv[])
         if (ROLE_TARGET != role) {
             printf("\ncontiguous datatype\n\n");
         }
-        do_test_for_ddt(run_tests, MPI_INT, MPI_INT, MAX_LENGTH, pack_byhand_contiguous_datatype,
-                        unpack_byhand_contiguous_datatype);
+        do_test_for_ddt(run_tests, "contig", MPI_INT, MPI_INT, MAX_LENGTH,
+                        pack_byhand_contiguous_datatype, unpack_byhand_contiguous_datatype);
     }
 
     if (run_tests & DO_INDEXED_GAP) {
@@ -3445,8 +3549,8 @@ int main(int argc, char *argv[])
         }
         ddt = create_indexed_gap_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_create_indexed_gap_ddt,
-                        unpack_byhand_create_indexed_gap_ddt);
+        do_test_for_ddt(run_tests, "indexed_gap", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_create_indexed_gap_ddt, unpack_byhand_create_indexed_gap_ddt);
         MPI_Type_free(&ddt);
     }
 
@@ -3456,7 +3560,7 @@ int main(int argc, char *argv[])
         }
         ddt = create_indexed_gap_optimized_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "optimized_indexed_gap", ddt, ddt, MAX_LENGTH,
                         pack_byhand_create_indexed_gap_optimized_ddt,
                         unpack_byhand_create_indexed_gap_optimized_ddt);
         MPI_Type_free(&ddt);
@@ -3468,7 +3572,7 @@ int main(int argc, char *argv[])
         }
         ddt = create_indexed_constant_gap_ddt(80, 100, 1);
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "constant_gap", ddt, ddt, MAX_LENGTH,
                         pack_byhand_create_indexed_constant_gap_ddt,
                         unpack_byhand_create_indexed_constant_gap_ddt);
         MPI_Type_free(&ddt);
@@ -3480,7 +3584,7 @@ int main(int argc, char *argv[])
         }
         ddt = create_optimized_indexed_constant_gap_ddt(80, 100, 1);
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "optimized_constant_gap", ddt, ddt, MAX_LENGTH,
                         pack_byhand_create_optimized_indexed_constant_gap_ddt,
                         unpack_byhand_create_optimized_indexed_constant_gap_ddt);
         MPI_Type_free(&ddt);
@@ -3492,7 +3596,7 @@ int main(int argc, char *argv[])
         }
         ddt = create_struct_constant_gap_ddt(80, 100, 1);
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "struct_constant_gap", ddt, ddt, MAX_LENGTH,
                         pack_byhand_create_struct_constant_gap_ddt,
                         unpack_byhand_create_struct_constant_gap_ddt);
         MPI_Type_free(&ddt);
@@ -3505,7 +3609,7 @@ int main(int argc, char *argv[])
         ddt = create_struct_constant_gap_resized_ddt(0 /* unused */, 0 /* unused */,
                                                      0 /* unused */);
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "struct_constant_gap_resized", ddt, ddt, MAX_LENGTH,
                         pack_byhand_create_struct_constant_gap_resized_ddt,
                         unpack_byhand_create_struct_constant_gap_resized_ddt);
         MPI_Type_free(&ddt);
@@ -3517,7 +3621,7 @@ int main(int argc, char *argv[])
         }
         ddt = create_merged_contig_with_gaps(1);
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "struct_merged_with_gap_resized", ddt, ddt, MAX_LENGTH,
                         pack_byhand_create_merged_contig_with_gaps,
                         unpack_byhand_create_merged_contig_with_gaps);
         MPI_Type_free(&ddt);
@@ -3528,7 +3632,7 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("FFT2D scatter");
         ddt = create_ddtbench_fft2d_scatter_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_fft2d_scatter", ddt, ddt, MAX_LENGTH,
                         pack_byhand_ddtbench_fft2d_scatter_ddt,
                         unpack_byhand_ddtbench_fft2d_scatter_ddt);
         MPI_Type_free(&ddt);
@@ -3538,7 +3642,7 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("FFT2D gather");
         ddt = create_ddtbench_fft2d_gather_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_fft2d_gather", ddt, ddt, MAX_LENGTH,
                         pack_byhand_ddtbench_fft2d_gather_ddt,
                         unpack_byhand_ddtbench_fft2d_gather_ddt);
         MPI_Type_free(&ddt);
@@ -3548,7 +3652,7 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("MILC su3 zdown");
         ddt = create_ddtbench_milc_su3_zdown_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_milc_su3_zdown", ddt, ddt, MAX_LENGTH,
                         pack_byhand_ddtbench_milc_su3_zdown_ddt,
                         unpack_byhand_ddtbench_milc_su3_zdown_ddt);
         MPI_Type_free(&ddt);
@@ -3558,8 +3662,8 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("NAS LU y");
         ddt = create_ddtbench_nas_lu_y_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_ddtbench_nas_lu_y_ddt,
-                        unpack_byhand_ddtbench_nas_lu_y_ddt);
+        do_test_for_ddt(run_tests, "ddtbench_nas_lu_y", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_ddtbench_nas_lu_y_ddt, unpack_byhand_ddtbench_nas_lu_y_ddt);
         MPI_Type_free(&ddt);
     }
 
@@ -3567,8 +3671,8 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("NAS LU x");
         ddt = create_ddtbench_nas_lu_x_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_ddtbench_nas_lu_x_ddt,
-                        unpack_byhand_ddtbench_nas_lu_x_ddt);
+        do_test_for_ddt(run_tests, "ddtbench_nas_lu_x", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_ddtbench_nas_lu_x_ddt, unpack_byhand_ddtbench_nas_lu_x_ddt);
         MPI_Type_free(&ddt);
     }
 
@@ -3576,8 +3680,8 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("NAS MG x");
         ddt = create_ddtbench_nas_mg_x_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_ddtbench_nas_mg_x_ddt,
-                        unpack_byhand_ddtbench_nas_mg_x_ddt);
+        do_test_for_ddt(run_tests, "ddtbench_nas_mg_x", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_ddtbench_nas_mg_x_ddt, unpack_byhand_ddtbench_nas_mg_x_ddt);
         MPI_Type_free(&ddt);
     }
 
@@ -3585,8 +3689,8 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("NAS MG y");
         ddt = create_ddtbench_nas_mg_y_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_ddtbench_nas_mg_y_ddt,
-                        unpack_byhand_ddtbench_nas_mg_y_ddt);
+        do_test_for_ddt(run_tests, "ddtbench_nas_mg_y", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_ddtbench_nas_mg_y_ddt, unpack_byhand_ddtbench_nas_mg_y_ddt);
         MPI_Type_free(&ddt);
     }
 
@@ -3594,8 +3698,8 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("NAS MG z");
         ddt = create_ddtbench_nas_mg_z_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_ddtbench_nas_mg_z_ddt,
-                        unpack_byhand_ddtbench_nas_mg_z_ddt);
+        do_test_for_ddt(run_tests, "ddtbench_nas_mg_z", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_ddtbench_nas_mg_z_ddt, unpack_byhand_ddtbench_nas_mg_z_ddt);
         MPI_Type_free(&ddt);
     }
 
@@ -3604,7 +3708,7 @@ int main(int argc, char *argv[])
         create_ddtbench_lammps_full_ddt(&sddt, &rddt);
         MPI_DDT_DUMP(sddt);
         MPI_DDT_DUMP(rddt);
-        do_test_for_ddt(run_tests, sddt, rddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_lammps_full", sddt, rddt, MAX_LENGTH,
                         pack_byhand_ddtbench_lammps_full_ddt,
                         unpack_byhand_ddtbench_lammps_full_ddt);
         MPI_Type_free(&sddt);
@@ -3616,7 +3720,7 @@ int main(int argc, char *argv[])
         create_ddtbench_lammps_atomic_ddt(&sddt, &rddt);
         MPI_DDT_DUMP(sddt);
         MPI_DDT_DUMP(rddt);
-        do_test_for_ddt(run_tests, sddt, rddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_lammps_atomic", sddt, rddt, MAX_LENGTH,
                         pack_byhand_ddtbench_lammps_atomic_ddt,
                         unpack_byhand_ddtbench_lammps_atomic_ddt);
         MPI_Type_free(&sddt);
@@ -3627,7 +3731,7 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("SPECFEM3D oc");
         ddt = create_ddtbench_specfem3d_oc_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_specfem3d_oc", ddt, ddt, MAX_LENGTH,
                         pack_byhand_ddtbench_specfem3d_oc_ddt,
                         unpack_byhand_ddtbench_specfem3d_oc_ddt);
         MPI_Type_free(&ddt);
@@ -3637,7 +3741,7 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("SPECFEM3D cm");
         ddt = create_ddtbench_specfem3d_cm_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_specfem3d_cm", ddt, ddt, MAX_LENGTH,
                         pack_byhand_ddtbench_specfem3d_cm_ddt,
                         unpack_byhand_ddtbench_specfem3d_cm_ddt);
         MPI_Type_free(&ddt);
@@ -3648,7 +3752,7 @@ int main(int argc, char *argv[])
         create_ddtbench_specfem3d_mt_ddt(&sddt, &rddt);
         MPI_DDT_DUMP(sddt);
         MPI_DDT_DUMP(rddt);
-        do_test_for_ddt(run_tests, sddt, rddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_specfem3d_mt", sddt, rddt, MAX_LENGTH,
                         pack_byhand_ddtbench_specfem3d_mt_ddt,
                         unpack_byhand_ddtbench_specfem3d_mt_ddt);
         MPI_Type_free(&sddt);
@@ -3659,8 +3763,8 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("WRF vec");
         ddt = create_ddtbench_wrf_vec_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH, pack_byhand_ddtbench_wrf_vec_ddt,
-                        unpack_byhand_ddtbench_wrf_vec_ddt);
+        do_test_for_ddt(run_tests, "ddtbench_wrf_vec", ddt, ddt, MAX_LENGTH,
+                        pack_byhand_ddtbench_wrf_vec_ddt, unpack_byhand_ddtbench_wrf_vec_ddt);
         MPI_Type_free(&ddt);
     }
 
@@ -3668,7 +3772,7 @@ int main(int argc, char *argv[])
         PRINT_DDTBENCH_TEST("WRF subarray");
         ddt = create_ddtbench_wrf_subarray_ddt();
         MPI_DDT_DUMP(ddt);
-        do_test_for_ddt(run_tests, ddt, ddt, MAX_LENGTH,
+        do_test_for_ddt(run_tests, "ddtbench_wrf_subarray", ddt, ddt, MAX_LENGTH,
                         pack_byhand_ddtbench_wrf_subarray_ddt,
                         unpack_byhand_ddtbench_wrf_subarray_ddt);
         MPI_Type_free(&ddt);

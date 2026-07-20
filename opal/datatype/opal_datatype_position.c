@@ -233,7 +233,7 @@ int opal_convertor_generic_simple_position(opal_convertor_t *pConvertor, size_t 
     }
     while (1) {
         if (OPAL_DATATYPE_END_LOOP
-            == pElem->elem.common.type) { /* end of the the entire datatype */
+            == pElem->elem.common.type) { /* end of the entire datatype */
         process_end_loop:
             DO_DEBUG(opal_output(0,
                                  "position end_loop count %" PRIsize_t
