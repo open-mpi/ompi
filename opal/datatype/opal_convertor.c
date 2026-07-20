@@ -425,8 +425,18 @@ int32_t opal_convertor_set_position_nocheck(opal_convertor_t *convertor, size_t 
      * position, so there is no need for special handling. In all other cases,
      * if we plan to rollback the convertor then first we have to reset it at
      * the beginning.
+     *
+     * The contiguous shortcut builds a stack tailored to the contiguous movers:
+     * pStack->count holds a single blocklen or, when landing mid-element, a
+     * remaining UINT1 byte count. Accelerator convertors, however, always run
+     * the general descriptor interpreter (opal_{pack,unpack}_accelerator_simple),
+     * which reads pStack->count as an element count and expects a mid-element
+     * offset in convertor->partial_length -- exactly the stack the generic
+     * position walk produces. Route accelerator convertors through the generic
+     * path so the interpreter is handed a stack it can resume from correctly.
      */
-    if (OPAL_LIKELY(convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)) {
+    if (OPAL_LIKELY((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)
+                    && !(convertor->flags & CONVERTOR_ACCELERATOR))) {
         rc = opal_convertor_create_stack_with_pos_contig(convertor, (*position),
                                                          opal_datatype_local_sizes);
     } else {

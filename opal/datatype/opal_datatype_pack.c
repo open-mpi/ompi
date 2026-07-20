@@ -714,6 +714,65 @@ pack_predefined:
  * of times the datatype is involved in the operation (ie. the count argument
  * in the MPI_ call).
  */
+/*
+ * Heterogeneous counterpart of pack_partial_blocklen(). When a previous fragment stopped in the
+ * middle of a repeated block (a whole number of predefined elements, but not a whole block), the
+ * block movers below cannot resume: they assume entry on a block boundary and would advance the
+ * gappy side by the full extent from a mid-block position. Convert just the elements left in the
+ * current block (COUNT % blocklen) through the same per-type conversion function used for full
+ * blocks, then skip the inter-block gap once the block is complete, so pack_predefined_heterogeneous
+ * always sees a block-aligned COUNT. As with the cap there, only whole predefined elements are
+ * moved -- a basic type is never split.
+ *
+ * Return 1 if we are now aligned on a block, 0 otherwise.
+ */
+static inline int
+pack_partial_blocklen_heterogeneous(opal_convertor_t *CONVERTOR,
+                                    const dt_elem_desc_t *ELEM, size_t *COUNT,
+                                    unsigned char **memory,
+                                    unsigned char **packed, size_t *SPACE)
+{
+    const opal_convertor_master_t *master = (CONVERTOR)->master;
+    const ddt_elem_desc_t *_elem = &((ELEM)->elem);
+    size_t local_elem_size = opal_datatype_basicDatatypes[_elem->common.type]->size;
+    size_t remote_elem_size = master->remote_sizes[_elem->common.type];
+    unsigned char *_memory = (*memory) + _elem->disp;
+    unsigned char *_packed = *packed;
+    char *from, *to;
+    size_t do_now;
+
+    assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
+
+    /* How many predefined elements remain in the current (partial) block? */
+    if (0 == (do_now = (*COUNT) % _elem->blocklen)) {
+        return 1; /* already aligned on a block boundary */
+    }
+    size_t left_in_block = do_now;
+
+    /* Never split a predefined element: cap to the whole elements that fit in the destination. */
+    if ((remote_elem_size * do_now) > *(SPACE)) {
+        do_now = (*SPACE) / remote_elem_size;
+    }
+
+    from = (char *) _memory;
+    to = (char *) _packed;
+    /* do_now < blocklen, so the conversion runs its contiguous "leftover" path (no extent jump). */
+    master->pFunctions[_elem->common.type](CONVERTOR, do_now, _elem->blocklen, _elem->count, &from,
+                                           *SPACE, _elem->extent, &to, *SPACE,
+                                           _elem->blocklen * remote_elem_size);
+    *(COUNT) -= do_now;
+    _memory = (unsigned char *) from;
+    _packed = (unsigned char *) to;
+    if (do_now == left_in_block) { /* compensate if we completed a blocklen */
+        _memory += _elem->extent - (ptrdiff_t) (_elem->blocklen * local_elem_size);
+    }
+
+    *(memory) = _memory - _elem->disp;
+    *(SPACE) -= (_packed - *packed);
+    *(packed) = _packed;
+    return (do_now == left_in_block);
+}
+
 /* Convert data from multiple input buffers (as received from the network layer)
  * to a contiguous output buffer with a predefined size.
  * return OPAL_SUCCESS if everything went OK and if there is still room before the complete
@@ -799,6 +858,25 @@ int32_t opal_pack_general(opal_convertor_t *pConvertor, struct iovec *iov,
     for (iov_count = 0; iov_count < (*out_size); iov_count++) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
+
+        /* Re-align a block split by the preceding output fragment before converting more data. The
+         * block movers below require entry on a block boundary. */
+        if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            if (((size_t) pElem->elem.count * pElem->elem.blocklen) != count_desc) {
+                int rc = pack_partial_blocklen_heterogeneous(pConvertor, pElem, &count_desc,
+                                                             &conv_ptr, &iov_ptr, &iov_len_local);
+                if (0 == rc) { /* still mid-block: destination is full for now */
+                    goto complete_loop;
+                }
+                if (0 == count_desc) {
+                    conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++; /* advance to the next data */
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                             process_loop, process_end_loop);
+                    goto process_data;
+                }
+            }
+        }
         while (1) {
             while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
             process_data:

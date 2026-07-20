@@ -561,6 +561,65 @@ unpack_predefined:
  *        1 if everything went fine and the data was completely converted
  *       -1 something wrong occurs.
  */
+/*
+ * Heterogeneous counterpart of unpack_partial_blocklen(). When a previous fragment stopped in the
+ * middle of a repeated block (a whole number of predefined elements, but not a whole block), the
+ * block movers below cannot resume: they assume entry on a block boundary and would advance the
+ * gappy destination by the full extent from a mid-block position. Convert just the elements left in
+ * the current block (COUNT % blocklen) through the same per-type conversion function used for full
+ * blocks, then skip the inter-block gap once the block is complete, so
+ * unpack_predefined_heterogeneous always sees a block-aligned COUNT. Only whole predefined elements
+ * are moved -- a basic type is never split (that case is handled by opal_unpack_partial_predefined).
+ *
+ * Return 1 if we are now aligned on a block, 0 otherwise.
+ */
+static inline int
+unpack_partial_blocklen_heterogeneous(opal_convertor_t *CONVERTOR,
+                                      const dt_elem_desc_t *ELEM, size_t *COUNT,
+                                      unsigned char **packed,
+                                      unsigned char **memory, size_t *SPACE)
+{
+    const opal_convertor_master_t *master = (CONVERTOR)->master;
+    const ddt_elem_desc_t *_elem = &((ELEM)->elem);
+    size_t local_elem_size = opal_datatype_basicDatatypes[_elem->common.type]->size;
+    size_t remote_elem_size = master->remote_sizes[_elem->common.type];
+    unsigned char *_memory = (*memory) + _elem->disp;
+    unsigned char *_packed = *packed;
+    char *from, *to;
+    size_t do_now;
+
+    assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
+
+    /* How many predefined elements remain in the current (partial) block? */
+    if (0 == (do_now = (*COUNT) % _elem->blocklen)) {
+        return 1; /* already aligned on a block boundary */
+    }
+    size_t left_in_block = do_now;
+
+    /* Never split a predefined element: cap to the whole elements available in the source. */
+    if ((remote_elem_size * do_now) > *(SPACE)) {
+        do_now = (*SPACE) / remote_elem_size;
+    }
+
+    from = (char *) _packed;
+    to = (char *) _memory;
+    /* do_now < blocklen, so the conversion runs its contiguous "leftover" path (no extent jump). */
+    master->pFunctions[_elem->common.type](CONVERTOR, do_now, _elem->blocklen, _elem->count, &from,
+                                           *SPACE, _elem->blocklen * remote_elem_size, &to, *SPACE,
+                                           _elem->extent);
+    *(COUNT) -= do_now;
+    _packed = (unsigned char *) from;
+    _memory = (unsigned char *) to;
+    if (do_now == left_in_block) { /* compensate if we completed a blocklen */
+        _memory += _elem->extent - (ptrdiff_t) (_elem->blocklen * local_elem_size);
+    }
+
+    *(memory) = _memory - _elem->disp;
+    *(SPACE) -= (_packed - *packed);
+    *(packed) = _packed;
+    return (do_now == left_in_block);
+}
+
 static inline void
 unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
                                 const dt_elem_desc_t *ELEM, size_t *COUNT,
@@ -654,6 +713,38 @@ int32_t opal_unpack_general(opal_convertor_t *pConvertor, struct iovec *iov,
             }
             if (0 == iov_len_local) {
                 goto complete_loop;
+            }
+        }
+
+        /* Re-align a block split by the preceding input fragment before converting more data. The
+         * block movers below require entry on a block boundary. */
+        if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            if (((size_t) pElem->elem.count * pElem->elem.blocklen) != count_desc) {
+                int rc = unpack_partial_blocklen_heterogeneous(pConvertor, pElem, &count_desc,
+                                                               &iov_ptr, &conv_ptr, &iov_len_local);
+                if (0 == rc) { /* still mid-block: the block was not completed */
+                    /* Any tail shorter than one predefined element is the leading bytes of the next
+                     * element (a basic type split across this fragment boundary). Stash it in the
+                     * convertor so the following fragment can finish it, exactly as the main mover
+                     * does below; otherwise the fragment is spent on a whole-element boundary and
+                     * there is nothing to keep. Without this the heterogeneous complete_loop would
+                     * silently drop the partial element. */
+                    if (0 != iov_len_local) {
+                        assert(iov_len_local
+                               < opal_datatype_basicDatatypes[pElem->elem.common.type]->size);
+                        opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr,
+                                                       &conv_ptr, &iov_len_local);
+                        assert(0 == iov_len_local);
+                    }
+                    goto complete_loop;
+                }
+                if (0 == count_desc) {
+                    conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++;
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc, process_loop,
+                                             process_end_loop);
+                    goto process_data;
+                }
             }
         }
         while (1) {

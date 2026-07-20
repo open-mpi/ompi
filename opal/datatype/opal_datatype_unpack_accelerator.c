@@ -21,6 +21,104 @@
 #include "opal/datatype/opal_datatype_prototypes.h"
 #include "opal/datatype/opal_datatype_accelerator_copy.h"
 
+/**
+ * Unpack only the remainder of a partially-unpacked block, so that the rest of the
+ * unpacking process operates on whole blocks (plus a possible trailing partial block).
+ * A basic type is never split. Returns 1 once we are aligned on a block boundary, 0 otherwise.
+ */
+static inline int opal_unpack_accelerator_partial_blocklen(opal_convertor_t *pConvertor,
+                                                           const dt_elem_desc_t *pElem,
+                                                           size_t *count,
+                                                           unsigned char **packed,
+                                                           unsigned char **memory,
+                                                           size_t *space)
+{
+    const ddt_elem_desc_t *elem = &pElem->elem;
+    const size_t elem_size = opal_datatype_basicDatatypes[elem->common.type]->size;
+    unsigned char *from = *packed;
+    unsigned char *to = (*memory) + elem->disp;
+    size_t do_now, left_in_block, do_now_bytes;
+
+    assert(0 != elem_size);
+    assert(0 != elem->blocklen);
+    assert(*count <= ((size_t) elem->count * elem->blocklen));
+
+    /* Nothing to do if we are already aligned on a block boundary. */
+    if (0 == (do_now = (*count) % elem->blocklen)) {
+        return 1;
+    }
+    left_in_block = do_now;
+
+    /* Never split a basic type: clamp to an integral number of elements. */
+    if ((do_now * elem_size) > *space) {
+        do_now = *space / elem_size;
+    }
+    if (0 == do_now) {
+        return 0;
+    }
+    do_now_bytes = do_now * elem_size;
+
+    pConvertor->cbmemcpy(to, from, do_now_bytes, pConvertor);
+    *memory += (ptrdiff_t) do_now_bytes;
+    if (do_now == left_in_block) {
+        /* Completed the block; skip the gap to the start of the next one. */
+        *memory += elem->extent - (ptrdiff_t) (elem->blocklen * elem_size);
+    }
+    *count -= do_now;
+    *space -= do_now_bytes;
+    *packed += do_now_bytes;
+    return (do_now == left_in_block);
+}
+
+/**
+ * Finish a predefined element that a fragment boundary split. The accelerator unpacker is only
+ * selected for homogeneous convertors, so a partial element is a plain byte copy: place the
+ * available sub-element bytes at their offset inside the destination element (through cbmemcpy so
+ * it stays device-safe) and record progress in pConvertor->partial_length.
+ *
+ * partial_length is the datatype engine's shared mechanism for a mid-basic-element position:
+ * opal_convertor_set_position() (via opal_convertor_generic_simple_position()) stores the
+ * sub-element offset there for a repositioned receive (e.g. the per-fragment OB1 copy-in/out path),
+ * and this mover stores it there itself for an in-order streaming receive, so both resume on the
+ * next call. The stack (PUSH_STACK, below) only carries the whole-element resume state; the
+ * intra-element offset is not derivable from it.
+ *
+ * When the element completes, consume it from the count and step past the block's trailing gap,
+ * mirroring opal_unpack_partial_predefined() in opal_datatype_unpack.h.
+ */
+static inline void opal_unpack_accelerator_partial_predefined(opal_convertor_t *pConvertor,
+                                                              const dt_elem_desc_t *pElem,
+                                                              size_t *count,
+                                                              unsigned char **packed,
+                                                              unsigned char **memory,
+                                                              size_t *space)
+{
+    const ddt_elem_desc_t *elem = &pElem->elem;
+    const size_t elem_size = opal_datatype_basicDatatypes[elem->common.type]->size;
+    const size_t start = pConvertor->partial_length;
+    size_t length = elem_size - start;
+    unsigned char *user_data = *memory + elem->disp;
+
+    assert(0 != elem_size);
+    assert(start < elem_size);
+    if (*space < length) {
+        length = *space;
+    }
+
+    pConvertor->cbmemcpy(user_data + start, *packed, length, pConvertor);
+
+    pConvertor->partial_length = (start + length) % elem_size;
+    *space -= length;
+    *packed += length;
+    if (0 == pConvertor->partial_length) {
+        (*count)--; /* one full predefined element completed */
+        *memory += elem_size;
+        if (0 == (*count % elem->blocklen)) {
+            *memory += elem->extent - (ptrdiff_t) (elem->blocklen * elem_size);
+        }
+    }
+}
+
 static inline size_t opal_unpack_accelerator_predefined_data(opal_convertor_t *pConvertor,
                                                              const dt_elem_desc_t *pElem,
                                                              size_t *count,
@@ -36,11 +134,14 @@ static inline size_t opal_unpack_accelerator_predefined_data(opal_convertor_t *p
 
     assert(0 != elem_size);
     assert(0 != elem->blocklen);
+    /* Entry is always block-aligned; a mid-block resume is handled beforehand by
+     * opal_unpack_accelerator_partial_blocklen(). */
     assert(0 == (copy_count % elem->blocklen));
 
-    /* Accelerator copies never split a datatype block. */
+    /* Never split a basic type, but a trailing partial block is allowed so that we always
+     * make progress as long as at least one element fits in the unpack buffer. */
     if (copy_count > (*space / elem_size)) {
-        copy_count = (*space / block_bytes) * elem->blocklen;
+        copy_count = *space / elem_size;
     }
     if (0 == copy_count) {
         return 0;
@@ -140,6 +241,40 @@ int32_t opal_unpack_accelerator_simple(opal_convertor_t *pConvertor, struct iove
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
 
+        if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            if (0 != pConvertor->partial_length) {
+                /* A previous call (or a set_position landing mid-element) left us inside a
+                 * predefined element; finish it before resuming the block. */
+                opal_unpack_accelerator_partial_predefined(pConvertor, pElem, &count_desc,
+                                                           &iov_ptr, &conv_ptr, &iov_len_local);
+                if (0 == count_desc) {
+                    conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++;
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                             process_loop, process_end_loop);
+                    goto process_data;
+                }
+                if (0 == iov_len_local) {
+                    goto complete_loop;
+                }
+            }
+            if (((size_t) pElem->elem.count * pElem->elem.blocklen) != count_desc) {
+                /* Resume a datatype block that a previous call left partially unpacked. */
+                if (0 == opal_unpack_accelerator_partial_blocklen(pConvertor, pElem, &count_desc,
+                                                                  &iov_ptr, &conv_ptr,
+                                                                  &iov_len_local)) {
+                    goto complete_loop;
+                }
+                if (0 == count_desc) {
+                    conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++;
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                             process_loop, process_end_loop);
+                    goto process_data;
+                }
+            }
+        }
+
         while (1) {
             while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
             process_data:
@@ -207,6 +342,14 @@ int32_t opal_unpack_accelerator_simple(opal_convertor_t *pConvertor, struct iove
         }
 
     complete_loop:
+        if ((pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) && (0 != iov_len_local)) {
+            /* A fragment boundary fell inside a predefined element (e.g. a host sender packed a
+             * partial element that this device receiver must finish across fragments). Stash the
+             * sub-element remainder and record partial_length so the next call resumes. */
+            assert(iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size);
+            opal_unpack_accelerator_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr,
+                                                       &conv_ptr, &iov_len_local);
+        }
         iov[iov_count].iov_len -= iov_len_local;
         total_unpacked += iov[iov_count].iov_len;
     }
