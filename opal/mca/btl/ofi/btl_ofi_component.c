@@ -595,6 +595,20 @@ no_hmem:
     *num_btl_modules = mca_btl_ofi_component.module_count;
 
 out:
+    if (NULL == base_modules) {
+        /* Initialization failed after some modules may already have been
+         * created: finalize them so we do not leak libfabric resources. */
+        for (int mi = 0; mi < mca_btl_ofi_component.module_count; mi++) {
+            if (NULL != mca_btl_ofi_component.modules[mi]) {
+                (void) mca_btl_ofi_finalize(
+                    (mca_btl_base_module_t *) mca_btl_ofi_component.modules[mi]);
+            }
+        }
+        mca_btl_ofi_component.module_count = 0;
+        free(mca_btl_ofi_component.modules);
+        mca_btl_ofi_component.modules = NULL;
+        mca_btl_ofi_component.modules_allocated = 0;
+    }
     free(unique_domains);
     if (include_list) {
         opal_argv_free(include_list);
