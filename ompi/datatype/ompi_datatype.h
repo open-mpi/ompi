@@ -47,21 +47,52 @@
 
 BEGIN_C_DECLS
 
-/* These flags are on top of the flags in opal_datatype.h */
+/*
+ * These flags are layered on top of the OPAL datatype flags (opal_datatype.h) in the shared
+ * opal_datatype_t::flags word.  They deliberately live in the high half of the 32-bit word (bits
+ * 18-24), above everything OPAL uses at the datatype level (the element-meaningful flags in bits
+ * 0-8 and the two shape hints OPAL_DATATYPE_OPTIMIZED_RESTRICTED / _COUNT_OPTIMIZABLE in bits
+ * 16-17).  Keeping them above bit 15 has two consequences the engine relies on:
+ *
+ *   - They can never fall inside the 16-bit per-element flag field (ddt_elem_id_description.flags):
+ *     opal_datatype_add() copies a sub-type's datatype-level flags down into an element, and a bit
+ *     above 15 simply cannot be represented there.  This is what keeps them from aliasing the
+ *     element-private OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED (bit 9) in the shared flag dumper.
+ *   - They fall outside CONVERTOR_DATATYPE_MASK (opal_convertor.h), so OPAL_CONVERTOR_PREPARE()
+ *     never copies them into a convertor; they are read only from ompi_datatype_t::super.flags at
+ *     the OMPI layer.
+ *
+ * By numeric value some of these coincide with the convertor *control* flags (opal_convertor.h),
+ * but those live in a different field (opal_convertor_t::flags) that OPAL alone owns and OPAL cannot
+ * reference these OMPI macros, so no single runtime word ever carries both meanings.  The
+ * _Static_asserts below lock in the two invariants above.
+ */
 /* Is the datatype predefined as MPI type (not necessarily as OPAL type, e.g. struct/block types) */
-#define OMPI_DATATYPE_FLAG_PREDEFINED    0x0200
-#define OMPI_DATATYPE_FLAG_ANALYZED      0x0400
-#define OMPI_DATATYPE_FLAG_MONOTONIC     0x0800
+#define OMPI_DATATYPE_FLAG_PREDEFINED    0x00040000
+#define OMPI_DATATYPE_FLAG_ANALYZED      0x00080000
+#define OMPI_DATATYPE_FLAG_MONOTONIC     0x00100000
 /* Keep trace of the type of the predefined datatypes */
-#define OMPI_DATATYPE_FLAG_DATA_INT      0x1000
-#define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x2000
-#define OMPI_DATATYPE_FLAG_DATA_COMPLEX  0x3000
-#define OMPI_DATATYPE_FLAG_DATA_TYPE     0x3000
+#define OMPI_DATATYPE_FLAG_DATA_INT      0x00200000
+#define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x00400000
+#define OMPI_DATATYPE_FLAG_DATA_COMPLEX  0x00600000
+#define OMPI_DATATYPE_FLAG_DATA_TYPE     0x00600000
 /* In which language the datatype is intended for to be used */
-#define OMPI_DATATYPE_FLAG_DATA_C        0x4000
-#define OMPI_DATATYPE_FLAG_DATA_CPP      0x8000
-#define OMPI_DATATYPE_FLAG_DATA_FORTRAN  0xC000
-#define OMPI_DATATYPE_FLAG_DATA_LANGUAGE 0xC000
+#define OMPI_DATATYPE_FLAG_DATA_C        0x00800000
+#define OMPI_DATATYPE_FLAG_DATA_CPP      0x01000000
+#define OMPI_DATATYPE_FLAG_DATA_FORTRAN  0x01800000
+#define OMPI_DATATYPE_FLAG_DATA_LANGUAGE 0x01800000
+
+/* Union of every OMPI datatype-level flag, used only to assert their placement below. */
+#define OMPI_DATATYPE_FLAG_ALL                                                                   \
+    (OMPI_DATATYPE_FLAG_PREDEFINED | OMPI_DATATYPE_FLAG_ANALYZED | OMPI_DATATYPE_FLAG_MONOTONIC  \
+     | OMPI_DATATYPE_FLAG_DATA_TYPE | OMPI_DATATYPE_FLAG_DATA_LANGUAGE)
+
+_Static_assert(0 == (OMPI_DATATYPE_FLAG_ALL & CONVERTOR_DATATYPE_MASK),
+               "OMPI datatype flags must live above bit 15 so they never reach the 16-bit element "
+               "flag field nor get copied into a convertor");
+_Static_assert(0 == (OMPI_DATATYPE_FLAG_ALL
+                     & (OPAL_DATATYPE_OPTIMIZED_RESTRICTED | OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE)),
+               "OMPI datatype flags must not overlap the OPAL datatype-level shape hints");
 
 #define OMPI_DATATYPE_MAX_PREDEFINED 53
 

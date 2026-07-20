@@ -62,7 +62,7 @@ BEGIN_C_DECLS
  * Upper limit of the number of _Basic_ datatypes supported (in order to
  * not change setup and usage of the predefined datatypes).
  *
- * BEWARE: This constant should reflect whatever the OMPI-layer needs.
+ * BEWARE: This constant should reflect whatever the upper layer needs.
  */
 #define OPAL_DATATYPE_MAX_SUPPORTED 64
 
@@ -96,12 +96,35 @@ BEGIN_C_DECLS
     (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS \
      | OPAL_DATATYPE_FLAG_DATA | OPAL_DATATYPE_FLAG_COMMITTED)
 /*
+ * The per-element descriptor flag field (ddt_elem_id_description.flags in
+ * opal_datatype_internal.h) is only 16 bits wide.  opal_datatype_add() copies a predefined type's
+ * datatype-level flags down into an element, so only the element-meaningful OPAL flags below may be
+ * let through; everything else is masked out on the way in.  By convention any layer above OPAL
+ * places its own datatype flags in the top 16 bits of the flags word, so they can never reach an
+ * element and are naturally excluded by the mask.  The one datatype-level bit that still lands
+ * inside the 16-bit range is the optimizer-private OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED (bit 9); it
+ * is intentionally left out of this mask (enforced by a _Static_assert in opal_datatype_add.c) so it
+ * is not confused with an incoming element flag.
+ */
+#define OPAL_DATATYPE_FLAG_ELEM_MASK                                                            \
+    (OPAL_DATATYPE_FLAG_UNAVAILABLE | OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_COMMITTED \
+     | OPAL_DATATYPE_FLAG_OVERLAP | OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS   \
+     | OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB | OPAL_DATATYPE_FLAG_DATA)
+/*
  * If during the datatype optimization process we collapse contiguous elements with
  * different types, we cannot use this optimized description for any communication
  * in a heterogeneous setting, especially not for the external32 support.
  *
  * A datatype with this flag cannot use the optimized description in heterogeneous
  * setups.
+ *
+ * This and OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE below are datatype-only "shape hints": they live
+ * above bit 15, outside CONVERTOR_DATATYPE_MASK, so OPAL_CONVERTOR_PREPARE() never copies them into
+ * a convertor's flags, and they are read only from opal_datatype_t::flags. They occupy the two
+ * lowest bits above the data-flag region; the convertor control flags (opal_convertor.h) pack
+ * downward from bit 31 and deliberately leave these two free. A _Static_assert there enforces the
+ * two sets stay disjoint, so a mistaken test of the wrong field cannot read as an active convertor
+ * bit.
  */
 #define OPAL_DATATYPE_OPTIMIZED_RESTRICTED 0x00010000u
 /*

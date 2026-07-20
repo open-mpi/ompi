@@ -41,23 +41,51 @@ BEGIN_C_DECLS
 /*
  * CONVERTOR SECTION
  */
-/* keep the last 16 bits free for data flags */
+/*
+ * The low 16 bits are reserved for the datatype "data" flags: OPAL_CONVERTOR_PREPARE copies
+ * datatype->flags & CONVERTOR_DATATYPE_MASK into the convertor. The convertor's own control flags
+ * are packed at the top of the word, downward from bit 31. The two lowest control bits (0x00010000
+ * and 0x00020000) are intentionally left to the datatype-only shape hints in opal_datatype.h; the
+ * _Static_assert below keeps the two sets disjoint so a mistaken cross-field test cannot misfire.
+ * By convention any layer above OPAL places its own datatype flags in the top 16 bits of the flags
+ * word, so they too sit above this mask and are never copied into a convertor; such flags may share
+ * bit values with the control flags here, but they live in opal_datatype_t::flags rather than a
+ * convertor, so no convertor word ever carries an upper-layer meaning.
+ */
 #define CONVERTOR_DATATYPE_MASK          0x0000FFFF
-#define CONVERTOR_SEND_CONVERSION        0x00010000
-#define CONVERTOR_RECV                   0x00020000
-#define CONVERTOR_SEND                   0x00040000
-#define CONVERTOR_HOMOGENEOUS            0x00080000
-#define CONVERTOR_NO_OP                  0x00100000
-#define CONVERTOR_ACCELERATOR            0x00400000
-#define CONVERTOR_ACCELERATOR_ASYNC      0x00800000
-#define CONVERTOR_TYPE_MASK              0x10DF0000
-#define CONVERTOR_STATE_START            0x01000000
-#define CONVERTOR_STATE_COMPLETE         0x02000000
-#define CONVERTOR_STATE_ALLOC            0x04000000
-#define CONVERTOR_COMPLETED              0x08000000
-#define CONVERTOR_ACCELERATOR_UNIFIED    0x10000000
-#define CONVERTOR_HAS_REMOTE_SIZE        0x20000000
-#define CONVERTOR_SKIP_ACCELERATOR_INIT  0x40000000
+#define CONVERTOR_SEND_CONVERSION        0x00200000
+#define CONVERTOR_RECV                   0x00400000
+#define CONVERTOR_SEND                   0x00800000
+#define CONVERTOR_HOMOGENEOUS            0x01000000
+#define CONVERTOR_NO_OP                  0x02000000
+#define CONVERTOR_COMPLETED              0x04000000
+#define CONVERTOR_HAS_REMOTE_SIZE        0x08000000
+/* Accelerator-related flags, kept adjacent. */
+#define CONVERTOR_ACCELERATOR            0x10000000
+#define CONVERTOR_ACCELERATOR_ASYNC      0x20000000
+#define CONVERTOR_ACCELERATOR_UNIFIED    0x40000000
+#define CONVERTOR_SKIP_ACCELERATOR_INIT  0x80000000
+/* The type-defining flags preserved across a re-prepare; everything else is reset. */
+#define CONVERTOR_TYPE_MASK                                                                     \
+    (CONVERTOR_SEND_CONVERSION | CONVERTOR_RECV | CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS         \
+     | CONVERTOR_NO_OP | CONVERTOR_ACCELERATOR | CONVERTOR_ACCELERATOR_ASYNC                     \
+     | CONVERTOR_ACCELERATOR_UNIFIED)
+
+/*
+ * The datatype-only shape-hint flags (opal_datatype.h) share this 32-bit width but live in a
+ * different field (opal_datatype_t::flags), are kept outside CONVERTOR_DATATYPE_MASK so they are
+ * never copied into a convertor, and are read only from the datatype. Guarantee their bit values do
+ * not coincide with any convertor control flag, so a mistaken test of the wrong field cannot read as
+ * an active convertor bit.
+ */
+_Static_assert(0
+                   == ((CONVERTOR_SEND_CONVERSION | CONVERTOR_RECV | CONVERTOR_SEND
+                        | CONVERTOR_HOMOGENEOUS | CONVERTOR_NO_OP | CONVERTOR_COMPLETED
+                        | CONVERTOR_HAS_REMOTE_SIZE | CONVERTOR_ACCELERATOR
+                        | CONVERTOR_ACCELERATOR_ASYNC | CONVERTOR_ACCELERATOR_UNIFIED
+                        | CONVERTOR_SKIP_ACCELERATOR_INIT)
+                       & (OPAL_DATATYPE_OPTIMIZED_RESTRICTED | OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE)),
+               "datatype shape-hint flags must not alias a convertor control flag");
 
 union dt_elem_desc;
 typedef struct opal_convertor_t opal_convertor_t;
