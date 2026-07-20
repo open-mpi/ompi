@@ -16,7 +16,7 @@
 #include "btl_ofi_rdma.h"
 
 #if OPAL_HAVE_THREAD_LOCAL
-static opal_thread_local mca_btl_ofi_context_t *my_context = NULL;
+static opal_thread_local int64_t my_ctx_idx = -1;
 #endif /* OPAL_HAVE_THREAD_LOCAL */
 
 static int init_context_freelists(mca_btl_ofi_context_t *context)
@@ -117,7 +117,6 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
     context->rx_ctx = ep;
     context->context_id = 0;
     context->btl = btl;
-    my_context = NULL;
 
     return context;
 
@@ -287,20 +286,17 @@ void mca_btl_ofi_context_finalize(mca_btl_ofi_context_t *context, bool scalable_
 mca_btl_ofi_context_t *get_ofi_context(mca_btl_ofi_module_t *btl)
 {
 #if OPAL_HAVE_THREAD_LOCAL
-    /* With TLS, we cache the context we use. */
-    static volatile int64_t cur_num = 0;
+    /* With TLS, we cache a per-thread context slot index and always index
+     * into the requested module's own contexts array. Caching the context
+     * pointer itself would pin every module's traffic to whichever module
+     * was used first. */
+    static opal_atomic_int64_t cur_num = 0;
 
-    if (OPAL_UNLIKELY(my_context == NULL)) {
-        OPAL_THREAD_LOCK(&btl->module_lock);
-
-        my_context = &btl->contexts[cur_num];
-        cur_num = (cur_num + 1) % btl->num_contexts;
-
-        OPAL_THREAD_UNLOCK(&btl->module_lock);
+    if (OPAL_UNLIKELY(my_ctx_idx < 0)) {
+        my_ctx_idx = opal_atomic_fetch_add_64(&cur_num, 1);
     }
 
-    assert(my_context);
-    return my_context;
+    return &btl->contexts[my_ctx_idx % btl->num_contexts];
 #else
     return get_ofi_context_rr(btl);
 #endif
