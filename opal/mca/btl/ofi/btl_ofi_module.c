@@ -418,6 +418,7 @@ int mca_btl_ofi_finalize(mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&ofi_btl->id_to_endpoint);
     OBJ_DESTRUCT(&ofi_btl->module_lock);
 
+    free(ofi_btl->domain_name);
     free(btl);
 
     return OPAL_SUCCESS;

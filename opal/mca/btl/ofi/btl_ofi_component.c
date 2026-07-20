@@ -516,7 +516,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
     size_t namelen;
     size_t num_contexts_to_create;
 
-    char *domain_name;
+    char *domain_name = NULL;
     void *ep_name = NULL;
 
     struct fi_info *ofi_info;
@@ -564,7 +564,11 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
                      fi_strerror(-rc)));
     }
 
-    domain_name = info->domain_attr->name;
+    domain_name = strdup(info->domain_attr->name);
+    if (NULL == domain_name) {
+        BTL_ERROR(("failed to duplicate domain name"));
+        goto fail;
+    }
     BTL_VERBOSE(
         ("initializing dev:%s provider:%s", domain_name, info->fabric_attr->prov_name));
 
@@ -765,6 +769,7 @@ fail:
     if (NULL != fabric) {
         opal_common_ofi_fabric_release(fabric);
     }
+    free(domain_name);
     free(module);
 
     if (NULL != ep_name) {
