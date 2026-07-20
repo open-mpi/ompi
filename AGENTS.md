@@ -140,6 +140,22 @@ you need to change a binding's behavior, change the **generator,
 templates, or the back-end implementation** — never the emitted `.c`/`.h`
 files.
 
+When you edit the generator itself (any file under
+`ompi/mpi/bindings/`), the generated bindings will automatically be
+regenerated on the next `make`. You do not need to manually delete or
+regenerate them. However, you must ensure your generator changes are
+correct before running `make`, as the build will incorporate your changes
+immediately.
+
+**Important:** If you add new files to or remove files from the generator
+(e.g., adding a new Python module under `ompi/mpi/bindings/ompi_bindings/`),
+you must update the `OMPI_BINDINGS_GENERATOR` variable in
+[`Makefile.ompi-rules`](Makefile.ompi-rules) to include the new file(s) or
+remove the deleted file(s). This ensures the build system properly tracks
+dependencies. You must also add new files to `EXTRA_DIST` in
+[`ompi/mpi/Makefile.am`](ompi/mpi/Makefile.am) so they are included in
+distribution tarballs.
+
 ## Do NOT hand-edit
 
 - **`3rd-party/` and the git submodules** (embedded OpenPMIx, and the
@@ -203,6 +219,11 @@ Note that editing `Makefile.am` files do *not* require the full
 `autogen.pl` + `./configure` process.  A simple `make` will regenerate
 the relevant `Makefile[.in]` files and then complete the build
 successfully.
+
+Note also that `Makefile.ompi-rules` is a special include file that
+defines shared build rules and variables (like `OMPI_BINDINGS_GENERATOR`).
+Changes to it also only require `make`, not the full `autogen.pl` +
+`./configure` process.
 
 **"Did I break it?" — layered:**
 
