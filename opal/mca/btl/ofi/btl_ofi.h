@@ -51,7 +51,6 @@
 #include <rdma/fi_rma.h>
 
 BEGIN_C_DECLS
-#define MCA_BTL_OFI_MAX_MODULES  16
 #define MCA_BTL_OFI_NUM_CQE_READ 64
 
 #define MCA_BTL_OFI_DEFAULT_RD_NUM             10
@@ -122,6 +121,9 @@ struct mca_btl_ofi_module_t {
     mca_btl_ofi_context_t *contexts;
 
     char *domain_name;
+    int module_index;
+    void *ep_name;
+    size_t ep_namelen;
 
     /** whether the module has been fully initialized or not */
     bool initialized;
@@ -172,7 +174,8 @@ struct mca_btl_ofi_component_t {
     bool disable_hmem;
 
     /** All BTL OFI modules (1 per tl) */
-    mca_btl_ofi_module_t *modules[MCA_BTL_OFI_MAX_MODULES];
+    mca_btl_ofi_module_t **modules;
+    int modules_allocated;
 };
 typedef struct mca_btl_ofi_component_t mca_btl_ofi_component_t;
 
