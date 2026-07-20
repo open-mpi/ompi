@@ -35,6 +35,7 @@ TESTS = \
         ddt_raw2 \
         unpack_ooo \
         ddt_pack \
+        resized_extent \
         external32 \
         large_data \
         partial \
@@ -70,6 +71,10 @@ ddt_raw2_LDADD = $(common_ldadd)
 ddt_pack_SOURCES = ddt_pack.c
 ddt_pack_LDFLAGS = $(common_ldflags)
 ddt_pack_LDADD = $(common_ldadd)
+
+resized_extent_SOURCES = resized_extent.c
+resized_extent_LDFLAGS = $(common_ldflags)
+resized_extent_LDADD = $(common_ldadd)
 
 position_SOURCES = position.c
 position_LDFLAGS = $(common_ldflags)

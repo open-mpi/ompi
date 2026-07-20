@@ -253,6 +253,7 @@ ompi/test/datatype/partial
 ompi/test/datatype/position
 ompi/test/datatype/position_noncontig
 ompi/test/datatype/reduce_local
+ompi/test/datatype/resized_extent
 ompi/test/datatype/sizedtypes
 ompi/test/datatype/to_self
 ompi/test/datatype/unpack_ooo

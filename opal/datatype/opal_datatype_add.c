@@ -155,7 +155,10 @@ int32_t opal_datatype_add(opal_datatype_t *pdtBase, const opal_datatype_t *pdtAd
         extent = (pdtAdd->ub - pdtAdd->lb);
     }
 
-    /* Deal with the special markers (OPAL_DATATYPE_LB and OPAL_DATATYPE_UB) */
+    /* Deal with the special markers (OPAL_DATATYPE_LB and OPAL_DATATYPE_UB).  These back
+     * the MPI_LB/MPI_UB pseudo-type handles (exposed at the MPI layer only under
+     * --enable-mpi1-compatibility) and share the same bound-marker machinery that
+     * MPI_Type_create_resized relies on, so the engine handles them unconditionally. */
     if (OPAL_DATATYPE_LB == pdtAdd->id) {
         pdtBase->bdt_used |= (((uint32_t) 1) << OPAL_DATATYPE_LB);
         if (pdtBase->flags & OPAL_DATATYPE_FLAG_USER_LB) {

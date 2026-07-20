@@ -265,7 +265,7 @@ static MPI_Datatype create_indexed_gap_ddt(void)
  */
 static MPI_Datatype create_indexed_gap_optimized_ddt(void)
 {
-    MPI_Datatype dt1, dt2, dt3;
+    MPI_Datatype dt1, dt2, dt3, dt_struct;
     int bLength[3];
     MPI_Datatype types[3];
     MPI_Aint displ[3];
@@ -285,10 +285,19 @@ static MPI_Datatype create_indexed_gap_optimized_ddt(void)
     displ[1] = 8;
     displ[2] = 44 * 9 + 8;
 
-    MPI_Type_create_struct(3, bLength, displ, types, &dt3);
+    MPI_Type_create_struct(3, bLength, displ, types, &dt_struct);
+
+    /* The inner resized (extent-44) payload plants an upper-bound marker; per the MPI
+     * bound-marker model that marker propagates into the enclosing struct and clips its
+     * extent to the end of the last payload (404) rather than the trailing float
+     * epilogue (440).  Resize the aggregate to the intended 10 * 44 = 440 so this
+     * hand-built shape is a faithful optimizer-target equivalent of
+     * create_indexed_gap_ddt() (extent 440) and strides identically for count > 1. */
+    MPI_Type_create_resized(dt_struct, 0, 44 * 10, &dt3);
 
     MPI_Type_free(&dt1);
     MPI_Type_free(&dt2);
+    MPI_Type_free(&dt_struct);
     MPI_DDT_DUMP(dt3);
     MPI_Type_commit(&dt3);
     return dt3;
