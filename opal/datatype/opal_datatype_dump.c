@@ -167,11 +167,11 @@ void opal_datatype_dump(const opal_datatype_t *pData)
                       "Datatype %p[%s] size %" PRIsize_t " align %u id %u length %" PRIsize_t
                       " used %" PRIsize_t "\n"
                       "true_lb %td true_ub %td (true_extent %td) lb %td ub %td (extent %td)\n"
-                      "nbElems %" PRIsize_t " loops %u flags %X (",
+                      "nbElems %" PRIsize_t " stack_depth %u flags %X (",
                       (void *) pData, pData->name, pData->size, pData->align, (uint32_t) pData->id,
                       pData->desc.length, pData->desc.used, pData->true_lb, pData->true_ub,
                       pData->true_ub - pData->true_lb, pData->lb, pData->ub, pData->ub - pData->lb,
-                      pData->nbElems, pData->loops, (unsigned int) pData->flags);
+                      pData->nbElems, pData->stack_depth, (unsigned int) pData->flags);
     /* dump the flags */
     if (pData->flags == OPAL_DATATYPE_FLAG_PREDEFINED) {
         index += snprintf(buffer + index, length - index, "predefined ");

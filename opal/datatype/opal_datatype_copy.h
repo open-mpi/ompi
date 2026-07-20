@@ -173,7 +173,7 @@ static inline int32_t _copy_content_same_ddt(const opal_datatype_t *datatype, in
         return 0; /* completed */
     }
 
-    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->loops + 1));
+    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->stack_depth + 2));
     pStack->count = count;
     pStack->index = -1;
     pStack->disp = 0;

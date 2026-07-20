@@ -849,12 +849,12 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
     index += snprintf( buffer, length - index,
                        "Datatype %p[%s] id %d size %" PRIsize_t " align %u opal_id %u length %" PRIsize_t " used %" PRIsize_t "\n"
                        "true_lb %td true_ub %td (true_extent %td) lb %td ub %td (extent %td)\n"
-                       "nbElems %" PRIsize_t " loops %u flags %X (",
+                       "nbElems %" PRIsize_t " stack_depth %u flags %X (",
                        (void*)pData, pData->name, pData->id,
                        pData->super.size, pData->super.align, (uint32_t)pData->super.id, pData->super.desc.length, pData->super.desc.used,
                        pData->super.true_lb, pData->super.true_ub, pData->super.true_ub - pData->super.true_lb,
                        pData->super.lb, pData->super.ub, pData->super.ub - pData->super.lb,
-                       pData->super.nbElems, pData->super.loops, (unsigned int) pData->super.flags );
+                       pData->super.nbElems, pData->super.stack_depth, (unsigned int) pData->super.flags );
     /* dump the flags */
     if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );

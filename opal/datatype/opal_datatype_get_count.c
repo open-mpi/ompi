@@ -42,7 +42,7 @@ ssize_t opal_datatype_get_element_count(const opal_datatype_t *datatype, size_t 
      */
     assert(iSize <= datatype->size);
     DUMP("dt_count_elements( %p, %ul )\n", (void *) datatype, (unsigned long) iSize);
-    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->loops + 2));
+    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->stack_depth + 2));
     pStack->count = 1;
     pStack->index = -1;
     pStack->disp = 0;
@@ -112,7 +112,7 @@ int32_t opal_datatype_set_element_count(const opal_datatype_t *datatype, size_t 
     }
 
     DUMP("dt_set_element_count( %p, %d )\n", (void *) datatype, count);
-    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->loops + 2));
+    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->stack_depth + 2));
     pStack->count = 1;
     pStack->index = -1;
     pStack->disp = 0;
@@ -181,7 +181,7 @@ int opal_datatype_compute_ptypes(opal_datatype_t *datatype)
     datatype->ptypes = (size_t *) calloc(OPAL_DATATYPE_MAX_SUPPORTED, sizeof(size_t));
 
     DUMP("opal_datatype_compute_ptypes( %p )\n", (void *) datatype);
-    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->loops + 2));
+    pStack = (dt_stack_t *) alloca(sizeof(dt_stack_t) * (datatype->stack_depth + 2));
     pStack->count = 1;
     pStack->index = -1;
     pStack->disp = 0;

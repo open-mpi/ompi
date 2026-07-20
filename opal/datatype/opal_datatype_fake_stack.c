@@ -102,7 +102,7 @@ int opal_convertor_create_stack_with_pos_general(opal_convertor_t *pConvertor,
     pStack->disp = count * (pData->ub - pData->lb) + pElems[loop_length].elem.disp;
 
     pos_desc = 0;
-    remoteLength = (size_t *) alloca(sizeof(size_t) * (pConvertor->pDesc->loops + 1));
+    remoteLength = (size_t *) alloca(sizeof(size_t) * (pConvertor->pDesc->stack_depth + 2));
     remoteLength[0] = 0; /* initial value set to ZERO */
     loop_length = 0;
 

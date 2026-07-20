@@ -37,14 +37,14 @@ int32_t opal_pack_homogeneous_contig_with_gaps(opal_convertor_t *pConv, struct i
                                                uint32_t *out_size, size_t *max_data);
 int32_t opal_generic_inlined_pack(opal_convertor_t *pConvertor, struct iovec *iov,
                                   uint32_t *out_size, size_t *max_data);
-int32_t opal_generic_inlined_pack_reference(opal_convertor_t *pConvertor, struct iovec *iov,
-                                            uint32_t *out_size, size_t *max_data);
 int32_t opal_unpack_homogeneous_contig(opal_convertor_t *pConv, struct iovec *iov,
                                        uint32_t *out_size, size_t *max_data);
 int32_t opal_generic_inlined_unpack(opal_convertor_t *pConvertor, struct iovec *iov,
                                     uint32_t *out_size, size_t *max_data);
-int32_t opal_generic_inlined_unpack_reference(opal_convertor_t *pConvertor, struct iovec *iov,
-                                              uint32_t *out_size, size_t *max_data);
+int32_t opal_pack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec *iov,
+                                     uint32_t *out_size, size_t *max_data);
+int32_t opal_unpack_accelerator_simple(opal_convertor_t *pConvertor, struct iovec *iov,
+                                       uint32_t *out_size, size_t *max_data);
 
 END_C_DECLS
 
