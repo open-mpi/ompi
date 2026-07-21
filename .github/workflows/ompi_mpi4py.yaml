@@ -83,6 +83,15 @@ jobs:
         mca_params="$HOME/.prte/mca-params.conf"
         mkdir -p "$(dirname "$mca_params")"
         echo rmaps_default_mapping_policy = :oversubscribe >> "$mca_params"
+        #
+        # Recent versions of OpenPMIx started emitting warnings about use of deprecated
+        # MCA parameters its emission to stderr causes the demo/test-run stuff below to fail.
+        # Suppress generation of these warnings.  A simpler CI test should be used to
+        # to check for these messages.
+        #
+        mca_params="$HOME/.pmix/mca-params.conf"
+        mkdir -p "$(dirname "$mca_params")"
+        echo mca_base_suppress_deprecated_warning = true >> "$mca_params"
 
     - name: Show MPI
       run:  ompi_info
