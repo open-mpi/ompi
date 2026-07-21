@@ -280,8 +280,15 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
         char *to = (char *) user_data;
         size_t copied;
 
-        /* Partial conversion supports structural transformations such as byte swapping, for which
-         * the local and remote predefined representations have the same size. */
+        /*
+         * A predefined element is only ever split across a fragment boundary when the packer was
+         * allowed to stop mid-element, which it is not for a size-changing (CONVERTOR_UNSAFE_SPLIT)
+         * convertor. So the only heterogeneous conversions that can reach this partial path are
+         * same-size structural transforms (e.g. byte swapping), for which remote and local widths
+         * are equal. Assert the invariant rather than attempting a size-changing partial reassembly
+         * the marker trick below cannot express.
+         */
+        assert(!(pConvertor->flags & CONVERTOR_UNSAFE_SPLIT));
         assert(remote_length == data_length);
         copied = pConvertor->master->pFunctions[pElem->elem.common.type](
             pConvertor, 1, 1, 1, &from, remote_length, remote_length, &to, data_length, data_length);

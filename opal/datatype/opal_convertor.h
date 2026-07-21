@@ -53,6 +53,15 @@ BEGIN_C_DECLS
  * convertor, so no convertor word ever carries an upper-layer meaning.
  */
 #define CONVERTOR_DATATYPE_MASK          0x0000FFFF
+/*
+ * Set when the packed (remote) representation of at least one predefined type in this convertor's
+ * datatype has a different size than the local one (e.g. a 4- vs 8-byte long, or a 1/2/4-byte bool
+ * across mismatched architectures). Such a conversion is not a byte permutation, so a predefined
+ * element cannot be split across a fragment boundary and later reassembled: the pack side must stop
+ * only on whole predefined-element boundaries ("unsafe to split"). Homogeneous and same-size
+ * byte-swap conversions do not set this flag and remain free to split anywhere.
+ */
+#define CONVERTOR_UNSAFE_SPLIT           0x00100000
 #define CONVERTOR_SEND_CONVERSION        0x00200000
 #define CONVERTOR_RECV                   0x00400000
 #define CONVERTOR_SEND                   0x00800000
@@ -81,9 +90,9 @@ BEGIN_C_DECLS
 _Static_assert(0
                    == ((CONVERTOR_SEND_CONVERSION | CONVERTOR_RECV | CONVERTOR_SEND
                         | CONVERTOR_HOMOGENEOUS | CONVERTOR_NO_OP | CONVERTOR_COMPLETED
-                        | CONVERTOR_HAS_REMOTE_SIZE | CONVERTOR_ACCELERATOR
-                        | CONVERTOR_ACCELERATOR_ASYNC | CONVERTOR_ACCELERATOR_UNIFIED
-                        | CONVERTOR_SKIP_ACCELERATOR_INIT)
+                        | CONVERTOR_HAS_REMOTE_SIZE | CONVERTOR_UNSAFE_SPLIT
+                        | CONVERTOR_ACCELERATOR | CONVERTOR_ACCELERATOR_ASYNC
+                        | CONVERTOR_ACCELERATOR_UNIFIED | CONVERTOR_SKIP_ACCELERATOR_INIT)
                        & (OPAL_DATATYPE_OPTIMIZED_RESTRICTED | OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE)),
                "datatype shape-hint flags must not alias a convertor control flag");
 

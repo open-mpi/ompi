@@ -71,6 +71,15 @@ int32_t opal_unpack_homogeneous_contig(opal_convertor_t *pConv, struct iovec *io
 
     DO_DEBUG(opal_output(0, "unpack_homogeneous_contig( pBaseBuf %p, iov count %d )\n",
                          (void *) pConv->pBaseBuf, *out_size););
+
+    /*
+     * Raw byte copier; the incoming stream is consumed at arbitrary byte boundaries. That is only
+     * valid when the convertor is safe to split (homogeneous or same-size byte-swap). A size-changing
+     * conversion must unpack through opal_unpack_general. See CONVERTOR_UNSAFE_SPLIT and the matching
+     * assert in opal_unpack_partial_predefined.
+     */
+    assert(!(pConv->flags & CONVERTOR_UNSAFE_SPLIT));
+
     if (stack[1].type != opal_datatype_uint1.id) {
         stack[1].count *= opal_datatype_basicDatatypes[stack[1].type]->size;
         stack[1].type = opal_datatype_uint1.id;
@@ -184,6 +193,13 @@ int32_t opal_generic_inlined_unpack(opal_convertor_t *pConvertor, struct iovec *
     DO_DEBUG(opal_output(0, "opal_convertor_generic_inlined_unpack( %p, iov[%u] = {%p, %lu} )\n",
                          (void *) pConvertor, *out_size, (void *) iov[0].iov_base,
                          (unsigned long) iov[0].iov_len););
+
+    /*
+     * The inlined homogeneous mover can consume the incoming stream mid predefined element at a
+     * fragment boundary, so it is only valid for a convertor that is safe to split. A size-changing
+     * conversion must go through opal_unpack_general instead. See CONVERTOR_UNSAFE_SPLIT.
+     */
+    assert(!(pConvertor->flags & CONVERTOR_UNSAFE_SPLIT));
 
     description = pConvertor->use_desc->desc;
 
@@ -630,7 +646,6 @@ unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
     size_t cando_count = *(COUNT);
     size_t remote_elem_size = master->remote_sizes[_elem->common.type];
-    size_t blocklen_bytes = remote_elem_size;
     unsigned char *_memory = (*memory) + _elem->disp;
     unsigned char *_packed = *packed;
     char *from, *to;
@@ -639,8 +654,9 @@ unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     assert(0 == (cando_count % _elem->blocklen)); /* no partials here */
     assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
 
+    /* Cap to whole predefined elements (single-element size, not the block size). */
     if ((remote_elem_size * cando_count) > *(SPACE))
-        cando_count = (*SPACE) / blocklen_bytes;
+        cando_count = (*SPACE) / remote_elem_size;
 
     from = (char *) _packed;
     to = (char *) _memory;

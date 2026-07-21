@@ -130,6 +130,7 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
     master->remote_arch = remote_arch;
     master->flags = 0;
     master->hetero_mask = 0;
+    master->size_mismatch_mask = 0;
     /**
      * Most of the sizes will be identical, so for now just make a copy of
      * the local ones. As master->remote_sizes is defined as being an array of
@@ -176,6 +177,12 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
             master->hetero_mask |= (((uint32_t) 1) << i);
         }
     }
+    /*
+     * Snapshot the size-changing types before the byte-swap pass below folds same-size swaps into
+     * hetero_mask. These are the only types whose predefined elements must never be split across a
+     * fragment boundary (CONVERTOR_UNSAFE_SPLIT).
+     */
+    master->size_mismatch_mask = master->hetero_mask;
     if (opal_arch_checkmask(&master->remote_arch, OPAL_ARCH_ISBIGENDIAN)
         != opal_arch_checkmask(&opal_local_arch, OPAL_ARCH_ISBIGENDIAN)) {
         uint32_t hetero_mask = 0;
@@ -475,6 +482,14 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
     pConvertor->remote_size = pConvertor->local_size;
     if (OPAL_UNLIKELY(datatype->bdt_used & pConvertor->master->hetero_mask)) {
         pConvertor->flags &= (~CONVERTOR_HOMOGENEOUS);
+        /*
+         * If any predefined type in this datatype is size-changing on the wire, mark the convertor
+         * "unsafe to split" so the packer only ever stops on whole predefined-element boundaries.
+         * Same-size byte-swap conversions leave this clear and may still split freely.
+         */
+        if (datatype->bdt_used & pConvertor->master->size_mismatch_mask) {
+            pConvertor->flags |= CONVERTOR_UNSAFE_SPLIT;
+        }
         /* Can we use the optimized description? */
         if (datatype->flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
             pConvertor->use_desc = &(datatype->desc);

@@ -33,6 +33,13 @@ typedef struct opal_convertor_master_t {
     uint32_t remote_arch;
     uint32_t flags;
     uint32_t hetero_mask;
+    /*
+     * Subset of hetero_mask covering only the predefined types whose remote size differs from the
+     * local one (size-changing conversions), excluding pure byte-swap. A datatype that touches any
+     * of these types cannot have its predefined elements split across a fragment boundary; see
+     * CONVERTOR_UNSAFE_SPLIT.
+     */
+    uint32_t size_mismatch_mask;
     const size_t remote_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
     conversion_fct_t *pFunctions; /**< the convertor functions pointer */
 } opal_convertor_master_t;

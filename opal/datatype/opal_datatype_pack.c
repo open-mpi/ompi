@@ -56,6 +56,15 @@ int32_t opal_pack_homogeneous_contig(opal_convertor_t *pConv, struct iovec *iov,
     uint32_t iov_count;
     size_t length = pConv->local_size - pConv->bConverted, initial_amount = pConv->bConverted;
 
+    /*
+     * This is a raw byte copier: it stops wherever the output fragment ends, possibly in the middle
+     * of a predefined element. That is only legal for a convertor that is safe to split (homogeneous
+     * or a same-size byte-swap). A size-changing conversion must never reach here; it has to pack
+     * through the element-aligned opal_pack_general so the peer only ever sees whole elements. See
+     * CONVERTOR_UNSAFE_SPLIT and the matching assert in opal_unpack_partial_predefined.
+     */
+    assert(!(pConv->flags & CONVERTOR_UNSAFE_SPLIT));
+
     source_base = (pConv->pBaseBuf + pConv->pDesc->true_lb + pStack[0].disp + pStack[1].disp);
 
     /* There are some optimizations that can be done if the upper level
@@ -111,6 +120,8 @@ int32_t opal_pack_homogeneous_contig_with_gaps(opal_convertor_t *pConv, struct i
      */
     assert((pData->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && ((ptrdiff_t) pData->size != extent));
     assert(pData->opt_desc.used <= 1);
+    /* Byte-granular copier; must not run for a size-changing conversion. See CONVERTOR_UNSAFE_SPLIT. */
+    assert(!(pConv->flags & CONVERTOR_UNSAFE_SPLIT));
     DO_DEBUG(opal_output(0, "pack_homogeneous_contig( pBaseBuf %p, iov_count %d )\n",
                          (void *) pConv->pBaseBuf, *out_size););
 
@@ -375,6 +386,14 @@ int32_t opal_generic_inlined_pack(opal_convertor_t *pConvertor, struct iovec *io
     DO_DEBUG(opal_output(0, "opal_convertor_generic_inlined_pack( %p:%p, {%p, %lu}, %d )\n",
                          (void *) pConvertor, (void *) pConvertor->pBaseBuf,
                          (void *) iov[0].iov_base, (unsigned long) iov[0].iov_len, *out_size););
+
+    /*
+     * The inlined homogeneous mover can stop in the middle of a predefined element at a fragment
+     * boundary, so it is only valid for a convertor that is safe to split. A size-changing
+     * conversion must go through the element-aligned opal_pack_general instead. See
+     * CONVERTOR_UNSAFE_SPLIT.
+     */
+    assert(!(pConvertor->flags & CONVERTOR_UNSAFE_SPLIT));
 
     description = pConvertor->use_desc->desc;
 
@@ -791,7 +810,6 @@ pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
     size_t cando_count = *(COUNT);
     size_t remote_elem_size = master->remote_sizes[_elem->common.type];
-    size_t blocklen_bytes = remote_elem_size;
     unsigned char *_memory = (*memory) + _elem->disp;
     unsigned char *_packed = *packed;
     char *from, *to;
@@ -800,8 +818,16 @@ pack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     assert(0 == (cando_count % _elem->blocklen)); /* no partials here */
     assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
 
+    /*
+     * Dividing by the single-element (not the block) size caps cando_count to whole predefined
+     * elements, so we never write a partial predefined element into the output -- stopping
+     * mid-block is fine, stopping mid-element is not. This is exactly the guarantee
+     * CONVERTOR_UNSAFE_SPLIT relies on for size-changing conversions: the receiver only ever sees
+     * element-aligned boundaries and thus never has to reassemble a split element (see
+     * opal_unpack_partial_predefined).
+     */
     if ((remote_elem_size * cando_count) > *(SPACE))
-        cando_count = (*SPACE) / blocklen_bytes;
+        cando_count = (*SPACE) / remote_elem_size;
 
     from = (char *) _memory;
     to = (char *) _packed;
