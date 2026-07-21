@@ -97,7 +97,7 @@ all contributions are compatible with that license.  Put differently:
 we need to have an established intellectual property pedigree of the
 code in Open MPI.  This means being able to ensure that all code
 included in Open MPI is free, open source, and able to be distributed
-under :doc:`the BSD license </license/index>`.
+under :doc:`the BSD 3 clause Open MPI variant license </license/index>`.
 
 Open MPI has therefore adopted requirements based on the signed-off-by
 process as described in Section 11 of the Linux kernel document on
