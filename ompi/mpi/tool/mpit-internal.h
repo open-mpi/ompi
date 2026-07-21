@@ -7,6 +7,7 @@
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +46,21 @@ void ompi_mpit_lock (void);
 void ompi_mpit_unlock (void);
 
 extern volatile uint32_t ompi_mpit_init_count;
+
+/* The thread level of the MPI tool information interface itself, pinned
+   for one init epoch: established by the first MPI_T_init_thread() of the
+   epoch, reported unchanged by nested init calls (MPI 5.0 sec. 15.3.4:
+   they have "no effect beyond increasing the reference count"), and reset
+   when the last MPI_T_finalize() ends the epoch.  This is NOT the same
+   thing as the World Model's thread level (see MPI_T_init_thread() for
+   why the two must never be conflated). */
+OMPI_DECLSPEC extern int ompi_mpit_thread_level;
+
+/* Set when a first MPI_T_init_thread() failed partway through framework
+   registration, which is not unwindable; MPI_T can never be brought up
+   in this process again, and MPI_T_finalize() must not run the component
+   closes (see both files for the details). */
+extern bool ompi_mpit_init_failed;
 
 int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype);
 int ompit_opal_to_mpit_error (int rc);

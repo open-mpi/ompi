@@ -25,6 +25,7 @@
 #include "opal/include/opal/sys/atomic.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/event.h"
+#include "opal/mca/threads/thread_usage.h"
 #include "ompi/instance/instance.h"
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -38,12 +39,6 @@ extern opal_mutex_t ompi_mpit_big_lock;
 
 extern volatile uint32_t ompi_mpit_init_count;
 
-/* Set when a first MPI_T_init_thread() failed partway: the framework
-   registration bookkeeping is not unwindable (see below), so MPI_T can
-   never be brought up in this process again.  Without this latch, the
-   *next* MPI_T_init_thread() would take the nested-init early exit and
-   report a fully working MPI_T that is in fact broken. */
-static bool ompi_mpit_init_failed = false;
 extern volatile int32_t initted;
 
 
@@ -67,6 +62,10 @@ int MPI_T_init_thread (int required, int *provided)
         }
 
         if (0 != ompi_mpit_init_count++) {
+            /* Nested init: report the level pinned by the first init of
+               this epoch (MPI 5.0 sec. 15.3.4: no effect beyond the
+               reference count). */
+            *provided = ompi_mpit_thread_level;
             break;
         }
 
@@ -134,9 +133,58 @@ int MPI_T_init_thread (int required, int *provided)
             break;
         }
 
-        /* determine the thread level. TODO -- this might
-           be wrong */
-        ompi_mpi_thread_level (required, provided);
+        /* The thread level of the MPI tool information interface is its
+           own, scoped to MPI_T routines only (MPI 5.0 sec. 15.3.4).  It
+           must NOT be written into the World Model's globals: those back
+           MPI_QUERY_THREAD, which is pinned to whatever the original
+           MPI_INIT_THREAD returned (sec. 11.6.2).  Writing them here both
+           corrupted that report and changed the process's effective
+           thread level in mid-flight -- an
+           MPI_T_init_thread(MPI_THREAD_SINGLE) inside a THREAD_MULTIPLE
+           application silently disabled locking process-wide, and an
+           MPI_T_init_thread(MPI_THREAD_MULTIPLE) before a session flipped
+           MPI onto threaded code paths the session never chose.
+
+           A tool at any level above MPI_THREAD_SINGLE may legally drive
+           MPI_T from a different thread than the one driving MPI proper,
+           so OPAL's process-wide thread flags must ratchet up -- and only
+           up, because the pinned promises of other live scopes (world,
+           sessions) may already depend on them.
+
+           Ratchet only at a quiescent point: when no MPI instance (world
+           or session) is active.  The instance lock we hold pins
+           ompi_instance_count, and with no active instance a conforming
+           program has no thread inside MPI or OPAL, so nothing can read
+           these plain flags concurrently with the write.  When MPI *is*
+           already active at a lower thread level, the flags cannot be
+           changed (the write would race MPI's unlocked hot-path readers,
+           and components already selected were configured at the lower
+           level) -- so instead of promising concurrency the process
+           cannot deliver, grant at most MPI_THREAD_SERIALIZED, the
+           coupling that MPI 5.0 secs. 11.6.2/15.3.4 explicitly permit
+           ("may influence").  Note that the MPI_T entry points that
+           mutate shared state serialize on ompi_mpit_big_lock, but not
+           every MPI_T query routine takes it, so the big lock alone is
+           not grounds for granting MPI_THREAD_MULTIPLE. */
+        if (MPI_THREAD_SINGLE != required) {
+            if (0 == ompi_instance_count) {
+                /* Write only on transition: a previous MPI_T epoch (or an
+                   already-finalized scope) may have set these, and other
+                   threads of this tool may be running unlocked MPI_T
+                   query routines that read them. */
+                if (!opal_using_threads ()) {
+                    opal_set_using_threads (true);
+                }
+                if (opal_single_threaded) {
+                    opal_single_threaded = false;
+                }
+            } else if (!ompi_mpi_thread_multiple
+                       && MPI_THREAD_SERIALIZED < required) {
+                required = MPI_THREAD_SERIALIZED;
+            }
+        }
+        ompi_mpit_thread_level = required;
+        *provided = ompi_mpit_thread_level;
     } while (0);
 
     ompi_mpi_instance_unlock ();

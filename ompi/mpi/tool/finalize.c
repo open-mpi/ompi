@@ -75,6 +75,10 @@ int MPI_T_finalize (void)
         }
 
         (void) opal_finalize_util ();
+
+        /* End of this MPI_T init epoch; a future epoch establishes its
+           own thread level. */
+        ompi_mpit_thread_level = MPI_THREAD_SINGLE;
     }
 
     ompi_mpi_instance_unlock ();

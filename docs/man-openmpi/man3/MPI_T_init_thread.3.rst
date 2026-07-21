@@ -33,6 +33,20 @@ calls to MPI_T_finalize() equals the number of calls to
 MPI_T_init_thread() the MPI tool interface will no longer be
 available until another call to MPI_T_init_thread().
 
+The ``required`` and ``provided`` thread support levels apply to the
+MPI tool information interface only; they are distinct from the thread
+support level of the World Model (reported by :ref:`MPI_Query_thread`)
+and from each session's ``thread_level`` info key.  The level granted
+in ``provided`` is fixed for as long as the interface remains
+initialized: additional calls to :ref:`MPI_T_init_thread` while the
+interface is initialized only increase the reference count and return
+the already-established level.  If another MPI scope (the World Model
+or a session) is already active at a lower thread level, a request for
+``MPI_THREAD_MULTIPLE`` may be granted ``MPI_THREAD_SERIALIZED``
+instead, because the running process cannot be safely upgraded; MPI-5.0
+explicitly permits one scope's thread level to influence the level
+granted to a later initialization.
+
 MPI_T_init_thread(), like MPI_Init_thread(), has a provision to
 request a certain level of thread support in ``required``:
 
