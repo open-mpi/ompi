@@ -275,7 +275,7 @@ opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_
         UNPACK_PREDEFINED_DATATYPE(pConvertor, &single_elem, count_desc, temporary_buffer, user_data,
                                    data_length);
     } else {
-        const size_t remote_length = pConvertor->master->remote_sizes[pElem->elem.common.type];
+        const size_t remote_length = pConvertor->sizes[pElem->elem.common.type];
         char *from = (char *) temporary_buffer;
         char *to = (char *) user_data;
         size_t copied;

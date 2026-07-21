@@ -146,6 +146,16 @@ struct opal_convertor_t {
     uint32_t remoteArch;         /**< the remote architecture */
 
     /* --- cacheline boundary (128 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
+    /**
+     * Per predefined type, the size of one element in the packed stream this convertor reads from
+     * or writes to: the master's remote_sizes for a receive convertor (or a send convertor doing
+     * the conversion, CONVERTOR_SEND_CONVERSION), the local sizes otherwise. Conversion and
+     * positioning code denominates its packed-stream byte accounting in these sizes; the in-memory
+     * layout still uses the local basic-type sizes and the datatype extent. Only read on the
+     * heterogeneous and repositioning paths, so it is kept off the two hot pack/unpack cachelines
+     * above.
+     */
+    const size_t *sizes;
     dt_stack_t static_stack[DT_STATIC_STACK_SIZE]; /**< local stack for small datatypes */
 
     opal_accelerator_stream_t *stream; /**< accelerator stream for async copy */

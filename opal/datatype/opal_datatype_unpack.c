@@ -598,7 +598,7 @@ unpack_partial_blocklen_heterogeneous(opal_convertor_t *CONVERTOR,
     const opal_convertor_master_t *master = (CONVERTOR)->master;
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
     size_t local_elem_size = opal_datatype_basicDatatypes[_elem->common.type]->size;
-    size_t remote_elem_size = master->remote_sizes[_elem->common.type];
+    size_t remote_elem_size = (CONVERTOR)->sizes[_elem->common.type];
     unsigned char *_memory = (*memory) + _elem->disp;
     unsigned char *_packed = *packed;
     char *from, *to;
@@ -650,7 +650,7 @@ unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
     const opal_convertor_master_t *master = (CONVERTOR)->master;
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
     size_t cando_count = *(COUNT);
-    size_t remote_elem_size = master->remote_sizes[_elem->common.type];
+    size_t remote_elem_size = (CONVERTOR)->sizes[_elem->common.type];
     unsigned char *_memory = (*memory) + _elem->disp;
     unsigned char *_packed = *packed;
     char *from, *to;

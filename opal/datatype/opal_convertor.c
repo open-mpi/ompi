@@ -70,6 +70,9 @@ static void opal_convertor_construct(opal_convertor_t *convertor)
     convertor->remoteArch = opal_local_arch;
     convertor->flags = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
     convertor->cbmemcpy = &opal_convertor_accelerator_memcpy;
+    /* Safe default until prepare/clone selects the right stream sizes: the local ones make a
+     * homogeneous send, which is the only thing that can happen before the convertor is prepared. */
+    convertor->sizes = opal_datatype_local_sizes;
 }
 
 static void opal_convertor_destruct(opal_convertor_t *convertor)
@@ -553,6 +556,16 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         convertor->flags |= (CONVERTOR_DATATYPE_MASK & datatype->flags);                        \
         convertor->flags |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS);                          \
                                                                                                 \
+        /* Select the packed-stream element sizes: the remote sizes whenever this convertor     \
+         * touches the wire representation (a receive, or a send that converts), the local      \
+         * sizes otherwise. Homogeneous masters hold a copy of the local sizes, so a homogeneous \
+         * receive still lands on the correct values. */                                         \
+        if (convertor->flags & (CONVERTOR_RECV | CONVERTOR_SEND_CONVERSION)) {                   \
+            convertor->sizes = convertor->master->remote_sizes;                                 \
+        } else {                                                                                \
+            convertor->sizes = opal_datatype_local_sizes;                                       \
+        }                                                                                       \
+                                                                                                \
         convertor->remote_size = convertor->local_size;                                         \
         if (OPAL_LIKELY(convertor->remoteArch == opal_local_arch)) {                            \
             if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                \
@@ -681,6 +694,7 @@ int opal_convertor_clone(const opal_convertor_t *source, opal_convertor_t *desti
     destination->pBaseBuf = source->pBaseBuf;
     destination->fAdvance = source->fAdvance;
     destination->master = source->master;
+    destination->sizes = source->sizes;
     destination->local_size = source->local_size;
     destination->remote_size = source->remote_size;
     /* create the stack */

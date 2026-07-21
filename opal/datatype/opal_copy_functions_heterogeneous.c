@@ -946,7 +946,7 @@ static size_t copy_cxx_bool_heterogeneous(opal_convertor_t *pConvertor, size_t c
                                           ptrdiff_t from_extent, char **to,
                                           size_t to_length, ptrdiff_t to_extent)
 {
-    const size_t remote_bool_size = pConvertor->master->remote_sizes[OPAL_DATATYPE_BOOL];
+    const size_t remote_bool_size = pConvertor->sizes[OPAL_DATATYPE_BOOL];
     const bool is_pack = !!(pConvertor->flags & CONVERTOR_SEND);
     const size_t from_elem_size = is_pack ? sizeof(bool) : remote_bool_size;
     const size_t to_elem_size = is_pack ? remote_bool_size : sizeof(bool);
@@ -1248,7 +1248,7 @@ copy_long_heterogeneous(opal_convertor_t *pConvertor, size_t count, size_t block
                         ptrdiff_t from_extent, char **to, size_t to_length,
                         ptrdiff_t to_extent)
 {
-    const size_t remote_long_size = pConvertor->master->remote_sizes[OPAL_DATATYPE_LONG];
+    const size_t remote_long_size = pConvertor->sizes[OPAL_DATATYPE_LONG];
     const bool is_pack = !!(pConvertor->flags & CONVERTOR_SEND);
     const size_t from_elem_size = is_pack ? sizeof(long) : remote_long_size;
     const size_t to_elem_size = is_pack ? remote_long_size : sizeof(long);
@@ -1405,7 +1405,7 @@ copy_unsigned_long_heterogeneous(opal_convertor_t *pConvertor, size_t count, siz
                                  ptrdiff_t from_extent, char **to, size_t to_length,
                                  ptrdiff_t to_extent)
 {
-    const size_t remote_long_size = pConvertor->master->remote_sizes[OPAL_DATATYPE_UNSIGNED_LONG];
+    const size_t remote_long_size = pConvertor->sizes[OPAL_DATATYPE_UNSIGNED_LONG];
     const bool is_pack = !!(pConvertor->flags & CONVERTOR_SEND);
     const size_t from_elem_size = is_pack ? sizeof(unsigned long) : remote_long_size;
     const size_t to_elem_size = is_pack ? remote_long_size : sizeof(unsigned long);
