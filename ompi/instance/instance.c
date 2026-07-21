@@ -392,6 +392,7 @@ static void evhandler_dereg_callbk(pmix_status_t status,
 static int ompi_mpi_instance_init_common (int argc, char **argv)
 {
     int ret;
+    bool need_world_comms;
     ompi_proc_t **procs;
     size_t nprocs;
     volatile bool active;
@@ -706,8 +707,8 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
     }
 
-    if (mca_pml_base_requires_world() ||
-        mca_osc_base_requires_world()) {
+    need_world_comms = mca_pml_base_requires_world() || mca_osc_base_requires_world();
+    if (need_world_comms) {
         /* need to set up comm world for this instance -- XXX -- FIXME -- probably won't always
          * be the case. */
         if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
@@ -752,8 +753,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     /* some btls/mtls require we call add_procs with all procs in the job.
      * since the btls/mtls have no visibility here it is up to the pml to
      * convey this requirement */
-    if (mca_pml_base_requires_world() ||
-        mca_osc_base_requires_world()) {
+    if (need_world_comms) {
         if (NULL == (procs = ompi_proc_world (&nprocs))) {
             return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
         }
@@ -776,6 +776,29 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ret;
     } else if (OMPI_SUCCESS != ret) {
         return ompi_instance_print_error ("PML add procs failed", ret);
+    }
+
+    /* ompi_comm_init_mpi3() (above) marks the predefined world/self
+       communicators OMPI_COMM_PML_ADDED, but the matching
+       MCA_PML_CALL(add_comm()) calls live only in the World Model path
+       (ompi_mpi_init()).  When the communicator subsystem was set up
+       here -- a sessions-only process whose pml/osc requires the world,
+       e.g. ob1 over a multi-interface tcp btl at MPI_THREAD_MULTIPLE --
+       the flag was a lie: teardown then calls pml del_comm() on
+       communicators the PML has never seen, and ob1 dereferences the
+       NULL c_pml_comm.  Add them for real, now that add_procs() has
+       run.  The c_pml_comm guard keeps the World Model path (which
+       re-runs ompi_comm_init_mpi3() and performs its own add_comm()
+       calls after this function returns) from double-adding. */
+    if (need_world_comms && NULL == ompi_mpi_comm_world.comm.c_pml_comm) {
+        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
+        if (OMPI_SUCCESS != ret) {
+            return ompi_instance_print_error ("PML add comm (world) failed", ret);
+        }
+        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
+        if (OMPI_SUCCESS != ret) {
+            return ompi_instance_print_error ("PML add comm (self) failed", ret);
+        }
     }
 
     /* Determine the overall threadlevel support of all processes
