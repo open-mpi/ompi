@@ -679,6 +679,11 @@ select_unlock:
 
     module->flavor = flavor;
     module->size = size;
+    /* Number of notify counters allocated per rank in this window.  Stored in
+     * the module so every user references a single value instead of the
+     * OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS compile-time constant; this is the one
+     * place that can later be driven from the info object. */
+    module->num_notify = OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS;
     module->no_locks = check_config_value_bool ("no_locks", info);
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->skip_sync_check = false;
@@ -792,7 +797,7 @@ select_unlock:
         /* create the segment */
 
         size_t total = 0;
-        size_t notify_size = OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
+        size_t notify_size = module->num_notify * sizeof(uint64_t);
         for (i = 0 ; i < comm_size ; ++i) {
             /* each rank's slot holds its window data plus its notify counters */
             total += ompi_osc_ucx_get_size(module, i) + notify_size;
@@ -902,7 +907,7 @@ select_unlock:
      * extra bytes so that remote atomic operations on the counters can use
      * the same rkey as the window data. */
     size_t notify_reg_size = (flavor == MPI_WIN_FLAVOR_DYNAMIC) ? 0 :
-                             OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
+                             module->num_notify * sizeof(uint64_t);
     ret = opal_common_ucx_wpmem_create(module->ctx, mem_base,
                                      module->size + notify_reg_size,
                                      mem_type, &exchange_len_info,
@@ -981,7 +986,7 @@ select_unlock:
     /* initialize notify counters to zero; they live at base + size */
     if (flavor != MPI_WIN_FLAVOR_DYNAMIC && *base != NULL) {
         memset((char *)*base + module->size, 0,
-               OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t));
+               module->num_notify * sizeof(uint64_t));
     }
     for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
         module->local_dynamic_win_info[i].refcnt = 0;

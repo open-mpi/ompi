@@ -123,6 +123,7 @@ typedef struct ompi_osc_ucx_module {
     struct ompi_communicator_t *comm;
     int flavor;
     size_t    size;
+    int num_notify; /* number of notify counters allocated per rank in this window */
     size_t   *sizes; /* used if not every process has the same size */
     uint64_t *addrs;
     uint64_t *state_addrs;

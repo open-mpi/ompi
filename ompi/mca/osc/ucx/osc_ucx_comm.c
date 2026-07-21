@@ -615,8 +615,8 @@ osc_ucx_notify_counter_addr(ompi_osc_ucx_module_t *module, int target, int notif
            + (uint64_t)notify * sizeof(uint64_t);
 }
 
-#define CHECK_NOTIFY_IDX(notify)                                              \
-    if ((notify) < 0 || (notify) >= OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS) {      \
+#define CHECK_NOTIFY_IDX(module, notify)                                      \
+    if ((notify) < 0 || (notify) >= (module)->num_notify) {                   \
         return MPI_ERR_NOTIFY_IDX;                                            \
     }
 
@@ -626,14 +626,12 @@ int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     int my_rank = ompi_comm_rank(module->comm);
 
-    CHECK_NOTIFY_IDX(notify);
+    CHECK_NOTIFY_IDX(module, notify);
 
-    /* Counters are local memory — just read with a barrier to ensure
-     * any preceding remote writes to this counter are visible. */
-    opal_atomic_rmb();
     volatile uint64_t *counter =
         (volatile uint64_t *)(module->addrs[my_rank] + module->size) + notify;
     *value = (OMPI_MPI_COUNT_TYPE)*counter;
+    opal_atomic_rmb();
     return OMPI_SUCCESS;
 }
 
@@ -642,12 +640,30 @@ int ompi_osc_ucx_win_reset_notify_value(struct ompi_win_t *win, int notify,
 {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     int my_rank = ompi_comm_rank(module->comm);
+    uint64_t result_value = 0;
+    ucp_ep_h *ep;
+    int ret;
 
-    CHECK_NOTIFY_IDX(notify);
+    CHECK_NOTIFY_IDX(module, notify);
 
-    volatile uint64_t *counter =
-        (volatile uint64_t *)(module->addrs[my_rank] + module->size) + notify;
-    *value = (OMPI_MPI_COUNT_TYPE)opal_atomic_swap_64((volatile int64_t *)counter, 0);
+    OSC_UCX_GET_DEFAULT_EP(ep, module, my_rank);
+
+    /* The counter is incremented by remote origins through UCX network atomic
+     * operations, so reset it with a UCX atomic swap (targeting our own rank)
+     * rather than a CPU atomic. That keeps the read-and-zero atomic with
+     * respect to those concurrent network atomics — a plain CPU swap is not
+     * ordered against them. The fetch returns the counter's previous value. */
+    ret = opal_common_ucx_wpmem_fetch(module->mem,
+                                      UCP_ATOMIC_FETCH_OP_SWAP, 0,
+                                      my_rank, &result_value, sizeof(result_value),
+                                      osc_ucx_notify_counter_addr(module, my_rank, notify),
+                                      ep);
+    if (OPAL_SUCCESS != ret) {
+        OSC_UCX_VERBOSE(1, "opal_common_ucx_wpmem_fetch failed: %d", ret);
+        return OMPI_ERROR;
+    }
+
+    *value = (OMPI_MPI_COUNT_TYPE)result_value;
     return OMPI_SUCCESS;
 }
 
@@ -661,7 +677,7 @@ int ompi_osc_ucx_put_notify(const void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(notify);
+    CHECK_NOTIFY_IDX(module, notify);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 
@@ -698,7 +714,7 @@ int ompi_osc_ucx_get_notify(void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(notify);
+    CHECK_NOTIFY_IDX(module, notify);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 
@@ -734,7 +750,7 @@ int ompi_osc_ucx_rput_notify(const void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(notify);
+    CHECK_NOTIFY_IDX(module, notify);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 
@@ -770,7 +786,7 @@ int ompi_osc_ucx_rget_notify(void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(notify);
+    CHECK_NOTIFY_IDX(module, notify);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 
