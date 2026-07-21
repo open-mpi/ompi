@@ -8,6 +8,13 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Implemented ``MPI_Get_hw_resource_info()`` using hwloc. The returned
+  info object now reports whether the calling process is restricted to
+  individual NUMA nodes, packages, caches, cores, and processing units.
+  The reported ``hwloc://`` resource keys can also be used with
+  ``MPI_Comm_split_type()`` for hardware- and resource-guided communicator
+  creation. Thanks to Musawer Ahmad Saqif for the contribution.
+
 - Renamed the ``--enable-weak-symbols`` configure option to
   ``--enable-weak-aliases``, which more accurately reflects the linker
   feature (weak symbol *aliases*) that Open MPI actually tests for and
