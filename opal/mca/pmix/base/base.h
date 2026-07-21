@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +37,6 @@ OPAL_DECLSPEC extern bool opal_pmix_base_allow_delayed_server;
 OPAL_DECLSPEC int opal_pmix_base_exchange(pmix_info_t *info, pmix_pdata_t *pdat, int timeout);
 
 typedef struct {
-    opal_event_base_t *evbase;
     int timeout;
     int initialized;
     opal_pmix_lock_t lock;
