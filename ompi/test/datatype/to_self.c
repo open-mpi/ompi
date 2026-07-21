@@ -2787,7 +2787,8 @@ static void validate_datatype(const char *datatype_name, MPI_Datatype sddt, MPI_
     if ((NULL == sbuf) || (NULL == packed_mpi) || (NULL == packed_ref) || (NULL == rbuf_mpi)
         || (NULL == rbuf_ref)) {
         fprintf(stderr, "Unable to allocate validation buffers for %s\n", datatype_name);
-        goto done;
+        /* Cannot run the check: abort rather than let a starved run report a clean pass. */
+        MPI_Abort(MPI_COMM_WORLD, MPI_ERR_NO_MEM);
     }
 
     /* Pack: MPI_Pack must emit exactly the same contiguous stream, and the same
@@ -2824,7 +2825,6 @@ static void validate_datatype(const char *datatype_name, MPI_Datatype sddt, MPI_
         unpack_status = (0 == memcmp(rbuf_mpi, rbuf_ref, recv_span)) ? "PASS" : "FAIL";
     }
 
-done:
     printf("# VALIDATION %s pack=%s unpack=%s\n", datatype_name, pack_status, unpack_status);
     fflush(stdout);
     free(sbuf);
@@ -2832,6 +2832,18 @@ done:
     free(packed_ref);
     free(rbuf_mpi);
     free(rbuf_ref);
+
+    /*
+     * --validate turns the tester into a correctness check. A mismatch against the by-hand
+     * reference is a real datatype-engine bug, so tear the whole job down with MPI_Abort: it
+     * yields a nonzero exit on every rank (so "make check" and any launcher flag the failure)
+     * and stops before the meaningless timing output that would otherwise follow.
+     */
+    if ((0 == strcmp(pack_status, "FAIL")) || (0 == strcmp(unpack_status, "FAIL"))) {
+        fprintf(stderr, "VALIDATION FAILED for %s (pack=%s unpack=%s)\n", datatype_name,
+                pack_status, unpack_status);
+        MPI_Abort(MPI_COMM_WORLD, MPI_ERR_OTHER);
+    }
 }
 
 /* Report the slower endpoint without including the synchronization reduction in the timing. */

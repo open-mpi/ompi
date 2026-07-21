@@ -221,7 +221,7 @@ _Static_assert(OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN == 8,
 
 #define OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT_UNCHECKED(src_base, dest_base, count, blocklen, type) \
     {                                                                                               \
-        register unsigned long i = count;                                                           \
+        register size_t i = count;                                                                  \
         type *_src = (type *) src_base;                                                             \
         type *_dest = (type *) dest_base;                                                           \
         if (0 == (elem->extent % (ptrdiff_t) sizeof(type))) {                                       \
@@ -265,7 +265,7 @@ _Static_assert(OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN == 8,
     {                                                                                                 \
         type *_src = (type *) src_base;                                                               \
         type *_dest = (type *) dest_base;                                                             \
-        register unsigned long i = count;                                                             \
+        register size_t i = count;                                                                    \
         if (0 == (elem->extent % (ptrdiff_t) sizeof(type))) {                                         \
             /* Mirror of pack: the packed source is contiguous and the destination strides by a      \
              * whole number of elements, so advance in element units for scaled-index addressing. */ \

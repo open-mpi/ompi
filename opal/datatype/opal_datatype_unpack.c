@@ -619,21 +619,26 @@ unpack_partial_blocklen_heterogeneous(opal_convertor_t *CONVERTOR,
 
     from = (char *) _packed;
     to = (char *) _memory;
-    /* do_now < blocklen, so the conversion runs its contiguous "leftover" path (no extent jump). */
-    master->pFunctions[_elem->common.type](CONVERTOR, do_now, _elem->blocklen, _elem->count, &from,
-                                           *SPACE, _elem->blocklen * remote_elem_size, &to, *SPACE,
-                                           _elem->extent);
-    *(COUNT) -= do_now;
+    /* do_now < blocklen, so the conversion runs its contiguous "leftover" path (no extent jump).
+     * Trust the mover's returned element count rather than the requested do_now: the pointer and
+     * SPACE bookkeeping below already follow the mover's actual advance (from/to), so COUNT and the
+     * block-completion test must too. They agree today (do_now is pre-capped to fit SPACE), but
+     * keying off the return keeps the three in lockstep if a mover ever converts fewer elements. */
+    size_t copied = master->pFunctions[_elem->common.type](CONVERTOR, do_now, _elem->blocklen,
+                                                           _elem->count, &from, *SPACE,
+                                                           _elem->blocklen * remote_elem_size, &to,
+                                                           *SPACE, _elem->extent);
+    *(COUNT) -= copied;
     _packed = (unsigned char *) from;
     _memory = (unsigned char *) to;
-    if (do_now == left_in_block) { /* compensate if we completed a blocklen */
+    if (copied == left_in_block) { /* compensate if we completed a blocklen */
         _memory += _elem->extent - (ptrdiff_t) (_elem->blocklen * local_elem_size);
     }
 
     *(memory) = _memory - _elem->disp;
     *(SPACE) -= (_packed - *packed);
     *(packed) = _packed;
-    return (do_now == left_in_block);
+    return (copied == left_in_block);
 }
 
 static inline void

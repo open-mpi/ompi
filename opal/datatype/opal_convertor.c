@@ -441,6 +441,12 @@ int32_t opal_convertor_set_position_nocheck(opal_convertor_t *convertor, size_t 
      * offset in convertor->partial_length -- exactly the stack the generic
      * position walk produces. Route accelerator convertors through the generic
      * path so the interpreter is handed a stack it can resume from correctly.
+     *
+     * This costs a descriptor walk instead of the O(1) contiguous shortcut, but only
+     * on a non-zero reposition (rendezvous/retransmit), never per fragment, and the walk
+     * skips whole elements arithmetically so it scales with the (tiny) contiguous
+     * descriptor rather than the message size. The correctness of the mover stack is
+     * worth that small, off-hot-path cost.
      */
     if (OPAL_LIKELY((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)
                     && !(convertor->flags & CONVERTOR_ACCELERATOR))) {
@@ -490,7 +496,17 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         if (datatype->bdt_used & pConvertor->master->size_mismatch_mask) {
             pConvertor->flags |= CONVERTOR_UNSAFE_SPLIT;
         }
-        /* Can we use the optimized description? */
+        /*
+         * Heterogeneous conversions may use the optimized description, but only when it is a
+         * faithful, type-preserving rewrite of the datatype. The optimizer sets
+         * OPAL_DATATYPE_OPTIMIZED_RESTRICTED whenever it changed a predefined element's type while
+         * keeping its local byte layout (e.g. merging same-size types into one block): that rewrite
+         * is correct locally but wrong on the wire, where the merged types can have different remote
+         * sizes. So fall back to the unoptimized desc exactly when RESTRICTED is set; otherwise the
+         * optimized desc is safe. The flag is a whole-datatype summary of the per-element
+         * OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED markers and is kept in lockstep with them across every
+         * optimizer pass, so "not RESTRICTED" reliably means "no element changed type".
+         */
         if (datatype->flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
             pConvertor->use_desc = &(datatype->desc);
         }
@@ -683,6 +699,18 @@ int opal_convertor_clone(const opal_convertor_t *source, opal_convertor_t *desti
         memcpy(destination->pStack, source->pStack, sizeof(dt_stack_t) * (source->stack_pos + 1));
         destination->bConverted = source->bConverted;
         destination->stack_pos = source->stack_pos;
+        /*
+         * We copy the progress stack but not partial_length, so the clone would silently
+         * restart any partially-consumed predefined element at offset 0. That is only safe
+         * because every caller that copies the stack either repositions afterwards (see
+         * opal_convertor_clone_with_position, which re-runs set_position) or clones a send
+         * convertor -- and a send convertor never carries a nonzero partial_length (the pack
+         * movers never set it, and send-side set_position zeroes it). A receive convertor
+         * paused mid-element (partial_length != 0) resumed from this clone without an
+         * intervening set_position would consume the wrong bytes; nothing does that today,
+         * so assert the invariant rather than teaching clone to reassemble a split element.
+         */
+        assert(0 == source->partial_length || (source->flags & CONVERTOR_SEND));
     }
 
     destination->cbmemcpy = source->cbmemcpy;

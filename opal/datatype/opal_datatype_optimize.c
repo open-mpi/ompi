@@ -167,7 +167,7 @@ static size_t opal_datatype_opt_loop_unroll_growth(const dt_type_desc_t *input_d
  */
 static void opal_datatype_opt_emit_unrolled_loop(dt_elem_desc_t **pElemDesc, int32_t *nbElems,
                                                  const dt_elem_desc_t *desc, int32_t pos_desc,
-                                                 uint32_t factor)
+                                                 uint32_t factor, int32_t capacity)
 {
     const ddt_loop_desc_t *loop = &desc[pos_desc].loop;
     const ddt_endloop_desc_t *end_loop = &desc[pos_desc + loop->items].end_loop;
@@ -176,6 +176,7 @@ static void opal_datatype_opt_emit_unrolled_loop(dt_elem_desc_t **pElemDesc, int
     const uint32_t tail = loop->loops % factor;
     const uint32_t unrolled_items = body_items * factor;
 
+    assert(*nbElems < capacity);
     CREATE_LOOP_START(*pElemDesc, iterations, unrolled_items + 1, loop->extent * factor,
                       loop->common.flags);
     (*pElemDesc)++;
@@ -186,12 +187,14 @@ static void opal_datatype_opt_emit_unrolled_loop(dt_elem_desc_t **pElemDesc, int
             uint16_t elem_flags = OPAL_DATATYPE_FLAG_BASIC
                                   | (elem->common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED);
 
+            assert(*nbElems < capacity);
             CREATE_ELEM(*pElemDesc, elem->common.type, elem_flags, elem->blocklen, elem->count,
                         elem->disp + (ptrdiff_t) iteration * loop->extent, elem->extent);
             (*pElemDesc)++;
             (*nbElems)++;
         }
     }
+    assert(*nbElems < capacity);
     CREATE_LOOP_END(*pElemDesc, unrolled_items + 1, end_loop->first_elem_disp,
                     end_loop->size * factor, end_loop->common.flags);
     (*pElemDesc)++;
@@ -205,6 +208,7 @@ static void opal_datatype_opt_emit_unrolled_loop(dt_elem_desc_t **pElemDesc, int
             uint16_t elem_flags = OPAL_DATATYPE_FLAG_BASIC
                                   | (elem->common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED);
 
+            assert(*nbElems < capacity);
             CREATE_ELEM(*pElemDesc, elem->common.type, elem_flags, elem->blocklen, elem->count,
                         elem->disp + displacement, elem->extent);
             (*pElemDesc)++;
@@ -321,6 +325,14 @@ opal_datatype_opt_find_copy_boundaries(const dt_type_desc_t *type_desc, size_t n
  * Cache whether adjacent datatype instances expose a copy fragment that spans
  * the count boundary.  This is descriptor shape metadata, so recompute it from
  * the optimized descriptor selected by the optimizer and clear any stale value.
+ *
+ * This must run exactly once per commit, on the final optimized descriptor. It
+ * is deliberately invoked only from opal_datatype_optimize_short_restart's
+ * mutually-exclusive return paths (never from the candidate/baseline exploration
+ * loops), and short_restart itself runs once per commit -- the top-level
+ * opal_datatype_optimize is gated by OPAL_DATATYPE_FLAG_COMMITTED. Do not add
+ * calls elsewhere: the count-boundary walk is not free and its single consumer
+ * (the flag) is descriptor metadata that only changes when opt_desc changes.
  */
 static void opal_datatype_opt_update_count_boundary(opal_datatype_t *pData,
                                                     const dt_type_desc_t *type_desc)
@@ -450,8 +462,10 @@ static uint32_t opal_datatype_opt_count_loop_markers(const dt_type_desc_t *type_
  * behavior used elsewhere in this optimizer.
  */
 static void opal_datatype_opt_emit_elem(dt_elem_desc_t **pElemDesc, int32_t *nbElems,
-                                        const ddt_elem_desc_t *elem, ptrdiff_t disp_delta)
+                                        const ddt_elem_desc_t *elem, ptrdiff_t disp_delta,
+                                        int32_t capacity)
 {
+    assert(*nbElems < capacity);
     CREATE_ELEM(*pElemDesc, elem->common.type, elem->common.flags, elem->blocklen, elem->count,
                 elem->disp + disp_delta, elem->extent);
     (*pElemDesc)++;
@@ -466,9 +480,10 @@ static void opal_datatype_opt_emit_elem(dt_elem_desc_t **pElemDesc, int32_t *nbE
 static void opal_datatype_opt_emit_desc_range(dt_elem_desc_t **pElemDesc, int32_t *nbElems,
                                               const dt_elem_desc_t *desc, int32_t pos_desc,
                                               uint32_t start, uint32_t end,
-                                              ptrdiff_t disp_delta)
+                                              ptrdiff_t disp_delta, int32_t capacity)
 {
     for (uint32_t i = start; i < end; ++i) {
+        assert(*nbElems < capacity);
         **pElemDesc = desc[pos_desc + i];
         if ((*pElemDesc)->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
             (*pElemDesc)->elem.common.flags = OPAL_DATATYPE_FLAG_BASIC
@@ -749,7 +764,8 @@ static bool opal_datatype_opt_fuse_tail_head(opal_datatype_t *pData,
 static bool opal_datatype_optimize_loop_boundary(opal_datatype_t *pData,
                                                  const dt_elem_desc_t *desc,
                                                  int32_t pos_desc,
-                                                 dt_elem_desc_t **pElemDesc, int32_t *nbElems)
+                                                 dt_elem_desc_t **pElemDesc, int32_t *nbElems,
+                                                 int32_t capacity)
 {
     const ddt_loop_desc_t *loop = &desc[pos_desc].loop;
     const ddt_endloop_desc_t *end_loop = &desc[pos_desc + loop->items].end_loop;
@@ -800,26 +816,31 @@ static bool opal_datatype_optimize_loop_boundary(opal_datatype_t *pData,
      * either data entries or nested loops. The first and last items must be
      * representable as single contiguous copy fragments before they are fused.
      */
-    opal_datatype_opt_emit_desc_range(pElemDesc, nbElems, desc, pos_desc, first_item, last_item, 0);
+    opal_datatype_opt_emit_desc_range(pElemDesc, nbElems, desc, pos_desc, first_item, last_item, 0,
+                                      capacity);
 
     if (2 == item_count) {
+        assert(*nbElems < capacity);
         CREATE_ELEM(*pElemDesc, fused.common.type, fused.common.flags, fused.blocklen,
                     loop->loops - 1, fused.disp, loop->extent);
         (*pElemDesc)++;
         (*nbElems)++;
     } else {
         steady_items = last_item - after_first_item + 2;
+        assert(*nbElems < capacity);
         CREATE_LOOP_START(*pElemDesc, loop->loops - 1, steady_items, loop->extent,
                           loop->common.flags);
         (*pElemDesc)++;
         (*nbElems)++;
 
+        assert(*nbElems < capacity);
         CREATE_ELEM(*pElemDesc, fused.common.type, fused.common.flags, fused.blocklen, 1,
                     fused.disp, fused.extent);
         (*pElemDesc)++;
         (*nbElems)++;
         opal_datatype_opt_emit_desc_range(pElemDesc, nbElems, desc, pos_desc, after_first_item,
-                                          last_item, loop->extent);
+                                          last_item, loop->extent, capacity);
+        assert(*nbElems < capacity);
         CREATE_LOOP_END(*pElemDesc, steady_items, fused.disp, end_loop->size,
                         loop->common.flags);
         (*pElemDesc)++;
@@ -827,7 +848,7 @@ static bool opal_datatype_optimize_loop_boundary(opal_datatype_t *pData,
     }
 
     opal_datatype_opt_emit_elem(pElemDesc, nbElems, &last_elem,
-                                (ptrdiff_t) (loop->loops - 1) * loop->extent);
+                                (ptrdiff_t) (loop->loops - 1) * loop->extent, capacity);
     return true;
 }
 
@@ -912,6 +933,12 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
     }
     output_desc->used = 0;
 
+    /* Every emit site below must stay within the buffer sized above; nbElems advances in lockstep
+     * with pElemDesc, so this is the single defensive bound shared by the inline writes and the
+     * emit helpers. It should never trip -- the length formula budgets for the worst case -- but a
+     * miscomputed budget would otherwise be a silent heap overflow. */
+    const int32_t capacity = (int32_t) output_desc->length;
+
     assert(OPAL_DATATYPE_END_LOOP == desc[input_desc->used].elem.common.type);
 
     while (stack_pos >= 0) {
@@ -919,6 +946,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
             == desc[pos_desc].elem.common.type) { /* end of the current loop */
             const ddt_endloop_desc_t *end_loop = &(desc[pos_desc].end_loop);
             if (0 != last.count) {
+                assert(nbElems < capacity);
                 CREATE_ELEM(pElemDesc, last.common.type,
                             OPAL_DATATYPE_FLAG_BASIC
                                 | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
@@ -928,6 +956,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 nbElems++;
                 last.count = 0;
             }
+            assert(nbElems < capacity);
             CREATE_LOOP_END(pElemDesc, nbElems - pStack->index + 1, /* # of elems in this loop */
                             end_loop->first_elem_disp, end_loop->size, end_loop->common.flags);
             if (--stack_pos >= 0) { /* still something to do ? */
@@ -972,6 +1001,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
              */
 
             if (0 != last.count) { /* Generate the pending element */
+                assert(nbElems < capacity);
                 CREATE_ELEM(pElemDesc, last.common.type,
                             OPAL_DATATYPE_FLAG_BASIC
                                 | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
@@ -998,6 +1028,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 for (uint32_t i = 0; i < loop->loops; i++) {
                     for (uint32_t j = 0; j < (loop->items - 1); j++) {
                         current = &desc[pos_desc + index + j].elem;
+                        assert(nbElems < capacity);
                         /* Carry the optimizer's per-element TYPE_CHANGED marker onto the expanded
                          * copies. It records that this element's predefined type was changed while
                          * preserving byte layout, which lets the heterogeneous path decide whether
@@ -1028,7 +1059,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 && (optimization_mask & OPAL_DATATYPE_OPTIMIZE_LOOP_BOUNDARY)
                 && (!top_loop_boundary_only || (0 == stack_pos))
                 && opal_datatype_optimize_loop_boundary(pData, desc, pos_desc, &pElemDesc,
-                                                        &nbElems)) {
+                                                        &nbElems, capacity)) {
                 if (NULL != loop_boundary_expanded) {
                     *loop_boundary_expanded = true;
                 }
@@ -1051,12 +1082,13 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                         : 1;
                 if (1 < unroll_factor) {
                     opal_datatype_opt_emit_unrolled_loop(&pElemDesc, &nbElems, desc, pos_desc,
-                                                         unroll_factor);
+                                                         unroll_factor, capacity);
                     pos_desc += loop->items + 1;
                     goto complete_loop;
                 }
             }
 
+            assert(nbElems < capacity);
             CREATE_LOOP_START(pElemDesc, loop->loops, loop->items, loop->extent,
                               loop->common.flags);
             pElemDesc++;
@@ -1168,6 +1200,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 }
 
                 if (last.count != 1) {
+                    assert(nbElems < capacity);
                     CREATE_ELEM(pElemDesc, last.common.type,
                                 OPAL_DATATYPE_FLAG_BASIC
                                     | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
@@ -1187,6 +1220,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 }
                 last.extent = fused_extent;
                 if (current->count != 1) {
+                    assert(nbElems < capacity);
                     CREATE_ELEM(pElemDesc, last.common.type,
                                 OPAL_DATATYPE_FLAG_BASIC
                                     | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
@@ -1199,6 +1233,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
                 }
                 continue;
             }
+            assert(nbElems < capacity);
             CREATE_ELEM(pElemDesc, last.common.type,
                         OPAL_DATATYPE_FLAG_BASIC
                             | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),
@@ -1211,6 +1246,7 @@ static int32_t opal_datatype_optimize_short(opal_datatype_t *pData,
     }
 
     if (0 != last.count) {
+        assert(nbElems < capacity);
         CREATE_ELEM(pElemDesc, last.common.type,
                     OPAL_DATATYPE_FLAG_BASIC
                         | (last.common.flags & OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED),

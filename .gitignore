@@ -240,7 +240,6 @@ ompi/test/file/file_info_set_view
 ompi/test/part/parrived_null_inactive
 ompi/test/part/partitioned_proc_null
 
-ompi/test/datatype/checksum
 ompi/test/datatype/ddt_pack
 ompi/test/datatype/ddt_raw
 ompi/test/datatype/ddt_raw2
@@ -555,7 +554,6 @@ test/util/opal_json
 test/util/opal_alfg
 test/util/opal_arch
 test/util/opal_cmd_line
-test/util/opal_crc
 test/util/opal_environ
 test/util/opal_fd
 test/util/opal_few
