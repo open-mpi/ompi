@@ -10,6 +10,7 @@
  *                         reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,10 @@
 opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
 volatile uint32_t ompi_mpit_init_count = 0;
+
+int ompi_mpit_thread_level = MPI_THREAD_SINGLE;
+
+bool ompi_mpit_init_failed = false;
 
 void ompi_mpit_lock (void)
 {
