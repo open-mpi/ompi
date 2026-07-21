@@ -21,6 +21,11 @@
 
 AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
+# This -lpthread has been here -- and working on all supported systems
+# -- since 42a05e9a741 (2004).  These tests call pthread_* APIs
+# directly; configure's THREAD_* variables describe the threads MCA
+# framework's selected package (not necessarily pthreads) and are not
+# AC_SUBSTed for Makefile use anyway.
 AM_LDFLAGS = -lpthread
 
 # Make "make check" work in an uninstalled --enable-mca-dso build tree
