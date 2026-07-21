@@ -8,6 +8,28 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Partitioned communication fixes:
+
+  - ``MPI_Parrived`` now returns ``flag = true`` for a null request
+    (``MPI_REQUEST_NULL``) and for an inactive request, as required by
+    MPI-5.0 section 4.2.2.  It previously raised ``MPI_ERR_REQUEST`` for
+    a null request and returned ``flag = false`` for a partitioned
+    receive request that had never been started.
+
+  - ``MPI_Psend_init`` and ``MPI_Precv_init`` now accept
+    ``MPI_PROC_NULL`` as the peer rank, per MPI-5.0 section 3.10.  Such
+    a request completes as soon as it is started, ``MPI_Pready`` on it
+    has no effect, and ``MPI_Parrived`` reports every partition as
+    arrived.  Previously, ``MPI_PROC_NULL`` was passed down as if it
+    were a real peer rank, reading outside the communicator's process
+    array.
+
+  - Freeing a partitioned communication request that was never started
+    no longer leaves its internal setup receive posted.  Such a stale
+    receive could consume the setup message of the next partitioned
+    operation using the same communicator, peer, and tag, which then
+    never completed.
+
 - Renamed the ``--enable-weak-symbols`` configure option to
   ``--enable-weak-aliases``, which more accurately reflects the linker
   feature (weak symbol *aliases*) that Open MPI actually tests for and
