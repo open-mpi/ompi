@@ -7,11 +7,13 @@ MPI Standard conformance
 ------------------------
 
 In the Open MPI |ompi_series| series, all MPI-|mpi_standard_version|
-functionality is supported.  *Some* MPI-4.0 functionality is
-supported.
+functionality is fully supported and conformant.  As such,
+``MPI_VERSION`` is set to 3 and ``MPI_SUBVERSION`` is set to 1.
 
-As such, ``MPI_VERSION`` is set to 3 and ``MPI_SUBVERSION`` is set
-to 1.
+Substantial portions of MPI-4.0 and MPI-4.1 are also implemented.
+However, neither standard is fully conformant, so Open MPI does not yet
+advertise an ``MPI_VERSION`` of 4.  The gaps are summarized below and
+enumerated in detail in dedicated documents.
 
 For historical reference:
 
@@ -33,37 +35,59 @@ For historical reference:
    * - MPI-3.1
      - Open MPI v2.0
 
-MPI-4.0 partial compliance
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+MPI-4.0 and MPI-4.1 partial conformance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In the Open MPI |ompi_series| series, only partial MPI-4.0 functionality is
-supported. This section contains a list of features added for the release.
+The Open MPI |ompi_series| series implements a large fraction of
+MPI-4.0, including:
 
-* Added support for MPI Sessions.
-* Added partitioned communication using persistent sends and persistent receives.
-* Added persistent collectives to the ``MPI_`` namespace (they were previously
-  available via the ``MPIX_`` prefix).
-* Added support for :ref:`MPI_Isendrecv()<mpi_isendrecv>` and its variants.
-* Added support for :ref:`MPI_Comm_idup_with_info()<mpi_comm_idup_with_info>`.
-* Added support for :ref:`MPI_Info_get_string()<mpi_info_get_string>`.
-* Added support for ``initial_error_handler`` info key and the
-  ``MPI_ERRORS_ABORT`` infrastructure.
-* Added support for ``mpi_minimum_memory_alignment`` info key.
-* Added support for ``MPI_COMM_TYPE_HW_GUIDED`` and
-  ``MPI_COMM_TYPE_HW_UNGUIDED``.
-* Added support for :ref:`MPI_Info_create_env()<mpi_info_create_env>`.
-* Added error handling for "unbound" errors to ``MPI_COMM_SELF``.
-* Added ``MPI_F_STATUS_SIZE``, ``MPI_F_SOURCE``, ``MPI_F_TAG``, and
-  ``MPI_F_ERROR``.
-* Made :ref:`MPI_Comm_get_info()<mpi_comm_get_info>`,
-  :ref:`MPI_File_get_info()<mpi_file_get_info>`, and
-  :ref:`MPI_Win_get_info()<mpi_win_get_info>` MPI-4.0 compliant.
-* Info keys that are not understood by Open MPI will be silently ignored and
-  dropped on communicators, files, and windows.
-* Deprecated :ref:`MPI_Sizeof()<mpi_sizeof>`.
-* Deprecated :ref:`MPI_Cancel()<mpi_cancel>` on send requests.
-* Deprecated :ref:`MPI_Info_get()<mpi_info_get>` and
+* The Sessions model.
+* Partitioned communication (persistent sends and receives).
+* Persistent collective and neighborhood collective operations in the
+  ``MPI_`` namespace (these were previously available only via the
+  ``MPIX_`` prefix).
+* :ref:`MPI_Isendrecv()<mpi_isendrecv>` and its variants.
+* :ref:`MPI_Comm_idup_with_info()<mpi_comm_idup_with_info>`,
+  :ref:`MPI_Info_get_string()<mpi_info_get_string>`, and
+  :ref:`MPI_Info_create_env()<mpi_info_create_env>`.
+* The ``MPI_ERRORS_ABORT`` error handler, ``MPI_COMM_SELF``-based
+  handling of "unbound" errors, and the ``mpi_initial_errhandler``
+  info key.
+* The ``MPI_COMM_TYPE_HW_GUIDED`` and ``MPI_COMM_TYPE_HW_UNGUIDED``
+  communicator split types and the ``mpi_minimum_memory_alignment``
+  info key.
+* The ``MPI_F_STATUS_SIZE``, ``MPI_F_SOURCE``, ``MPI_F_TAG``, and
+  ``MPI_F_ERROR`` constants.
+* The MPI-4.0 deprecations of :ref:`MPI_Sizeof()<mpi_sizeof>`,
+  :ref:`MPI_Cancel()<mpi_cancel>` on send requests, and
+  :ref:`MPI_Info_get()<mpi_info_get>` /
   :ref:`MPI_Info_get_valuelen()<mpi_info_get_valuelen>`.
+
+Two major MPI-4.0 feature families are *not* yet implemented, and their
+absence is the primary reason Open MPI cannot advertise MPI-4.0
+conformance:
+
+* The **large-count ("embiggening") interface**: the entire family of
+  ``MPI_<fn>_c`` C bindings (and their Fortran ``mpi_f08`` overloads)
+  that accept ``MPI_Count`` arguments in place of ``int``.
+* The **MPI tool information interface "events" interface**: the
+  callback-driven ``MPI_T_event_*`` and ``MPI_T_source_*`` routines.
+
+MPI-4.1 is a superset of MPI-4.0.  Full MPI-4.1 conformance therefore
+requires closing the MPI-4.0 gaps above *and* implementing the
+procedures that MPI-4.1 newly introduced -- none of which are yet
+available.  These include the
+``MPI_Status_{get,set}_{source,tag,error}`` accessors, communicator-
+and session-level message buffering, the
+``MPI_Request_get_status_{all,any,some}`` queries,
+``MPI_Type_get_value_index``, ``MPI_Get_hw_resource_info``, and the
+``MPI_Remove_error_{class,code,string}`` routines.
+
+For the complete, itemized gap analyses -- including every missing
+procedure, constant, info key, and deprecation -- see:
+
+* :doc:`mpi-4.0`
+* :doc:`mpi-4.1`
 
 Removed MPI APIs
 ----------------
