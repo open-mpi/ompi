@@ -418,6 +418,14 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_mpi_init: ompi_rte_init failed", ret);
     }
 
+    /* ompi_rte_init() called opal_init(), which set the current finalize
+     * domain to its own.  Restore ours, or every cleanup we register from here
+     * on lands in OPAL's domain and runs from inside opal_finalize() -- after
+     * we have already torn the RTE down, and before we close the frameworks
+     * whose components those cleanups touch.
+     */
+    opal_finalize_set_domain (&ompi_instance_common_domain);
+
     /* open the ompi hook framework */
     for (int i = 0 ; ompi_framework_dependencies[i] ; ++i) {
         ret = mca_base_framework_open (ompi_framework_dependencies[i], 0);
@@ -938,13 +946,13 @@ static int ompi_mpi_instance_finalize_common (void)
         ompi_ulfm_pmix_err_handler = 0;
     }
 
-    /* Leave the RTE */
-    if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
-        return ret;
-    }
-
-    ompi_rte_initialized = false;
-
+    /* Close our frameworks before leaving the RTE.  ompi_rte_finalize() calls
+     * opal_finalize(), and the BML opens the *OPAL* BTL framework on our
+     * behalf -- so leaving these open across ompi_rte_finalize() means
+     * finalizing OPAL while an OPAL framework is still open, and its
+     * components (e.g., the TCP BTL) still have events registered on
+     * opal_sync_event_base.
+     */
     for (int i = 0 ; ompi_lazy_frameworks[i] ; ++i) {
         if (0 < ompi_lazy_frameworks[i]->framework_refcnt) {
             /* May have been "opened" multiple times. We want it closed now! */
@@ -968,6 +976,13 @@ static int ompi_mpi_instance_finalize_common (void)
             return ret;
         }
     }
+
+    /* Leave the RTE */
+    if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
+        return ret;
+    }
+
+    ompi_rte_initialized = false;
 
     ompi_proc_finalize();
 
