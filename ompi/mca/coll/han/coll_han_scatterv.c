@@ -113,6 +113,27 @@ int mca_coll_han_scatterv_intra(const void *sbuf, ompi_count_array_t scounts, om
                                              root, comm, han_module->previous_scatterv_module);
     }
 
+    /* HAN's hierarchical scatterv assigns each rank to a role (root, root's
+     * local peer, other-node follower, or node leader) using the virtual-rank
+     * decomposition vrank = low_size * up_rank + low_rank.  That decomposition
+     * only matches the physical node layout when the ranks are mapped by core
+     * (consecutive on each node).  On a communicator that is balanced but not
+     * mapped by core -- for example the local_comm produced by
+     * MPI_Intercomm_merge -- two ranks that share one intra-node sub-communicator
+     * (low_comm) can be assigned different up_rank values and take inconsistent
+     * branches, so a node leader blocks on an intra-node sub-collective that a
+     * peer classified into a different branch never joins.  The scatterv branch
+     * logic has no topo-array reordering to handle this, so fall back to the
+     * previous component when the layout is not mapped by core. */
+    if (!han_module->is_mapbycore) {
+        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
+                             "han cannot handle scatterv with this communicator (not mapped by "
+                             "core). Fall back on another component\n"));
+        HAN_UNINSTALL_COLL_API(comm, han_module, scatterv);
+        return han_module->previous_scatterv(sbuf, scounts, displs, sdtype, rbuf, rcount, rdtype,
+                                             root, comm, han_module->previous_scatterv_module);
+    }
+
     w_rank = ompi_comm_rank(comm);
     w_size = ompi_comm_size(comm);
 
