@@ -242,6 +242,9 @@ ompi/test/file/file_info_hints
 ompi/test/file/file_info_memkind
 ompi/test/file/file_info_set_view
 
+ompi/test/part/parrived_null_inactive
+ompi/test/part/partitioned_proc_null
+
 ompi/test/datatype/checksum
 ompi/test/datatype/ddt_pack
 ompi/test/datatype/ddt_raw
