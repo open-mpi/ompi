@@ -11,6 +11,26 @@ MPI tarballs.
 See the :doc:`general "Install Open MPI" documentation for more
 details. </installing-open-mpi/index>`
 
+Working on the Bindings Generator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are modifying the Python bindings generator under
+``ompi/mpi/bindings/``, note that generated bindings automatically
+regenerate when you run ``make`` after changing any generator source
+file. The build system tracks dependencies on all generator components,
+so you don't need to manually trigger regeneration.
+
+.. important::
+
+   If you add new files to or remove files from the generator (e.g.,
+   adding a new Python module under
+   ``ompi/mpi/bindings/ompi_bindings/``), you must update the
+   ``OMPI_BINDINGS_GENERATOR`` variable in ``Makefile.ompi-rules`` to
+   include the new file(s) or remove the deleted file(s). This ensures
+   the build system properly tracks dependencies. You must also add new
+   files to ``EXTRA_DIST`` in ``ompi/mpi/Makefile.am`` so they are
+   included in distribution tarballs.
+
 Building Against External OpenPMIx / PRRTE
 ------------------------------------------
 
