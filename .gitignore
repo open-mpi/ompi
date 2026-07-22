@@ -248,6 +248,7 @@ ompi/test/datatype/external32
 ompi/test/datatype/large_data
 ompi/test/datatype/mpi_datatype_bigcount
 ompi/test/datatype/ompi_datatype_bigcount
+ompi/test/datatype/opt_desc_equiv
 ompi/test/datatype/pack_description_sweep
 ompi/test/datatype/partial
 ompi/test/datatype/position

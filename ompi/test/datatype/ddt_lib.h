@@ -20,6 +20,15 @@
  * $HEADER$
  */
 
+/*
+ * A grab-bag of à-la-carte datatype builders returning ompi_datatype_t handles
+ * that the caller frees.  This library is OMPI-internal (it builds through
+ * ompi_datatype_* and OBJ_RELEASE) and is used by ddt_test, ddt_raw, ddt_raw2
+ * and unpack_ooo.  For a self-describing, public-MPI-only registry of committed
+ * datatypes with by-hand pack/unpack baselines (used by to_self and
+ * opt_desc_equiv), see datatype_corpus.[hc] instead.
+ */
+
 #include "ompi_config.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include <stdlib.h>

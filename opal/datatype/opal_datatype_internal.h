@@ -252,11 +252,16 @@ struct opal_datatype_t;
 #if OPAL_ENABLE_DEBUG
 #    define OPAL_DATATYPE_SAFEGUARD_POINTER(ACTPTR, LENGTH, INITPTR, PDATA, COUNT)                \
         {                                                                                         \
-            unsigned char *__lower_bound = (INITPTR), *__upper_bound;                             \
+            unsigned char *__lower_bound = (INITPTR), *__upper_bound = (INITPTR);                 \
+            ptrdiff_t __span_disp = ((ptrdiff_t) (PDATA)->ub - (ptrdiff_t) (PDATA)->lb)           \
+                                    * (ptrdiff_t) ((COUNT) - 1);                                  \
             assert( (COUNT) != 0 );                                                               \
-            __lower_bound += (PDATA)->true_lb;                                                    \
-            __upper_bound = (INITPTR) + (PDATA)->true_ub +                                        \
-                            ((PDATA)->ub - (PDATA)->lb) * ((COUNT) -1);                           \
+            /* Instances may stride backward when the extent is negative, so the region          \
+             * touched by COUNT copies is the union over all of them: fold a negative span        \
+             * into the lower bound and a positive span into the upper bound rather than          \
+             * assuming the last copy sits at the highest address. */                             \
+            __lower_bound += (PDATA)->true_lb + ((__span_disp < 0) ? __span_disp : 0);            \
+            __upper_bound += (PDATA)->true_ub + ((__span_disp > 0) ? __span_disp : 0);            \
             if (((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound)) {                      \
                 opal_datatype_safeguard_pointer_debug_breakpoint((ACTPTR), (LENGTH), (INITPTR),   \
                                                                  (PDATA), (COUNT));               \
