@@ -41,7 +41,8 @@ TESTS = \
         partial \
         ompi_datatype_bigcount \
         mpi_datatype_bigcount \
-        sizedtypes
+        sizedtypes \
+        opt_desc_equiv
 
 MPI_CHECKS = to_self pack_description_sweep reduce_local
 
@@ -91,7 +92,7 @@ ddt_pack_LDADD = $(internal_ldadd)
 
 resized_extent_SOURCES = resized_extent.c
 resized_extent_LDFLAGS = $(common_ldflags)
-resized_extent_LDADD = $(common_ldadd)
+resized_extent_LDADD = $(internal_ldadd)
 
 position_SOURCES = position.c
 position_LDFLAGS = $(common_ldflags)
@@ -101,13 +102,17 @@ position_noncontig_SOURCES = position_noncontig.c
 position_noncontig_LDFLAGS = $(common_ldflags)
 position_noncontig_LDADD = $(internal_ldadd)
 
-to_self_SOURCES = to_self.c
+to_self_SOURCES = to_self.c datatype_corpus.c datatype_corpus.h
 to_self_LDFLAGS = $(common_ldflags)
 to_self_LDADD = $(mpi_ldadd)
 
+opt_desc_equiv_SOURCES = opt_desc_equiv.c datatype_corpus.c datatype_corpus.h
+opt_desc_equiv_LDFLAGS = $(common_ldflags)
+opt_desc_equiv_LDADD = $(mpi_ldadd)
+
 pack_description_sweep_SOURCES = pack_description_sweep.c
 pack_description_sweep_LDFLAGS = $(common_ldflags)
-pack_description_sweep_LDADD = $(common_ldadd)
+pack_description_sweep_LDADD = $(mpi_ldadd)
 
 large_data_SOURCES = large_data.c
 large_data_LDFLAGS = $(common_ldflags)
