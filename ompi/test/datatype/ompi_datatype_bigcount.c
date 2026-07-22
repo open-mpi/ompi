@@ -197,7 +197,7 @@ static void test_set_get_args_bigcount(void)
 
 /* (4) match_size (#14057): only basic scalar predefined types may be
  * returned; size 0 (and any request with no scalar match) must fail. */
-static void check_match(uint16_t datakind, size_t size, bool expect_match)
+static void check_match(uint32_t datakind, size_t size, bool expect_match)
 {
     /* On no match, ompi_datatype_match_size() returns the sentinel
      * &ompi_mpi_datatype_null.dt (which MPI_Type_match_size turns into
