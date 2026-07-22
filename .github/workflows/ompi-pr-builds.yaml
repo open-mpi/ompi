@@ -89,7 +89,7 @@ jobs:
       run: |
         find . -name .opal_ignore -exec rm -f {} \; -print
 
-    - name: Build everything: (${{ matrix.config_name }})
+    - name: Build everything (${{ matrix.os }}, ${{ matrix.config_name }})
       run: |
         NCPU=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
         # Parallelize automake's Makefile.in generation during autogen.pl.
