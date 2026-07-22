@@ -100,29 +100,6 @@ int mca_coll_han_gatherv_intra(const void *sbuf, size_t scount, struct ompi_data
                                             root, comm, han_module->previous_gatherv_module);
     }
 
-    /* HAN's hierarchical gatherv assigns each rank to a role (root, root's local
-     * peer, other-node follower, or node leader) using the virtual-rank
-     * decomposition vrank = low_size * up_rank + low_rank.  That decomposition
-     * only matches the physical node layout when the ranks are mapped by core
-     * (consecutive on each node).  On a communicator that is balanced but not
-     * mapped by core -- for example the local_comm produced by
-     * MPI_Intercomm_merge -- two ranks that share one intra-node sub-communicator
-     * (low_comm) can be assigned different up_rank values.  They then take
-     * different gatherv branches: a node leader posts a Low Gather expecting a
-     * contribution from every low_comm member, while a peer classified as a
-     * root's-local-peer skips that Low Gather, so the leader blocks forever.
-     * Only the fixed-role gather/scatter paths reorder via the topo array; the
-     * gatherv branch logic has no such handling, so fall back to the previous
-     * component when the layout is not mapped by core. */
-    if (!han_module->is_mapbycore) {
-        OPAL_OUTPUT_VERBOSE((30, mca_coll_han_component.han_output,
-                             "han cannot handle gatherv with this communicator (not mapped by "
-                             "core). Fall back on another component\n"));
-        HAN_UNINSTALL_COLL_API(comm, han_module, gatherv);
-        return han_module->previous_gatherv(sbuf, scount, sdtype, rbuf, rcounts, displs, rdtype,
-                                            root, comm, han_module->previous_gatherv_module);
-    }
-
     w_rank = ompi_comm_rank(comm);
     w_size = ompi_comm_size(comm);
 
