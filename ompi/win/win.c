@@ -42,6 +42,7 @@
 #include "ompi/info/info_memkind.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/runtime/ompi_mpit_events.h"
 
 #include "ompi/runtime/params.h"
 
@@ -252,6 +253,31 @@ config_window(void *base, size_t size, ptrdiff_t disp_unit,
     win->w_f_to_c_index = opal_pointer_array_add(&ompi_mpi_windows, win);
     if (-1 == win->w_f_to_c_index) return OMPI_ERR_OUT_OF_RESOURCE;
 
+    /* Raise the MPI_T window-created event (no-op when no tool is listening or
+       the producer is disabled).  Covers all window flavors, since every
+       flavor's creation path funnels through config_window. */
+    if (NULL != ompi_event_win_created) {
+        struct {
+            int64_t  size;
+            int32_t  disp_unit;
+            int32_t  flavor;
+            uint64_t handle;
+        } payload;
+        payload.size = (int64_t) size;
+        payload.disp_unit = (int32_t) disp_unit;
+        payload.flavor = (int32_t) flavor;
+        /* XXX ABI: the MPI_Win handle value must match the registering MPI_T
+           tool's ABI (ompi_mpit_callback_abi). */
+        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+            payload.handle = (uint64_t) (uintptr_t) win;
+        } else {
+            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
+               window win. */
+            payload.handle = 0;
+        }
+        mca_base_event_raise(ompi_event_win_created, NULL, &payload);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -396,6 +422,30 @@ ompi_win_free(ompi_win_t *win)
     }
 
     if (OMPI_SUCCESS == ret) {
+        /* Raise the MPI_T window-freed event now that teardown has succeeded,
+           while the window object is still valid (raising here, not at entry,
+           keeps the freed event off the osc_free() failure path, so it pairs
+           with the created event).  No-op when no tool is listening or the
+           producer is disabled. */
+        if (NULL != ompi_event_win_freed) {
+            struct {
+                int32_t  flavor;
+                uint32_t pad;
+                uint64_t handle;
+            } payload;
+            payload.flavor = (int32_t) win->w_flavor;
+            payload.pad = 0;
+            /* XXX ABI: the MPI_Win handle value must match the registering MPI_T
+               tool's ABI (ompi_mpit_callback_abi). */
+            if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+                payload.handle = (uint64_t) (uintptr_t) win;
+            } else {
+                /* TODO ABI (#13280): set the MPI Standard ABI handle value for
+                   the window win. */
+                payload.handle = 0;
+            }
+            mca_base_event_raise(ompi_event_win_freed, NULL, &payload);
+        }
         OBJ_RELEASE(win);
     }
 

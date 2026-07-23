@@ -5,6 +5,7 @@
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,9 @@ int MPI_T_event_get_num (int *num_event)
         return MPI_ERR_ARG;
     }
 
-    *num_event = 0;
+    ompi_mpit_lock ();
+    (void) mca_base_event_get_count (num_event);
+    ompi_mpit_unlock ();
+
     return MPI_SUCCESS;
 }

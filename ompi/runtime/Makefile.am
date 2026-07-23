@@ -29,7 +29,8 @@ headers += \
         runtime/params.h \
 	runtime/ompi_info_support.h \
 	runtime/ompi_spc.h \
-	runtime/ompi_rte.h
+	runtime/ompi_rte.h \
+	runtime/ompi_mpit_events.h
 
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_init.c \
@@ -40,4 +41,5 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_preconnect.c \
 	runtime/ompi_info_support.c \
 	runtime/ompi_spc.c \
-	runtime/ompi_rte.c
+	runtime/ompi_rte.c \
+	runtime/ompi_mpit_register_events.c

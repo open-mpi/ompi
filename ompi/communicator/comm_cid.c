@@ -27,6 +27,7 @@
  * Copyright (c) 2020-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +55,7 @@
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/request/request.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_mpit_events.h"
 #include "ompi/runtime/ompi_rte.h"
 
 #include "pmix.h"
@@ -923,6 +925,34 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
         OBJ_RELEASE(*newcomm);
         *newcomm = MPI_COMM_NULL;
         return ret;
+    }
+
+    /* Raise the MPI_T communicator-created event here, in the shared completion
+       reached by BOTH the blocking (ompi_comm_activate) and non-blocking
+       (ompi_comm_activate_nb, used by MPI_Comm_idup) creation paths, so every
+       new communicator a process joins is observed and pairs with its "freed"
+       event.  Only processes in the new communicator reach this point (others
+       returned above at the MPI_UNDEFINED check).  No-op when no tool is
+       listening or the producer is disabled.  (newcomm and the communicator it
+       points to are already dereferenced above, so no NULL check here.) */
+    if (NULL != ompi_event_comm_created) {
+        struct {
+            int32_t  size;
+            int32_t  pad;
+            uint64_t handle;
+        } payload;
+        payload.size = (int32_t) ompi_comm_size(*newcomm);
+        payload.pad = 0;
+        /* XXX ABI: the MPI_Comm handle value carried here must match the ABI of
+           the registering MPI_T tool (ompi_mpit_callback_abi). */
+        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+            payload.handle = (uint64_t) (uintptr_t) *newcomm;
+        } else {
+            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
+               communicator *newcomm. */
+            payload.handle = 0;
+        }
+        mca_base_event_raise(ompi_event_comm_created, NULL, &payload);
     }
 
     /* done */

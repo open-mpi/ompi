@@ -32,8 +32,11 @@ made visible to the user (e.g., if new event sources become available
 via dynamic loading of additional components in the MPI
 implementation).
 
-.. note:: Open MPI will currently return that there are 0 sources of
-          MPI_T events.
+.. note:: The set of event sources Open MPI exports depends on the platform and
+          on MCA parameters. With all built-in producers disabled (the MCA
+          parameter ``mca_base_event_register_producers`` set to 0) the count is
+          0. Use ``ompi_info --event`` to list the registered sources and event
+          types.
 
 
 ERRORS
@@ -43,3 +46,7 @@ ERRORS
 
 * ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface is not
   initialized
+
+.. seealso::
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`

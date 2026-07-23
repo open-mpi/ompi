@@ -34,6 +34,8 @@ int MPI_T_category_get_events(int cat_index, int len, int indices[])
 {
     const mca_base_var_group_t *group;
     int rc = MPI_SUCCESS;
+    int size, i;
+    const int *events;
 
     if (!mpit_is_initialized ()) {
         return MPI_T_ERR_NOT_INITIALIZED;
@@ -50,10 +52,13 @@ int MPI_T_category_get_events(int cat_index, int len, int indices[])
             break;
         }
 
-        /* Open MPI does not yet register any MPI_T events, so there is
-           nothing to copy into the caller's len-element indices[] array.
-           When events are implemented, populate indices[] from the
-           per-category event list here. */
+        /* Copy this category's (stable, append-only) event indices into the
+           caller's len-element indices[] array. */
+        size = opal_value_array_get_size ((opal_value_array_t *) &group->group_events);
+        events = OPAL_VALUE_ARRAY_GET_BASE (&group->group_events, int);
+        for (i = 0; i < len && i < size; ++i) {
+            indices[i] = events[i];
+        }
         rc = MPI_SUCCESS;
     } while (0);
 

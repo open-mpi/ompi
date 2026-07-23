@@ -8,17 +8,22 @@
 # $HEADER$
 #
 
-# These are singleton MPI_T tests: they exercise the MPI tool
-# information interface without MPI_Init, so they need no launcher and
-# can run as part of 'make check'.
-check_PROGRAMS = mpi_t_category_get_events
+# These are singleton MPI tool / MPI_T tests: they need no launcher
+# (an MPI_T-only test runs without MPI_Init; a test that does call
+# MPI_Init runs as a singleton), so they can run as part of 'make check'.
+check_PROGRAMS = mpi_t_category_get_events mpi_t_errcodes mpi_t_event_smoke \
+                 mpi_t_event_producers mpi_t_event_selftest mpi_t_event_inert_ok \
+                 mpi_t_event_reinit mpi_t_event_14019 mpi_t_event_world \
+                 mpi_t_event_comm_name
 TESTS = $(check_PROGRAMS)
 
-mpi_t_category_get_events_SOURCES = mpi_t_category_get_events.c
-mpi_t_category_get_events_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
-mpi_t_category_get_events_LDADD = \
+# Every test here is a single .c file named after the test, so Automake's
+# default _SOURCES is what we want, and they all link the same way.
+AM_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 distclean-local:
-	rm -rf *.dSYM .deps .libs *.la *.lo mpi_t_category_get_events *.log *.o *.trs Makefile
+	rm -rf *.dSYM .deps .libs *.la *.lo *.log *.o *.trs Makefile \
+		$(check_PROGRAMS)

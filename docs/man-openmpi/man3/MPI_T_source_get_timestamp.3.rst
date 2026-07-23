@@ -33,3 +33,7 @@ ERRORS
 * ``MPI_T_ERR_NOT_INITIALIZED``: The MPI Tools interface not initialized
 
 * ``MPI_T_ERR_INVALID_INDEX``: The source index is invalid
+
+.. seealso::
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`

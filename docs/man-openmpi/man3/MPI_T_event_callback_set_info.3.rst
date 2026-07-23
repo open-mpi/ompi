@@ -29,3 +29,7 @@ ERRORS
 :ref:`MPI_T_event_callback_set_info` will fail if:
 
 .. include:: ./MPI_T_ERRORS.rst
+
+.. seealso::
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`
