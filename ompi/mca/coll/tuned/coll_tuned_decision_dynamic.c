@@ -177,7 +177,8 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, ompi_count_arr
         return ompi_coll_tuned_alltoallv_intra_do_this(sbuf, scounts, sdisps, sdtype,
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        comm, module,
-                                                       tuned_module->user_forced[ALLTOALLV].algorithm);
+                                                       tuned_module->user_forced[ALLTOALLV].algorithm,
+                                                       tuned_module->user_forced[ALLTOALLV].max_requests);
     }
 
     /**
@@ -197,7 +198,7 @@ int ompi_coll_tuned_alltoallv_intra_dec_dynamic(const void *sbuf, ompi_count_arr
             return ompi_coll_tuned_alltoallv_intra_do_this (sbuf, scounts, sdisps, sdtype,
                                                             rbuf, rcounts, rdisps, rdtype,
                                                             comm, module,
-                                                            alg);
+                                                            alg, max_requests);
         } /* found a method */
     } /*end if any com rules to check */
 
