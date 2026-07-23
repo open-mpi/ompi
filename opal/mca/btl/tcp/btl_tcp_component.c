@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2024 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -1573,12 +1573,16 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
         }
     }
 
+
     /* lookup the corresponding process */
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if (NULL == btl_proc) {
+        const char *peer = opal_fd_get_peer_name(sd);
         opal_show_help("help-mpi-btl-tcp.txt", "server accept cannot find guid", true,
-                       opal_process_info.nodename, getpid());
+                       OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), OPAL_PROC_MY_HOSTNAME,
+                       getpid(), OPAL_NAME_PRINT(guid), peer);
         CLOSE_THE_SOCKET(sd);
+        free((char *) peer);
         return;
     }
 
