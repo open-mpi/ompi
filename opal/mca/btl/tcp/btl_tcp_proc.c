@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -357,19 +358,99 @@ cleanup:
 }
 
 /*
+ * Create an endpoint for every TCP BTL module that the interface
+ * matching paired with one of the peer's exported addresses.  Called
+ * from mca_btl_tcp_proc_create() while the btl_proc is still private
+ * to the calling thread (i.e., before it is published in
+ * mca_btl_tcp_component.tcp_procs), so no proc_lock is needed to
+ * modify the endpoint array.
+ */
+static int mca_btl_tcp_proc_create_endpoints(mca_btl_tcp_proc_t *btl_proc, opal_proc_t *proc)
+{
+    for (uint32_t i = 0; i < mca_btl_tcp_component.tcp_num_btls; ++i) {
+        mca_btl_tcp_module_t *tcp_btl = mca_btl_tcp_component.tcp_btls[i];
+        mca_btl_tcp_addr_t *remote_addr;
+        mca_btl_base_endpoint_t *tcp_endpoint;
+        int rc;
+
+        rc = opal_hash_table_get_value_uint32(&btl_proc->btl_index_to_endpoint,
+                                              tcp_btl->btl_index, (void **) &remote_addr);
+        if (OPAL_SUCCESS != rc) {
+            /* The interface matching did not pair this module with any
+               of the peer's addresses: the peer is not reachable
+               through this module. */
+            if (9 < opal_output_get_verbosity(opal_btl_base_framework.framework_output)) {
+                char *proc_hostname = opal_get_proc_hostname(proc);
+                opal_output(0, "btl:tcp: host %s, process %s UNREACHABLE", proc_hostname,
+                            OPAL_NAME_PRINT(proc->proc_name));
+                free(proc_hostname);
+            }
+            continue;
+        }
+
+        tcp_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
+        if (NULL == tcp_endpoint) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+
+        tcp_endpoint->endpoint_btl = tcp_btl;
+        tcp_endpoint->endpoint_addr = remote_addr;
+#ifndef WORDS_BIGENDIAN
+        /* if we are little endian and our peer is not so lucky, then we
+           need to put all information sent to him in big endian (aka
+           Network Byte Order) and expect all information received to
+           be in NBO.  Since big endian machines always send and receive
+           in NBO, we don't care so much about that case. */
+        if (proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
+            tcp_endpoint->endpoint_nbo = true;
+        }
+#endif
+        tcp_endpoint->endpoint_proc = btl_proc;
+        btl_proc->proc_endpoints[btl_proc->proc_endpoint_count++] = tcp_endpoint;
+
+        OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
+        opal_list_append(&tcp_btl->tcp_endpoints, (opal_list_item_t *) tcp_endpoint);
+        OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/*
  * Create a TCP process structure. There is a one-to-one correspondence
  * between a opal_proc_t and a mca_btl_tcp_proc_t instance. We cache
  * additional data (specifically the list of mca_btl_tcp_endpoint_t instances,
  * and published addresses) associated w/ a given destination on this
  * datastructure.
+ *
+ * The endpoints for *all* TCP BTL modules are created here, before the
+ * proc is published in mca_btl_tcp_component.tcp_procs.  This ordering
+ * is what makes the wire-up safe against concurrent incoming
+ * connections: mca_btl_tcp_proc_accept() matches an incoming
+ * connection's source address against the proc's endpoint list, so any
+ * thread that can find the proc (via mca_btl_tcp_proc_lookup()) must
+ * also be able to find every endpoint.  If endpoints were instead added
+ * one module at a time (as the BML's per-module add_procs loop used to
+ * do), a connection arriving between two of those calls would find a
+ * partially wired proc and be dropped; see
+ * https://github.com/open-mpi/ompi/issues/3035.
+ *
+ * On failure, returns NULL and sets *errcode to the reason; callers
+ * use it to tell resource exhaustion apart from an unreachable peer
+ * (e.g., one that exported no TCP addresses).  errcode may be NULL if
+ * the caller does not care.
  */
 
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *errcode)
 {
     mca_btl_tcp_proc_t *btl_proc;
     int rc, local_proc_is_left;
     mca_btl_tcp_modex_addr_t *remote_addrs = NULL;
     size_t size;
+
+    if (NULL != errcode) {
+        *errcode = OPAL_SUCCESS;
+    }
 
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, proc->proc_name,
@@ -441,6 +522,10 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
         goto cleanup;
     }
 
+    /* wire up the endpoints for all modules before the proc becomes
+       visible to the rest of the component */
+    rc = mca_btl_tcp_proc_create_endpoints(btl_proc, proc);
+
 cleanup:
     if (OPAL_SUCCESS == rc) {
         btl_proc->proc_opal = proc; /* link with the proc */
@@ -448,9 +533,29 @@ cleanup:
         opal_proc_table_set_value(&mca_btl_tcp_component.tcp_procs, proc->proc_name, btl_proc);
     } else {
         if (btl_proc) {
+            /* unwind any endpoints that were created before the
+               failure; the proc was never published, so nothing else
+               can hold a reference to them */
+            for (size_t j = 0; j < btl_proc->proc_endpoint_count; ++j) {
+                mca_btl_base_endpoint_t *tcp_endpoint = btl_proc->proc_endpoints[j];
+                mca_btl_tcp_module_t *tcp_btl = tcp_endpoint->endpoint_btl;
+
+                OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
+                opal_list_remove_item(&tcp_btl->tcp_endpoints,
+                                      (opal_list_item_t *) tcp_endpoint);
+                OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
+                /* keep the endpoint destructor from dereferencing the
+                   half-constructed proc */
+                tcp_endpoint->endpoint_proc = NULL;
+                OBJ_RELEASE(tcp_endpoint);
+            }
+            btl_proc->proc_endpoint_count = 0;
             OBJ_RELEASE(btl_proc); /* release the local proc */
             OBJ_RELEASE(proc);     /* and the ref on the OMPI proc */
             btl_proc = NULL;
+        }
+        if (NULL != errcode) {
+            *errcode = rc;
         }
     }
 
@@ -461,49 +566,6 @@ cleanup:
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
     return btl_proc;
-}
-
-/*
- * Note that this routine must be called with the lock on the process
- * already held.  Insert a btl instance into the proc array and assign
- * it an address.
- */
-int mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t *btl_proc, mca_btl_base_endpoint_t *btl_endpoint)
-{
-    mca_btl_tcp_module_t *tcp_btl = btl_endpoint->endpoint_btl;
-    mca_btl_tcp_addr_t *remote_addr;
-    int rc = OPAL_SUCCESS;
-
-    rc = opal_hash_table_get_value_uint32(&btl_proc->btl_index_to_endpoint, tcp_btl->btl_index,
-                                          (void **) &remote_addr);
-    if (OPAL_SUCCESS != rc) {
-        if (9 < opal_output_get_verbosity(opal_btl_base_framework.framework_output)) {
-            char *proc_hostname = opal_get_proc_hostname(btl_proc->proc_opal);
-            opal_output(0, "btl:tcp: host %s, process %s UNREACHABLE", proc_hostname,
-                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name));
-            free(proc_hostname);
-        }
-        goto out;
-    }
-    btl_endpoint->endpoint_addr = remote_addr;
-
-#ifndef WORDS_BIGENDIAN
-    /* if we are little endian and our peer is not so lucky, then we
-       need to put all information sent to him in big endian (aka
-       Network Byte Order) and expect all information received to
-       be in NBO.  Since big endian machines always send and receive
-       in NBO, we don't care so much about that case. */
-    if (btl_proc->proc_opal->proc_arch & OPAL_ARCH_ISBIGENDIAN) {
-        btl_endpoint->endpoint_nbo = true;
-    }
-#endif
-
-    /* insert into endpoint array */
-    btl_endpoint->endpoint_proc = btl_proc;
-    btl_proc->proc_endpoints[btl_proc->proc_endpoint_count++] = btl_endpoint;
-
-out:
-    return rc;
 }
 
 /*
@@ -546,26 +608,19 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
     opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, *name, (void **) &proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
     if (OPAL_UNLIKELY(NULL == proc)) {
-        mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
 
         BTL_VERBOSE(("adding tcp proc for peer {%s}", OPAL_NAME_PRINT(*name)));
 
         opal_proc = opal_proc_for_name(*name);
-        if (NULL == opal_proc) {
+        if (NULL == opal_proc || opal_proc_local_get() == opal_proc) {
             return NULL;
         }
 
-        /* try adding this proc to each btl until */
-        for (uint32_t i = 0; i < mca_btl_tcp_component.tcp_num_btls; ++i) {
-            endpoint = NULL;
-            (void) mca_btl_tcp_add_procs(&mca_btl_tcp_component.tcp_btls[i]->super, 1, &opal_proc,
-                                         &endpoint, NULL);
-            if (NULL != endpoint && NULL == proc) {
-                /* construct all the endpoints and get the proc */
-                proc = endpoint->endpoint_proc;
-            }
-        }
+        /* creates the proc, including the endpoints for all modules,
+           or returns the existing proc if another thread beat us to
+           creating it */
+        proc = mca_btl_tcp_proc_create(opal_proc, NULL);
     }
 
     return proc;
