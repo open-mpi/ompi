@@ -22,4 +22,4 @@
 # t, file, datatype, general, mpi-abi, reexport, and bindings-generator are run by
 # "make check".  spc and monitoring are multi-process tests: they are
 # built, but not run by "make check".
-SUBDIRS = t file datatype general monitoring spc mpi-abi reexport bindings-generator
+SUBDIRS = t file datatype general monitoring part spc mpi-abi reexport bindings-generator
