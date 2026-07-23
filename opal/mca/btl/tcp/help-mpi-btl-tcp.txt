@@ -113,6 +113,19 @@ aborting your job.
   Flag:       %s
   Error:      %s (%d)
 #
+[server cannot accept connection from self]
+WARNING: Open MPI accepted a TCP connection from what appears to be
+the same Open MPI process. This is not supported, please exclude
+(using btl_tcp_if_exclude) the interface corresponding to the
+following IP address %s
+
+This attempted connection will be ignored; your MPI job may or may not
+continue properly.
+
+  Process guid:        %s
+  on host:             %s
+  PID:                 %d
+#
 [server accept cannot find guid]
 WARNING: Open MPI accepted a TCP connection from what appears to be a
 another Open MPI process but cannot find a corresponding process
@@ -121,8 +134,11 @@ entry for that peer.
 This attempted connection will be ignored; your MPI job may or may not
 continue properly.
 
-  Local host: %s
-  PID:        %d
+  Process guid:        %s
+  on host:             %s
+  PID:                 %d
+  guid:                %s
+  Source IP of socket: %s
 #
 [server getpeername failed]
 WARNING: Open MPI failed to look up the peer IP address information of
