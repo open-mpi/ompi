@@ -1,3 +1,5 @@
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+
 # The two following belong to a different package
 #### ./opal/mca/backtrace/darwin/MoreBacktrace/MoreDebugging/MoreBacktrace.c: defined(__cplusplus)
 #### ./opal/mca/backtrace/darwin/MoreBacktrace/MoreDebugging/MoreBacktrace.h: defined(__cplusplus)
@@ -126,7 +128,6 @@
 ./opal/runtime/opal_progress.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/threads/threads.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/cmd_line.h: defined(c_plusplus)  defined(__cplusplus)
-./opal/util/crc.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/daemon_init.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/error.h: defined(c_plusplus)  defined(__cplusplus)
 ./opal/util/few.h: defined(c_plusplus)  defined(__cplusplus)

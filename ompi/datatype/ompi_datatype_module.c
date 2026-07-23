@@ -36,6 +36,7 @@
 #include <stdio.h>
 
 #include "opal/datatype/opal_convertor_internal.h"
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/util/output.h"
 #include "opal/util/string_copy.h"
 #include "opal/class/opal_pointer_array.h"
@@ -54,6 +55,9 @@ static int ompi_datatype_finalize (void);
  * as it include all the optional datatypes (such as MPI_INTEGER?, MPI_REAL?).
  */
 int32_t ompi_datatype_number_of_predefined_data = 0;
+
+/* Empirical count/datatype consolidation crossover used by MPI_Pack/Unpack. */
+int ompi_datatype_consolidate_threshold = 250;
 
 /*
  * The following initialization of C, C++ and Fortran types is fairly complex,
@@ -502,6 +506,13 @@ int32_t ompi_datatype_init( void )
 
     opal_datatype_init();
 
+    (void) mca_base_var_register(
+        "ompi", "datatype", NULL, "consolidate_threshold",
+        "Minimum count for MPI_Pack and MPI_Unpack to consolidate count/datatype into a "
+        "temporary contiguous datatype",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &ompi_datatype_consolidate_threshold);
+
     /* Create the f2c translation table */
     OBJ_CONSTRUCT(&ompi_datatype_f_to_c_table, opal_pointer_array_t);
     if( OPAL_SUCCESS != opal_pointer_array_init(&ompi_datatype_f_to_c_table,
@@ -753,15 +764,15 @@ int ompi_datatype_safeguard_pointer_debug_breakpoint( const void* actual_ptr, in
  * Data dumping functions
  ********************************************************/
 
-static int _ompi_dump_data_flags( unsigned short usflags, char* ptr, size_t length )
+static int _ompi_dump_data_flags(uint32_t flags, char *ptr, size_t length)
 {
     int index = 0;
     if( length < 22 ) return 0;
     /* The lower-level part is the responsibility of opal_datatype_dump_data_flags */
-    index += opal_datatype_dump_data_flags (usflags, ptr, length);
+    index += opal_datatype_dump_data_flags(flags, ptr, length);
 
     /* Which kind of datatype is that */
-    switch( usflags & OMPI_DATATYPE_FLAG_DATA_LANGUAGE ) {
+    switch( flags & OMPI_DATATYPE_FLAG_DATA_LANGUAGE ) {
     case OMPI_DATATYPE_FLAG_DATA_C:
         ptr[12] = ' '; ptr[13] = 'C'; ptr[14] = ' '; break;
     case OMPI_DATATYPE_FLAG_DATA_CPP:
@@ -769,11 +780,11 @@ static int _ompi_dump_data_flags( unsigned short usflags, char* ptr, size_t leng
     case OMPI_DATATYPE_FLAG_DATA_FORTRAN:
         ptr[12] = 'F'; ptr[13] = '7'; ptr[14] = '7'; break;
     default:
-        if( usflags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
+        if( flags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
             ptr[12] = 'E'; ptr[13] = 'R'; ptr[14] = 'R'; break;
         }
     }
-    switch( usflags & OMPI_DATATYPE_FLAG_DATA_TYPE ) {
+    switch( flags & OMPI_DATATYPE_FLAG_DATA_TYPE ) {
     case OMPI_DATATYPE_FLAG_DATA_INT:
         ptr[17] = 'I'; ptr[18] = 'N'; ptr[19] = 'T'; break;
     case OMPI_DATATYPE_FLAG_DATA_FLOAT:
@@ -781,7 +792,7 @@ static int _ompi_dump_data_flags( unsigned short usflags, char* ptr, size_t leng
     case OMPI_DATATYPE_FLAG_DATA_COMPLEX:
         ptr[17] = 'C'; ptr[18] = 'P'; ptr[19] = 'L'; break;
     default:
-        if( usflags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
+        if( flags & OMPI_DATATYPE_FLAG_PREDEFINED ) {
             ptr[17] = 'E'; ptr[18] = 'R'; ptr[19] = 'R'; break;
         }
     }
@@ -806,13 +817,16 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
                        pData->super.size, pData->super.align, (uint32_t)pData->super.id, pData->super.desc.length, pData->super.desc.used,
                        pData->super.true_lb, pData->super.true_ub, pData->super.true_ub - pData->super.true_lb,
                        pData->super.lb, pData->super.ub, pData->super.ub - pData->super.lb,
-                       pData->super.nbElems, pData->super.loops, (int)pData->super.flags );
+                       pData->super.nbElems, pData->super.loops, (unsigned int) pData->super.flags );
     /* dump the flags */
     if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );
     } else {
         if( pData->super.flags & OPAL_DATATYPE_FLAG_COMMITTED ) index += snprintf( buffer + index, length - index, "committed " );
         if( pData->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) index += snprintf( buffer + index, length - index, "contiguous " );
+        if( pData->super.flags & OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE ) {
+            index += snprintf( buffer + index, length - index, "count-boundary " );
+        }
     }
     index += snprintf( buffer + index, length - index, ")" );
     index += _ompi_dump_data_flags( pData->super.flags, buffer + index, length - index );

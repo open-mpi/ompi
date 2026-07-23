@@ -16,7 +16,7 @@ dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
-dnl Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
+dnl Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
 dnl Copyright (c) 2013-2017 Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015      Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
@@ -494,21 +494,6 @@ with_ident_string="`eval echo $with_ident_string`"
 AC_DEFINE_UNQUOTED([OPAL_IDENT_STRING], ["$with_ident_string"],
      [ident string for Open MPI])
 AC_MSG_RESULT([$with_ident_string])
-
-
-#
-# Use alternative checksum algorithm
-#
-AC_MSG_CHECKING([if want to use an alternative checksum algo for messages])
-AC_ARG_WITH([dst-checksum],
-     [AS_HELP_STRING([--with-dst-checksum],
-                     [Use an alternative checksum algorithm for messages])])
-if test "$with_dst_checksum" = "yes"; then
-    AC_MSG_RESULT([yes])
-    CFLAGS="-DOPAL_CSUM_DST $CFLAGS"
-else
-    AC_MSG_RESULT([no])
-fi
 
 
 #

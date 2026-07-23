@@ -41,7 +41,9 @@
 
 #include "opal_config.h"
 
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "opal/class/opal_object.h"
 
@@ -57,27 +59,42 @@ BEGIN_C_DECLS
 #    define OPAL_DATATYPE_MAX_PREDEFINED 29
 #endif
 /*
+ * Size (in bytes) of the largest predefined datatype element. The partial-element staging buffers
+ * in opal_unpack_partial_predefined() (opal_datatype_unpack.h) are sized to this bound so a
+ * fragment boundary landing inside a predefined element can be staged on the stack. The widest
+ * predefined types are the 32-byte complex forms (long double _Complex, _Float128 _Complex); a
+ * _Static_assert next to opal_datatype_local_sizes[] in opal_datatype_module.c enforces at compile
+ * time that no predefined type exceeds this value.
+ */
+#define OPAL_DATATYPE_MAX_PREDEFINED_SIZE 32
+/*
  * Upper limit of the number of _Basic_ datatypes supported (in order to
  * not change setup and usage of the predefined datatypes).
  *
- * BEWARE: This constant should reflect whatever the OMPI-layer needs.
+ * BEWARE: This constant should reflect whatever the upper layer needs.
  */
 #define OPAL_DATATYPE_MAX_SUPPORTED 64
 
 /* flags for the datatypes. */
 #define OPAL_DATATYPE_FLAG_UNAVAILABLE \
-    0x0001 /**< datatypes unavailable on the build (OS or compiler dependant) */
+    0x00000001u /**< datatypes unavailable on the build (OS or compiler dependent) */
 #define OPAL_DATATYPE_FLAG_PREDEFINED \
-    0x0002 /**< cannot be removed: initial and predefined datatypes */
-#define OPAL_DATATYPE_FLAG_COMMITTED  0x0004 /**< ready to be used for a send/recv operation */
-#define OPAL_DATATYPE_FLAG_OVERLAP    0x0008 /**< datatype is unpropper for a recv operation */
-#define OPAL_DATATYPE_FLAG_CONTIGUOUS 0x0010 /**< contiguous datatype */
-#define OPAL_DATATYPE_FLAG_NO_GAPS                                                                \
-    0x0020 /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size \
-            */
-#define OPAL_DATATYPE_FLAG_USER_LB 0x0040 /**< has a user defined LB */
-#define OPAL_DATATYPE_FLAG_USER_UB 0x0080 /**< has a user defined UB */
-#define OPAL_DATATYPE_FLAG_DATA    0x0100 /**< data or control structure */
+    0x00000002u /**< cannot be removed: initial and predefined datatypes */
+#define OPAL_DATATYPE_FLAG_COMMITTED  0x00000004u /**< ready to be used for a send/recv operation */
+#define OPAL_DATATYPE_FLAG_OVERLAP    0x00000008u /**< datatype is unpropper for a recv operation */
+/*
+ * For datatype descriptors this flag describes the whole datatype layout.  A
+ * LOOP descriptor may also carry it, but that is a construction artifact: in a
+ * homogeneous optimized descriptor such loops should have been collapsed
+ * already, and in a heterogeneous path the loop body typemap must still be
+ * traversed. Do not use a contiguous LOOP marker as a generic byte-copy
+ * optimization.
+ */
+#define OPAL_DATATYPE_FLAG_CONTIGUOUS 0x00000010u /**< contiguous datatype */
+#define OPAL_DATATYPE_FLAG_NO_GAPS    0x00000020u /**< no gaps around the datatype, aka OPAL_DATATYPE_FLAG_CONTIGUOUS and extent == size */
+#define OPAL_DATATYPE_FLAG_USER_LB 0x00000040u /**< has a user defined LB */
+#define OPAL_DATATYPE_FLAG_USER_UB 0x00000080u /**< has a user defined UB */
+#define OPAL_DATATYPE_FLAG_DATA    0x00000100u /**< data or control structure */
 /*
  * We should make the difference here between the predefined contiguous and non contiguous
  * datatypes. The OPAL_DATATYPE_FLAG_BASIC is held by all predefined contiguous datatypes.
@@ -86,14 +103,52 @@ BEGIN_C_DECLS
     (OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS \
      | OPAL_DATATYPE_FLAG_DATA | OPAL_DATATYPE_FLAG_COMMITTED)
 /*
+ * The per-element descriptor flag field (ddt_elem_id_description.flags in
+ * opal_datatype_internal.h) is only 16 bits wide.  opal_datatype_add() copies a predefined type's
+ * datatype-level flags down into an element, so only the element-meaningful OPAL flags below may be
+ * let through; everything else is masked out on the way in.  By convention any layer above OPAL
+ * places its own datatype flags in the top 16 bits of the flags word, so they can never reach an
+ * element and are naturally excluded by the mask.  The one datatype-level bit that still lands
+ * inside the 16-bit range is the optimizer-private OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED (bit 9); it
+ * is intentionally left out of this mask (enforced by a _Static_assert in opal_datatype_add.c) so it
+ * is not confused with an incoming element flag.
+ */
+#define OPAL_DATATYPE_FLAG_ELEM_MASK                                                            \
+    (OPAL_DATATYPE_FLAG_UNAVAILABLE | OPAL_DATATYPE_FLAG_PREDEFINED | OPAL_DATATYPE_FLAG_COMMITTED \
+     | OPAL_DATATYPE_FLAG_OVERLAP | OPAL_DATATYPE_FLAG_CONTIGUOUS | OPAL_DATATYPE_FLAG_NO_GAPS   \
+     | OPAL_DATATYPE_FLAG_USER_LB | OPAL_DATATYPE_FLAG_USER_UB | OPAL_DATATYPE_FLAG_DATA)
+/*
  * If during the datatype optimization process we collapse contiguous elements with
  * different types, we cannot use this optimized description for any communication
- * in a heterogeneous setting, especially not for the exteranl32 support.
+ * in a heterogeneous setting, especially not for the external32 support.
  *
  * A datatype with this flag cannot use the optimized description in heterogeneous
  * setups.
+ *
+ * This and OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE below are datatype-only "shape hints": they live
+ * above bit 15, outside CONVERTOR_DATATYPE_MASK, so OPAL_CONVERTOR_PREPARE() never copies them into
+ * a convertor's flags, and they are read only from opal_datatype_t::flags. They occupy the two
+ * lowest bits above the data-flag region; the convertor control flags (opal_convertor.h) pack
+ * downward from bit 31 and deliberately leave these two free. A _Static_assert there enforces the
+ * two sets stay disjoint, so a mistaken test of the wrong field cannot read as an active convertor
+ * bit.
  */
-#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED  0x1000
+#define OPAL_DATATYPE_OPTIMIZED_RESTRICTED 0x00010000u
+/*
+ * The last fragment of one full datatype instance is adjacent to the first
+ * fragment of the next instance. Commit-time optimization cannot fold this into
+ * a count-1 description, but convertor setup can use the hint for count > 1.
+ */
+#define OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE 0x00020000u
+
+/*
+ * Optimization controls.  Keep these as a mask so upper layers can disable
+ * transformations whose cost model differs for a given pack/unpack path.
+ */
+#define OPAL_DATATYPE_OPTIMIZE_ADJACENT_FUSION 0x00000001u
+#define OPAL_DATATYPE_OPTIMIZE_LOOP_BOUNDARY   0x00000002u
+#define OPAL_DATATYPE_OPTIMIZE_LOOP_UNROLL     0x00000004u
+#define OPAL_DATATYPE_OPTIMIZE_ALL             UINT32_MAX
 
 /**
  * The number of supported entries in the data-type definition and the
@@ -116,8 +171,7 @@ typedef struct dt_type_desc_t dt_type_desc_t;
  */
 struct opal_datatype_t {
     opal_object_t super; /**< basic superclass */
-    uint16_t flags;      /**< the flags */
-    uint16_t id;         /**< data id, normally the index in the data array. */
+    uint32_t flags;      /**< datatype flags, including shape hints above bit 15 */
     uint32_t bdt_used;   /**< bitset of which basic datatypes are used in the data description */
     size_t size;         /**< total size in bytes of the memory used by the data if
                               the data is put on a contiguous buffer */
@@ -127,8 +181,9 @@ struct opal_datatype_t {
     ptrdiff_t ub;        /**< upper bound in memory */
     /* --- cacheline 1 boundary (64 bytes) --- */
     size_t nbElems; /**< total number of elements inside the datatype */
-    uint32_t align; /**< data should be aligned to */
-    uint32_t loops; /**< number of loops on the iternal type stack */
+    uint16_t id;    /**< data id, normally the index in the data array. */
+    uint16_t align; /**< data should be aligned to */
+    uint32_t loops; /**< number of loops on the internal type stack */
 
     /* Attribute fields */
     char name[OPAL_MAX_OBJECT_NAME]; /**< name of the datatype */
@@ -142,10 +197,15 @@ struct opal_datatype_t {
                          all language interfaces (because Fortran is not known at the OPAL
                          layer). This field should never be initialized in homogeneous
                          environments */
-    /* --- cacheline 5 boundary (320 bytes) was 32-36 bytes ago --- */
 
-    /* size: 352, cachelines: 6, members: 15 */
-    /* last cacheline: 28-32 bytes */
+    /*
+     * Layout note for the default LP64 configuration with
+     * OPAL_MAX_OBJECT_NAME == 64: this struct is 200 bytes, aligned to 8
+     * bytes, and ptypes ends at offset 200.  The 32-bit flags field is paid
+     * for by keeping id and align as adjacent 16-bit fields, so there is no
+     * trailing padding in the C object to reuse; the object only occupies the
+     * first 8 bytes of its fourth 64-byte cacheline.
+     */
 };
 
 typedef struct opal_datatype_t opal_datatype_t;
@@ -251,6 +311,17 @@ OPAL_DECLSPEC int32_t opal_datatype_clone(const opal_datatype_t *src_type,
  */
 OPAL_DECLSPEC int32_t opal_datatype_create_contiguous(int count, const opal_datatype_t *oldType,
                                                       opal_datatype_t **newType);
+/*
+ * Build the optimized descriptor for a datatype created by
+ * opal_datatype_create_contiguous(count, oldType), using oldType's already
+ * optimized descriptor as the loop body.  The regular descriptor is left as
+ * the true contiguous-constructor description.  optimization_mask controls
+ * which transforms are allowed while building the optimized descriptor.
+ */
+OPAL_DECLSPEC int32_t opal_datatype_optimize_from_contiguous(opal_datatype_t *pData,
+                                                             const opal_datatype_t *oldType,
+                                                             size_t count,
+                                                             uint32_t optimization_mask);
 /**
  * Add a new datatype to the base type description. The count is the number
  * repetitions of the same element to be added, and the extent is the extent

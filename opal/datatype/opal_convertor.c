@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
@@ -38,13 +38,10 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_convertor_internal.h"
 #include "opal/datatype/opal_datatype.h"
-#include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
 #include "opal/mca/accelerator/accelerator.h"
-
-#define MEMCPY_ACCELERATOR(DST, SRC, BLENGTH, CONVERTOR) \
-    CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
 
 static void *opal_convertor_accelerator_memcpy(void *dest, const void *src, size_t size, opal_convertor_t *convertor)
 {
@@ -56,7 +53,9 @@ static void *opal_convertor_accelerator_memcpy(void *dest, const void *src, size
     res = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, MCA_ACCELERATOR_NO_DEVICE_ID,
                                   dest, src, size, MCA_ACCELERATOR_TRANSFER_UNSPEC);
     if (OPAL_SUCCESS != res) {
-        opal_output(0, "Error in accelerator memcpy");
+        opal_output(0, "opal_convertor_accelerator_memcpy: accelerator mem_copy failed "
+                       "(rc=%d, dest=%p, src=%p, size=%" PRIsize_t "); aborting",
+                    res, dest, (void *) src, size);
         abort();
     } else {
         return dest;
@@ -71,6 +70,9 @@ static void opal_convertor_construct(opal_convertor_t *convertor)
     convertor->remoteArch = opal_local_arch;
     convertor->flags = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
     convertor->cbmemcpy = &opal_convertor_accelerator_memcpy;
+    /* Safe default until prepare/clone selects the right stream sizes: the local ones make a
+     * homogeneous send, which is the only thing that can happen before the convertor is prepared. */
+    convertor->sizes = opal_datatype_local_sizes;
 }
 
 static void opal_convertor_destruct(opal_convertor_t *convertor)
@@ -131,6 +133,7 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
     master->remote_arch = remote_arch;
     master->flags = 0;
     master->hetero_mask = 0;
+    master->size_mismatch_mask = 0;
     /**
      * Most of the sizes will be identical, so for now just make a copy of
      * the local ones. As master->remote_sizes is defined as being an array of
@@ -177,6 +180,12 @@ opal_convertor_master_t *opal_convertor_find_or_create_master(uint32_t remote_ar
             master->hetero_mask |= (((uint32_t) 1) << i);
         }
     }
+    /*
+     * Snapshot the size-changing types before the byte-swap pass below folds same-size swaps into
+     * hetero_mask. These are the only types whose predefined elements must never be split across a
+     * fragment boundary (CONVERTOR_UNSAFE_SPLIT).
+     */
+    master->size_mismatch_mask = master->hetero_mask;
     if (opal_arch_checkmask(&master->remote_arch, OPAL_ARCH_ISBIGENDIAN)
         != opal_arch_checkmask(&opal_local_arch, OPAL_ARCH_ISBIGENDIAN)) {
         uint32_t hetero_mask = 0;
@@ -231,9 +240,6 @@ opal_convertor_t *opal_convertor_create(int32_t remote_arch, int32_t mode)
             *(MAX_DATA) = 0;                                                        \
             return 1; /* nothing to do */                                           \
         }                                                                           \
-        (CONVERTOR)->checksum = OPAL_CSUM_ZERO;                                     \
-        (CONVERTOR)->csum_ui1 = 0;                                                  \
-        (CONVERTOR)->csum_ui2 = 0;                                                  \
         assert((CONVERTOR)->bConverted < (CONVERTOR)->local_size);                  \
     } while (0)
 
@@ -268,7 +274,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
             if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
                 iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
             } else {
-                MEMCPY_ACCELERATOR(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
+                pConv->cbmemcpy(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
             }
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
@@ -282,7 +288,7 @@ int32_t opal_convertor_pack(opal_convertor_t *pConv, struct iovec *iov, uint32_t
         if (OPAL_LIKELY(NULL == iov[i].iov_base)) {
             iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
         } else {
-            MEMCPY_ACCELERATOR(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
+            pConv->cbmemcpy(iov[i].iov_base, base_pointer, iov[i].iov_len, pConv);
         }
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
@@ -315,7 +321,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
             if (iov[i].iov_len >= pending_length) {
                 goto complete_contiguous_data_unpack;
             }
-            MEMCPY_ACCELERATOR(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
+            pConv->cbmemcpy(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
 
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
@@ -326,7 +332,7 @@ int32_t opal_convertor_unpack(opal_convertor_t *pConv, struct iovec *iov, uint32
 
     complete_contiguous_data_unpack:
         iov[i].iov_len = pending_length;
-        MEMCPY_ACCELERATOR(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
+        pConv->cbmemcpy(base_pointer, iov[i].iov_base, iov[i].iov_len, pConv);
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
         pConv->flags |= CONVERTOR_COMPLETED;
@@ -429,8 +435,24 @@ int32_t opal_convertor_set_position_nocheck(opal_convertor_t *convertor, size_t 
      * position, so there is no need for special handling. In all other cases,
      * if we plan to rollback the convertor then first we have to reset it at
      * the beginning.
+     *
+     * The contiguous shortcut builds a stack tailored to the contiguous movers:
+     * pStack->count holds a single blocklen or, when landing mid-element, a
+     * remaining UINT1 byte count. Accelerator convertors, however, always run
+     * the general descriptor interpreter (opal_{pack,unpack}_accelerator_simple),
+     * which reads pStack->count as an element count and expects a mid-element
+     * offset in convertor->partial_length -- exactly the stack the generic
+     * position walk produces. Route accelerator convertors through the generic
+     * path so the interpreter is handed a stack it can resume from correctly.
+     *
+     * This costs a descriptor walk instead of the O(1) contiguous shortcut, but only
+     * on a non-zero reposition (rendezvous/retransmit), never per fragment, and the walk
+     * skips whole elements arithmetically so it scales with the (tiny) contiguous
+     * descriptor rather than the message size. The correctness of the mover stack is
+     * worth that small, off-hot-path cost.
      */
-    if (OPAL_LIKELY(convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)) {
+    if (OPAL_LIKELY((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS)
+                    && !(convertor->flags & CONVERTOR_ACCELERATOR))) {
         rc = opal_convertor_create_stack_with_pos_contig(convertor, (*position),
                                                          opal_datatype_local_sizes);
     } else {
@@ -469,8 +491,26 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
     pConvertor->remote_size = pConvertor->local_size;
     if (OPAL_UNLIKELY(datatype->bdt_used & pConvertor->master->hetero_mask)) {
         pConvertor->flags &= (~CONVERTOR_HOMOGENEOUS);
-        /* Can we use the optimized description? */
-        if (pConvertor->flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
+        /*
+         * If any predefined type in this datatype is size-changing on the wire, mark the convertor
+         * "unsafe to split" so the packer only ever stops on whole predefined-element boundaries.
+         * Same-size byte-swap conversions leave this clear and may still split freely.
+         */
+        if (datatype->bdt_used & pConvertor->master->size_mismatch_mask) {
+            pConvertor->flags |= CONVERTOR_UNSAFE_SPLIT;
+        }
+        /*
+         * Heterogeneous conversions may use the optimized description, but only when it is a
+         * faithful, type-preserving rewrite of the datatype. The optimizer sets
+         * OPAL_DATATYPE_OPTIMIZED_RESTRICTED whenever it changed a predefined element's type while
+         * keeping its local byte layout (e.g. merging same-size types into one block): that rewrite
+         * is correct locally but wrong on the wire, where the merged types can have different remote
+         * sizes. So fall back to the unoptimized desc exactly when RESTRICTED is set; otherwise the
+         * optimized desc is safe. The flag is a whole-datatype summary of the per-element
+         * OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED markers and is kept in lockstep with them across every
+         * optimizer pass, so "not RESTRICTED" reliably means "no element changed type".
+         */
+        if (datatype->flags & OPAL_DATATYPE_OPTIMIZED_RESTRICTED) {
             pConvertor->use_desc = &(datatype->desc);
         }
         if (0 == (pConvertor->flags & CONVERTOR_HAS_REMOTE_SIZE)) {
@@ -516,11 +556,20 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         convertor->flags |= (CONVERTOR_DATATYPE_MASK & datatype->flags);                        \
         convertor->flags |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS);                          \
                                                                                                 \
+        /* Select the packed-stream element sizes: the remote sizes whenever this convertor     \
+         * touches the wire representation (a receive, or a send that converts), the local      \
+         * sizes otherwise. Homogeneous masters hold a copy of the local sizes, so a homogeneous \
+         * receive still lands on the correct values. */                                         \
+        if (convertor->flags & (CONVERTOR_RECV | CONVERTOR_SEND_CONVERSION)) {                   \
+            convertor->sizes = convertor->master->remote_sizes;                                 \
+        } else {                                                                                \
+            convertor->sizes = opal_datatype_local_sizes;                                       \
+        }                                                                                       \
+                                                                                                \
         convertor->remote_size = convertor->local_size;                                         \
         if (OPAL_LIKELY(convertor->remoteArch == opal_local_arch)) {                            \
-            if (!(convertor->flags & CONVERTOR_WITH_CHECKSUM)                                   \
-                && ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                             \
-                    || ((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && (1 == count)))) { \
+            if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                \
+                || ((convertor->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) && (1 == count))) {      \
                 return OPAL_SUCCESS;                                                            \
             }                                                                                   \
         }                                                                                       \
@@ -529,9 +578,7 @@ size_t opal_convertor_compute_remote_size(opal_convertor_t *pConvertor)
         opal_convertor_compute_remote_size(convertor);                                          \
         assert(NULL != convertor->use_desc->desc);                                              \
         /* For predefined datatypes (contiguous) do nothing more */                             \
-        /* if checksum is enabled then always continue */                                       \
-        if (((convertor->flags & (CONVERTOR_WITH_CHECKSUM | OPAL_DATATYPE_FLAG_NO_GAPS))        \
-             == OPAL_DATATYPE_FLAG_NO_GAPS)                                                     \
+        if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)                                     \
             && ((convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))                   \
                 == (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {                                 \
             return OPAL_SUCCESS;                                                                \
@@ -581,31 +628,17 @@ int32_t opal_convertor_prepare_for_recv(opal_convertor_t *convertor,
     assert(!(convertor->flags & CONVERTOR_SEND));
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
 
-#if defined(CHECKSUM)
-    if (OPAL_UNLIKELY(convertor->flags & CONVERTOR_WITH_CHECKSUM)) {
-        if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_unpack_general_checksum;
-        } else {
-            if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                convertor->fAdvance = opal_unpack_homogeneous_contig_checksum;
-            } else {
-                convertor->fAdvance = opal_generic_simple_unpack_checksum;
-            }
-        }
+    if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
+        convertor->fAdvance = opal_unpack_general;
+    } else if (convertor->flags & CONVERTOR_ACCELERATOR) {
+        convertor->fAdvance = opal_unpack_accelerator_simple;
     } else {
-#endif /* defined(CHECKSUM) */
-        if (OPAL_UNLIKELY(!(convertor->flags & CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_unpack_general;
+        if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+            convertor->fAdvance = opal_unpack_homogeneous_contig;
         } else {
-            if (convertor->pDesc->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                convertor->fAdvance = opal_unpack_homogeneous_contig;
-            } else {
-                convertor->fAdvance = opal_generic_simple_unpack;
-            }
+            convertor->fAdvance = opal_generic_inlined_unpack;
         }
-#if defined(CHECKSUM)
     }
-#endif
     return OPAL_SUCCESS;
 }
 
@@ -620,43 +653,23 @@ int32_t opal_convertor_prepare_for_send(opal_convertor_t *convertor,
 
     OPAL_CONVERTOR_PREPARE(convertor, datatype, count, pUserBuf);
 
-#if defined(CHECKSUM)
-    if (convertor->flags & CONVERTOR_WITH_CHECKSUM) {
-        if (CONVERTOR_SEND_CONVERSION
-            == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_pack_general_checksum;
-        } else {
-            if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)
-                    || (1 >= convertor->count)) {
-                    convertor->fAdvance = opal_pack_homogeneous_contig_checksum;
-                } else {
-                    convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps_checksum;
-                }
-            } else {
-                convertor->fAdvance = opal_generic_simple_pack_checksum;
-            }
-        }
+    if (CONVERTOR_SEND_CONVERSION
+        == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
+        convertor->fAdvance = opal_pack_general;
+    } else if (convertor->flags & CONVERTOR_ACCELERATOR) {
+        convertor->fAdvance = opal_pack_accelerator_simple;
     } else {
-#endif /* defined(CHECKSUM) */
-        if (CONVERTOR_SEND_CONVERSION
-            == (convertor->flags & (CONVERTOR_SEND_CONVERSION | CONVERTOR_HOMOGENEOUS))) {
-            convertor->fAdvance = opal_pack_general;
-        } else {
-            if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
-                if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)
-                    || (1 >= convertor->count)) {
-                    convertor->fAdvance = opal_pack_homogeneous_contig;
-                } else {
-                    convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
-                }
+        if (datatype->flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
+            if (((datatype->ub - datatype->lb) == (ptrdiff_t) datatype->size)
+                || (1 >= convertor->count)) {
+                convertor->fAdvance = opal_pack_homogeneous_contig;
             } else {
-                convertor->fAdvance = opal_generic_simple_pack;
+                convertor->fAdvance = opal_pack_homogeneous_contig_with_gaps;
             }
+        } else {
+            convertor->fAdvance = opal_generic_inlined_pack;
         }
-#if defined(CHECKSUM)
     }
-#endif
     return OPAL_SUCCESS;
 }
 
@@ -681,6 +694,7 @@ int opal_convertor_clone(const opal_convertor_t *source, opal_convertor_t *desti
     destination->pBaseBuf = source->pBaseBuf;
     destination->fAdvance = source->fAdvance;
     destination->master = source->master;
+    destination->sizes = source->sizes;
     destination->local_size = source->local_size;
     destination->remote_size = source->remote_size;
     /* create the stack */
@@ -699,6 +713,18 @@ int opal_convertor_clone(const opal_convertor_t *source, opal_convertor_t *desti
         memcpy(destination->pStack, source->pStack, sizeof(dt_stack_t) * (source->stack_pos + 1));
         destination->bConverted = source->bConverted;
         destination->stack_pos = source->stack_pos;
+        /*
+         * We copy the progress stack but not partial_length, so the clone would silently
+         * restart any partially-consumed predefined element at offset 0. That is only safe
+         * because every caller that copies the stack either repositions afterwards (see
+         * opal_convertor_clone_with_position, which re-runs set_position) or clones a send
+         * convertor -- and a send convertor never carries a nonzero partial_length (the pack
+         * movers never set it, and send-side set_position zeroes it). A receive convertor
+         * paused mid-element (partial_length != 0) resumed from this clone without an
+         * intervening set_position would consume the wrong bytes; nothing does that today,
+         * so assert the invariant rather than teaching clone to reassemble a split element.
+         */
+        assert(0 == source->partial_length || (source->flags & CONVERTOR_SEND));
     }
 
     destination->cbmemcpy = source->cbmemcpy;
@@ -733,9 +759,6 @@ void opal_convertor_dump(opal_convertor_t *convertor)
     }
     if (convertor->flags & CONVERTOR_NO_OP) {
         opal_output(0, "no_op ");
-    }
-    if (convertor->flags & CONVERTOR_WITH_CHECKSUM) {
-        opal_output(0, "checksum ");
     }
     if (convertor->flags & CONVERTOR_ACCELERATOR) {
         opal_output(0, "ACCELERATOR ");

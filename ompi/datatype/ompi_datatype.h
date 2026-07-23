@@ -47,21 +47,52 @@
 
 BEGIN_C_DECLS
 
-/* These flags are on top of the flags in opal_datatype.h */
+/*
+ * These flags are layered on top of the OPAL datatype flags (opal_datatype.h) in the shared
+ * opal_datatype_t::flags word.  They deliberately live in the high half of the 32-bit word (bits
+ * 18-24), above everything OPAL uses at the datatype level (the element-meaningful flags in bits
+ * 0-8 and the two shape hints OPAL_DATATYPE_OPTIMIZED_RESTRICTED / _COUNT_OPTIMIZABLE in bits
+ * 16-17).  Keeping them above bit 15 has two consequences the engine relies on:
+ *
+ *   - They can never fall inside the 16-bit per-element flag field (ddt_elem_id_description.flags):
+ *     opal_datatype_add() copies a sub-type's datatype-level flags down into an element, and a bit
+ *     above 15 simply cannot be represented there.  This is what keeps them from aliasing the
+ *     element-private OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED (bit 9) in the shared flag dumper.
+ *   - They fall outside CONVERTOR_DATATYPE_MASK (opal_convertor.h), so OPAL_CONVERTOR_PREPARE()
+ *     never copies them into a convertor; they are read only from ompi_datatype_t::super.flags at
+ *     the OMPI layer.
+ *
+ * By numeric value some of these coincide with the convertor *control* flags (opal_convertor.h),
+ * but those live in a different field (opal_convertor_t::flags) that OPAL alone owns and OPAL cannot
+ * reference these OMPI macros, so no single runtime word ever carries both meanings.  The
+ * _Static_asserts below lock in the two invariants above.
+ */
 /* Is the datatype predefined as MPI type (not necessarily as OPAL type, e.g. struct/block types) */
-#define OMPI_DATATYPE_FLAG_PREDEFINED    0x0200
-#define OMPI_DATATYPE_FLAG_ANALYZED      0x0400
-#define OMPI_DATATYPE_FLAG_MONOTONIC     0x0800
+#define OMPI_DATATYPE_FLAG_PREDEFINED    0x00040000
+#define OMPI_DATATYPE_FLAG_ANALYZED      0x00080000
+#define OMPI_DATATYPE_FLAG_MONOTONIC     0x00100000
 /* Keep trace of the type of the predefined datatypes */
-#define OMPI_DATATYPE_FLAG_DATA_INT      0x1000
-#define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x2000
-#define OMPI_DATATYPE_FLAG_DATA_COMPLEX  0x3000
-#define OMPI_DATATYPE_FLAG_DATA_TYPE     0x3000
+#define OMPI_DATATYPE_FLAG_DATA_INT      0x00200000
+#define OMPI_DATATYPE_FLAG_DATA_FLOAT    0x00400000
+#define OMPI_DATATYPE_FLAG_DATA_COMPLEX  0x00600000
+#define OMPI_DATATYPE_FLAG_DATA_TYPE     0x00600000
 /* In which language the datatype is intended for to be used */
-#define OMPI_DATATYPE_FLAG_DATA_C        0x4000
-#define OMPI_DATATYPE_FLAG_DATA_CPP      0x8000
-#define OMPI_DATATYPE_FLAG_DATA_FORTRAN  0xC000
-#define OMPI_DATATYPE_FLAG_DATA_LANGUAGE 0xC000
+#define OMPI_DATATYPE_FLAG_DATA_C        0x00800000
+#define OMPI_DATATYPE_FLAG_DATA_CPP      0x01000000
+#define OMPI_DATATYPE_FLAG_DATA_FORTRAN  0x01800000
+#define OMPI_DATATYPE_FLAG_DATA_LANGUAGE 0x01800000
+
+/* Union of every OMPI datatype-level flag, used only to assert their placement below. */
+#define OMPI_DATATYPE_FLAG_ALL                                                                   \
+    (OMPI_DATATYPE_FLAG_PREDEFINED | OMPI_DATATYPE_FLAG_ANALYZED | OMPI_DATATYPE_FLAG_MONOTONIC  \
+     | OMPI_DATATYPE_FLAG_DATA_TYPE | OMPI_DATATYPE_FLAG_DATA_LANGUAGE)
+
+_Static_assert(0 == (OMPI_DATATYPE_FLAG_ALL & CONVERTOR_DATATYPE_MASK),
+               "OMPI datatype flags must live above bit 15 so they never reach the 16-bit element "
+               "flag field nor get copied into a convertor");
+_Static_assert(0 == (OMPI_DATATYPE_FLAG_ALL
+                     & (OPAL_DATATYPE_OPTIMIZED_RESTRICTED | OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE)),
+               "OMPI datatype flags must not overlap the OPAL datatype-level shape hints");
 
 #define OMPI_DATATYPE_MAX_PREDEFINED 53
 
@@ -120,6 +151,7 @@ typedef struct ompi_predefined_datatype_t ompi_predefined_datatype_t;
 OMPI_DECLSPEC extern opal_convertor_t* ompi_mpi_external32_convertor;
 OMPI_DECLSPEC extern opal_convertor_t* ompi_mpi_local_convertor;
 extern struct opal_pointer_array_t ompi_datatype_f_to_c_table;
+OMPI_DECLSPEC extern int ompi_datatype_consolidate_threshold;
 
 OMPI_DECLSPEC int32_t ompi_datatype_init( void );
 
@@ -193,6 +225,15 @@ OMPI_DECLSPEC int32_t
 ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 
 OMPI_DECLSPEC int32_t ompi_datatype_create_contiguous( size_t count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
+/*
+ * Return the datatype pack/unpack should use for (count, oldType).  The
+ * function either returns oldType unchanged, or creates a temporary datatype
+ * that represents contiguous(count, oldType) with a cheaper optimized
+ * description.  The caller owns *newType only when it differs from oldType.
+ */
+OMPI_DECLSPEC int32_t ompi_datatype_consolidate_create(MPI_Count count,
+                                                       const ompi_datatype_t *oldType,
+                                                       ompi_datatype_t **newType);
 OMPI_DECLSPEC int32_t ompi_datatype_create_vector( size_t count, size_t bLength, ptrdiff_t stride,
                                                    const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_hvector( size_t count, size_t bLength, ptrdiff_t stride,
@@ -299,7 +340,7 @@ ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
     return 0;
 }
 
-OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( size_t size, uint16_t datakind, uint16_t datalang );
+OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( size_t size, uint32_t datakind, uint32_t datalang );
 
 /*
  *
@@ -426,95 +467,6 @@ OMPI_DECLSPEC int ompi_datatype_get_value_index(const ompi_datatype_t *value_typ
             OBJ_RELEASE_NO_NULLIFY((ddt));                              \
         }                                                               \
     }
-
-/*
- * Sometimes it's faster to operate on a (count,datatype) pair if it's
- * converted to (1,larger_datatype).  This comes up in pack/unpack if
- * the datatype is [int4b,empty4b] for example.  With that datatype the
- * (count,datatype) path has to loop over the count processing each
- * occurrence of the datatype, but a larger type created via
- * MPI_Type_contiguous(count,datatype,) will have a single description
- * entry describing the whole vector and go through pack/unpack much
- * faster.
- *
- * These functions convert an incoming (count,dt) if the performance
- * is potentially better.
- *
- * Note this function is only likely to be useful if the (count,datatype)
- * describes a simple evenly spaced vector that will boil down to a
- * single description element, but I don't think it's cheap to traverse
- * the incoming datatype to check if that will be the case.  Eg I'm not
- * sure it would be cheap enough to check that
- *   [int,int,space,int,int,space]  is going to convert nicely, vs
- *   [int,int,space,int,space]      which isn't.
- * So the only checks performed are that the (count,datatype) isn't
- * contiguous, and that the count is large enough to justify the
- * overhead of making a new datatype.
- */
-typedef struct {
-    MPI_Datatype dt;
-    MPI_Count count;
-    int new_type_was_created;
-} ompi_datatype_consolidate_t;
-
-static inline int
-ompi_datatype_consolidate_create(
-    MPI_Count count, MPI_Datatype dtype, ompi_datatype_consolidate_t *dtmod,
-    int threshold)
-{
-    int rc;
-    size_t dtsize;
-    MPI_Aint lb, extent;
-
-    /* default (do nothing) unless we decide otherwise below */
-    dtmod->dt = dtype;
-    dtmod->count = count;
-    dtmod->new_type_was_created = 0;
-
-    if (count >= threshold) {
-        opal_datatype_type_size ( &dtype->super, &dtsize);
-        rc = ompi_datatype_get_extent( dtype, &lb, &extent );
-        if (rc != OMPI_SUCCESS) { return rc; }
-        if ((dtype->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) &&
-            (MPI_Aint)dtsize == extent)
-        {
-            /* contig, no performance advantage to making a new type */
-        } else {
-            rc = ompi_datatype_create_contiguous( count, dtype, &dtmod->dt );
-            if (rc != OMPI_SUCCESS) { return rc; }
-            ompi_datatype_commit(&dtmod->dt);
-            dtmod->count = 1;
-            dtmod->new_type_was_created = 1;
-        }
-    }
-    return OMPI_SUCCESS;
-}
-static inline int
-ompi_datatype_consolidate_free(ompi_datatype_consolidate_t *dtmod)
-{
-    int rc = OMPI_SUCCESS;
-    if (dtmod->new_type_was_created) {
-        rc = ompi_datatype_destroy( &dtmod->dt );
-        /* caller isn't supposed to free twice, but safety valve if they do: */
-        dtmod->new_type_was_created = 0;
-    }
-    return rc;
-}
-/*
- *  The magic number below just came from empirical testing on a couple
- *  local PPC machines using [int,space] as the datatype.  There's some
- *  overhead in constructing a new datatype, so just walking a sequence of
- *  description elements is better for a short list of elements vs
- *  creating a potentially shorter list and hoping the vector-walking
- *  of the new elements is faster.  This could maybe be tuned dynamically
- *  but it doesn't really seem worth it.
- *
- *  I only tested on two machines, the crossover point for pack and unpack
- *  were 80 and 62 on one machine, and 250 and 220 on the other.  So I lean
- *  toward using 250 for both and assuming that's likely to not waste too
- *  much overhead on the datatype creation for most cases.
- */
-#define OMPI_DATATYPE_CONSOLIDATE_THRESHOLD 250
 
 END_C_DECLS
 #endif  /* OMPI_DATATYPE_H_HAS_BEEN_INCLUDED */

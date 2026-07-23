@@ -71,188 +71,234 @@
  *   better over the current implementation.
  */
 
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_ONE(stride, blocklen) \
-    {                                                                \
-        for (; i; i--) {                                             \
-            *_dest = *_src;                                          \
-            _src += stride;                                          \
-            _dest += blocklen;                                       \
-        }                                                            \
-    }
+/*
+ * The unrolled BLOCKLEN_ONE..EIGHT handlers below (and the blocklen 1..8
+ * dispatch in the UNCHECKED movers) hand-code the inline copy region.  Keep
+ * that in lock-step with the named constant so callers that branch on it (for
+ * example an upper-layer consolidation mask) stay correct: if the inline region
+ * ever grows, this assertion fires until the handlers follow.
+ */
+_Static_assert(OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN == 8,
+               "inline pack/unpack handlers cover blocklen 1..8; update them and this "
+               "assertion together with OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN");
 
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_TWO(stride, blocklen) \
-    {                                                                \
-        for (; i > 1; i -= 2) {                                      \
-            _dest[0] = _src[0];                                      \
-            _dest[1] = _src[1];                                      \
-            _src += stride;                                          \
-            _dest += blocklen;                                       \
-        }                                                            \
-    }
-
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_THREE(stride, blocklen) \
-    {                                                                  \
-        for (; i > 2; i -= 3) {                                        \
-            _dest[0] = _src[0];                                        \
-            _dest[1] = _src[1];                                        \
-            _dest[2] = _src[2];                                        \
-            _src += stride;                                            \
-            _dest += blocklen;                                         \
-        }                                                              \
-    }
-
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FOUR(stride, blocklen) \
+/*
+ * The unrolled copy bodies below take the source/destination advance as statements (ADV_SRC,
+ * ADV_DEST) rather than a fixed stride, so a single set of bodies serves both the aligned
+ * fast path (element-unit advance -> scaled-index addressing) and the rare sub-multiple-extent
+ * path (byte-exact advance).  _src, _dest and the loop counter i come from the enclosing mover.
+ */
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_ONE(ADV_SRC, ADV_DEST) \
     {                                                                 \
-        for (; i > 3; i -= 4) {                                       \
-            _dest[0] = _src[0];                                       \
-            _dest[1] = _src[1];                                       \
-            _dest[2] = _src[2];                                       \
-            _dest[3] = _src[3];                                       \
-            _src += stride;                                           \
-            _dest += blocklen;                                        \
+        for (; i; i--) {                                              \
+            *_dest = *_src;                                           \
+            ADV_SRC;                                                  \
+            ADV_DEST;                                                 \
         }                                                             \
     }
 
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FIVE(stride, blocklen) \
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_TWO(ADV_SRC, ADV_DEST) \
     {                                                                 \
-        for (; i > 4; i -= 5) {                                       \
+        for (; i > 1; i -= 2) {                                       \
+            _dest[0] = _src[0];                                       \
+            _dest[1] = _src[1];                                       \
+            ADV_SRC;                                                  \
+            ADV_DEST;                                                 \
+        }                                                             \
+    }
+
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_THREE(ADV_SRC, ADV_DEST) \
+    {                                                                   \
+        for (; i > 2; i -= 3) {                                         \
+            _dest[0] = _src[0];                                         \
+            _dest[1] = _src[1];                                         \
+            _dest[2] = _src[2];                                         \
+            ADV_SRC;                                                    \
+            ADV_DEST;                                                   \
+        }                                                               \
+    }
+
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FOUR(ADV_SRC, ADV_DEST) \
+    {                                                                  \
+        for (; i > 3; i -= 4) {                                        \
+            _dest[0] = _src[0];                                        \
+            _dest[1] = _src[1];                                        \
+            _dest[2] = _src[2];                                        \
+            _dest[3] = _src[3];                                        \
+            ADV_SRC;                                                   \
+            ADV_DEST;                                                  \
+        }                                                              \
+    }
+
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FIVE(ADV_SRC, ADV_DEST) \
+    {                                                                  \
+        for (; i > 4; i -= 5) {                                        \
+            _dest[0] = _src[0];                                        \
+            _dest[1] = _src[1];                                        \
+            _dest[2] = _src[2];                                        \
+            _dest[3] = _src[3];                                        \
+            _dest[4] = _src[4];                                        \
+            ADV_SRC;                                                   \
+            ADV_DEST;                                                  \
+        }                                                              \
+    }
+
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SIX(ADV_SRC, ADV_DEST) \
+    {                                                                 \
+        for (; i > 5; i -= 6) {                                       \
             _dest[0] = _src[0];                                       \
             _dest[1] = _src[1];                                       \
             _dest[2] = _src[2];                                       \
             _dest[3] = _src[3];                                       \
             _dest[4] = _src[4];                                       \
-            _src += stride;                                           \
-            _dest += blocklen;                                        \
+            _dest[5] = _src[5];                                       \
+            ADV_SRC;                                                  \
+            ADV_DEST;                                                 \
         }                                                             \
     }
 
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SIX(stride, blocklen) \
-    {                                                                \
-        for (; i > 5; i -= 6) {                                      \
-            _dest[0] = _src[0];                                      \
-            _dest[1] = _src[1];                                      \
-            _dest[2] = _src[2];                                      \
-            _dest[3] = _src[3];                                      \
-            _dest[4] = _src[4];                                      \
-            _dest[5] = _src[5];                                      \
-            _src += stride;                                          \
-            _dest += blocklen;                                       \
-        }                                                            \
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SEVEN(ADV_SRC, ADV_DEST) \
+    {                                                                   \
+        for (; i > 6; i -= 7) {                                         \
+            _dest[0] = _src[0];                                         \
+            _dest[1] = _src[1];                                         \
+            _dest[2] = _src[2];                                         \
+            _dest[3] = _src[3];                                         \
+            _dest[4] = _src[4];                                         \
+            _dest[5] = _src[5];                                         \
+            _dest[6] = _src[6];                                         \
+            ADV_SRC;                                                    \
+            ADV_DEST;                                                   \
+        }                                                               \
     }
 
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SEVEN(stride, blocklen) \
-    {                                                                  \
-        for (; i > 6; i -= 7) {                                        \
-            _dest[0] = _src[0];                                        \
-            _dest[1] = _src[1];                                        \
-            _dest[2] = _src[2];                                        \
-            _dest[3] = _src[3];                                        \
-            _dest[4] = _src[4];                                        \
-            _dest[5] = _src[5];                                        \
-            _dest[6] = _src[6];                                        \
-            _src += stride;                                            \
-            _dest += blocklen;                                         \
-        }                                                              \
-    }
-
-#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_EIGHT(stride, blocklen) \
-    {                                                                  \
-        for (; i > 7; i -= 8) {                                        \
-            _dest[0] = _src[0];                                        \
-            _dest[1] = _src[1];                                        \
-            _dest[2] = _src[2];                                        \
-            _dest[3] = _src[3];                                        \
-            _dest[4] = _src[4];                                        \
-            _dest[5] = _src[5];                                        \
-            _dest[6] = _src[6];                                        \
-            _dest[7] = _src[7];                                        \
-            _src += stride;                                            \
-            _dest += blocklen;                                         \
-        }                                                              \
+#define OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_EIGHT(ADV_SRC, ADV_DEST) \
+    {                                                                   \
+        for (; i > 7; i -= 8) {                                         \
+            _dest[0] = _src[0];                                         \
+            _dest[1] = _src[1];                                         \
+            _dest[2] = _src[2];                                         \
+            _dest[3] = _src[3];                                         \
+            _dest[4] = _src[4];                                         \
+            _dest[5] = _src[5];                                         \
+            _dest[6] = _src[6];                                         \
+            _dest[7] = _src[7];                                         \
+            ADV_SRC;                                                    \
+            ADV_DEST;                                                   \
+        }                                                               \
     }
 
 #define OPAL_DATATYPE_PACK_PREDEFINED_RESIDUAL_DATA() \
     {                                                 \
-        if (i != 0) {                                 \
-            for (; i > 0; i--) {                      \
-                *_dest++ = *_src++;                   \
-            }                                         \
+        for (; i > 0; i--) {                          \
+            *_dest++ = *_src++;                       \
         }                                             \
     }
 
-#define OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT(src_base, dest_base, count, blocklen, type, align)  \
-    {                                                                                             \
-        register unsigned long i = count;                                                         \
-        if (((uintptr_t) src_base)  % (align) ||                                                  \
-            ((uintptr_t) dest_base) % (align) ||                                                  \
-            (elem->extent % (align) && cando_count > blocklen)) {                                 \
-            return OPAL_ERROR;                                                                    \
-        }                                                                                         \
-        type *_src = (type *) src_base;                                                           \
-        type *_dest = (type *) dest_base;                                                         \
-        size_t stride = elem->extent / sizeof(type);                                              \
-        if (blocklen == 1) {                                                                      \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_ONE(stride, blocklen);                         \
-        } else if (blocklen == 2) {                                                               \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_TWO(stride, blocklen);                         \
-        } else if (blocklen == 3) {                                                               \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_THREE(stride, blocklen);                       \
-        } else if (blocklen == 4) {                                                               \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FOUR(stride, blocklen);                        \
-        } else if (blocklen == 5) {                                                               \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FIVE(stride, blocklen);                        \
-        } else if (blocklen == 6) {                                                               \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SIX(stride, blocklen);                         \
-        } else if (blocklen == 7) {                                                               \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SEVEN(stride, blocklen);                       \
-        } else if (blocklen == 8) {                                                               \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_EIGHT(stride, blocklen);                       \
-        }                                                                                         \
-        OPAL_DATATYPE_PACK_PREDEFINED_RESIDUAL_DATA()                                             \
-        src_base = (unsigned char *) _src;                                                        \
-        dest_base = (unsigned char *) _dest;                                                      \
+/*
+ * Dispatch the blocklen 1..8 unrolled bodies with a caller-supplied advance. ADV_SRC/ADV_DEST are
+ * statements evaluated at the end of every block iteration; the enclosing mover selects element-
+ * unit or byte-exact advance for the source and destination as appropriate.
+ */
+#define OPAL_DATATYPE_PREDEFINED_BLOCKLEN_DISPATCH(ADV_SRC, ADV_DEST)      \
+    if (1 == blocklen) {                                                  \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_ONE(ADV_SRC, ADV_DEST);    \
+    } else if (2 == blocklen) {                                          \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_TWO(ADV_SRC, ADV_DEST);    \
+    } else if (3 == blocklen) {                                          \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_THREE(ADV_SRC, ADV_DEST);  \
+    } else if (4 == blocklen) {                                          \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FOUR(ADV_SRC, ADV_DEST);   \
+    } else if (5 == blocklen) {                                          \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FIVE(ADV_SRC, ADV_DEST);   \
+    } else if (6 == blocklen) {                                          \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SIX(ADV_SRC, ADV_DEST);    \
+    } else if (7 == blocklen) {                                          \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SEVEN(ADV_SRC, ADV_DEST);  \
+    } else if (8 == blocklen) {                                          \
+        OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_EIGHT(ADV_SRC, ADV_DEST);  \
     }
 
-#define OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT(src_base, dest_base, count, blocklen,         \
-                                                type, align)                                  \
-    {                                                                                         \
-        if (((uintptr_t) src_base)  % (align)  ||                                             \
-            ((uintptr_t) dest_base) % (align) ||                                              \
-            (elem->extent % (align) && cando_count > blocklen)) {                             \
-            return OPAL_ERROR;                                                                \
-        }                                                                                     \
-        type *_src = (type *) src_base;                                                       \
-        type *_dest = (type *) dest_base;                                                     \
-        /* elem's extent but in terms of count rather than bytes */                           \
-        size_t stride = elem->extent / sizeof(type);                                          \
-        register unsigned long i = count;                                                     \
-        /* (reversing the meanings of blocklen and stride and using the "PACK" macro) */      \
-        if (blocklen == 1) {                                                                  \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_ONE(blocklen, stride);                     \
-        } else if (blocklen == 2) {                                                           \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_TWO(blocklen, stride);                     \
-        } else if (blocklen == 3) {                                                           \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_THREE(blocklen, stride);                   \
-        } else if (blocklen == 4) {                                                           \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FOUR(blocklen, stride);                    \
-        } else if (blocklen == 5) {                                                           \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_FIVE(blocklen, stride);                    \
-        } else if (blocklen == 6) {                                                           \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SIX(blocklen, stride);                     \
-        } else if (blocklen == 7) {                                                           \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_SEVEN(blocklen, stride);                   \
-        } else if (blocklen == 8) {                                                           \
-            OPAL_DATATYPE_PACK_PREDEFINED_BLOCKLEN_EIGHT(blocklen, stride);                   \
-        }                                                                                     \
-        OPAL_DATATYPE_PACK_PREDEFINED_RESIDUAL_DATA()                                         \
-        src_base = (unsigned char *) _src;                                                    \
-        dest_base = (unsigned char *) _dest;                                                  \
+#define OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT_UNCHECKED(src_base, dest_base, count, blocklen, type) \
+    {                                                                                               \
+        register size_t i = count;                                                                  \
+        type *_src = (type *) src_base;                                                             \
+        type *_dest = (type *) dest_base;                                                           \
+        if (0 == (elem->extent % (ptrdiff_t) sizeof(type))) {                                       \
+            /* Common case: the gappy source extent is a whole number of elements, so advance in    \
+             * element units.  This keeps the stride in a scaled-index addressing mode instead of   \
+             * a serialized byte pointer recompute, which matters a lot on x86.  The packed          \
+             * destination is contiguous, hence a stride of blocklen elements. */                   \
+            const ptrdiff_t src_stride = elem->extent / (ptrdiff_t) sizeof(type);                   \
+            OPAL_DATATYPE_PREDEFINED_BLOCKLEN_DISPATCH(_src += src_stride,                          \
+                                                       _dest += (ptrdiff_t) (blocklen));           \
+        } else {                                                                                    \
+            /* Rare: the extent is not a whole number of elements (only sub-size-aligned complex    \
+             * types reach here with a multi-block count).  Advance the source byte-wise so a        \
+             * non-multiple extent is never truncated by an element-unit stride; the unrolled        \
+             * bodies are still used for the copy. */                                               \
+            const ptrdiff_t src_stride = elem->extent;                                               \
+            OPAL_DATATYPE_PREDEFINED_BLOCKLEN_DISPATCH(                                             \
+                _src = (type *) ((unsigned char *) _src + src_stride),                             \
+                _dest += (ptrdiff_t) (blocklen));                                                   \
+        }                                                                                           \
+        OPAL_DATATYPE_PACK_PREDEFINED_RESIDUAL_DATA()                                               \
+        src_base = (unsigned char *) _src;                                                          \
+        dest_base = (unsigned char *) _dest;                                                        \
     }
 
-static inline int opal_datatype_unpack_predefined_element(unsigned char **rtn_src,
-                                                          unsigned char **rtn_dest,
-                                                          size_t cando_count,
-                                                          const ddt_elem_desc_t *elem)
+/*
+ * Validate the alignment needed for typed accesses before entering the shared mover. Callers that
+ * already performed these checks may use OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT_UNCHECKED directly.
+ */
+#define OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT(src_base, dest_base, count, blocklen, type, align) \
+    {                                                                                            \
+        if (((uintptr_t) src_base) % (align) || ((uintptr_t) dest_base) % (align)                \
+            || (elem->extent % (align) && cando_count > blocklen)) {                             \
+            return OPAL_ERROR;                                                                   \
+        }                                                                                        \
+        OPAL_DATATYPE_PACK_PREDEFINED_ELEMENT_UNCHECKED(src_base, dest_base, count, blocklen,    \
+                                                         type);                                  \
+    }
+
+#define OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT_UNCHECKED(src_base, dest_base, count, blocklen, type) \
+    {                                                                                                 \
+        type *_src = (type *) src_base;                                                               \
+        type *_dest = (type *) dest_base;                                                             \
+        register size_t i = count;                                                                    \
+        if (0 == (elem->extent % (ptrdiff_t) sizeof(type))) {                                         \
+            /* Mirror of pack: the packed source is contiguous and the destination strides by a      \
+             * whole number of elements, so advance in element units for scaled-index addressing. */ \
+            const ptrdiff_t dest_stride = elem->extent / (ptrdiff_t) sizeof(type);                    \
+            OPAL_DATATYPE_PREDEFINED_BLOCKLEN_DISPATCH(_src += (ptrdiff_t) (blocklen),               \
+                                                       _dest += dest_stride);                        \
+        } else {                                                                                      \
+            /* Rare: the destination extent is not a whole number of elements (only sub-size-aligned \
+             * complex types).  Advance the destination byte-wise so a non-multiple extent is         \
+             * honored exactly; the unrolled bodies are still used for the copy. */                  \
+            const ptrdiff_t dest_stride = elem->extent;                                               \
+            OPAL_DATATYPE_PREDEFINED_BLOCKLEN_DISPATCH(                                              \
+                _src += (ptrdiff_t) (blocklen),                                                       \
+                _dest = (type *) ((unsigned char *) _dest + dest_stride));                          \
+        }                                                                                             \
+        OPAL_DATATYPE_PACK_PREDEFINED_RESIDUAL_DATA()                                                 \
+        src_base = (unsigned char *) _src;                                                            \
+        dest_base = (unsigned char *) _dest;                                                          \
+    }
+
+/* Validate typed-access alignment before entering the unchecked unpack mover. */
+#define OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT(src_base, dest_base, count, blocklen, type, align)      \
+    {                                                                                                   \
+        if (((uintptr_t) src_base) % (align) || ((uintptr_t) dest_base) % (align)                       \
+            || (elem->extent % (align) && cando_count > blocklen)) {                                    \
+            return OPAL_ERROR;                                                                          \
+        }                                                                                               \
+        OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT_UNCHECKED(src_base, dest_base, count, blocklen, type);  \
+    }
+
+__opal_attribute_always_inline__ static inline int
+opal_datatype_unpack_predefined_element(unsigned char **rtn_src, unsigned char **rtn_dest,
+                                        size_t cando_count, const ddt_elem_desc_t *elem)
 {
     size_t blocklen;
     int id;
@@ -378,10 +424,9 @@ static inline int opal_datatype_unpack_predefined_element(unsigned char **rtn_sr
     return OPAL_SUCCESS;
 }
 
-static inline int opal_datatype_pack_predefined_element(unsigned char **rtn_src,
-                                                        unsigned char **rtn_dest,
-                                                        size_t cando_count,
-                                                        const ddt_elem_desc_t *elem)
+__opal_attribute_always_inline__ static inline int
+opal_datatype_pack_predefined_element(unsigned char **rtn_src, unsigned char **rtn_dest,
+                                      size_t cando_count, const ddt_elem_desc_t *elem)
 {
     size_t blocklen;
     int id;

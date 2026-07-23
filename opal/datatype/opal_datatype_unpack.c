@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -45,19 +45,9 @@
 #    define DO_DEBUG(INST)
 #endif /* OPAL_ENABLE_DEBUG */
 
-#include "opal/datatype/opal_datatype_checksum.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
 #include "opal/datatype/opal_datatype_unpack.h"
-
-#if defined(CHECKSUM)
-#    define opal_unpack_general_function            opal_unpack_general_checksum
-#    define opal_unpack_homogeneous_contig_function opal_unpack_homogeneous_contig_checksum
-#    define opal_generic_simple_unpack_function     opal_generic_simple_unpack_checksum
-#else
-#    define opal_unpack_general_function            opal_unpack_general
-#    define opal_unpack_homogeneous_contig_function opal_unpack_homogeneous_contig
-#    define opal_generic_simple_unpack_function     opal_generic_simple_unpack
-#endif /* defined(CHECKSUM) */
 
 /**
  * This function will be used to unpack all datatypes that have the contiguous flag set.
@@ -68,8 +58,8 @@
  * taken in account directly in the opal_convertor_unpack function (in convertor.c) for
  * the homogeneous case.
  */
-int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct iovec *iov,
-                                                uint32_t *out_size, size_t *max_data)
+int32_t opal_unpack_homogeneous_contig(opal_convertor_t *pConv, struct iovec *iov,
+                                       uint32_t *out_size, size_t *max_data)
 {
     const opal_datatype_t *pData = pConv->pDesc;
     unsigned char *user_memory, *packed_buffer;
@@ -81,6 +71,15 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
 
     DO_DEBUG(opal_output(0, "unpack_homogeneous_contig( pBaseBuf %p, iov count %d )\n",
                          (void *) pConv->pBaseBuf, *out_size););
+
+    /*
+     * Raw byte copier; the incoming stream is consumed at arbitrary byte boundaries. That is only
+     * valid when the convertor is safe to split (homogeneous or same-size byte-swap). A size-changing
+     * conversion must unpack through opal_unpack_general. See CONVERTOR_UNSAFE_SPLIT and the matching
+     * assert in opal_unpack_partial_predefined.
+     */
+    assert(!(pConv->flags & CONVERTOR_UNSAFE_SPLIT));
+
     if (stack[1].type != opal_datatype_uint1.id) {
         stack[1].count *= opal_datatype_basicDatatypes[stack[1].type]->size;
         stack[1].type = opal_datatype_uint1.id;
@@ -105,7 +104,7 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
             DO_DEBUG(opal_output(0, "unpack contig [%d] dest %p src %p length %" PRIsize_t "\n",
                                  iov_idx, (void *) user_memory, (void *) packed_buffer,
                                  remaining););
-            MEMCPY_CSUM(user_memory, packed_buffer, remaining, pConv);
+            pConv->cbmemcpy(user_memory, packed_buffer, remaining, pConv);
             pConv->bConverted += remaining; /* how much will get unpacked this time */
         }
     } else {
@@ -129,7 +128,7 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
                                      "unpack gaps [%d] dest %p src %p length %" PRIsize_t " [%d]\n",
                                      iov_idx, (void *) user_memory, (void *) packed_buffer,
                                      stack[1].count, i););
-                MEMCPY_CSUM(user_memory, packed_buffer, stack[1].count, pConv);
+                pConv->cbmemcpy(user_memory, packed_buffer, stack[1].count, pConv);
 
                 packed_buffer += stack[1].count;
                 remaining -= stack[1].count;
@@ -150,7 +149,7 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
                     opal_output(0,
                                 "unpack gaps [%d] dest %p src %p length %" PRIsize_t " [epilog]\n",
                                 iov_idx, (void *) user_memory, (void *) packed_buffer, remaining););
-                MEMCPY_CSUM(user_memory, packed_buffer, remaining, pConv);
+                pConv->cbmemcpy(user_memory, packed_buffer, remaining, pConv);
                 stack[1].count -= remaining;
                 stack[1].disp += remaining; /* keep the += in case we are copying less that the
                                                datatype size */
@@ -166,213 +165,119 @@ int32_t opal_unpack_homogeneous_contig_function(opal_convertor_t *pConv, struct 
     return !!(pConv->flags & CONVERTOR_COMPLETED); /* done or not */
 }
 
-/**
- * This function handle partial types. Depending on the send operation it might happens
- * that we receive only a partial type (always predefined type). In fact the outcome is
- * that the unpack has to be done in 2 steps. As there is no way to know if the other
- * part of the datatype is already received, we need to use a trick to handle this special
- * case. The trick is to fill the missing part with some well known value, unpack the data
- * as if it was completely received, and then move into the user memory only the bytes
- * that don't match the well known value. This approach work as long as there is no need
- * for more than structural changes. They will not work for cases where we will have to
- * change the content of the data (as in all conversions that require changing the size
- * of the exponent or mantissa).
- */
-static inline void
-opal_unpack_partial_predefined(opal_convertor_t *pConvertor, const dt_elem_desc_t *pElem,
-                               size_t *COUNT, unsigned char **packed,
-                               unsigned char **memory, size_t *SPACE)
-{
-    char unused_byte = 0x7F, saved_data[16];
-    unsigned char temporary[16], *temporary_buffer = temporary;
-    unsigned char *user_data = *memory + pElem->elem.disp;
-    size_t data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
-    unsigned char *partial_data = *packed;
-    ptrdiff_t start_position = pConvertor->partial_length;
-    size_t length = data_length - start_position;
-    size_t count_desc = 1;
-    dt_elem_desc_t single_elem = { .elem = { .common = pElem->elem.common, .count = 1, .blocklen = 1,
-                                   .extent = data_length,  /* advance by a full data element */
-                                   .disp = 0  /* right where the pointer is */ } };
-    if( *SPACE < length ) {
-        length = *SPACE;
-    }
-
-    DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
-                           "\tbConverted %lu total_length %lu count %ld\n",
-                           (unsigned long)start_position, (unsigned long)start_position + length,
-                           (unsigned long)data_length, (void*)*memory,
-                           (unsigned long)pConvertor->bConverted,
-                           (unsigned long)pConvertor->local_size, pConvertor->count ); );
-    COMPUTE_CSUM( partial_data, length, pConvertor );
-
-    /* Find a byte value that is not used in the partial buffer. We use it as a marker
-     * to identify what has not been modified by the unpack call. */
- find_unused_byte:
-    for (size_t i = 0; i < length; i++ ) {
-        if( unused_byte == partial_data[i] ) {
-            unused_byte--;
-            goto find_unused_byte;
-        }
-    }
-
-    /* Prepare an full element of the predefined type, by populating an entire type
-     * with the unused byte and then put the partial data at the right position. */
-    memset( temporary, unused_byte, data_length );
-    MEMCPY( temporary + start_position, partial_data, length );
-
-    /* Save the original content of the user memory */
-    /* In the case where the data is being unpacked from device memory, need to
-     * use the special host to device memory copy. */
-    pConvertor->cbmemcpy(saved_data, user_data, data_length, pConvertor );
-
-    /* Then unpack the data into the user memory */
-    UNPACK_PREDEFINED_DATATYPE(pConvertor, &single_elem, count_desc, temporary_buffer, user_data,
-                               data_length);
-
-    /* reload the length and user buffer as they have been updated by the macro */
-    data_length = opal_datatype_basicDatatypes[pElem->elem.common.type]->size;
-    user_data = *memory + pElem->elem.disp;
-
-    /* Rebuild the data by pulling back the unmodified bytes from the original
-     * content in the user memory. */
-    /* Need to copy the modified user_data again so we can see which
-     * bytes need to be converted back to their original values. */
-    if (0 != strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
-        char resaved_data[16];
-        pConvertor->cbmemcpy(resaved_data, user_data, data_length, pConvertor);
-        for (size_t i = 0; i < data_length; i++) {
-            if (unused_byte == resaved_data[i])
-                pConvertor->cbmemcpy(&user_data[i], &saved_data[i], 1, pConvertor);
-        }
-    } else {
-        for (size_t i = 0; i < data_length; i++) {
-            if (unused_byte == user_data[i]) {
-                user_data[i] = saved_data[i];
-            }
-        }
-    }
-
-    pConvertor->partial_length = (pConvertor->partial_length + length) % data_length;
-    *SPACE  -= length;
-    *packed += length;
-    if (0 == pConvertor->partial_length) {
-        (*COUNT)--;  /* we have enough to complete one full predefined type */
-        *memory += data_length;
-        if (0 == (*COUNT % pElem->elem.blocklen)) {
-            *memory += pElem->elem.extent - (pElem->elem.blocklen * data_length);
-        }
-    }
-}
-
-/* The pack/unpack functions need a cleanup. I have to create a proper interface to access
- * all basic functionalities, hence using them as basic blocks for all conversion functions.
+/*
+ * Production homogeneous unpack interpreter using in-function typed movers: the default unpack
+ * fAdvance for non-contiguous derived datatypes.
  *
- * But first let's make some global assumptions:
- * - a datatype (with the flag DT_DATA set) will have the contiguous flags set if and only if
- *   the data is really contiguous (extent equal with size)
- * - for the OPAL_DATATYPE_LOOP type the DT_CONTIGUOUS flag set means that the content of the loop
- * is contiguous but with a gap in the beginning or at the end.
- * - the DT_CONTIGUOUS flag for the type OPAL_DATATYPE_END_LOOP is meaningless.
+ * Complete DATA entries jump to a mover specialized for their predefined C type, and consecutive
+ * entries of the same type remain in that mover. Partial predefined elements, descriptor loops,
+ * stack state, and fragmented iovecs use the shared handlers. The medium-block byte limit is
+ * deliberately unpack-specific because unpack scatters into datatype memory instead of gathering
+ * from it.
  */
-int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct iovec *iov,
-                                            uint32_t *out_size, size_t *max_data)
+int32_t opal_generic_inlined_unpack(opal_convertor_t *pConvertor, struct iovec *iov,
+                                    uint32_t *out_size, size_t *max_data)
 {
-    dt_stack_t *pStack;        /* pointer to the position on the stack */
-    uint32_t pos_desc;         /* actual position in the description of the derived datatype */
-    size_t count_desc;         /* the number of items already done in the actual pos_desc */
-    size_t total_unpacked = 0; /* total size unpacked this time */
+    dt_stack_t *pStack;
+    uint32_t pos_desc;
+    size_t count_desc;
+    size_t total_unpacked = 0;
     dt_elem_desc_t *description;
     dt_elem_desc_t *pElem;
     const opal_datatype_t *pData = pConvertor->pDesc;
     unsigned char *conv_ptr, *iov_ptr;
     size_t iov_len_local;
+    ptrdiff_t local_disp;
     uint32_t iov_count;
 
-    DO_DEBUG( opal_output( 0, "opal_convertor_generic_simple_unpack( %p, iov[%u] = {%p, %lu} )\n",
-                           (void*)pConvertor, *out_size, (void*)iov[0].iov_base, (unsigned long)iov[0].iov_len ); );
+    DO_DEBUG(opal_output(0, "opal_convertor_generic_inlined_unpack( %p, iov[%u] = {%p, %lu} )\n",
+                         (void *) pConvertor, *out_size, (void *) iov[0].iov_base,
+                         (unsigned long) iov[0].iov_len););
+
+    /*
+     * The inlined homogeneous mover can consume the incoming stream mid predefined element at a
+     * fragment boundary, so it is only valid for a convertor that is safe to split. A size-changing
+     * conversion must go through opal_unpack_general instead. See CONVERTOR_UNSAFE_SPLIT.
+     */
+    assert(!(pConvertor->flags & CONVERTOR_UNSAFE_SPLIT));
 
     description = pConvertor->use_desc->desc;
 
-    /* For the first step we have to add both displacement to the source. After in the
-     * main while loop we will set back the source_base to the correct value. This is
-     * due to the fact that the convertor can stop in the middle of a data with a count
-     */
+    /* Restore the exact DATA-entry position because conversion can stop within an entry. */
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc = pStack->index;
     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
     count_desc = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
-    pElem = &(description[pos_desc]);
+    pElem = &description[pos_desc];
 
     DO_DEBUG(opal_output(0,
                          "unpack start pos_desc %d count_desc %" PRIsize_t " disp %ld\n"
                          "stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
                          pos_desc, count_desc, (long) (conv_ptr - pConvertor->pBaseBuf),
                          pConvertor->stack_pos, pStack->index, pStack->count,
-                         (long) (pStack->disp)););
+                         (long) pStack->disp););
 
-    for (iov_count = 0; iov_count < (*out_size); iov_count++) {
+    for (iov_count = 0; iov_count < *out_size; iov_count++) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
 
-        /* Deal with all types of partial predefined datatype unpacking, including when
-         * unpacking a partial predefined element and when unpacking a part smaller than
-         * the blocklen.
-         */
+        /* Finish any predefined element or block that was split by the previous iovec. */
         if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
-            if (0 != pConvertor->partial_length) {  /* partial predefined element */
-                assert( pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA );
-                opal_unpack_partial_predefined( pConvertor, pElem, &count_desc,
-                                                &iov_ptr, &conv_ptr, &iov_len_local );
-                if (0 == count_desc) {  /* the end of the vector ? */
-                    assert( 0 == pConvertor->partial_length );
+            if (0 != pConvertor->partial_length) {
+                opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr, &conv_ptr,
+                                               &iov_len_local);
+                if (0 == count_desc) {
+                    assert(0 == pConvertor->partial_length);
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                    pos_desc++; /* advance to the next data */
-                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                    goto next_vector;
+                    pos_desc++;
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                             process_loop, process_end_loop);
+                    goto process_data;
                 }
-                if( 0 == iov_len_local )
+                if (0 == iov_len_local) {
                     goto complete_loop;
+                }
             }
             if (((size_t) pElem->elem.count * pElem->elem.blocklen) != count_desc) {
-                /* we have a partial (less than blocklen) basic datatype */
                 int rc = UNPACK_PARTIAL_BLOCKLEN(pConvertor, pElem, count_desc, iov_ptr, conv_ptr,
                                                  iov_len_local);
-                if (0 == rc) { /* not done */
+
+                if (0 == rc) {
                     goto complete_loop;
                 }
                 if (0 == count_desc) {
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                    pos_desc++; /* advance to the next data */
-                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+                    pos_desc++;
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                             process_loop, process_end_loop);
+                    goto process_data;
                 }
             }
         }
 
         while (1) {
-          next_vector:
-            while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
-                /* we have a basic datatype (working on full blocks) */
-                UNPACK_PREDEFINED_DATATYPE(pConvertor, pElem, count_desc, iov_ptr, conv_ptr,
-                                           iov_len_local);
-                if (0 != count_desc) { /* completed? */
+            if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+                goto process_data;
+
+            process_data_complete:
+                if (0 != count_desc) {
                     goto complete_loop;
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                pos_desc++; /* advance to the next data */
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
+                pos_desc++;
+                goto process_next_element;
             }
-            if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) { /* end of the current loop */
+            if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) {
+            process_end_loop:
                 DO_DEBUG(opal_output(0,
                                      "unpack end_loop count %" PRIsize_t
-                                     " stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                     " stack_pos %d pos_desc %d disp %ld space %" PRIsize_t "\n",
                                      pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
-                                     (unsigned long) iov_len_local););
-                if (--(pStack->count) == 0) { /* end of loop */
+                                     iov_len_local););
+                if (0 == --pStack->count) {
                     if (0 == pConvertor->stack_pos) {
-                        /* we're done. Force the exit of the main for loop (around iovec) */
                         *out_size = iov_count;
                         goto complete_loop;
                     }
@@ -381,64 +286,70 @@ int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct
                     pos_desc++;
                 } else {
                     pos_desc = pStack->index + 1;
-                    if (pStack->index == -1) {
-                        pStack->disp += (pData->ub - pData->lb);
+                    if (-1 == pStack->index) {
+                        pStack->disp += pData->ub - pData->lb;
                     } else {
                         assert(OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type);
                         pStack->disp += description[pStack->index].loop.extent;
                     }
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
                 DO_DEBUG(opal_output(0,
                                      "unpack new_loop count %" PRIsize_t
-                                     " stack_pos %d pos_desc %d disp %ld space %lu\n",
+                                     " stack_pos %d pos_desc %d disp %ld space %" PRIsize_t "\n",
                                      pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
-                                     (unsigned long) iov_len_local););
+                                     iov_len_local););
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc, process_loop,
+                                         process_end_loop);
+                goto process_data;
             }
             if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
-                ptrdiff_t local_disp = (ptrdiff_t) conv_ptr;
+            process_loop:
+                local_disp = (ptrdiff_t) conv_ptr;
                 if (pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
                     UNPACK_CONTIGUOUS_LOOP(pConvertor, pElem, count_desc, iov_ptr, conv_ptr,
                                            iov_len_local);
-                    if (0 == count_desc) { /* completed */
+                    if (0 == count_desc) {
                         pos_desc += pElem->loop.items + 1;
                         goto update_loop_description;
                     }
-                    /* Save the stack with the correct last_count value. */
                 }
                 local_disp = (ptrdiff_t) conv_ptr - local_disp;
                 PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                            pStack->disp + local_disp);
                 pos_desc++;
-            update_loop_description: /* update the current state */
+            update_loop_description:
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop");
+                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, &description[pos_desc],
+                               "advance loop");
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc, process_loop,
+                                         process_end_loop);
+                goto process_data;
             }
         }
+
     complete_loop:
-        assert( pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED );
-        if( (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) && (0 != iov_len_local) ) {
-            unsigned char* temp = conv_ptr;
-            /* We have some partial data here. Let's copy it into the convertor
-             * and keep it hot until the next round.
-             */
-            assert( iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size );
-            opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr, &temp, &iov_len_local);
+        assert(pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED);
+        if ((pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) && (0 != iov_len_local)) {
+            unsigned char *temporary = conv_ptr;
+
+            /* Keep an incomplete predefined element in the convertor until the next call. */
+            assert(iov_len_local
+                   < opal_datatype_basicDatatypes[pElem->elem.common.type]->size);
+            opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr, &temporary,
+                                           &iov_len_local);
         }
 
-        iov[iov_count].iov_len -= iov_len_local; /* update the amount of valid data */
+        iov[iov_count].iov_len -= iov_len_local;
         total_unpacked += iov[iov_count].iov_len;
     }
     *max_data = total_unpacked;
-    pConvertor->bConverted += total_unpacked; /* update the already converted bytes */
+    pConvertor->bConverted += total_unpacked;
     *out_size = iov_count;
     if (pConvertor->bConverted == pConvertor->local_size) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
-    /* Save the global position for the next round */
     PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, pElem->elem.common.type, count_desc,
                conv_ptr - pConvertor->pBaseBuf);
     DO_DEBUG(opal_output(0,
@@ -447,6 +358,211 @@ int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct
                          pConvertor->stack_pos, pStack->index, pStack->count,
                          (long) pStack->disp););
     return 0;
+
+process_next_element:
+    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc, process_loop,
+                             process_end_loop);
+    goto process_data;
+
+process_data:
+    /* Select a typed mover when entering or resuming a DATA entry. */
+#define OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE(TYPE, ALIGN, NAME, FLAGS) goto unpack_##NAME
+#define OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE(NAME, FLAGS) goto unpack_predefined
+
+    switch (pElem->elem.common.type) {
+    case OPAL_DATATYPE_INT1:
+    case OPAL_DATATYPE_UINT1:
+        OPAL_DATATYPE_HANDLE_UINT1(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                   OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_INT2:
+    case OPAL_DATATYPE_UINT2:
+        OPAL_DATATYPE_HANDLE_UINT2(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                   OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_INT4:
+    case OPAL_DATATYPE_UINT4:
+        OPAL_DATATYPE_HANDLE_UINT4(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                   OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_INT8:
+    case OPAL_DATATYPE_UINT8:
+        OPAL_DATATYPE_HANDLE_UINT8(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                   OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_INT16:
+    case OPAL_DATATYPE_UINT16:
+        OPAL_DATATYPE_HANDLE_UINT16(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                    OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_FLOAT2:
+        OPAL_DATATYPE_HANDLE_FLOAT2(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                    OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_FLOAT4:
+        OPAL_DATATYPE_HANDLE_FLOAT4(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                    OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_FLOAT8:
+        OPAL_DATATYPE_HANDLE_FLOAT8(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                    OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_FLOAT16:
+        OPAL_DATATYPE_HANDLE_FLOAT16(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                     OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_SHORT_FLOAT_COMPLEX:
+        OPAL_DATATYPE_HANDLE_SHORT_FLOAT_COMPLEX(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                                 OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_FLOAT_COMPLEX:
+        OPAL_DATATYPE_HANDLE_FLOAT_COMPLEX(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                           OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_DOUBLE_COMPLEX:
+        OPAL_DATATYPE_HANDLE_DOUBLE_COMPLEX(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                            OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_LONG_DOUBLE_COMPLEX:
+        OPAL_DATATYPE_HANDLE_LONG_DOUBLE_COMPLEX(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                                 OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_BOOL:
+        OPAL_DATATYPE_HANDLE_BOOL(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                  OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_WCHAR:
+        OPAL_DATATYPE_HANDLE_WCHAR(OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE,
+                                   OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE, 0);
+    case OPAL_DATATYPE_FLOAT12:
+    case OPAL_DATATYPE_FLOAT128_COMPLEX:
+    default:
+        goto unpack_predefined;
+    }
+
+#undef OPAL_DATATYPE_UNPACK_DISPATCH_NOT_AVAILABLE
+#undef OPAL_DATATYPE_UNPACK_DISPATCH_AVAILABLE
+
+    /* Generate one typed scatter mover and same-type continuation per available predefined type. */
+#define OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE(TYPE, ALIGN, NAME, ALTERNATE_TYPE)                    \
+    unpack_##NAME : {                                                                             \
+        const ddt_elem_desc_t *elem = &pElem->elem;                                               \
+        size_t blocklen = elem->blocklen;                                                         \
+        size_t cando_count = count_desc;                                                          \
+        unsigned char *src = iov_ptr;                                                             \
+        unsigned char *dest = conv_ptr + elem->disp;                                              \
+        uintptr_t alignment_mask = (uintptr_t) (ALIGN) - 1;                                       \
+        if (cando_count > iov_len_local / sizeof(TYPE)) {                                         \
+            cando_count = iov_len_local / sizeof(TYPE);                                           \
+        }                                                                                         \
+        if ((0 != (((uintptr_t) src | (uintptr_t) dest) & alignment_mask))                        \
+            || ((0 != ((uintptr_t) elem->extent & alignment_mask))                                \
+                && (cando_count > blocklen))) {                                                   \
+            goto unpack_predefined;                                                               \
+        }                                                                                         \
+        if (OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN >= blocklen) {                           \
+            OPAL_DATATYPE_UNPACK_PREDEFINED_ELEMENT_UNCHECKED(src, dest, cando_count, blocklen,   \
+                                                               TYPE);                             \
+        } else {                                                                                  \
+            const size_t block_bytes = blocklen * sizeof(TYPE);                                   \
+            const ptrdiff_t block_gap = elem->extent - (ptrdiff_t) block_bytes;                   \
+            size_t remaining = cando_count;                                                       \
+            if ((opal_datatype_config.unpack.max_vectorized_block_bytes < block_bytes)           \
+                || (cando_count < (blocklen << 1))) {                                             \
+                goto unpack_predefined;                                                           \
+            }                                                                                     \
+            /* Compact medium scatters use the callback in the measured middle-length region.     \
+             * block_gap is signed (a negative-stride element yields a negative gap), so compare  \
+             * it against the threshold as ptrdiff_t rather than letting it wrap to size_t. */    \
+            if ((opal_datatype_config.unpack.always_typed_block_bytes < block_bytes)             \
+                && (block_bytes <= opal_datatype_config.unpack.compact_memcpy_max_bytes)         \
+                && (block_gap < (ptrdiff_t) opal_datatype_config.unpack.min_scatter_gap_bytes)   \
+                && (opal_datatype_config.unpack.small_fragment_bytes < iov_len_local)            \
+                && (iov_len_local < opal_datatype_config.unpack.large_fragment_bytes)) {         \
+                goto unpack_predefined;                                                           \
+            }                                                                                     \
+            TYPE *source = (TYPE *) (void *) src;                                                 \
+            TYPE *destination = (TYPE *) (void *) dest;                                           \
+            while (blocklen <= remaining) {                                                       \
+                OPAL_DATATYPE_SAFEGUARD_POINTER((unsigned char *) destination,                    \
+                                                blocklen * sizeof(TYPE), pConvertor->pBaseBuf,    \
+                                                pConvertor->pDesc, pConvertor->count);            \
+                for (size_t index = 0; index < blocklen; index++) {                               \
+                    destination[index] = source[index];                                           \
+                }                                                                                 \
+                source += blocklen;                                                               \
+                destination = (TYPE *) ((unsigned char *) destination + elem->extent);            \
+                remaining -= blocklen;                                                            \
+            }                                                                                     \
+            if (0 != remaining) {                                                                 \
+                OPAL_DATATYPE_SAFEGUARD_POINTER((unsigned char *) destination,                    \
+                                                remaining * sizeof(TYPE), pConvertor->pBaseBuf,   \
+                                                pConvertor->pDesc, pConvertor->count);            \
+                for (size_t index = 0; index < remaining; index++) {                              \
+                    destination[index] = source[index];                                           \
+                }                                                                                 \
+                source += remaining;                                                              \
+                destination += remaining;                                                         \
+            }                                                                                     \
+            src = (unsigned char *) source;                                                       \
+            dest = (unsigned char *) destination;                                                 \
+        }                                                                                         \
+        count_desc -= cando_count;                                                                \
+        iov_len_local -= cando_count * sizeof(TYPE);                                              \
+        iov_ptr = src;                                                                            \
+        conv_ptr = dest - elem->disp;                                                             \
+        goto unpack_##NAME##_complete;                                                            \
+    }                                                                                             \
+    unpack_##NAME##_complete :                                                                    \
+        if (0 != count_desc) {                                                                    \
+            goto complete_loop;                                                                   \
+        }                                                                                         \
+        conv_ptr = pConvertor->pBaseBuf + pStack->disp;                                           \
+        pos_desc++;                                                                               \
+        /* Fall through to this type's next-element dispatch. */                                  \
+        UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc, process_loop,          \
+                                 process_end_loop);                                               \
+        if ((OPAL_DATATYPE_##NAME == pElem->elem.common.type)                                     \
+            || ((ALTERNATE_TYPE) == pElem->elem.common.type)) {                                   \
+            goto unpack_##NAME;                                                                   \
+        }                                                                                         \
+        goto process_data;
+
+#define OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE(NAME, ALTERNATE_TYPE)
+
+    OPAL_DATATYPE_HANDLE_UINT1(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                               OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE, OPAL_DATATYPE_INT1);
+    OPAL_DATATYPE_HANDLE_UINT2(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                               OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE, OPAL_DATATYPE_INT2);
+    OPAL_DATATYPE_HANDLE_UINT4(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                               OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE, OPAL_DATATYPE_INT4);
+    OPAL_DATATYPE_HANDLE_UINT8(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                               OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE, OPAL_DATATYPE_INT8);
+    OPAL_DATATYPE_HANDLE_UINT16(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE, OPAL_DATATYPE_INT16);
+    OPAL_DATATYPE_HANDLE_FLOAT2(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_FLOAT4(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_FLOAT8(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_FLOAT16(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                 OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                 OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_SHORT_FLOAT_COMPLEX(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                             OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                             OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_FLOAT_COMPLEX(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                       OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                       OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_DOUBLE_COMPLEX(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                        OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                        OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_LONG_DOUBLE_COMPLEX(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                                             OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                                             OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_BOOL(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                              OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                              OPAL_DATATYPE_MAX_PREDEFINED);
+    OPAL_DATATYPE_HANDLE_WCHAR(OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE,
+                               OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE,
+                               OPAL_DATATYPE_MAX_PREDEFINED);
+
+#undef OPAL_DATATYPE_UNPACK_TYPE_NOT_AVAILABLE
+#undef OPAL_DATATYPE_UNPACK_TYPE_AVAILABLE
+
+unpack_predefined:
+    UNPACK_PREDEFINED_DATATYPE(pConvertor, pElem, count_desc, iov_ptr, conv_ptr, iov_len_local);
+    goto process_data_complete;
 }
 
 /*
@@ -461,6 +577,70 @@ int32_t opal_generic_simple_unpack_function(opal_convertor_t *pConvertor, struct
  *        1 if everything went fine and the data was completely converted
  *       -1 something wrong occurs.
  */
+/*
+ * Heterogeneous counterpart of unpack_partial_blocklen(). When a previous fragment stopped in the
+ * middle of a repeated block (a whole number of predefined elements, but not a whole block), the
+ * block movers below cannot resume: they assume entry on a block boundary and would advance the
+ * gappy destination by the full extent from a mid-block position. Convert just the elements left in
+ * the current block (COUNT % blocklen) through the same per-type conversion function used for full
+ * blocks, then skip the inter-block gap once the block is complete, so
+ * unpack_predefined_heterogeneous always sees a block-aligned COUNT. Only whole predefined elements
+ * are moved -- a basic type is never split (that case is handled by opal_unpack_partial_predefined).
+ *
+ * Return 1 if we are now aligned on a block, 0 otherwise.
+ */
+static inline int
+unpack_partial_blocklen_heterogeneous(opal_convertor_t *CONVERTOR,
+                                      const dt_elem_desc_t *ELEM, size_t *COUNT,
+                                      unsigned char **packed,
+                                      unsigned char **memory, size_t *SPACE)
+{
+    const opal_convertor_master_t *master = (CONVERTOR)->master;
+    const ddt_elem_desc_t *_elem = &((ELEM)->elem);
+    size_t local_elem_size = opal_datatype_basicDatatypes[_elem->common.type]->size;
+    size_t remote_elem_size = (CONVERTOR)->sizes[_elem->common.type];
+    unsigned char *_memory = (*memory) + _elem->disp;
+    unsigned char *_packed = *packed;
+    char *from, *to;
+    size_t do_now;
+
+    assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
+
+    /* How many predefined elements remain in the current (partial) block? */
+    if (0 == (do_now = (*COUNT) % _elem->blocklen)) {
+        return 1; /* already aligned on a block boundary */
+    }
+    size_t left_in_block = do_now;
+
+    /* Never split a predefined element: cap to the whole elements available in the source. */
+    if ((remote_elem_size * do_now) > *(SPACE)) {
+        do_now = (*SPACE) / remote_elem_size;
+    }
+
+    from = (char *) _packed;
+    to = (char *) _memory;
+    /* do_now < blocklen, so the conversion runs its contiguous "leftover" path (no extent jump).
+     * Trust the mover's returned element count rather than the requested do_now: the pointer and
+     * SPACE bookkeeping below already follow the mover's actual advance (from/to), so COUNT and the
+     * block-completion test must too. They agree today (do_now is pre-capped to fit SPACE), but
+     * keying off the return keeps the three in lockstep if a mover ever converts fewer elements. */
+    size_t copied = master->pFunctions[_elem->common.type](CONVERTOR, do_now, _elem->blocklen,
+                                                           _elem->count, &from, *SPACE,
+                                                           _elem->blocklen * remote_elem_size, &to,
+                                                           *SPACE, _elem->extent);
+    *(COUNT) -= copied;
+    _packed = (unsigned char *) from;
+    _memory = (unsigned char *) to;
+    if (copied == left_in_block) { /* compensate if we completed a blocklen */
+        _memory += _elem->extent - (ptrdiff_t) (_elem->blocklen * local_elem_size);
+    }
+
+    *(memory) = _memory - _elem->disp;
+    *(SPACE) -= (_packed - *packed);
+    *(packed) = _packed;
+    return (copied == left_in_block);
+}
+
 static inline void
 unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
                                 const dt_elem_desc_t *ELEM, size_t *COUNT,
@@ -469,80 +649,36 @@ unpack_predefined_heterogeneous(opal_convertor_t *CONVERTOR,
 {
     const opal_convertor_master_t *master = (CONVERTOR)->master;
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
-    size_t cando_count = *(COUNT), do_now_bytes;
-    size_t local_elem_size = opal_datatype_basicDatatypes[_elem->common.type]->size;
-    size_t remote_elem_size = master->remote_sizes[_elem->common.type];
-    size_t blocklen_bytes = remote_elem_size;
+    size_t cando_count = *(COUNT);
+    size_t remote_elem_size = (CONVERTOR)->sizes[_elem->common.type];
     unsigned char *_memory = (*memory) + _elem->disp;
     unsigned char *_packed = *packed;
-    ptrdiff_t advance = 0;
+    char *from, *to;
+    size_t copied;
 
     assert(0 == (cando_count % _elem->blocklen)); /* no partials here */
     assert(*(COUNT) <= ((size_t) _elem->count * _elem->blocklen));
 
+    /* Cap to whole predefined elements (single-element size, not the block size). */
     if ((remote_elem_size * cando_count) > *(SPACE))
-        cando_count = (*SPACE) / blocklen_bytes;
+        cando_count = (*SPACE) / remote_elem_size;
 
-    /* preemptively update the number of COUNT we will return. */
-    *(COUNT) -= cando_count;
+    from = (char *) _packed;
+    to = (char *) _memory;
+    copied = master->pFunctions[_elem->common.type](
+        CONVERTOR, cando_count, _elem->blocklen, _elem->count, &from, *SPACE,
+        _elem->blocklen * remote_elem_size, &to, *SPACE, _elem->extent);
+    *(COUNT) -= copied;
+    _packed = (unsigned char *) from;
+    _memory = (unsigned char *) to;
 
-    if (_elem->blocklen == 1) {
-        master->pFunctions[_elem->common.type](CONVERTOR, cando_count,
-                                               _packed, *SPACE, remote_elem_size,
-                                               _memory, *SPACE, _elem->extent,
-                                               &advance);
-        _memory += cando_count * _elem->extent;
-        _packed += cando_count * remote_elem_size;
-        goto update_and_return;
-    }
-
-    if ((1 < _elem->count) && (_elem->blocklen <= cando_count)) {
-        blocklen_bytes = remote_elem_size * _elem->blocklen;
-
-        do { /* Do as many full blocklen as possible */
-            OPAL_DATATYPE_SAFEGUARD_POINTER(_memory, blocklen_bytes, (CONVERTOR)->pBaseBuf,
-                                            (CONVERTOR)->pDesc, (CONVERTOR)->count);
-            DO_DEBUG(opal_output(0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
-                                 (void *) _packed, (void *) _memory, (unsigned long) blocklen_bytes,
-                                 (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-            master->pFunctions[_elem->common.type](CONVERTOR, _elem->blocklen,
-                                                   _packed, *SPACE, remote_elem_size,
-                                                   _memory, *SPACE, local_elem_size,
-                                                   &advance);
-            _packed += blocklen_bytes;
-            _memory += _elem->extent;
-            cando_count -= _elem->blocklen;
-        } while (_elem->blocklen <= cando_count);
-    }
-
-    /**
-     * As an epilog do anything left from the last blocklen.
-     */
-    if (0 != cando_count) {
-        assert((cando_count < _elem->blocklen)
-               || ((1 == _elem->count) && (cando_count <= _elem->blocklen)));
-        do_now_bytes = cando_count * remote_elem_size;
-        OPAL_DATATYPE_SAFEGUARD_POINTER(_memory, do_now_bytes, (CONVERTOR)->pBaseBuf,
-                                        (CONVERTOR)->pDesc, (CONVERTOR)->count);
-        DO_DEBUG(opal_output(0, "pack 3. memcpy( %p, %p, %lu ) => space %lu [epilog]\n",
-                             (void *) _packed, (void *) _memory, (unsigned long) do_now_bytes,
-                             (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-        master->pFunctions[_elem->common.type](CONVERTOR, cando_count,
-                                               _packed, *SPACE, remote_elem_size,
-                                               _memory, *SPACE, local_elem_size,
-                                               &advance);
-        _memory += cando_count * local_elem_size;
-        _packed += do_now_bytes;
-    }
-
-update_and_return:
     *(memory) = _memory - _elem->disp;
     *(SPACE) -= (_packed - *packed);
     *(packed) = _packed;
 }
 
-int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec *iov,
-                                     uint32_t *out_size, size_t *max_data)
+int32_t opal_unpack_general(opal_convertor_t *pConvertor, struct iovec *iov,
+                            uint32_t *out_size, size_t *max_data)
 {
     dt_stack_t *pStack; /* pointer to the position on the stack */
     uint32_t pos_desc;  /* actual position in the description of the derived datatype */
@@ -577,55 +713,106 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
                          "unpack start pos_desc %d count_desc %" PRIsize_t " disp %ld\n"
                          "stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
                          pos_desc, count_desc, (long) (conv_ptr - pConvertor->pBaseBuf),
-                         pConvertor->stack_pos, pStack->index, pStack->count,
-                         (long) (pStack->disp)););
+                         pConvertor->stack_pos, pStack->index, pStack->count, (long) (pStack->disp)););
 
     for (iov_count = 0; iov_count < (*out_size); iov_count++) {
         iov_ptr = (unsigned char *) iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
-        assert(0 == pConvertor->partial_length);
+
+        /* Complete an element split by the preceding input fragment before converting more data. */
+        if (0 != pConvertor->partial_length) {
+            assert(pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA);
+            opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr, &conv_ptr,
+                                           &iov_len_local);
+            if (0 == count_desc) {
+                assert(0 == pConvertor->partial_length);
+                conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                pos_desc++;
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc, process_loop,
+                                         process_end_loop);
+                goto process_data;
+            }
+            if (0 == iov_len_local) {
+                goto complete_loop;
+            }
+        }
+
+        /* Re-align a block split by the preceding input fragment before converting more data. The
+         * block movers below require entry on a block boundary. */
+        if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            if (((size_t) pElem->elem.count * pElem->elem.blocklen) != count_desc) {
+                int rc = unpack_partial_blocklen_heterogeneous(pConvertor, pElem, &count_desc,
+                                                               &iov_ptr, &conv_ptr, &iov_len_local);
+                if (0 == rc) { /* still mid-block: the block was not completed */
+                    /* Any tail shorter than one predefined element is the leading bytes of the next
+                     * element (a basic type split across this fragment boundary). Stash it in the
+                     * convertor so the following fragment can finish it, exactly as the main mover
+                     * does below; otherwise the fragment is spent on a whole-element boundary and
+                     * there is nothing to keep. Without this the heterogeneous complete_loop would
+                     * silently drop the partial element. */
+                    if (0 != iov_len_local) {
+                        assert(iov_len_local
+                               < opal_datatype_basicDatatypes[pElem->elem.common.type]->size);
+                        opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr,
+                                                       &conv_ptr, &iov_len_local);
+                        assert(0 == iov_len_local);
+                    }
+                    goto complete_loop;
+                }
+                if (0 == count_desc) {
+                    conv_ptr = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++;
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc, process_loop,
+                                             process_end_loop);
+                    goto process_data;
+                }
+            }
+        }
         while (1) {
             while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
+            process_data:
                 /* now here we have a basic datatype */
                 OPAL_DATATYPE_SAFEGUARD_POINTER(conv_ptr + pElem->elem.disp, pData->size,
                                                 pConvertor->pBaseBuf, pData, pConvertor->count);
-                DO_DEBUG(opal_output(0,
-                                     "unpack (%p, %ld) -> (%p:%ld, %" PRIsize_t ", %ld) type %s\n",
+                DO_DEBUG(opal_output(0, "unpack (%p, %ld) -> (%p:%ld, %" PRIsize_t ", %ld) type %s\n",
                                      (void *) iov_ptr, iov_len_local, (void *) pConvertor->pBaseBuf,
                                      conv_ptr + pElem->elem.disp - pConvertor->pBaseBuf, count_desc,
-                                     description[pos_desc].elem.extent,
-                                     opal_datatype_basicDatatypes[description[pos_desc].elem.common.type]->name););
+                                     pElem->elem.extent,
+                                     opal_datatype_basicDatatypes[pElem->elem.common.type]->name););
                 unpack_predefined_heterogeneous(pConvertor, pElem, &count_desc, &conv_ptr, &iov_ptr,
                                                 &iov_len_local);
                 if (0 == count_desc) {    /* completed */
                     conv_ptr = pConvertor->pBaseBuf + pStack->disp;
                     pos_desc++; /* advance to the next data */
-                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                    if (0 == iov_len_local) {
-                        goto complete_loop; /* escape if we're done */
-                    }
-                    continue;
+                    /* Refresh pElem/count_desc for the new pos_desc before any escape: do not
+                     * shortcut to complete_loop on a spent iovec (0 == iov_len_local) while pElem
+                     * still names the finished entry and count_desc is 0. Doing so would save a
+                     * stale (pos_desc, count_desc==0) resume state and, if another iovec follows,
+                     * re-enter the DATA loop on the old element and increment pos_desc a second
+                     * time, skipping an entry. When iov_len_local is 0 the refreshed DATA entry
+                     * simply copies nothing at process_data and falls through to complete_loop with
+                     * the correct saved state. */
+                    UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                             process_loop, process_end_loop);
+                    goto process_data;
                 }
                 assert(pElem->elem.common.type < OPAL_DATATYPE_MAX_PREDEFINED);
-                assert(0 == iov_len_local);
                 if (0 != iov_len_local) {
-                    unsigned char *temp = conv_ptr;
                     /* We have some partial data here. Let's copy it into the convertor
                      * and keep it hot until the next round.
                      */
                     assert(iov_len_local < opal_datatype_basicDatatypes[pElem->elem.common.type]->size);
                     opal_unpack_partial_predefined(pConvertor, pElem, &count_desc, &iov_ptr,
-                                                   &temp, &iov_len_local);
+                                                   &conv_ptr, &iov_len_local);
                     assert( 0 == iov_len_local );
                 }
                 goto complete_loop;
             }
             if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) { /* end of the current loop */
+            process_end_loop:
                 DO_DEBUG(opal_output(0,
-                                     "unpack end_loop count %" PRIsize_t
-                                     " stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                     pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
-                                     (unsigned long) iov_len_local););
+                                     "unpack end_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %" PRIsize_t "\n",
+                                     pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local););
                 if (--(pStack->count) == 0) { /* end of loop */
                     if (0 == pConvertor->stack_pos) {
                         /* we're done. Force the exit of the main for loop (around iovec) */
@@ -645,21 +832,24 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
                     }
                 }
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
                 DO_DEBUG(opal_output(0,
-                                     "unpack new_loop count %" PRIsize_t
-                                     " stack_pos %d pos_desc %d disp %ld space %lu\n",
-                                     pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp,
-                                     (unsigned long) iov_len_local););
+                                     "unpack new_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %" PRIsize_t "\n",
+                                     pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local););
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                         process_loop, process_end_loop);
+                goto process_data;
             }
             if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
+            process_loop:
                 PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, OPAL_DATATYPE_LOOP, count_desc,
                            pStack->disp);
                 pos_desc++;
                 conv_ptr = pConvertor->pBaseBuf + pStack->disp;
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop");
-                continue;
+                DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos,
+                               &description[pos_desc], "advance loop");
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                         process_loop, process_end_loop);
+                goto process_data;
             }
         }
     complete_loop:
@@ -678,10 +868,7 @@ int32_t opal_unpack_general_function(opal_convertor_t *pConvertor, struct iovec 
     /* Save the global position for the next round */
     PUSH_STACK(pStack, pConvertor->stack_pos, pos_desc, pElem->elem.common.type, count_desc,
                conv_ptr - pConvertor->pBaseBuf);
-    DO_DEBUG(opal_output(0,
-                         "unpack save stack stack_pos %d pos_desc %d count_desc %" PRIsize_t
-                         " disp %ld\n",
-                         pConvertor->stack_pos, pStack->index, pStack->count,
-                         (long) pStack->disp););
+    DO_DEBUG(opal_output(0, "unpack save stack stack_pos %d pos_desc %d count_desc %" PRIsize_t " disp %ld\n",
+                         pConvertor->stack_pos, pStack->index, pStack->count, (long) pStack->disp););
     return 0;
 }

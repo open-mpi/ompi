@@ -240,7 +240,6 @@ ompi/test/file/file_info_set_view
 ompi/test/part/parrived_null_inactive
 ompi/test/part/partitioned_proc_null
 
-ompi/test/datatype/checksum
 ompi/test/datatype/ddt_pack
 ompi/test/datatype/ddt_raw
 ompi/test/datatype/ddt_raw2
@@ -249,10 +248,13 @@ ompi/test/datatype/external32
 ompi/test/datatype/large_data
 ompi/test/datatype/mpi_datatype_bigcount
 ompi/test/datatype/ompi_datatype_bigcount
+ompi/test/datatype/opt_desc_equiv
+ompi/test/datatype/pack_description_sweep
 ompi/test/datatype/partial
 ompi/test/datatype/position
 ompi/test/datatype/position_noncontig
 ompi/test/datatype/reduce_local
+ompi/test/datatype/resized_extent
 ompi/test/datatype/sizedtypes
 ompi/test/datatype/to_self
 ompi/test/datatype/unpack_ooo
@@ -553,7 +555,6 @@ test/util/opal_json
 test/util/opal_alfg
 test/util/opal_arch
 test/util/opal_cmd_line
-test/util/opal_crc
 test/util/opal_environ
 test/util/opal_fd
 test/util/opal_few

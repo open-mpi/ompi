@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
@@ -41,24 +41,60 @@ BEGIN_C_DECLS
 /*
  * CONVERTOR SECTION
  */
-/* keep the last 16 bits free for data flags */
+/*
+ * The low 16 bits are reserved for the datatype "data" flags: OPAL_CONVERTOR_PREPARE copies
+ * datatype->flags & CONVERTOR_DATATYPE_MASK into the convertor. The convertor's own control flags
+ * are packed at the top of the word, downward from bit 31. The two lowest control bits (0x00010000
+ * and 0x00020000) are intentionally left to the datatype-only shape hints in opal_datatype.h; the
+ * _Static_assert below keeps the two sets disjoint so a mistaken cross-field test cannot misfire.
+ * By convention any layer above OPAL places its own datatype flags in the top 16 bits of the flags
+ * word, so they too sit above this mask and are never copied into a convertor; such flags may share
+ * bit values with the control flags here, but they live in opal_datatype_t::flags rather than a
+ * convertor, so no convertor word ever carries an upper-layer meaning.
+ */
 #define CONVERTOR_DATATYPE_MASK          0x0000FFFF
-#define CONVERTOR_SEND_CONVERSION        0x00010000
-#define CONVERTOR_RECV                   0x00020000
-#define CONVERTOR_SEND                   0x00040000
-#define CONVERTOR_HOMOGENEOUS            0x00080000
-#define CONVERTOR_NO_OP                  0x00100000
-#define CONVERTOR_WITH_CHECKSUM          0x00200000
-#define CONVERTOR_ACCELERATOR            0x00400000
-#define CONVERTOR_ACCELERATOR_ASYNC      0x00800000
-#define CONVERTOR_TYPE_MASK              0x10FF0000
-#define CONVERTOR_STATE_START            0x01000000
-#define CONVERTOR_STATE_COMPLETE         0x02000000
-#define CONVERTOR_STATE_ALLOC            0x04000000
-#define CONVERTOR_COMPLETED              0x08000000
-#define CONVERTOR_ACCELERATOR_UNIFIED    0x10000000
-#define CONVERTOR_HAS_REMOTE_SIZE        0x20000000
-#define CONVERTOR_SKIP_ACCELERATOR_INIT  0x40000000
+/*
+ * Set when the packed (remote) representation of at least one predefined type in this convertor's
+ * datatype has a different size than the local one (e.g. a 4- vs 8-byte long, or a 1/2/4-byte bool
+ * across mismatched architectures). Such a conversion is not a byte permutation, so a predefined
+ * element cannot be split across a fragment boundary and later reassembled: the pack side must stop
+ * only on whole predefined-element boundaries ("unsafe to split"). Homogeneous and same-size
+ * byte-swap conversions do not set this flag and remain free to split anywhere.
+ */
+#define CONVERTOR_UNSAFE_SPLIT           0x00100000
+#define CONVERTOR_SEND_CONVERSION        0x00200000
+#define CONVERTOR_RECV                   0x00400000
+#define CONVERTOR_SEND                   0x00800000
+#define CONVERTOR_HOMOGENEOUS            0x01000000
+#define CONVERTOR_NO_OP                  0x02000000
+#define CONVERTOR_COMPLETED              0x04000000
+#define CONVERTOR_HAS_REMOTE_SIZE        0x08000000
+/* Accelerator-related flags, kept adjacent. */
+#define CONVERTOR_ACCELERATOR            0x10000000
+#define CONVERTOR_ACCELERATOR_ASYNC      0x20000000
+#define CONVERTOR_ACCELERATOR_UNIFIED    0x40000000
+#define CONVERTOR_SKIP_ACCELERATOR_INIT  0x80000000
+/* The type-defining flags preserved across a re-prepare; everything else is reset. */
+#define CONVERTOR_TYPE_MASK                                                                     \
+    (CONVERTOR_SEND_CONVERSION | CONVERTOR_RECV | CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS         \
+     | CONVERTOR_NO_OP | CONVERTOR_ACCELERATOR | CONVERTOR_ACCELERATOR_ASYNC                     \
+     | CONVERTOR_ACCELERATOR_UNIFIED)
+
+/*
+ * The datatype-only shape-hint flags (opal_datatype.h) share this 32-bit width but live in a
+ * different field (opal_datatype_t::flags), are kept outside CONVERTOR_DATATYPE_MASK so they are
+ * never copied into a convertor, and are read only from the datatype. Guarantee their bit values do
+ * not coincide with any convertor control flag, so a mistaken test of the wrong field cannot read as
+ * an active convertor bit.
+ */
+_Static_assert(0
+                   == ((CONVERTOR_SEND_CONVERSION | CONVERTOR_RECV | CONVERTOR_SEND
+                        | CONVERTOR_HOMOGENEOUS | CONVERTOR_NO_OP | CONVERTOR_COMPLETED
+                        | CONVERTOR_HAS_REMOTE_SIZE | CONVERTOR_UNSAFE_SPLIT
+                        | CONVERTOR_ACCELERATOR | CONVERTOR_ACCELERATOR_ASYNC
+                        | CONVERTOR_ACCELERATOR_UNIFIED | CONVERTOR_SKIP_ACCELERATOR_INIT)
+                       & (OPAL_DATATYPE_OPTIMIZED_RESTRICTED | OPAL_DATATYPE_FLAG_COUNT_OPTIMIZABLE)),
+               "datatype shape-hint flags must not alias a convertor control flag");
 
 union dt_elem_desc;
 typedef struct opal_convertor_t opal_convertor_t;
@@ -87,48 +123,44 @@ typedef struct dt_stack_t dt_stack_t;
 
 struct opal_convertor_t {
     opal_object_t super; /**< basic superclass */
-    uint32_t remoteArch; /**< the remote architecture */
-    uint32_t flags;      /**< the properties of this convertor */
-    size_t local_size;   /**< overall length data on local machine, compared to bConverted */
-    size_t remote_size;  /**< overall length data on remote machine, compared to bConverted */
+
+    /* Descriptor and dispatch state is fixed after convertor preparation. */
     const opal_datatype_t *pDesc;   /**< the datatype description associated with the convertor */
     const dt_type_desc_t *use_desc; /**< the version used by the convertor (normal or optimized) */
     opal_datatype_count_t count;    /**< the total number of full datatype elements */
+    size_t remote_size;             /**< overall length data on the remote machine */
+    struct opal_convertor_master_t *master; /**< the master convertor */
+    convertor_advance_fct_t fAdvance;       /**< pointer to the pack/unpack functions */
 
     /* --- cacheline boundary (64 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
-    uint32_t stack_size;              /**< size of the allocated stack */
-    unsigned char *pBaseBuf;          /**< initial buffer as supplied by the user */
-    dt_stack_t *pStack;               /**< the local stack for the actual conversion */
-    convertor_advance_fct_t fAdvance; /**< pointer to the pack/unpack functions */
-
-    /* --- cacheline boundary (96 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
-    struct opal_convertor_master_t *master; /**< the master convertor */
-
-    /* All others fields get modified for every call to pack/unpack functions */
-    uint32_t stack_pos;    /**< the actual position on the stack */
-    size_t partial_length; /**< amount of data left over from the last unpack */
-    size_t bConverted;     /**< # of bytes already converted */
+    /* Keep mutable runtime state together on the cache line used by pack and unpack. */
+    size_t bConverted;           /**< # of bytes already converted */
+    size_t partial_length;       /**< amount of data left over from the last unpack */
+    size_t local_size;           /**< overall length data on the local machine */
+    unsigned char *pBaseBuf;     /**< initial buffer as supplied by the user */
+    dt_stack_t *pStack;          /**< the local stack for the actual conversion */
+    memcpy_fct_t cbmemcpy;       /**< memcpy or accelerator memcpy */
+    uint32_t flags;              /**< the properties of this convertor */
+    uint32_t stack_pos;          /**< the actual position on the stack */
+    uint32_t stack_size;         /**< size of the allocated stack */
+    uint32_t remoteArch;         /**< the remote architecture */
 
     /* --- cacheline boundary (128 bytes - if 64bits arch and !OPAL_ENABLE_DEBUG) --- */
-    uint32_t checksum; /**< checksum computed by pack/unpack operation */
-    uint32_t csum_ui1; /**< partial checksum computed by pack/unpack operation */
-    size_t csum_ui2;   /**< partial checksum computed by pack/unpack operation */
-
-    /* --- fields are no more aligned on cacheline --- */
+    /**
+     * Per predefined type, the size of one element in the packed stream this convertor reads from
+     * or writes to: the master's remote_sizes for a receive convertor (or a send convertor doing
+     * the conversion, CONVERTOR_SEND_CONVERSION), the local sizes otherwise. Conversion and
+     * positioning code denominates its packed-stream byte accounting in these sizes; the in-memory
+     * layout still uses the local basic-type sizes and the datatype extent. Only read on the
+     * heterogeneous and repositioning paths, so it is kept off the two hot pack/unpack cachelines
+     * above.
+     */
+    const size_t *sizes;
     dt_stack_t static_stack[DT_STATIC_STACK_SIZE]; /**< local stack for small datatypes */
 
-    memcpy_fct_t cbmemcpy; /**< memcpy or accelerator memcpy */
-    opal_accelerator_stream_t *stream;  /**<Accelerator stream for async copy */
+    opal_accelerator_stream_t *stream; /**< accelerator stream for async copy */
 };
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_convertor_t);
-
-/*
- *
- */
-static inline uint32_t opal_convertor_get_checksum(opal_convertor_t *convertor)
-{
-    return convertor->checksum;
-}
 
 /*
  *
@@ -323,11 +355,8 @@ static inline int32_t opal_convertor_set_position(opal_convertor_t *convertor, s
     /* Remove the completed flag if it's already set */
     convertor->flags &= ~CONVERTOR_COMPLETED;
 
-    if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS) &&
-#if defined(CHECKSUM)
-        !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&
-#endif /* defined(CHECKSUM) */
-        (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {
+    if ((convertor->flags & OPAL_DATATYPE_FLAG_NO_GAPS)
+        && (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS))) {
         /* Contiguous and no checkpoint and no homogeneous unpack */
         convertor->bConverted = *position;
         return OPAL_SUCCESS;
@@ -336,22 +365,6 @@ static inline int32_t opal_convertor_set_position(opal_convertor_t *convertor, s
     return opal_convertor_set_position_nocheck(convertor, position);
 }
 
-/*
- *
- */
-static inline int32_t opal_convertor_personalize(opal_convertor_t *convertor, uint32_t flags,
-                                                 size_t *position)
-{
-    convertor->flags |= flags;
-
-    if (OPAL_UNLIKELY(NULL == position))
-        return OPAL_SUCCESS;
-    return opal_convertor_set_position(convertor, position);
-}
-
-/*
- *
- */
 OPAL_DECLSPEC int opal_convertor_clone(const opal_convertor_t *source,
                                        opal_convertor_t *destination, int32_t copy_stack);
 

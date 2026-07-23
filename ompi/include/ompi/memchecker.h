@@ -357,32 +357,34 @@ static inline int memchecker_datatype(MPI_Datatype type)
         return OMPI_SUCCESS;
     }
 
-    /* the data description in the opal_datatype_t super class */
-    opal_memchecker_base_isdefined (&type->super.flags, sizeof(uint16_t));
-    opal_memchecker_base_isdefined (&type->super.id, sizeof(uint16_t));
-    opal_memchecker_base_isdefined (&type->super.bdt_used, sizeof(uint32_t));
-    opal_memchecker_base_isdefined (&type->super.size, sizeof(size_t));
-    opal_memchecker_base_isdefined (&type->super.true_lb, sizeof(ptrdiff_t));
-    opal_memchecker_base_isdefined (&type->super.true_ub, sizeof(ptrdiff_t));
-    opal_memchecker_base_isdefined (&type->super.lb, sizeof(ptrdiff_t));
-    opal_memchecker_base_isdefined (&type->super.ub, sizeof(ptrdiff_t));
-    opal_memchecker_base_isdefined (&type->super.align, sizeof(uint32_t));
-    opal_memchecker_base_isdefined (&type->super.nbElems, sizeof(uint32_t));
+    /* The data description in the opal_datatype_t super class.  Each scalar
+       check is sized from the member itself (sizeof(type->super.field)) so the
+       checked width cannot drift from the struct definition. */
+    opal_memchecker_base_isdefined (&type->super.flags, sizeof(type->super.flags));
+    opal_memchecker_base_isdefined (&type->super.id, sizeof(type->super.id));
+    opal_memchecker_base_isdefined (&type->super.bdt_used, sizeof(type->super.bdt_used));
+    opal_memchecker_base_isdefined (&type->super.size, sizeof(type->super.size));
+    opal_memchecker_base_isdefined (&type->super.true_lb, sizeof(type->super.true_lb));
+    opal_memchecker_base_isdefined (&type->super.true_ub, sizeof(type->super.true_ub));
+    opal_memchecker_base_isdefined (&type->super.lb, sizeof(type->super.lb));
+    opal_memchecker_base_isdefined (&type->super.ub, sizeof(type->super.ub));
+    opal_memchecker_base_isdefined (&type->super.align, sizeof(type->super.align));
+    opal_memchecker_base_isdefined (&type->super.nbElems, sizeof(type->super.nbElems));
     /* name... */
-    opal_memchecker_base_isdefined (&type->super.desc.length, sizeof(opal_datatype_count_t));
-    opal_memchecker_base_isdefined (&type->super.desc.used, sizeof(opal_datatype_count_t));
-    opal_memchecker_base_isdefined (&type->super.desc.desc, sizeof(dt_elem_desc_t *));
-    opal_memchecker_base_isdefined (&type->super.opt_desc.length, sizeof(opal_datatype_count_t));
-    opal_memchecker_base_isdefined (&type->super.opt_desc.used, sizeof(opal_datatype_count_t));
-    opal_memchecker_base_isdefined (&type->super.opt_desc.desc, sizeof(dt_elem_desc_t *));
+    opal_memchecker_base_isdefined (&type->super.desc.length, sizeof(type->super.desc.length));
+    opal_memchecker_base_isdefined (&type->super.desc.used, sizeof(type->super.desc.used));
+    opal_memchecker_base_isdefined (&type->super.desc.desc, sizeof(type->super.desc.desc));
+    opal_memchecker_base_isdefined (&type->super.opt_desc.length, sizeof(type->super.opt_desc.length));
+    opal_memchecker_base_isdefined (&type->super.opt_desc.used, sizeof(type->super.opt_desc.used));
+    opal_memchecker_base_isdefined (&type->super.opt_desc.desc, sizeof(type->super.opt_desc.desc));
     if( NULL != type->super.ptypes )
         opal_memchecker_base_isdefined (&type->super.ptypes, OPAL_DATATYPE_MAX_PREDEFINED * sizeof(size_t));
 
-    opal_memchecker_base_isdefined (&type->id, sizeof(int32_t));
-    opal_memchecker_base_isdefined (&type->d_f_to_c_index, sizeof(int32_t));
-    opal_memchecker_base_isdefined (&type->d_keyhash, sizeof(opal_hash_table_t *));
-    opal_memchecker_base_isdefined (&type->args, sizeof(void *));
-    opal_memchecker_base_isdefined (&type->packed_description, sizeof(void *));
+    opal_memchecker_base_isdefined (&type->id, sizeof(type->id));
+    opal_memchecker_base_isdefined (&type->d_f_to_c_index, sizeof(type->d_f_to_c_index));
+    opal_memchecker_base_isdefined (&type->d_keyhash, sizeof(type->d_keyhash));
+    opal_memchecker_base_isdefined (&type->args, sizeof(type->args));
+    opal_memchecker_base_isdefined (&type->packed_description, sizeof(type->packed_description));
     opal_memchecker_base_isdefined (&type->name, MPI_MAX_OBJECT_NAME * sizeof(char));
 
     return OMPI_SUCCESS;

@@ -14,7 +14,7 @@
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011-2013 NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2021      IBM Corporation. All rights reserved.
@@ -28,11 +28,11 @@
 headers = \
         opal_convertor.h \
         opal_convertor_internal.h \
-        opal_datatype_checksum.h \
         opal_datatype.h \
         opal_datatype_internal.h \
         opal_datatype_copy.h \
         opal_datatype_memcpy.h \
+        opal_datatype_accelerator_copy.h \
         opal_datatype_pack_unpack_predefined.h \
         opal_datatype_pack.h \
         opal_datatype_prototypes.h \
@@ -40,13 +40,7 @@ headers = \
         opal_datatype_unpack.h
 
 
-noinst_LTLIBRARIES = \
-        libdatatype_reliable.la \
-        libdatatype.la
-
-# these sources will be compiled with the special -D
-libdatatype_reliable_la_SOURCES = opal_datatype_pack.c opal_datatype_unpack.c
-libdatatype_reliable_la_CFLAGS = -DCHECKSUM $(AM_CFLAGS)
+noinst_LTLIBRARIES = libdatatype.la
 
 # these sources will be compiled with the normal CFLAGS only
 libdatatype_la_SOURCES = \
@@ -67,15 +61,14 @@ libdatatype_la_SOURCES = \
         opal_datatype_monotonic.c \
         opal_datatype_optimize.c \
         opal_datatype_pack.c \
+        opal_datatype_pack_accelerator.c \
         opal_datatype_position.c \
         opal_datatype_resize.c \
-        opal_datatype_unpack.c
-
-libdatatype_la_LIBADD = libdatatype_reliable.la
+        opal_datatype_unpack.c \
+        opal_datatype_unpack_accelerator.c
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 opaldir = $(opalincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif
-

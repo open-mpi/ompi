@@ -7,6 +7,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,15 +23,23 @@
 
 BEGIN_C_DECLS
 
-typedef int32_t (*conversion_fct_t)(opal_convertor_t *pConvertor, uint32_t count, const void *from,
-                                    size_t from_len, ptrdiff_t from_extent, void *to,
-                                    size_t to_length, ptrdiff_t to_extent, ptrdiff_t *advance);
+typedef size_t (*conversion_fct_t)(opal_convertor_t *pConvertor, size_t count, size_t blocklen,
+                                   size_t elem_count, char **from, size_t from_len,
+                                   ptrdiff_t from_extent, char **to, size_t to_length,
+                                   ptrdiff_t to_extent);
 
 typedef struct opal_convertor_master_t {
     struct opal_convertor_master_t *next;
     uint32_t remote_arch;
     uint32_t flags;
     uint32_t hetero_mask;
+    /*
+     * Subset of hetero_mask covering only the predefined types whose remote size differs from the
+     * local one (size-changing conversions), excluding pure byte-swap. A datatype that touches any
+     * of these types cannot have its predefined elements split across a fragment boundary; see
+     * CONVERTOR_UNSAFE_SPLIT.
+     */
+    uint32_t size_mismatch_mask;
     const size_t remote_sizes[OPAL_DATATYPE_MAX_PREDEFINED];
     conversion_fct_t *pFunctions; /**< the convertor functions pointer */
 } opal_convertor_master_t;
