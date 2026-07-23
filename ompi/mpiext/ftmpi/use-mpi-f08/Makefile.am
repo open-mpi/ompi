@@ -7,6 +7,7 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -65,25 +66,14 @@ mpi_api_files = \
     comm_shrink_f08.F90 \
     comm_ishrink_f08.F90
 
-pmpi_api_files = \
-    profile/pcomm_revoke_f08.F90 \
-    profile/pcomm_is_revoked_f08.F90 \
-    profile/pcomm_failure_ack_f08.F90 \
-    profile/pcomm_failure_get_acked_f08.F90 \
-    profile/pcomm_get_failed_f08.F90 \
-    profile/pcomm_ack_failed_f08.F90 \
-    profile/pcomm_agree_f08.F90 \
-    profile/pcomm_iagree_f08.F90 \
-    profile/pcomm_shrink_f08.F90 \
-    profile/pcomm_ishrink_f08.F90
 
 mpi_api_lo_files = $(mpi_api_files:.F90=.lo)
-pmpi_api_lo_files = $(pmpi_api_files:.F90=.lo)
 
-# Sources for the convenience libtool library.
+# Sources for the convenience libtool library.  Each source file
+# defines both the MPIX_* and the PMPIX_* f08 wrapper subroutines
+# (Fortran has no weak symbols, so both wrappers are spelled out).
 libmpiext_ftmpi_usempif08_la_SOURCES = \
-        $(mpi_api_files) \
-        $(pmpi_api_files)
+        $(mpi_api_files)
 
 # Remove the intermediate module file
 distclean-local:

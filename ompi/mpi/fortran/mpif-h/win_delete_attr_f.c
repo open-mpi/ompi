@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_DELETE_ATTR,
                            pmpi_win_delete_attr,
                            pmpi_win_delete_attr_,
                            pmpi_win_delete_attr__,
-                           pompi_win_delete_attr_f,
+                           ompi_win_delete_attr_f,
                            (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr),
                            (win, win_keyval, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_DELETE_ATTR,
 #pragma weak MPI_Win_delete_attr_f = ompi_win_delete_attr_f
 #pragma weak MPI_Win_delete_attr_f08 = ompi_win_delete_attr_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_DELETE_ATTR,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_DELETE_ATTR,
                            mpi_win_delete_attr,
                            mpi_win_delete_attr_,
                            mpi_win_delete_attr__,
                            ompi_win_delete_attr_f,
                            (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr),
                            (win, win_keyval, ierr) )
-#else
-#define ompi_win_delete_attr_f pompi_win_delete_attr_f
-#endif
 #endif
 
 

@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
                            pmpi_group_translate_ranks,
                            pmpi_group_translate_ranks_,
                            pmpi_group_translate_ranks__,
-                           pompi_group_translate_ranks_f,
+                           ompi_group_translate_ranks_f,
                            (MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr),
                            (group1, n, ranks1, group2, ranks2, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
 #pragma weak MPI_Group_translate_ranks_f = ompi_group_translate_ranks_f
 #pragma weak MPI_Group_translate_ranks_f08 = ompi_group_translate_ranks_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
                            mpi_group_translate_ranks,
                            mpi_group_translate_ranks_,
                            mpi_group_translate_ranks__,
                            ompi_group_translate_ranks_f,
                            (MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr),
                            (group1, n, ranks1, group2, ranks2, ierr) )
-#else
-#define ompi_group_translate_ranks_f pompi_group_translate_ranks_f
-#endif
 #endif
 
 

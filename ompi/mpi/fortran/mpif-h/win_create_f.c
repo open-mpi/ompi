@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
                            pmpi_win_create,
                            pmpi_win_create_,
                            pmpi_win_create__,
-                           pompi_win_create_f,
+                           ompi_win_create_f,
                            (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (base, size, disp_unit, info, comm, win, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
 #pragma weak MPI_Win_create_f = ompi_win_create_f
 #pragma weak MPI_Win_create_f08 = ompi_win_create_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_CREATE,
                            mpi_win_create,
                            mpi_win_create_,
                            mpi_win_create__,
                            ompi_win_create_f,
                            (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (base, size, disp_unit, info, comm, win, ierr) )
-#else
-#define ompi_win_create_f pompi_win_create_f
-#endif
 #endif
 
 

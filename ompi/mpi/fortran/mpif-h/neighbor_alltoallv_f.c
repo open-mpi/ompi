@@ -44,7 +44,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLTOALLV,
                            pmpi_neighbor_alltoallv,
                            pmpi_neighbor_alltoallv_,
                            pmpi_neighbor_alltoallv__,
-                           pompi_neighbor_alltoallv_f,
+                           ompi_neighbor_alltoallv_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr) )
 #endif
@@ -59,17 +59,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLTOALLV,
 #pragma weak MPI_Neighbor_alltoallv_f = ompi_neighbor_alltoallv_f
 #pragma weak MPI_Neighbor_alltoallv_f08 = ompi_neighbor_alltoallv_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_NEIGHBOR_ALLTOALLV,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_NEIGHBOR_ALLTOALLV,
                            mpi_neighbor_alltoallv,
                            mpi_neighbor_alltoallv_,
                            mpi_neighbor_alltoallv__,
                            ompi_neighbor_alltoallv_f,
                            (char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *rdispls, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, ierr) )
-#else
-#define ompi_neighbor_alltoallv_f pompi_neighbor_alltoallv_f
-#endif
 #endif
 
 

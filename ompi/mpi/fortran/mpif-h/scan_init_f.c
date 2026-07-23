@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCAN_INIT,
                             pmpi_scan_init,
                             pmpi_scan_init_,
                             pmpi_scan_init__,
-                            pompi_scan_init_f,
+                            ompi_scan_init_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, count, datatype, op, comm, info, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SCAN_INIT,
 #pragma weak MPI_Scan_init_f = ompi_scan_init_f
 #pragma weak MPI_Scan_init_f08 = ompi_scan_init_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_SCAN_INIT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_SCAN_INIT,
                             mpi_scan_init,
                             mpi_scan_init_,
                             mpi_scan_init__,
                             ompi_scan_init_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, count, datatype, op, comm, info, request, ierr) )
-#else
-#define ompi_scan_init_f pompi_scan_init_f
-#endif
 #endif
 
 

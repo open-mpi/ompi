@@ -194,8 +194,6 @@ ompi/mca/sharedfp/addproc/mca_sharedfp_addproc_control
 
 ompi/mca/topo/treematch/config.h
 
-ompi/mpi/c/profile/p*.c
-
 ompi/mpi/fortran/configure-fortran-output.h
 ompi/mpi/fortran/mpiext/mpi-ext-module.F90
 ompi/mpi/fortran/mpiext/mpi-f08-ext-module.F90
@@ -204,8 +202,7 @@ ompi/mpi/fortran/mpiext-use-mpi-f08/mpi-f08-ext-module.F90
 ompi/mpi/fortran/use-mpi-f08/psizeof_f08.f90
 
 ompi/mpi/fortran/mpif-h/sizeof_f.f90
-ompi/mpi/fortran/mpif-h/profile/p*.c
-ompi/mpi/fortran/mpif-h/profile/psizeof_f.f90
+ompi/mpi/fortran/mpif-h/psizeof_f.f90
 
 ompi/mpi/fortran/use-mpi/mpi-types.F90
 
@@ -213,8 +210,6 @@ ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-constants.h
 ompi/mpi/fortran/use-mpi-f08/mod/mpi-f08-interfaces.h
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.f90
 ompi/mpi/fortran/use-mpi-f08/sizeof_f08.h
-ompi/mpi/fortran/use-mpi-f08/profile/psizeof_f08.f90
-ompi/mpi/fortran/use-mpi-f08/profile/*.F90
 
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces.h
 ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h
@@ -227,8 +222,6 @@ ompi/mpi/fortran/use-mpi-tkr/fortran_sizes.h
 ompi/mpi/fortran/use-mpi-tkr/mpi_kinds.ompi_module
 ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.f90
 ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.h
-
-ompi/mpi/tool/profile/*.c
 
 ompi/test/t/mpi_t_category_get_events
 
@@ -257,6 +250,7 @@ ompi/test/datatype/sizedtypes
 ompi/test/datatype/to_self
 ompi/test/datatype/unpack_ooo
 
+ompi/test/general/abi_fortran
 ompi/test/general/attr_interlang_mpifh
 ompi/test/general/attr_interlang_mpifh.f90
 ompi/test/general/attr_interlang_usempi
@@ -281,6 +275,8 @@ ompi/test/general/request
 ompi/test/general/seq_tracker
 ompi/test/general/win
 
+ompi/test/reexport/test_symbol_resolution
+
 ompi/test/monitoring/monitoring_test
 ompi/test/monitoring/check_monitoring
 ompi/test/monitoring/example_reduce_count
@@ -290,17 +286,6 @@ ompi/test/monitoring/test_pvar_access
 ompi/test/spc/spc_test
 
 ompi/mpiext/affinity/c/example
-
-ompi/mpiext/ftmpi/c/profile/pcomm_agree.c
-ompi/mpiext/ftmpi/c/profile/pcomm_failure_ack.c
-ompi/mpiext/ftmpi/c/profile/pcomm_failure_get_acked.c
-ompi/mpiext/ftmpi/c/profile/pcomm_iagree.c
-ompi/mpiext/ftmpi/c/profile/pcomm_is_revoked.c
-ompi/mpiext/ftmpi/c/profile/pcomm_revoke.c
-ompi/mpiext/ftmpi/c/profile/pcomm_shrink.c
-ompi/mpiext/ftmpi/c/profile/pcomm_ack_failed.c
-ompi/mpiext/ftmpi/c/profile/pcomm_get_failed.c
-ompi/mpiext/ftmpi/c/profile/pcomm_ishrink.c
 
 ompi/mpiext/example/tests/progress_c
 ompi/mpiext/example/tests/progress_mpifh
@@ -325,12 +310,15 @@ ompi/tools/ompi_info/ompi_info
 
 ompi/tools/wrappers/mpic++-wrapper-data.txt
 ompi/tools/wrappers/mpicc-wrapper-data.txt
+ompi/tools/wrappers/mpicc_abi-wrapper-data.txt
 ompi/tools/wrappers/mpifort-wrapper-data.txt
 ompi/tools/wrappers/ompi_wrapper_script
 ompi/tools/wrappers/ompi.pc
 ompi/tools/wrappers/ompi-c.pc
 ompi/tools/wrappers/ompi-cxx.pc
-ompi/tools/wrappers/ompi-fort.pc
+ompi/tools/wrappers/ompi-abi-c.pc
+ompi/tools/wrappers/ompi-abi-cxx.pc
+ompi/tools/wrappers/ompi-abi.pc
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
@@ -594,6 +582,16 @@ venv
 py??
 __pycache__/
 
+# MPI ABI test runner output.  The bare names cover direct runner use
+# and VPATH builds whose top build directory is outside ompi/test/mpi-abi;
+# the ompi/test/mpi-abi/ names cover in-tree recursive make targets.
+check-results/
+check-abi-results/
+check-abi-mpich-results/
+ompi/test/mpi-abi/check-results/
+ompi/test/mpi-abi/check-abi-results/
+ompi/test/mpi-abi/check-abi-mpich-results/
+
 # Copies of PRRTE RST files (i.e., not source controlled in this tree)
 docs/prrte-rst-content
 docs/schizo-ompi-rst-content
@@ -608,6 +606,13 @@ docs/code-of-conduct.rst
 
 # Generated C Bindings
 ompi/mpi/c/*_generated*.c
+ompi/mpi/c/standard_*.c
+ompi/mpi/c/abi.h
+ompi/mpi/c/abi_get_info.c
+ompi/mpi/c/abi_converters.h
+ompi/mpi/c/abi_converters.c
+ompi/mpi/c/standard_abi
+ompi/mpi/tool/*_generated*.c
 
 # Generated Fortran Bindings
 ompi/mpi/fortran/use-mpi-f08/*_generated.F90

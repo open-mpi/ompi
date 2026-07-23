@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANGE_EXCL,
                            pmpi_group_range_excl,
                            pmpi_group_range_excl_,
                            pmpi_group_range_excl__,
-                           pompi_group_range_excl_f,
+                           ompi_group_range_excl_f,
                            (MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group, n, ranges, newgroup, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_RANGE_EXCL,
 #pragma weak MPI_Group_range_excl_f = ompi_group_range_excl_f
 #pragma weak MPI_Group_range_excl_f08 = ompi_group_range_excl_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_EXCL,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GROUP_RANGE_EXCL,
                            mpi_group_range_excl,
                            mpi_group_range_excl_,
                            mpi_group_range_excl__,
                            ompi_group_range_excl_f,
                            (MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group, n, ranges, newgroup, ierr) )
-#else
-#define ompi_group_range_excl_f pompi_group_range_excl_f
-#endif
 #endif
 
 

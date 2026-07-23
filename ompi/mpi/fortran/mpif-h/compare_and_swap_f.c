@@ -42,7 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMPARE_AND_SWAP,
 			    pmpi_compare_and_swap,
 			    pmpi_compare_and_swap_,
 			    pmpi_compare_and_swap__,
-			    pompi_compare_and_swap_f,
+			    ompi_compare_and_swap_f,
                             (char *origin_addr, char *compare_addr, char *result_addr, MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *win, MPI_Fint *ierr),
 			    (origin_addr, compare_addr, result_addr, datatype, target_rank, target_disp, win, ierr) )
 #endif
@@ -57,17 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMPARE_AND_SWAP,
 #pragma weak MPI_Compare_and_swap_f = ompi_compare_and_swap_f
 #pragma weak MPI_Compare_and_swap_f08 = ompi_compare_and_swap_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMPARE_AND_SWAP,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMPARE_AND_SWAP,
 			    mpi_compare_and_swap,
 			    mpi_compare_and_swap_,
 			    mpi_compare_and_swap__,
 			    ompi_compare_and_swap_f,
                             (char *origin_addr, char *compare_addr, char *result_addr, MPI_Fint *datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *win, MPI_Fint *ierr),
 			    (origin_addr, compare_addr, result_addr, datatype, target_rank, target_disp, win, ierr) )
-#else
-#define ompi_compare_and_swap_f pompi_compare_and_swap_f
-#endif
 #endif
 
 

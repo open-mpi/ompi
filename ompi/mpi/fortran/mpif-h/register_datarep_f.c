@@ -46,7 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pmpi_register_datarep,
                            pmpi_register_datarep_,
                            pmpi_register_datarep__,
-                           pompi_register_datarep_f,
+                           ompi_register_datarep_f,
                            (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
 #endif
@@ -61,17 +61,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
 #pragma weak MPI_Register_datarep_f = ompi_register_datarep_f
 #pragma weak MPI_Register_datarep_f08 = ompi_register_datarep_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            mpi_register_datarep,
                            mpi_register_datarep_,
                            mpi_register_datarep__,
                            ompi_register_datarep_f,
                            (char *datarep, ompi_mpi2_fortran_datarep_conversion_fn_t *read_conversion_fn, ompi_mpi2_fortran_datarep_conversion_fn_t *write_conversion_fn, ompi_mpi2_fortran_datarep_extent_fn_t *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
-#else
-#define ompi_register_datarep_f pompi_register_datarep_f
-#endif
 #endif
 
 static const char FUNC_NAME[] = "MPI_REGISTER_DATAREP";
@@ -100,7 +96,13 @@ typedef struct intercept_extra_state {
 
 OBJ_CLASS_DECLARATION(ompi_intercept_extra_state_t);
 
-#if !OMPI_BUILD_MPI_PROFILING || OPAL_HAVE_WEAK_ALIASES
+/*
+ * This used to be guarded on "!OMPI_BUILD_MPI_PROFILING ||
+ * OPAL_HAVE_WEAK_ALIASES", because where weak aliases were unavailable this
+ * file was compiled twice, and the class instance had to be emitted by
+ * exactly one of those compiles.  The bindings are now compiled once, so the
+ * guard is unnecessary -- and, worse, would emit the class instance nowhere.
+ */
 static void intercept_extra_state_constructor(ompi_intercept_extra_state_t *obj)
 {
     obj->read_fn_f77 = NULL;
@@ -112,7 +114,6 @@ static void intercept_extra_state_constructor(ompi_intercept_extra_state_t *obj)
 OBJ_CLASS_INSTANCE(ompi_intercept_extra_state_t,
                    opal_list_item_t,
                    intercept_extra_state_constructor, NULL);
-#endif  /* !OMPI_BUILD_MPI_PROFILING */
 
 /*
  * This function works by calling the C version of

@@ -1,0 +1,82 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define MPI_T event callbacks that validate registration, dropped,
+ *   and free callback argument conversion.  Open MPI may expose the
+ *   event APIs without any event sources that can allocate a
+ *   registration; the body treats that as a stable skip.
+ */
+struct mpit_event_state {
+    MPI_T_event_registration registration;
+    int event_calls;
+    int dropped_calls;
+    int free_calls;
+    int failure_code;
+};
+
+static struct mpit_event_state mpit_event_state;
+
+static void mpit_event_callback(MPI_T_event_instance event_instance,
+                                MPI_T_event_registration event_registration,
+                                MPI_T_cb_safety cb_safety,
+                                void *user_data)
+{
+    struct mpit_event_state *state =
+        (struct mpit_event_state *) user_data;
+    (void) event_instance;
+    if (&mpit_event_state != state) {
+        mpit_event_state.failure_code = 101;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 102;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 103;
+    } else {
+        ++state->event_calls;
+    }
+}
+
+static void mpit_dropped_callback(MPI_Count count,
+                                  MPI_T_event_registration registration,
+                                  int source_index,
+                                  MPI_T_cb_safety cb_safety,
+                                  void *user_data)
+{
+    struct mpit_event_state *state =
+        (struct mpit_event_state *) user_data;
+    (void) count;
+    (void) source_index;
+    if (&mpit_event_state != state) {
+        mpit_event_state.failure_code = 111;
+    } else if (registration != state->registration) {
+        state->failure_code = 112;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 113;
+    } else {
+        ++state->dropped_calls;
+    }
+}
+
+static void mpit_free_callback(MPI_T_event_registration registration,
+                               MPI_T_cb_safety cb_safety,
+                               void *user_data)
+{
+    struct mpit_event_state *state =
+        (struct mpit_event_state *) user_data;
+    if (&mpit_event_state != state) {
+        mpit_event_state.failure_code = 121;
+    } else if (registration != state->registration) {
+        state->failure_code = 122;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 123;
+    } else {
+        ++state->free_calls;
+    }
+}

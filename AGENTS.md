@@ -225,6 +225,16 @@ defines shared build rules and variables (like `OMPI_BINDINGS_GENERATOR`).
 Changes to it also only require `make`, not the full `autogen.pl` +
 `./configure` process.
 
+## Python compatibility
+
+Open MPI still supports Python 3.7 in some CI and user environments.
+Python code in the build system, binding generators, documentation
+tooling, and tests must remain compatible with Python 3.7 unless the
+project-wide minimum is explicitly raised.  Do not use syntax or
+standard-library APIs introduced after Python 3.7 without a fallback.
+When changing Python parser logic, remember that some AST details differ
+between Python 3.7 and newer versions.
+
 **"Did I break it?" — layered:**
 
 1. **Build cleanly.** A clean `make` after your change is the baseline.
@@ -372,6 +382,7 @@ honor:
 |------|--------------|
 | `opal/` | OPAL portability layer (`opal/mca/` = its frameworks) |
 | `ompi/` | OMPI / MPI layer; `ompi/mpi/` = language bindings, `ompi/mca/` = frameworks |
+| `ompi/mpi/README_ABI.md` | **MPI-5 ABI support** — how Open MPI supports the standardized binary interface |
 | `oshmem/` | OpenSHMEM layer |
 | `3rd-party/` | embedded upstreams + submodules (OpenPMIx, PRRTE fork) — don't hand-edit |
 | `config/` | m4 macros for Autoconf / Automake / Libtool |
@@ -379,6 +390,37 @@ honor:
 | `examples/` | small MPI example programs (good smoke tests) |
 | `test/` | unit / functional tests |
 | `contrib/` | unsupported contributed scripts and tools |
+
+## Installed libraries and wrappers
+
+Open MPI builds and installs multiple shared libraries with different purposes:
+
+* **`libopen-pal`** — OPAL layer (portability primitives)
+* **`libopen_mpi`** — Internal OMPI library containing implementation details;
+  as of v6.0, this is an installed library (previously internal-only)
+* **`libmpi`** — Standard Open MPI library providing the Open MPI ABI; links
+  applications compiled with `mpicc`, `mpic++`, `mpifort` wrappers
+* **`libmpi_abi`** — MPI standard ABI library (MPI-5.0 ABI version 1.0);
+  links applications compiled with `mpicc_abi` wrapper; only installed when
+  configured with `--enable-standard-abi` (the default)
+
+**Linking behavior:**
+
+* Standard `mpicc` wrapper links both `-lmpi` **and** `-lopen_mpi`. This
+  ensures the dynamic linker finds all needed symbols, particularly on
+  macOS where transitive dependencies must be explicit at link time.
+* ABI wrapper `mpicc_abi` links **only** `-lmpi_abi`. The `libmpi_abi.so`
+  library itself has `libopen_mpi` as a link-time dependency, so
+  applications don't need to explicitly link it.
+
+**pkg-config files:**
+
+Open MPI installs pkg-config files in `$libdir/pkgconfig` as an alternative
+to wrapper compilers:
+
+* Standard MPI: `ompi.pc`, `ompi-c.pc`, `ompi-cxx.pc`, `ompi-fort.pc`
+* ABI (when `--enable-standard-abi`): `ompi-abi.pc`, `ompi-abi-c.pc`,
+  `ompi-abi-cxx.pc`
 
 ## When in doubt
 

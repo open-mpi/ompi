@@ -16,6 +16,9 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/tool/mpit-internal.h"
+#ifdef OMPI_NO_MPI_PROTOTYPES
+#include "ompi/mpi/c/abi.h"
+#endif
 
 #include "ompi/runtime/ompi_info_support.h"
 #include "opal/include/opal/sys/atomic.h"
@@ -57,3 +60,19 @@ int MPI_T_finalize (void)
 
     return MPI_SUCCESS;
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_T_finalize
+__opal_attribute_weak__ int MPI_T_finalize(void)
+{
+    return PMPI_T_finalize();
+}
+#endif

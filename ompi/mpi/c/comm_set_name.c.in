@@ -34,6 +34,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/totalview.h"
 #include "ompi/memchecker.h"
+#include "opal/util/string_copy.h"
 
 PROTOTYPE ERROR_CLASS comm_set_name(COMM comm, STRING name)
 {
@@ -57,7 +58,15 @@ PROTOTYPE ERROR_CLASS comm_set_name(COMM comm, STRING name)
         }
     }
 
-    rc = ompi_comm_set_name (comm, name );
+    /* Limit the stored name to this entry point's MPI_MAX_OBJECT_NAME by first
+     * copying into a buffer of that size: @MPI_MAX_OBJECT_NAME@ expands to
+     * MPI_MAX_OBJECT_NAME (== OPAL_MAX_OBJECT_NAME) for the OMPI binding and to
+     * the MPI Forum ABI maximum for the standard-ABI binding.
+     * ompi_comm_set_name() then stores it into the internal buffer (sized to
+     * the ABI maximum) without re-truncating. */
+    char truncated_name[@MPI_MAX_OBJECT_NAME@];
+    opal_string_copy(truncated_name, name, sizeof(truncated_name));
+    rc = ompi_comm_set_name (comm, truncated_name);
     /* -- Tracing information for new communicator name -- */
 #if 0
   /* Force TotalView DLL to take note of this name setting */

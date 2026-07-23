@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FENCE,
                            pmpi_win_fence,
                            pmpi_win_fence_,
                            pmpi_win_fence__,
-                           pompi_win_fence_f,
+                           ompi_win_fence_f,
                            (MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr),
                            (assert, win, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FENCE,
 #pragma weak MPI_Win_fence_f = ompi_win_fence_f
 #pragma weak MPI_Win_fence_f08 = ompi_win_fence_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FENCE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_FENCE,
                            mpi_win_fence,
                            mpi_win_fence_,
                            mpi_win_fence__,
                            ompi_win_fence_f,
                            (MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr),
                            (assert, win, ierr) )
-#else
-#define ompi_win_fence_f pompi_win_fence_f
-#endif
 #endif
 
 

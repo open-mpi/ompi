@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NTHKEY,
                             pmpi_info_get_nthkey,
                             pmpi_info_get_nthkey_,
                             pmpi_info_get_nthkey__,
-                            pompi_info_get_nthkey_f,
+                            ompi_info_get_nthkey_f,
                             (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
                             (info, n, key, ierr, key_len) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_NTHKEY,
 #pragma weak MPI_Info_get_nthkey_f = ompi_info_get_nthkey_f
 #pragma weak MPI_Info_get_nthkey_f08 = ompi_info_get_nthkey_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NTHKEY,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_INFO_GET_NTHKEY,
                             mpi_info_get_nthkey,
                             mpi_info_get_nthkey_,
                             mpi_info_get_nthkey__,
                             ompi_info_get_nthkey_f,
                             (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len),
                             (info, n, key, ierr, key_len) )
-#else
-#define ompi_info_get_nthkey_f pompi_info_get_nthkey_f
-#endif
 #endif
 
 

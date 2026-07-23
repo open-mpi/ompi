@@ -166,6 +166,17 @@ extern opal_hash_table_t ompi_mpi_f90_complex_hashtable;
 OMPI_DECLSPEC extern const char ompi_version_string[];
 
 /**
+ * Internal, profiling-neutral equivalent of MPI_Wtime().
+ *
+ * Returns a number of seconds since some time in the past, using the
+ * same time origin (ompi_wtime_time_origin) as the MPI_Wtime() binding.
+ * Back-end OMPI code must call this instead of the public
+ * MPI_Wtime()/PMPI_Wtime() so that libopen_mpi does not acquire a link
+ * dependency on the MPI bindings library (libmpi).
+ */
+OMPI_DECLSPEC double ompi_wtime(void);
+
+/**
  * Obtain the required thread level from environment (if any)
  *
  * @param requested Thread support that is requested (OUT)

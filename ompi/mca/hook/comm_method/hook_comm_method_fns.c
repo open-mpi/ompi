@@ -18,6 +18,8 @@
 
 #include "opal/util/string_copy.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/ompi_datatype.h"
+#include "ompi/op/op.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/mca/btl/btl.h"
 #include "ompi/mca/pml/base/base.h"
@@ -511,16 +513,16 @@ ompi_report_comm_methods(int called_from_location)
         free(p);
     }
 
-    MPI_Datatype mydt;
-    MPI_Op myop;
-    MPI_Type_contiguous(sizeof(comm_method_string_conversion_t), MPI_BYTE, &mydt);
-    MPI_Type_commit(&mydt);
-    MPI_Op_create(myfn, 1, &myop);
+    ompi_datatype_t *mydt;
+    ompi_op_t *myop;
+    ompi_datatype_create_contiguous(sizeof(comm_method_string_conversion_t), MPI_BYTE, &mydt);
+    ompi_datatype_commit(&mydt);
+    myop = ompi_op_create_user(true, false, (ompi_op_fortran_handler_fn_t *) myfn);
     leader_comm->c_coll->coll_allreduce(
         MPI_IN_PLACE, (void*)&comm_method_string_conversion, 1, mydt, myop, leader_comm,
             leader_comm->c_coll->coll_allreduce_module);
-    MPI_Op_free(&myop);
-    MPI_Type_free(&mydt);
+    OBJ_RELEASE(myop);
+    ompi_datatype_destroy(&mydt);
 
     // Sort communication method string arrays after reduction
     qsort(&comm_method_string_conversion.str[1],

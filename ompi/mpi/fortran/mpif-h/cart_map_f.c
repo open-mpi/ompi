@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_MAP,
                            pmpi_cart_map,
                            pmpi_cart_map_,
                            pmpi_cart_map__,
-                           pompi_cart_map_f,
+                           ompi_cart_map_f,
                            (MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *dims, ompi_fortran_logical_t *periods, MPI_Fint *newrank, MPI_Fint *ierr),
                            (comm, ndims, dims, periods, newrank, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_MAP,
 #pragma weak MPI_Cart_map_f = ompi_cart_map_f
 #pragma weak MPI_Cart_map_f08 = ompi_cart_map_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_CART_MAP,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_CART_MAP,
                            mpi_cart_map,
                            mpi_cart_map_,
                            mpi_cart_map__,
                            ompi_cart_map_f,
                            (MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *dims, ompi_fortran_logical_t *periods, MPI_Fint *newrank, MPI_Fint *ierr),
                            (comm, ndims, dims, periods, newrank, ierr) )
-#else
-#define ompi_cart_map_f pompi_cart_map_f
-#endif
 #endif
 
 

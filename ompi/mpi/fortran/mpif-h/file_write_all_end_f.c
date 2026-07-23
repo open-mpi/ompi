@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ALL_END,
                            pmpi_file_write_all_end,
                            pmpi_file_write_all_end_,
                            pmpi_file_write_all_end__,
-                           pompi_file_write_all_end_f,
+                           ompi_file_write_all_end_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, status, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_ALL_END,
 #pragma weak MPI_File_write_all_end_f = ompi_file_write_all_end_f
 #pragma weak MPI_File_write_all_end_f08 = ompi_file_write_all_end_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ALL_END,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_WRITE_ALL_END,
                            mpi_file_write_all_end,
                            mpi_file_write_all_end_,
                            mpi_file_write_all_end__,
                            ompi_file_write_all_end_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, status, ierr) )
-#else
-#define ompi_file_write_all_end_f pompi_file_write_all_end_f
-#endif
 #endif
 
 

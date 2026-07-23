@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_COMPLETE,
                            pmpi_grequest_complete,
                            pmpi_grequest_complete_,
                            pmpi_grequest_complete__,
-                           pompi_grequest_complete_f,
+                           ompi_grequest_complete_f,
                            (MPI_Fint *request, MPI_Fint *ierr),
                            (request, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GREQUEST_COMPLETE,
 #pragma weak MPI_Grequest_complete_f = ompi_grequest_complete_f
 #pragma weak MPI_Grequest_complete_f08 = ompi_grequest_complete_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_COMPLETE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GREQUEST_COMPLETE,
                            mpi_grequest_complete,
                            mpi_grequest_complete_,
                            mpi_grequest_complete__,
                            ompi_grequest_complete_f,
                            (MPI_Fint *request, MPI_Fint *ierr),
                            (request, ierr) )
-#else
-#define ompi_grequest_complete_f pompi_grequest_complete_f
-#endif
 #endif
 
 

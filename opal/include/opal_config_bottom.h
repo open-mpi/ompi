@@ -230,6 +230,22 @@
 #    define __opal_attribute_weak_alias__(a)
 #endif
 
+/*
+ * A plain weak definition, as distinct from a weak *alias*.
+ *
+ * Mach-O cannot express a weak alias at all -- there is no way to mark a
+ * ".set" alias as a weak definition -- so a platform without weak aliases
+ * has to define the public MPI_* symbol as a real (weak) function that
+ * forwards to the strong PMPI_* one.  This is the attribute that marks such
+ * a definition weak, so that a profiling library's strong MPI_* still
+ * overrides it.
+ */
+#if OPAL_HAVE_WEAK_SYMBOLS
+#    define __opal_attribute_weak__ __attribute__((__weak__))
+#else
+#    define __opal_attribute_weak__
+#endif
+
 #if OPAL_HAVE_ATTRIBUTE_CONSTRUCTOR
 #    define __opal_attribute_constructor__ __attribute__((__constructor__))
 #else

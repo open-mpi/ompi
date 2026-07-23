@@ -78,3 +78,23 @@ int MPI_Type_hvector(int count,
                                   oldtype,
                                   newtype);
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_Type_hvector
+__opal_attribute_weak__ int MPI_Type_hvector(int count,
+                     int blocklength,
+                     MPI_Aint stride,
+                     MPI_Datatype oldtype,
+                     MPI_Datatype *newtype)
+{
+    return PMPI_Type_hvector(count, blocklength, stride, oldtype, newtype);
+}
+#endif

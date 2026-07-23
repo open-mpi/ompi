@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
                            pmpi_cart_shift,
                            pmpi_cart_shift_,
                            pmpi_cart_shift__,
-                           pompi_cart_shift_f,
+                           ompi_cart_shift_f,
                            (MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp, MPI_Fint *rank_source, MPI_Fint *rank_dest, MPI_Fint *ierr),
                            (comm, direction, disp, rank_source, rank_dest, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
 #pragma weak MPI_Cart_shift_f = ompi_cart_shift_f
 #pragma weak MPI_Cart_shift_f08 = ompi_cart_shift_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_CART_SHIFT,
                            mpi_cart_shift,
                            mpi_cart_shift_,
                            mpi_cart_shift__,
                            ompi_cart_shift_f,
                            (MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp, MPI_Fint *rank_source, MPI_Fint *rank_dest, MPI_Fint *ierr),
                            (comm, direction, disp, rank_source, rank_dest, ierr) )
-#else
-#define ompi_cart_shift_f pompi_cart_shift_f
-#endif
 #endif
 
 

@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
                            pmpi_type_commit,
                            pmpi_type_commit_,
                            pmpi_type_commit__,
-                           pompi_type_commit_f,
+                           ompi_type_commit_f,
                            (MPI_Fint *type, MPI_Fint *ierr),
                            (type, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
 #pragma weak MPI_Type_commit_f = ompi_type_commit_f
 #pragma weak MPI_Type_commit_f08 = ompi_type_commit_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_COMMIT,
                            mpi_type_commit,
                            mpi_type_commit_,
                            mpi_type_commit__,
                            ompi_type_commit_f,
                            (MPI_Fint *type, MPI_Fint *ierr),
                            (type, ierr) )
-#else
-#define ompi_type_commit_f pompi_type_commit_f
-#endif
 #endif
 
 

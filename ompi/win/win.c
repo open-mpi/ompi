@@ -164,7 +164,7 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    win->w_name = (char*) malloc (OPAL_MAX_OBJECT_NAME);
+    win->w_name = (char*) malloc (OMPI_MPI_MAX_OBJECT_NAME_ABI);
     if (NULL == win->w_name) {
         OBJ_RELEASE(win);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -407,7 +407,10 @@ int
 ompi_win_set_name(ompi_win_t *win, const char *win_name)
 {
     OPAL_THREAD_LOCK(&(win->w_lock));
-    opal_string_copy(win->w_name, win_name, MPI_MAX_OBJECT_NAME);
+    /* Bound the store by the full internal buffer size (the ABI maximum); the
+     * per-entry-point limit (OPAL_MAX_OBJECT_NAME for the OMPI bindings, the
+     * ABI maximum for the standard-ABI bindings) is applied by the caller. */
+    opal_string_copy(win->w_name, win_name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
     OPAL_THREAD_UNLOCK(&(win->w_lock));
 
     return OMPI_SUCCESS;

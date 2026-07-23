@@ -15,6 +15,9 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/tool/mpit-internal.h"
+#ifdef OMPI_NO_MPI_PROTOTYPES
+#include "ompi/mpi/c/abi.h"
+#endif
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
@@ -35,3 +38,19 @@ int MPI_T_event_get_index (const char *name, int *event_index)
 
     return MPI_T_ERR_INVALID_NAME;
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_T_event_get_index
+__opal_attribute_weak__ int MPI_T_event_get_index(const char *name, int *event_index)
+{
+    return PMPI_T_event_get_index(name, event_index);
+}
+#endif

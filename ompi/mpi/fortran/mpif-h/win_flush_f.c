@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FLUSH,
                            pmpi_win_flush,
                            pmpi_win_flush_,
                            pmpi_win_flush__,
-                           pompi_win_flush_f,
+                           ompi_win_flush_f,
                            (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
                            (rank, win, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_FLUSH,
 #pragma weak MPI_Win_flush_f = ompi_win_flush_f
 #pragma weak MPI_Win_flush_f08 = ompi_win_flush_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FLUSH,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_FLUSH,
                            mpi_win_flush,
                            mpi_win_flush_,
                            mpi_win_flush__,
                            ompi_win_flush_f,
                            (MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr),
                            (rank, win, ierr) )
-#else
-#define ompi_win_flush_f pompi_win_flush_f
-#endif
 #endif
 
 

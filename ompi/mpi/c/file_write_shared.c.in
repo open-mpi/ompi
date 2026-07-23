@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -33,7 +33,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS file_write_shared(FILE fh, BUFFER buf, COUNT count,
+PROTOTYPE ERROR_CLASS file_write_shared(FILE fh, BUFFER_CONST buf, COUNT count,
                                         DATATYPE datatype, STATUS_OUT status)
 {
     int rc;

@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_INDEXED,
                            pmpi_type_indexed,
                            pmpi_type_indexed_,
                            pmpi_type_indexed__,
-                           pompi_type_indexed_f,
+                           ompi_type_indexed_f,
                            (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_blocklengths, array_of_displacements, oldtype, newtype, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_INDEXED,
 #pragma weak MPI_Type_indexed_f = ompi_type_indexed_f
 #pragma weak MPI_Type_indexed_f08 = ompi_type_indexed_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_INDEXED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_INDEXED,
                            mpi_type_indexed,
                            mpi_type_indexed_,
                            mpi_type_indexed__,
                            ompi_type_indexed_f,
                            (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_blocklengths, array_of_displacements, oldtype, newtype, ierr) )
-#else
-#define ompi_type_indexed_f pompi_type_indexed_f
-#endif
 #endif
 
 

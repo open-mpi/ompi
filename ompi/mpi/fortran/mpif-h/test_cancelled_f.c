@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TEST_CANCELLED,
                            pmpi_test_cancelled,
                            pmpi_test_cancelled_,
                            pmpi_test_cancelled__,
-                           pompi_test_cancelled_f,
+                           ompi_test_cancelled_f,
                            (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (status, flag, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TEST_CANCELLED,
 #pragma weak MPI_Test_cancelled_f = ompi_test_cancelled_f
 #pragma weak MPI_Test_cancelled_f08 = ompi_test_cancelled_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TEST_CANCELLED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TEST_CANCELLED,
                            mpi_test_cancelled,
                            mpi_test_cancelled_,
                            mpi_test_cancelled__,
                            ompi_test_cancelled_f,
                            (MPI_Fint *status, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (status, flag, ierr) )
-#else
-#define ompi_test_cancelled_f pompi_test_cancelled_f
-#endif
 #endif
 
 

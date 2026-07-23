@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER_BLOCK,
                             pmpi_ireduce_scatter_block,
                             pmpi_ireduce_scatter_block_,
                             pmpi_ireduce_scatter_block__,
-                            pompi_ireduce_scatter_block_f,
+                            ompi_ireduce_scatter_block_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, recvcounts, datatype, op, comm, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IREDUCE_SCATTER_BLOCK,
 #pragma weak MPI_Ireduce_scatter_block_f = ompi_ireduce_scatter_block_f
 #pragma weak MPI_Ireduce_scatter_block_f08 = ompi_ireduce_scatter_block_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_IREDUCE_SCATTER_BLOCK,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_IREDUCE_SCATTER_BLOCK,
                             mpi_ireduce_scatter_block,
                             mpi_ireduce_scatter_block_,
                             mpi_ireduce_scatter_block__,
                             ompi_ireduce_scatter_block_f,
                             (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, recvbuf, recvcounts, datatype, op, comm, request, ierr) )
-#else
-#define ompi_ireduce_scatter_block_f pompi_ireduce_scatter_block_f
-#endif
 #endif
 
 

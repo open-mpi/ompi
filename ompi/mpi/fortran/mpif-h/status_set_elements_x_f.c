@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ELEMENTS_X,
                            pmpi_status_set_elements_x,
                            pmpi_status_set_elements_x_,
                            pmpi_status_set_elements_x__,
-                           pompi_status_set_elements_x_f,
+                           ompi_status_set_elements_x_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_STATUS_SET_ELEMENTS_X,
 #pragma weak MPI_Status_set_elements_x_f = ompi_status_set_elements_x_f
 #pragma weak MPI_Status_set_elements_x_f08 = ompi_status_set_elements_x_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS_X,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS_X,
                            mpi_status_set_elements_x,
                            mpi_status_set_elements_x_,
                            mpi_status_set_elements_x__,
                            ompi_status_set_elements_x_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Count *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
-#else
-#define ompi_status_set_elements_x_f pompi_status_set_elements_x_f
-#endif
 #endif
 
 

@@ -53,3 +53,23 @@ int MPI_Type_struct(int count,
                                   array_of_types,
                                   newtype);
 }
+
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * Mach-O cannot express a weak *alias* -- there is no way to mark a ".set"
+ * alias as a weak definition -- so where weak aliases are unavailable the
+ * public MPI_* symbol is defined here as a weak function that forwards to the
+ * strong PMPI_* one.  That is what lets these bindings be compiled exactly
+ * once: this translation unit provides both the strong PMPI_* symbol
+ * (above) and the weak MPI_* symbol (here).
+ */
+#undef MPI_Type_struct
+__opal_attribute_weak__ int MPI_Type_struct(int count,
+                    int array_of_blocklengths[],
+                    MPI_Aint array_of_displacements[],
+                    MPI_Datatype array_of_types[],
+                    MPI_Datatype *newtype)
+{
+    return PMPI_Type_struct(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype);
+}
+#endif

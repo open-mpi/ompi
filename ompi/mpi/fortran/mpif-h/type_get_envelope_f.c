@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ENVELOPE,
                            pmpi_type_get_envelope,
                            pmpi_type_get_envelope_,
                            pmpi_type_get_envelope__,
-                           pompi_type_get_envelope_f,
+                           ompi_type_get_envelope_f,
                            (MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr),
                            (type, num_integers, num_addresses, num_datatypes, combiner, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ENVELOPE,
 #pragma weak MPI_Type_get_envelope_f = ompi_type_get_envelope_f
 #pragma weak MPI_Type_get_envelope_f08 = ompi_type_get_envelope_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_GET_ENVELOPE,
                            mpi_type_get_envelope,
                            mpi_type_get_envelope_,
                            mpi_type_get_envelope__,
                            ompi_type_get_envelope_f,
                            (MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr),
                            (type, num_integers, num_addresses, num_datatypes, combiner, ierr) )
-#else
-#define ompi_type_get_envelope_f pompi_type_get_envelope_f
-#endif
 #endif
 
 

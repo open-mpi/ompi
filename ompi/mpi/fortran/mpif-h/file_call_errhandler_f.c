@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_CALL_ERRHANDLER,
                            pmpi_file_call_errhandler,
                            pmpi_file_call_errhandler_,
                            pmpi_file_call_errhandler__,
-                           pompi_file_call_errhandler_f,
+                           ompi_file_call_errhandler_f,
                            (MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr),
                            (fh, errorcode, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_CALL_ERRHANDLER,
 #pragma weak MPI_File_call_errhandler_f = ompi_file_call_errhandler_f
 #pragma weak MPI_File_call_errhandler_f08 = ompi_file_call_errhandler_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_CALL_ERRHANDLER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_CALL_ERRHANDLER,
                            mpi_file_call_errhandler,
                            mpi_file_call_errhandler_,
                            mpi_file_call_errhandler__,
                            ompi_file_call_errhandler_f,
                            (MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr),
                            (fh, errorcode, ierr) )
-#else
-#define ompi_file_call_errhandler_f pompi_file_call_errhandler_f
-#endif
 #endif
 
 

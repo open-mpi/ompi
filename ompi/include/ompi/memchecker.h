@@ -217,7 +217,11 @@ static inline int memchecker_comm(MPI_Comm comm)
      */
     opal_memchecker_base_isdefined (&comm->c_lock.m_lock_atomic, sizeof(opal_atomic_lock_t));
 #endif /* 0 */
-    opal_memchecker_base_isdefined (&comm->c_name, MPI_MAX_OBJECT_NAME);
+    /* c_name is a separately-allocated buffer (not an inline array), so check
+     * the buffer it points to. Only check the NUL-terminated string length,
+     * not the entire allocated buffer, since only the string portion is
+     * initialized. */
+    opal_memchecker_base_isdefined (comm->c_name, strlen(comm->c_name) + 1);
     opal_memchecker_base_isdefined (&comm->c_my_rank, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_flags, sizeof(uint32_t));
     opal_memchecker_base_isdefined (&comm->c_local_group, sizeof(ompi_group_t *));
@@ -383,7 +387,13 @@ static inline int memchecker_datatype(MPI_Datatype type)
     opal_memchecker_base_isdefined (&type->d_keyhash, sizeof(opal_hash_table_t *));
     opal_memchecker_base_isdefined (&type->args, sizeof(void *));
     opal_memchecker_base_isdefined (&type->packed_description, sizeof(void *));
-    opal_memchecker_base_isdefined (&type->name, MPI_MAX_OBJECT_NAME * sizeof(char));
+    opal_memchecker_base_isdefined (&type->name, sizeof(char *));
+    /* name is a separately-allocated buffer; only the NUL-terminated string
+     * portion is initialized, so check just that (mirrors the c_name check in
+     * memchecker_comm() above), and brace the guard per the coding style. */
+    if( NULL != type->name ) {
+        opal_memchecker_base_isdefined (type->name, strlen(type->name) + 1);
+    }
 
     return OMPI_SUCCESS;
 }

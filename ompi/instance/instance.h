@@ -97,6 +97,22 @@ struct ompi_predefined_instance_t {
 typedef struct ompi_predefined_instance_t ompi_predefined_instance_t;
 
 /**
+ * MPI extensions initialization function type
+ */
+typedef int (*ompi_mpiext_init_fn_t)(void);
+
+/**
+ * @brief Register MPI extensions initialization function
+ *
+ * This function is called by libmpi to register the mpiext initialization
+ * function with libopen_mpi. This avoids a circular dependency between
+ * libopen_mpi and libmpi.
+ *
+ * @param init_fn Function pointer to mpiext init function
+ */
+OMPI_DECLSPEC void ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init_fn_t init_fn);
+
+/**
  * @brief NULL instance
  */
 OMPI_DECLSPEC extern ompi_predefined_instance_t ompi_mpi_instance_null;

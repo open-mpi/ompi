@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PREADY_LIST,
                            pmpi_pready_list,
                            pmpi_pready_list_,
                            pmpi_pready_list__,
-                           pompi_pready_list_f,
+                           ompi_pready_list_f,
                            (MPI_Fint *length, MPI_Fint *partitions, MPI_Fint *request, MPI_Fint *ierr),
                            (length, partitions, request, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PREADY_LIST,
 #pragma weak MPI_Pready_list_f = ompi_pready_list_f
 #pragma weak MPI_Pready_list_f08 = ompi_pready_list_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_PREADY_LIST,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_PREADY_LIST,
                            mpi_pready_list,
                            mpi_pready_list_,
                            mpi_pready_list__,
                            ompi_pready_list_f,
                            (MPI_Fint *length, MPI_Fint *partitions, MPI_Fint *request, MPI_Fint *ierr),
                            (length, partitions, request, ierr) )
-#else
-#define ompi_pready_list_f pompi_pready_list_f
-#endif
 #endif
 
 

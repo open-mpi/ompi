@@ -135,3 +135,25 @@ The Open MPI wrapper compilers (``mpicc`` and friends) should
 automatically insert all relevant compiler and linker flags necessary
 to use the extensions.  No special flags or steps should be necessary
 compared to "normal" MPI applications.
+
+The extensions and the MPI Forum ABI
+------------------------------------
+
+.. warning:: The Open MPI extensions are only available in Open MPI's
+             own ``libmpi`` library, and therefore only to applications
+             that use the Open MPI ABI |mdash| i.e., applications built
+             with the ``mpicc`` / ``mpifort`` wrapper compilers (or the
+             ``ompi-c`` / ``ompi-fort`` pkg-config files).
+
+             The extensions are **not** present in ``libmpi_abi``, the
+             MPI Forum standard ABI library.  An application built with
+             ``mpicc_abi`` cannot use them: its ``OMPI_*`` and
+             ``MPIX_*`` symbols will not be found at link time.
+
+This is a direct consequence of what the MPI Forum ABI is for: an
+application built against it can run with any MPI implementation that
+provides that ABI, so implementation-specific extensions have no place
+in it.
+
+See :ref:`Building MPI applications using the MPI Forum ABI
+<label-mpi-abi-no-extensions>` for more detail.

@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IS_THREAD_MAIN,
                            pmpi_is_thread_main,
                            pmpi_is_thread_main_,
                            pmpi_is_thread_main__,
-                           pompi_is_thread_main_f,
+                           ompi_is_thread_main_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IS_THREAD_MAIN,
 #pragma weak MPI_Is_thread_main_f = ompi_is_thread_main_f
 #pragma weak MPI_Is_thread_main_f08 = ompi_is_thread_main_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_IS_THREAD_MAIN,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_IS_THREAD_MAIN,
                            mpi_is_thread_main,
                            mpi_is_thread_main_,
                            mpi_is_thread_main__,
                            ompi_is_thread_main_f,
                            (ompi_fortran_logical_t *flag, MPI_Fint *ierr),
                            (flag, ierr) )
-#else
-#define ompi_is_thread_main_f pompi_is_thread_main_f
-#endif
 #endif
 
 

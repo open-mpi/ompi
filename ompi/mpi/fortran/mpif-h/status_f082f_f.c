@@ -27,7 +27,7 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_STATUS_F082F,
                            pmpi_status_f082f,
                            pmpi_status_f082f_,
                            pmpi_status_f082f__,
-                           pompi_status_f082f_f,
+                           ompi_status_f082f_f,
                            (const MPI_F08_status *f08_status, MPI_Fint *f_status, MPI_Fint *ierr),
                            (f08_status, f_status, ierr) )
 #endif
@@ -42,17 +42,13 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_STATUS_F082F,
 #pragma weak MPI_Status_f082f_f = ompi_status_f082f_f
 #pragma weak MPI_Status_f082f_f08 = ompi_status_f082f_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS(MPI_STATUS_F082F,
+OMPI_GENERATE_WEAK_F77_BINDINGS(MPI_STATUS_F082F,
                            mpi_status_f082f,
                            mpi_status_f082f_,
                            mpi_status_f082f__,
                            ompi_status_f082f_f,
                            (const MPI_F08_status *f08_status, MPI_Fint *f_status, MPI_Fint *ierr),
                            (f08_status, f_status, ierr) )
-#else
-#define ompi_status_f082f_f pompi_status_f082f_f
-#endif
 #endif
 
 

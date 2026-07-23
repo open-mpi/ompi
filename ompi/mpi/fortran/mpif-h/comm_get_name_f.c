@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_GET_NAME,
                             pmpi_comm_get_name,
                             pmpi_comm_get_name_,
                             pmpi_comm_get_name__,
-                            pompi_comm_get_name_f,
+                            ompi_comm_get_name_f,
                             (MPI_Fint *comm, char *comm_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
                             (comm, comm_name, resultlen, ierr, name_len) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_GET_NAME,
 #pragma weak MPI_Comm_get_name_f = ompi_comm_get_name_f
 #pragma weak MPI_Comm_get_name_f08 = ompi_comm_get_name_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_NAME,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_GET_NAME,
                             mpi_comm_get_name,
                             mpi_comm_get_name_,
                             mpi_comm_get_name__,
                             ompi_comm_get_name_f,
                             (MPI_Fint *comm, char *comm_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
                             (comm, comm_name, resultlen, ierr, name_len) )
-#else
-#define ompi_comm_get_name_f pompi_comm_get_name_f
-#endif
 #endif
 
 

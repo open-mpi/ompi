@@ -746,29 +746,10 @@ end type test_mpi_handle],
     AM_CONDITIONAL([BUILD_FORTRAN_SIZEOF],
         [test $OMPI_FORTRAN_BUILD_SIZEOF -eq 1])
 
-    # There are 2 layers to the MPI mpif.h layer. The only extra thing
-    # that determine mpif.h bindings is that fortran can be disabled
-    # by user. In such cases, we need to not build the target at all.
-    # One layer generates MPI_<foo> bindings. The other layer
-    # generates PMPI_<foo> bindings. The following conditions
-    # determine whether each (or both) these layers are built.
-    #
-    # Superceeding clause:
-    #   - Fortran bindings should be enabled, else everything is
-    #     disabled
-    # 1. MPI_<foo> bindings are needed if:
-    #   - Profiling is not required
-    #   - Profiling is required but weak aliases are not supported
-    # 2. PMPI_<foo> bindings are needed if profiling is required.
-    #
-    # Hence we define 2 conditionals which tell us whether each of
-    # these layers need to be built or NOT
-
-    AM_CONDITIONAL(BUILD_MPI_FORTRAN_MPIFH_BINDINGS_LAYER,
-                   [test $OMPI_PROFILING_COMPILE_SEPARATELY -eq 1 && \
-                    test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
-    AM_CONDITIONAL(BUILD_PMPI_FORTRAN_MPIFH_BINDINGS_LAYER,
-                   [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
+    # The mpif.h bindings are compiled exactly once, emitting both the
+    # strong PMPI_<foo> entry points and the (weak) MPI_<foo> entry
+    # points.  The only question is whether the user has disabled the
+    # Fortran bindings entirely.
     AM_CONDITIONAL(OMPI_BUILD_FORTRAN_MPIFH_BINDINGS,
                    [test $OMPI_BUILD_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS])
 

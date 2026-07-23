@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DUP,
                            pmpi_comm_dup,
                            pmpi_comm_dup_,
                            pmpi_comm_dup__,
-                           pompi_comm_dup_f,
+                           ompi_comm_dup_f,
                            (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr),
                            (comm, newcomm, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_DUP,
 #pragma weak MPI_Comm_dup_f = ompi_comm_dup_f
 #pragma weak MPI_Comm_dup_f08 = ompi_comm_dup_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DUP,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_DUP,
                            mpi_comm_dup,
                            mpi_comm_dup_,
                            mpi_comm_dup__,
                            ompi_comm_dup_f,
                            (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr),
                            (comm, newcomm, ierr) )
-#else
-#define ompi_comm_dup_f pompi_comm_dup_f
-#endif
 #endif
 
 

@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_COUNT,
                            pmpi_get_count,
                            pmpi_get_count_,
                            pmpi_get_count__,
-                           pompi_get_count_f,
+                           ompi_get_count_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_COUNT,
 #pragma weak MPI_Get_count_f = ompi_get_count_f
 #pragma weak MPI_Get_count_f08 = ompi_get_count_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GET_COUNT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GET_COUNT,
                            mpi_get_count,
                            mpi_get_count_,
                            mpi_get_count__,
                            ompi_get_count_f,
                            (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr),
                            (status, datatype, count, ierr) )
-#else
-#define ompi_get_count_f pompi_get_count_f
-#endif
 #endif
 
 

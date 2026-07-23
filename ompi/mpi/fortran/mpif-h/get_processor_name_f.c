@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_PROCESSOR_NAME,
                             pmpi_get_processor_name,
                             pmpi_get_processor_name_,
                             pmpi_get_processor_name__,
-                            pompi_get_processor_name_f,
+                            ompi_get_processor_name_f,
                             (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
                             (name, resultlen, ierr, name_len) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_PROCESSOR_NAME,
 #pragma weak MPI_Get_processor_name_f = ompi_get_processor_name_f
 #pragma weak MPI_Get_processor_name_f08 = ompi_get_processor_name_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
                             mpi_get_processor_name,
                             mpi_get_processor_name_,
                             mpi_get_processor_name__,
                             ompi_get_processor_name_f,
                             (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
                             (name, resultlen, ierr, name_len) )
-#else
-#define ompi_get_processor_name_f pompi_get_processor_name_f
-#endif
 #endif
 
 

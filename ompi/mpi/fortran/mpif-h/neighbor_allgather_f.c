@@ -41,7 +41,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLGATHER,
                            pmpi_neighbor_allgather,
                            pmpi_neighbor_allgather_,
                            pmpi_neighbor_allgather__,
-                           pompi_neighbor_allgather_f,
+                           ompi_neighbor_allgather_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
 #endif
@@ -56,17 +56,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_NEIGHBOR_ALLGATHER,
 #pragma weak MPI_Neighbor_allgather_f = ompi_neighbor_allgather_f
 #pragma weak MPI_Neighbor_allgather_f08 = ompi_neighbor_allgather_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_NEIGHBOR_ALLGATHER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_NEIGHBOR_ALLGATHER,
                            mpi_neighbor_allgather,
                            mpi_neighbor_allgather_,
                            mpi_neighbor_allgather__,
                            ompi_neighbor_allgather_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
-#else
-#define ompi_neighbor_allgather_f pompi_neighbor_allgather_f
-#endif
 #endif
 
 

@@ -1,0 +1,219 @@
+#ifndef MPI_H_ABI
+#define MPI_H_ABI
+
+#include <stddef.h>
+#include <stdint.h>
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#undef MPI_VERSION
+#define MPI_VERSION    5
+#undef MPI_SUBVERSION
+#define MPI_SUBVERSION 0
+
+#undef MPI_ABI_VERSION
+#define MPI_ABI_VERSION    1
+#undef MPI_ABI_SUBVERSION
+#define MPI_ABI_SUBVERSION 0
+
+typedef struct MPI_ABI_Comm * MPI_Comm;
+typedef struct MPI_ABI_Datatype * MPI_Datatype;
+typedef struct MPI_ABI_Errhandler * MPI_Errhandler;
+typedef struct MPI_ABI_File * MPI_File;
+typedef struct MPI_ABI_Group * MPI_Group;
+typedef struct MPI_ABI_Info * MPI_Info;
+typedef struct MPI_ABI_Message * MPI_Message;
+typedef struct MPI_ABI_Op * MPI_Op;
+typedef struct MPI_ABI_Request * MPI_Request;
+typedef struct MPI_ABI_Session * MPI_Session;
+typedef struct MPI_ABI_Win * MPI_Win;
+
+/* MPI_Aint is defined to be intptr_t (or equivalent to it, if compiler support is absent).
+ * The only acceptable alternative to intptr_t is the C89 type equivalent to it. */
+#if !defined(MPI_ABI_Aint)
+#define MPI_ABI_Aint intptr_t
+#endif
+typedef MPI_ABI_Aint @MPI_AINT@;
+#undef  MPI_ABI_Aint
+
+/* MPI_Offset will be 64b on all relevant systems.
+ * We allow for MPI implementations supporting for 128b filesystems. */
+#if !defined(MPI_ABI_Offset)
+#define MPI_ABI_Offset int64_t
+#endif
+typedef MPI_ABI_Offset @MPI_OFFSET@;
+#undef  MPI_ABI_Offset
+
+/* MPI_Count must be large enough to hold the larger of MPI_Aint and MPI_Offset.
+ * Platforms where MPI_Aint is larger than MPI_Offset are extremely rare. */
+#if !defined(MPI_ABI_Count)
+#define MPI_ABI_Count MPI_Offset
+#endif
+typedef MPI_ABI_Count @MPI_COUNT@;
+#undef  MPI_ABI_Count
+
+typedef struct {
+  int MPI_SOURCE;
+  int MPI_TAG;
+  int MPI_ERROR;
+  int MPI_internal[5];
+} MPI_Status;
+
+/* MPI_T types */
+    
+typedef struct MPI_ABI_T_enum* MPI_T_enum;
+typedef struct MPI_ABI_T_cvar_handle* MPI_T_cvar_handle;
+typedef struct MPI_ABI_T_pvar_handle* MPI_T_pvar_handle;
+typedef struct MPI_ABI_T_pvar_session* MPI_T_pvar_session;
+typedef struct MPI_ABI_T_event_registration* MPI_T_event_registration;
+typedef struct MPI_ABI_T_event_instance* MPI_T_event_instance;
+    
+/*****************************************************************************/
+/* The following categories and values are taken, in order, from Section A.1 */
+/* ("Defined Values and Handles") of the MPI Standard, v5.0. Each category   */
+/* (header comment followed by block of assignments) corresponds to a table  */
+/* within Section A.1.                                                       */
+/*****************************************************************************/
+
+/* Error classes */
+$CATEGORY:ERROR_CLASSES$
+
+/* Buffer address constants */
+$CATEGORY:BUFFER_ADDR_CONSTANTS$
+
+/* Constants specifying empty or ignored input */
+$CATEGORY:EMPTY_IGNORE_INPUT_CONSTANTS$
+
+/* Maximum sizes for strings */
+$CATEGORY:MAX_STR_SIZE_CONSTANTS$
+
+/* Mode constants */
+$CATEGORY:MODE_CONSTANTS$
+
+/* Assorted constants */
+$CATEGORY:ASSORTED_CONSTANTS$
+
+/* Threads constants */
+$CATEGORY:THREADS_CONSTANTS$
+
+/* File operations constants */
+$CATEGORY:FILE_OPERATIONS_CONSTANTS$
+
+/* Datatype decoding constants */
+$CATEGORY:DATATYPE_DECODING_CONSTANTS$
+
+/* F90 datatype matching constants */
+$CATEGORY:F90_DATATYPE_MATCHING_CONSTANTS$
+
+/* Results of communicator and group comparisons */
+$CATEGORY:COMMUNICATOR_GROUP_COMP_RESULTS$
+
+/* Topologies */
+$CATEGORY:TOPOLOGIES$
+
+/* Communicator split type constants */
+$CATEGORY:COMMUNICATOR_SPLIT_TYPE$
+
+/* Window lock type constants */
+$CATEGORY:WINDOW_LOCK_TYPE_CONSTANTS$
+
+/* MPI window create flavors */
+$CATEGORY:WINDOW_CREATE_FLAVORS$
+
+/* MPI window models */
+$CATEGORY:WINDOW_MODELS$
+
+/* File positioning constants */
+$CATEGORY:FILE_POS_CONSTANTS$
+
+/* File operation constants */
+$CATEGORY:FILE_OP_CONSTANTS$
+
+/* Environmental inquiry and predefined attribute keys */
+$CATEGORY:ENV_INQ_AND_ATTR_KEYS$
+
+/* Fortran support method specific constants */
+/* $CATEGORY:FORTRAN_SUPPORT_METHOD_CONSTANTS$ */
+
+/* Status array size and reserved index values (Fortran only) */
+/* $CATEGORY:STATUS_ARRAY_SIZE_AND_INDEX_FORTRAN$ */
+
+/* Fortran status array size and reserved index values (C only) */
+$CATEGORY:FORTRAN_STATUS_ARRAY_SIZE_AND_INDEX_C$
+
+/* Variable address size (Fortran only) */
+/* $CATEGORY:VARIABLE_ADDR_SIZE_FORTRAN$ */
+
+/* Reserved communicators */
+$CATEGORY:RESERVED_COMMUNICATORS$
+
+/* Named predefined datatypes */
+$CATEGORY:PREDEFINED_DATATYPES$
+
+/* Optional datatypes (Fortran) */
+$CATEGORY:OPT_DATATYPES_FORTRAN$
+
+/* Datatypes for reduction functions (C) */
+$CATEGORY:REDUCTION_FUNC_DATATYPES_C$
+
+/* Datatypes for reduction functions (Fortran) */
+$CATEGORY:REDUCTION_FUNC_DATATYPES_FORTRAN$
+
+/* Predefined message handles */
+$CATEGORY:MSG_HANDLES$
+
+/* Predefined error-handling specifiers */
+$CATEGORY:ERROR_SPECIFIERS$
+
+/* Environmental inquiry info key */
+$CATEGORY:ENV_INQ_INFO_KEY$
+
+/* Collective operators */
+$CATEGORY:COLLECTIVE_OPS$
+
+/* Predefined group handles */
+$CATEGORY:GROUP_HANDLES$
+
+/* Other predefined handles */
+$CATEGORY:OTHER_HANDLES$
+
+/* Predefined functions */
+$CATEGORY:FUNCTIONS$
+
+/* Deprecated predefined functions */
+$CATEGORY:DEPRECATED_FUNCS$
+
+/* C preprocessor constants and Fortran parameters */
+/* $CATEGORY:C_PREPROCESSOR_CONSTANTS_FORTRAN_PARAMETERS$ */
+
+/* Handles used in the MPI tool information interface */
+$CATEGORY:TOOL_INFO_IFACE_HANDLES$
+
+/* Verbosity levels in the MPI tool information interface */
+$CATEGORY:TOOL_INFO_IFACE_VERBOSITY_LEVELS$
+
+/*
+ * Constants to identify associations of variables in the MPI tool information
+ * interface
+ */
+$CATEGORY:TOOL_INFO_IFACE_VAR_ASSOCIATIONS$
+
+/*
+ * Constants describing the scope of a control variable in the MPI tool
+ * information interface
+ */
+$CATEGORY:TOOL_INFO_IFACE_VAR_SCOPES$
+
+/* Performance variable classes used by the MPI tool information interface */
+$CATEGORY:TOOL_INFO_IFACE_PVAR_CLASSES$
+
+/* Source event ordering guarantees in the MPI tool information interface */
+$CATEGORY:TOOL_INFO_IFACE_SOURCE_ORDERINGS$
+
+/*
+ * Callback safety requirement levels used in the MPI tool information interface
+ */
+$CATEGORY:TOOL_INFO_IFACE_CB_SAFETY_REQ_LEVELS$
+

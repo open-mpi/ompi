@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ISENDRECV,
                            pmpi_isendrecv,
                            pmpi_isendrecv_,
                            pmpi_isendrecv__,
-                           pompi_isendrecv_f,
+                           ompi_isendrecv_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, MPI_Fint *dest, MPI_Fint *sendtag, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, request, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ISENDRECV,
 #pragma weak MPI_Isendrecv_f = ompi_isendrecv_f
 #pragma weak MPI_Isendrecv_f08 = ompi_isendrecv_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ISENDRECV,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_ISENDRECV,
                            mpi_isendrecv,
                            mpi_isendrecv_,
                            mpi_isendrecv__,
                            ompi_isendrecv_f,
                            (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, MPI_Fint *dest, MPI_Fint *sendtag, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                            (sendbuf, sendcount, sendtype, dest, sendtag, recvbuf, recvcount, recvtype, source, recvtag, comm, request, ierr) )
-#else
-#define ompi_isendrecv_f pompi_isendrecv_f
-#endif
 #endif
 
 

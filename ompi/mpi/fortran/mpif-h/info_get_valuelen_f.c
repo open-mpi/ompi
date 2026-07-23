@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_VALUELEN,
                             pmpi_info_get_valuelen,
                             pmpi_info_get_valuelen_,
                             pmpi_info_get_valuelen__,
-                            pompi_info_get_valuelen_f,
+                            ompi_info_get_valuelen_f,
                             (MPI_Fint *info, char *key, MPI_Fint *valuelen, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len),
                             (info, key, valuelen, flag, ierr, key_len) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_INFO_GET_VALUELEN,
 #pragma weak MPI_Info_get_valuelen_f = ompi_info_get_valuelen_f
 #pragma weak MPI_Info_get_valuelen_f08 = ompi_info_get_valuelen_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_VALUELEN,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_INFO_GET_VALUELEN,
                             mpi_info_get_valuelen,
                             mpi_info_get_valuelen_,
                             mpi_info_get_valuelen__,
                             ompi_info_get_valuelen_f,
                             (MPI_Fint *info, char *key, MPI_Fint *valuelen, ompi_fortran_logical_t *flag, MPI_Fint *ierr, int key_len),
                             (info, key, valuelen, flag, ierr, key_len) )
-#else
-#define ompi_info_get_valuelen_f pompi_info_get_valuelen_f
-#endif
 #endif
 
 

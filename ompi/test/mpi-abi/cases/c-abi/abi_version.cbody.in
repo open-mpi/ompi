@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Verify the installed standard ABI library reports the ABI version
+ *   that the installed standard ABI header promised at compile time.
+ */
+int major = -1;
+int minor = -1;
+int ret = MPI_Abi_get_version(&major, &minor);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+if (MPI_ABI_VERSION != major) {
+    return 2;
+}
+if (MPI_ABI_SUBVERSION != minor) {
+    return 3;
+}

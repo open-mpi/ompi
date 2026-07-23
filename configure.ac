@@ -147,6 +147,8 @@ OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
+          AC_SUBST(libmpi_abi_so_version)
+          AC_SUBST(libopen_mpi_so_version)
           AC_SUBST(libmpi_mpifh_so_version)
           AC_SUBST(libmpi_usempi_tkr_so_version)
           AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
@@ -562,19 +564,30 @@ OPAL_C_WEAK_ALIASES
 OPAL_C_MACRO_WEAK_ALIASES
 OPAL_C_WEAK_SYMBOLS
 
-# If we want the profiling layer:
-# - If the C compiler has weak aliases, use those.
-# - If not, then set to compile the code again with #define's in a
-#   separate directory.
+# The profiling layer:
+#
+# - Where the C compiler has weak aliases, the public MPI_* symbol is a weak
+#   alias of the strong PMPI_* one.
+#
+# - Where it does not (notably Mach-O, which cannot express a weak alias at
+#   all), the public MPI_* symbol is a *weak definition* that forwards to the
+#   strong PMPI_* one.
+#
+# Either way the bindings are compiled exactly once.  Open MPI used to compile
+# them a second time, with #defines, purely to emit the MPI_* symbols on
+# platforms with no weak aliases; that is no longer necessary, and weak symbols
+# are now required.
 
 if test "$WANT_WEAK_ALIASES" = "0"; then
     OPAL_C_HAVE_WEAK_ALIASES=0
 fi
-if test "$OPAL_C_HAVE_WEAK_ALIASES" = "1"; then
-    OMPI_PROFILING_COMPILE_SEPARATELY=0
-else
-    OMPI_PROFILING_COMPILE_SEPARATELY=1
-fi
+AS_IF([test "$OPAL_C_HAVE_WEAK_ALIASES" != "1" && \
+       test "$OPAL_C_HAVE_WEAK_SYMBOLS" != "1"],
+      [AC_MSG_ERROR([Open MPI requires a C compiler with support for weak
+symbols (__attribute__((weak))) or weak aliases; this compiler has neither.
+The MPI profiling interface cannot be built without one of them.])])
+
+OMPI_PROFILING_COMPILE_SEPARATELY=0
 
 # Check if we support the offsetof compiler directive
 
@@ -1196,6 +1209,11 @@ AC_SUBST(OPAL_3RDPARTY_DISTCLEAN_DIRS)
 OPAL_SETUP_FT
 
 ##################################
+# MPI Forum values
+##################################
+OMPI_GET_FORUM_ABI_VALUES
+
+##################################
 # MCA
 ##################################
 
@@ -1356,6 +1374,57 @@ m4_ifdef([project_ompi],[CXXCPPFLAGS="$CXX_INCLUDES $CXXCPPFLAGS"])
 # versions without optimization for debugger modules).
 
 m4_ifdef([project_ompi], [OMPI_SETUP_DEBUGGER_FLAGS])
+
+############################################################################
+# Symbol re-export detection for libmpi backward compatibility
+############################################################################
+# Detect platform-specific linker support for re-exporting symbols from
+# libopen_mpi through libmpi to maintain v5.x binary compatibility.
+#
+# This is only needed on macOS, where the two-level namespace records
+# which library each symbol was found in at link time: a v5.x-built
+# binary looked up the predefined MPI handle symbols (e.g.,
+# ompi_mpi_comm_world) in libmpi, so libmpi must re-export them now
+# that they live in libopen_mpi.  On ELF platforms the global symbol
+# namespace is flat: libmpi's DT_NEEDED dependency on libopen_mpi is
+# sufficient for a v5.x binary's references to resolve at run time,
+# so no re-export mechanism is required at all.
+m4_ifdef([project_ompi], [
+    AC_MSG_CHECKING([for linker symbol re-export support])
+    ompi_reexport_method="none"
+
+    OPAL_VAR_SCOPE_PUSH([LDFLAGS_save])
+
+    # Save current LDFLAGS
+    LDFLAGS_save="$LDFLAGS"
+
+    case $host_os in
+    darwin* | rhapsody*)
+        # macOS: Test -reexport_library flag
+        LDFLAGS="$LDFLAGS_save -Wl,-reexport_library,/usr/lib/libSystem.dylib"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+                       [ompi_reexport_method=macos],
+                       [AC_MSG_WARN([macOS linker does not support -reexport flag])])
+        ;;
+    *)
+        ;;
+    esac
+
+    # Restore LDFLAGS
+    LDFLAGS="$LDFLAGS_save"
+    OPAL_VAR_SCOPE_POP
+
+    AC_MSG_RESULT([$ompi_reexport_method])
+
+    AM_CONDITIONAL([OMPI_REEXPORT_MACOS],
+                   [test "$ompi_reexport_method" = "macos"])
+])
+
+# libopen_mpi fails at link time.
+# See https://github.com/open-mpi/ompi/issues/2956
+# but the check does not seem to work on all architectures.
+m4_ifdef([project_ompi], [OMPI_SETUP_LAYERING_CHECKS])
+
 #
 # Delayed the substitution of CFLAGS and friends until now because
 # they may have been modified throughout the course of this script.

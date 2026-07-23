@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_UNION,
                            pmpi_group_union,
                            pmpi_group_union_,
                            pmpi_group_union__,
-                           pompi_group_union_f,
+                           ompi_group_union_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_UNION,
 #pragma weak MPI_Group_union_f = ompi_group_union_f
 #pragma weak MPI_Group_union_f08 = ompi_group_union_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_UNION,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GROUP_UNION,
                            mpi_group_union,
                            mpi_group_union_,
                            mpi_group_union__,
                            ompi_group_union_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
-#else
-#define ompi_group_union_f pompi_group_union_f
-#endif
 #endif
 
 

@@ -43,7 +43,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_INFO,
                             pmpi_session_get_info,
                             pmpi_session_get_info_,
                             pmpi_session_get_info__,
-                            pompi_session_get_info_f,
+                            ompi_session_get_info_f,
                             (MPI_Fint *session, MPI_Fint *npset_names, MPI_Fint *ierr),
                             (session, npset_names, ierr) )
 #endif
@@ -58,17 +58,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_SESSION_GET_INFO,
 #pragma weak MPI_Session_get_info_f = ompi_session_get_info_f
 #pragma weak MPI_Session_get_info_f08 = ompi_session_get_info_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_SESSION_GET_INFO,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_SESSION_GET_INFO,
                             mpi_session_get_info,
                             mpi_session_get_info_,
                             mpi_session_get_info__,
                             ompi_session_get_info_f,
                             (MPI_Fint *session, MPI_Fint *npset_names, MPI_Fint *ierr),
                             (session, npset_names, ierr) )
-#else
-#define ompi_session_get_info_f pompi_session_get_info_f
-#endif
 #endif
 
 void ompi_session_get_info_f(MPI_Fint *session, MPI_Fint *info, MPI_Fint *ierr)
