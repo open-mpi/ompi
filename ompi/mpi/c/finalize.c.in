@@ -26,6 +26,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/ompi_hwpc_cxi_counters.h"
 
 PROTOTYPE ERROR_CLASS finalize()
 {

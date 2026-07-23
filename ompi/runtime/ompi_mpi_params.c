@@ -88,6 +88,7 @@ bool ompi_mpi_compat_mpi3 = true;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
+
 uint32_t ompi_pmix_connect_timeout = 0;
 
 bool ompi_enable_timing = false;
@@ -375,7 +376,7 @@ int ompi_mpi_register_params(void)
 #if SPC_ENABLE == 1
     ompi_mpi_spc_attach_string = NULL;
     (void) mca_base_var_register("ompi", "mpi", NULL, "spc_attach",
-                                 "A comma-delimeted list of software-based performance counters (SPCs) to enable (\"all\" enables all counters).",
+                                 "A comma-delimited list of software-based performance counters (SPCs) to enable (\"all\" enables all counters).",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
