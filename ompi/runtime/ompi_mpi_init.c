@@ -30,6 +30,7 @@
  * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -606,13 +607,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
        function else), but before dpm.dyncom_init, since this function
        might require collective for the CID allocation. */
     if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD, NULL))) {
         error = "mca_coll_base_comm_select(MPI_COMM_WORLD) failed";
         goto error;
     }
 
     if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_SELF))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_SELF, NULL))) {
         error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
         goto error;
     }

@@ -22,7 +22,7 @@
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      BULL S.A.S. All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -213,7 +213,7 @@ static void mca_coll_base_print_component_names(ompi_communicator_t *comm)
  *
  * This selection logic is not for the weak.
  */
-int mca_coll_base_comm_select(ompi_communicator_t * comm)
+int mca_coll_base_comm_select(ompi_communicator_t * comm, ompi_communicator_t * parent)
 {
     opal_list_t *selectable;
     opal_list_item_t *item;
@@ -229,6 +229,13 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
      * sentinel values */
     comm->c_coll = (mca_coll_base_comm_coll_t*)calloc(1, sizeof(mca_coll_base_comm_coll_t));
     comm->c_coll->coll_revoke_local = mca_coll_base_revoke_local;
+
+    /* Make the parent communicator available to components for the duration
+     * of the selection (comm_query / module_enable).  Some components use it
+     * to consult parent state, e.g. to inherit a collective context rather
+     * than bootstrapping a new one.  It is cleared again before returning so
+     * it can never be dereferenced past the selection window. */
+    comm->c_coll->parent = parent;
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:base:comm_select: Checking all available modules");
@@ -275,6 +282,10 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     }
     /* Done with the list from the check_components() call so release it. */
     OBJ_RELEASE(selectable);
+
+    /* The parent communicator is only meaningful during selection; clear it
+     * so it cannot be dereferenced (and cannot dangle) afterwards. */
+    comm->c_coll->parent = NULL;
 
     /* check to make sure no NULLs */
     if (CHECK_NULL(which_func, comm, allgather) ||
