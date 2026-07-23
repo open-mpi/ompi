@@ -359,6 +359,13 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         return 1;
     }
 
+    /* cuPointerGetAttributes returns success and fills default NULL values for
+     * pointers that are not valid CUDA pointers. Treat that as host memory before
+     * probing VMM or mempool state. */
+    if (0 == mem_type) {
+        return 0;
+    }
+
     is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
     is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
 
@@ -373,9 +380,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
             /* Host memory, nothing to do here */
             return 0;
         }
-    } else if (0 == mem_type) {
-        /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
-        return 0;
     } else {
         if (is_vmm) {
             *dev_id = vmm_dev_id;
