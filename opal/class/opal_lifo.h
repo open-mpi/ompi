@@ -163,10 +163,10 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
         if (item == &lifo->opal_lifo_ghost) {
             return NULL;
         }
-
+        // synchronize with the wmb in push
+        opal_atomic_rmb();
         if (opal_update_counted_pointer(&lifo->opal_lifo_head, &old_head,
                                         (opal_list_item_t *) item->opal_list_next)) {
-            opal_atomic_wmb();
             item->opal_list_next = NULL;
             return item;
         }
@@ -227,8 +227,6 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
         opal_atomic_sc_ptr(&lifo->opal_lifo_head.data.item, next, ret);
     } while (!ret);
 
-    opal_atomic_wmb();
-
     item->opal_list_next = NULL;
     return item;
 }
@@ -248,7 +246,8 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
             continue;
         }
 
-        opal_atomic_wmb();
+        // synchronize with the wmb in push
+        opal_atomic_rmb();
 
         head = item;
         /* try to swap out the head pointer */
@@ -268,8 +267,6 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
     if (item == &lifo->opal_lifo_ghost) {
         return NULL;
     }
-
-    opal_atomic_wmb();
 
     item->opal_list_next = NULL;
     return item;
