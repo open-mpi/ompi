@@ -59,6 +59,19 @@ OMPI_DECLSPEC extern volatile bool ompi_rte_initialized;
 
 /** Do we have multiple threads? */
 OMPI_DECLSPEC extern bool ompi_mpi_thread_multiple;
+
+/* Number of active MPI_T init references (defined in
+   ompi/mpi/tool/mpit_common.c).  Read by the instance and world-model
+   initialization paths to judge quiescence before writing the
+   process-wide thread flags; all transitions happen with the instance
+   lock held (MPI_T_init_thread()/MPI_T_finalize() take it), so a reader
+   holding that lock sees a stable value. */
+OMPI_DECLSPEC extern volatile uint32_t ompi_mpit_init_count;
+
+/* Thread level of the current MPI_T epoch (defined in
+   ompi/mpi/tool/mpit_common.c); MPI_THREAD_SINGLE when no epoch is
+   active.  Same locking discipline as ompi_mpit_init_count. */
+OMPI_DECLSPEC extern int ompi_mpit_thread_level;
 /** Thread level requested to \c MPI_Init_thread() */
 OMPI_DECLSPEC extern int ompi_mpi_thread_requested;
 /** Thread level provided by Open MPI */

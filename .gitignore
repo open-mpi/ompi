@@ -231,6 +231,18 @@ ompi/mpi/fortran/use-mpi-tkr/mpi-tkr-sizeof.h
 ompi/mpi/tool/profile/*.c
 
 ompi/test/t/mpi_t_category_get_events
+ompi/test/t/mpi_t_concurrent_init
+ompi/test/t/mpi_t_level_no_downgrade
+ompi/test/t/mpi_t_level_pinning
+ompi/test/t/mpi_t_lifecycle
+ompi/test/t/mpi_t_outlives_mpi
+ompi/test/t/mpi_t_repeated_sessions
+ompi/test/t/mpi_t_sessions
+ompi/test/t/mpi_t_stress
+ompi/test/t/mpi_t_world_close_first
+ompi/test/t/mpi_t_world_inner
+ompi/test/t/mpi_t_world_outlast
+ompi/test/t/mpi_t_world_sessions
 
 ompi/test/file/file_info_defaults
 ompi/test/file/file_info_hints

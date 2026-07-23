@@ -6,7 +6,7 @@
  * Copyright (c) 2022      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * Copyright (c) 2026      BULL S.A.S.  All rights reserved.
@@ -28,6 +28,7 @@
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
 
 #include "ompi/interlib/interlib.h"
 #include "ompi/communicator/communicator.h"
@@ -76,6 +77,26 @@ __opal_attribute_constructor__ static void instance_lock_init(void) {
 #error "No support for recursive mutexes available on this platform."
 #endif  /* defined(OPAL_RECURSIVE_MUTEX_STATIC_INIT) */
 
+/* MPI_T_init_thread()/MPI_T_finalize() serialize themselves with the same
+   lock that serializes instance (world and session) initialization and
+   teardown.  The two families share unlocked under-layers -- the
+   opal_init_util()/opal_init() reference counters, the shared event base
+   reference count, MCA variable registration, and every framework's
+   refcnt -- so a first MPI_T initialization racing a session (or world)
+   initialization on another thread would corrupt that state.  Lock
+   ordering: MPI_T takes its own serializing lock (ompi_mpit_big_lock)
+   first, then this one; nothing on the instance side ever takes the MPI_T
+   lock, so the ordering cannot invert. */
+void ompi_mpi_instance_lock (void)
+{
+    opal_mutex_lock (&instance_lock);
+}
+
+void ompi_mpi_instance_unlock (void)
+{
+    opal_mutex_unlock (&instance_lock);
+}
+
 /** MPI_Init instance */
 ompi_instance_t *ompi_mpi_instance_default = NULL;
 
@@ -93,6 +114,11 @@ enum {
 };
 
 opal_atomic_int32_t ompi_instance_count = 0;
+
+/* Set when a first instance's common initialization failed partway;
+   the partial state cannot be safely unwound or re-entered, so all
+   later instance creation is refused (see ompi_mpi_instance_init()). */
+static bool instance_init_failed = false;
 
 static const char *ompi_instance_builtin_psets[] = {
     "mpi://WORLD",
@@ -366,6 +392,7 @@ static void evhandler_dereg_callbk(pmix_status_t status,
 static int ompi_mpi_instance_init_common (int argc, char **argv)
 {
     int ret;
+    bool need_world_comms;
     ompi_proc_t **procs;
     size_t nprocs;
     volatile bool active;
@@ -680,8 +707,8 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
     }
 
-    if (mca_pml_base_requires_world() ||
-        mca_osc_base_requires_world()) {
+    need_world_comms = mca_pml_base_requires_world() || mca_osc_base_requires_world();
+    if (need_world_comms) {
         /* need to set up comm world for this instance -- XXX -- FIXME -- probably won't always
          * be the case. */
         if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
@@ -726,8 +753,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     /* some btls/mtls require we call add_procs with all procs in the job.
      * since the btls/mtls have no visibility here it is up to the pml to
      * convey this requirement */
-    if (mca_pml_base_requires_world() ||
-        mca_osc_base_requires_world()) {
+    if (need_world_comms) {
         if (NULL == (procs = ompi_proc_world (&nprocs))) {
             return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
         }
@@ -750,6 +776,29 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ret;
     } else if (OMPI_SUCCESS != ret) {
         return ompi_instance_print_error ("PML add procs failed", ret);
+    }
+
+    /* ompi_comm_init_mpi3() (above) marks the predefined world/self
+       communicators OMPI_COMM_PML_ADDED, but the matching
+       MCA_PML_CALL(add_comm()) calls live only in the World Model path
+       (ompi_mpi_init()).  When the communicator subsystem was set up
+       here -- a sessions-only process whose pml/osc requires the world,
+       e.g. ob1 over a multi-interface tcp btl at MPI_THREAD_MULTIPLE --
+       the flag was a lie: teardown then calls pml del_comm() on
+       communicators the PML has never seen, and ob1 dereferences the
+       NULL c_pml_comm.  Add them for real, now that add_procs() has
+       run.  The c_pml_comm guard keeps the World Model path (which
+       re-runs ompi_comm_init_mpi3() and performs its own add_comm()
+       calls after this function returns) from double-adding. */
+    if (need_world_comms && NULL == ompi_mpi_comm_world.comm.c_pml_comm) {
+        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
+        if (OMPI_SUCCESS != ret) {
+            return ompi_instance_print_error ("PML add comm (world) failed", ret);
+        }
+        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
+        if (OMPI_SUCCESS != ret) {
+            return ompi_instance_print_error ("PML add comm (self) failed", ret);
+        }
     }
 
     /* Determine the overall threadlevel support of all processes
@@ -881,19 +930,90 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
 
     *instance = &ompi_mpi_instance_null.instance;
 
-    /* If thread support was enabled, then setup OPAL to allow for them by default. This must be done
-     * early to prevent a race condition that can occur with orte_init(). */
-    if (ts_level == MPI_THREAD_MULTIPLE) {
-        opal_set_using_threads(true);
+    opal_mutex_lock (&instance_lock);
+
+    if (OPAL_UNLIKELY(instance_init_failed)) {
+        opal_mutex_unlock (&instance_lock);
+        return OMPI_ERROR;
     }
 
-    /* Set single-threaded flag for optimization purposes */
-    opal_single_threaded = (ts_level == MPI_THREAD_SINGLE);
+    /* The process-wide thread flags are monotonic: they only ever ratchet
+     * upward, because other scopes (the World Model, other sessions,
+     * MPI_T) with stronger promises may already be active, and the levels
+     * they have reported are pinned (MPI 5.0 secs. 11.3.1, 11.6.2,
+     * 15.3.4).  In particular, do NOT assign opal_single_threaded from
+     * this instance's level: a THREAD_SINGLE session created while a
+     * THREAD_MULTIPLE scope is live must not flip the process back to
+     * single-threaded behavior.
+     *
+     * Ratchet only at a quiescent point: when this is the first instance
+     * (the instance lock we hold pins ompi_instance_count, and with no
+     * active instance a conforming program has no thread inside MPI's
+     * hot paths, which read these plain flags without locks).  When an
+     * instance is already active, writing the flags would (a) race those
+     * unlocked hot-path reads and (b) lie: components already selected
+     * and configured by the first instance (e.g. a UCX worker's thread
+     * mode, ob1's request paths) were frozen at the lower level and are
+     * not reconfigured here.  Instead, exercise the latitude MPI 5.0
+     * sec. 11.6.2 grants ("the requested and provided level of thread
+     * support when creating a Session may influence the granted level of
+     * thread support in a subsequent invocation of MPI_SESSION_INIT"):
+     * grant this later scope MPI_THREAD_SERIALIZED, which the
+     * already-running configuration genuinely supports, and report that
+     * through the session's "thread_level" info key. */
+    /* An MPI_T epoch does NOT usually block the flip: the standard tool
+       pattern initializes MPI_T (from a PMPI wrapper) before the
+       application's MPI_Init_thread(MPI_THREAD_MULTIPLE), and that
+       application must still be granted MULTIPLE.  A tool epoch at
+       MPI_THREAD_SINGLE promises a single-threaded process (no
+       concurrent readers to race), and a tool epoch above SINGLE flipped
+       the OPAL flags itself at its own (quiescent) init -- making the
+       conditional writes below no-ops, hence race-free.  The one unsafe
+       case is a tool epoch above SINGLE whose own init could NOT flip
+       the flags (it started while instances were active): its threads
+       may be inside unlocked MPI_T query routines, so the flags must not
+       change under them. */
+    bool mpit_blocks_flip = (0 != ompi_mpit_init_count
+                             && MPI_THREAD_SINGLE != ompi_mpit_thread_level
+                             && !opal_using_threads());
 
-    opal_mutex_lock (&instance_lock);
+    if (0 == ompi_instance_count && !mpit_blocks_flip) {
+        /* Write only on transition: flags may already be set by an
+           earlier (finalized) scope, and redundant writes would race any
+           unlocked reader. */
+        if (ts_level == MPI_THREAD_MULTIPLE) {
+            if (!opal_using_threads()) {
+                opal_set_using_threads(true);
+            }
+            /* The MPI layer's threaded code paths (e.g. ob1's request
+             * handling) key off this flag; a THREAD_MULTIPLE session must
+             * engage them even when the World Model was initialized at a
+             * lower level -- or not at all, in which case nothing else
+             * ever sets it. */
+            if (!ompi_mpi_thread_multiple) {
+                ompi_mpi_thread_multiple = true;
+            }
+        }
+        if (MPI_THREAD_SINGLE != ts_level && opal_single_threaded) {
+            opal_single_threaded = false;
+        }
+    } else if (MPI_THREAD_MULTIPLE == ts_level && !ompi_mpi_thread_multiple) {
+        ts_level = MPI_THREAD_SERIALIZED;
+    }
+
     if (0 == opal_atomic_fetch_add_32 (&ompi_instance_count, 1)) {
         ret = ompi_mpi_instance_init_common (argc, argv);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != ret)) {
+            /* Undo the increment: a stuck nonzero count would make every
+               later thread-level decision treat a phantom instance as
+               active.  A retry cannot be permitted either:
+               init_common's partial state (RTE, frameworks, the common
+               finalize domain) is not unwound here, and re-entering
+               init_common over it would corrupt or leak.  Latch instead:
+               all future instance creation in this process fails
+               cleanly. */
+            instance_init_failed = true;
+            (void) opal_atomic_add_fetch_32 (&ompi_instance_count, -1);
             opal_mutex_unlock (&instance_lock);
             return ret;
         }

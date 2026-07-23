@@ -72,6 +72,7 @@
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/instance/instance.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
@@ -316,8 +317,41 @@ void ompi_mpi_thread_level(int requested, int *provided)
      * provided > required. Finally, if the user requirement cannot be
      * satisfied, then the call will return in provided the highest
      * supported level.
+     *
+     * This establishes the World Model's thread level, and is called only
+     * from ompi_mpi_init().  These globals back MPI_QUERY_THREAD, which
+     * MPI 5.0 sec. 11.6.2 pins for the life of the process to "the level
+     * of thread support returned by the original call to
+     * MPI_INIT_THREAD" -- no other scope (MPI_T, sessions) may write
+     * them; each has its own pinned level.
      */
     ompi_mpi_thread_requested = requested;
+
+    /* If sessions are already active at a lower level, this process
+       cannot be safely upgraded to MPI_THREAD_MULTIPLE mid-flight (the
+       components those sessions selected were configured at the lower
+       level, and the process-wide flags cannot be changed without racing
+       their unlocked hot-path readers).  Grant MPI_THREAD_SERIALIZED
+       instead -- the coupling MPI 5.0 sec. 11.6.2 explicitly permits:
+       "the level of thread support returned from MPI_INIT_THREAD may be
+       similarly influenced by the requested level of thread support in
+       the prior call to MPI_SESSION_INIT".  We are called with the
+       instance lock held, which pins ompi_instance_count. */
+    if (MPI_THREAD_MULTIPLE == requested && !ompi_mpi_thread_multiple
+        && (0 != ompi_instance_count
+            || (0 != ompi_mpit_init_count
+                && MPI_THREAD_SINGLE != ompi_mpit_thread_level
+                && !opal_using_threads()))) {
+        /* Active sessions, or a tool epoch whose threads may be inside
+           unlocked MPI_T query routines and whose own init could not
+           flip the OPAL flags, make an upgrade unsafe.  Note this is NOT
+           the common tool pattern (MPI_T_init_thread() from a PMPI
+           wrapper before the application's MPI_Init_thread()): a tool at
+           SINGLE has no other threads, and a tool above SINGLE at a
+           quiescent init already flipped the OPAL flags, so MULTIPLE is
+           granted normally in both of those cases. */
+        requested = MPI_THREAD_SERIALIZED;
+    }
 
     ompi_mpi_thread_provided = *provided = requested;
 
@@ -325,8 +359,13 @@ void ompi_mpi_thread_level(int requested, int *provided)
         ompi_mpi_main_thread = opal_thread_get_self();
     }
 
-    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided ==
-                                MPI_THREAD_MULTIPLE);
+    /* Ratchet only: a THREAD_MULTIPLE session may already have engaged
+       the process-wide threaded code paths, and a lower-level world
+       initialization must not disengage them. */
+    if (MPI_THREAD_MULTIPLE == ompi_mpi_thread_provided
+        && !ompi_mpi_thread_multiple) {
+        ompi_mpi_thread_multiple = true;
+    }
 }
 
 static void fence_release(pmix_status_t status, void *cbdata)
@@ -392,9 +431,25 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     }
 #endif
 
+    /* Publish the world thread level (and ompi_mpi_main_thread) under
+       the instance lock: MPI_T_finalize() reads ompi_mpi_main_thread
+       under that lock, and must either see it not yet set (and leave it
+       alone because ompi_mpi_state is already INIT_STARTED) or see a
+       fully published value.
+
+       Hold the lock across the instance initialization as well (it is
+       recursive), so that the level decided above and the process-wide
+       thread-flag ratchet inside ompi_mpi_instance_init() happen in ONE
+       critical section.  Otherwise a concurrent MPI_Session_init() could
+       slip between the two acquisitions, become the first instance
+       without engaging the flags, and leave a THREAD_MULTIPLE world
+       running with its granted level already decided but the threaded
+       code paths never enabled. */
+    ompi_mpi_instance_lock ();
     ompi_mpi_thread_level(requested, provided);
 
     ret = ompi_mpi_instance_init (*provided, &ompi_mpi_info_null.info.super, MPI_ERRORS_ARE_FATAL, &ompi_mpi_instance_default, argc, argv);
+    ompi_mpi_instance_unlock ();
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         error = "ompi_mpi_init: ompi_mpi_instance_init failed";
         goto error;

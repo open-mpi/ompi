@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2018-2025  Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -134,6 +135,14 @@ OMPI_DECLSPEC int ompi_mpi_instance_init (int ts_level, opal_info_t *info, ompi_
  * @brief Destroy an MPI instance and set it to MPI_SESSION_NULL
  */
 OMPI_DECLSPEC int ompi_mpi_instance_finalize (ompi_instance_t **instance);
+
+/* Serialize against instance (world and session) initialization and
+   teardown.  For use by the MPI_T entry points, whose first init/last
+   finalize share unlocked state with instance bring-up; see the
+   definitions in instance.c for the locking rationale and the
+   lock-ordering rules. */
+OMPI_DECLSPEC void ompi_mpi_instance_lock (void);
+OMPI_DECLSPEC void ompi_mpi_instance_unlock (void);
 
 
 /**
