@@ -55,7 +55,7 @@
 int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
                                  mca_coll_han_module_t *han_module)
 {
-    int low_rank, low_size, up_rank, w_rank, w_size;
+    int low_rank, low_size, up_rank, w_rank, w_size, node_leader_w_rank;
     ompi_communicator_t **low_comm = &(han_module->sub_comm[INTRA_NODE]);
     ompi_communicator_t **up_comm = &(han_module->sub_comm[INTER_NODE]);
     mca_coll_han_collectives_fallback_t fallbacks;
@@ -151,11 +151,56 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     low_rank = ompi_comm_rank(*low_comm);
 
     /*
-     * This sub-communicator contains one process per node: processes with the
-     * same intra-node rank id share such a sub-communicator
+     * This sub-communicator contains one process per node: all ranks that share
+     * a given intra-node rank id (low_rank) form one such sub-communicator.
+     *
+     * Sort key = global rank of this node's leader (the rank with low_rank 0),
+     * NOT each rank's own w_rank.
+     *
+     * Why: the split produces one inter-node "column" for each low_rank value
+     * 0 .. low_size-1.  Ranks on the same physical node but with different
+     * low_rank values end up in different columns.  When the sort key is w_rank,
+     * each column is ordered independently by global rank, so a rank's position
+     * (up_rank) in its column can differ from its node-mates in other columns.
+     * The vrank formula  vrank = low_size * up_rank + low_rank  then assigns
+     * inconsistent node identifiers to ranks on the same node, breaking the
+     * role-assignment logic in gatherv, scatterv, and alltoall*.
+     *
+     * Using the node leader's global rank as the key guarantees that every rank
+     * on node K uses the same key regardless of which column it sits in, so all
+     * ranks on node K receive the same up_rank value.  The formula then
+     * correctly encodes each rank's 2-D position in the node × intra-node grid
+     * for ANY balanced rank layout, not just map-by-core.
+     *
+     * Example: 4 ranks, 2 nodes, mapped by node (NOT map-by-core)
+     *   Node 0: global ranks {0, 2}    low_rank: 0→0, 2→1
+     *   Node 1: global ranks {1, 3}    low_rank: 1→0, 3→1
+     *
+     *   Old key = w_rank:
+     *     col (low_rank=0): {0,1} sorted by w_rank → up_rank 0→0, 1→1
+     *     col (low_rank=1): {2,3} sorted by w_rank → up_rank 2→0, 3→1
+     *     up_rank is still consistent here, but for a layout like
+     *     MPI_Intercomm_merge where the same node's global ranks are
+     *     not monotone, a node's members get *different* up_rank values
+     *     across columns, e.g. up_rank=0 in col 0 but up_rank=1 in col 1.
+     *
+     *   New key = node_leader_w_rank (min global rank on the node):
+     *     Node 0 leader = rank 0;  Node 1 leader = rank 1.
+     *     col (low_rank=0): {0,1} sorted by key 0,1 → up_rank 0→0, 1→1
+     *     col (low_rank=1): {2,3} sorted by key 0,1 → up_rank 2→0, 3→1
+     *     Every rank on node 0 has up_rank=0; every rank on node 1
+     *     has up_rank=1, regardless of which column it sits in.
+     *
+     * The node leader's global rank is obtained via a pure local group
+     * translation (no communication).
      */
+    {
+        int local_zero = 0;
+        ompi_group_translate_ranks((*low_comm)->c_local_group, 1, &local_zero,
+                                   comm->c_local_group, &node_leader_w_rank);
+    }
     opal_info_set(&comm_info, "ompi_comm_coll_han_topo_level", "INTER_NODE");
-    rc = ompi_comm_split_with_info(comm, low_rank, w_rank, &comm_info, up_comm, false);
+    rc = ompi_comm_split_with_info(comm, low_rank, node_leader_w_rank, &comm_info, up_comm, false);
     if( OMPI_SUCCESS != rc ) {
         /* cannot create subcommunicators. Return the error upstream */
         goto return_with_error;
@@ -165,11 +210,13 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
 
     /*
      * Set my virtual rank number.
-     * my rank # = <intra-node comm size> * <inter-node rank number>
-     *             + <intra-node rank number>
-     * WARNING: this formula works only if the ranks are perfectly spread over
-     *          the nodes
-     * TODO: find a better way of doing
+     * vrank = low_size * up_rank + low_rank
+     *
+     * This encodes the 2-D position of a rank in the node × intra-node grid:
+     * up_rank  = which node (row), low_rank = position within the node (column).
+     * Because the up_comm split above uses node_leader_w_rank as the key, all
+     * ranks on the same node share the same up_rank across every column, so
+     * the formula is valid for any balanced rank layout.
      */
     vrank = low_size * up_rank + low_rank;
     vranks = (int *)malloc(sizeof(int) * w_size);
@@ -235,7 +282,7 @@ return_with_error:
 int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
                              mca_coll_han_module_t *han_module)
 {
-    int low_rank, low_size, up_rank, w_rank, w_size;
+    int low_rank, low_size, up_rank, w_rank, w_size, node_leader_w_rank;
     mca_coll_han_collectives_fallback_t fallbacks;
     ompi_communicator_t **low_comms = NULL, **up_comms = NULL;
     int vrank, *vranks;
@@ -354,12 +401,35 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     }
     assert(OMPI_COMM_IS_DISJOINT_SET(low_comms[2]) && !OMPI_COMM_IS_DISJOINT(low_comms[2]));
     /*
-     * Upgrade libnbc module priority to set up up_comms[0] with libnbc module
-     * This sub-communicator contains one process per node: processes with the
-     * same intra-node rank id share such a sub-communicator
+     * Determine the global rank of this node's leader (the rank with low_rank 0
+     * in low_comms[0]).  This is computed locally with no communication.
+     *
+     * All up_comm splits below use node_leader_w_rank as the sort key instead
+     * of each rank's own w_rank.  See mca_coll_han_comm_create_new for the
+     * full explanation; in short, this guarantees that every rank on the same
+     * physical node receives the same up_rank across all up_comm columns
+     * (one column per low_rank value), making the vrank formula valid for any
+     * balanced rank layout.
+     *
+     * Example: 4 ranks, 2 nodes, global ranks {0,2} on node 0 / {1,3} on node 1
+     *   node 0 leader = rank 0, node 1 leader = rank 1
+     *   Both col (low_rank=0) and col (low_rank=1) sort by {0,1} not {w_rank},
+     *   so rank 0 and rank 2 both get up_rank=0, rank 1 and rank 3 both get
+     *   up_rank=1 — consistent across columns.
+     */
+    {
+        int local_zero = 0;
+        ompi_group_translate_ranks(low_comms[0]->c_local_group, 1, &local_zero,
+                                   comm->c_local_group, &node_leader_w_rank);
+    }
+
+    /*
+     * Upgrade libnbc module priority to set up up_comms[0] with libnbc module.
+     * One process per node: processes with the same intra-node rank id share
+     * this sub-communicator.
      */
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "libnbc,^han");
-    rc = ompi_comm_split_with_info(comm, low_rank, w_rank, &comm_info, &(up_comms[0]), false);
+    rc = ompi_comm_split_with_info(comm, low_rank, node_leader_w_rank, &comm_info, &(up_comms[0]), false);
     if (OMPI_SUCCESS != rc) {
         goto final_agree;
     }
@@ -367,11 +437,11 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     assert(OMPI_COMM_IS_DISJOINT_SET(up_comms[0]) && OMPI_COMM_IS_DISJOINT(up_comms[0]));
 
     /*
-     * Upgrade adapt module priority to set up up_comms[0] with adapt module
-     * This sub-communicator contains one process per node.
+     * Upgrade adapt module priority to set up up_comms[1] with adapt module.
+     * One process per node.
      */
     opal_info_set(&comm_info, "ompi_comm_coll_preference", "adapt,^han");
-    rc = ompi_comm_split_with_info(comm, low_rank, w_rank, &comm_info, &(up_comms[1]), false);
+    rc = ompi_comm_split_with_info(comm, low_rank, node_leader_w_rank, &comm_info, &(up_comms[1]), false);
     if (OMPI_SUCCESS != rc) {
         goto final_agree;
     }
@@ -379,11 +449,15 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
 
     /*
      * Set my virtual rank number.
-     * my rank # = <intra-node comm size> * <inter-node rank number>
-     *             + <intra-node rank number>
-     * WARNING: this formula works only if the ranks are perfectly spread over
-     *          the nodes
-     * TODO: find a better way of doing
+     * vrank = low_size * up_rank + low_rank
+     *
+     * Encodes the 2-D position of this rank in the node × intra-node grid:
+     *   up_rank  = which node (row)
+     *   low_rank = position within the node (column)
+     *
+     * Because the up_comm splits above use node_leader_w_rank as the key,
+     * all ranks on the same node share the same up_rank value across every
+     * column, so this formula is valid for any balanced rank layout.
      */
     vrank = low_size * up_rank + low_rank;
     vranks = (int *)malloc(sizeof(int) * w_size);
