@@ -23,6 +23,14 @@
 #include "coll_acoll.h"
 #include "coll_acoll_utils.h"
 
+/* SMSC message size thresholds for allreduce */
+#define ACOLL_ALLREDUCE_SHM_MIN_MSG_THRESH      32
+#define ACOLL_ALLREDUCE_SHM_SMALL_MSG_THRESH    512
+#define ACOLL_ALLREDUCE_SMSC_MULTINODE_THRESH   8192
+#define ACOLL_ALLREDUCE_SMSC_LOW_THRESH         65536
+#define ACOLL_ALLREDUCE_SMSC_MID_THRESH         4194304
+#define ACOLL_ALLREDUCE_SMSC_HIGH_THRESH        16777216
+
 
 void mca_coll_acoll_sync(coll_acoll_data_t *data, int offset, int *group, int gp_size, int rank, int up);
 int mca_coll_acoll_allreduce_small_msgs_h(const void *sbuf, void *rbuf, size_t count,
@@ -97,16 +105,18 @@ static inline int mca_coll_acoll_reduce_smsc_h(const void *sbuf, void *rbuf, siz
     void *rbuf_vaddr[1] = {tmp_rbuf};
     int err = MPI_SUCCESS;
 
-    err = comm->c_coll->coll_allgather(sbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_sbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(sbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_sbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != err) {
         return err;
     }
 
-    err = comm->c_coll->coll_allgather(rbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_rbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(rbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_rbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -228,15 +238,17 @@ static inline int mca_coll_acoll_allreduce_smsc_f(const void *sbuf, void *rbuf, 
     int err = MPI_SUCCESS;
     int rank = ompi_comm_rank(comm);
 
-    err = comm->c_coll->coll_allgather(sbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_sbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(sbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_sbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != err) {
         return err;
     }
-    err = comm->c_coll->coll_allgather(rbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_rbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(rbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_rbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
 
     if (MPI_SUCCESS != err) {
         return err;
@@ -507,6 +519,24 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
 
     num_nodes = subc->num_nodes;
 
+    /* Call recursive doubling allreduce on is_opt for cases where
+     * shm/smsc based implementations are used.
+     */
+    if (mca_coll_acoll_is_heterogeneous_case
+        && ((num_nodes > 1 && total_dsize > ACOLL_ALLREDUCE_SMSC_MULTINODE_THRESH)
+            || (1 == num_nodes && ((total_dsize >= ACOLL_ALLREDUCE_SHM_MIN_MSG_THRESH
+                                    && total_dsize < ACOLL_ALLREDUCE_SHM_SMALL_MSG_THRESH)
+                                   || total_dsize >= ACOLL_ALLREDUCE_SMSC_LOW_THRESH)))) {
+        int is_opt_local = (int) is_opt;
+        int is_opt_final;
+        err = ompi_coll_base_allreduce_intra_recursivedoubling(&is_opt_local, &is_opt_final, 1,
+                                                               MPI_INT, MPI_BAND,
+                                                               subc->local_comm, module);
+        if (MPI_SUCCESS == err) {
+            is_opt = (bool) is_opt_final;
+        }
+    }
+
     alg = coll_allreduce_decision_fixed(size, total_dsize);
 
     /* Try with socket/node based split */
@@ -550,13 +580,13 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
                     tmp_sbuf = tmp_rbuf;
                 }
 
-                if((total_dsize > 8192) &&
+                if((total_dsize > ACOLL_ALLREDUCE_SMSC_MULTINODE_THRESH) &&
                     ((0 != subc->smsc_use_sr_buf) || (subc->smsc_buf_size > 2 * total_dsize)) &&
                     (1 != subc->without_smsc) && is_opt) {
                     err = mca_coll_acoll_reduce_smsc_h(sbuf, tmp_rbuf, count, dtype, op,
                                                        soc_comm, module, soc_subc);
                 } else {
-                    acoll_module->red_algo = total_dsize <= 8192 ? 0 : 1;
+                    acoll_module->red_algo = total_dsize <= ACOLL_ALLREDUCE_SMSC_MULTINODE_THRESH ? 0 : 1;
                     err = mca_coll_acoll_reduce_intra(sbuf, tmp_rbuf, count, dtype, op,
                                                       soc_root, soc_comm, module);
                     acoll_module->red_algo = -1;
@@ -605,16 +635,16 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
     }
 
     if (1 == num_nodes) {
-        if (total_dsize < 32) {
+        if (total_dsize < ACOLL_ALLREDUCE_SHM_MIN_MSG_THRESH) {
             return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
                                                                     comm, module);
-        } else if ((total_dsize < 512) && is_opt) {
+        } else if ((total_dsize < ACOLL_ALLREDUCE_SHM_SMALL_MSG_THRESH) && is_opt) {
             return mca_coll_acoll_allreduce_small_msgs_h(sbuf, rbuf, count, dtype, op, comm, module,
                                                          subc, 1);
         } else if (total_dsize <= 2048) {
             return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
                                                                     comm, module);
-        } else if (total_dsize < 65536) {
+        } else if (total_dsize < ACOLL_ALLREDUCE_SMSC_LOW_THRESH) {
             if (1 == alg) {
                 return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype,
                                                                         op, comm, module);
@@ -625,7 +655,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
                 return ompi_coll_base_allreduce_intra_ring_segmented(sbuf, rbuf, count, dtype, op,
                                                                      comm, module, 0);
             }
-        } else if (total_dsize < 4194304) {
+        } else if (total_dsize < ACOLL_ALLREDUCE_SMSC_MID_THRESH) {
             if (((0 != subc->smsc_use_sr_buf) || (subc->smsc_buf_size > 2 * total_dsize))
                 && (1 != subc->without_smsc) && is_opt) {
                 return mca_coll_acoll_allreduce_smsc_f(sbuf, rbuf, count, dtype, op, comm, module, subc);
@@ -633,7 +663,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
                 return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype,
                                                                         op, comm, module);
             }
-        } else if (total_dsize <= 16777216) {
+        } else if (total_dsize <= ACOLL_ALLREDUCE_SMSC_HIGH_THRESH) {
             if (((0 != subc->smsc_use_sr_buf) || (subc->smsc_buf_size > 2 * total_dsize))
                 && (1 != subc->without_smsc) && is_opt) {
                 mca_coll_acoll_reduce_smsc_h(sbuf, rbuf, count, dtype, op, comm, module, subc);

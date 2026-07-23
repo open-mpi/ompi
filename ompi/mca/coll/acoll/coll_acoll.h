@@ -49,6 +49,7 @@ extern int mca_coll_acoll_bcast_nonsg;
 extern int mca_coll_acoll_bcast_socket;
 extern int mca_coll_acoll_allgather_lin;
 extern int mca_coll_acoll_allgather_ring_1;
+extern int mca_coll_acoll_is_heterogeneous_case;
 
 /* API functions */
 int mca_coll_acoll_init_query(bool enable_progress_threads, bool enable_mpi_threads);

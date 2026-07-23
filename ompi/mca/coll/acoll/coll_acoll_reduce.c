@@ -21,6 +21,9 @@
 #include "coll_acoll.h"
 #include "coll_acoll_utils.h"
 
+/* SMSC message size threshold for reduce */
+#define ACOLL_REDUCE_SMSC_THRESH  262144
+
 static inline int coll_reduce_decision_fixed(int comm_size, size_t msg_size)
 {
     /* Set default to topology aware algorithm */
@@ -256,15 +259,17 @@ static inline int mca_coll_acoll_reduce_smsc(const void *sbuf, void *rbuf, size_
 
     int ret;
 
-    ret = comm->c_coll->coll_allgather(sbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_sbuf,
+    ret = ompi_coll_base_allgather_intra_recursivedoubling(sbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_sbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != ret) {
         return ret;
     }
-    ret = comm->c_coll->coll_allgather(rbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_rbuf,
+    ret = ompi_coll_base_allgather_intra_recursivedoubling(rbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_rbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
 
     if (MPI_SUCCESS != ret) {
         return ret;
@@ -407,8 +412,23 @@ int mca_coll_acoll_reduce_intra(const void *sbuf, void *rbuf, size_t count,
     }
 
     num_nodes = subc->num_nodes;
+
+    /* Call recursive doubling allreduce on is_opt for cases where
+     * shm/smsc based implementations are used.
+     */
+    if (mca_coll_acoll_is_heterogeneous_case
+        && 1 == num_nodes && total_dsize >= ACOLL_REDUCE_SMSC_THRESH) {
+        int is_opt_local = (int) is_opt;
+        int is_opt_final;
+        ret = ompi_coll_base_allreduce_intra_recursivedoubling(&is_opt_local, &is_opt_final, 1,
+                                                              MPI_INT, MPI_BAND, comm, module);
+        if (MPI_SUCCESS == ret) {
+            is_opt = (bool) is_opt_final;
+        }
+    }
+
     if (1 == num_nodes) {
-        int is_dsize_lt_thresh = total_dsize < 262144 ? 1 : 0;
+        int is_dsize_lt_thresh = total_dsize < ACOLL_REDUCE_SMSC_THRESH ? 1 : 0;
         if (-1 != acoll_module->red_algo) {
             is_dsize_lt_thresh = 1;
             alg = acoll_module->red_algo;

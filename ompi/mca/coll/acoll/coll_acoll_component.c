@@ -47,6 +47,7 @@ uint64_t mca_coll_acoll_reserve_memory_size_for_algo = 128 * 32768; // 4 MB
 uint64_t mca_coll_acoll_smsc_buffer_size = 128 * 32768;
 int mca_coll_acoll_alltoall_split_factor = 0;
 size_t mca_coll_acoll_alltoall_psplit_msg_thres = 0;
+int mca_coll_acoll_is_heterogeneous_case = 0;
 
 /* By default utilize smsc based algorithms applicable when built with smsc. */
 int mca_coll_acoll_without_smsc = 0;
@@ -230,6 +231,12 @@ static int acoll_register(void)
         "should not be used.",
         MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_coll_acoll_alltoall_psplit_msg_thres);
+    (void) mca_base_component_var_register(
+        &mca_coll_acoll_component.collm_version, "is_heterogeneous_case",
+        "Enable recursive doubling allreduce for heterogeneous rank detection "
+        "(1=enabled, 0=disabled).",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_coll_acoll_is_heterogeneous_case);
 
     return OMPI_SUCCESS;
 }
