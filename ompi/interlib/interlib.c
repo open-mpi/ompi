@@ -12,8 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2015      Research Organization for Information Science
- *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2015-2025 Research Organization for Information Science
+ *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2015-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
@@ -37,6 +37,8 @@
 
 #include "mpi.h"
 
+static bool show_model_callback = false;
+
 static void model_callback(size_t refid, pmix_status_t status,
                            const pmix_proc_t *source,
                            pmix_info_t *info, size_t ninfo,
@@ -46,7 +48,7 @@ static void model_callback(size_t refid, pmix_status_t status,
 {
     size_t n;
 
-    if (NULL != getenv("OMPI_SHOW_MODEL_CALLBACK")) {
+    if (show_model_callback) {
         /* we can ignore our own callback as we obviously
          * know that we are MPI */
         if (NULL != info) {
@@ -90,6 +92,7 @@ int ompi_interlib_declare(int threadlevel, char *version)
     pmix_status_t code = PMIX_MODEL_DECLARED;
     opal_pmix_lock_t mylock;
 
+    show_model_callback = (NULL != getenv("OMPI_SHOW_MODEL_CALLBACK"));
     /* Register an event handler for library model declarations  */
     /* give it a name so we can distinguish it */
     PMIX_INFO_LOAD(&directives, PMIX_EVENT_HDLR_NAME, "MPI-Model-Declarations", PMIX_STRING);
