@@ -1,4 +1,4 @@
-name: Build everything, make check, and run examples (Linux and macOS)
+name: Build everything
 
 # Build and test Open MPI on both Linux and macOS:
 #
@@ -20,11 +20,38 @@ permissions:
 
 jobs:
   ompi-pr-builds:
+    name: ${{ matrix.os }} ${{ matrix.config_name }}
     strategy:
       # Run both platforms to completion even if one fails.
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            config_name: default
+            configure_options: >-
+              --enable-sphinx
+              --enable-mpi-fortran
+              --disable-silent-rules
+          - os: ubuntu-latest
+            config_name: mca-dso
+            configure_options: >-
+              --enable-sphinx
+              --enable-mpi-fortran
+              --disable-silent-rules
+              --enable-mca-dso
+          - os: macos-latest
+            config_name: default
+            configure_options: >-
+              --enable-sphinx
+              --enable-mpi-fortran
+              --disable-silent-rules
+          - os: macos-latest
+            config_name: mca-dso
+            configure_options: >-
+              --enable-sphinx
+              --enable-mpi-fortran
+              --disable-silent-rules
+              --enable-mca-dso
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
@@ -69,10 +96,7 @@ jobs:
         # Parallelize automake's Makefile.in generation during autogen.pl.
         export AUTOMAKE_JOBS=$NCPU
         ./autogen.pl
-        ./configure --prefix=${PWD}/install \
-            --enable-sphinx \
-            --enable-mpi-fortran \
-            --disable-silent-rules
+        ./configure --prefix=${PWD}/install ${{ matrix.configure_options }}
         make -j $NCPU
 
     - name: Run unit tests
