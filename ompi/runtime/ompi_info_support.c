@@ -67,15 +67,30 @@ int ompi_info_register_framework_params(opal_pointer_array_t *component_map)
     /* Register the MPI layer's MCA parameters */
     if (OMPI_SUCCESS != (rc = ompi_mpi_register_params())) {
         fprintf(stderr, "ompi_info_register: ompi_mpi_register_params failed\n");
+        --ompi_info_registered;
         return rc;
     }
 
     rc = opal_info_register_framework_params(component_map);
     if (OPAL_SUCCESS != rc) {
+        /* the OPAL layer unwound itself (except on BAD_PARAM, where
+           registrations are deliberately kept for ompi_info's
+           diagnostic dump and the registration references are kept
+           with them) */
+        if (OPAL_ERR_BAD_PARAM != rc) {
+            --ompi_info_registered;
+        }
         return rc;
     }
 
-    return opal_info_register_project_frameworks(ompi_info_type_ompi, ompi_frameworks, component_map);
+    rc = opal_info_register_project_frameworks(ompi_info_type_ompi, ompi_frameworks, component_map);
+    if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
+        /* the OMPI project loop rolled its own registrations back;
+           release the OPAL layer registration taken above */
+        opal_info_close_components();
+        --ompi_info_registered;
+    }
+    return rc;
 }
 
 void ompi_info_close_components(void)

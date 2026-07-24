@@ -20,6 +20,7 @@
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -815,6 +816,18 @@ int mca_bml_r2_finalize( void )
  CLEANUP:
     mca_bml_r2.num_btl_modules = 0;
     mca_bml_r2.num_btl_progress = 0;
+    /* The btl_modules array being freed below is rebuilt (from
+       mca_btl_base_modules_initialized) by mca_bml_r2_add_btls(), which is a
+       no-op while btls_added is true -- so the flag must fall with the state
+       it guards.  It was previously reset only in mca_bml_r2_component_init(),
+       which cannot be relied upon to run again: mca_bml_base_init() skips
+       component init while the bml framework is merely *held* rather than
+       closed and reopened, and MPI_T's framework registration holds every
+       framework across MPI session cycles.  Leaving the flag set while the
+       array is empty made the next session's add_procs attach zero BTLs and
+       fail (unreachable), even though the BTL modules themselves were still
+       alive. */
+    mca_bml_r2.btls_added = false;
 
     if( NULL != mca_bml_r2.btl_modules) {
         free(mca_bml_r2.btl_modules);
