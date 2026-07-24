@@ -45,6 +45,7 @@
 #include "ompi/message/message.h"
 #include "opal/mca/common/ofi/common_ofi.h"
 #include "opal/mca/accelerator/base/base.h"
+#include "opal/runtime/opal_params.h"
 
 #include "mtl_ofi_opt.h"
 #include "mtl_ofi_types.h"
@@ -230,9 +231,16 @@ ompi_mtl_ofi_progress(void)
     int count = 0, ctxt_id = 0, i;
     static volatile uint32_t num_calls = 0;
 
+    /* This progress function is both called application thread
+     * and registered as an OPAL progress callback as well, so
+     * should be thread-safe when async progress thread is active.
+     */
+    const bool have_threads = ompi_mtl_ofi.mpi_thread_multiple ||
+                              opal_async_progress_thread_spawned;
+
     get_thread_context(&ctxt_id);
 
-    if (ompi_mtl_ofi.mpi_thread_multiple) {
+    if (have_threads) {
         if (MTL_OFI_CONTEXT_LOCK(ctxt_id)) {
             count += ompi_mtl_ofi_context_progress(ctxt_id);
             MTL_OFI_CONTEXT_UNLOCK(ctxt_id);
@@ -247,7 +255,7 @@ ompi_mtl_ofi_progress(void)
      * Progress is only made if no events were read from the CQ
      * local to the calling thread past 16 times.
      */
-    if (OPAL_UNLIKELY((count == 0) && ompi_mtl_ofi.mpi_thread_multiple &&
+    if (OPAL_UNLIKELY((count == 0) && have_threads &&
         (((num_calls++) & 0xF) == 0 ))) {
         for (i = 0; i < ompi_mtl_ofi.total_ctxts_used - 1; i++) {
             ctxt_id = (ctxt_id + 1) % ompi_mtl_ofi.total_ctxts_used;
