@@ -615,9 +615,23 @@ osc_ucx_notify_counter_addr(ompi_osc_ucx_module_t *module, int target, int notif
            + (uint64_t)notify * sizeof(uint64_t);
 }
 
-#define CHECK_NOTIFY_IDX(module, notify)                                      \
-    if ((notify) < 0 || (notify) >= (module)->num_notify) {                   \
+/* A fixed region of OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS notification counters is
+ * registered per rank at window creation (see osc_ucx_component.c), but only
+ * the first notify_counts[rank] of them are considered *attached* by
+ * MPI_WIN_SET_NUM_NOTIFY.  Per the MPI Standard it is erroneous to reference a
+ * counter that is out of range at the target, so validate against the target
+ * rank's attached count. */
+#define CHECK_NOTIFY_IDX(module, notify, rank)                                \
+    if ((notify) < 0 || (notify) >= (module)->notify_counts[rank]) {          \
         return MPI_ERR_NOTIFY_IDX;                                            \
+    }
+
+/* Notification counters live in the window's registered memory region, which
+ * is not allocated for dynamic windows.  Reject notified operations on them
+ * rather than issuing remote atomics against unregistered memory. */
+#define CHECK_NOTIFY_FLAVOR(module)                                           \
+    if (MPI_WIN_FLAVOR_DYNAMIC == (module)->flavor) {                         \
+        return MPI_ERR_RMA_FLAVOR;                                            \
     }
 
 int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
@@ -626,7 +640,8 @@ int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     int my_rank = ompi_comm_rank(module->comm);
 
-    CHECK_NOTIFY_IDX(module, notify);
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, my_rank);
 
     volatile uint64_t *counter =
         (volatile uint64_t *)(module->addrs[my_rank] + module->size) + notify;
@@ -644,7 +659,8 @@ int ompi_osc_ucx_win_reset_notify_value(struct ompi_win_t *win, int notify,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(module, notify);
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, my_rank);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, my_rank);
 
@@ -667,6 +683,79 @@ int ompi_osc_ucx_win_reset_notify_value(struct ompi_win_t *win, int notify,
     return OMPI_SUCCESS;
 }
 
+int ompi_osc_ucx_win_get_num_notify(struct ompi_win_t *win, int target_rank,
+                                     int *num_notifications)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+
+    if (target_rank < 0 || target_rank >= ompi_comm_size(module->comm)) {
+        return MPI_ERR_RANK;
+    }
+
+    /* Local query (MPI_WIN_GET_NUM_NOTIFY, §12.6.1): return the number of
+     * notification counters currently attached at target_rank, as last
+     * published by MPI_WIN_SET_NUM_NOTIFY. */
+    *num_notifications = module->notify_counts[target_rank];
+    return OMPI_SUCCESS;
+}
+
+int ompi_osc_ucx_win_set_num_notify(struct ompi_win_t *win, struct opal_info_t *info,
+                                     int num_notifications)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    int my_rank = ompi_comm_rank(module->comm);
+    int my_count;
+    int ret;
+
+    (void) info; /* "mpi_assert_same_num_notifications" is an optimization hint only */
+
+    if (num_notifications < 0) {
+        return MPI_ERR_ARG;
+    }
+
+    /* Notification counters live in the window's registered memory region,
+     * which is not allocated for dynamic windows. */
+    CHECK_NOTIFY_FLAVOR(module);
+
+    /* A fixed region of OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS counters is registered
+     * once at window creation (the effective MPI_WIN_NOTIFICATION_NUM_UB), so
+     * we can attach up to that many without re-registering memory.  Requesting
+     * more than the capacity is out of range. */
+    if (num_notifications > OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS) {
+        return MPI_ERR_ARG;
+    }
+
+    /* The number of attached notification counters is never decreased
+     * (§12.6.1). */
+    if (num_notifications > module->notify_counts[my_rank]) {
+        module->notify_counts[my_rank] = num_notifications;
+    }
+
+    /* All notification counters (existing and newly attached) are reset to zero
+     * by this call.  It is erroneous to call MPI_WIN_SET_NUM_NOTIFY while an
+     * access epoch is open, so no concurrent network atomics touch the counters
+     * and a plain local reset is sufficient. */
+    if (0 != module->addrs[my_rank]) {
+        memset((void *)(module->addrs[my_rank] + module->size), 0,
+               OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t));
+    }
+    opal_atomic_wmb();
+
+    /* Publish every rank's attached count to the whole group so that origins
+     * can validate notification indices against the target's count.  This is
+     * the blocking, synchronizing collective required by the standard. */
+    my_count = module->notify_counts[my_rank];
+    ret = module->comm->c_coll->coll_allgather(&my_count, 1, MPI_INT,
+                                               module->notify_counts, 1, MPI_INT,
+                                               module->comm,
+                                               module->comm->c_coll->coll_allgather_module);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    return OMPI_SUCCESS;
+}
+
 int ompi_osc_ucx_put_notify(const void *origin_addr, size_t origin_count,
                             struct ompi_datatype_t *origin_dt,
                             int target, ptrdiff_t target_disp, size_t target_count,
@@ -677,7 +766,8 @@ int ompi_osc_ucx_put_notify(const void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(module, notify);
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 
@@ -714,7 +804,8 @@ int ompi_osc_ucx_get_notify(void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(module, notify);
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 
@@ -750,7 +841,8 @@ int ompi_osc_ucx_rput_notify(const void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(module, notify);
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 
@@ -786,7 +878,8 @@ int ompi_osc_ucx_rget_notify(void *origin_addr, size_t origin_count,
     ucp_ep_h *ep;
     int ret;
 
-    CHECK_NOTIFY_IDX(module, notify);
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
 
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
 

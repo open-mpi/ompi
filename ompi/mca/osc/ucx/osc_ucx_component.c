@@ -108,6 +108,8 @@ ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
         .osc_rget_notify = ompi_osc_ucx_rget_notify,
         .osc_win_get_notify_value = ompi_osc_ucx_win_get_notify_value,
         .osc_win_reset_notify_value = ompi_osc_ucx_win_reset_notify_value,
+        .osc_win_set_num_notify = ompi_osc_ucx_win_set_num_notify,
+        .osc_win_get_num_notify = ompi_osc_ucx_win_get_num_notify,
 
         .osc_rput = ompi_osc_ucx_rput,
         .osc_rget = ompi_osc_ucx_rget,
@@ -679,11 +681,6 @@ select_unlock:
 
     module->flavor = flavor;
     module->size = size;
-    /* Number of notify counters allocated per rank in this window.  Stored in
-     * the module so every user references a single value instead of the
-     * OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS compile-time constant; this is the one
-     * place that can later be driven from the info object. */
-    module->num_notify = OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS;
     module->no_locks = check_config_value_bool ("no_locks", info);
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->skip_sync_check = false;
@@ -797,7 +794,7 @@ select_unlock:
         /* create the segment */
 
         size_t total = 0;
-        size_t notify_size = module->num_notify * sizeof(uint64_t);
+        size_t notify_size = OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
         for (i = 0 ; i < comm_size ; ++i) {
             /* each rank's slot holds its window data plus its notify counters */
             total += ompi_osc_ucx_get_size(module, i) + notify_size;
@@ -907,7 +904,7 @@ select_unlock:
      * extra bytes so that remote atomic operations on the counters can use
      * the same rkey as the window data. */
     size_t notify_reg_size = (flavor == MPI_WIN_FLAVOR_DYNAMIC) ? 0 :
-                             module->num_notify * sizeof(uint64_t);
+                             OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
     ret = opal_common_ucx_wpmem_create(module->ctx, mem_base,
                                      module->size + notify_reg_size,
                                      mem_type, &exchange_len_info,
@@ -966,6 +963,10 @@ select_unlock:
     module->addrs = calloc(comm_size, sizeof(uint64_t));
     module->state_addrs = calloc(comm_size, sizeof(uint64_t));
     module->comm_world_ranks = calloc(comm_size, sizeof(uint64_t));
+    /* Number of notification counters attached at each rank; starts at zero
+     * everywhere (consistent without communication) and is updated by
+     * MPI_WIN_SET_NUM_NOTIFY.  Counters must be attached before use. */
+    module->notify_counts = calloc(comm_size, sizeof(int));
     for (i = 0; i < comm_size; i++) {
         memcpy(&(module->addrs[i]), recv_buf + i * 3 * sizeof(uint64_t), sizeof(uint64_t));
         memcpy(&(module->state_addrs[i]), recv_buf + i * 3 * sizeof(uint64_t) + sizeof(uint64_t), sizeof(uint64_t));
@@ -983,10 +984,11 @@ select_unlock:
     module->state.dynamic_lock = TARGET_LOCK_UNLOCKED;
     module->state.dynamic_win_count = 0;
 
-    /* initialize notify counters to zero; they live at base + size */
+    /* initialize the fixed set of notify counters to zero; they live at
+     * base + size, immediately after the window data */
     if (flavor != MPI_WIN_FLAVOR_DYNAMIC && *base != NULL) {
         memset((char *)*base + module->size, 0,
-               module->num_notify * sizeof(uint64_t));
+               OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t));
     }
     for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
         module->local_dynamic_win_info[i].refcnt = 0;
@@ -1276,6 +1278,7 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     free(module->addrs);
     free(module->state_addrs);
     free(module->comm_world_ranks);
+    free(module->notify_counts);
 
     opal_common_ucx_wpmem_free(module->state_mem);
     if (NULL != module->mem) {

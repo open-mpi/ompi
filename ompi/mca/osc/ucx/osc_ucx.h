@@ -123,7 +123,12 @@ typedef struct ompi_osc_ucx_module {
     struct ompi_communicator_t *comm;
     int flavor;
     size_t    size;
-    int num_notify; /* number of notify counters allocated per rank in this window */
+    int *notify_counts;  /* per-rank number of notification counters attached at each
+                          * rank (size comm_size).  A fixed region of
+                          * OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS counters is registered per
+                          * rank at window creation; this tracks how many of them are
+                          * currently attached, as set by MPI_WIN_SET_NUM_NOTIFY and
+                          * kept consistent across the group by an allgather. */
     size_t   *sizes; /* used if not every process has the same size */
     uint64_t *addrs;
     uint64_t *state_addrs;
@@ -305,6 +310,10 @@ int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
                                       OMPI_MPI_COUNT_TYPE *value);
 int ompi_osc_ucx_win_reset_notify_value(struct ompi_win_t *win, int notify,
                                         OMPI_MPI_COUNT_TYPE *value);
+int ompi_osc_ucx_win_set_num_notify(struct ompi_win_t *win, struct opal_info_t *info,
+                                     int num_notifications);
+int ompi_osc_ucx_win_get_num_notify(struct ompi_win_t *win, int target_rank,
+                                     int *num_notifications);
 
 /* returns the size at the peer */
 static inline size_t ompi_osc_ucx_get_size(ompi_osc_ucx_module_t *module, int rank)
