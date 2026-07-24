@@ -935,7 +935,7 @@ OPAL_DECLSPEC int opal_common_ucx_wpmem_flush_ep_nb(opal_common_ucx_wpmem_t *mem
 
     opal_mutex_lock(&winfo->mutex);
     opal_common_ucx_request_t *req;
-    req = ucp_worker_flush_nb(winfo->worker, 0, opal_common_ucx_req_completion);
+    req = ucp_ep_flush_nb(ep, 0, opal_common_ucx_req_completion);
     if (UCS_PTR_IS_PTR(req)) {
         req->ext_req = user_req_ptr;
         req->ext_cb = user_req_cb;
