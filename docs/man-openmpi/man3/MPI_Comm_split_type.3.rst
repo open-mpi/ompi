@@ -64,6 +64,11 @@ For ``MPI_COMM_TYPE_HW_GUIDED`` and ``MPI_COMM_TYPE_RESOURCE_GUIDED``,
 Open MPI-specific values ``numanode``, ``socket``, ``l3cache``, ``l2cache``,
 ``l1cache``, ``core``, and ``hwthread`` are also accepted.
 
+For a ``hwloc://`` URI value, Open MPI queries each process's current CPU binding.
+A process whose binding is unavailable or spans multiple instances of the
+requested resource receives ``MPI_COMM_NULL``. Other processes are grouped by
+the specific resource instance containing their binding.
+
 OMPI_COMM_TYPE_NODE
    Synonym for MPI_COMM_TYPE_SHARED.
 

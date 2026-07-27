@@ -42,11 +42,15 @@ keys can include:
 
 Resource types absent from the local topology are omitted. Open MPI returns an
 empty info object if hardware topology or process binding information is not
-available.
+available. The routine may be called before :ref:`MPI_Init` and after
+:ref:`MPI_Finalize`; Open MPI returns an empty info object outside the active
+MPI lifetime.
 
 The returned keys can be passed as values of the ``mpi_hw_resource_type`` info
 key to :ref:`MPI_Comm_split_type` with ``MPI_COMM_TYPE_HW_GUIDED`` or
-``MPI_COMM_TYPE_RESOURCE_GUIDED``. For example:
+``MPI_COMM_TYPE_RESOURCE_GUIDED``. A process receives ``MPI_COMM_NULL`` if its
+current binding is unavailable or spans multiple instances of the requested
+resource. For example:
 
 .. code-block:: c
 
@@ -57,6 +61,9 @@ key to :ref:`MPI_Comm_split_type` with ``MPI_COMM_TYPE_HW_GUIDED`` or
    MPI_Info_set(split_info, "mpi_hw_resource_type", "hwloc://NUMANode");
    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_RESOURCE_GUIDED,
                        0, split_info, &resource_comm);
+   if (MPI_COMM_NULL != resource_comm) {
+       MPI_Comm_free(&resource_comm);
+   }
    MPI_Info_free(&split_info);
 
 ERRORS

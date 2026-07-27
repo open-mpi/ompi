@@ -30,6 +30,7 @@
 #                         reserved.
 # Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2025      Nanook Consulting  All rights reserved.
+# Copyright (c) 2026      Musawer Ahmad Saqif.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -1520,6 +1521,8 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
+    test/mpi/Makefile
+    test/mpi/environment/Makefile
 ])
 
 AC_CONFIG_FILES([contrib/dist/mofed/debian/rules],

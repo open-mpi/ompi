@@ -45,8 +45,7 @@ check_PROGRAMS = \
 	win \
 	instance \
 	file \
-	message \
-	hw_resource_info
+	message
 
 TESTS = $(check_PROGRAMS)
 
@@ -120,10 +119,6 @@ file_DEPENDENCIES = $(ompi_test_ldadd)
 message_SOURCES = message.c
 message_LDADD = $(ompi_test_ldadd)
 message_DEPENDENCIES = $(ompi_test_ldadd)
-
-hw_resource_info_SOURCES = hw_resource_info.c
-hw_resource_info_LDADD = $(ompi_test_ldadd)
-hw_resource_info_DEPENDENCIES = $(ompi_test_ldadd)
 
 # The Fortran attribute test drives the Fortran attribute back-end
 # (ompi_attr_create_keyval_fint / set_fint / get_fint), which is only

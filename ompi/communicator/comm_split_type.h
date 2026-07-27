@@ -31,6 +31,12 @@ typedef struct {
 OMPI_HIDDEN extern const ompi_comm_split_type_hw_guided_t
     ompi_comm_split_type_hw_guided_support[];
 
+OMPI_HIDDEN bool ompi_comm_split_type_hwloc_topology_available(void);
+OMPI_HIDDEN int ompi_comm_split_type_hwloc_get_process_cpuset(hwloc_cpuset_t cpuset);
+OMPI_HIDDEN bool ompi_comm_split_type_hwloc_get_object(
+    hwloc_const_cpuset_t cpuset, hwloc_obj_type_t type,
+    hwloc_obj_t *resource_object);
+
 END_C_DECLS
 
 #endif /* OMPI_COMM_SPLIT_TYPE_H */
