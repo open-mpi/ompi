@@ -31,8 +31,8 @@
 #pragma weak pmpi_buffer_iflush_ = ompi_buffer_iflush_f
 #pragma weak pmpi_buffer_iflush__ = ompi_buffer_iflush_f
 
-#pragma weak PMPI_buffer_iflush_f = ompi_buffer_iflush_f
-#pragma weak PMPI_buffer_iflush_f08 = ompi_buffer_iflush_f
+#pragma weak PMPI_Buffer_iflush_f = ompi_buffer_iflush_f
+#pragma weak PMPI_Buffer_iflush_f08 = ompi_buffer_iflush_f
 #else
 OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_IFLUSH,
                             pmpi_buffer_iflush,
@@ -50,8 +50,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BUFFER_IFLUSH,
 #pragma weak mpi_buffer_iflush_ = ompi_buffer_iflush_f
 #pragma weak mpi_buffer_iflush__ = ompi_buffer_iflush_f
 
-#pragma weak MPI_buffer_iflush_f = ompi_buffer_iflush_f
-#pragma weak MPI_buffer_iflush_f08 = ompi_buffer_iflush_f
+#pragma weak MPI_Buffer_iflush_f = ompi_buffer_iflush_f
+#pragma weak MPI_Buffer_iflush_f08 = ompi_buffer_iflush_f
 #else
 #if ! OMPI_BUILD_MPI_PROFILING
 OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_IFLUSH,
@@ -72,7 +72,7 @@ void ompi_buffer_iflush_f(MPI_Fint *request, MPI_Fint *ierr)
     int ierr_c;
     MPI_Request c_req;
 
-    ierr_c = PMPI_buffer_iflush(&c_req);
+    ierr_c = PMPI_Buffer_iflush(&c_req);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
 
     if (MPI_SUCCESS == ierr_c) *request = PMPI_Request_c2f(c_req);
