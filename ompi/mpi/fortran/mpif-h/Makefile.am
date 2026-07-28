@@ -166,6 +166,8 @@ lib@OMPI_LIBMPI_NAME@_mpifh_la_SOURCES += \
         bsend_init_f.c \
         buffer_attach_f.c \
         buffer_detach_f.c \
+        buffer_flush_f.c \
+        buffer_iflush_f.c \
         cancel_f.c \
         cart_coords_f.c \
         cart_create_f.c \

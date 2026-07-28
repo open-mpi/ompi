@@ -120,6 +120,7 @@ PN2(void, MPI_Bsend_init, mpi_bsend_init, MPI_BSEND_INIT, (char *buf, MPI_Fint *
 PN2(void, MPI_Buffer_attach, mpi_buffer_attach, MPI_BUFFER_ATTACH, (char *buffer, MPI_Fint *size, MPI_Fint *ierr));
 PN2(void, MPI_Buffer_detach, mpi_buffer_detach, MPI_BUFFER_DETACH, (char *buffer, MPI_Fint *size, MPI_Fint *ierr));
 PN2(void, MPI_Buffer_flush, mpi_buffer_flush, MPI_BUFFER_FLUSH, (MPI_Fint *ierr));
+PN2(void, MPI_Buffer_iflush, mpi_buffer_iflush, MPI_BUFFER_IFLUSH, (MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Cancel, mpi_cancel, MPI_CANCEL, (MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPI_Cart_coords, mpi_cart_coords, MPI_CART_COORDS, (MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims, MPI_Fint *coords, MPI_Fint *ierr));
 PN2(void, MPI_Cart_create, mpi_cart_create, MPI_CART_CREATE, (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, ompi_fortran_logical_t *periods, ompi_fortran_logical_t *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr));
