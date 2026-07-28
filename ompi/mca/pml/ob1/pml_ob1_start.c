@@ -84,13 +84,16 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                     sendreq = (mca_pml_ob1_send_request_t *) request;
                     requests[i] = request;
                 } else if (sendreq->req_send.req_bytes_packed != 0) {
-                    size_t offset = 0;
                     /**
                      * Reset the convertor in case we're dealing with the original
-                     * request, which when completed do not reset the convertor.
+                     * request, which when completed do not reset the convertor but
+                     * leaves it pointing to the buffered send location, with the
+                     * packed datatype and count.
                      */
-                    opal_convertor_set_position (&sendreq->req_send.req_base.req_convertor,
-                                                 &offset);
+                    opal_convertor_prepare_for_send(&sendreq->req_send.req_base.req_convertor,
+                                                    &sendreq->req_send.req_base.req_datatype->super,
+                                                    sendreq->req_send.req_base.req_count,
+                                                    sendreq->req_send.req_base.req_addr);
                 }
 
                 /* reset the completion flag */
