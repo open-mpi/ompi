@@ -52,6 +52,9 @@ module mpi
 # include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-file-interfaces.h"
 # include "ompi/mpi/fortran/use-mpi-ignore-tkr/pmpi-ignore-tkr-file-interfaces.h"
 # include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces-generated.h"
+
+# define OMPI_BUILD_MPI_PROFILING 1
+# include "ompi/mpi/fortran/use-mpi-ignore-tkr/mpi-ignore-tkr-interfaces-generated.h"
 #if !defined(OMPI_ENABLE_MPI1_COMPAT)
 
 #error "Remove MPI-1 compat code"
