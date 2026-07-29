@@ -78,6 +78,8 @@ linked_files = \
         pbsend_init_f.c \
         pbuffer_attach_f.c \
         pbuffer_detach_f.c \
+        pbuffer_flush_f.c \
+        pbuffer_iflush_f.c \
         pcancel_f.c \
         pcart_coords_f.c \
         pcart_create_f.c \
