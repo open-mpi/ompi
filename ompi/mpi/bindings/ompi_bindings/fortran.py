@@ -292,14 +292,13 @@ def print_profiling_rename_macros(templates, out, args):
     for template in templates:
         has_buffers = util.prototype_has_buffers(template.prototype)
         needs_ts = has_buffers and args.generate_ts_suffix
-        name = util.fortran_name(template.prototype.name, gen_f90=gen_f90, needs_ts=needs_ts)
-        out.dump(f'#define {name} P{name}')
+        names = {util.fortran_name(template.prototype.name, gen_f90=gen_f90, needs_ts=needs_ts)}
         # Check for bigcount version
         if util.prototype_has_bigcount(template.prototype):
-            bigcount_name = util.fortran_name(template.prototype.name, bigcount=True, needs_ts=needs_ts)
-            out.dump(f'#define {bigcount_name} P{bigcount_name}')
-        if gen_f90 == False:
-            name = util.fortran_f08_generic_interface_name(template.prototype.name)
+            names.add(util.fortran_name(template.prototype.name, gen_f90=gen_f90, bigcount=True, needs_ts=needs_ts))
+        interface_name = util.fortran_generic_interface_name(template.prototype.name)
+        names.add(interface_name)
+        for name in sorted(names):
             out.dump(f'#define {name} P{name}')
     out.dump('#endif /* OMPI_BUILD_MPI_PROFILING */')
 
