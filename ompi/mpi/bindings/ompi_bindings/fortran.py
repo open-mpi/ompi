@@ -102,7 +102,8 @@ class FortranBinding:
     @property
     def c_func_name(self):
         """Produce the final C func name from base_name."""
-        return f'ompi_{self.fn_name}_wrapper_f08{self._fn_name_suffix()}'
+        module = 'f90' if self.gen_f90 else 'f08'
+        return f'ompi_{self.fn_name}_wrapper_{module}{self._fn_name_suffix()}'
 
     @property
     def inner_call(self):
@@ -242,7 +243,10 @@ class FortranBinding:
             self.dump(line)
 
         # Convert error type
-        self.dump(f'    if (present({consts.FORTRAN_ERROR_NAME})) {consts.FORTRAN_ERROR_NAME} = {consts.C_ERROR_TMP_NAME}')
+        if self.gen_f90:
+            self.dump(f'    {consts.FORTRAN_ERROR_NAME} = {consts.C_ERROR_TMP_NAME}')
+        else:
+            self.dump(f'    if (present({consts.FORTRAN_ERROR_NAME})) {consts.FORTRAN_ERROR_NAME} = {consts.C_ERROR_TMP_NAME}')
 
         for param in self.parameters:
             self.dump_lines(param.post())
@@ -321,8 +325,8 @@ def print_c_source_header(out):
     out.dump('#include "ompi/datatype/ompi_datatype.h"')
     out.dump('#include "ompi/attribute/attribute.h"')
     out.dump('#include "ompi/mca/coll/base/coll_base_util.h"')
-    out.dump('#include "ts.h"')
-    out.dump('#include "bigcount.h"')
+    out.dump('#include "ompi/mpi/fortran/use-mpi-f08/base/ts.h"')
+    out.dump('#include "ompi/mpi/fortran/use-mpi-f08/base/bigcount.h"')
 
 
 def print_binding(prototype, lang, out, bigcount=False, template=None, needs_ts=False, gen_f90=False, f08_names=None):
@@ -366,9 +370,14 @@ def generate_code(args, out):
         print_c_source_header(out)
 
     for template in templates:
-        out.dump()
         has_buffers = util.prototype_has_buffers(template.prototype)
         needs_ts = has_buffers and args.generate_ts_suffix
+
+        # use-mpi needs generated procedure only for the suffixed ts functions
+        # Rest are covered by mpif already
+        if gen_f90 and not needs_ts:
+            continue
+        out.dump()
         f08_names = std_names.get('mpi_' + template.prototype.name.lower())
         print_binding(template.prototype, args.lang, out, template=template, needs_ts=needs_ts,
                       gen_f90=gen_f90, f08_names=f08_names)
