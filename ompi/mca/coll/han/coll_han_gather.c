@@ -409,7 +409,16 @@ mca_coll_han_gather_intra_simple(const void *sbuf, size_t scount,
                                         &han_module->scratch_buf_size[1],
                                         (size_t)rsize,
                                         mca_coll_han_component.han_use_persist_buffers);
-        if (NULL == tmp_buf) return OMPI_ERR_OUT_OF_RESOURCE;
+        if (NULL == tmp_buf) {
+            /* Release the root's reorder buffer if it was heap-allocated
+             * (persistent scratch buffers are owned by the module and must
+             * not be freed here). */
+            if (!mca_coll_han_component.han_use_persist_buffers) {
+                free(reorder_buf);
+                reorder_buf = NULL;
+            }
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
         tmp_buf_start = tmp_buf - rgap;
     }
 
