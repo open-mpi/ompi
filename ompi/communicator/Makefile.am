@@ -16,6 +16,7 @@
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      Musawer Ahmad Saqif.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -27,17 +28,18 @@
 
 headers += \
         communicator/communicator.h \
-	communicator/comm_request.h
+        communicator/comm_split_type.h \
+        communicator/comm_request.h
 
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         communicator/comm_init.c \
-	communicator/comm.c \
-	communicator/comm_cid.c \
-	communicator/comm_request.c
+        communicator/comm.c \
+        communicator/comm_cid.c \
+        communicator/comm_request.c
 
 if WANT_FT_MPI
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
-	communicator/ft/comm_ft.c communicator/ft/comm_ft_reliable_bcast.c communicator/ft/comm_ft_propagator.c communicator/ft/comm_ft_detector.c communicator/ft/comm_ft_revoke.c
+        communicator/ft/comm_ft.c communicator/ft/comm_ft_reliable_bcast.c communicator/ft/comm_ft_propagator.c communicator/ft/comm_ft_detector.c communicator/ft/comm_ft_revoke.c
 endif # WANT_FT_MPI
 
 EXTRA_DIST += communicator/help-comm.txt
