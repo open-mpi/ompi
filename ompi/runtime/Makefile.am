@@ -27,9 +27,9 @@ EXTRA_DIST += runtime/help-mpi-runtime.txt
 headers += \
         runtime/mpiruntime.h \
         runtime/params.h \
-	runtime/ompi_info_support.h \
-	runtime/ompi_spc.h \
-	runtime/ompi_rte.h
+        runtime/ompi_info_support.h \
+        runtime/ompi_spc.h \
+        runtime/ompi_rte.h
 
 lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_init.c \
@@ -38,6 +38,7 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_mpi_finalize.c \
         runtime/ompi_mpi_params.c \
         runtime/ompi_mpi_preconnect.c \
-	runtime/ompi_info_support.c \
-	runtime/ompi_spc.c \
-	runtime/ompi_rte.c
+        runtime/ompi_info_support.c \
+        runtime/ompi_spc.c \
+        runtime/ompi_rte.c
+
