@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -96,7 +97,8 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * communicator creation functions may be re-entered (albeit with
  * different arguments).
  */
-int mca_coll_base_comm_select(struct ompi_communicator_t *comm);
+int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
+                              struct ompi_communicator_t *parent);
 
 /**
  * Finalize a coll component on a specific communicator.

@@ -1,6 +1,7 @@
 /**
  * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +55,7 @@ int mca_coll_ucc_bcast(void *buf, size_t count, struct ompi_datatype_t *dtype,
     COLL_UCC_CHECK(mca_coll_ucc_bcast_init_common(buf, count, dtype, root,
                                                   false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
-    COLL_UCC_CHECK(coll_ucc_req_wait(req));
+    COLL_UCC_CHECK(coll_ucc_req_wait(req, ucc_module));
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback bcast");
