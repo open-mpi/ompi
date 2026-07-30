@@ -173,6 +173,7 @@ mpi-ignore-tkr-interfaces-generated.h: $(template_files) $(OMPI_BINDINGS_GENERAT
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    $(gen_ts) \
+        --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
 	    --fort-std f90 \
 	    interface \
 	    --prototype-files $(template_files)
@@ -184,6 +185,7 @@ api_f90_generated.F90: $(template_files) $(OMPI_BINDINGS_GENERATOR)
 	    --output $(abs_builddir)/$@ \
 	    fortran \
 	    $(gen_ts) \
+        --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
 	    --fort-std f90 \
 	    code \
 	    --lang fortran \
