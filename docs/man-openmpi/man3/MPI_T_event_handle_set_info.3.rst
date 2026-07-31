@@ -33,3 +33,7 @@ ERRORS
 * ``MPI_T_ERR_INVALID_INDEX``: The event registration is invalid
 
 * ``MPI_T_ERR_INFO``: Invalid info
+
+.. seealso::
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`

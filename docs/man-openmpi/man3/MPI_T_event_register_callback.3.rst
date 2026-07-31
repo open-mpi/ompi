@@ -39,3 +39,7 @@ ERRORS
 * ``MPI_T_ERR_INFO``: Invalid info
 
 * ``MPI_T_ERR_OTHER``: Other error
+
+.. seealso::
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`

@@ -237,6 +237,15 @@ ompi/mpi/tool/profile/*.c
 
 ompi/test/t/mpi_t_category_get_events
 ompi/test/t/mpi_t_concurrent_init
+ompi/test/t/mpi_t_errcodes
+ompi/test/t/mpi_t_event_14019
+ompi/test/t/mpi_t_event_comm_name
+ompi/test/t/mpi_t_event_inert_ok
+ompi/test/t/mpi_t_event_producers
+ompi/test/t/mpi_t_event_reinit
+ompi/test/t/mpi_t_event_selftest
+ompi/test/t/mpi_t_event_smoke
+ompi/test/t/mpi_t_event_world
 ompi/test/t/mpi_t_level_no_downgrade
 ompi/test/t/mpi_t_level_pinning
 ompi/test/t/mpi_t_lifecycle
@@ -547,6 +556,7 @@ test/threads/opal_atomic_thread_bench
 
 test/util/aaa
 test/util/test_session_dir_out
+test/util/mca_base_event_test
 test/util/opal_os_path
 test/util/opal_argv
 test/util/opal_os_create_dirpath

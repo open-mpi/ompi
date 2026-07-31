@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2020      Google LLC. All rights reserved.
-# Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2025-2026 Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -37,6 +37,7 @@ headers = \
         mca_base_component_repository.h \
         mca_base_var.h \
         mca_base_pvar.h \
+        mca_base_event.h \
 	mca_base_var_enum.h \
         mca_base_var_group.h \
         mca_base_vari.h \
@@ -59,6 +60,9 @@ libmca_base_la_SOURCES = \
         mca_base_open.c \
         mca_base_var.c \
         mca_base_pvar.c \
+        mca_base_event.c \
+        mca_base_event_dispatch.c \
+        mca_base_event_memory.c \
 	mca_base_var_enum.c \
         mca_base_var_group.c \
         mca_base_parse_paramfile.c \
