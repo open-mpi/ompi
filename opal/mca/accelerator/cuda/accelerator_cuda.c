@@ -260,9 +260,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
 
     *flags = 0;
 
-    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
-    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
-
 #if OPAL_CUDA_GET_ATTRIBUTES
     uint32_t is_managed = 0;
     /* With CUDA 7.0, we can get multiple attributes with a single call */
@@ -291,7 +288,20 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         } else {
             return OPAL_ERROR;
         }
-    } else if (CU_MEMORYTYPE_HOST == mem_type) {
+    }
+
+    /* cuPointerGetAttributes returns success with mem_type==0 for pointers
+     * CUDA recognizes but cannot classify (plain host allocations when CUDA
+     * is initialized).  Return early before the more expensive VMM and
+     * mempool driver probes. */
+    if (0 == mem_type) {
+        return 0;
+    }
+
+    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
+    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
+
+    if (CU_MEMORYTYPE_HOST == mem_type) {
         if (is_vmm && (vmm_mem_type == CU_MEMORYTYPE_DEVICE)) {
             mem_type = CU_MEMORYTYPE_DEVICE;
             *dev_id = vmm_dev_id;
@@ -302,9 +312,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
             /* Host memory, nothing to do here */
             return 0;
         }
-    } else if (0 == mem_type) {
-        /* This can happen when CUDA is initialized but dbuf is not valid CUDA pointer */
-        return 0;
     } else {
         if (is_vmm) {
             *dev_id = vmm_dev_id;
@@ -324,7 +331,12 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         } else {
             return OPAL_ERROR;
         }
-    } else if (CU_MEMORYTYPE_HOST == mem_type) {
+    }
+
+    is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
+    is_mpool_ptr = accelerator_cuda_check_mpool(dbuf, &mpool_mem_type, &mpool_dev_id);
+
+    if (CU_MEMORYTYPE_HOST == mem_type) {
         if (is_vmm && (vmm_mem_type == CU_MEMORYTYPE_DEVICE)) {
             mem_type = CU_MEMORYTYPE_DEVICE;
             *dev_id = vmm_dev_id;
