@@ -33,8 +33,8 @@ end interface
 
 interface
 
-subroutine MPI_File_create_errhandler(function, errhandler, ierror)
-  external :: function
+subroutine MPI_File_create_errhandler(file_errhandler_fn, errhandler, ierror)
+  external :: file_errhandler_fn
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_File_create_errhandler

@@ -190,6 +190,19 @@ api_f90_generated.F90: $(template_files) $(OMPI_BINDINGS_GENERATOR)
 	    --lang fortran \
 	    --prototype-files $(template_files)
 
+# Analogous checks to mpi_f08:
+# Verify parameter names and types against pympistandard.
+check-local:
+	@$(PYTHON) $(top_srcdir)/ompi/mpi/bindings/check_fortran_param_names.py \
+	    --label "mpi interface specifications and bindings" \
+	    --lang f90 \
+	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
+	    mpi-ignore-tkr-interfaces-generated.h \
+	    mpi-ignore-tkr-interfaces.h \
+	    mpi-ignore-tkr-file-interfaces.h \
+	    mpi-ignore-tkr-removed-interfaces.h \
+	    api_f90_generated.F90
+
 #
 # Clean up generated and module files
 #

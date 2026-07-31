@@ -5,30 +5,30 @@
 # Additional copyrights may follow
 #
 # $HEADER$
-"""Validate the Open MPI mpi_f08 interfaces against the MPI standard.
+"""Validate the Open MPI Fortran module interfaces against the MPI standard.
 
-The mpi_f08 module is the only Fortran binding whose dummy-argument
+The mpi(_f08) modules are the only Fortran bindings whose dummy-argument
 *names* are part of the user-visible contract (keyword arguments).  This
 script loads the MPI Forum's pympistandard metadata and checks that every
-mpi_f08 procedure's dummy arguments agree with the standard on three
+procedure's dummy arguments agree with the standard on three
 things:
 
   * name      -- the dummy-argument name (case-insensitive)
-  * intent    -- INTENT(IN|OUT|INOUT)
+  * intent    -- INTENT(IN|OUT|INOUT) (for F08 only)
   * type      -- the declared Fortran type
 
-It is intended to be run at build time over the generated Fortran source
-(api_f08_generated.F90 and the interface headers) plus the hand-written
+It is intended to be run at build time over the generated Fortran sources
+(api_{f08,f90}_generated.F90 and the interface headers) plus the hand-written
 *_f08.F90 files, and exits non-zero -- failing the build -- if any
-mpi_f08 interface has drifted from the standard.  Only the mpi_f08
-module is in scope; the C back-end and the older mpi (f90) module are
-not checked.
+interface has drifted from the standard. Only the modules are in scope;
+the C back-end is not checked.
 
 Things the standard deliberately leaves to the implementation are not
 flagged:
 
-  * choice buffers (standard type 'TYPE(*), ...'); Open MPI renders
-    these with its own ignore-TKR macro and may attach INTENT(IN).
+  * choice buffers (standard type 'TYPE(*), ...' in F08, '<type>' in
+    F90); Open MPI renders these with its own ignore-TKR macro and may
+    attach INTENT(IN).
   * any argument whose standard F08 intent is unspecified (None), e.g.
     a TYPE(MPI_Status) argument that must also accept MPI_STATUS_IGNORE.
   * a large-count (_c) procedure that the standard does not provide an
@@ -68,21 +68,22 @@ def emit_status(status, label, reason=None):
     print(line)
 
 
-def load_standard(pympistd_dir):
+def load_standard(pympistd_dir, lang):
     """Load {function_key: {'r': params, 'c': params}} from pympistandard.
 
     Each params entry is a list of (name, intent, type) tuples for the
-    regular ('r') and large-count/embiggened ('c') F08 bindings.
+    regular ('r') and large-count/embiggened ('c') bindings.
     """
     sys.path.insert(0, os.path.join(pympistd_dir, 'src'))
     import pympistandard as std
     std.use_api_version(1)
 
     def params_of(express):
-        f08 = getattr(express, 'f08', None) if express is not None else None
-        if f08 is None:
+        binding = getattr(express, lang, None) if express is not None else None
+        if binding is None:
             return None
-        return [(p.name.lower(), p.intent, p.type) for p in f08.parameters]
+        return [(p.name.lower(), getattr(p, 'intent', None), p.type)
+                for p in binding.parameters]
 
     table = {}
     for key, proc in std.PROCEDURES.items():
@@ -98,8 +99,8 @@ def load_standard(pympistd_dir):
     return table
 
 
-# Procedures whose Open MPI mpi_f08 binding intentionally has a different
-# argument count than the standard's F08 expression, so an argument-count
+# Procedures whose Open MPI binding intentionally has a different
+# argument count than the standard's expression, so an argument-count
 # mismatch is expected rather than drift: MPI_Pcontrol is variadic, and the
 # Open MPI bindings for MPI_Type_get_contents / MPI_Type_get_envelope take a
 # different argument shape than pympistandard's rendering.
@@ -111,15 +112,16 @@ COUNT_MISMATCH_EXEMPT = {
 
 
 def function_key(subroutine_name):
-    """Map an mpi_f08 subroutine name to a (pympistandard key, is_large_count) pair.
+    """Map a subroutine name to a (pympistandard key, is_large_count) pair.
 
-    Large-count variants use two suffix conventions: the template-generated
+    Large-count variants for mpi_f08 use two suffix conventions: the template-generated
     routines use '_c_f08'/'_c_f08ts', while the hand-written ones use
     '_f08_c'/'_f08ts_c'.  Both must be recognized so the large-count routines
     resolve to the embiggened standard entry instead of being skipped.
     """
-    is_c = bool(re.search(r'(_c_f08(ts)?|_f08(ts)?_c)$', subroutine_name))
-    base = re.sub(r'(_c_f08(ts)?|_f08(ts)?_c|_f08(ts)?)$', '', subroutine_name).lower()
+    is_c = bool(re.search(r'(_c_f08(ts)?|_f08(ts)?_c)$', subroutine_name, re.IGNORECASE))
+    base = re.sub(r'(_c_f08(ts)?|_f08(ts)?_c|_f08(ts)?|_fts)$', '', subroutine_name,
+                  flags=re.IGNORECASE).lower()
     if not base.startswith('mpi_'):
         base = 'mpi_' + base
     return base, is_c
@@ -129,13 +131,13 @@ def normalize_type(text):
     """Normalize a Fortran type for comparison."""
     text = re.sub(r'\s+', '', text).upper().replace('KIND=', '')
     # CHARACTER(LEN=*) and friends are all just CHARACTER for our purposes.
-    text = re.sub(r'CHARACTER\(.*\)', 'CHARACTER', text)
+    text = re.sub(r'CHARACTER(\*?\(.*\)|\*\d+)', 'CHARACTER', text)
     return text
 
 
 def is_choice_buffer(std_type):
-    """A standard choice-buffer argument renders as 'TYPE(*), ...'."""
-    return 'TYPE(*)' in std_type
+    """A standard choice-buffer argument renders as 'TYPE(*), ...' or '<type>'"""
+    return 'TYPE(*)' in std_type or '<type>' in std_type
 
 
 def parse_fortran(path):
@@ -253,21 +255,23 @@ def check_file(path, table, matched):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Validate mpi_f08 interfaces against the MPI standard (pympistandard).')
+        description='Validate mpi(_f08) interfaces against the MPI standard (pympistandard).')
     parser.add_argument('--pympistd-dir', required=True,
                         help='path to the pympistandard submodule')
     parser.add_argument('--label', default='mpi_f08 interfaces',
                         help='label for the Automake-style PASS/FAIL/SKIP result line')
+    parser.add_argument('--lang', default='f08', choices=('f08', 'f90'),
+                        help='version of Fortran bindings to check against (f08/f90)')
     parser.add_argument('files', nargs='+',
-                        help='Fortran files containing mpi_f08 interfaces to check')
+                        help='Fortran files containing mpi(_f08) interfaces to check')
     args = parser.parse_args()
     label = args.label
 
-    # Skip (don't fail) when the mpi_f08 sources are not present -- e.g. the
+    # Skip (don't fail) when the mpi(_f08) sources are not present -- e.g. the
     # Fortran bindings were not built.  (The Makefiles only run this during
-    # "make check" when the f08 bindings are enabled, but stay robust anyway.)
+    # "make check" when the bindings are enabled, but stay robust anyway.)
     if not any(os.path.exists(f) for f in args.files):
-        emit_status('SKIP', label, 'mpi_f08 sources not built')
+        emit_status('SKIP', label, 'mpi(_f08) sources not built')
         return
 
     # Skip when pympistandard is unavailable (e.g. the submodule was not
@@ -277,7 +281,7 @@ def main():
         emit_status('SKIP', label, 'pympistandard not available')
         return
     try:
-        table = load_standard(args.pympistd_dir)
+        table = load_standard(args.pympistd_dir, args.lang)
     except ImportError as e:
         emit_status('SKIP', label, f'pympistandard could not be loaded: {e}')
         return
@@ -297,7 +301,7 @@ def main():
         sys.exit(1)
 
     if problems:
-        print('mpi_f08 interfaces disagree with the MPI standard:')
+        print('mpi(_f08) interfaces disagree with the MPI standard:')
         for p in problems:
             print(f'  {p}')
         print(f'{len(problems)} mismatch(es) found ({len(matched)} procedures validated).')
