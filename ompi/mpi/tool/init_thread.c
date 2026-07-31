@@ -142,6 +142,11 @@ int MPI_T_init_thread (int required, int *provided)
         goto unlock;
     }
 
+    /* Install the OPAL debug raise-check hook so a producer that raises an
+       MPI_T event while holding the big lock trips an assert rather than
+       deadlocking (no-op unless OPAL_ENABLE_DEBUG; sec. 5.10). */
+    ompit_install_event_debug_hook ();
+
     /* The thread level of the MPI tool information interface is its
        own, scoped to MPI_T routines only (MPI 5.0 sec. 15.3.4).  It
        must NOT be written into the World Model's globals: those back

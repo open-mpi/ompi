@@ -30,6 +30,13 @@ DESCRIPTION
 :ref:`MPI_T_event_get_info` returns MPI_T_BIND_NO_OBJECT as the binding of the
 variable the *obj_handle* argument is ignored.
 
+.. note:: When the event type is bound to an object, *obj_handle* is the address
+   of the variable holding that MPI object's handle, and the resulting
+   registration is notified only when the event occurs for that specific object.
+   For the list of Open MPI's built-in event types -- which are bound to an
+   object and which are ``MPI_T_BIND_NO_OBJECT`` -- and a fuller description of
+   binding, see :ref:`MPI_T_Events`.
+
 ERRORS
 ------
 
@@ -39,3 +46,5 @@ ERRORS
 
 .. seealso::
    * :ref:`MPI_T_event_get_info`
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`

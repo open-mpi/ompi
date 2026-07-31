@@ -882,6 +882,14 @@ AC_CHECK_MEMBERS([struct timespec.tv_nsec],
 #endif])
 
 #
+# Determine the type backing opal_count_t.  This runs unconditionally (OPAL
+# must build standalone) and is the single source of truth for the count type:
+# OMPI_FIND_MPI_AINT_COUNT_OFFSET (below) derives MPI_Count from the same
+# OPAL_COUNT_* values rather than recomputing them.
+#
+OPAL_FIND_COUNT_TYPE
+
+#
 # Find corresponding types for MPI_Aint, MPI_Count, and MPI_Offset.
 # And if relevant, find the corresponding MPI_ADDRESS_KIND,
 # MPI_COUNT_KIND, and MPI_OFFSET_KIND.

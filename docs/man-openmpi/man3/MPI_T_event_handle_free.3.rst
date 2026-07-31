@@ -36,3 +36,5 @@ ERRORS
 
 .. seealso::
    * :ref:`MPI_T_event_get_info`
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`

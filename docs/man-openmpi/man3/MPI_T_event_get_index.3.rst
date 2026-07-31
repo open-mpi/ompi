@@ -38,3 +38,7 @@ ERRORS
 
 * ``MPI_T_ERR_INVALID_NAME``:  The event name is invalid
   initialized
+
+.. seealso::
+   * :ref:`MPI_T_Events`
+   * :ref:`MPI_T`
