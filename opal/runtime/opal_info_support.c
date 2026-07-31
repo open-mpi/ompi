@@ -321,6 +321,24 @@ int opal_info_register_project_frameworks(const char *project_name,
                 continue;
             }
 
+            /* Roll back this loop's own work so a failure leaves no
+               references behind: close every framework registered by the
+               earlier iterations (mca_base_framework_close() is a no-op
+               for the ones the NOT_AVAILABLE/continue path skipped, and
+               mca_base_framework_register() unwinds its own reference on
+               failure, so frameworks[i] itself holds nothing).
+
+               Exception: on BAD_PARAM, deliberately leave everything
+               registered.  ompi_info relies on the registrations
+               surviving that failure so it can dump the surrounding
+               parameters as a diagnostic (see ompi_info.c); the caller
+               keeps its registration reference in that case. */
+            if (OPAL_ERR_BAD_PARAM != rc) {
+                for (i = i - 1; i >= 0; i--) {
+                    (void) mca_base_framework_close(frameworks[i]);
+                }
+            }
+
             break;
         }
     }
@@ -354,16 +372,26 @@ int opal_info_register_framework_params(opal_pointer_array_t *component_map)
     if (OPAL_SUCCESS != mca_base_open()) {
         opal_show_help("help-opal_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__,
                        __LINE__);
+        --opal_info_registered;
         return OPAL_ERROR;
     }
 
     /* Register the OPAL layer's MCA parameters */
     if (OPAL_SUCCESS != (rc = opal_register_params())) {
         fprintf(stderr, "opal_info_register: opal_register_params failed\n");
+        (void) mca_base_close();
+        --opal_info_registered;
         return rc;
     }
 
-    return opal_info_register_project_frameworks("opal", opal_frameworks, component_map);
+    rc = opal_info_register_project_frameworks("opal", opal_frameworks, component_map);
+    if (OPAL_SUCCESS != rc && OPAL_ERR_BAD_PARAM != rc) {
+        /* the project loop rolled its own registrations back; release
+           the mca_base reference taken above */
+        (void) mca_base_close();
+        --opal_info_registered;
+    }
+    return rc;
 }
 
 void opal_info_close_components(void)
