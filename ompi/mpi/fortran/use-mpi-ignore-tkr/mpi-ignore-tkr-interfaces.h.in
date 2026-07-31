@@ -89,10 +89,10 @@ end interface
 
 interface
 
-function MPI_Aint_add(base, diff)
+function MPI_Aint_add(base, disp)
   include 'mpif-config.h'
   integer(kind=MPI_ADDRESS_KIND) :: base
-  integer(kind=MPI_ADDRESS_KIND) :: diff
+  integer(kind=MPI_ADDRESS_KIND) :: disp
   integer(kind=MPI_ADDRESS_KIND) MPI_Aint_add
 end function MPI_Aint_add
 
@@ -488,9 +488,9 @@ end interface
 
 interface
 
-subroutine MPI_Buffer_detach(buffer, size, ierror)
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buffer
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buffer
+subroutine MPI_Buffer_detach(buffer_addr, size, ierror)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buffer_addr
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buffer_addr
   integer, intent(out) :: size
   integer, intent(out) :: ierror
 end subroutine MPI_Buffer_detach
@@ -523,9 +523,9 @@ end interface
 
 interface
 
-subroutine MPI_Cart_create(old_comm, ndims, dims, periods, reorder, &
+subroutine MPI_Cart_create(comm_old, ndims, dims, periods, reorder, &
         comm_cart, ierror)
-  integer, intent(in) :: old_comm
+  integer, intent(in) :: comm_old
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: dims
   logical, dimension(*), intent(in) :: periods
@@ -596,10 +596,10 @@ end interface
 
 interface
 
-subroutine MPI_Cart_sub(comm, remain_dims, new_comm, ierror)
+subroutine MPI_Cart_sub(comm, remain_dims, newcomm, ierror)
   integer, intent(in) :: comm
   logical, dimension(*), intent(in) :: remain_dims
-  integer, intent(out) :: new_comm
+  integer, intent(out) :: newcomm
   integer, intent(out) :: ierror
 end subroutine MPI_Cart_sub
 
@@ -694,8 +694,8 @@ end interface
 
 interface
 
-subroutine MPI_Comm_create_errhandler(function, errhandler, ierror)
-  external :: function
+subroutine MPI_Comm_create_errhandler(comm_errhandler_fn, errhandler, ierror)
+  external :: comm_errhandler_fn
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_Comm_create_errhandler
@@ -822,9 +822,9 @@ end interface
 
 interface
 
-subroutine MPI_Comm_get_errhandler(comm, erhandler, ierror)
+subroutine MPI_Comm_get_errhandler(comm, errhandler, ierror)
   integer, intent(in) :: comm
-  integer, intent(out) :: erhandler
+  integer, intent(out) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_Comm_get_errhandler
 
@@ -2312,11 +2312,11 @@ end interface
 
 interface
 
-subroutine MPI_Intercomm_create(local_comm, local_leader, bridge_comm, remote_leader, tag, &
+subroutine MPI_Intercomm_create(local_comm, local_leader, peer_comm, remote_leader, tag, &
         newintercomm, ierror)
   integer, intent(in) :: local_comm
   integer, intent(in) :: local_leader
-  integer, intent(in) :: bridge_comm
+  integer, intent(in) :: peer_comm
   integer, intent(in) :: remote_leader
   integer, intent(in) :: tag
   integer, intent(out) :: newintercomm
@@ -2639,7 +2639,7 @@ end interface
 
 interface
 
-subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
+subroutine MPI_Precv_init(buf, partitions, count, datatype, source, tag, &
         comm, info, request, ierror)
   include 'mpif-config.h'
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
@@ -2647,7 +2647,7 @@ subroutine MPI_Precv_init(buf, partitions, count, datatype, dest, tag, &
   integer, intent(in) :: partitions
   integer(KIND=MPI_COUNT_KIND), intent(in) :: count
   integer, intent(in) :: datatype
-  integer, intent(in) :: dest
+  integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   integer, intent(in) :: info
@@ -2671,9 +2671,9 @@ end interface
 
 interface
 
-subroutine MPI_Pready_list(length, partitions, request, ierror)
+subroutine MPI_Pready_list(length, array_of_partitions, request, ierror)
   integer, intent(in) :: length
-  integer, dimension(*), intent(in) :: partitions
+  integer, dimension(*), intent(in) :: array_of_partitions
   integer, intent(in) :: request
   integer, intent(out) :: ierror
 end subroutine MPI_Pready_list
@@ -2698,7 +2698,7 @@ interface
 subroutine MPI_Parrived(request, partition, flag, ierror)
   integer, intent(in) :: request
   integer, intent(in) :: partition
-  logical, intent(in) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierror
 end subroutine MPI_Parrived
 
@@ -2973,8 +2973,8 @@ end interface
 
 interface
 
-subroutine MPI_Op_create(function, commute, op, ierror)
-  external :: function
+subroutine MPI_Op_create(user_fn, commute, op, ierror)
+  external :: user_fn
   logical, intent(in) :: commute
   integer, intent(out) :: op
   integer, intent(out) :: ierror
@@ -3238,12 +3238,12 @@ end interface
 
 interface
 
-subroutine MPI_Reduce_local(inbuf, inout, count, datatype, op, &
+subroutine MPI_Reduce_local(inbuf, inoutbuf, count, datatype, op, &
         ierror)
   @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ inbuf
   @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: inbuf
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ inout
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: inout
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ inoutbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: inoutbuf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: op
@@ -3459,10 +3459,10 @@ end interface
 
 interface
 
-subroutine MPI_Rsend(ibuf, count, datatype, dest, tag, &
+subroutine MPI_Rsend(buf, count, datatype, dest, tag, &
         comm, ierror)
-  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ ibuf
-  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: ibuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(in) :: dest
@@ -3709,8 +3709,8 @@ end interface
 
 interface
 
-subroutine MPI_Session_create_errhandler(function, errhandler, ierror)
-  external :: function
+subroutine MPI_Session_create_errhandler(session_errhandler_fn, errhandler, ierror)
+  external :: session_errhandler_fn
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_Session_create_errhandler
@@ -3719,9 +3719,9 @@ end interface
 
 interface
 
-subroutine MPI_Session_get_errhandler(session, erhandler, ierror)
+subroutine MPI_Session_get_errhandler(session, errhandler, ierror)
   integer, intent(in) :: session
-  integer, intent(out) :: erhandler
+  integer, intent(out) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_Session_get_errhandler
 
@@ -3729,9 +3729,9 @@ end interface
 
 
 interface MPI_Session_get_info
-subroutine MPI_Session_get_info(session, info, ierror)
+subroutine MPI_Session_get_info(session, info_used, ierror)
    integer, INTENT(IN) :: session
-   integer, INTENT(OUT) :: info
+   integer, INTENT(OUT) :: info_used
    INTEGER, INTENT(OUT) :: ierror
 end subroutine MPI_Session_get_info
 end interface
@@ -3785,9 +3785,9 @@ end interface
 
 interface
 
-subroutine MPI_Session_set_errhandler(session, erhandler, ierror)
+subroutine MPI_Session_set_errhandler(session, errhandler, ierror)
   integer, intent(in) :: session
-  integer, intent(out) :: erhandler
+  integer, intent(in) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_Session_set_errhandler
 
@@ -3980,15 +3980,15 @@ end interface
 
 interface
 
-subroutine MPI_Type_create_darray(size, rank, ndims, gsize_array, distrib_array, &
-        darg_array, psize_array, order, oldtype, newtype, ierror)
+subroutine MPI_Type_create_darray(size, rank, ndims, array_of_gsizes, array_of_distribs, &
+        array_of_dargs, array_of_psizes, order, oldtype, newtype, ierror)
   integer, intent(in) :: size
   integer, intent(in) :: rank
   integer, intent(in) :: ndims
-  integer, dimension(*), intent(in) :: gsize_array
-  integer, dimension(*), intent(in) :: distrib_array
-  integer, dimension(*), intent(in) :: darg_array
-  integer, dimension(*), intent(in) :: psize_array
+  integer, dimension(*), intent(in) :: array_of_gsizes
+  integer, dimension(*), intent(in) :: array_of_distribs
+  integer, dimension(*), intent(in) :: array_of_dargs
+  integer, dimension(*), intent(in) :: array_of_psizes
   integer, intent(in) :: order
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
@@ -4126,11 +4126,11 @@ end interface
 
 interface
 
-subroutine MPI_Type_create_struct(count, array_of_block_lengths, array_of_displacements, array_of_types, newtype&
+subroutine MPI_Type_create_struct(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype&
         , ierror)
   include 'mpif-config.h'
   integer, intent(in) :: count
-  integer, dimension(*), intent(in) :: array_of_block_lengths
+  integer, dimension(*), intent(in) :: array_of_blocklengths
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
   integer, dimension(*), intent(in) :: array_of_types
   integer, intent(out) :: newtype
@@ -4142,12 +4142,12 @@ end interface
 
 interface
 
-subroutine MPI_Type_create_subarray(ndims, size_array, subsize_array, start_array, order, &
+subroutine MPI_Type_create_subarray(ndims, array_of_sizes, array_of_subsizes, array_of_starts, order, &
         oldtype, newtype, ierror)
   integer, intent(in) :: ndims
-  integer, dimension(*), intent(in) :: size_array
-  integer, dimension(*), intent(in) :: subsize_array
-  integer, dimension(*), intent(in) :: start_array
+  integer, dimension(*), intent(in) :: array_of_sizes
+  integer, dimension(*), intent(in) :: array_of_subsizes
+  integer, dimension(*), intent(in) :: array_of_starts
   integer, intent(in) :: order
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
@@ -4170,8 +4170,8 @@ end interface
 
 interface
 
-subroutine MPI_Type_dup(datatype, newtype, ierror)
-  integer, intent(in) :: datatype
+subroutine MPI_Type_dup(oldtype, newtype, ierror)
+  integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
   integer, intent(out) :: ierror
 end subroutine MPI_Type_dup
@@ -4339,11 +4339,11 @@ end interface
 
 interface
 
-subroutine MPI_Type_set_attr(datatype, type_keyval, attr_val, ierror)
+subroutine MPI_Type_set_attr(datatype, type_keyval, attribute_val, ierror)
   include 'mpif-config.h'
   integer, intent(in) :: datatype
   integer, intent(in) :: type_keyval
-  integer(kind=MPI_ADDRESS_KIND), intent(in) :: attr_val
+  integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
   integer, intent(out) :: ierror
 end subroutine MPI_Type_set_attr
 
@@ -4628,8 +4628,8 @@ end interface
 
 interface
 
-subroutine MPI_Win_create_errhandler(function, errhandler, ierror)
-  external :: function
+subroutine MPI_Win_create_errhandler(win_errhandler_fn, errhandler, ierror)
+  external :: win_errhandler_fn
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierror
 end subroutine MPI_Win_create_errhandler
@@ -4786,10 +4786,10 @@ end interface
 
 interface
 
-subroutine MPI_Win_get_info(comm, info, ierror)
+subroutine MPI_Win_get_info(win, info_used, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: comm
-  integer, intent(in) :: info
+  integer, intent(in) :: win
+  integer, intent(out) :: info_used
   integer, intent(out) :: ierror
 end subroutine MPI_Win_get_info
 
@@ -4870,9 +4870,9 @@ end interface
 
 interface
 
-subroutine MPI_Win_set_info(comm, info, ierror)
+subroutine MPI_Win_set_info(win, info, ierror)
   include 'mpif-config.h'
-  integer, intent(in) :: comm
+  integer, intent(in) :: win
   integer, intent(in) :: info
   integer, intent(out) :: ierror
 end subroutine MPI_Win_set_info
