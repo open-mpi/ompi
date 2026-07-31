@@ -434,13 +434,6 @@ int mca_io_ompio_file_sync (ompi_file_t *fh)
     if ( data->ompio_fh.f_amode & MPI_MODE_RDONLY ) {
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return MPI_ERR_ACCESS;
-    }        
-    // Make sure all processes reach this point before syncing the file.
-    ret = data->ompio_fh.f_comm->c_coll->coll_barrier (data->ompio_fh.f_comm,
-                                                       data->ompio_fh.f_comm->c_coll->coll_barrier_module);
-    if ( MPI_SUCCESS != ret ) {
-        OPAL_THREAD_UNLOCK(&fh->f_lock);
-        return ret;
     }
     ret = data->ompio_fh.f_fs->fs_file_sync (&data->ompio_fh);
     OPAL_THREAD_UNLOCK(&fh->f_lock);
