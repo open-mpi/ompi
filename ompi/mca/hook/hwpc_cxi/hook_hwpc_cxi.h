@@ -1,8 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
- * SPDX-License-Identifier:  MIT
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
+ * Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@ extern char *mca_hook_hwpc_cxi_counter_file;
 extern int mca_hook_hwpc_cxi_counter_report;
 extern bool mca_hook_hwpc_cxi_counter_verbose;
 extern bool mca_hook_hwpc_cxi_counter_summary_filter_zeros;
+extern bool mca_hook_hwpc_cxi_counter_mpi_t_enable;
 extern char *mca_hook_hwpc_cxi_counter_report_file;
 
 void ompi_hook_hwpc_cxi_mpi_init_bottom(int argc, char **argv, int requested, int *provided);

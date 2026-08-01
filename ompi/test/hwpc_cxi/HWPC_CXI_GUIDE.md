@@ -1,14 +1,14 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
-/*
- * SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
- * SPDX-License-Identifier:  MIT
- *
- * $COPYRIGHT$
- *
- * Additional copyrights may follow
- *
- * $HEADER$
- */
+<!--
+  SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
+  SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+  Copyright (c) 2026      Copyright Hewlett Packard Enterprise Development LP
+  $COPYRIGHT$
+
+  Additional copyrights may follow
+
+  $HEADER$
+-->
 
 # HWPC_CXI Test Suite Guide
 
@@ -19,13 +19,11 @@ This file condenses the HWPC_CXI documentation in this folder into one practical
 The maintained HWPC_CXI validation flow uses:
 
 - `hwpc_cxi_sendrecv_test` - minimal MPI workload for counter activity
-- `run_hwpc_cxi_validate.sh` - primary validation and comparison driver
+- `run_hwpc_cxi_validate.sh` - primary validation and comparison driver. Will have to first use the --save-baseline option to create a known good to compare against
 
 Helper files in this directory:
 
-- `build_and_run.sh` - recommended build helper
-- `build_with_env.sh` - alternate environment-based builder
-- `run_hwpc_cxi_tests.sh` - compatibility wrapper that forwards to `run_hwpc_cxi_validate.sh`
+- `build_with_env_and_run.sh` - recommended build helper
 
 ## Recommended Workflow
 
@@ -36,7 +34,7 @@ Helper files in this directory:
 
 ## Build Open MPI
 
-If you are building manually, make sure HWPC_CXI is enabled at configure time and Open MPI finishes building before compiling the test suite.
+If you are building manually, make sure HWPC_CXI is enabled at configure time (--enable-hwpc-cxi) and Open MPI finishes building before compiling the test suite.
 
 ## Build The Tests
 
@@ -44,7 +42,7 @@ If you are building manually, make sure HWPC_CXI is enabled at configure time an
 
 ```bash
 cd "$PROJECT_ROOT/test/hwpc_cxi"
-./build_and_run.sh
+./build_with_env_and_run.sh
 ```
 
 ### Manual Build With Environment Variables - Example
@@ -53,32 +51,29 @@ cd "$PROJECT_ROOT/test/hwpc_cxi"
 cd "$PROJECT_ROOT/test/hwpc_cxi"
 
 export LIBFABRIC_PREFIX=/path/to/libfabric/install/prefix
-export JSONC_LIBDIR=/path/to/json-c/lib64
-export JSONC_LINK_SO=$JSONC_LIBDIR/libjson-c.so.5.0.0
-export LD_LIBRARY_PATH="$LIBFABRIC_PREFIX/lib:$JSONC_LIBDIR:${LD_LIBRARY_PATH:-}"
+export OMPI_PREFIX=/path/to/ompi/install/prefix
+export LD_LIBRARY_PATH="$LIBFABRIC_PREFIX/lib:$OMPI_PREFIX/lib:${LD_LIBRARY_PATH:-}"
 
 make clean
 LIBFABRIC_PREFIX="$LIBFABRIC_PREFIX" \
-JSONC_LIBDIR="$JSONC_LIBDIR" \
-JSONC_LINK_SO="$JSONC_LINK_SO" \
+OMPI_PREFIX="$OMPI_PREFIX" \
 make all
 ```
 
 ### Note On The Two Builder Scripts
 
-- `build_and_run.sh` is the preferred path for the standard build environment
-- `build_with_env.sh` is an alternate builder for setups that already provide compatible library paths.
+- `build_with_env_and_run.sh` is the preferred path for the standard build environment
 
 ## Runtime Environment
 
-The validation scripts require a runtime library path value through:
+The validation script requires a runtime library path value through:
 
 - `HWPC_CXI_RUNTIME_LD_LIBRARY_PATH`
 
 Example:
 
 ```bash
-export HWPC_CXI_RUNTIME_LD_LIBRARY_PATH="/path/to/libfabric/lib:/path/to/json-c/lib64"
+export HWPC_CXI_RUNTIME_LD_LIBRARY_PATH="/path/to/libfabric/lib:/path/to/open-mpi/lib"
 ```
 
 The scripts prepend this value to `LD_LIBRARY_PATH` at runtime.
@@ -88,12 +83,8 @@ Typical environment variables used by the build system:
 | Variable | Purpose |
 | --- | --- |
 | `LIBFABRIC_PREFIX` | libfabric install prefix |
-| `JSONC_LIBDIR` | json-c library directory |
-| `JSONC_LINK_SO` | absolute path to `libjson-c.so.5.0.0` |
-| `CPPFLAGS` | includes libfabric headers |
-| `LDFLAGS` | libfabric/json-c link and rpath flags |
-
-The important detail is that the test link must use the versioned json-c shared object, not a generic `-ljson-c`, because the linked libfabric depends on versioned `JSONC_0.14` symbols.
+| `CPPFLAGS` | includes libfabric and OpenMPI headers |
+| `LDFLAGS` | libfabric and OpenMPI link and rpath flags |
 
 ## Run The Tests
 
@@ -138,7 +129,6 @@ Successful validation runs generally show:
 ## Troubleshooting
 
 - Build fails with missing HWPC_CXI support: verify configure used `--enable-hwpc-cxi` and the Open MPI build completed.
-- Linker errors mentioning `JSONC_0.14`: confirm `JSONC_LINK_SO` points to the versioned `libjson-c.so.5.0.0` and not the system library.
 - Runtime library not found: set `HWPC_CXI_RUNTIME_LD_LIBRARY_PATH` before running validation.
 - Validation script cannot find executable: rebuild from `test/hwpc_cxi` and confirm `hwpc_cxi_sendrecv_test` exists.
 
@@ -146,16 +136,15 @@ Successful validation runs generally show:
 
 When changing HWPC_CXI code, use this order:
 
-1. `./build_and_run.sh`
+1. `./build_with_env_and_run.sh`
 2. `./run_hwpc_cxi_validate.sh --save-baseline 4 2 100` (when baseline refresh is needed)
-3. `./run_hwpc_cxi_validate.sh 4 2 100`
+3. make your desired code changes
+4. `./run_hwpc_cxi_validate.sh 4 2 100`
 
-If you are debugging build or runtime failures, start with `build_and_run.sh` and `run_hwpc_cxi_validate.sh` because this is the maintained path.
+If you are debugging build or runtime failures, start with `build_with_env_and_run.sh` and `run_hwpc_cxi_validate.sh` because this is the maintained path.
 
 ## Minimal Summary
 
 - Build Open MPI
-- Build tests with `./build_and_run.sh`
-- Set `HWPC_CXI_RUNTIME_LD_LIBRARY_PATH` to the libfabric/json-c runtime directories
+- Build and run tests with `./build_with_env_and_run.sh`
 - Run `./run_hwpc_cxi_validate.sh 4 2 100`
-- Use the versioned json-c shared object for linking
