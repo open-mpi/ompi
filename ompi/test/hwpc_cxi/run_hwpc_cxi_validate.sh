@@ -1,10 +1,10 @@
 #!/bin/bash
-
 # -*- Mode: sh; c-basic-offset:4 ; indent-tabs-mode:nil -*-
 #
 # SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
-# SPDX-License-Identifier:  MIT
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
+# Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,6 +25,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+PASS_LABEL="PASS"
+FAIL_LABEL="FAIL"
+if [[ -t 1 && "${TERM:-}" != "dumb" ]]; then
+	printf -v PASS_LABEL '\033[32mPASS\033[0m'
+	printf -v FAIL_LABEL '\033[31mFAIL\033[0m'
+fi
 
 # Parse optional flags before positional arguments.
 SAVE_BASELINE=false
@@ -54,13 +61,13 @@ export OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose="${OMPI_MCA_ompi_hook_hwpc_cx
 export OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file:-mock_report_prefix}"
 #export OMPI_MCA_btl="${OMPI_MCA_btl:-^ofi}"
 
-export HWPC_CXI_RUNTIME_LD_LIBRARY_PATH="${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH:-__REPLACE_ME_RUNTIME_LD_LIBRARY_PATH__}"
+HWPC_CXI_RUNTIME_LD_LIBRARY_PATH="${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH:-}"
 if [[ "${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}" == __REPLACE_ME_* ]]; then
-	echo "WARNING: placeholder path detected. Set HWPC_CXI_RUNTIME_LD_LIBRARY_PATH to required runtime library directories." >&2
-	echo "  HWPC_CXI_RUNTIME_LD_LIBRARY_PATH=${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}" >&2
-	#exit 1
+	HWPC_CXI_RUNTIME_LD_LIBRARY_PATH=""
 fi
-export LD_LIBRARY_PATH="${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH:-}"
+if [[ -n "${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}" ]]; then
+	export LD_LIBRARY_PATH="${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH:-}"
+fi
 
 TEST_BIN="${SCRIPT_DIR}/hwpc_cxi_sendrecv_test"
 STDOUT_LOG="${RUN_DIR}/stdout.log"
@@ -271,11 +278,11 @@ echo "report_dir:     ${REPORT_DIR}"
 echo "========================================================"
 
 # Run the test and capture stdout / stderr separately.
-if srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"; then
-	echo "RESULT: PASS"
+if srun --mpi=pmix -n "${NUM_PROCS}"  --ntasks-per-node "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"; then
+	echo "RESULT: ${PASS_LABEL}"
 else
 	rc=$?
-	echo "RESULT: FAIL (exit code ${rc})"
+	echo "RESULT: ${FAIL_LABEL} (exit code ${rc})"
 fi
 
 # Capture any report files matching the configured prefix.
@@ -321,6 +328,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 	echo "COMPARISON against baseline: ${BASELINE_DIR}"
 	echo "======================================================="
 	_compare_pass=true
+	rc=0
 
 	# stdout counter lines: allow numeric variance within tolerance, warn above it,
 	# but fail when baseline counter names are missing.
@@ -329,6 +337,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 	else
 		echo "stdout:          ERROR (missing/invalid counters) -> ${RUN_DIR}/stdout_counter_compare.txt"
 		_compare_pass=false
+		rc=1
 	fi
 
 	# stderr: apply PE 0: gating so pre-activation preamble differences are
@@ -338,6 +347,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 	else
 		echo "stderr:          ERROR (missing/invalid counters) -> ${RUN_DIR}/stderr_counter_compare.txt"
 		_compare_pass=false
+		rc=1
 	fi
 
 	# report files
@@ -352,10 +362,12 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 				else
 					echo "report ${_rname}: ERROR (missing/invalid counters) -> ${RUN_DIR}/${_rname}_counter_compare.txt"
 					_compare_pass=false
+					rc=1
 				fi
 			else
 				echo "report ${_rname}: MISSING in current run"
 				_compare_pass=false
+				rc=1
 			fi
 		done
 		if [[ -d "${RUN_DIR}/reports" ]]; then
@@ -364,6 +376,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 				if [[ ! -f "${BASELINE_DIR}/reports/${_rname}" ]]; then
 					echo "report ${_rname}: NEW (not in baseline)"
 					_compare_pass=false
+					rc=1
 				fi
 			done
 		fi
@@ -371,9 +384,9 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 	fi
 
 	if $_compare_pass; then
-		echo "COMPARISON:      PASS"
+		echo "COMPARISON:      ${PASS_LABEL}"
 	else
-		echo "COMPARISON:      FAIL"
+		echo "COMPARISON:      ${FAIL_LABEL}"
 	fi
 	echo "======================================================="
 else
@@ -417,9 +430,9 @@ _fake_diag_count=$(grep -ciE \
 	"${FAKE_STDERR_LOG}" 2>/dev/null || true)
 
 if (( _fake_diag_count == 6 )); then
-	echo "FAKE-COUNTER:    PASS (${_fake_diag_count} diagnostic line(s) found in stderr)"
+	echo "FAKE-COUNTER:    ${PASS_LABEL} (${_fake_diag_count} diagnostic line(s) found in stderr)"
 else
-	echo "FAKE-COUNTER:    FAIL (${_fake_diag_count} diagnostic line(s) found in stderr. (Expected exactly six -- 3 for each local_root))"
+	echo "FAKE-COUNTER:    ${FAIL_LABEL} (${_fake_diag_count} diagnostic line(s) found in stderr. (Expected exactly six -- 3 for each local_root))"
 	echo "  Expected hwpc_cxi to report unrecognised counter names."
 	echo "  Inspect: ${FAKE_STDERR_LOG}"
 	rc=1
@@ -457,24 +470,24 @@ echo "report1_stdout_log: ${REPORT1_STDOUT_LOG}"
 echo "report1_stderr_log: ${REPORT1_STDERR_LOG}"
 
 if [[ "${_report1_rc}" -ne 0 ]]; then
-	echo "REPORT_LEVEL=1:        FAIL (exit code ${_report1_rc})"
+	echo "REPORT_LEVEL=1:        ${FAIL_LABEL} (exit code ${_report1_rc})"
 	rc=1
 else
 	# REPORT_LEVEL=1 must not emit the detailed CXI counter summary table/header.
 	if grep -q "OpenMPI Slingshot CXI Counter Summary:" "${REPORT1_STDOUT_LOG}"; then
-		echo "REPORT_LEVEL=1:        FAIL (stdout contains CXI Counter Summary table)"
+		echo "REPORT_LEVEL=1:        ${FAIL_LABEL} (stdout contains CXI Counter Summary table)"
 		echo "  Inspect: ${REPORT1_STDOUT_LOG}"
 		rc=1
 	else
-		echo "REPORT_LEVEL=1 stdout: PASS (no detailed counter summary table)"
+		echo "REPORT_LEVEL=1 stdout: ${PASS_LABEL} (no detailed counter summary table)"
 	fi
 
 	# Compare stderr against baseline stderr when available.
 	if [[ -f "${BASELINE_DIR}/stderr.log" ]]; then
 		if compare_counter_logs "${BASELINE_DIR}/stderr.log" "${REPORT1_STDERR_LOG}" "${REPORT1_RUN_DIR}/stderr_vs_baseline.txt" 20 1; then
-			echo "REPORT_LEVEL=1 stderr: PASS (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
+			echo "REPORT_LEVEL=1 stderr: ${PASS_LABEL} (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
 		else
-			echo "REPORT_LEVEL=1 stderr: FAIL (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
+			echo "REPORT_LEVEL=1 stderr: ${FAIL_LABEL} (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
 			rc=1
 		fi
 	else
@@ -483,6 +496,7 @@ else
 fi
 echo "======================================================="
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 # ── Report-level=0 disabled-feature test ────────────────────────────────────
 # Run with the normal desired counter file, but force report level 0.
@@ -514,34 +528,34 @@ echo "report0_stdout_log: ${REPORT0_STDOUT_LOG}"
 echo "report0_stderr_log: ${REPORT0_STDERR_LOG}"
 
 if [[ "${_report0_rc}" -ne 0 ]]; then
-	echo "REPORT=0:        FAIL (exit code ${_report0_rc})"
+	echo "REPORT=0:        ${FAIL_LABEL} (exit code ${_report0_rc})"
 	rc=1
 else
 	# For REPORT=0, stdout may be empty or contain only the sendrecv completion
 	# line. No HWPC_CXI summary/counter output should appear.
 	if grep -qE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT0_STDOUT_LOG}"; then
-		echo "REPORT_LEVEL=0 stdout: FAIL (found HWPC_CXI output)"
+		echo "REPORT_LEVEL=0 stdout: ${FAIL_LABEL} (found HWPC_CXI output)"
 		echo "  Inspect: ${REPORT0_STDOUT_LOG}"
 		rc=1
 	else
 		mapfile -t _report0_stdout_lines < <(grep -v '^[[:space:]]*$' "${REPORT0_STDOUT_LOG}" || true)
 		if (( ${#_report0_stdout_lines[@]} == 0 )); then
-			echo "REPORT_LEVEL=0 stdout: PASS (empty)"
+			echo "REPORT_LEVEL=0 stdout: ${PASS_LABEL} (empty)"
 		elif (( ${#_report0_stdout_lines[@]} == 1 )) && [[ "${_report0_stdout_lines[0]}" == "hwpc_cxi_sendrecv_test complete" ]]; then
-			echo "REPORT_LEVEL=0 stdout: PASS (single completion line)"
+			echo "REPORT_LEVEL=0 stdout: ${PASS_LABEL} (single completion line)"
 		else
-			echo "REPORT_LEVEL=0 stdout: FAIL (unexpected stdout content)"
+			echo "REPORT_LEVEL=0 stdout: ${FAIL_LABEL} (unexpected stdout content)"
 			echo "  Inspect: ${REPORT0_STDOUT_LOG}"
 			rc=1
 		fi
 	fi
 
 	if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT0_STDERR_LOG}"; then
-		echo "REPORT_LEVEL=0 stderr: FAIL (found HWPC_CXI output)"
+		echo "REPORT_LEVEL=0 stderr: ${FAIL_LABEL} (found HWPC_CXI output)"
 		echo "  Inspect: ${REPORT0_STDERR_LOG}"
 		rc=1
 	else
-		echo "REPORT_LEVEL=0 stderr: PASS (no HWPC_CXI output)"
+		echo "REPORT_LEVEL=0 stderr: ${PASS_LABEL} (no HWPC_CXI output)"
 	fi
 fi
 echo "======================================================="
@@ -577,15 +591,15 @@ echo "report2_stdout_log: ${REPORT2_STDOUT_LOG}"
 echo "report2_stderr_log: ${REPORT2_STDERR_LOG}"
 
 if [[ "${_report2_rc}" -ne 0 ]]; then
-	echo "REPORT_LEVEL=2+VERBOSE=false: FAIL (exit code ${_report2_rc})"
+	echo "REPORT_LEVEL=2+VERBOSE=false: ${FAIL_LABEL} (exit code ${_report2_rc})"
 	rc=1
 else
 	if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT2_STDERR_LOG}"; then
-		echo "REPORT_LEVEL=2+VERBOSE=false stderr: FAIL (found HWPC_CXI output)"
+		echo "REPORT_LEVEL=2+VERBOSE=false stderr: ${FAIL_LABEL} (found HWPC_CXI output)"
 		echo "  Inspect: ${REPORT2_STDERR_LOG}"
 		rc=1
 	else
-		echo "REPORT_LEVEL=2+VERBOSE=false stderr: PASS (no HWPC_CXI output)"
+		echo "REPORT_LEVEL=2+VERBOSE=false stderr: ${PASS_LABEL} (no HWPC_CXI output)"
 	fi
 fi
 echo "======================================================="
@@ -622,23 +636,23 @@ echo "report2_stdout_log: ${REPORT2_STDOUT_LOG}"
 echo "report2_stderr_log: ${REPORT2_STDERR_LOG}"
 
 if check_stdout_for_all_zero_numeric_lines "${REPORT2_STDOUT_LOG}" "${REPORT2_RUN_DIR}/stdout_all_zero_numeric_lines.txt"; then
-	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true zero-numeric check: PASS"
+	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true zero-numeric check: ${PASS_LABEL}"
 else
-	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true zero-numeric check: FAIL (found all-zero numeric-heavy line(s))"
+	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true zero-numeric check: ${FAIL_LABEL} (found all-zero numeric-heavy line(s))"
 	echo "  Inspect: ${REPORT2_RUN_DIR}/stdout_all_zero_numeric_lines.txt"
 	rc=1
 fi
 
 if [[ "${_report2_rc}" -ne 0 ]]; then
-	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true: FAIL (exit code ${_report2_rc})"
+	echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true: ${FAIL_LABEL} (exit code ${_report2_rc})"
 	rc=1
 else
 	if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT2_STDERR_LOG}"; then
-		echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true stderr: FAIL (found HWPC_CXI output)"
+		echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true stderr: ${FAIL_LABEL} (found HWPC_CXI output)"
 		echo "  Inspect: ${REPORT2_STDERR_LOG}"
 		rc=1
 	else
-		echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true stderr: PASS (no HWPC_CXI output)"
+		echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true stderr: ${PASS_LABEL} (no HWPC_CXI output)"
 	fi
 fi
 echo "======================================================="
@@ -682,11 +696,11 @@ printf '%s\n' "${_report5_files[@]}" > "${REPORT5_RUN_DIR}/report_files.txt"
 echo "report5_file_index: ${REPORT5_RUN_DIR}/report_files.txt"
 
 if (( ${#_report5_files[@]} == 0 )); then
-	echo "REPORT_LEVEL=5 files:  FAIL (no files generated for prefix ${REPORT5_REPORT_PREFIX})"
+	echo "REPORT_LEVEL=5 files:  ${FAIL_LABEL} (no files generated for prefix ${REPORT5_REPORT_PREFIX})"
 	echo "  Inspect: ${REPORT5_RUN_DIR}/report_files.txt"
 	rc=1
 else
-	echo "REPORT_LEVEL=5 files:  PASS (${#_report5_files[@]} file(s) generated)"
+	echo "REPORT_LEVEL=5 files:  ${PASS_LABEL} (${#_report5_files[@]} file(s) generated)"
 	if [[ "${_report5_rc}" -ne 0 ]]; then
 		echo "REPORT_LEVEL=5 note:   srun exited with ${_report5_rc}, but files were generated"
 	fi

@@ -1,8 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
- * SPDX-License-Identifier:  MIT
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
+ * Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,11 +44,11 @@ int main(int argc, char **argv)
 
     if (size < 2) {
         if (0 == rank) {
-            printf("hwpc_cxi_sendrecv_test requires at least 2 MPI ranks\n");
+            printf("hwpc_cxi_sendrecv_test requires at least 2 MPI ranks, skipping test\n");
             fflush(stdout);
         }
         MPI_Finalize();
-        return EXIT_FAILURE;
+        return 77; /* 77 indicates the test was skipped. */
     }
 
     if (rank < 2) {

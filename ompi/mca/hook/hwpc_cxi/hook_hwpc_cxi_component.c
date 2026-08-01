@@ -1,8 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
- * SPDX-License-Identifier:  MIT
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
+ * Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -62,6 +63,7 @@ int mca_hook_hwpc_cxi_counter_report = 1;
 char *mca_hook_hwpc_cxi_counter_report_file = NULL;
 bool mca_hook_hwpc_cxi_counter_verbose = false;
 bool mca_hook_hwpc_cxi_counter_summary_filter_zeros = true;
+bool mca_hook_hwpc_cxi_counter_mpi_t_enable = false;
 
 static int ompi_hook_hwpc_cxi_component_open(void)
 {
@@ -111,6 +113,13 @@ static int ompi_hook_hwpc_cxi_component_register(void)
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_hwpc_cxi_counter_summary_filter_zeros);
+
+    mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_mpi_t_enable",
+                                 "A boolean value for whether to register HWPC counters for HPE's Cassini devices as MPI_T performance variables (default: false).",
+                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &mca_hook_hwpc_cxi_counter_mpi_t_enable);
 
     return OMPI_SUCCESS;
 }
