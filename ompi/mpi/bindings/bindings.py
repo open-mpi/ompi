@@ -56,11 +56,6 @@ def main():
     # C set up code
     parser_c = subparsers.add_parser('c', help='subcommand for generating C code')
     subparsers_c = parser_c.add_subparsers()
-    parser_header = subparsers_c.add_parser('header', help='generate header file from template files')
-    parser_header.add_argument('file', nargs='+', help='list of template source files')
-    parser_header.add_argument('--external', action='store_true', help='generate external mpi.h header file')
-    parser_header.add_argument('--srcdir', help='source directory')
-    parser_header.set_defaults(handler=lambda args, out: c.generate_header(args, out))
     parser_gen = subparsers_c.add_parser('source', help='generate source file from template file')
     # parser = argparse.ArgumentParser(description='C ABI binding generation code')
     parser_gen.add_argument('type', choices=('ompi', 'standard'),
