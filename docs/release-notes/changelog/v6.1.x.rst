@@ -8,6 +8,12 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- ``MPI_Info_set`` now accepts a zero-length (empty) value string.  It
+  previously raised ``MPI_ERR_INFO_VALUE`` for an empty value, but
+  MPI-5.0 chapter 10 only limits the *maximum* length of an info
+  value, and gives the empty string a defined meaning for the
+  ``mpi_memory_alloc_kinds`` info key.  Empty *keys* remain invalid.
+
 - Partitioned communication fixes:
 
   - ``MPI_Parrived`` now returns ``flag = true`` for a null request

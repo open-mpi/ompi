@@ -34,6 +34,7 @@ static int argc_saved;
 static char **argv_saved;
 
 static void test_info_api(void);
+static void test_info_empty_value(void);
 static void test_info_env(void);
 static void test_memkind_process(void);
 
@@ -48,6 +49,7 @@ int main(int argc, char *argv[])
     test_verify("MPI_Init succeeds", MPI_SUCCESS == rc);
 
     test_info_api();
+    test_info_empty_value();
     test_info_env();
     test_memkind_process();
 
@@ -98,6 +100,62 @@ static void test_info_api(void)
     test_verify("Info_free succeeds", MPI_SUCCESS == rc);
     test_verify("Info_free NULLs the handle", MPI_INFO_NULL == info);
     MPI_Info_free(&dup);
+}
+
+/* ------------------------------------------------------------------ */
+
+/* An empty string is a valid info value: MPI-5.0 chapter 10 only
+ * limits the *maximum* length of a value, and gives the empty string
+ * a defined meaning for the "mpi_memory_alloc_kinds" info key.  Empty
+ * keys and over-long values must still be rejected.  This exercises
+ * the parameter checks in the MPI_Info_set binding itself (see GitHub
+ * issue #14246), which is why the checks go through the public MPI
+ * API and not the ompi/opal back-end functions. */
+static void test_info_empty_value(void)
+{
+    MPI_Info info = MPI_INFO_NULL;
+    int rc = MPI_Info_create(&info);
+    test_verify("Info_create succeeds (empty value)",
+                MPI_SUCCESS == rc && MPI_INFO_NULL != info);
+
+    /* The error checks below must not abort the test program */
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
+    rc = MPI_Info_set(info, "emptyval", "");
+    test_verify("Info_set accepts an empty value", MPI_SUCCESS == rc);
+
+    char value[9] = "sentinel";
+    int buflen = sizeof(value);
+    int flag = 0;
+    rc = MPI_Info_get_string(info, "emptyval", &buflen, value, &flag);
+    test_verify("get_string of empty value succeeds", MPI_SUCCESS == rc);
+    test_verify("get_string finds the key", 1 == flag);
+    test_verify("returned value is the empty string", 0 == strcmp(value, ""));
+    test_verify("required buflen is 1 (just the \\0)", 1 == buflen);
+
+    int vlen = -1;
+    flag = 0;
+    rc = MPI_Info_get_valuelen(info, "emptyval", &vlen, &flag);
+    test_verify("get_valuelen of empty value succeeds",
+                MPI_SUCCESS == rc && 1 == flag);
+    test_verify("valuelen of empty value is 0", 0 == vlen);
+
+    /* An empty key must still be rejected */
+    rc = MPI_Info_set(info, "", "value");
+    test_verify("Info_set still rejects an empty key",
+                MPI_ERR_INFO_KEY == rc);
+
+    /* An over-long value must still be rejected */
+    char big[MPI_MAX_INFO_VAL + 8];
+    memset(big, 'x', sizeof(big) - 1);
+    big[sizeof(big) - 1] = '\0';
+    rc = MPI_Info_set(info, "emptyval", big);
+    test_verify("Info_set still rejects an over-long value",
+                MPI_ERR_INFO_VALUE == rc);
+
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
+
+    MPI_Info_free(&info);
 }
 
 /* ------------------------------------------------------------------ */
