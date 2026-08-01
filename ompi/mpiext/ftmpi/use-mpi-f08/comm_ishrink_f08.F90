@@ -15,7 +15,7 @@ subroutine MPIX_Comm_ishrink_f08(comm, newcomm, request, ierror)
   implicit none
   interface
      subroutine ompix_comm_ishrink_f(comm, newcomm, request, ierror) &
-          BIND(C, name="ompix_comm_shrink_f")
+          BIND(C, name="ompix_comm_ishrink_f")
        implicit none
        INTEGER, INTENT(IN) :: comm
        INTEGER, INTENT(OUT) :: newcomm
