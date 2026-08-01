@@ -27,6 +27,7 @@
 
 #include "ompi/constants.h"
 #include "ompi/info/info_memkind.h"
+#include "ompi/runtime/params.h"
 
 #include "mpi.h"
 
@@ -140,18 +141,23 @@ static void test_info_empty_value(void)
                 MPI_SUCCESS == rc && 1 == flag);
     test_verify("valuelen of empty value is 0", 0 == vlen);
 
-    /* An empty key must still be rejected */
-    rc = MPI_Info_set(info, "", "value");
-    test_verify("Info_set still rejects an empty key",
-                MPI_ERR_INFO_KEY == rc);
+    /* The rejection tests below only apply when MPI parameter
+     * checking is active (it can be disabled at configure time or at
+     * run time) */
+    if (ompi_mpi_param_check) {
+        /* An empty key must still be rejected */
+        rc = MPI_Info_set(info, "", "value");
+        test_verify("Info_set still rejects an empty key",
+                    MPI_ERR_INFO_KEY == rc);
 
-    /* An over-long value must still be rejected */
-    char big[MPI_MAX_INFO_VAL + 8];
-    memset(big, 'x', sizeof(big) - 1);
-    big[sizeof(big) - 1] = '\0';
-    rc = MPI_Info_set(info, "emptyval", big);
-    test_verify("Info_set still rejects an over-long value",
-                MPI_ERR_INFO_VALUE == rc);
+        /* An over-long value must still be rejected */
+        char big[MPI_MAX_INFO_VAL + 8];
+        memset(big, 'x', sizeof(big) - 1);
+        big[sizeof(big) - 1] = '\0';
+        rc = MPI_Info_set(info, "emptyval", big);
+        test_verify("Info_set still rejects an over-long value",
+                    MPI_ERR_INFO_VALUE == rc);
+    }
 
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
@@ -205,6 +211,18 @@ static void test_memkind_process(void)
     test_verify("memkind_process(NULL) succeeds", OMPI_SUCCESS == rc);
     test_verify("memkind_process(NULL) -> NULL provided", NULL == provided);
     test_verify("memkind_process(NULL) -> UNDEFINED", OMPI_INFO_MEMKIND_ASSERT_UNDEFINED == type);
+
+    /* "" (no kinds requested; settable since MPI_Info_set accepts an
+     * empty value, see GitHub issue #14246) -> provided still contains
+     * the always-supported system and mpi; NO_ACCEL */
+    provided = NULL;
+    rc = ompi_info_memkind_process("", &provided, &type);
+    test_verify("memkind_process(\"\") succeeds", OMPI_SUCCESS == rc);
+    check_has("empty request: provided contains system", provided, "system");
+    check_has("empty request: provided contains mpi", provided, "mpi");
+    test_verify("empty request is NO_ACCEL",
+                OMPI_INFO_MEMKIND_ASSERT_NO_ACCEL == type);
+    free(provided);
 
     /* "system" -> provided contains system and mpi; NO_ACCEL */
     provided = NULL;
