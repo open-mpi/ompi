@@ -48,6 +48,7 @@
 
 static void test_set_and_get(void);
 static void test_set_cstring(void);
+static void test_empty_value(void);
 static void test_get_missing_key(void);
 static void test_overwrite(void);
 static void test_delete(void);
@@ -72,6 +73,7 @@ int main(int argc, char *argv[])
 
     test_set_and_get();
     test_set_cstring();
+    test_empty_value();
     test_get_missing_key();
     test_overwrite();
     test_delete();
@@ -142,6 +144,62 @@ static void test_set_cstring(void)
     test_verify("flag is 1 after set_cstring", 1 == flag);
     test_verify("value matches cstring content",
                 NULL != val && 0 == strcmp(val->string, "cstring_val"));
+    if (NULL != val) {
+        OBJ_RELEASE(val);
+    }
+
+    OBJ_RELEASE(info);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * An empty string is a valid info value (MPI-5.0 chapter 10 only
+ * limits the *maximum* length of a value, and gives the empty string
+ * a defined meaning for the "mpi_memory_alloc_kinds" info key).
+ */
+static void test_empty_value(void)
+{
+    opal_info_t *info = OBJ_NEW(opal_info_t);
+
+    /* Set a key with an empty value and read it back */
+    int rc = opal_info_set(info, "emptykey", "");
+    test_verify("set with empty value returns OPAL_SUCCESS", OPAL_SUCCESS == rc);
+
+    opal_cstring_t *val = NULL;
+    int flag = 0;
+    rc = opal_info_get(info, "emptykey", &val, &flag);
+    test_verify("get of empty value returns OPAL_SUCCESS", OPAL_SUCCESS == rc);
+    test_verify("flag is 1 for empty value", 1 == flag);
+    test_verify("empty value string matches",
+                NULL != val && 0 == strcmp(val->string, ""));
+    test_verify("empty value length is 0", NULL != val && 0 == val->length);
+    if (NULL != val) {
+        OBJ_RELEASE(val);
+    }
+
+    int vlen = 999;
+    flag = 0;
+    rc = opal_info_get_valuelen(info, "emptykey", &vlen, &flag);
+    test_verify("get_valuelen of empty value returns OPAL_SUCCESS",
+                OPAL_SUCCESS == rc);
+    test_verify("flag is 1 for empty value (valuelen)", 1 == flag);
+    test_verify("valuelen is 0 for empty value", 0 == vlen);
+
+    /* Overwrite a non-empty value with an empty one */
+    rc = opal_info_set(info, "emptykey2", "nonempty");
+    test_verify("set non-empty value returns OPAL_SUCCESS", OPAL_SUCCESS == rc);
+    rc = opal_info_set(info, "emptykey2", "");
+    test_verify("overwrite with empty value returns OPAL_SUCCESS",
+                OPAL_SUCCESS == rc);
+
+    val = NULL;
+    flag = 0;
+    rc = opal_info_get(info, "emptykey2", &val, &flag);
+    test_verify("get after overwrite-with-empty succeeds", OPAL_SUCCESS == rc);
+    test_verify("flag is 1 after overwrite-with-empty", 1 == flag);
+    test_verify("value is empty after overwrite-with-empty",
+                NULL != val && 0 == val->length && 0 == strcmp(val->string, ""));
     if (NULL != val) {
         OBJ_RELEASE(val);
     }
