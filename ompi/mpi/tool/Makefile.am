@@ -54,7 +54,18 @@ endif
 # to generated both ompi and standard abi variants
 #
 prototype_sources = \
+	category_changed.c.in \
+	category_get_categories.c.in \
+	category_get_cvars.c.in \
+	category_get_events.c.in \
+	category_get_index.c.in \
+	category_get_info.c.in \
+	category_get_num.c.in \
+	category_get_num_events.c.in \
+	category_get_pvars.c.in \
+	cvar_get_index.c.in \
 	cvar_get_info.c.in \
+	cvar_get_num.c.in \
 	cvar_handle_alloc.c.in \
 	cvar_handle_free.c.in \
 	cvar_read.c.in \
@@ -64,17 +75,23 @@ prototype_sources = \
 	event_callback_get_info.c.in \
 	event_callback_set_info.c.in \
 	event_copy.c.in \
-	event_handle_get_info.c.in \
-	event_handle_set_info.c.in \
+	event_get_index.c.in \
 	event_get_info.c.in \
+	event_get_num.c.in \
 	event_get_source.c.in \
 	event_get_timestamp.c.in \
 	event_handle_alloc.c.in \
 	event_handle_free.c.in \
+	event_handle_get_info.c.in \
+	event_handle_set_info.c.in \
 	event_read.c.in \
 	event_register_callback.c.in \
 	event_set_dropped_handler.c.in \
+	finalize.c.in \
+	init_thread.c.in \
+	pvar_get_index.c.in \
 	pvar_get_info.c.in \
+	pvar_get_num.c.in \
 	pvar_handle_alloc.c.in \
 	pvar_handle_free.c.in \
 	pvar_read.c.in \
@@ -85,33 +102,9 @@ prototype_sources = \
 	pvar_start.c.in \
 	pvar_stop.c.in \
 	pvar_write.c.in \
-	source_get_info.c.in
-
-#
-# the following have function prototypes that work both for
-# ompi and standard abi so do not requiring generating by the binding
-# framework
-#
-interface_profile_sources_np = \
-	category_changed.c \
-	category_get_categories.c \
-	category_get_cvars.c \
-	category_get_events.c \
-	category_get_info.c \
-	category_get_index.c \
-	category_get_num.c \
-	category_get_num_events.c \
-	category_get_pvars.c \
-	cvar_get_index.c \
-	cvar_get_num.c \
-	event_get_index.c \
-	event_get_num.c \
-	finalize.c \
-	init_thread.c \
-	pvar_get_index.c \
-	pvar_get_num.c \
-	source_get_num.c \
-	source_get_timestamp.c
+	source_get_info.c.in \
+	source_get_num.c.in \
+	source_get_timestamp.c.in
 
 #
 # List of all C files that have profile versions (*_generated.c files were
@@ -120,15 +113,22 @@ interface_profile_sources_np = \
 #
 #
 
-#
-# AGENT HELP: We can not use this pattern substitution because BSD Unix Make does not
-# support this kind of pattern substition.
-#interface_profile_sources = $(prototype_sources:.c.in=_ompi_generated.c) \
-#	$(interface_profile_sources_np)
-#
-
+# This list is spelled out explicitly (rather than derived from
+# prototype_sources with a substitution reference) because BSD make
+# does not support GNU make's pattern substitution.
 interface_profile_sources = \
+	category_changed_ompi_generated.c \
+	category_get_categories_ompi_generated.c \
+	category_get_cvars_ompi_generated.c \
+	category_get_events_ompi_generated.c \
+	category_get_index_ompi_generated.c \
+	category_get_info_ompi_generated.c \
+	category_get_num_events_ompi_generated.c \
+	category_get_num_ompi_generated.c \
+	category_get_pvars_ompi_generated.c \
+	cvar_get_index_ompi_generated.c \
 	cvar_get_info_ompi_generated.c \
+	cvar_get_num_ompi_generated.c \
 	cvar_handle_alloc_ompi_generated.c \
 	cvar_handle_free_ompi_generated.c \
 	cvar_read_ompi_generated.c \
@@ -138,17 +138,23 @@ interface_profile_sources = \
 	event_callback_get_info_ompi_generated.c \
 	event_callback_set_info_ompi_generated.c \
 	event_copy_ompi_generated.c \
-	event_handle_get_info_ompi_generated.c \
-	event_handle_set_info_ompi_generated.c \
+	event_get_index_ompi_generated.c \
 	event_get_info_ompi_generated.c \
+	event_get_num_ompi_generated.c \
 	event_get_source_ompi_generated.c \
 	event_get_timestamp_ompi_generated.c \
 	event_handle_alloc_ompi_generated.c \
 	event_handle_free_ompi_generated.c \
+	event_handle_get_info_ompi_generated.c \
+	event_handle_set_info_ompi_generated.c \
 	event_read_ompi_generated.c \
 	event_register_callback_ompi_generated.c \
 	event_set_dropped_handler_ompi_generated.c \
+	finalize_ompi_generated.c \
+	init_thread_ompi_generated.c \
+	pvar_get_index_ompi_generated.c \
 	pvar_get_info_ompi_generated.c \
+	pvar_get_num_ompi_generated.c \
 	pvar_handle_alloc_ompi_generated.c \
 	pvar_handle_free_ompi_generated.c \
 	pvar_read_ompi_generated.c \
@@ -159,7 +165,9 @@ interface_profile_sources = \
 	pvar_start_ompi_generated.c \
 	pvar_stop_ompi_generated.c \
 	pvar_write_ompi_generated.c \
-	source_get_info_ompi_generated.c
+	source_get_info_ompi_generated.c \
+	source_get_num_ompi_generated.c \
+	source_get_timestamp_ompi_generated.c
 
 if OMPI_GENERATE_BINDINGS
 # See OMPI_BINDINGS_GENERATOR in Makefile.ompi-rules.
@@ -188,7 +196,7 @@ $(interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
 	    $<
 endif
 
-libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources) $(interface_profile_sources_np)
+libmpi_mpit_profile_la_SOURCES = $(interface_profile_sources)
 libmpi_mpit_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 
 

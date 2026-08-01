@@ -42,7 +42,18 @@ libmpi_mpit_abi_la_LIBADD = libmpi_mpit_abi_profile.la
 #abi_interface_profile_sources = $(prototype_sources:.c.in=_abi_generated.c)
 
 abi_interface_profile_sources = \
+	category_changed_abi_generated.c \
+	category_get_categories_abi_generated.c \
+	category_get_cvars_abi_generated.c \
+	category_get_events_abi_generated.c \
+	category_get_index_abi_generated.c \
+	category_get_info_abi_generated.c \
+	category_get_num_abi_generated.c \
+	category_get_num_events_abi_generated.c \
+	category_get_pvars_abi_generated.c \
+	cvar_get_index_abi_generated.c \
 	cvar_get_info_abi_generated.c \
+	cvar_get_num_abi_generated.c \
 	cvar_handle_alloc_abi_generated.c \
 	cvar_handle_free_abi_generated.c \
 	cvar_read_abi_generated.c \
@@ -52,17 +63,23 @@ abi_interface_profile_sources = \
 	event_callback_get_info_abi_generated.c \
 	event_callback_set_info_abi_generated.c \
 	event_copy_abi_generated.c \
-	event_handle_get_info_abi_generated.c \
-	event_handle_set_info_abi_generated.c \
+	event_get_index_abi_generated.c \
 	event_get_info_abi_generated.c \
+	event_get_num_abi_generated.c \
 	event_get_source_abi_generated.c \
 	event_get_timestamp_abi_generated.c \
 	event_handle_alloc_abi_generated.c \
 	event_handle_free_abi_generated.c \
+	event_handle_get_info_abi_generated.c \
+	event_handle_set_info_abi_generated.c \
 	event_read_abi_generated.c \
 	event_register_callback_abi_generated.c \
 	event_set_dropped_handler_abi_generated.c \
+	finalize_abi_generated.c \
+	init_thread_abi_generated.c \
+	pvar_get_index_abi_generated.c \
 	pvar_get_info_abi_generated.c \
+	pvar_get_num_abi_generated.c \
 	pvar_handle_alloc_abi_generated.c \
 	pvar_handle_free_abi_generated.c \
 	pvar_read_abi_generated.c \
@@ -73,8 +90,10 @@ abi_interface_profile_sources = \
 	pvar_start_abi_generated.c \
 	pvar_stop_abi_generated.c \
 	pvar_write_abi_generated.c \
-	source_get_info_abi_generated.c
+	source_get_info_abi_generated.c \
+	source_get_num_abi_generated.c \
+	source_get_timestamp_abi_generated.c
 
-libmpi_mpit_abi_profile_la_SOURCES = $(abi_interface_profile_sources) $(interface_profile_sources_np)
+libmpi_mpit_abi_profile_la_SOURCES = $(abi_interface_profile_sources)
 libmpi_mpit_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1
 
