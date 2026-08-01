@@ -183,7 +183,6 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
     if( context->packed_size > sizeof(context->packed_data) ) {
         rc = PMPI_Alloc_mem(context->packed_size, MPI_INFO_NULL, &context->iov.iov_base);
         if(OMPI_SUCCESS != rc) {
-            OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
             OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
         }
@@ -193,7 +192,6 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
     iov_count = 1;
     rc = opal_convertor_pack(&context->convertor, &context->iov, &iov_count, &max_data);
     if ( 0 > rc ) {
-        OBJ_RELEASE(context);
         ompi_comm_request_return (crequest);
         rc = MPI_ERR_UNKNOWN;
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
@@ -203,7 +201,6 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
         rc = MCA_PML_CALL(irecv(buf, count, datatype,
                                 source, recvtag, comm, &context->subreq[nreqs++]));
         if (MPI_SUCCESS != rc) {
-            OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
@@ -214,7 +211,6 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
                                sendtag, MCA_PML_BASE_SEND_STANDARD, comm, 
                                 &context->subreq[nreqs++]));
         if (MPI_SUCCESS != rc) {
-            OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
@@ -235,7 +231,6 @@ PROTOTYPE ERROR_CLASS isendrecv_replace(BUFFER_OUT buf, COUNT count, DATATYPE da
                                                    nreqs,
                                                    flags);
     if (MPI_SUCCESS != rc) {
-        OBJ_RELEASE(context);
         ompi_comm_request_return (crequest);
     }
 
