@@ -20,7 +20,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
- * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,6 +118,9 @@ OBJ_CLASS_INSTANCE(opal_info_component_map_t, opal_list_item_t, component_map_co
 
 static void opal_info_show_failed_component(const mca_base_component_repository_item_t *ri,
                                             const char *error_msg);
+
+static mca_base_var_info_lvl_t opal_info_max_level(opal_cmd_line_t *opal_info_cmd_line,
+                                                   bool want_all);
 
 int opal_info_init(int argc, char **argv, opal_cmd_line_t *opal_info_cmd_line)
 {
@@ -515,7 +518,7 @@ void opal_info_do_path(bool want_all, opal_cmd_line_t *cmd_line)
 void opal_info_do_params(bool want_all_in, bool want_internal, opal_pointer_array_t *mca_types,
                          opal_pointer_array_t *component_map, opal_cmd_line_t *opal_info_cmd_line)
 {
-    mca_base_var_info_lvl_t max_level = OPAL_INFO_LVL_1;
+    mca_base_var_info_lvl_t max_level = opal_info_max_level(opal_info_cmd_line, want_all_in);
     int count;
     char *type, *component, *str;
     bool found;
@@ -529,23 +532,6 @@ void opal_info_do_params(bool want_all_in, bool want_internal, opal_pointer_arra
         p = "params";
     } else {
         p = "foo"; /* should never happen, but protect against segfault */
-    }
-
-    if (NULL != (str = opal_cmd_line_get_param(opal_info_cmd_line, "level", 0, 0))) {
-        char *tmp;
-
-        errno = 0;
-        max_level = strtol(str, &tmp, 10) + OPAL_INFO_LVL_1 - 1;
-        if (0 != errno || '\0' != tmp[0] || max_level < OPAL_INFO_LVL_1
-            || max_level > OPAL_INFO_LVL_9) {
-            char *usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
-            opal_show_help("help-opal_info.txt", "invalid-level", true, str);
-            free(usage);
-            exit(1);
-        }
-    } else if (want_all_in) {
-        /* if not specified default to level 9 if all components are requested */
-        max_level = OPAL_INFO_LVL_9;
     }
 
     if (want_all_in) {
@@ -632,29 +618,15 @@ void opal_info_err_params(opal_pointer_array_t *component_map)
 
 void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line)
 {
-    mca_base_var_info_lvl_t max_level = OPAL_INFO_LVL_1;
+    mca_base_var_info_lvl_t max_level = opal_info_max_level(opal_info_cmd_line, false);
     int count;
-    char *type, *str;
+    char *type;
     int i, j, k, len, ret;
     char *p;
     const mca_base_var_t *var;
     char **strings, *message;
     const mca_base_var_group_t *group;
     p = "type";
-
-    if (NULL != (str = opal_cmd_line_get_param(opal_info_cmd_line, "level", 0, 0))) {
-        char *tmp;
-
-        errno = 0;
-        max_level = strtol(str, &tmp, 10) + OPAL_INFO_LVL_1 - 1;
-        if (0 != errno || '\0' != tmp[0] || max_level < OPAL_INFO_LVL_1
-            || max_level > OPAL_INFO_LVL_9) {
-            char *usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
-            opal_show_help("help-opal_info.txt", "invalid-level", true, str);
-            free(usage);
-            exit(1);
-        }
-    }
 
     count = opal_cmd_line_get_ninsts(opal_info_cmd_line, p);
     len = mca_base_var_get_count();
@@ -850,9 +822,8 @@ static void opal_info_show_mca_group_params(const mca_base_var_group_t *group,
 }
 
 /* Parse the --level option (1-9) into an internal max verbosity, exiting on a
-   malformed value, exactly as opal_info_do_params/opal_info_do_type do.  With
-   no --level given, default to showing everything when want_all is set,
-   otherwise only the most basic (level 1) items. */
+   malformed value.  With no --level given, default to showing everything when
+   want_all is set, otherwise only the most basic (level 1) items. */
 static mca_base_var_info_lvl_t opal_info_max_level(opal_cmd_line_t *opal_info_cmd_line,
                                                    bool want_all)
 {
@@ -860,15 +831,22 @@ static mca_base_var_info_lvl_t opal_info_max_level(opal_cmd_line_t *opal_info_cm
     char *str, *tmp;
 
     if (NULL != (str = opal_cmd_line_get_param(opal_info_cmd_line, "level", 0, 0))) {
+        /* Parse and range-check in a long before converting to the
+           enum type; converting an out-of-range value (e.g., a negative
+           one) to the unsigned enum type would wrap around (CID
+           1697543).  The user-facing levels 1-9 map onto
+           OPAL_INFO_LVL_1..OPAL_INFO_LVL_9. */
+        long level;
+
         errno = 0;
-        max_level = strtol(str, &tmp, 10) + OPAL_INFO_LVL_1 - 1;
-        if (0 != errno || '\0' != tmp[0] || max_level < OPAL_INFO_LVL_1
-            || max_level > OPAL_INFO_LVL_9) {
+        level = strtol(str, &tmp, 10);
+        if (0 != errno || '\0' != tmp[0] || level < 1 || level > 9) {
             char *usage = opal_cmd_line_get_usage_msg(opal_info_cmd_line);
             opal_show_help("help-opal_info.txt", "invalid-level", true, str);
             free(usage);
             exit(1);
         }
+        max_level = (mca_base_var_info_lvl_t) (OPAL_INFO_LVL_1 + level - 1);
     } else if (want_all) {
         max_level = OPAL_INFO_LVL_9;
     }
