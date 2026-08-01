@@ -22,3 +22,11 @@ Open MPI version v6.1.0
   run-time MCA parameters), and a manifest, all indexed from
   ``llms.txt``. See the "LLM-friendly documentation artifacts" page in
   the developer documentation.
+
+- Added an optional ``hook:hwpc_cxi`` component, enabled via the new
+  ``--enable-hwpc-cxi`` configure option (default: disabled), that
+  collects and reports HPE Cassini (CXI) hardware performance counters
+  for Slingshot 11 (or newer) environments. See the "HPE Cassini (CXI)
+  Hardware Performance Counters (HWPC)" page in the features
+  documentation for the new ``hook_hwpc_cxi_counter_*`` MCA parameters.
+

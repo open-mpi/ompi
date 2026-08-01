@@ -88,7 +88,6 @@ bool ompi_mpi_compat_mpi3 = true;
 
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
-
 uint32_t ompi_pmix_connect_timeout = 0;
 
 bool ompi_enable_timing = false;

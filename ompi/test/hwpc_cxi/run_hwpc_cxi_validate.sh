@@ -1,10 +1,10 @@
 #!/bin/bash
-
 # -*- Mode: sh; c-basic-offset:4 ; indent-tabs-mode:nil -*-
 #
 # SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
-# SPDX-License-Identifier:  MIT
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
+# Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -271,7 +271,7 @@ echo "report_dir:     ${REPORT_DIR}"
 echo "========================================================"
 
 # Run the test and capture stdout / stderr separately.
-if srun --mpi=pmix -n "${NUM_PROCS}" -N "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"; then
+if srun --mpi=pmix -n "${NUM_PROCS}"  --ntasks-per-node "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"; then
 	echo "RESULT: PASS"
 else
 	rc=$?
@@ -321,6 +321,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 	echo "COMPARISON against baseline: ${BASELINE_DIR}"
 	echo "======================================================="
 	_compare_pass=true
+	rc=0
 
 	# stdout counter lines: allow numeric variance within tolerance, warn above it,
 	# but fail when baseline counter names are missing.
@@ -329,6 +330,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 	else
 		echo "stdout:          ERROR (missing/invalid counters) -> ${RUN_DIR}/stdout_counter_compare.txt"
 		_compare_pass=false
+		rc=1
 	fi
 
 	# stderr: apply PE 0: gating so pre-activation preamble differences are
@@ -338,6 +340,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 	else
 		echo "stderr:          ERROR (missing/invalid counters) -> ${RUN_DIR}/stderr_counter_compare.txt"
 		_compare_pass=false
+		rc=1
 	fi
 
 	# report files
@@ -352,10 +355,12 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 				else
 					echo "report ${_rname}: ERROR (missing/invalid counters) -> ${RUN_DIR}/${_rname}_counter_compare.txt"
 					_compare_pass=false
+					rc=1
 				fi
 			else
 				echo "report ${_rname}: MISSING in current run"
 				_compare_pass=false
+				rc=1
 			fi
 		done
 		if [[ -d "${RUN_DIR}/reports" ]]; then
@@ -364,6 +369,7 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
 				if [[ ! -f "${BASELINE_DIR}/reports/${_rname}" ]]; then
 					echo "report ${_rname}: NEW (not in baseline)"
 					_compare_pass=false
+					rc=1
 				fi
 			done
 		fi
@@ -483,6 +489,7 @@ else
 fi
 echo "======================================================="
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 # ── Report-level=0 disabled-feature test ────────────────────────────────────
 # Run with the normal desired counter file, but force report level 0.

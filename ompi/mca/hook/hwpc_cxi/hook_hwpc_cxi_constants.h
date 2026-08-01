@@ -1,8 +1,9 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
- * SPDX-License-Identifier:  MIT
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
+ * Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,25 +27,25 @@
 #define HWPC_CXI_MAX_FULLPATH_LENGTH 512  /* Absolute path + HWPC_CXI_MAX_OUTPUT_REPORT_PREFIX_LENGTH + HWPC_CXI_MAX_HOSTNAME_LENGTH */
 #define HWPC_CXI_MAX_LINE_LENGTH 512
 
-typedef enum ompi_hwpc_cxi_error_code_t {
+typedef enum hwpc_cxi_error_code_t {
     HWPC_CXI_SUCCESS                        =  0,
     HWPC_CXI_ERROR                          = -1,   /* general error */
     HWPC_CXI_ERROR_INVALID_ARGUMENTS        = -2,   /* invalid arguments */
     HWPC_CXI_ERROR_OUT_OF_MEMORY            = -3,   /* out of memory */
     HWPC_CXI_COUNTER_GROUP_NOT_FOUND        = -4,   /* counter group not found */
     HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND     = -5    /* counter mnemonic not found */
-} ompi_hwpc_cxi_error_code_t;
+} hwpc_cxi_error_code_t;
 
-typedef enum ompi_hwpc_cxi_counter_type_t {
+typedef enum hwpc_cxi_counter_type_t {
     HWPC_CXI_COUNTER_UNKNOWN_TYPE           = 0,    /* Unknown counter type */
     HWPC_CXI_COUNTER_LOWLEVEL_TYPE          = 1,    /* A low-level counter represents a hardware-specific performance metric */
     HWPC_CXI_COUNTER_MNEMONIC_TYPE          = 2,    /* A counter mnemonic represents a specific performance metric within a counter group */
     HWPC_CXI_COUNTER_GROUP_TYPE             = 3,    /* A counter group is a collection of related counter mnemonics that represent a higher-level performance metric */
     HWPC_CXI_NUM_COUNTER_TYPES                      /* number of counter types */
-} ompi_hwpc_cxi_counter_type_t;
+} hwpc_cxi_counter_type_t;
 
 /* This enumeration serves as a list of predefined cxi hardware performance counter group mnemonic name ids */
-typedef enum ompi_hwpc_cxi_predefined_counter_group_id_t {
+typedef enum hwpc_cxi_predefined_counter_group_id_t {
     CXI_PERFSTATS,
     CXI_ERRSTATS,
     CXI_OPCOMMANDS,
@@ -58,11 +59,11 @@ typedef enum ompi_hwpc_cxi_predefined_counter_group_id_t {
     CXI_LINKRELIABILITY,
     CXI_CONGESTION,
     /* This serves as the number of counter groups. It must be last. */
-    OMPI_HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS
-} ompi_hwpc_cxi_predefined_counter_group_id_t;
+    HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS
+} hwpc_cxi_predefined_counter_group_id_t;
 
 /* This enumeration serves as a list of predefined cxi hardware performance counter mnemonic name ids */
-typedef enum ompi_hwpc_cxi_predefined_counter_mnemonic_id_t {
+typedef enum hwpc_cxi_predefined_counter_mnemonic_id_t {
     /* Address Translation Unit Performance Counters */
     ATU_ATS_PRS_ODP_LATENCY,
     ATU_ATS_TRANS_LATENCY,
@@ -263,10 +264,10 @@ typedef enum ompi_hwpc_cxi_predefined_counter_mnemonic_id_t {
     SCT_IN_USE,
     TCT_TIMEOUTS,
     /* This serves as the number of counters. It must be last. */
-    OMPI_HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS
-} ompi_hwpc_cxi_predefined_counter_mnemonic_id_t;
+    HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS
+} hwpc_cxi_predefined_counter_mnemonic_id_t;
 
-typedef struct ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t {
+typedef struct hwpc_cxi_predefined_counter_mnemonic_obj_t {
     const char* counter_name;
     const char* counter_description;
     const bool is_per_cxi_device;
@@ -276,51 +277,68 @@ typedef struct ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t {
     const size_t num_categories;
     /* Name of category, if is_per_category is true, else NULL */
     const char* category_name;      /* e.g. traffic-class, command-type, etc. */
-} ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t;
+} hwpc_cxi_predefined_counter_mnemonic_obj_t;
 
-typedef struct ompi_hwpc_cxi_predefined_counter_group_obj_t {
+typedef struct hwpc_cxi_predefined_counter_group_obj_t {
     const char* counter_group_name;
     const char* counter_group_pretty_name;
     const char* counter_group_description;
-    const ompi_hwpc_cxi_predefined_counter_mnemonic_id_t* counter_mnemonic_list;
+    const hwpc_cxi_predefined_counter_mnemonic_id_t* counter_mnemonic_list;
     const size_t counter_mnemonic_list_size;
-} ompi_hwpc_cxi_predefined_counter_group_obj_t;
+} hwpc_cxi_predefined_counter_group_obj_t;
 
-/* Simple helper for sanity-checking when processing a counter group object */
-extern bool ompi_hwpc_cxi_counter_mnemonic_id_is_valid(const ompi_hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id);
+
+/* Simple helper for sanity-checking predefined counter group ids */
+extern bool hwpc_cxi_counter_group_id_is_valid(const hwpc_cxi_predefined_counter_group_id_t counter_group_id);
+
+/* Function that given a predefined counter group id, returns the corresponding predefined counter group object */
+extern hwpc_cxi_error_code_t hwpc_cxi_get_counter_group_obj_by_id(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const hwpc_cxi_predefined_counter_group_id_t counter_group_id);
+
+/* Function that given a predefined counter group object, returns the corresponding predefined counter group id */
+extern hwpc_cxi_error_code_t hwpc_cxi_get_counter_group_id_by_obj(hwpc_cxi_predefined_counter_group_id_t *counter_group_id, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
 
 /* Function that given a counter group name, returns the corresponding counter group object */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_counter_group_obj_by_name(const ompi_hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const char *counter_group_name);
+extern hwpc_cxi_error_code_t hwpc_cxi_get_counter_group_obj_by_name(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const char *counter_group_name);
 
-/* Function that given a counter group name, returns the number of counters in the group */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_num_counters_in_counter_group_by_name(int *total_num_counters, const char *counter_group_name);
+/* Function that given a predefined counter group name, returns the number of counters in the predefined group */
+extern hwpc_cxi_error_code_t hwpc_cxi_get_num_counters_in_counter_group_by_name(int *total_num_counters, const char *counter_group_name);
 
-/* Function that given a counter mnemonic id, returns the corresponding counter mnemonic object */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_counter_mnemonic_obj_by_id(const ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const ompi_hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id);
 
-/* Function that given a counter mnemonic name, returns the corresponding counter mnemonic object */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_counter_mnemonic_obj_by_name(const ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_mnemonic_name);
+/* Simple helper for sanity-checking predefined counter mnemonic ids */
+extern bool hwpc_cxi_counter_mnemonic_id_is_valid(const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id);
+
+/* Function that given a predefined counter mnemonic id, returns the corresponding predefined counter mnemonic object */
+extern hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_obj_by_id(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id);
+
+/* Function that given a predefined counter mnemonic object, returns the corresponding predefined counter mnemonic id */
+extern hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_id_by_obj(hwpc_cxi_predefined_counter_mnemonic_id_t *counter_mnemonic_id, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
+
+/* Function that given a predefined counter mnemonic name, returns the corresponding predefined counter mnemonic object */
+extern hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_obj_by_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_mnemonic_name);
+    
+/* Function that given a low-level counter name, returns the corresponding predefined counter mnemonic object */
+extern hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_name);
 
 /* Function that given a counter mnemonic name, returns the number of counters in the mnemonic */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(int *total_num_counters, const char *counter_mnemonic_name);
+extern hwpc_cxi_error_code_t hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(int *total_num_counters, const char *counter_mnemonic_name);
 
 /*
  * Prints out a description of a counter group, but only the top-level information.
- * Call ompi_hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group
+ * Call hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group
  * including all of its nested counter mnemonics.
  */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_print_counter_group_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
+extern hwpc_cxi_error_code_t hwpc_cxi_print_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
 
 /* Prints out a detailed description of a counter mnemonic */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_print_counter_mnemonic_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
+extern hwpc_cxi_error_code_t hwpc_cxi_print_counter_mnemonic_description(FILE *ofp, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
 
 /* Prints out a detailed description of a counter group plus all of its nested counter mnemonics */
-extern ompi_hwpc_cxi_error_code_t ompi_hwpc_cxi_print_full_counter_group_description(FILE *ofp, const ompi_hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
+extern hwpc_cxi_error_code_t hwpc_cxi_print_full_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
 
 /* Returns a string representation of the given error code */
-extern const char* ompi_hwpc_cxi_error_to_string(ompi_hwpc_cxi_error_code_t error_code);
+extern const char* hwpc_cxi_error_to_string(hwpc_cxi_error_code_t error_code);
 
 /* Returns a string representation of the given counter type*/
-extern const char* ompi_hwpc_cxi_counter_type_to_string(ompi_hwpc_cxi_counter_type_t counter_type);
+extern const char* hwpc_cxi_counter_type_to_string(hwpc_cxi_counter_type_t counter_type);
 
 #endif /* OMPI_HWPC_CXI_CONSTANTS_H */

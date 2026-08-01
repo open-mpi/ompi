@@ -41,4 +41,3 @@ lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
         runtime/ompi_info_support.c \
         runtime/ompi_spc.c \
         runtime/ompi_rte.c
-

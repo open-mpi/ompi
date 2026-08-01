@@ -185,6 +185,10 @@ ompi/mca/coll/ml/coll_ml_lex.c
 ompi/mca/coll/self/coll-self-version.h*
 ompi/mca/coll/sm/coll-sm-version.h*
 
+ompi/mca/hook/hwpc_cxi/test/hwpc_cxi_*_test
+ompi/test/hwpc_cxi/hwpc_cxi_sendrecv_test
+ompi/test/hwpc_cxi/validation_logs/
+
 ompi/mca/osc/monitoring/osc_monitoring_template_gen.h
 
 ompi/mca/pml/v/autogen.vprotocols
