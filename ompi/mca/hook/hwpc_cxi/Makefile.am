@@ -1,7 +1,8 @@
 #
 # SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
-# SPDX-License-Identifier:  MIT
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
+# Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -22,3 +23,7 @@ noinst_LTLIBRARIES = libmca_hook_hwpc_cxi.la
 
 libmca_hook_hwpc_cxi_la_SOURCES = $(sources)
 libmca_hook_hwpc_cxi_la_LDFLAGS = -module -avoid-version
+
+if HWPC_CXI_ENABLE
+SUBDIRS = test
+endif

@@ -1,14 +1,14 @@
-/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
-/*
- * SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
- * SPDX-License-Identifier:  MIT
- *
- * $COPYRIGHT$
- *
- * Additional copyrights may follow
- *
- * $HEADER$
- */
+<!--
+  SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
+  SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+  Copyright (c) 2026      Copyright Hewlett Packard Enterprise Development LP
+  $COPYRIGHT$
+
+  Additional copyrights may follow
+
+  $HEADER$
+-->
 
 # HWPC_CXI Validation
 
