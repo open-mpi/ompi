@@ -937,10 +937,16 @@ static bool check_file(const char *root, const char *path)
      *  - non-zero files starting with "output-"
      */
     if (0 == strncmp(path, "output-", strlen("output-"))) {
-        fullpath = opal_os_path(false, &fullpath, root, path, NULL);
-        stat(fullpath, &st);
+        int rc;
+
+        fullpath = opal_os_path(false, root, path, NULL);
+        if (NULL == fullpath) {
+            return true;
+        }
+        rc = stat(fullpath, &st);
         free(fullpath);
-        if (0 == st.st_size) {
+        if (0 != rc || 0 == st.st_size) {
+            /* cannot stat it, or it is empty: allow removal */
             return true;
         }
         return false;
