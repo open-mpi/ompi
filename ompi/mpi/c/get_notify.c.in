@@ -58,7 +58,7 @@ PROTOTYPE ERROR_CLASS get_notify(BUFFER_OUT origin_addr, COUNT origin_count,
         } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else if (notification_idx < 0) {
-            rc = MPI_ERR_NOTIFY_IDX;
+            rc = MPI_ERR_RMA_NOTIFICATION;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, origin_datatype, origin_count);
             if (OMPI_SUCCESS == rc) {
