@@ -23,6 +23,8 @@
 
 #include "ompi_config.h"
 
+#include <stdint.h>
+
 #include "opal/constants.h"
 #include "opal/mca/hwloc/base/base.h"
 
@@ -391,13 +393,24 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
          * If weights have been provided take them in account. Otherwise rely
          * solely on HWLOC information.
          */
+        /* All ranks must take the same branch here: size is uniform
+           across the communicator, so this bails out (and falls back
+           to the unreordered communicator) collectively */
+        if ((size_t) size > SIZE_MAX / sizeof(double) / (size_t) size) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto release_and_return;
+        }
         if( 0 == rank ) {
 
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  "========== Centralized Reordering ========= \n"));
-            local_pattern = (double *)calloc(size*size,sizeof(double));
+            local_pattern = (double *)calloc((size_t) size * size, sizeof(double));
         } else {
             local_pattern = (double *)calloc(size,sizeof(double));
+        }
+        if (NULL == local_pattern) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            goto release_and_return;
         }
         if( true == topo->weighted ) {
             for(i = 0; i < topo->indegree ; i++)
@@ -646,7 +659,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 #endif
                 comm_pattern = (double **)malloc(size*sizeof(double *));
                 for(i = 0 ; i < size ; i++)
-                    comm_pattern[i] = local_pattern + i * size;
+                    comm_pattern[i] = local_pattern + (size_t) i * size;
                 /* matrix needs to be symmetric */
                 for( i = 0; i < size ; i++ )
                     for( j = i; j < size ; j++ ) {
@@ -742,7 +755,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         if (rank == lindex_to_grank[0]) {
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  "========== Partially Distributed Reordering ========= \n"));
-            local_pattern = (double *)calloc(num_procs_in_node * num_procs_in_node, sizeof(double));
+            local_pattern = (double *)calloc((size_t) num_procs_in_node * num_procs_in_node, sizeof(double));
         } else {
             local_pattern = (double *)calloc(num_procs_in_node, sizeof(double));
         }
