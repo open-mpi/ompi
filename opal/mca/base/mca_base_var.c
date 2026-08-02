@@ -1084,11 +1084,17 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
         switch (var->mbv_source) {
         case MCA_BASE_VAR_SOURCE_FILE:
         case MCA_BASE_VAR_SOURCE_OVERRIDE:
-            opal_asprintf(&str, "%sSOURCE_%s=FILE:%s", mca_prefix, var->mbv_full_name,
-                          mca_base_var_source_file(var));
+            ret = opal_asprintf(&str, "%sSOURCE_%s=FILE:%s", mca_prefix, var->mbv_full_name,
+                                mca_base_var_source_file(var));
+            if (0 > ret) {
+                goto cleanup;
+            }
             break;
         case MCA_BASE_VAR_SOURCE_COMMAND_LINE:
-            opal_asprintf(&str, "%sSOURCE_%s=COMMAND_LINE", mca_prefix, var->mbv_full_name);
+            ret = opal_asprintf(&str, "%sSOURCE_%s=COMMAND_LINE", mca_prefix, var->mbv_full_name);
+            if (0 > ret) {
+                goto cleanup;
+            }
             break;
         case MCA_BASE_VAR_SOURCE_ENV:
         case MCA_BASE_VAR_SOURCE_SET:
