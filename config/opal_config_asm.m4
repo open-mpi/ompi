@@ -19,6 +19,7 @@ dnl Copyright (c) 2017-2022 Amazon.com, Inc. or its affiliates.  All Rights rese
 dnl Copyright (c) 2020      Google, LLC. All rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -371,10 +372,14 @@ __atomic_add_fetch(&tmp64, 1, __ATOMIC_RELAXED);])],
     else
         opal_cv_have___atomic_64=no
     fi
-
-    # Check for 128-bit support
-    OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
   fi
+
+  # Check for 128-bit support.  This must be outside the cache-check
+  # block above because OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128 AC_DEFINEs
+  # OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128 and may add flags to CFLAGS /
+  # LIBS, all of which must also happen when the results above were
+  # restored from a cache file.
+  OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128
 ])
 
 
