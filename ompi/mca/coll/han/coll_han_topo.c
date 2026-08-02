@@ -199,7 +199,7 @@ mca_coll_han_topo_init(struct ompi_communicator_t *comm,
     }
 
     /* broadcast topology from node leaders to remaining ranks */
-    low_comm->c_coll->coll_bcast(topo, num_topo_level*size, MPI_INT, 0,
+    low_comm->c_coll->coll_bcast(topo, (size_t) num_topo_level * size, MPI_INT, 0,
                                 low_comm, low_comm->c_coll->coll_bcast_module);
     free(my_low_rank_map);
     han_module->cached_topo = topo;
