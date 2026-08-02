@@ -12,6 +12,7 @@
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 #include "opal_config.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #    include <unistd.h>
@@ -46,9 +48,65 @@
 
 static const char path_sep[] = OPAL_PATH_SEP;
 
-int opal_os_dirpath_create(const char *path, const mode_t mode)
+/**
+ * The named directory already exists (or should): open it and make
+ * sure it carries (at least) the requested mode bits, adjusting them
+ * if needed.  All checks and the chmod operate on the descriptor, so
+ * the object that was inspected is the object that is modified --
+ * a path-based stat()/chmod() pair is the classic TOCTOU race, where
+ * the path can be swapped (e.g., for a symlink to another file)
+ * between the two calls.
+ *
+ * O_NOFOLLOW: refuse a symlink at the final component.  The
+ * ownership check below inspects the object the descriptor refers
+ * to, so following a link would validate the link's *target* -- and
+ * a planted symlink pointing at a directory the victim owns (e.g.,
+ * their home directory) would pass that check and be adopted (and,
+ * eventually, recursively destroyed).
+ *
+ * Returns OPAL_ERR_NOT_FOUND -- without displaying an error -- if
+ * the path cannot be opened as a directory; the caller is expected
+ * to (re)try creating it and report the resulting error.
+ */
+static int dirpath_ensure_mode(const char *path, const mode_t mode)
 {
     struct stat buf;
+    int fd, ret;
+
+    fd = open(path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+    if (0 > fd) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    if (0 != fstat(fd, &buf)) {
+        close(fd);
+        return OPAL_ERROR;
+    }
+    /* Never adopt (or chmod) a directory owned by another user: the
+       only production paths that come through here are session
+       directories with predictable names under a world-writable
+       root, so an existing directory with the right name but the
+       wrong owner is at best stale and at worst planted */
+    if (buf.st_uid != geteuid()) {
+        close(fd);
+        opal_show_help("help-opal-util.txt", "dir-owner", true, path, (unsigned long) buf.st_uid,
+                       (unsigned long) geteuid());
+        return OPAL_ERR_PERM;
+    }
+    if (mode == (mode & buf.st_mode)) { /* already has correct mode */
+        close(fd);
+        return OPAL_SUCCESS;
+    }
+    ret = fchmod(fd, (buf.st_mode | mode));
+    close(fd);
+    if (0 == ret) {
+        return OPAL_SUCCESS;
+    }
+    opal_show_help("help-opal-util.txt", "dir-mode", true, path, mode, strerror(errno));
+    return OPAL_ERR_PERM; /* can't set correct mode */
+}
+
+int opal_os_dirpath_create(const char *path, const mode_t mode)
+{
     char **parts, *tmp;
     int i, len;
     int ret;
@@ -57,20 +115,18 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
         return (OPAL_ERR_BAD_PARAM);
     }
 
-    if (0 == (ret = stat(path, &buf))) {    /* already exists */
-        if (mode == (mode & buf.st_mode)) { /* has correct mode */
-            return (OPAL_SUCCESS);
-        }
-        if (0 == (ret = chmod(path, (buf.st_mode | mode)))) { /* successfully change mode */
-            return (OPAL_SUCCESS);
-        }
-        opal_show_help("help-opal-util.txt", "dir-mode", true, path, mode, strerror(errno));
-        return (OPAL_ERR_PERM); /* can't set correct mode */
-    }
-
     /* quick -- try to make directory */
     if (0 == mkdir(path, mode)) {
         return (OPAL_SUCCESS);
+    }
+    if (EEXIST == errno) {
+        ret = dirpath_ensure_mode(path, mode);
+        if (OPAL_ERR_NOT_FOUND != ret) {
+            return ret;
+        }
+        /* The path exists but could not be opened as a directory
+           (or vanished); fall through and build the tree, which
+           will produce a proper error message */
     }
 
     /* didn't work, so now have to build our way down the tree */
@@ -113,17 +169,32 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
         /* Now that we have the name, try to create it */
         mkdir(tmp, mode);
         ret = errno; // save the errno for an error msg, if needed
-        if (0 != stat(tmp, &buf)) {
-            opal_show_help("help-opal-util.txt", "mkdir-failed", true, tmp, strerror(ret));
-            opal_argv_free(parts);
-            free(tmp);
-            return OPAL_ERROR;
-        } else if (i == (len - 1) && (mode != (mode & buf.st_mode))
-                   && (0 > chmod(tmp, (buf.st_mode | mode)))) {
-            opal_show_help("help-opal-util.txt", "dir-mode", true, tmp, mode, strerror(errno));
-            opal_argv_free(parts);
-            free(tmp);
-            return (OPAL_ERR_PERM); /* can't set correct mode */
+        if (i == (len - 1)) {
+            /* Ensure the final component has the requested mode (and
+               is ours); intermediate components need only exist */
+            int err = dirpath_ensure_mode(tmp, mode);
+            if (OPAL_ERR_NOT_FOUND == err) {
+                opal_show_help("help-opal-util.txt", "mkdir-failed", true, tmp, strerror(ret));
+                err = OPAL_ERROR;
+            }
+            if (OPAL_SUCCESS != err) {
+                opal_argv_free(parts);
+                free(tmp);
+                return err;
+            }
+        } else {
+            /* Intermediate components need only exist: probe with
+               stat(), which (unlike open()) requires only search
+               permission on the ancestors, not read permission on
+               the component itself (an 0711 traverse-only
+               intermediate directory is legitimate) */
+            struct stat buf;
+            if (0 != stat(tmp, &buf)) {
+                opal_show_help("help-opal-util.txt", "mkdir-failed", true, tmp, strerror(ret));
+                opal_argv_free(parts);
+                free(tmp);
+                return OPAL_ERROR;
+            }
         }
     }
 
