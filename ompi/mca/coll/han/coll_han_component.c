@@ -568,20 +568,32 @@ static int han_register(void)
                                        "Collective module to use for %s on %s topological level: ",
                                        mca_coll_base_colltype_to_str(coll),
                                        mca_coll_han_topo_lvl_to_str(topo_lvl));
+            if (param_desc_size >= (int) sizeof(param_desc)) {
+                param_desc_size = (int) sizeof(param_desc) - 1;
+            }
             /*
              * Exhaustive description:
              * 0 = self; 1 = basic; 2 = libnbc; ...
              * FIXME: Do not print component not providing this collective
              */
             for(component = 0 ; component < COMPONENTS_COUNT ; component++) {
+                int written;
+
                 if(HAN == component && GLOBAL_COMMUNICATOR != topo_lvl) {
                     /* Han can only be used on the global communicator */
                     continue;
                 }
-                param_desc_size += snprintf(param_desc+param_desc_size, sizeof(param_desc) - param_desc_size,
-                                            "%d = %s; ",
-                                            component,
-                                            ompi_coll_han_available_components[component].component_name);
+                written = snprintf(param_desc + param_desc_size, sizeof(param_desc) - param_desc_size,
+                                   "%d = %s; ",
+                                   component,
+                                   ompi_coll_han_available_components[component].component_name);
+                if (0 > written || written >= (int) (sizeof(param_desc) - param_desc_size)) {
+                    /* The description does not fit in the buffer; drop
+                       the partial entry and stop appending */
+                    param_desc[param_desc_size] = '\0';
+                    break;
+                }
+                param_desc_size += written;
             }
 
             mca_base_component_var_register(c, param_name, param_desc,
