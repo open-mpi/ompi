@@ -109,6 +109,18 @@ static void test_access_exists_no_match(void);
 static void test_destroy_recursive_no_callback(void);
 static void test_destroy_recursive_with_callback(void);
 static void test_destroy_nonexistent(void);
+static void test_create_on_file(void);
+static void test_create_on_symlink(void);
+static void test_destroy_does_not_follow_symlink(void);
+static void test_destroy_symlink_base(void);
+static void test_destroy_nonrecursive_with_subdir(void);
+static void test_destroy_callback_veto_in_subdir(void);
+static void test_create_on_unreadable_dir(void);
+static void test_destroy_unsearchable_dir(void);
+static void test_destroy_subdir_rmdir_failure(void);
+static void test_destroy_base_rmdir_failure(void);
+static void test_destroy_trailing_separator(void);
+static void test_destroy_unreadable_parent(void);
 
 /* ------------------------------------------------------------------ */
 /* main                                                                */
@@ -130,6 +142,18 @@ int main(int argc, char *argv[])
     test_destroy_recursive_no_callback();
     test_destroy_recursive_with_callback();
     test_destroy_nonexistent();
+    test_create_on_file();
+    test_create_on_symlink();
+    test_destroy_does_not_follow_symlink();
+    test_destroy_symlink_base();
+    test_destroy_nonrecursive_with_subdir();
+    test_destroy_callback_veto_in_subdir();
+    test_create_on_unreadable_dir();
+    test_destroy_unsearchable_dir();
+    test_destroy_subdir_rmdir_failure();
+    test_destroy_base_rmdir_failure();
+    test_destroy_trailing_separator();
+    test_destroy_unreadable_parent();
 
     int r = test_finalize();
     opal_finalize_util();
@@ -415,4 +439,481 @@ static void test_destroy_nonexistent(void)
                                     true, NULL);
     test_verify("destroy on non-existent path returns OPAL_ERR_NOT_FOUND",
                 OPAL_ERR_NOT_FOUND == rc);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * A pre-existing regular file at the requested path must be an
+ * error: it cannot be used as a directory (previously it was
+ * silently chmod'ed and reported as success).
+ */
+static void test_create_on_file(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_create_on_file: mkdtemp failed");
+        return;
+    }
+    char *file = path_join(base, "iamafile");
+
+    if (0 != create_file(file)) {
+        test_failure("test_create_on_file: create_file failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_create(file, S_IRWXU);
+    test_verify("create on existing regular file returns error", OPAL_SUCCESS != rc);
+
+out:
+    unlink(file);
+    rmdir(base);
+    free(file);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * A symlink planted at the requested path must be refused, even when
+ * it points at a directory the caller owns: following it would make
+ * the ownership/mode checks inspect the link's target, and the
+ * adopted path would later be recursively destroyed.
+ */
+static void test_create_on_symlink(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_create_on_symlink: mkdtemp failed");
+        return;
+    }
+    char *target = path_join(base, "target");
+    char *link = path_join(base, "link");
+
+    if (0 != mkdir(target, S_IRWXU) || 0 != symlink(target, link)) {
+        test_failure("test_create_on_symlink: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_create(link, S_IRWXU);
+    test_verify("create on symlink-to-own-dir returns error", OPAL_SUCCESS != rc);
+
+    struct stat buf;
+    test_verify("symlink target still exists", 0 == stat(target, &buf));
+
+out:
+    unlink(link);
+    rmdir(target);
+    rmdir(base);
+    free(target);
+    free(link);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * Recursive destroy must not follow a symlink inside the tree: the
+ * link itself is removed, but the directory it points to (and that
+ * directory's contents) must survive.
+ */
+static void test_destroy_does_not_follow_symlink(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_does_not_follow_symlink: mkdtemp failed");
+        return;
+    }
+    char *victim = path_join(base, "victim");
+    char *vfile = path_join(victim, "precious");
+    char *doomed = path_join(base, "doomed");
+    char *link = path_join(doomed, "escape");
+
+    if (0 != mkdir(victim, S_IRWXU) || 0 != create_file(vfile)
+        || 0 != mkdir(doomed, S_IRWXU) || 0 != symlink(victim, link)) {
+        test_failure("test_destroy_does_not_follow_symlink: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(doomed, true, NULL);
+    test_verify("destroy of dir containing symlink returns OPAL_SUCCESS",
+                OPAL_SUCCESS == rc);
+
+    struct stat buf;
+    test_verify("symlink was removed", 0 != lstat(link, &buf));
+    test_verify("destroyed dir is gone", 0 != stat(doomed, &buf));
+    test_verify("symlink target dir survives", 0 == stat(victim, &buf));
+    test_verify("file inside symlink target survives", 0 == stat(vfile, &buf));
+
+out:
+    unlink(vfile);
+    rmdir(victim);
+    unlink(link);
+    rmdir(doomed);
+    rmdir(base);
+    free(victim);
+    free(vfile);
+    free(doomed);
+    free(link);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * Destroy must refuse a symlink as its base path: the link's target
+ * (and the target's contents) must be untouched, and the link itself
+ * must remain (destroy errored out, it did not "destroy the link").
+ */
+static void test_destroy_symlink_base(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_symlink_base: mkdtemp failed");
+        return;
+    }
+    char *victim = path_join(base, "victim");
+    char *vfile = path_join(victim, "precious");
+    char *link = path_join(base, "link");
+
+    if (0 != mkdir(victim, S_IRWXU) || 0 != create_file(vfile)
+        || 0 != symlink(victim, link)) {
+        test_failure("test_destroy_symlink_base: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(link, true, NULL);
+    test_verify("destroy on symlink base returns error", OPAL_SUCCESS != rc);
+
+    struct stat buf;
+    test_verify("symlink target dir untouched", 0 == stat(victim, &buf));
+    test_verify("file inside target untouched", 0 == stat(vfile, &buf));
+
+out:
+    unlink(link);
+    unlink(vfile);
+    rmdir(victim);
+    rmdir(base);
+    free(victim);
+    free(vfile);
+    free(link);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * Non-recursive destroy of a directory that contains a subdirectory:
+ * files are removed, the subdirectory survives, and OPAL_ERROR is
+ * returned (we found a directory but were not told to remove it).
+ * The top directory survives because it is not empty.
+ */
+static void test_destroy_nonrecursive_with_subdir(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_nonrecursive_with_subdir: mkdtemp failed");
+        return;
+    }
+    char *sub = path_join(base, "sub");
+    char *file = path_join(base, "afile");
+
+    if (0 != mkdir(sub, S_IRWXU) || 0 != create_file(file)) {
+        test_failure("test_destroy_nonrecursive_with_subdir: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(base, false /* not recursive */, NULL);
+    test_verify("non-recursive destroy with subdir returns error",
+                OPAL_SUCCESS != rc);
+
+    struct stat buf;
+    test_verify("file was still removed", 0 != stat(file, &buf));
+    test_verify("subdir survives non-recursive destroy", 0 == stat(sub, &buf));
+    test_verify("top dir survives (not empty)", 0 == stat(base, &buf));
+
+out:
+    unlink(file);
+    rmdir(sub);
+    rmdir(base);
+    free(sub);
+    free(file);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * Callback veto on a file inside a subdirectory: the subdirectory
+ * cannot be removed (it still holds the protected file), which must
+ * be harmless -- overall destroy still succeeds, the protected file
+ * and its parent dir survive, and unprotected siblings are removed.
+ */
+static void test_destroy_callback_veto_in_subdir(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_callback_veto_in_subdir: mkdtemp failed");
+        return;
+    }
+    char *sub = path_join(base, "sub");
+    char *prot = path_join3(base, "sub", "protected");
+    char *remo = path_join3(base, "sub", "removable");
+
+    if (0 != mkdir(sub, S_IRWXU) || 0 != create_file(prot)
+        || 0 != create_file(remo)) {
+        test_failure("test_destroy_callback_veto_in_subdir: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(base, true, cb_protect);
+    test_verify("destroy with nested veto returns OPAL_SUCCESS",
+                OPAL_SUCCESS == rc);
+
+    struct stat buf;
+    test_verify("nested protected file survives", 0 == stat(prot, &buf));
+    test_verify("nested removable file was removed", 0 != stat(remo, &buf));
+    test_verify("subdir holding protected file survives", 0 == stat(sub, &buf));
+
+out:
+    unlink(prot);
+    unlink(remo);
+    rmdir(sub);
+    rmdir(base);
+    free(sub);
+    free(prot);
+    free(remo);
+}
+
+/* ------------------------------------------------------------------ */
+
+/*
+ * The remaining tests rely on permission bits denying access, which
+ * root bypasses.
+ */
+static bool running_as_root(const char *test_name)
+{
+    if (0 == geteuid()) {
+        char msg[256];
+        snprintf(msg, sizeof(msg), "%s: skipped (running as root)", test_name);
+        test_comment(msg);
+        return true;
+    }
+    return false;
+}
+
+/*
+ * An existing directory we own but cannot read cannot be opened, so
+ * its mode cannot be adjusted through a descriptor.  That must be
+ * reported as a permission error -- not misclassified as a missing
+ * directory and sent down the tree-building path.
+ */
+static void test_create_on_unreadable_dir(void)
+{
+    if (running_as_root("test_create_on_unreadable_dir")) {
+        return;
+    }
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_create_on_unreadable_dir: mkdtemp failed");
+        return;
+    }
+    char *dir = path_join(base, "unreadable");
+
+    if (0 != mkdir(dir, S_IRWXU) || 0 != chmod(dir, S_IWUSR | S_IXUSR)) {
+        test_failure("test_create_on_unreadable_dir: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_create(dir, S_IRWXU);
+    test_verify("create on unreadable existing dir returns OPAL_ERR_PERM",
+                OPAL_ERR_PERM == rc);
+
+out:
+    chmod(dir, S_IRWXU);
+    rmdir(dir);
+    rmdir(base);
+    free(dir);
+}
+
+/*
+ * A directory that is readable but not searchable can be listed, but
+ * its entries cannot be inspected or removed.  Destroy must report
+ * that, not silently skip every entry.  (A callback that vetoes
+ * nothing is used so that the leftover entries are not the only
+ * thing flagging the failure.)
+ */
+static void test_destroy_unsearchable_dir(void)
+{
+    if (running_as_root("test_destroy_unsearchable_dir")) {
+        return;
+    }
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_unsearchable_dir: mkdtemp failed");
+        return;
+    }
+    char *file = path_join(base, "afile");
+
+    if (0 != create_file(file) || 0 != chmod(base, S_IRUSR | S_IWUSR)) {
+        test_failure("test_destroy_unsearchable_dir: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(base, true, cb_protect);
+    test_verify("destroy of unsearchable dir returns error", OPAL_SUCCESS != rc);
+
+out:
+    chmod(base, S_IRWXU);
+    unlink(file);
+    rmdir(base);
+    free(file);
+}
+
+/*
+ * Failing to remove an emptied subdirectory (here: its parent is not
+ * writable) is a real failure, unlike the subdirectory still holding
+ * something a callback preserved.
+ */
+static void test_destroy_subdir_rmdir_failure(void)
+{
+    if (running_as_root("test_destroy_subdir_rmdir_failure")) {
+        return;
+    }
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_subdir_rmdir_failure: mkdtemp failed");
+        return;
+    }
+    char *sub = path_join(base, "sub");
+    char *file = path_join(sub, "afile");
+
+    if (0 != mkdir(sub, S_IRWXU) || 0 != create_file(file)
+        || 0 != chmod(base, S_IRUSR | S_IXUSR)) {
+        test_failure("test_destroy_subdir_rmdir_failure: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(base, true, cb_protect);
+    test_verify("destroy with unremovable subdir returns error", OPAL_SUCCESS != rc);
+
+out:
+    chmod(base, S_IRWXU);
+    unlink(file);
+    rmdir(sub);
+    rmdir(base);
+    free(sub);
+    free(file);
+}
+
+/*
+ * Likewise for the base directory itself: if it is emptied but cannot
+ * be removed (its parent is not writable), destroy has not done what
+ * was asked.
+ */
+static void test_destroy_base_rmdir_failure(void)
+{
+    if (running_as_root("test_destroy_base_rmdir_failure")) {
+        return;
+    }
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_base_rmdir_failure: mkdtemp failed");
+        return;
+    }
+    char *doomed = path_join(base, "doomed");
+
+    if (0 != mkdir(doomed, S_IRWXU) || 0 != chmod(base, S_IRUSR | S_IXUSR)) {
+        test_failure("test_destroy_base_rmdir_failure: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(doomed, true, NULL);
+    test_verify("destroy of unremovable base dir returns error", OPAL_SUCCESS != rc);
+
+out:
+    chmod(base, S_IRWXU);
+    rmdir(doomed);
+    rmdir(base);
+    free(doomed);
+}
+
+/*
+ * Trailing path separators name the same directory, which must still
+ * be emptied and removed.
+ */
+static void test_destroy_trailing_separator(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_trailing_separator: mkdtemp failed");
+        return;
+    }
+    char *doomed = path_join(base, "doomed//");
+    char *file = path_join(base, "doomed/afile");
+
+    if (0 != mkdir(doomed, S_IRWXU) || 0 != create_file(file)) {
+        test_failure("test_destroy_trailing_separator: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(doomed, true, NULL);
+    test_verify("destroy with trailing separators returns OPAL_SUCCESS", OPAL_SUCCESS == rc);
+
+    struct stat buf;
+    test_verify("dir named with trailing separators is gone", 0 != stat(doomed, &buf));
+
+out:
+    unlink(file);
+    rmdir(doomed);
+    rmdir(base);
+    free(doomed);
+    free(file);
+}
+
+/*
+ * The directory being destroyed is removed relative to a descriptor
+ * on its parent.  Removing it needs only write and search permission
+ * on the parent -- not read permission -- and that must still work.
+ */
+static void test_destroy_unreadable_parent(void)
+{
+    if (running_as_root("test_destroy_unreadable_parent")) {
+        return;
+    }
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_destroy_unreadable_parent: mkdtemp failed");
+        return;
+    }
+    char *doomed = path_join(base, "doomed");
+    char *file = path_join(doomed, "afile");
+
+    if (0 != mkdir(doomed, S_IRWXU) || 0 != create_file(file)
+        || 0 != chmod(base, S_IWUSR | S_IXUSR)) {
+        test_failure("test_destroy_unreadable_parent: setup failed");
+        goto out;
+    }
+
+    int rc = opal_os_dirpath_destroy(doomed, true, NULL);
+    test_verify("destroy under write+search-only parent returns OPAL_SUCCESS",
+                OPAL_SUCCESS == rc);
+
+    struct stat buf;
+    test_verify("dir under write+search-only parent is gone", 0 != stat(doomed, &buf));
+
+out:
+    chmod(base, S_IRWXU);
+    unlink(file);
+    rmdir(doomed);
+    rmdir(base);
+    free(doomed);
+    free(file);
 }
