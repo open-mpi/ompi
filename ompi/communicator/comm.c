@@ -41,6 +41,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "opal_stdint.h"
+
 #include "ompi/constants.h"
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/base/mca_base_var.h"
@@ -2196,7 +2198,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
     /*
      * append the pmix CONTEXT_ID obtained when creating the leader comm as discriminator
      */
-    opal_asprintf (&sub_tag, "%s-%ld", tag, data[1]);
+    opal_asprintf (&sub_tag, "%s-%" PRIu64, tag, data[1]);
     if (OPAL_UNLIKELY(NULL == sub_tag)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
