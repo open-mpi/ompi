@@ -2393,18 +2393,18 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 
     /* Step 1: the gather-step */
     if ( 0 == rank ) {
-        tmpbuf = (int *) malloc (rsize*outcount*sizeof(int));
+        tmpbuf = (int *) malloc ((size_t) rsize * outcount * sizeof(int));
         if ( NULL == tmpbuf ) {
             return (OMPI_ERR_OUT_OF_RESOURCE);
         }
-        req = (MPI_Request *)malloc (rsize*outcount*sizeof(MPI_Request));
+        req = (MPI_Request *)malloc ((size_t) rsize * outcount * sizeof(MPI_Request));
         if ( NULL == req ) {
             free ( tmpbuf );
             return (OMPI_ERR_OUT_OF_RESOURCE);
         }
 
         for ( i=0; i<rsize; i++) {
-            rc = MCA_PML_CALL(irecv( &tmpbuf[outcount*i], outcount, outtype, i,
+            rc = MCA_PML_CALL(irecv( &tmpbuf[(size_t) outcount * i], outcount, outtype, i,
                                      OMPI_COMM_ALLGATHER_TAG, comm, &req[i] ));
             if ( OMPI_SUCCESS != rc ) {
                 goto exit;
@@ -2430,7 +2430,7 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
     }
 
     /* Step 2: the inter-bcast step */
-    rc = MCA_PML_CALL(irecv (outbuf, size*outcount, outtype, 0,
+    rc = MCA_PML_CALL(irecv (outbuf, (size_t) size * outcount, outtype, 0,
                              OMPI_COMM_ALLGATHER_TAG, comm, &sendreq));
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
@@ -2438,7 +2438,7 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 
     if ( 0 == rank ) {
         for ( i=0; i < rsize; i++ ){
-            rc = MCA_PML_CALL(send (tmpbuf, rsize*outcount, outtype, i,
+            rc = MCA_PML_CALL(send (tmpbuf, (size_t) rsize * outcount, outtype, i,
                                     OMPI_COMM_ALLGATHER_TAG,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
             if ( OMPI_SUCCESS != rc ) {
