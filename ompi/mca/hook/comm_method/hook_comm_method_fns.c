@@ -611,21 +611,27 @@ ompi_report_comm_methods(int called_from_location)
             FILE *fp;
             int setting;
             fp = fopen(mca_hook_comm_method_fakefile, "r");
-            for (i=0; i<nleaderranks; ++i) {
-                for (k=0; k<nleaderranks; ++k) {
-                    if (fscanf(fp, "%d", &setting) != 1) {
+            if (NULL == fp) {
+                printf("Unable to open comm_method fakefile %s\n",
+                       mca_hook_comm_method_fakefile);
+            } else {
+                for (i=0; i<nleaderranks; ++i) {
+                    for (k=0; k<nleaderranks; ++k) {
+                        if (fscanf(fp, "%d", &setting) != 1) {
+                            break;
+                        }
+                        // let -1 mean "use existing (real) setting"
+                        if (setting != -1) {
+                            method[i * nleaderranks + k] = setting;
+                        }
+                    }
+                    // a whitespace-only directive returns 0 or EOF; stop at EOF
+                    if (EOF == fscanf(fp, "\n")) {
                         break;
                     }
-                    // let -1 mean "use existing (real) setting"
-                    if (setting != -1) {
-                        method[i * nleaderranks + k] = setting;
-                    }
                 }
-                if (fscanf(fp, "\n") != 0) {
-                    break;
-                }
+                fclose(fp);
             }
-            fclose(fp);
         }
     }
 
