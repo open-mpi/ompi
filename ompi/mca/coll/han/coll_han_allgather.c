@@ -388,8 +388,13 @@ int mca_coll_han_allgather_uag_task(void *task_args)
                                            t->up_comm, t->up_comm->c_coll->coll_allgather_module);
 
         if (t->sbuf_inter_free != NULL) {
-            han_free_frag(&t->han_module->fragment_freelist,
-                          t->inter_frag, t->sbuf_inter_free);
+            if (NULL != t->han_module) {
+                han_free_frag(&t->han_module->fragment_freelist,
+                              t->inter_frag, t->sbuf_inter_free);
+            } else {
+                /* Without a module the buffer came from plain malloc() */
+                free(t->sbuf_inter_free);
+            }
             t->inter_frag = NULL;
             t->sbuf_inter_free = NULL;
         }
