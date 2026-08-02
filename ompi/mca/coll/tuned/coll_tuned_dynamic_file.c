@@ -447,8 +447,9 @@ static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_col
         goto on_file_error;
     }
 
-    /* consume the optional version identifier */
-    if (0 == fscanf(fptr, "rule-file-version-%d", &version)) {
+    /* consume the optional version identifier; fscanf() returns EOF
+       (not 0) if the file is empty */
+    if (1 != fscanf(fptr, "rule-file-version-%d", &version)) {
         version = 1;
     }
 
