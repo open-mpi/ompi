@@ -22,6 +22,12 @@ typedef uint64_t osc_sm_post_type_t;
 typedef opal_atomic_uint64_t osc_sm_post_atomic_type_t;
 #define OSC_SM_POST_BITS 6
 #define OSC_SM_POST_MASK 0x3f
+
+/* Capacity of the per-rank notification counter region reserved in the shared
+ * segment at window creation, i.e. the effective
+ * MPI_WIN_NOTIFICATION_NUM_UB.  How many of those counters are actually
+ * *attached* is a separate, per-rank quantity that starts at zero and is set by
+ * MPI_WIN_SET_NUM_NOTIFY (MPI-5.1 section 12.6.1). */
 #define OSC_SM_MAX_NOTIFY_COUNTERS 16
 
 /* data shared across all peers */
@@ -48,6 +54,10 @@ struct ompi_osc_sm_node_state_t {
     opal_atomic_int32_t complete_count;
     ompi_osc_sm_lock_t lock;
     opal_atomic_lock_t accumulate_lock;
+    /* Number of notification counters currently *attached* at this rank.  Zero
+     * until MPI_WIN_SET_NUM_NOTIFY is called (MPI-5.1 section 12.6.1).  Lives in
+     * the shared segment so that an origin can validate a notification index
+     * against the target's attached count without any communication. */
     uint32_t notify_counter_count;
     uint64_t notify_counter_offset; /* offset from segment_base, not raw pointer */
 
@@ -83,7 +93,10 @@ struct ompi_osc_sm_module_t {
     size_t *sizes;
     void **bases;
     ptrdiff_t *disp_units;
-    uint64_t *notify_counters;
+    /* Base of the notification counter region.  Typed atomic so that plain
+     * loads are atomic (and never hoisted out of a caller's polling loop) while
+     * remote origins increment the same location with opal_atomic_add(). */
+    opal_atomic_int64_t *notify_counters;
 
 
     ompi_group_t *start_group;

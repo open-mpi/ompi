@@ -21,15 +21,36 @@
 
 #include "osc_sm.h"
 
-static inline uint64_t *osc_sm_target_notify_base(ompi_osc_sm_module_t *module, int target)
+static inline opal_atomic_int64_t *
+osc_sm_target_notify_base(ompi_osc_sm_module_t *module, int target)
 {
     if (NULL == module->segment_base) {
         /* single-rank path: notify_counters is a regular local allocation */
         return module->notify_counters;
     }
 
-    return (uint64_t *) ((char *) module->segment_base +
-                         module->node_states[target].notify_counter_offset);
+    return (opal_atomic_int64_t *) ((char *) module->segment_base +
+                                    module->node_states[target].notify_counter_offset);
+}
+
+/* MPI-5.1 section 12.6.1: "The notification counter referenced by a notified
+ * communication operation must be attached to the window at the target before
+ * the operation is initiated at the origin.  Initiating a notified
+ * communication operation that references a notification counter that is out of
+ * range at the target is erroneous."
+ *
+ * The check is therefore against the *target's* attached count, and it must
+ * happen before any data is moved -- otherwise an erroneous call would still
+ * have overwritten the target window (or, for get, the origin buffer) by the
+ * time the error is reported. */
+static inline int
+osc_sm_check_notify_idx(ompi_osc_sm_module_t *module, int target, int notify)
+{
+    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
+        return MPI_ERR_RMA_NOTIFICATION;
+    }
+
+    return OMPI_SUCCESS;
 }
 
 int
@@ -39,11 +60,24 @@ ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
 {
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     int rank = ompi_comm_rank(module->comm);
+    int ret;
 
-    if (notify < 0 || (uint32_t) notify >= module->node_states[rank].notify_counter_count) {
-        return MPI_ERR_RMA_NOTIFICATION;
+    ret = osc_sm_check_notify_idx(module, rank, notify);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
+    /* Acquire ordering: sample the counter first, then fence, so that window
+     * loads issued by the caller after this call cannot be satisfied by values
+     * read before the notification was observed.  A barrier placed ahead of the
+     * counter load would order nothing useful.  MPI-5.1 section 12.6.2 requires
+     * this procedure to synchronize the public and private window copies as if
+     * MPI_WIN_SYNC had been called; osc/sm is a unified-memory-model component,
+     * so the barrier is the whole of that synchronization.
+     *
+     * The load itself is atomic because notify_counters is opal_atomic_int64_t:
+     * remote origins bump the same location concurrently, and the standard's
+     * usage model is to poll this procedure in a loop. */
     *value = (OMPI_MPI_COUNT_TYPE) osc_sm_target_notify_base(module, rank)[notify];
     opal_atomic_rmb();
 
@@ -57,14 +91,19 @@ ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
 {
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
     int rank = ompi_comm_rank(module->comm);
+    int ret;
 
-    if (notify < 0 || (uint32_t) notify >= module->node_states[rank].notify_counter_count) {
-        return MPI_ERR_RMA_NOTIFICATION;
+    ret = osc_sm_check_notify_idx(module, rank, notify);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
     }
 
-    /* Atomically swap the counter to 0 and return the previous value */
+    /* Atomically swap the counter to 0 and return the previous value.  Must be
+     * a single atomic so that increments arriving from other MPI processes
+     * between the read and the zeroing are not lost. */
     *value = (OMPI_MPI_COUNT_TYPE) opal_atomic_swap_64(
                  &osc_sm_target_notify_base(module, rank)[notify], 0);
+    opal_atomic_rmb();
 
     return OMPI_SUCCESS;
 }
@@ -210,6 +249,11 @@ ompi_osc_sm_rput_notify(const void *origin_addr,
                          notify,
                          (unsigned long) win));
 
+    ret = osc_sm_check_notify_idx(module, target, notify);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
     ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
@@ -218,17 +262,17 @@ ompi_osc_sm_rput_notify(const void *origin_addr,
         return ret;
     }
 
+    /* Release ordering: the data must be visible at the target before the
+     * notification is (MPI-5.1 section 12.3, "The notification counter will be
+     * updated at the target only after the completion of the data movement
+     * operation at the target"). */
+    opal_atomic_wmb();
+    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
+
     /* the only valid field of RMA request status is the MPI_ERROR field.
      * ompi_request_empty has status MPI_SUCCESS and indicates the request is
      * complete. */
     *ompi_req = &ompi_request_empty;
-
-    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
-        return MPI_ERR_RMA_NOTIFICATION;
-    }
-
-    opal_atomic_wmb();
-    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
     return OMPI_SUCCESS;
 }
@@ -297,6 +341,11 @@ ompi_osc_sm_rget_notify(void *origin_addr,
                          notify,
                          (unsigned long) win));
 
+    ret = osc_sm_check_notify_idx(module, target, notify);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
     ret = ompi_datatype_sndrcv(remote_address, target_count, target_dt,
@@ -305,17 +354,19 @@ ompi_osc_sm_rget_notify(void *origin_addr,
         return ret;
     }
 
+    /* Full barrier, not opal_atomic_rmb(): the notification tells the target
+     * that this get has read the window, so the loads above must not be
+     * reordered after the counter increment below -- that is a load-before-store
+     * constraint, which a load-load fence does not express.  opal_atomic_add()
+     * is relaxed (see opal/include/opal/sys/atomic_stdc.h) and supplies no
+     * ordering of its own. */
+    opal_atomic_mb();
+    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
+
     /* the only valid field of RMA request status is the MPI_ERROR field.
      * ompi_request_empty has status MPI_SUCCESS and indicates the request is
      * complete. */
     *ompi_req = &ompi_request_empty;
-
-    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
-        return MPI_ERR_RMA_NOTIFICATION;
-    }
-
-    opal_atomic_rmb();
-    opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
     return OMPI_SUCCESS;
 }
@@ -480,6 +531,11 @@ ompi_osc_sm_put_notify(const void *origin_addr,
                             notify,
                             (unsigned long) win));
 
+    ret = osc_sm_check_notify_idx(module, target, notify);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
     ret = ompi_datatype_sndrcv((void *)origin_addr, origin_count, origin_dt,
@@ -488,10 +544,10 @@ ompi_osc_sm_put_notify(const void *origin_addr,
         return ret;
     }
 
-    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
-        return MPI_ERR_RMA_NOTIFICATION;
-    }
-
+    /* Release ordering: the data must be visible at the target before the
+     * notification is (MPI-5.1 section 12.3, "The notification counter will be
+     * updated at the target only after the completion of the data movement
+     * operation at the target"). */
     opal_atomic_wmb();
     opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
@@ -552,6 +608,11 @@ ompi_osc_sm_get_notify(void *origin_addr,
                          target_count, target_dt->name,
                          (unsigned long) win));
 
+    ret = osc_sm_check_notify_idx(module, target, notify);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
     remote_address = ((char*) (module->bases[target])) + module->disp_units[target] * target_disp;
 
     ret = ompi_datatype_sndrcv(remote_address, target_count, target_dt,
@@ -559,11 +620,9 @@ ompi_osc_sm_get_notify(void *origin_addr,
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
-    if (notify < 0 || (uint32_t) notify >= module->node_states[target].notify_counter_count) {
-        return OMPI_ERR_BAD_PARAM;
-    }
 
-    opal_atomic_rmb();
+    /* Full barrier, not opal_atomic_rmb(): see ompi_osc_sm_rget_notify(). */
+    opal_atomic_mb();
     opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
     return ret;

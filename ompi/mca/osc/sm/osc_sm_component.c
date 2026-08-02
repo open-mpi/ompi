@@ -260,8 +260,15 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
         if (NULL == module->posts) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         module->posts[0] = (osc_sm_post_atomic_type_t *) (module->posts + 1);
 
-        /* allocate notify counters for single process case */
-        module->notify_counters = calloc(OSC_SM_MAX_NOTIFY_COUNTERS, sizeof(uint64_t));
+        /* allocate notify counters for single process case.
+         *
+         * NOTE: osc/sm pre-attaches the full reserved capacity, whereas osc/ucx
+         * starts at zero and requires MPI_WIN_SET_NUM_NOTIFY before any counter
+         * may be referenced.  MPI-5.1 section 12.6.1 does not state what the
+         * initial attached count is, so neither is provably wrong, but the
+         * divergence means a program that omits MPI_WIN_SET_NUM_NOTIFY works
+         * here and fails on ucx.  Left as-is pending a decision. */
+        module->notify_counters = calloc(OSC_SM_MAX_NOTIFY_COUNTERS, sizeof(int64_t));
         if (NULL == module->notify_counters) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         module->node_states[0].notify_counter_count = OSC_SM_MAX_NOTIFY_COUNTERS;
         module->node_states[0].notify_counter_offset = 0;
@@ -394,10 +401,10 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
         module->node_states = (ompi_osc_sm_node_state_t *) (module->global_state + 1);
 
         /* set up notify counters in shared memory after node_states */
-        module->notify_counters = (uint64_t *) ((char *)(module->node_states + comm_size) +
+        module->notify_counters = (opal_atomic_int64_t *) ((char *)(module->node_states + comm_size) +
                                    OPAL_ALIGN_PAD_AMOUNT((uintptr_t)(module->node_states + comm_size), 64));
         /* zero out notify counters */
-        memset(module->notify_counters, 0, total_counters * sizeof(uint64_t));
+        memset((void *) module->notify_counters, 0, total_counters * sizeof(int64_t));
 
         for (i = 0, total = data_base_size, total_counters = 0 ; i < comm_size ; ++i) {
             if (i > 0) {
@@ -593,7 +600,9 @@ ompi_osc_sm_free(struct ompi_win_t *win)
                                                       module->bases[0]);
         }
         /* free notify_counters for single process case */
-        free(module->notify_counters);
+        /* cast away the atomic/volatile qualifier for free(), as in
+         * opal/runtime/opal_progress.c */
+        free((void *) module->notify_counters);
     }
     free(module->disp_units);
     free(module->outstanding_locks);
