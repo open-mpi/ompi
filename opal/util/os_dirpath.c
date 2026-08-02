@@ -213,31 +213,33 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
  * removed.  If the callback returns non-zero, then no removal is
  * done.
  */
-int opal_os_dirpath_destroy(const char *path, bool recursive,
-                            opal_os_dirpath_destroy_callback_fn_t cbfunc)
+/**
+ * Recursively empty the directory that fd refers to.  Takes
+ * ownership of fd (it is closed via closedir() before returning).
+ *
+ * All inspection and removal is descriptor-relative
+ * (fstatat/openat/unlinkat against the open directory), so no entry
+ * can be swapped between the check and the use: the entry that was
+ * classified is the entry that is removed.  AT_SYMLINK_NOFOLLOW and
+ * O_NOFOLLOW ensure symlinks are treated as entries to unlink, never
+ * followed -- following one would send the recursion outside the
+ * tree being destroyed.
+ *
+ * path is the (display) path of the directory, used only for the
+ * user callback and for building child display paths.
+ */
+static int dirpath_destroy_at(int fd, const char *path, bool recursive,
+                              opal_os_dirpath_destroy_callback_fn_t cbfunc)
 {
     int rc, exit_status = OPAL_SUCCESS;
-    bool is_dir = false;
     DIR *dp;
     struct dirent *ep;
-    char *filenm;
     struct stat buf;
 
-    if (NULL == path) { /* protect against error */
-        return OPAL_ERROR;
-    }
-
-    /*
-     * Make sure we have access to the the base directory
-     */
-    if (OPAL_SUCCESS != (rc = opal_os_dirpath_access(path, 0))) {
-        exit_status = rc;
-        goto cleanup;
-    }
-
-    /* Open up the directory */
-    dp = opendir(path);
+    /* fdopendir() takes ownership of fd; closedir() closes it */
+    dp = fdopendir(fd);
     if (NULL == dp) {
+        close(fd);
         return OPAL_ERROR;
     }
 
@@ -249,78 +251,94 @@ int opal_os_dirpath_destroy(const char *path, bool recursive,
             continue;
         }
 
-        /* Check to see if it is a directory */
-        is_dir = false;
-
-        /* Create a pathname.  This is not always needed, but it makes
-         * for cleaner code just to create it here.  Note that we are
-         * allocating memory here, so we need to free it later on.
-         */
-        filenm = opal_os_path(false, path, ep->d_name, NULL);
-
-        rc = stat(filenm, &buf);
-        if (0 > rc) {
-            /* Handle a race condition. filenm might have been deleted by an
+        if (0 != fstatat(dirfd(dp), ep->d_name, &buf, AT_SYMLINK_NOFOLLOW)) {
+            /* Handle a race condition. The entry might have been deleted by an
              * other process running on the same node. That typically occurs
              * when one task is removing the job_session_dir and an other task
              * is still removing its proc_session_dir.
              */
-            free(filenm);
             continue;
-        }
-        if (S_ISDIR(buf.st_mode)) {
-            is_dir = true;
         }
 
         /*
          * If not recursively descending, then if we find a directory then fail
          * since we were not told to remove it.
          */
-        if (is_dir && !recursive) {
+        if (S_ISDIR(buf.st_mode) && !recursive) {
             /* Set the error indicating that we found a directory,
              * but continue removing files
              */
             exit_status = OPAL_ERROR;
-            free(filenm);
             continue;
         }
 
         /* Will the caller allow us to remove this file/directory? */
-        if (NULL != cbfunc) {
+        if (NULL != cbfunc && !cbfunc(path, ep->d_name)) {
             /*
              * Caller does not wish to remove this file/directory,
              * continue with the rest of the entries
              */
-            if (!(cbfunc(path, ep->d_name))) {
-                free(filenm);
+            continue;
+        }
+
+        /* Directories are recursively destroyed */
+        if (S_ISDIR(buf.st_mode)) {
+            char *filenm;
+            int childfd = openat(dirfd(dp), ep->d_name,
+                                 O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+            if (0 > childfd) {
+                if (ENOENT != errno) {
+                    /* The entry was swapped for something that is no
+                     * longer an ordinary directory; leave it alone */
+                    exit_status = OPAL_ERROR;
+                }
                 continue;
             }
-        }
-        /* Directories are recursively destroyed */
-        if (is_dir) {
-            rc = opal_os_dirpath_destroy(filenm, recursive, cbfunc);
+            filenm = opal_os_path(false, path, ep->d_name, NULL);
+            rc = dirpath_destroy_at(childfd, filenm, recursive, cbfunc);
             free(filenm);
             if (OPAL_SUCCESS != rc) {
                 exit_status = rc;
-                closedir(dp);
-                goto cleanup;
+                break;
             }
+            /* Remove the now-empty subdirectory.  This fails
+             * (harmlessly) if the callback preserved any entries */
+            unlinkat(dirfd(dp), ep->d_name, AT_REMOVEDIR);
         } else {
-            /* Files are removed right here */
-            if (0 != (rc = unlink(filenm))) {
+            /* Files (and symlinks) are removed right here; unlinkat
+             * removes a link itself, never its target */
+            if (0 != unlinkat(dirfd(dp), ep->d_name, 0)) {
                 exit_status = OPAL_ERROR;
             }
-            free(filenm);
         }
     }
 
     /* Done with this directory */
     closedir(dp);
 
-cleanup:
+    return exit_status;
+}
+
+int opal_os_dirpath_destroy(const char *path, bool recursive,
+                            opal_os_dirpath_destroy_callback_fn_t cbfunc)
+{
+    int fd, exit_status;
+
+    if (NULL == path) { /* protect against error */
+        return OPAL_ERROR;
+    }
+
+    /* O_NOFOLLOW: never destroy through a symlinked base path */
+    fd = open(path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+    if (0 > fd) {
+        return (ENOENT == errno) ? OPAL_ERR_NOT_FOUND : OPAL_ERROR;
+    }
+
+    exit_status = dirpath_destroy_at(fd, path, recursive, cbfunc);
 
     /*
-     * If the directory is empty, them remove it
+     * If the directory is empty, them remove it (rmdir() does not
+     * follow symlinks)
      */
     if (opal_os_dirpath_is_empty(path)) {
         rmdir(path);
