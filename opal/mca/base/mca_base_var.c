@@ -1079,6 +1079,7 @@ int mca_base_var_build_env(char ***env, int *num_env, bool internal)
 
         opal_argv_append(num_env, env, str);
         free(str);
+        str = NULL;
 
         switch (var->mbv_source) {
         case MCA_BASE_VAR_SOURCE_FILE:
