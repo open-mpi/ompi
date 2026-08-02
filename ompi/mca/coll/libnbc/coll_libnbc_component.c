@@ -649,13 +649,13 @@ request_start(size_t count, ompi_request_t ** requests)
         NBC_Schedule *schedule = handle->schedule;
 
         NBC_DEBUG(5, "--------------------------------\n");
-        NBC_DEBUG(5, "schedule %p size %u\n", &schedule, sizeof(schedule));
-        NBC_DEBUG(5, "handle %p size %u\n", &handle, sizeof(handle));
-        NBC_DEBUG(5, "data %p size %u\n", &schedule->data, sizeof(schedule->data));
-        NBC_DEBUG(5, "req_array %p size %u\n", &handle->req_array, sizeof(handle->req_array));
-        NBC_DEBUG(5, "row_offset=%u address=%p size=%u\n", handle->row_offset, &handle->row_offset, sizeof(handle->row_offset));
-        NBC_DEBUG(5, "req_count=%u address=%p size=%u\n", handle->req_count, &handle->req_count, sizeof(handle->req_count));
-        NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
+        NBC_DEBUG(5, "schedule %p size %" PRIsize_t "\n", &schedule, sizeof(schedule));
+        NBC_DEBUG(5, "handle %p size %" PRIsize_t "\n", &handle, sizeof(handle));
+        NBC_DEBUG(5, "data %p size %" PRIsize_t "\n", &schedule->data, sizeof(schedule->data));
+        NBC_DEBUG(5, "req_array %p size %" PRIsize_t "\n", &handle->req_array, sizeof(handle->req_array));
+        NBC_DEBUG(5, "row_offset=%li address=%p size=%" PRIsize_t "\n", handle->row_offset, &handle->row_offset, sizeof(handle->row_offset));
+        NBC_DEBUG(5, "req_count=%i address=%p size=%" PRIsize_t "\n", handle->req_count, &handle->req_count, sizeof(handle->req_count));
+        NBC_DEBUG(5, "tmpbuf address=%p size=%" PRIsize_t "\n", handle->tmpbuf, sizeof(handle->tmpbuf));
         NBC_DEBUG(5, "--------------------------------\n");
 
         handle->super.super.req_complete = REQUEST_PENDING;
