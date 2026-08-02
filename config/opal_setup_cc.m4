@@ -19,6 +19,7 @@ dnl                         and Technology (RIST).  All rights reserved.
 dnl Copyright (c) 2020      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -27,7 +28,25 @@ dnl
 dnl $HEADER$
 dnl
 
+dnl OPAL_CC_HELPER(check-message, cache-variable, prologue, body)
+dnl
+dnl Check whether a test program compiles and links, saving the result
+dnl (1 or 0) in the cache variable $2 (which must therefore be named
+dnl "opal_cv_...").
 AC_DEFUN([OPAL_CC_HELPER],[
+    AC_CACHE_CHECK([$1], [$2],
+                   [AC_LINK_IFELSE([AC_LANG_PROGRAM([$3],[$4])],
+                                   [$2=1],
+                                   [$2=0])])
+])
+
+
+dnl _OPAL_CC_HELPER(check-message, result-variable, prologue, body)
+dnl
+dnl Like OPAL_CC_HELPER, but does not cache the result.  Use this only
+dnl for checks whose results depend on transient CFLAGS values (e.g.,
+dnl testing candidate C11 flags) and therefore must not be cached.
+AC_DEFUN([_OPAL_CC_HELPER],[
     OPAL_VAR_SCOPE_PUSH([opal_cc_helper_result])
     AC_MSG_CHECKING([$1])
 
@@ -42,29 +61,26 @@ AC_DEFUN([OPAL_CC_HELPER],[
 ])
 
 
+dnl OPAL_PROG_CC_C11_HELPER(flag, action-if-supported, action-if-not)
+dnl
+dnl Check whether $CC supports the C11 features that Open MPI requires
+dnl when invoked with the extra compiler flag $1 (which may be empty).
+dnl These results are specific to the flag under test, so they are not
+dnl cached; the cached per-feature checks are in OPAL_SETUP_CC.
 AC_DEFUN([OPAL_PROG_CC_C11_HELPER],[
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper_CFLAGS_save])
+    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper_CFLAGS_save opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available])
 
     opal_prog_cc_c11_helper_CFLAGS_save=$CFLAGS
     CFLAGS="$CFLAGS $1"
 
-    OPAL_CC_HELPER([if $CC $1 supports C11 _Thread_local], [opal_prog_cc_c11_helper__Thread_local_available],
-                   [],[[static _Thread_local int  foo = 1;++foo;]])
+    _OPAL_CC_HELPER([if $CC $1 supports C11 _Thread_local], [opal_prog_cc_c11_helper__Thread_local_available],
+                    [],[[static _Thread_local int  foo = 1;++foo;]])
 
-    OPAL_CC_HELPER([if $CC $1 supports C11 atomic variables], [opal_prog_cc_c11_helper_atomic_var_available],
-                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]])
+    _OPAL_CC_HELPER([if $CC $1 supports C11 atomic variables], [opal_prog_cc_c11_helper_atomic_var_available],
+                    [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]])
 
-    OPAL_CC_HELPER([if $CC $1 supports C11 _Atomic keyword], [opal_prog_cc_c11_helper__Atomic_available],
-                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]])
-
-    OPAL_CC_HELPER([if $CC $1 supports C11 _Generic keyword], [opal_prog_cc_c11_helper__Generic_available],
-                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]])
-
-    OPAL_CC_HELPER([if $CC $1 supports C11 _Static_assert], [opal_prog_cc_c11_helper__static_assert_available],
-                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]])
-
-    OPAL_CC_HELPER([if $CC $1 supports C11 atomic_fetch_xor_explicit], [opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available],
-                   [[#include <stdatomic.h>
+    _OPAL_CC_HELPER([if $CC $1 supports C11 atomic_fetch_xor_explicit], [opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available],
+                    [[#include <stdatomic.h>
 #include <stdint.h>]],[[_Atomic uint32_t a; uint32_t b; atomic_fetch_xor_explicit(&a, b, memory_order_relaxed);]])
 
     AS_IF([test $opal_prog_cc_c11_helper__Thread_local_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_var_available -eq 1 && test $opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available -eq 1],
@@ -106,8 +122,6 @@ AC_DEFUN([OPAL_PROG_CC_C11],[
             for flag in $(echo $opal_prog_cc_c11_flags | tr ' ' '\n') ; do
                 OPAL_PROG_CC_C11_HELPER([$flag],[opal_cv_c11_flag=$flag],[])
                 if test "x$opal_cv_c11_flag" != "x" ; then
-                    OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$opal_cv_c11_flag"])
-                    AC_MSG_NOTICE([using $flag to enable C11 support])
                     opal_cv_c11_supported=yes
                     break
                 fi
@@ -116,6 +130,14 @@ AC_DEFUN([OPAL_PROG_CC_C11],[
             AC_MSG_NOTICE([no flag required for C11 support])
             opal_cv_c11_supported=yes
         fi
+    fi
+
+    dnl This must be outside the cache-check block above so that it
+    dnl also happens when all the results above were restored from a
+    dnl cache file.
+    if test "$opal_cv_c11_supported" = "yes" && test -n "$opal_cv_c11_flag" ; then
+        OPAL_FLAGS_APPEND_UNIQ([CFLAGS], ["$opal_cv_c11_flag"])
+        AC_MSG_NOTICE([using $opal_cv_c11_flag to enable C11 support])
     fi
 
     OPAL_VAR_SCOPE_POP
@@ -170,8 +192,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_REQUIRE([_OPAL_PROG_CC])
     AC_REQUIRE([AM_PROG_CC_C_O])
 
-    OPAL_VAR_SCOPE_PUSH([opal_prog_cc_c11_helper__Thread_local_available opal_prog_cc_c11_helper_atomic_var_available opal_prog_cc_c11_helper__Atomic_available opal_prog_cc_c11_helper__static_assert_available opal_prog_cc_c11_helper__Generic_available opal_prog_cc_c11_helper_atomic_fetch_xor_explicit_available opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics])
-
     OPAL_PROG_CC_C11
 
     OPAL_CHECK_CC_IQUOTE
@@ -186,19 +206,35 @@ AC_DEFUN([OPAL_SETUP_CC],[
 
     dnl At this time Open MPI only needs thread local and the atomic convenience types for C11 support. These
     dnl will likely be required in the future.
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__THREAD_LOCAL], [$opal_prog_cc_c11_helper__Thread_local_available],
+    dnl
+    dnl These checks must run on every invocation of configure --
+    dnl including when the C11 flag detection above was satisfied from
+    dnl a cache file -- because their results feed the AC_DEFINEs
+    dnl below.  They run after OPAL_PROG_CC_C11 so that CFLAGS already
+    dnl contains any flag required for C11 support.
+    OPAL_CC_HELPER([if $CC supports C11 _Thread_local], [opal_cv_c_have__thread_local],
+                   [],[[static _Thread_local int  foo = 1;++foo;]])
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__THREAD_LOCAL], [$opal_cv_c_have__thread_local],
                        [Whether C compiler supports __Thread_local])
 
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_ATOMIC_CONV_VAR], [$opal_prog_cc_c11_helper_atomic_var_available],
+    OPAL_CC_HELPER([if $CC supports C11 atomic variables], [opal_cv_c_have_atomic_conv_var],
+                   [[#include <stdatomic.h>]], [[static atomic_long foo = 1;++foo;]])
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_ATOMIC_CONV_VAR], [$opal_cv_c_have_atomic_conv_var],
                        [Whether C compiler support atomic convenience variables in stdatomic.h])
 
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__ATOMIC], [$opal_prog_cc_c11_helper__Atomic_available],
+    OPAL_CC_HELPER([if $CC supports C11 _Atomic keyword], [opal_cv_c_have__atomic],
+                   [[#include <stdatomic.h>]],[[static _Atomic long foo = 1;++foo;]])
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__ATOMIC], [$opal_cv_c_have__atomic],
                        [Whether C compiler supports __Atomic keyword])
 
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__GENERIC], [$opal_prog_cc_c11_helper__Generic_available],
+    OPAL_CC_HELPER([if $CC supports C11 _Generic keyword], [opal_cv_c_have__generic],
+                   [[#define FOO(x) (_Generic (x, int: 1))]], [[static int x, y; y = FOO(x);]])
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__GENERIC], [$opal_cv_c_have__generic],
                        [Whether C compiler supports __Generic keyword])
 
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__STATIC_ASSERT], [$opal_prog_cc_c11_helper__static_assert_available],
+    OPAL_CC_HELPER([if $CC supports C11 _Static_assert], [opal_cv_c_have__static_assert],
+                   [[#include <stdint.h>]],[[_Static_assert(sizeof(int64_t) == 8, "WTH");]])
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE__STATIC_ASSERT], [$opal_cv_c_have__static_assert],
                        [Whether C compiler support _Static_assert keyword])
 
     # Check for standard headers, needed here because needed before
@@ -224,7 +260,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
            AC_DEFINE([_GNU_SOURCE])])
 
     AS_IF([test "$opal_cv_c_compiler_vendor" = "intel"],
-          [OPAL_CC_HELPER([if $CC is Intel < 20200310 (lacks proper support for atomic operations on _Atomic variables)], [opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics],
+          [OPAL_CC_HELPER([if $CC is Intel < 20200310 (lacks proper support for atomic operations on _Atomic variables)], [opal_cv_c_have_atomic_support_for__atomic],
                           [],[[
                    #ifdef __INTEL_COMPILER
                    #if __INTEL_COMPILER_BUILD_DATE <= 20200310
@@ -232,9 +268,9 @@ AC_DEFUN([OPAL_SETUP_CC],[
                    #endif  /* __INTEL_COMPILER_BUILD_DATE <= 20200310 */
                    #endif  /* __INTEL_COMPILER */
                              ]])],
-          [opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics=1])
+          [opal_cv_c_have_atomic_support_for__atomic=1])
 
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_ATOMIC_SUPPORT_FOR__ATOMIC], [$opal_prog_cc_c11_helper_proper__Atomic_support_in_atomics],
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_ATOMIC_SUPPORT_FOR__ATOMIC], [$opal_cv_c_have_atomic_support_for__atomic],
                        [Whether C compiler supports atomic operations on _Atomic variables without warnings])
 
     # Do we want code coverage
@@ -394,7 +430,6 @@ AC_DEFUN([OPAL_SETUP_CC],[
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
     AC_MSG_RESULT(CFLAGS result: $CFLAGS)
-    OPAL_VAR_SCOPE_POP
 ])
 
 
