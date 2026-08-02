@@ -1,0 +1,43 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+#include "ompi_config.h"
+
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/win/win.h"
+#include "ompi/mca/osc/osc.h"
+
+PROTOTYPE ERROR_CLASS win_get_num_notify(WIN win, INT target_rank, INT_OUT num_notifications)
+{
+    int rc;
+
+    if (MPI_PARAM_CHECK) {
+        rc = OMPI_SUCCESS;
+
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+        if (ompi_win_invalid(win)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
+        } else if (NULL == num_notifications) {
+            rc = MPI_ERR_ARG;
+        }
+
+        OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
+    }
+
+    if (NULL == win->w_osc_module->osc_win_get_num_notify) {
+        return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_UNSUPPORTED_OPERATION, FUNC_NAME);
+    }
+
+    rc = win->w_osc_module->osc_win_get_num_notify(win, target_rank, num_notifications);
+    OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
+}

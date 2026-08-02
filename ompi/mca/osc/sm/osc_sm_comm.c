@@ -70,6 +70,83 @@ ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
 }
 
 int
+ompi_osc_sm_win_set_num_notify(struct ompi_win_t *win,
+                               struct opal_info_t *info,
+                               int num_notifications)
+{
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
+    int rank = ompi_comm_rank(module->comm);
+    int ret;
+
+    /* "mpi_assert_same_num_notifications" is an optimization hint only, and
+     * osc/sm reserves the same fixed number of counters at every rank
+     * regardless, so there is nothing to specialize on. */
+    (void) info;
+
+    if (num_notifications < 0) {
+        return MPI_ERR_ARG;
+    }
+
+    /* A fixed region of OSC_SM_MAX_NOTIFY_COUNTERS counters per rank is carved
+     * out of the shared segment at window creation, so that is the effective
+     * MPI_WIN_NOTIFICATION_NUM_UB.  Asking for more cannot be satisfied without
+     * re-creating the segment. */
+    if (num_notifications > OSC_SM_MAX_NOTIFY_COUNTERS) {
+        return MPI_ERR_ARG;
+    }
+
+    /* MPI-5.1 section 12.6.1: "A subsequent call to MPI_WIN_GET_NUM_NOTIFY will
+     * return the value given to MPI_WIN_SET_NUM_NOTIFY."  The count is set to
+     * exactly what was asked for -- note this differs from earlier drafts of
+     * the chapter, which forbade decreasing it.
+     *
+     * "All notification counters (both existing and newly attached) are reset
+     * to zero by this call."  Zero the whole reserved region rather than just
+     * the attached prefix, so that counters left over from a previous, larger
+     * attachment cannot resurface if the count is raised again.  It is
+     * erroneous to call this while an access epoch is open, so no origin can be
+     * incrementing our counters concurrently and plain stores are sufficient. */
+    memset((void *) osc_sm_target_notify_base(module, rank), 0,
+           OSC_SM_MAX_NOTIFY_COUNTERS * sizeof(int64_t));
+    module->node_states[rank].notify_counter_count = (uint32_t) num_notifications;
+    opal_atomic_wmb();
+
+    /* "MPI_WIN_SET_NUM_NOTIFY is a blocking, synchronizing collective
+     * procedure; it will not return until all MPI processes in the group of the
+     * window have called the function and all processes have adjusted the
+     * number of notification counters attached to the window."  Each rank
+     * publishes its own count into the shared segment above, so the barrier is
+     * all that is needed to make every rank's count visible to every other --
+     * no counts have to be exchanged. */
+    ret = module->comm->c_coll->coll_barrier(module->comm,
+                                             module->comm->c_coll->coll_barrier_module);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int
+ompi_osc_sm_win_get_num_notify(struct ompi_win_t *win,
+                               int target_rank,
+                               int *num_notifications)
+{
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
+
+    if (target_rank < 0 || target_rank >= ompi_comm_size(module->comm)) {
+        return MPI_ERR_RANK;
+    }
+
+    /* MPI-5.1 section 12.6.1: local procedure returning the number of counters
+     * attached at target_rank.  Every rank's count is published in the shared
+     * segment by MPI_WIN_SET_NUM_NOTIFY, so this is a plain read. */
+    *num_notifications = (int) module->node_states[target_rank].notify_counter_count;
+
+    return OMPI_SUCCESS;
+}
+
+int
 ompi_osc_sm_rput(const void *origin_addr,
                  size_t origin_count,
                  struct ompi_datatype_t *origin_dt,

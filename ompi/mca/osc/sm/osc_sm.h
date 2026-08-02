@@ -158,6 +158,14 @@ int ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
                                        int notify,
                                        OMPI_MPI_COUNT_TYPE *value);
 
+int ompi_osc_sm_win_set_num_notify(struct ompi_win_t *win,
+                                   struct opal_info_t *info,
+                                   int num_notifications);
+
+int ompi_osc_sm_win_get_num_notify(struct ompi_win_t *win,
+                                   int target_rank,
+                                   int *num_notifications);
+
 int ompi_osc_sm_accumulate(const void *origin_addr,
                                  size_t origin_count,
                                  struct ompi_datatype_t *origin_dt,

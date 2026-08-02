@@ -253,6 +253,19 @@ typedef int (*ompi_osc_base_module_win_reset_notify_value_fn_t)(struct ompi_win_
                                                                 int notify,
                                                                 OMPI_MPI_COUNT_TYPE *value);
 
+/* MPI-5.1 section 12.6.1.  Blocking, synchronizing collective; sets the number
+ * of notification counters attached at the calling MPI process to exactly
+ * num_notifications and resets every counter to zero. */
+typedef int (*ompi_osc_base_module_win_set_num_notify_fn_t)(struct ompi_win_t *win,
+                                                            struct opal_info_t *info,
+                                                            int num_notifications);
+
+/* MPI-5.1 section 12.6.1.  Local; returns the number of notification counters
+ * attached at target_rank. */
+typedef int (*ompi_osc_base_module_win_get_num_notify_fn_t)(struct ompi_win_t *win,
+                                                            int target_rank,
+                                                            int *num_notifications);
+
 typedef int (*ompi_osc_base_module_accumulate_fn_t)(const void *origin_addr,
                                                    size_t origin_count,
                                                    struct ompi_datatype_t *origin_dt,
@@ -459,6 +472,8 @@ struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_get_notify_fn_t osc_get_notify;
     ompi_osc_base_module_win_get_notify_value_fn_t osc_win_get_notify_value;
     ompi_osc_base_module_win_reset_notify_value_fn_t osc_win_reset_notify_value;
+    ompi_osc_base_module_win_set_num_notify_fn_t osc_win_set_num_notify;
+    ompi_osc_base_module_win_get_num_notify_fn_t osc_win_get_num_notify;
     ompi_osc_base_module_rput_notify_fn_t osc_rput_notify;
     ompi_osc_base_module_rget_notify_fn_t osc_rget_notify;
 };
