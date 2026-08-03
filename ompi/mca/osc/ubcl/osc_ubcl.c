@@ -238,6 +238,7 @@ static int component_query(struct ompi_win_t *win, void **base, size_t size, ptr
 {
     uint64_t flags = 0;
     int dev_id;
+    ubcl_mca_state_t state;
 
     if (MPI_WIN_FLAVOR_SHARED == flavor) {
         return OPAL_ERR_NOT_IMPLEMENTED;
@@ -255,6 +256,14 @@ static int component_query(struct ompi_win_t *win, void **base, size_t size, ptr
             OPAL_ERR_NOT_SUPPORTED,
             "GPU buffer not supported by osc/ubcl: disqualifying UBCL for this window creation");
         return OPAL_ERR_NOT_SUPPORTED;
+    }
+
+    state = mca_common_ubcl_get_state();
+    if (UBCL_PML_COMM_CREATED > state) {
+        opal_output_verbose(10, mca_osc_ubcl_component.output,
+                            "osc:ubcl:%s: missing pml ubcl endpoints ; disqualifying myself",
+                            __func__);
+        return OPAL_ERR_NOT_INITIALIZED;
     }
 
     return mca_osc_ubcl_component.priority;
