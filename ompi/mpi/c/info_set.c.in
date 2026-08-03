@@ -16,6 +16,7 @@
  * Copyright (c) 2018 IBM Corporation. All rights reserved.
  * Copyright (c) 2018-2024 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,7 +85,7 @@ PROTOTYPE ERROR_CLASS info_set(INFO info, STRING key, STRING value)
         }
 
         value_length = (value) ? (int)strlen (value) : 0;
-        if ((NULL == value) || (0 == value_length) ||
+        if ((NULL == value) ||
             (MPI_MAX_INFO_VAL <= value_length)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_VALUE,
                                            FUNC_NAME);
