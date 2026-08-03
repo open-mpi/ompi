@@ -1099,7 +1099,11 @@ int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uin
     }
 
     if (val->type != PMIX_SIZE) {
-        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID type mismatch - %s", PMIx_Value_string(val)));
+#if OPAL_ENABLE_DEBUG
+        char *val_string = PMIx_Value_string(val);
+        OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Get failed for PMIX_GROUP_LOCAL_CID type mismatch - %s", val_string));
+        free(val_string);
+#endif
         rc = OMPI_ERR_TYPE_MISMATCH;
         goto done;
     }

@@ -994,8 +994,11 @@ static int ompi_comm_split_type_get_nvlink_domain(
     }
 
     rc = mca_base_var_get_value(var_id, &value, NULL, NULL);
-    if (OMPI_SUCCESS != rc || NULL == value) {
+    if (OMPI_SUCCESS != rc) {
         return rc;
+    }
+    if (NULL == value || NULL == *value) {
+        return OMPI_ERR_NOT_FOUND;
     }
 
     return ompi_comm_split_type_parse_nvlink_domain(*value, domain);
