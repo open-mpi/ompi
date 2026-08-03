@@ -156,7 +156,9 @@ jobs:
       # bundled third-party projects, which gives CodeQL complete build
       # context but can also produce alerts in code we do not maintain.
       # For C/C++ only, write SARIF locally, remove alerts whose primary
-      # locations are under 3rd-party/, and then upload the filtered SARIF.
+      # locations are under 3rd-party/ or the test directories (mirroring
+      # the config sidecar's paths-ignore), and then upload the filtered
+      # SARIF.
       - name: Perform CodeQL Analysis
         if: matrix.language == 'c-cpp'
         uses: github/codeql-action/analyze@v4
@@ -186,6 +188,8 @@ jobs:
           patterns: |
             -3rd-party/**
             -**/3rd-party/**
+            -test/**
+            -**/test/**
           input: ${{ steps.cpp_sarif.outputs.file }}
           output: ${{ steps.cpp_sarif.outputs.file }}
 
@@ -280,7 +284,9 @@ jobs:
       # bundled third-party projects, which gives CodeQL complete build
       # context but can also produce alerts in code we do not maintain.
       # For C/C++ only, write SARIF locally, remove alerts whose primary
-      # locations are under 3rd-party/, and then upload the filtered SARIF.
+      # locations are under 3rd-party/ or the test directories (mirroring
+      # the config sidecar's paths-ignore), and then upload the filtered
+      # SARIF.
       - name: Perform CodeQL Analysis
         if: matrix.language == 'c-cpp'
         uses: github/codeql-action/analyze@v4
@@ -317,6 +323,8 @@ jobs:
           patterns: |
             -3rd-party/**
             -**/3rd-party/**
+            -test/**
+            -**/test/**
           input: ${{ steps.cpp_sarif.outputs.file }}
           output: ${{ steps.cpp_sarif.outputs.file }}
 
