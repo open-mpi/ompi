@@ -145,7 +145,6 @@ PROTOTYPE ERROR_CLASS isendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendty
         rc = MCA_PML_CALL(irecv(recvbuf, recvcount, recvtype,
                                 source, recvtag, comm, &context->subreq[nreqs++]));
         if (MPI_SUCCESS != rc) {
-            OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
@@ -155,7 +154,6 @@ PROTOTYPE ERROR_CLASS isendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendty
         rc = MCA_PML_CALL(isend(sendbuf, sendcount, sendtype, dest,
                                 sendtag, MCA_PML_BASE_SEND_STANDARD, comm, &context->subreq[nreqs++]));
         if (MPI_SUCCESS != rc) {
-            OBJ_RELEASE(context);
             ompi_comm_request_return (crequest);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
@@ -173,7 +171,6 @@ PROTOTYPE ERROR_CLASS isendrecv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendty
     rc = ompi_comm_request_schedule_append_w_flags(crequest, ompi_isendrecv_complete_func, 
                                                    context->subreq, nreqs, flags);
     if (MPI_SUCCESS != rc) {
-        OBJ_RELEASE(context);
         ompi_comm_request_return (crequest);
     }
 
