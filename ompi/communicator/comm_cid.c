@@ -461,7 +461,7 @@ static int ompi_comm_ext_cid_new_block (ompi_communicator_t *newcomm, ompi_commu
     /* destruct the group */
     PMIX_INFO_CONSTRUCT(&tinfo);
     PMIX_INFO_LOAD(&tinfo, PMIX_TIMEOUT, &ompi_pmix_connect_timeout, PMIX_UINT32);
-    rc = PMIx_Group_destruct (tag, &tinfo, 0);
+    rc = PMIx_Group_destruct (tag, &tinfo, 1);
     PMIX_INFO_DESTRUCT(&tinfo);
     if(PMIX_SUCCESS != rc) {
         OPAL_OUTPUT_VERBOSE((10, ompi_comm_output, "PMIx_Group_destruct failed %s", PMIx_Error_string(rc)));
