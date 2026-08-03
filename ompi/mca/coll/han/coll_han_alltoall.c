@@ -79,7 +79,9 @@ static int alltoall_cache_setup(
     if (c->cached_sbuf == sbuf
         && c->cached_scount == scount
         && c->cached_low_size == low_size
-        && c->low_bufs != NULL) {
+        && NULL != c->low_bufs
+        && NULL != c->map_ctx
+        && NULL != c->gather_buf) {
         *low_bufs_out = c->low_bufs;
         *map_ctx_out = c->map_ctx;
         *gather_buf_out = c->gather_buf;
@@ -96,7 +98,8 @@ static int alltoall_cache_setup(
         }
     }
     /* Allocate/reuse persistent arrays */
-    if (c->cached_low_size < low_size) {
+    if (c->cached_low_size < low_size || NULL == c->low_bufs
+        || NULL == c->map_ctx || NULL == c->gather_buf) {
         free(c->low_bufs);
         free(c->map_ctx);
         free(c->gather_buf);
