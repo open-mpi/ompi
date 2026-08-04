@@ -396,16 +396,18 @@ error_cleanup:
 
 static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_coll_alg_rule_t** rules)
 {
-    long NCOL = 0,      /* number of collectives for which rules are provided  */
-         COLID = 0,     /* identifies the collective type to associate the rules with */
-         NCOMSIZES = 0, /* number of sets of message size rules. the key is communicator size */
-         COMSIZE = 0,   /* communicator size, the key identifying a specific set of message size rules. */
-         NMSGSIZES = 0, /* number of message size rules in the set. */
-         MSGSIZE = 0,   /* message size, the key identifying a specific rule in the set. */
-         ALG = 0,       /* the collective specific algorithm to use */
-         FANINOUT = 0,  /* algorithm specific tuning parameter */
-         SEGSIZE = 0,   /* algorithm specific tuning parameter */
-         MAXREQ = 0;    /* algorithm specific tuning parameter */
+    long NCOL = 0,     /* number of collectives for which rules are provided  */
+        COLID = 0,     /* identifies the collective type to associate the rules with */
+        NCOMSIZES = 0, /* number of sets of message size rules. the key is communicator size */
+        COMSIZE
+        = 0, /* communicator size, the key identifying a specific set of message size rules. */
+        NMSGSIZES = 0, /* number of message size rules in the set. */
+        MSGSIZE = 0,   /* message size, the key identifying a specific rule in the set. */
+        ALG = 0,       /* the collective specific algorithm to use */
+        FANINOUT = 0,  /* algorithm specific tuning parameter */
+        SEGSIZE = 0,   /* algorithm specific tuning parameter */
+        MAXREQ = 0,    /* algorithm specific tuning parameter */
+        BINE_IMP = 0;  /* algorithm specific tuning parameter */
     FILE *fptr = (FILE*) NULL;
     int x, ncs, nms, version;
 
@@ -605,6 +607,16 @@ static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_col
                     }
                     msg_p->result_max_requests = MAXREQ;
                 }
+
+                /* read the bine implementation */
+                if ((getnext(fptr, &BINE_IMP) < 0) || (BINE_IMP < 0)) {
+                    opal_output_verbose(1, ompi_coll_tuned_stream,
+                                        "Could not read bine implementation for  collective ID %ld "
+                                        "com rule %d msg rule %d at around line %d\n",
+                                        COLID, ncs, nms, fileline);
+                    goto on_file_error;
+                }
+                msg_p->result_bine_implementation = BINE_IMP;
 
                 /* check the first rule is for 0 size. look-up depends on this */
                 if (!nms && MSGSIZE) {

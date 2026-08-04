@@ -58,6 +58,7 @@ struct coll_tuned_force_algorithm_mca_param_indices_t {
     int  tree_fanout_param_index;    /* tree fanout/in to use */
     int  chain_fanout_param_index;   /* K-chain fanout/in to use */
     int  max_requests_param_index;   /* Maximum number of outstanding send or recv requests */
+    int bine_implementation_index;   /* Bine algorithm implementation */
 };
 typedef struct coll_tuned_force_algorithm_mca_param_indices_t coll_tuned_force_algorithm_mca_param_indices_t;
 
@@ -71,6 +72,7 @@ struct coll_tuned_force_algorithm_params_t {
     int  tree_fanout;    /* tree fanout/in to use */
     int  chain_fanout;   /* K-chain fanout/in to use */
     int  max_requests;   /* Maximum number of outstanding send or recv requests */
+    int bine_implementation; /* implementation of bine algorithm */
 };
 typedef struct coll_tuned_force_algorithm_params_t coll_tuned_force_algorithm_params_t;
 
@@ -102,8 +104,10 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority);
 
 /* All Gather */
 int ompi_coll_tuned_allgather_intra_dec_fixed(ALLGATHER_ARGS);
+int ompi_coll_tuned_allgather_intra_bine_dec_fixed(ALLGATHER_ARGS);
 int ompi_coll_tuned_allgather_intra_dec_dynamic(ALLGATHER_ARGS);
-int ompi_coll_tuned_allgather_intra_do_this(ALLGATHER_ARGS, int algorithm, int faninout, int segsize);
+int ompi_coll_tuned_allgather_intra_do_this(ALLGATHER_ARGS, int algorithm, int faninout,
+                                            int segsize, int bine_imp);
 int ompi_coll_tuned_allgather_intra_check_forced_init(coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
 
 /* All GatherV */
@@ -114,9 +118,11 @@ int ompi_coll_tuned_allgatherv_intra_check_forced_init(coll_tuned_force_algorith
 
 /* All Reduce */
 int ompi_coll_tuned_allreduce_intra_dec_fixed(ALLREDUCE_ARGS);
+int ompi_coll_tuned_allreduce_intra_bine_dec_fixed(ALLREDUCE_ARGS);
 int ompi_coll_tuned_allreduce_intra_disjoint_dec_fixed(ALLREDUCE_ARGS);
 int ompi_coll_tuned_allreduce_intra_dec_dynamic(ALLREDUCE_ARGS);
-int ompi_coll_tuned_allreduce_intra_do_this(ALLREDUCE_ARGS, int algorithm, int faninout, int segsize);
+int ompi_coll_tuned_allreduce_intra_do_this(ALLREDUCE_ARGS, int algorithm, int faninout,
+                                            int segsize, int bine_imp);
 int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
 
 /* AlltoAll */
@@ -139,9 +145,11 @@ int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_
 
 /* Bcast */
 int ompi_coll_tuned_bcast_intra_dec_fixed(BCAST_ARGS);
+int ompi_coll_tuned_bcast_intra_bine_dec_fixed(BCAST_ARGS);
 int ompi_coll_tuned_bcast_intra_disjoint_dec_fixed(BCAST_ARGS);
 int ompi_coll_tuned_bcast_intra_dec_dynamic(BCAST_ARGS);
-int ompi_coll_tuned_bcast_intra_do_this(BCAST_ARGS, int algorithm, int faninout, int segsize);
+int ompi_coll_tuned_bcast_intra_do_this(BCAST_ARGS, int algorithm, int faninout, int segsize,
+                                        int bine_imp);
 int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
 
 /* Gather */
@@ -152,14 +160,18 @@ int ompi_coll_tuned_gather_intra_check_forced_init (coll_tuned_force_algorithm_m
 
 /* Reduce */
 int ompi_coll_tuned_reduce_intra_dec_fixed(REDUCE_ARGS);
+int ompi_coll_tuned_reduce_intra_bine_dec_fixed(REDUCE_ARGS);
 int ompi_coll_tuned_reduce_intra_dec_dynamic(REDUCE_ARGS);
-int ompi_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int algorithm, int faninout, int segsize, int max_oustanding_reqs);
+int ompi_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int algorithm, int faninout, int segsize,
+                                         int max_oustanding_reqs, int bine_imp);
 int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
 
 /* Reduce_scatter */
 int ompi_coll_tuned_reduce_scatter_intra_dec_fixed(REDUCESCATTER_ARGS);
+int ompi_coll_tuned_reduce_scatter_intra_bine_dec_fixed(REDUCESCATTER_ARGS);
 int ompi_coll_tuned_reduce_scatter_intra_dec_dynamic(REDUCESCATTER_ARGS);
-int ompi_coll_tuned_reduce_scatter_intra_do_this(REDUCESCATTER_ARGS, int algorithm, int faninout, int segsize);
+int ompi_coll_tuned_reduce_scatter_intra_do_this(REDUCESCATTER_ARGS, int algorithm, int faninout,
+                                                 int segsize, int bine_imp);
 int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
 
 /* Reduce_scatter_block */
@@ -227,5 +239,8 @@ int coll_tuned_alg_from_str(int collective_id, const char *alg_name, int *alg_in
 int coll_tuned_alg_to_str(int collective_id, int alg_value, char **alg_string);
 int coll_tuned_alg_register_options(int collective_id, mca_base_var_enum_t *options);
 
+int coll_tuned_alg_bine_from_str(int collective_id, const char *alg_name, int *alg_index);
+int coll_tuned_alg_bine_to_str(int collective_id, int alg_value, char **alg_string);
+int coll_tuned_alg_bine_register_options(int collective_id, mca_base_var_enum_t *options);
 
 #endif  /* MCA_COLL_TUNED_EXPORT_H */

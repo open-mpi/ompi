@@ -30,6 +30,7 @@
 
 /* bcast algorithm variables */
 static int coll_tuned_bcast_forced_algorithm = 0;
+static int coll_tuned_bcast_forced_bine_imp = 0;
 static int coll_tuned_bcast_segment_size = 0;
 static int coll_tuned_bcast_tree_fanout;
 static int coll_tuned_bcast_chain_fanout;
@@ -37,19 +38,26 @@ static int coll_tuned_bcast_chain_fanout;
 static int coll_tuned_bcast_knomial_radix = 4;
 
 /* valid values for coll_tuned_bcast_forced_algorithm */
-static const mca_base_var_enum_value_t bcast_algorithms[] = {
-    {0, "ignore"},
-    {1, "basic_linear"},
-    {2, "chain"},
-    {3, "pipeline"},
-    {4, "split_binary_tree"},
-    {5, "binary_tree"},
-    {6, "binomial"},
-    {7, "knomial"},
-    {8, "scatter_allgather"},
-    {9, "scatter_allgather_ring"},
-    {0, NULL}
-};
+static const mca_base_var_enum_value_t bcast_algorithms[] = {{0, "ignore"},
+                                                             {1, "basic_linear"},
+                                                             {2, "chain"},
+                                                             {3, "pipeline"},
+                                                             {4, "split_binary_tree"},
+                                                             {5, "binary_tree"},
+                                                             {6, "binomial"},
+                                                             {7, "knomial"},
+                                                             {8, "scatter_allgather"},
+                                                             {9, "scatter_allgather_ring"},
+                                                             {10, "bine"},
+                                                             {0, NULL}};
+
+static const mca_base_var_enum_value_t bcast_bine_imp[] = {{0, "ignore"},
+                                                           {1, "lat"},
+                                                           {2, "lat_reversed"},
+                                                           {3, "lat_new"},
+                                                           {4, "lat_i_new"},
+                                                           {5, "bdw_remap"},
+                                                           {0, NULL}};
 
 /* The following are used by dynamic and forced rules */
 
@@ -133,19 +141,33 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
                                     OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_ALL,
                                     &coll_tuned_bcast_knomial_radix);
 
+    coll_tuned_bcast_forced_bine_imp = 0;
+    (void) mca_base_var_enum_create("coll_tuned_bcast_bine_implementation", bcast_bine_imp, &new_enum);
+    mca_param_indices->bine_implementation_index = mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "bcast_bine_implementation",
+        "Bine implementation to use for bcast. "
+        "Can be locked down to choice of: 0 ignore, 1 lat, 2 lat_reversed, 3 lat_new, 4 lat_i_new, "
+        "5 bdw_remap "
+        "Only relevant if coll_tuned_use_dynamic_rules is true and algorithm is bine 10.",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &coll_tuned_bcast_forced_bine_imp);
+    coll_tuned_alg_bine_register_options(BCAST, new_enum);
+    OBJ_RELEASE(new_enum);
+    if (mca_param_indices->bine_implementation_index < 0) {
+        return mca_param_indices->bine_implementation_index;
+    }
+
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_bcast_intra_do_this(void *buf, size_t count,
-                                        struct ompi_datatype_t *dtype,
-                                        int root,
-                                        struct ompi_communicator_t *comm,
-                                        mca_coll_base_module_t *module,
-                                        int algorithm, int faninout, int segsize)
+int ompi_coll_tuned_bcast_intra_do_this(void *buf, size_t count, struct ompi_datatype_t *dtype,
+                                        int root, struct ompi_communicator_t *comm,
+                                        mca_coll_base_module_t *module, int algorithm, int faninout,
+                                        int segsize, int bine_imp)
 {
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
-        "coll:tuned:bcast_intra_do_this algorithm %d topo faninout %d segsize %d",
-        algorithm, faninout, segsize));
+        "coll:tuned:bcast_intra_do_this selected algorithm %d topo faninout %d segsize %d bine imp %d",
+        algorithm, faninout, segsize, bine_imp));
 
     switch (algorithm) {
     case (0):
@@ -169,6 +191,23 @@ int ompi_coll_tuned_bcast_intra_do_this(void *buf, size_t count,
         return ompi_coll_base_bcast_intra_scatter_allgather(buf, count, dtype, root, comm, module, segsize);
     case (9):
         return ompi_coll_base_bcast_intra_scatter_allgather_ring(buf, count, dtype, root, comm, module, segsize);
+    case (10):
+        switch (bine_imp) {
+        case 0:
+            return ompi_coll_tuned_bcast_intra_bine_dec_fixed(buf, count, dtype, root, comm,
+                                                              module);
+        case 1:
+            return ompi_coll_base_bcast_intra_bine_lat(buf, count, dtype, root, comm, module);
+        case 2:
+            return ompi_coll_base_bcast_intra_bine_lat_reversed(buf, count, dtype, root, comm,
+                                                                module);
+        case 3:
+            return ompi_coll_base_bcast_intra_bine_lat_new(buf, count, dtype, root, comm, module);
+        case 4:
+            return ompi_coll_base_bcast_intra_bine_lat_i_new(buf, count, dtype, root, comm, module);
+        case 5:
+            return ompi_coll_base_bcast_intra_bine_bdw_remap(buf, count, dtype, root, comm, module);
+        }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
         "coll:tuned:bcast_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",

@@ -32,22 +32,29 @@
 
 /* allreduce algorithm variables */
 static int coll_tuned_allreduce_forced_algorithm = 0;
+static int coll_tuned_allreduce_forced_bine_imp = 0;
 static int coll_tuned_allreduce_segment_size = 0;
 static int coll_tuned_allreduce_tree_fanout;
 static int coll_tuned_allreduce_chain_fanout;
 
 /* valid values for coll_tuned_allreduce_forced_algorithm */
-static const mca_base_var_enum_value_t allreduce_algorithms[] = {
-    {0, "ignore"},
-    {1, "basic_linear"},
-    {2, "nonoverlapping"},
-    {3, "recursive_doubling"},
-    {4, "ring"},
-    {5, "segmented_ring"},
-    {6, "rabenseifner"},
-    {7, "allgather_reduce"},
-    {0, NULL}
-};
+static const mca_base_var_enum_value_t allreduce_algorithms[] = {{0, "ignore"},
+                                                                 {1, "basic_linear"},
+                                                                 {2, "nonoverlapping"},
+                                                                 {3, "recursive_doubling"},
+                                                                 {4, "ring"},
+                                                                 {5, "segmented_ring"},
+                                                                 {6, "rabenseifner"},
+                                                                 {7, "allgather_reduce"},
+                                                                 {8, "bine"},
+                                                                 {0, NULL}};
+
+static const mca_base_var_enum_value_t allreduce_bine_imp[] = {{0, "ignore"},
+                                                               {1, "lat"},
+                                                               {2, "bdw_remap"},
+                                                               {3, "block_by_block_any_even_over"},
+                                                               {4, "bdw_remap_segmented"},
+                                                               {0, NULL}};
 
 /* The following are used by dynamic and forced rules */
 
@@ -123,19 +130,33 @@ int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorith
                                       MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_allreduce_chain_fanout);
 
+    coll_tuned_allreduce_forced_bine_imp = 0;
+    (void) mca_base_var_enum_create("coll_tuned_allreduce_bine_imp", allreduce_bine_imp, &new_enum);
+    mca_param_indices->bine_implementation_index = mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "allreduce_bine_implementation",
+        "Which allreduce bine implementation is used. Can be locked down to any of: 0 ignore, 1 lat, "
+        "2 bdw_remap, 3 block_by_block_any_even_over, 4 bdw_remap_segmented "
+        "Only relevant if coll_tuned_use_dynamic_rules is true and algorithm is bine 8.",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &coll_tuned_allreduce_forced_bine_imp);
+    coll_tuned_alg_bine_register_options(ALLREDUCE, new_enum);
+    OBJ_RELEASE(new_enum);
+    if (mca_param_indices->bine_implementation_index < 0) {
+        return mca_param_indices->bine_implementation_index;
+    }
+
     return (MPI_SUCCESS);
 }
 
 int ompi_coll_tuned_allreduce_intra_do_this(const void *sbuf, void *rbuf, size_t count,
-                                            struct ompi_datatype_t *dtype,
-                                            struct ompi_op_t *op,
+                                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
                                             struct ompi_communicator_t *comm,
-                                            mca_coll_base_module_t *module,
-                                            int algorithm, int faninout, int segsize)
+                                            mca_coll_base_module_t *module, int algorithm,
+                                            int faninout, int segsize, int bine_imp)
 {
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
-        "coll:tuned:allreduce_intra_do_this algorithm %d topo fan in/out %d segsize %d",
-        algorithm, faninout, segsize));
+        "coll:tuned:allreduce_intra_do_this selected algorithm %d topo faninout %d segsize %d bine imp %d",
+        algorithm, faninout, segsize, bine_imp));
 
     switch (algorithm) {
     case (0):
@@ -154,6 +175,27 @@ int ompi_coll_tuned_allreduce_intra_do_this(const void *sbuf, void *rbuf, size_t
         return ompi_coll_base_allreduce_intra_redscat_allgather(sbuf, rbuf, count, dtype, op, comm, module);
     case (7):
         return ompi_coll_base_allreduce_intra_allgather_reduce(sbuf, rbuf, count, dtype, op, comm, module);
+    case (8):
+        switch (bine_imp) {
+        case 0:
+            return ompi_coll_tuned_allreduce_intra_bine_dec_fixed(sbuf, rbuf, count, dtype, op,
+                                                                  comm, module);
+        case 1:
+            return ompi_coll_base_allreduce_intra_bine_lat(sbuf, rbuf, count, dtype, op, comm,
+                                                           module);
+        case 2:
+            return ompi_coll_base_allreduce_intra_bine_bdw_remap(sbuf, rbuf, count, dtype, op, comm,
+                                                                 module);
+        case 3:
+            return ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(sbuf, rbuf,
+                                                                                    count, dtype,
+                                                                                    op, comm,
+                                                                                    module);
+        case 4:
+            return ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(sbuf, rbuf, count, dtype,
+                                                                           op, comm, module,
+                                                                           segsize);
+        }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
         "coll:tuned:allreduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
