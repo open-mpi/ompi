@@ -452,7 +452,7 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
     char *tmpbuf = NULL, *base = NULL, *dst;
     struct ompi_datatype_t *block_dtype;
     size_t block_count;
-    MPI_Aint span, sextent, rextent = 0, extent, gap = 0;
+    MPI_Aint span, rextent, extent, gap = 0;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -468,20 +468,13 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
                                                     root, comm, module);
     }
 
-    ompi_datatype_type_extent(sdtype, &sextent);
-    if (rank == root) {
-        ompi_datatype_type_extent(rdtype, &rextent);
-        block_dtype = rdtype;
-        block_count = rcount;
-        extent = rextent;
-    } else {
-        block_dtype = sdtype;
-        block_count = scount;
-        extent = sextent;
-    }
+    ompi_datatype_type_extent(rdtype, &rextent);
+    block_dtype = rdtype;
+    block_count = rcount;
+    extent = rextent;
 
     if (rank != root) {
-        span = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &gap);
+        span = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &gap);
         tmpbuf = (char *) malloc(span);
         if (tmpbuf == NULL) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
@@ -495,15 +488,9 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
 
     dst = base + (ptrdiff_t)rank * (ptrdiff_t)block_count * (ptrdiff_t)extent;
 
-    if (rank == root) {
-        if (MPI_IN_PLACE != sbuf) {
-            err = ompi_datatype_sndrcv((void *)sbuf, scount, sdtype,
-                                       (void *)dst, rcount, rdtype);
-            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-        }
-    } else {
+    if (MPI_IN_PLACE != sbuf) {
         err = ompi_datatype_sndrcv((void *)sbuf, scount, sdtype,
-                                   (void *)dst, scount, sdtype);
+                                   (void *)dst, rcount, rdtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
     }
 
@@ -511,17 +498,20 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
     vrank = ompi_coll_mod(rank - root, size);
 
     extension_direction = 1;
-    if (rank % 2) {
+    if (vrank % 2) {
         extension_direction = -1;
     }
 
     int mask = 0x1, partner, mask_lsbs, lsbs, equal_lsbs;
+    uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
+    if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+    int btnb_vrank = (int) btnb_vrank_u32;
     while (mask < size) {
-        partner = ompi_coll_binary_to_negabinary(vrank) ^ ((mask << 1) - 1);
+        partner = btnb_vrank ^ ((mask << 1) - 1);
         partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
 
         mask_lsbs = (mask << 2) - 1; // Mask for the step: (k+2) LSBs set to 1
-        lsbs = ompi_coll_binary_to_negabinary(vrank) & mask_lsbs;  // Extract k LSBs from the negabinary rank
+        lsbs = btnb_vrank & mask_lsbs;  // Extract k LSBs from the negabinary rank
         equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
 
         if (!equal_lsbs || ((mask << 1) >= size && (rank != root))) {

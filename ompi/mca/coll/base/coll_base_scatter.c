@@ -421,7 +421,7 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     size_t min_resident_block, max_resident_block;
     size_t sbuf_offset, rtype_size, packed_block_size;
     ptrdiff_t sextent, slb, rextent, rlb;
-    char *tmpbuf = NULL, *sbuf_ptr = NULL, *rbuf_ptr = NULL;
+    char *tmpbuf = NULL, *sbuf_ptr = NULL, *rbuf_ptr = NULL, *root_tmpbuf = NULL;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -447,7 +447,7 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
 
     vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
     halving_direction = 1; // Down -- send bottom half
-    if (rank % 2) {
+    if (vrank % 2) {
         halving_direction = -1; // Up -- send top half
     }
     // The gather started with these directions. Thus this will
@@ -465,7 +465,7 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     //     and subtracted 2^1, 2^3, 2^5, ... from min_resident_block
     // Odd ranks subtracted 2^0, 2^2, 2^4, ... from min_resident_block
     //     and added 2^1, 2^3, 2^5, ... to max_resident_block
-    if (rank % 2 == 0) {
+    if (vrank % 2 == 0) {
         max_resident_block = ompi_coll_mod((rank + 0x55555555) & ((0x1 << (int) log_2_size) - 1), size);
         min_resident_block = ompi_coll_mod((rank - 0xAAAAAAAA) & ((0x1 << (int) log_2_size) - 1), size);
     } else {
@@ -477,10 +477,33 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     sbuf_offset = rank;
     if (root == rank) {
         recvd = 1;
-        sbuf_ptr = (char*) sbuf;
+        /* Convert the send buffer from (scount, sdtype) per block into a packed
+           (rcount, rdtype) per block layout, so that every rank sends and
+           receives with the same MPI_PACKED / packed_block_size convention. */
+        root_tmpbuf = (char *) malloc(size * packed_block_size);
+        if (NULL == root_tmpbuf) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            line = __LINE__;
+            goto err_hndl;
+        }
+        for (int i = 0; i < size; i++) {
+            err = ompi_datatype_sndrcv((char *) sbuf + (ptrdiff_t) i * (ptrdiff_t) scount * sextent,
+                                       scount, sdtype,
+                                       root_tmpbuf + (ptrdiff_t) i * (ptrdiff_t) packed_block_size,
+                                       packed_block_size, MPI_PACKED);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+        sbuf_ptr = (char *) root_tmpbuf;
     }
 
-    vrank_nb = ompi_coll_binary_to_negabinary(vrank);
+    {
+        uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
+        if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+        vrank_nb = (int) btnb_vrank_u32;
+    }
     while (mask > 0) {
         size_t top_start, top_end, bottom_start, bottom_end;
         size_t send_start, send_end, recv_start, recv_end;
@@ -515,10 +538,11 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
         // --- SEND LOGIC ---
         if (recvd) {
             size_t num_to_send = ompi_coll_mod(send_end - send_start + 1, size);
-            // Root sends using sdtype; Relays send from tmpbuf using MPI_PACKED
-            struct ompi_datatype_t *stype_eff = (rank == root) ? sdtype : MPI_PACKED;
-            size_t scount_eff = (rank == root) ? scount : packed_block_size;
-            ptrdiff_t s_step  = (rank == root) ? (ptrdiff_t)scount * sextent : (ptrdiff_t)packed_block_size;
+            // All ranks (root and relays) send from their resident buffer
+            // using the packed block convention.
+            struct ompi_datatype_t *stype_eff = MPI_PACKED;
+            size_t scount_eff = packed_block_size;
+            ptrdiff_t s_step  = (ptrdiff_t) packed_block_size;
 
             if (send_end >= send_start) {
                 err = MCA_PML_CALL(send(sbuf_ptr + (ptrdiff_t)send_start * s_step,
@@ -545,9 +569,6 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
         // --- RECV LOGIC ---
         else if (equal_lsbs) {
             // Setup the buffers to be used from now on
-            // How large should the tmpbuf be?
-            // It must be large enough to hold a number of blocks 
-            // equal to the number of children in the tree rooted in me.
             size_t num_blocks = ompi_coll_mod((recv_end - recv_start + 1), size);
 
             // I am a leaf and this is the last step, I do not need a tmpbuf
@@ -570,10 +591,28 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
                 max_resident_block = num_blocks - 1;
 
                 sbuf_offset = ompi_coll_mod(rank - recv_start, size);
-                err = MCA_PML_CALL(recv(rbuf_ptr, num_blocks * packed_block_size,
-                                        MPI_PACKED, partner, MCA_COLL_BASE_TAG_SCATTER,
-                                        comm, MPI_STATUS_IGNORE));
-                if(err != MPI_SUCCESS){ line = __LINE__; goto err_hndl; }
+                
+                if (recv_end >= recv_start || partner != root) {
+                    // Ricezione standard: un singolo blocco continuo
+                    err = MCA_PML_CALL(recv(rbuf_ptr, num_blocks * packed_block_size,
+                                            MPI_PACKED, partner, MCA_COLL_BASE_TAG_SCATTER,
+                                            comm, MPI_STATUS_IGNORE));
+                    if(err != MPI_SUCCESS){ line = __LINE__; goto err_hndl; }
+                } else {
+                    // Wrap-around receive: Il mittente (es. la root) ha effettuato 
+                    // il wrap-around e inviato 2 messaggi. Dobbiamo ricevere in due parti!
+                    size_t part_a = size - recv_start;
+                    err = MCA_PML_CALL(recv(rbuf_ptr, part_a * packed_block_size,
+                                            MPI_PACKED, partner, MCA_COLL_BASE_TAG_SCATTER,
+                                            comm, MPI_STATUS_IGNORE));
+                    if(err != MPI_SUCCESS){ line = __LINE__; goto err_hndl; }
+
+                    err = MCA_PML_CALL(recv(rbuf_ptr + part_a * packed_block_size, 
+                                            (recv_end + 1) * packed_block_size,
+                                            MPI_PACKED, partner, MCA_COLL_BASE_TAG_SCATTER,
+                                            comm, MPI_STATUS_IGNORE));
+                    if(err != MPI_SUCCESS){ line = __LINE__; goto err_hndl; }
+                }
             }
             recvd = 1;
         }
@@ -582,7 +621,8 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     }
 
     if(!is_leaf && rbuf != MPI_IN_PLACE){
-        err = ompi_datatype_sndrcv(sbuf_ptr + sbuf_offset * packed_block_size,
+        // Extract this rank's block from the packed resident buffer
+        err = ompi_datatype_sndrcv(sbuf_ptr + (ptrdiff_t) sbuf_offset * (ptrdiff_t) packed_block_size,
                                    packed_block_size, MPI_PACKED,
                                    rbuf, rcount, rdtype);
     }
@@ -590,12 +630,18 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     if (tmpbuf != NULL) {
       free(tmpbuf);
     }
+    if (root_tmpbuf != NULL) {
+        free(root_tmpbuf);
+    }
 
     return MPI_SUCCESS;
 
 err_hndl:
     if(tmpbuf != NULL){
         free(tmpbuf);
+    }
+    if (root_tmpbuf != NULL) {
+        free(root_tmpbuf);
     }
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
