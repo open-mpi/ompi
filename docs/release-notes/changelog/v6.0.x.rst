@@ -23,6 +23,12 @@ Open MPI version v6.0.0
 - Fix build system and some internal code to support compiler
   link-time optimization (LTO).
 
+- Fixed ``configure`` to emit correct results when using an Autoconf
+  cache file (e.g., ``configure -C``).  Previously, several C compiler
+  and atomics results were emitted incorrectly (or omitted entirely)
+  when they were read back from a cache file, which broke the
+  subsequent build.
+
 - Open MPI now requires a C11-compliant compiler to build.
 
 - Open MPI now requires Python >= |python_min_version| to build.
