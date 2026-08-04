@@ -94,6 +94,7 @@ ompi_coll_msg_rule_t* ompi_coll_tuned_mk_msg_rules (int n_msg_rules, int coll_id
         msg_rules[i].result_topo_faninout = 0;   /* unknown */
         msg_rules[i].result_segsize = 0;         /* unknown */
         msg_rules[i].result_max_requests = 0;    /* unknown & default */
+        msg_rules[i].result_bine_implementation = 0; /* unknown & default */
     }
     return (msg_rules);
 }
@@ -127,8 +128,8 @@ int ompi_coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
         if (rc != OPAL_SUCCESS) {
             alg_name = "ERROR_BAD_ALG_ID";
         }
-        opal_output(ompi_coll_tuned_stream,"\t\t\tmsg_size %lu:%s -> %s (%2d).  Params: topo in/out %2d, segsize %5ld, max_requests %4d\n",
-                    msg_p->msg_size_min, max_msg_size, alg_name, msg_p->result_alg, msg_p->result_topo_faninout, msg_p->result_segsize,
+        opal_output(ompi_coll_tuned_stream,"\t\t\tmsg_size %lu:%s -> %s (%2d bine imp %2d).  Params: topo in/out %2d, segsize %5ld, max_requests %4d\n",
+                    msg_p->msg_size_min, max_msg_size, alg_name, msg_p->result_alg, msg_p->result_bine_implementation, msg_p->result_topo_faninout, msg_p->result_segsize,
                     msg_p->result_max_requests);
         if (rc == OPAL_SUCCESS) {
             free(alg_name);
@@ -384,8 +385,9 @@ ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* ru
  *
  */
 
-int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, size_t mpi_msgsize, int *result_topo_faninout,
-                                              int* result_segsize, int* max_requests)
+int ompi_coll_tuned_get_target_method_params(ompi_coll_com_rule_t *base_com_rule,
+                                             size_t mpi_msgsize, int *result_topo_faninout,
+                                             int *result_segsize, int *max_requests, int *bine_imp)
 {
     ompi_coll_msg_rule_t*  msg_p = (ompi_coll_msg_rule_t*) NULL;
     ompi_coll_msg_rule_t*  best_msg_p = (ompi_coll_msg_rule_t*) NULL;
@@ -433,6 +435,9 @@ int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rul
 
     /* return the maximum requests */
     *max_requests = best_msg_p->result_max_requests;
+
+    /* return the bine implementation */
+    *bine_imp = best_msg_p->result_bine_implementation;
 
     /* return the algorithm/method to use */
     return (best_msg_p->result_alg);
