@@ -185,9 +185,15 @@ int mca_base_event_source_get_timestamp(int source_index, opal_count_t *timestam
 /* ======================================================================== */
 
 /* Tear down the pool + dispatch state.  Registered with the core finalize via
-   mca_base_event_set_dispatch_finalize() the first time the pool is created. */
+   mca_base_event_set_dispatch_finalize() the first time the pool is created.
+   Called from mca_base_event_finalize() WITHOUT mca_base_event_lock held, so
+   we acquire it here: the state torn down below (the live table + its count,
+   the clock origin, and the lazy-create flags) is otherwise only ever touched
+   under that lock, and taking it keeps that invariant intact. */
 static void dispatch_finalize(void)
 {
+    opal_mutex_lock(&mca_base_event_lock);
+
     /* v1 limitation: any registration a tool failed to free before finalize
        leaks here (it remains on its event's registration list and in the live
        table).  Freeing a handle is the tool's responsibility (the standard
@@ -208,6 +214,8 @@ static void dispatch_finalize(void)
        handle_alloc fails with no handles actually live. */
     live_registration_count = 0;
     clock_origin_set = false;
+
+    opal_mutex_unlock(&mca_base_event_lock);
 }
 
 /* Lazily create the pool, live table, and clock origin on first attach.
