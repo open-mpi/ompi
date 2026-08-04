@@ -453,7 +453,17 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
 					     &i, &total_bytes_written, &spc,
 					     &fh->f_io_array, &fh->f_num_of_io_entries);
 
-            fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
+            if (OMPI_SUCCESS != fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req)) {
+                /* The fbtl could not post the operation. Without this the
+                 * request carries no progress function, which the progress loop
+                 * cannot tell from a parent request with no subrequests left, so
+                 * it completes it with an untouched status: MPI_Wait then reports
+                 * MPI_SUCCESS for a write that never happened.
+                 */
+                ompio_req->req_ompi.req_status.MPI_ERROR = MPI_ERR_IO;
+                ompio_req->req_ompi.req_status._ucount = 0;
+                ompi_request_complete (&ompio_req->req_ompi, false);
+            }
         }
     } else {
         // This fbtl does not support non-blocking write operations
