@@ -33,8 +33,6 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-#define MAX_ATTEMPTS 10
-
 ssize_t  mca_fbtl_posix_ipwritev (ompio_file_t *fh,
                                  ompi_request_t *request)
 {
@@ -110,24 +108,29 @@ ssize_t  mca_fbtl_posix_ipwritev (ompio_file_t *fh,
         return OMPI_ERROR;
     }
 
-    for (i=0; i < data->prd_last_active_req; i++) {
-        int counter=0;
-        while ( MAX_ATTEMPTS > counter ) {
-            if (-1 != aio_write(&data->prd_aio.aio_reqs[i])) {
-                break;
-            }
-            counter++;
-            mca_common_ompio_progress();
-        }
-        if ( MAX_ATTEMPTS == counter ) {
-            opal_output(1, "mca_fbtl_posix_ipwritev: error in aio_write():  %s", strerror(errno));
-            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter);
-            free(data->prd_aio.aio_req_status);
-            free(data->prd_aio.aio_reqs);
-            free(data);
-            return OMPI_ERROR;
-        }
+    ret = mca_fbtl_posix_post_reqs ( data, data->prd_first_active_req,
+                                     data->prd_last_active_req, &i );
+    if ( OMPI_SUCCESS != ret ) {
+        opal_output(1, "mca_fbtl_posix_ipwritev: error in aio_write():  %s", strerror(errno));
+        /* Reap what did get posted. Freeing the aiocbs with operations still
+         * outstanding against them would leave the kernel writing into memory
+         * this request no longer owns, and would cost the process a queue slot
+         * per abandoned request for the rest of its life.
+         */
+        mca_fbtl_posix_drain_reqs ( data, data->prd_first_active_req, i );
+        mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter);
+        free(data->prd_aio.aio_req_status);
+        free(data->prd_aio.aio_reqs);
+        free(data);
+        return OMPI_ERROR;
     }
+    /* The process's aio queue may have been full before the whole batch was
+     * posted. Whatever did not fit stays for mca_fbtl_posix_progress to post
+     * once a slot frees up, so the active window is what was accepted rather
+     * than what was wanted. Nothing is lost and nothing is reported: this is
+     * ordinary back-pressure, not a failure.
+     */
+    data->prd_last_active_req = i;
 
     req->req_data = data;
     req->req_progress_fn = mca_fbtl_posix_progress;

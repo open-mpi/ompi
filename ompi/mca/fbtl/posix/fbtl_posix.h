@@ -35,6 +35,7 @@ extern bool mca_fbtl_posix_write_datasieving;
 extern size_t mca_fbtl_posix_max_block_size;
 extern size_t mca_fbtl_posix_max_gap_size;
 extern size_t mca_fbtl_posix_max_tmpbuf_size;
+extern int mca_fbtl_posix_max_aio_reqs;
 
 BEGIN_C_DECLS
 
@@ -66,6 +67,12 @@ ssize_t mca_fbtl_posix_ipwritev (ompio_file_t *file,
 bool mca_fbtl_posix_progress     ( mca_ompio_request_t *req);
 void mca_fbtl_posix_request_free ( mca_ompio_request_t *req);
 bool mca_fbtl_posix_check_atomicity ( ompio_file_t *file);
+
+struct mca_fbtl_posix_request_data_t;
+int mca_fbtl_posix_post_reqs ( struct mca_fbtl_posix_request_data_t *data,
+                               int first, int last, int *posted );
+void mca_fbtl_posix_drain_reqs ( struct mca_fbtl_posix_request_data_t *data,
+                                 int first, int last );
 
 int mca_fbtl_posix_lock ( struct flock *lock, ompio_file_t *fh, int op, 
                           OMPI_MPI_OFFSET_TYPE iov_offset, off_t len, int flags,
