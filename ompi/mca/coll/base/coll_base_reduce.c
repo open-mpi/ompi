@@ -1310,3 +1310,324 @@ int ompi_coll_base_reduce_intra_knomial( const void *sendbuf, void *recvbuf,
     return err;
 
 }
+
+/*
+ * Binomial Negabinary (Bine) reduce, latency-optimized variant.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., 2025).
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial reduce is used as a fallback.
+ */
+int ompi_coll_base_reduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t count,
+                                         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                         int root, struct ompi_communicator_t *comm,
+                                         mca_coll_base_module_t *module)
+{
+    int size, rank, vrank, mask, err = MPI_SUCCESS, line;
+    int partner, mask_lsbs, lsbs, equal_lsbs;
+    char *tmpbuf = NULL;
+    ptrdiff_t lb, extent, true_extent, gap;
+    size_t span, buf_size;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
+    span = true_extent + extent * (count - 1);
+    buf_size = span + gap;
+
+    if (count == 0) {
+        return MPI_SUCCESS;
+    }
+
+    if (!ompi_coll_is_power_of_two(size)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:reduce_intra_bine_lat WARNING: "
+                     "non-pow-2 size %d, switching to binomial reduce",
+                     size));
+        return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root, comm,
+                                                    module, 0, 0);
+    }
+
+    tmpbuf = (char *) malloc(buf_size);
+    if (tmpbuf == NULL) {
+        err = MPI_ERR_NO_MEM;
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    if (rank != root) {
+        rbuf = (char *) malloc(buf_size);
+        if (rbuf == NULL) {
+            err = MPI_ERR_NO_MEM;
+            line = __LINE__;
+            goto err_hndl;
+        }
+    }
+
+    err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
+    mask = 0x1;
+    uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
+    if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+    int btnb_vrank = (int) btnb_vrank_u32;
+    while (mask < size) {
+        partner = btnb_vrank ^ ((mask << 1) - 1);
+        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+        mask_lsbs = (mask << 2) - 1;   // Mask with step + 2 LSBs set to 1
+        lsbs = btnb_vrank & mask_lsbs; // Extract k LSBs
+        equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
+
+        if (!equal_lsbs || ((mask << 1) >= size && (rank != root))) {
+            err = MCA_PML_CALL(send(rbuf, count, dtype, partner, MCA_COLL_BASE_TAG_REDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (err != MPI_SUCCESS) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            break;
+        } else {
+            err = MCA_PML_CALL(recv(tmpbuf, count, dtype, partner, MCA_COLL_BASE_TAG_REDUCE, comm,
+                                    MPI_STATUS_IGNORE));
+            if (err != MPI_SUCCESS) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            ompi_op_reduce(op, tmpbuf, rbuf, count, dtype);
+        }
+        mask <<= 1;
+    }
+
+    free(tmpbuf);
+    if (rank != root) {
+        free(rbuf);
+    }
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warning
+
+    if (tmpbuf != NULL)
+        free(tmpbuf);
+    if (rank != root) {
+        if (rbuf != NULL)
+            free(rbuf);
+    }
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) reduce, bandwidth-optimized variant.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., 2025).
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial reduce is used as a fallback.
+ */
+int ompi_coll_base_reduce_intra_bine_bdw(const void *sbuf, void *rbuf, size_t count,
+                                         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                         int root, struct ompi_communicator_t *comm,
+                                         mca_coll_base_module_t *module)
+{
+    int size, rank, err = MPI_SUCCESS, steps, step, line;
+    int vrank, count_per_rank, rem, mask = 0x1, inverse_mask;
+    int block_first_mask, remapped_rank, receiving_mask;
+    int *rindex = NULL, *sindex = NULL, *rcount = NULL, *scount = NULL;
+    char *resbuf = NULL, *tmpbuf = NULL;
+    ptrdiff_t lb, extent, true_extent, gap;
+    size_t span, buf_size;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
+    span = true_extent + extent * (count - 1);
+    buf_size = span + gap;
+
+    if (!ompi_coll_is_power_of_two(size)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:reduce_intra_bine_bdw WARNING: "
+                     "non-pow-2 size %d, switching to binomial reduce",
+                     size));
+        return ompi_coll_base_reduce_intra_binomial(sbuf, rbuf, count, dtype, op, root, comm,
+                                                    module, 0, 0);
+    }
+
+    vrank = ompi_coll_mod(rank - root, size);
+
+    steps = opal_cube_dim(size);
+
+    count_per_rank = count / size;
+    rem = count % size;
+
+    tmpbuf = (char *) malloc(buf_size);
+    if (tmpbuf == NULL) {
+        err = MPI_ERR_NO_MEM;
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    if (rank == root) {
+        resbuf = rbuf;
+    } else {
+        resbuf = (char *) malloc(buf_size);
+        if (resbuf == NULL) {
+            err = MPI_ERR_NO_MEM;
+            line = __LINE__;
+            goto err_hndl;
+        }
+    }
+
+    err = ompi_datatype_copy_content_same_ddt(dtype, count, resbuf, sbuf);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    mask = 0x1;
+    inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
+    block_first_mask = ~(inverse_mask - 1);
+    remapped_rank = ompi_coll_bine_remap_rank(size, vrank);
+
+    /***** Reduce_scatter *****/
+    rindex = malloc(sizeof(int) * steps);
+    sindex = malloc(sizeof(int) * steps);
+    rcount = malloc(sizeof(int) * steps);
+    scount = malloc(sizeof(int) * steps);
+    if (NULL == rindex || NULL == sindex || NULL == rcount || NULL == scount) {
+        err = MPI_ERR_NO_MEM;
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    step = 0;
+    while (mask < size) {
+        int vpartner;
+        int nbtb = ompi_coll_negabinary_to_binary((mask << 1) - 1);
+        if (vrank % 2 == 0) {
+            vpartner = ompi_coll_mod(vrank + nbtb, size);
+        } else {
+            vpartner = ompi_coll_mod(vrank - nbtb, size);
+        }
+        int partner = ompi_coll_mod(vpartner + root, size);
+
+        // Compute send block boundaries inline
+        int send_block_first = ompi_coll_bine_remap_rank(size, vpartner) & block_first_mask;
+        int send_block_last = send_block_first + inverse_mask - 1;
+        sindex[step] = count_per_rank * send_block_first
+                       + (send_block_first < rem ? send_block_first : rem);
+        scount[step] = count_per_rank * (send_block_last - send_block_first + 1)
+                       + (MIN(send_block_last, rem) - MIN(send_block_first, rem))
+                       + (send_block_last < rem ? 1 : 0);
+
+        // Compute recv block boundaries inline
+        int recv_block_first = remapped_rank & block_first_mask;
+        int recv_block_last = recv_block_first + inverse_mask - 1;
+        rindex[step] = count_per_rank * recv_block_first
+                       + (recv_block_first < rem ? recv_block_first : rem);
+        rcount[step] = count_per_rank * (recv_block_last - recv_block_first + 1)
+                       + (MIN(recv_block_last, rem) - MIN(recv_block_first, rem))
+                       + (recv_block_last < rem ? 1 : 0);
+
+        err = ompi_coll_base_sendrecv(resbuf + sindex[step] * extent, scount[step], dtype, partner,
+                                      MCA_COLL_BASE_TAG_REDUCE, tmpbuf + rindex[step] * extent,
+                                      rcount[step], dtype, partner, MCA_COLL_BASE_TAG_REDUCE, comm,
+                                      MPI_STATUS_IGNORE, rank);
+        if (err != MPI_SUCCESS) {
+            goto err_hndl;
+        }
+        ompi_op_reduce(op, tmpbuf + rindex[step] * extent, resbuf + rindex[step] * extent,
+                       rcount[step], dtype);
+
+        mask <<= 1;
+        inverse_mask >>= 1;
+        block_first_mask >>= 1;
+        step++;
+    }
+
+    /***** Gather *****/
+    mask >>= 1;
+    inverse_mask = 0x1;
+    block_first_mask = ~0x0;
+    // I send in the step corresponding to the position (starting from right)
+    // of the first 1 in my remapped rank -- this indicates the step when the data reaches me in a
+    // scatter
+    receiving_mask = 0x1 << (ffs(remapped_rank) - 1); // ffs starts counting from 1, thus -1
+    step = steps - 1;
+    while (mask > 0) {
+        int vpartner;
+        int nbtb = ompi_coll_negabinary_to_binary((mask << 1) - 1);
+        if (vrank % 2 == 0) {
+            vpartner = ompi_coll_mod(vrank + nbtb, size);
+        } else {
+            vpartner = ompi_coll_mod(vrank - nbtb, size);
+        }
+        int partner = ompi_coll_mod(vpartner + root, size);
+
+        // Only the one with 0 in the i-th bit starting from the left (i is the step) survives
+        if (inverse_mask & receiving_mask) {
+            err = MCA_PML_CALL(send(resbuf + rindex[step] * extent, rcount[step], dtype, partner,
+                                    MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm));
+            if (err != MPI_SUCCESS) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            break;
+        } else {
+            // Something similar for the block to recv.
+            // I receive my partner's block, but aligned to the power of two
+            err = MCA_PML_CALL(recv(resbuf + sindex[step] * extent, scount[step], dtype, partner,
+                                    MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE));
+            if (err != MPI_SUCCESS) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        mask >>= 1;
+        inverse_mask <<= 1;
+        block_first_mask <<= 1;
+        step--;
+    }
+
+    free(rindex);
+    free(sindex);
+    free(rcount);
+    free(scount);
+    free(tmpbuf);
+    if (rank != root) {
+        free(resbuf);
+    }
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warning
+
+    if (rindex != NULL)
+        free(rindex);
+    if (sindex != NULL)
+        free(sindex);
+    if (rcount != NULL)
+        free(rcount);
+    if (scount != NULL)
+        free(scount);
+    if (tmpbuf != NULL)
+        free(tmpbuf);
+    if (rank != root) {
+        if (resbuf != NULL)
+            free(resbuf);
+    }
+    return err;
+}
