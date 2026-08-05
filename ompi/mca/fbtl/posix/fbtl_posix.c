@@ -30,8 +30,13 @@
 #include "ompi_config.h"
 #include "mpi.h"
 
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/uio.h>
+#if defined(__APPLE__)
+#include <sys/sysctl.h>
+#endif
 #if HAVE_AIO_H
 #include <aio.h>
 #endif
@@ -104,13 +109,98 @@ int mca_fbtl_posix_component_file_unquery (ompio_file_t *file) {
 int mca_fbtl_posix_module_init (ompio_file_t *file) {
 
 #if defined (FBTL_POSIX_HAVE_AIO)
-    long val = sysconf(_SC_AIO_MAX);
-    if ( -1 != val ) {
-        ompi_fbtl_posix_max_prd_active_reqs = (int)val;
+    /* An explicit fbtl_posix_max_aio_reqs wins; otherwise ask the system.
+     * The number wanted is what *one process* may have outstanding, and
+     * sysconf(_SC_AIO_MAX) is not always that: on Darwin it reports
+     * kern.aiomax, the limit across all processes on the machine (90 by
+     * default), where a single process is held to kern.aioprocmax (16). Sizing
+     * a batch of concurrent aio_write() calls from the former overruns the
+     * latter by 5x on a stock machine, so read the per-process sysctl there.
+     */
+    if ( 0 >= mca_fbtl_posix_max_aio_reqs ) {
+        long val = -1;
+#if defined(__APPLE__)
+        int procmax = 0;
+        size_t procmax_len = sizeof(procmax);
+        if ( 0 == sysctlbyname("kern.aioprocmax", &procmax, &procmax_len, NULL, 0) ) {
+            val = (long)procmax;
+        }
+#endif
+        if ( -1 == val ) {
+            val = sysconf(_SC_AIO_MAX);
+        }
+        if ( -1 != val && 0 < val ) {
+            ompi_fbtl_posix_max_prd_active_reqs = (int)val;
+        }
+    }
+    else {
+        ompi_fbtl_posix_max_prd_active_reqs = mca_fbtl_posix_max_aio_reqs;
     }
 #endif
     return OMPI_SUCCESS;
 }
+
+#if defined (FBTL_POSIX_HAVE_AIO)
+/* Hand requests [first, last) to the kernel. *posted comes back as one past the
+ * last request accepted, so that the caller can make it prd_last_active_req; it
+ * is set whether this returns success or not, since the caller has to know what
+ * is in flight either way.
+ *
+ * EAGAIN is not a failure. It means this process already has as many aio
+ * operations outstanding as it is allowed, which is transient -- a slot comes
+ * back when a request is aio_return()ed -- so the requests that did not fit are
+ * simply left for a later call, and *posted says where to resume. Retrying here
+ * cannot work: nothing in this process reaps anything until the request this
+ * batch belongs to is registered with mca_common_ompio_progress, which happens
+ * only once the caller returns.
+ */
+int mca_fbtl_posix_post_reqs ( mca_fbtl_posix_request_data_t *data,
+                               int first, int last, int *posted )
+{
+    int i, ret = OMPI_SUCCESS;
+
+    for ( i = first; i < last; i++ ) {
+        int rc;
+        if ( FBTL_POSIX_AIO_WRITE == data->prd_req_type ) {
+            rc = aio_write ( &data->prd_aio.aio_reqs[i] );
+        }
+        else {
+            rc = aio_read ( &data->prd_aio.aio_reqs[i] );
+        }
+        if ( -1 == rc ) {
+            if ( EAGAIN != errno ) {
+                opal_output(1, "mca_fbtl_posix_post_reqs: error in aio_%s(): errno %d %s",
+                            FBTL_POSIX_AIO_WRITE == data->prd_req_type ? "write" : "read",
+                            errno, strerror(errno));
+                ret = OMPI_ERROR;
+            }
+            break;
+        }
+    }
+
+    *posted = i;
+    return ret;
+}
+
+/* Wait for the requests in [first, last) and reap them. Every aio operation
+ * that has been posted has to be aio_return()ed even once it has completed,
+ * because that is what releases its slot in the queue -- an abandoned request
+ * costs the process a slot for the rest of its life. Used on the error paths,
+ * which would otherwise free the aiocbs from under the kernel as well.
+ */
+void mca_fbtl_posix_drain_reqs ( mca_fbtl_posix_request_data_t *data,
+                                 int first, int last )
+{
+    int i;
+
+    for ( i = first; i < last; i++ ) {
+        while ( EINPROGRESS == aio_error ( &data->prd_aio.aio_reqs[i] ) ) {
+            mca_common_ompio_progress();
+        }
+        (void) aio_return ( &data->prd_aio.aio_reqs[i] );
+    }
+}
+#endif
 
 
 int mca_fbtl_posix_module_finalize (ompio_file_t *file) {
@@ -205,22 +295,39 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
 #if 0
     printf("lcount=%d open_reqs=%d\n", lcount, data->prd_open_reqs );
 #endif
-    if ( (lcount == data->prd_req_chunks) && (0 != data->prd_open_reqs )) {
+    /* Every request in the active window is accounted for. If any remain
+     * unfinished, the next batch goes out -- which includes the case of an empty
+     * window, left behind when the process's aio queue was full and would take
+     * none of the previous batch. Comparing lcount against the width of the
+     * window rather than against prd_req_chunks is what lets that work: a window
+     * is only as wide as the queue allowed, which need not be a whole chunk.
+     */
+    if ( (lcount == (data->prd_last_active_req - data->prd_first_active_req)) &&
+         (0 != data->prd_open_reqs )) {
+        int want, posted;
+
         /* release the lock of the previous operations */
         mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
-        
+
         /* post the next batch of operations */
         data->prd_first_active_req = data->prd_last_active_req;
-        if ( (data->prd_req_count-data->prd_last_active_req) > data->prd_req_chunks ) {
-            data->prd_last_active_req += data->prd_req_chunks;
+        if ( (data->prd_req_count-data->prd_first_active_req) > data->prd_req_chunks ) {
+            want = data->prd_first_active_req + data->prd_req_chunks;
         }
         else {
-            data->prd_last_active_req = data->prd_req_count;
+            want = data->prd_req_count;
+        }
+        if ( want <= data->prd_first_active_req ) {
+            /* Requests are outstanding but none are left to post, which should
+             * not happen. Leave the request alone rather than index outside the
+             * array below.
+             */
+            return ret;
         }
 
         start_offset = data->prd_aio.aio_reqs[data->prd_first_active_req].aio_offset;
-        end_offset   = data->prd_aio.aio_reqs[data->prd_last_active_req-1].aio_offset +
-                       data->prd_aio.aio_reqs[data->prd_last_active_req-1].aio_nbytes;
+        end_offset   = data->prd_aio.aio_reqs[want-1].aio_offset +
+                       data->prd_aio.aio_reqs[want-1].aio_nbytes;
         total_length = (end_offset - start_offset);
 
         if ( FBTL_POSIX_AIO_READ == data->prd_req_type ) {
@@ -238,22 +345,26 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
             return false;
         }
         
-        for ( i=data->prd_first_active_req; i< data->prd_last_active_req; i++ ) {
-            if ( FBTL_POSIX_AIO_READ == data->prd_req_type ) {
-                if (-1 == aio_read(&data->prd_aio.aio_reqs[i])) {
-                    opal_output(1, "mca_fbtl_posix_progress: error in aio_read()");
-                    mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
-                    return false;
-                }
-            }
-            else if ( FBTL_POSIX_AIO_WRITE == data->prd_req_type ) {
-                if (-1 == aio_write(&data->prd_aio.aio_reqs[i])) {
-                    opal_output(1, "mca_fbtl_posix_progress: error in aio_write()");
-                    mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
-                    return false;
-                }
-            }
+        if ( OMPI_SUCCESS != mca_fbtl_posix_post_reqs ( data, data->prd_first_active_req,
+                                                        want, &posted ) ) {
+            /* A real error rather than a full queue. Reap the part of the batch
+             * that did go out, then complete the request with an error instead
+             * of leaving the caller waiting on operations that will never be
+             * posted.
+             */
+            mca_fbtl_posix_drain_reqs ( data, data->prd_first_active_req, posted );
+            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter );
+            data->prd_last_active_req = data->prd_first_active_req;
+            data->prd_open_reqs = 0;
+            req->req_ompi.req_status.MPI_ERROR = OMPI_ERROR;
+            req->req_ompi.req_status._ucount = data->prd_total_len;
+            return true;
         }
+        /* posted may fall short of want, the queue being full; the remainder
+         * waits for the next call, which finds a short or empty window and comes
+         * back here.
+         */
+        data->prd_last_active_req = posted;
 #if 0
         printf("posting new batch: first=%d last=%d\n", data->prd_first_active_req, data->prd_last_active_req );
 #endif
