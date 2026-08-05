@@ -79,7 +79,7 @@ def fortran_name(fn_name, bigcount=False, needs_ts=False, gen_f90=False):
         name = f'MPI_{fn_name.capitalize()}{ts}'
     return name
 
-def fortran_f08_generic_interface_name(fn_name):
+def fortran_generic_interface_name(fn_name):
     """Produce the generic interface name from the base_name."""
     return f'MPI_{fn_name.capitalize()}'
 
