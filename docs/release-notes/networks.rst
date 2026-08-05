@@ -121,3 +121,10 @@ Miscellaneous network notes
   message about sending too large of a message when using the OFI MTL,
   please reach out to your networking vendor to ask them to support a
   larger ``max_msg_size`` for tagged messages.
+
+* Starting with Open MPI v6.0.0, the ``ofi`` BTL can use multiple
+  Libfabric NICs per process when more than one NIC is available for
+  the selected provider.  Open MPI automatically gives each process on
+  a node its own share of the available NICs, which can improve both
+  single-rank and total node bandwidth on multi-NIC systems.  See
+  :doc:`../tuning-apps/networking/ofi` for details.
