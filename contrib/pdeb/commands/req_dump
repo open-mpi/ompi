@@ -1,0 +1,48 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  req_dump [<requests_ptr> <count>]\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+req_dump
+req_dump <requests_ptr> <count>
+  Report every non-completed request for every selected PID.  With no
+  arguments, the command finds the active ompi_request_default_wait_all frame
+  and uses its requests/count locals.  With arguments, requests_ptr and count
+  are evaluated by the debugger.
+EOF
+}
+
+run()
+{
+    require_selection || return 1
+
+    if [ 0 -lt $# ] && [ "help" = "$1" ] ; then
+        detailed_help
+        return 0
+    fi
+
+    if [ 0 -ne $# ] && [ 2 -ne $# ] ; then
+        echo "req_dump accepts no arguments or exactly: <requests_ptr> <count>." >&2
+        return 1
+    fi
+
+    if ! pdeb_function_defined debugger_req_dump_command ; then
+        echo "req_dump is not supported by debugger: $debugger" >&2
+        return 1
+    fi
+
+    pdeb_debugger_commands=$(debugger_req_dump_command "$*")
+    pdeb_output_dir="$tmpdir/req_dump.$$.$(date +%s)"
+}

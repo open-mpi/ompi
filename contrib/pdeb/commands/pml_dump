@@ -1,0 +1,48 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  pml_dump [<start> <count>]\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+pml_dump
+pml_dump <start> <count>
+  Decode OB1 PML global pending lists and selected send request fields for
+  every selected PID.  With no arguments, the first few incomplete requests in
+  the active wait_all frame are shown.  With arguments, requests in the range
+  [start, start + count) are shown.
+EOF
+}
+
+run()
+{
+    require_selection || return 1
+
+    if [ 0 -lt $# ] && [ "help" = "$1" ] ; then
+        detailed_help
+        return 0
+    fi
+
+    if [ 0 -ne $# ] && [ 2 -ne $# ] ; then
+        echo "pml_dump accepts no arguments or exactly: <start> <count>." >&2
+        return 1
+    fi
+
+    if ! pdeb_function_defined debugger_pml_dump_command ; then
+        echo "pml_dump is not supported by debugger: $debugger" >&2
+        return 1
+    fi
+
+    pdeb_debugger_commands=$(debugger_pml_dump_command "$*")
+    pdeb_output_dir="$tmpdir/pml_dump.$$.$(date +%s)"
+}

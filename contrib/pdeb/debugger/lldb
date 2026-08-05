@@ -1,0 +1,162 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+debugger_available()
+{
+    command -v lldb >/dev/null 2>&1
+}
+
+debugger_collect_stack()
+{
+    pid=$1
+
+    lldb --batch -p "$pid" \
+        -o "process status" \
+        -o "thread backtrace all" \
+        -o "detach" \
+        -o "quit"
+}
+
+debugger_marker_command()
+{
+    marker=$1
+
+    printf "script print(\"%s\")\n" "$marker"
+}
+
+debugger_backtrace_command()
+{
+    printf "thread backtrace all\n"
+}
+
+debugger_current_backtrace_command()
+{
+    printf "thread backtrace\n"
+}
+
+debugger_select_frame_command()
+{
+    frame_number=$1
+
+    printf "frame select %s\n" "$frame_number"
+}
+
+debugger_start()
+{
+    pid=$1
+    command_file=$2
+    log_file=$3
+    tail_pid_file=$4
+
+    { tail -f "$command_file" & printf "%s\n" "$!" > "$tail_pid_file"; wait "$!" 2>/dev/null; } 2>/dev/null |
+        lldb -p "$pid" > "$log_file" 2>&1 &
+    printf "%s\n" "$!"
+}
+
+debugger_startup_commands()
+{
+    printf "settings set interpreter.prompt-on-quit false\n"
+}
+
+debugger_find_frame_number()
+{
+    raw_file=$1
+    function_name=$2
+
+    awk -v function_name="$function_name" '
+        index($0, function_name) && match($0, /frame #[0-9]+/) {
+            frame = substr($0, RSTART + 7, RLENGTH - 7)
+            print frame
+            exit
+        }
+    ' "$raw_file"
+}
+
+debugger_parse_stack()
+{
+    raw_file=$1
+    funcs_file=$2
+    details_file=$3
+    labels_file=$4
+
+    : > "$funcs_file"
+    : > "$details_file"
+    : > "$labels_file"
+
+    awk -v funcs_file="$funcs_file" \
+        -v details_file="$details_file" \
+        -v labels_file="$labels_file" '
+        function trim(s)
+        {
+            sub(/^[[:space:]]*/, "", s)
+            sub(/[[:space:]]*$/, "", s)
+            return s
+        }
+
+        function strip_function(s)
+        {
+            s = trim(s)
+            sub(/[[:space:]]+at[[:space:]].*/, "", s)
+            sub(/[[:space:]]+from[[:space:]].*/, "", s)
+            sub(/[[:space:]]+[+][[:space:]].*/, "", s)
+            sub(/[[:space:]]+[+][0-9].*/, "", s)
+            sub(/\(.*/, "", s)
+            return trim(s)
+        }
+
+        function lldb_function(line, parts, n, s)
+        {
+            if (0 < index(line, "`")) {
+                n = split(line, parts, "`")
+                return strip_function(parts[n])
+            }
+
+            s = line
+            sub(/^.*frame #[0-9]+:[[:space:]]*/, "", s)
+            sub(/^0x[0-9a-fA-F]+[[:space:]]*/, "", s)
+            return strip_function(s)
+        }
+
+        function frame_location(line, location)
+        {
+            if (match(line, /[[:space:]]at[[:space:]][^[:space:]]+:[0-9][0-9]*/)) {
+                location = substr(line, RSTART + 4, RLENGTH - 4)
+                return trim(location)
+            }
+
+            return ""
+        }
+
+        function emit_frame(function_name, detail)
+        {
+            if (done) {
+                return
+            }
+            if ("" == function_name) {
+                return
+            }
+            location = frame_location(detail)
+            print function_name >> funcs_file
+            print trim(detail) >> details_file
+            if ("" == location) {
+                print function_name >> labels_file
+            } else {
+                printf "%s (%s)\n", function_name, location >> labels_file
+            }
+            if ("main" == function_name) {
+                done = 1
+            }
+        }
+
+        /^[[:space:]*]*frame #[0-9]+:/ {
+            emit_frame(lldb_function($0), $0)
+            next
+        }
+    ' "$raw_file"
+}

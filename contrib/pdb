@@ -1,0 +1,1143 @@
+#!/bin/sh
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+set -u
+
+usage()
+{
+    cat <<EOF
+Usage: $0 [-d debugger] [--dump filename] [-p|--pids pid[,pid]...] [program-name]
+
+Find processes owned by the current user whose executable basename is
+program-name, resolve them to PIDs, attach a debugger to each one, and
+enter an interactive command loop.  Use the backtrace command to collect
+and summarize stacks.  Use --dump to save an initial raw stack archive.
+
+Instead of program-name, use -p/--pids to attach to an explicit list of
+PIDs.  The two forms are mutually exclusive.
+
+If neither program-name nor -p/--pids is given, the script starts
+unattached.  Use the attach command to attach to a list of PIDs.
+
+Options:
+  -d debugger        Use a debugger module, such as lldb or gdb.  Default:
+                     first available debugger module.
+  --dump file        Save the process list and raw debugger stacks to file.
+  -p, --pids pid[,pid]...
+                     Attach to an explicit, comma- or space-separated list
+                     of PIDs.
+  -h                 Show this help.
+EOF
+}
+
+debugger=auto
+dump_file=
+initial_pids=
+pids=
+selected_pids=
+attached=0
+PROMPT=ompi-stack
+prompt_stack=
+
+case "$0" in
+*/*)
+    script_path=$0
+    ;;
+*)
+script_path=$(command -v "$0" 2>/dev/null || printf "%s\n" "$0")
+    ;;
+esac
+script_dir=$(CDPATH= cd "$(dirname "$script_path")" 2>/dev/null && pwd)
+pdeb_command_dir=${PDEB_COMMAND_DIR:-"$script_dir/pdeb/commands"}
+pdeb_debugger_dir=${PDEB_DEBUGGER_DIR:-"$script_dir/pdeb/debugger"}
+
+while [ 0 -lt $# ] ; do
+    case "$1" in
+    -d)
+        shift
+        if [ 0 -eq $# ] ; then
+            usage >&2
+            exit 2
+        fi
+        debugger=$1
+        ;;
+    --dump)
+        shift
+        if [ 0 -eq $# ] ; then
+            usage >&2
+            exit 2
+        fi
+        dump_file=$1
+        ;;
+    -p|--pids)
+        shift
+        if [ 0 -eq $# ] ; then
+            usage >&2
+            exit 2
+        fi
+        initial_pids="$initial_pids $1"
+        ;;
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    --)
+        shift
+        break
+        ;;
+    -*)
+        echo "Unsupported option: $1" >&2
+        usage >&2
+        exit 2
+        ;;
+    *)
+        break
+        ;;
+    esac
+    shift
+done
+
+if [ 1 -lt $# ] ; then
+    usage >&2
+    exit 2
+fi
+
+if [ 1 -eq $# ] ; then
+    program=$1
+    program_base=$(basename "$program")
+else
+    program=
+    program_base=
+fi
+
+initial_pids=$(printf "%s" "$initial_pids" | tr ',' ' ')
+
+if [ -n "$initial_pids" ] && [ -n "$program_base" ] ; then
+    echo "--pids and program-name are mutually exclusive." >&2
+    usage >&2
+    exit 2
+fi
+
+uid=$(id -u)
+user_name=$(id -un)
+
+if [ -n "$dump_file" ] && [ -z "$program_base" ] && [ -z "$initial_pids" ] ; then
+    echo "--dump requires an initial program-name or --pids PID list." >&2
+    exit 2
+fi
+
+find_pids()
+{
+    if command -v pgrep >/dev/null 2>&1 ; then
+        pgrep_output=$(pgrep -U "$uid" -x "$program_base" 2>/dev/null)
+        pgrep_status=$?
+        if [ 0 -eq "$pgrep_status" ] || [ 1 -eq "$pgrep_status" ] ; then
+            printf "%s\n" "$pgrep_output" | awk -v self="$$" \
+                '0 < NF && $1 != self { print $1 }'
+            return 0
+        fi
+    fi
+
+    ps_output=$(ps -u "$uid" -o pid= -o comm=) || return 1
+
+    printf "%s\n" "$ps_output" | awk \
+        -v target="$program_base" \
+        -v self="$$" \
+        '{
+            if (1 > NF) {
+                next
+            }
+            pid = $1
+            $1 = ""
+            sub(/^[[:space:]]*/, "", $0)
+            n = split($0, path, "/")
+            base = path[n]
+            if (pid != self && base == target) {
+                print pid
+            }
+        }'
+}
+
+pid_exists()
+{
+    kill -0 "$1" 2>/dev/null
+}
+
+pid_command_base()
+{
+    pid_command=$(ps -p "$1" -o comm= 2>/dev/null) || return 1
+
+    if [ -z "$pid_command" ] ; then
+        return 1
+    fi
+
+    basename "$pid_command"
+}
+
+args_are_pids()
+{
+    if [ 0 -eq $# ] ; then
+        return 1
+    fi
+
+    for args_pid in "$@" ; do
+        case "$args_pid" in
+        ''|*[!0-9]*)
+            return 1
+            ;;
+        esac
+    done
+
+    return 0
+}
+
+pdeb_debugger_file()
+{
+    pdeb_debugger_name=$1
+
+    case "$pdeb_debugger_name" in
+    ""|.*|*/*)
+        return 1
+        ;;
+    esac
+
+    pdeb_debugger_path="$pdeb_debugger_dir/$pdeb_debugger_name"
+    if [ ! -f "$pdeb_debugger_path" ] ; then
+        return 1
+    fi
+
+    printf "%s\n" "$pdeb_debugger_path"
+}
+
+pdeb_debugger_names()
+{
+    for pdeb_debugger_path in "$pdeb_debugger_dir"/* ; do
+        if [ ! -f "$pdeb_debugger_path" ] ; then
+            continue
+        fi
+        pdeb_debugger_name=$(basename "$pdeb_debugger_path")
+        case "$pdeb_debugger_name" in
+        .*)
+            continue
+            ;;
+        esac
+        printf "%s\n" "$pdeb_debugger_name"
+    done | sort
+}
+
+pdeb_unload_debugger()
+{
+    unset -f debugger_available debugger_collect_stack debugger_marker_command \
+        debugger_backtrace_command debugger_current_backtrace_command \
+        debugger_select_frame_command debugger_start debugger_startup_commands \
+        debugger_find_frame_number debugger_parse_stack \
+        debugger_btlsm_dump_command debugger_req_dump_command \
+        debugger_pml_dump_command 2>/dev/null || true
+}
+
+load_debugger_module()
+{
+    pdeb_debugger_name=$1
+    pdeb_debugger_path=$(pdeb_debugger_file "$pdeb_debugger_name") || return 1
+
+    pdeb_unload_debugger
+    . "$pdeb_debugger_path"
+}
+
+ensure_debugger()
+{
+    case "$debugger" in
+    auto)
+        pdeb_seen_debuggers=
+        for pdeb_candidate in lldb gdb $(pdeb_debugger_names) ; do
+            case " $pdeb_seen_debuggers " in
+            *" $pdeb_candidate "*)
+                continue
+                ;;
+            esac
+            pdeb_seen_debuggers="$pdeb_seen_debuggers $pdeb_candidate"
+            if ! load_debugger_module "$pdeb_candidate" ; then
+                continue
+            fi
+            if debugger_available ; then
+                debugger=$pdeb_candidate
+                return 0
+            fi
+        done
+        pdeb_unload_debugger
+        echo "Could not find a supported debugger in PATH." >&2
+        return 1
+        ;;
+    *)
+        if ! load_debugger_module "$debugger" ; then
+            echo "Unsupported debugger: $debugger" >&2
+            return 1
+        fi
+        if ! debugger_available ; then
+            echo "Could not find $debugger in PATH." >&2
+            return 1
+        fi
+        ;;
+    esac
+}
+
+collect_stack()
+{
+    pid=$1
+
+    debugger_collect_stack "$pid"
+}
+
+write_dump_file()
+{
+    archive_file=$1
+
+    if ! : > "$archive_file" ; then
+        echo "Could not write dump file: $archive_file" >&2
+        return 1
+    fi
+
+    {
+        printf "OPENMPI_STACK_DUMP_V1\n"
+        printf "PROGRAM %s\n" "$program_base"
+        printf "USER %s\n" "$user_name"
+        printf "UID %s\n" "$uid"
+        printf "DEBUGGER %s\n" "$debugger"
+        printf "CAPTURED %s\n" "$(date)"
+
+        for pid in $pids ; do
+            raw_file="$tmpdir/$pid.raw"
+            failed_file="$tmpdir/$pid.failed"
+
+            printf "PID %s\n" "$pid"
+            if [ -f "$failed_file" ] ; then
+                sed 's/^/FAILTEXT /' "$failed_file"
+            fi
+            sed 's/^/RAW /' "$raw_file"
+            printf "ENDPID\n"
+        done
+    } > "$archive_file"
+}
+
+parse_stack()
+{
+    raw_file=$1
+    funcs_file=$2
+    details_file=$3
+    labels_file=$4
+
+    debugger_parse_stack "$raw_file" "$funcs_file" "$details_file" "$labels_file"
+}
+
+find_common_sequence()
+{
+    common_file=$1
+    match_file=$2
+
+    shift 2
+
+    : > "$common_file"
+    : > "$match_file"
+
+    if [ 0 -eq $# ] ; then
+        return 0
+    fi
+
+    awk -v common_file="$common_file" -v match_file="$match_file" '
+        function same_at(file_number, pos, base_pos, candidate_len, i)
+        {
+            for (i = 0 ; i < candidate_len ; ++i) {
+                if (seq[file_number, pos + i] != seq[1, base_pos + i]) {
+                    return 0
+                }
+            }
+            return 1
+        }
+
+        function find_at(file_number, base_pos, candidate_len, pos)
+        {
+            if (len[file_number] < candidate_len) {
+                return 0
+            }
+
+            for (pos = 1 ; pos <= len[file_number] - candidate_len + 1 ; ++pos) {
+                if (same_at(file_number, pos, base_pos, candidate_len)) {
+                    return pos
+                }
+            }
+
+            return 0
+        }
+
+        FNR == 1 {
+            ++file_count
+            files[file_count] = FILENAME
+        }
+
+        {
+            seq[file_count, ++len[file_count]] = $0
+        }
+
+        END {
+            best_len = 0
+            best_start = 0
+
+            for (base_pos = 1 ; base_pos <= len[1] ; ++base_pos) {
+                for (candidate_len = len[1] - base_pos + 1 ;
+                     candidate_len > best_len ;
+                     --candidate_len) {
+                    ok = 1
+                    found_pos[1] = base_pos
+
+                    for (file_number = 2 ;
+                         file_number <= file_count ;
+                         ++file_number) {
+                        pos = find_at(file_number, base_pos, candidate_len)
+                        if (0 == pos) {
+                            ok = 0
+                            break
+                        }
+                        found_pos[file_number] = pos
+                    }
+
+                    if (ok) {
+                        best_len = candidate_len
+                        best_start = base_pos
+                        for (file_number = 1 ;
+                             file_number <= file_count ;
+                             ++file_number) {
+                            best_pos[file_number] = found_pos[file_number]
+                        }
+                        break
+                    }
+                }
+            }
+
+            for (i = 0 ; i < best_len ; ++i) {
+                print seq[1, best_start + i] > common_file
+            }
+
+            for (file_number = 1 ;
+                 file_number <= file_count ;
+                 ++file_number) {
+                printf "%s %d %d\n",
+                       files[file_number],
+                       best_pos[file_number],
+                       best_len > match_file
+            }
+        }
+    ' "$@"
+}
+
+line_count()
+{
+    awk 'END { print NR + 0 }' "$1"
+}
+
+print_function_stack()
+{
+    stack_file=$1
+
+    if [ ! -s "$stack_file" ] ; then
+        printf "  (no parsed frames)\n"
+        return
+    fi
+
+    awk '{ printf "  #%d %s\n", NR - 1, $0 }' "$stack_file"
+}
+
+print_different_frames()
+{
+    details_file=$1
+    funcs_file=$2
+    match_file=$3
+
+    match=$(awk -v funcs_file="$funcs_file" \
+        '$1 == funcs_file { print $2 " " $3 ; exit }' "$match_file")
+
+    start=$(printf "%s\n" "$match" | awk '{ print $1 + 0 }')
+    common_len=$(printf "%s\n" "$match" | awk '{ print $2 + 0 }')
+
+    awk -v start="$start" -v common_len="$common_len" '
+        {
+            if (0 < common_len && NR == start) {
+                printf "  [common frames #%d..#%d elided; see common stack above]\n",
+                       start - 1,
+                       start + common_len - 2
+            }
+
+            if (0 < common_len && start <= NR && NR < start + common_len) {
+                next
+            }
+
+            printf "  %s\n", $0
+            printed = 1
+        }
+
+        END {
+            if (0 == NR) {
+                print "  (no parsed frames)"
+            } else if (!printed) {
+                print "  (no different frames; parsed stack is entirely common)"
+            }
+        }
+    ' "$details_file"
+}
+
+start_debuggers()
+{
+    for pid in $pids ; do
+        command_file="$tmpdir/$pid.commands"
+        log_file="$tmpdir/$pid.log"
+        debugger_pid_file="$tmpdir/$pid.debugger_pid"
+        tail_pid_file="$tmpdir/$pid.tail_pid"
+
+        : > "$command_file"
+        : > "$log_file"
+
+        debugger_start "$pid" "$command_file" "$log_file" "$tail_pid_file" \
+            > "$debugger_pid_file"
+    done
+
+    for pid in $pids ; do
+        startup_commands=$(debugger_startup_commands)
+        if [ -n "$startup_commands" ] ; then
+            run_debugger_commands "$pid" "$startup_commands" \
+                "$tmpdir/$pid.startup" >/dev/null
+        fi
+    done
+}
+
+stop_debuggers()
+{
+    wait_status=0
+
+    for pid in $pids ; do
+        command_file="$tmpdir/$pid.commands"
+
+        if [ -f "$command_file" ] ; then
+            {
+                printf "detach\n"
+                printf "quit\n"
+            } >> "$command_file"
+        fi
+    done
+
+    for pid in $pids ; do
+        debugger_pid_file="$tmpdir/$pid.debugger_pid"
+        tail_pid_file="$tmpdir/$pid.tail_pid"
+
+        if [ -f "$tail_pid_file" ] ; then
+            sleep 0.5
+            kill "$(sed -n '1p' "$tail_pid_file")" 2>/dev/null || true
+        fi
+
+        if [ -f "$debugger_pid_file" ] ; then
+            debugger_pid=$(sed -n '1p' "$debugger_pid_file")
+            if ! wait "$debugger_pid" 2>/dev/null ; then
+                wait_status=1
+            fi
+        fi
+    done
+
+    return "$wait_status"
+}
+
+run_debugger_commands()
+{
+    run_pid=$1
+    run_commands=$2
+    run_output_file=$3
+    run_command_file="$tmpdir/$run_pid.commands"
+    run_log_file="$tmpdir/$run_pid.log"
+    run_sequence_file="$tmpdir/sequence"
+
+    if [ -s "$run_sequence_file" ] ; then
+        sequence=$(sed -n '1p' "$run_sequence_file")
+    else
+        sequence=0
+    fi
+    sequence=$((sequence + 1))
+    printf "%s\n" "$sequence" > "$run_sequence_file"
+
+    marker="__OMPI_STACK_DONE_${run_pid}_${sequence}__"
+    offset=$(wc -c < "$run_log_file" | awk '{ print $1 + 0 }')
+
+    {
+        printf "%s\n" "$run_commands"
+        debugger_marker_command "$marker"
+    } >> "$run_command_file"
+
+    waited=0
+    while : ; do
+        if dd if="$run_log_file" bs=1 skip="$offset" 2>/dev/null | grep -q "$marker" ; then
+            break
+        fi
+        waited=$((waited + 1))
+        if [ 400 -lt "$waited" ] ; then
+            echo "Timed out waiting for debugger output from PID $run_pid." >&2
+            return 1
+        fi
+        sleep 0.1
+    done
+
+    dd if="$run_log_file" bs=1 skip="$offset" 2>/dev/null | awk -v marker="$marker" '
+        index($0, marker) {
+            exit
+        }
+        {
+            print
+        }
+    ' > "$run_output_file"
+}
+
+generate_backtrace_report()
+{
+    raw_dir=$1
+    report_file=$2
+    parsed_func_files=
+    parsed_pids=
+    common_file="$tmpdir/common.funcs"
+    match_file="$tmpdir/common.matches"
+    common_labels_file="$tmpdir/common.labels"
+
+    : > "$common_labels_file"
+
+    for pid in $pids ; do
+        raw_file="$raw_dir/$pid.raw"
+        funcs_file="$raw_dir/$pid.funcs"
+        details_file="$raw_dir/$pid.details"
+        labels_file="$raw_dir/$pid.labels"
+
+        parse_stack "$raw_file" "$funcs_file" "$details_file" "$labels_file"
+        if [ -s "$funcs_file" ] ; then
+            parsed_func_files="$parsed_func_files $funcs_file"
+            parsed_pids="$parsed_pids $pid"
+        fi
+    done
+
+    find_common_sequence "$common_file" "$match_file" $parsed_func_files
+    common_count=$(line_count "$common_file")
+
+    if [ 0 -lt "$common_count" ] && [ -s "$match_file" ] ; then
+        common_match=$(sed -n '1p' "$match_file")
+        common_funcs_file=$(printf "%s\n" "$common_match" | awk '{ print $1 }')
+        common_start=$(printf "%s\n" "$common_match" | awk '{ print $2 + 0 }')
+        common_len=$(printf "%s\n" "$common_match" | awk '{ print $3 + 0 }')
+        common_pid_labels_file=${common_funcs_file%.funcs}.labels
+
+        if [ -s "$common_pid_labels_file" ] ; then
+            awk -v start="$common_start" -v common_len="$common_len" \
+                'start <= NR && NR < start + common_len { print }' \
+                "$common_pid_labels_file" > "$common_labels_file"
+        fi
+    fi
+
+    {
+        printf "Program: %s\n" "$program_base"
+        printf "Debugger: %s\n" "$debugger"
+        printf "PIDs:%s\n" "$(printf " %s" $pids)"
+        if [ -n "$parsed_pids" ] ; then
+            printf "Parsed PIDs:%s\n" "$(printf " %s" $parsed_pids)"
+        else
+            printf "Parsed PIDs: none\n"
+        fi
+
+        printf "\n"
+        printf "================================================================\n"
+        printf "Common function stack\n"
+        printf "================================================================\n"
+        if [ 0 -eq "$common_count" ] ; then
+            printf "  (no common function-name frames found)\n"
+        else
+            printf "  Longest common contiguous sequence: %s frame(s)\n" "$common_count"
+            if [ -s "$common_labels_file" ] ; then
+                print_function_stack "$common_labels_file"
+            else
+                print_function_stack "$common_file"
+            fi
+        fi
+
+        printf "\n"
+        printf "================================================================\n"
+        printf "Per-PID different frames\n"
+        printf "================================================================\n"
+        for pid in $pids ; do
+            funcs_file="$raw_dir/$pid.funcs"
+            details_file="$raw_dir/$pid.details"
+
+            printf "\n"
+            printf "PID %s: %s\n" "$pid" "$program_base"
+            printf "%s\n" "----------------------------------------------------------------"
+            printf "  Parsed frames: %s\n" "$(line_count "$funcs_file")"
+            print_different_frames "$details_file" "$funcs_file" "$match_file"
+        done
+
+        printf "\n"
+        printf "================================================================\n"
+        printf "Trimmed function stacks\n"
+        printf "================================================================\n"
+        for pid in $pids ; do
+            labels_file="$raw_dir/$pid.labels"
+
+            printf "\n"
+            printf "PID %s: %s\n" "$pid" "$program_base"
+            printf "%s\n" "----------------------------------------------------------------"
+            print_function_stack "$labels_file"
+        done
+    } > "$report_file"
+}
+
+pdeb_command_file()
+{
+    pdeb_command_name=$1
+
+    case "$pdeb_command_name" in
+    ""|.*|*/*)
+        return 1
+        ;;
+    esac
+
+    pdeb_path="$pdeb_command_dir/$pdeb_command_name"
+    if [ ! -f "$pdeb_path" ] ; then
+        return 1
+    fi
+
+    printf "%s\n" "$pdeb_path"
+}
+
+pdeb_command_names()
+{
+    for pdeb_path in "$pdeb_command_dir"/* ; do
+        if [ ! -f "$pdeb_path" ] ; then
+            continue
+        fi
+        pdeb_name=$(basename "$pdeb_path")
+        case "$pdeb_name" in
+        .*)
+            continue
+            ;;
+        esac
+        printf "%s\n" "$pdeb_name"
+    done | sort
+}
+
+pdeb_unload_command()
+{
+    unset -f help detailed_help run output 2>/dev/null || true
+}
+
+pdeb_function_defined()
+{
+    pdeb_type=$(type "$1" 2>/dev/null) || return 1
+
+    case "$pdeb_type" in
+    *function*)
+        return 0
+        ;;
+    esac
+
+    return 1
+}
+
+pdeb_source_command()
+{
+    pdeb_command_name=$1
+
+    pdeb_path=$(pdeb_command_file "$pdeb_command_name") || return 1
+    pdeb_unload_command
+    . "$pdeb_path"
+}
+
+load_pdeb_helpers()
+{
+    if [ ! -d "$pdeb_command_dir" ] ; then
+        echo "Command directory does not exist: $pdeb_command_dir" >&2
+        return 1
+    fi
+
+    for pdeb_helper in "$pdeb_command_dir"/.* ; do
+        if [ ! -f "$pdeb_helper" ] ; then
+            continue
+        fi
+        pdeb_name=$(basename "$pdeb_helper")
+        case "$pdeb_name" in
+        .|..)
+            continue
+            ;;
+        esac
+        . "$pdeb_helper"
+    done
+}
+
+print_help()
+{
+    printf "Commands:\n"
+    for pdeb_command_name in $(pdeb_command_names) ; do
+        if ! pdeb_source_command "$pdeb_command_name" ; then
+            continue
+        fi
+        if pdeb_function_defined help ; then
+            help
+        else
+            printf "  %s\n" "$pdeb_command_name"
+        fi
+    done
+    pdeb_unload_command
+    cat <<EOF
+  help
+  <command> help
+  quit
+EOF
+}
+
+print_command_help()
+{
+    pdeb_command_name=$1
+
+    if [ "help" = "$pdeb_command_name" ] ; then
+        print_help
+        return 0
+    fi
+
+    if ! pdeb_source_command "$pdeb_command_name" ; then
+        echo "No such command: $pdeb_command_name" >&2
+        return 1
+    fi
+
+    if pdeb_function_defined detailed_help ; then
+        detailed_help
+    elif pdeb_function_defined help ; then
+        help
+    else
+        echo "No detailed help for command: $pdeb_command_name"
+    fi
+    pdeb_unload_command
+}
+
+pdeb_default_output()
+{
+    for pdeb_output_file in "$@" ; do
+        pdeb_output_pid=$(basename "$pdeb_output_file" .raw)
+        printf "\nPID %s: %s\n" "$pdeb_output_pid" "$program_base"
+        printf "%s\n" "----------------------------------------------------------------"
+        cat "$pdeb_output_file"
+    done
+}
+
+# If a command sets pdeb_debugger_commands, the infrastructure runs that
+# debugger command block once per selected PID. A command-specific output
+# function receives "$@" as raw-output file paths, one per selected PID, in
+# selected-PID order; pdeb_output_pids holds the matching PID list.
+pdeb_run_selected_debugger_commands()
+{
+    pdeb_use_command_output=$1
+
+    if [ -z "$pdeb_output_dir" ] ; then
+        pdeb_output_dir="$tmpdir/$pdeb_command_name.$$.$(date +%s)"
+    fi
+
+    mkdir -p "$pdeb_output_dir" || return 1
+    pdeb_output_pids=$selected_pids
+
+    set --
+    for pdeb_output_pid in $selected_pids ; do
+        pdeb_output_file="$pdeb_output_dir/$pdeb_output_pid.raw"
+        run_debugger_commands "$pdeb_output_pid" "$pdeb_debugger_commands" \
+            "$pdeb_output_file" || return 1
+        set -- "$@" "$pdeb_output_file"
+    done
+
+    if [ 1 -eq "$pdeb_use_command_output" ] && pdeb_function_defined output ; then
+        output "$@"
+    else
+        pdeb_default_output "$@"
+    fi
+}
+
+pdeb_execute_command()
+{
+    pdeb_command_name=$1
+    shift
+
+    if ! pdeb_source_command "$pdeb_command_name" ; then
+        echo "No such command: $pdeb_command_name" >&2
+        return 1
+    fi
+
+    if ! pdeb_function_defined run ; then
+        echo "Command does not define run: $pdeb_command_name" >&2
+        pdeb_unload_command
+        return 1
+    fi
+
+    pdeb_debugger_commands=
+    pdeb_output_dir=
+    pdeb_output_pids=
+
+    run "$@"
+    pdeb_status=$?
+    if [ 0 -ne "$pdeb_status" ] ; then
+        pdeb_unload_command
+        return "$pdeb_status"
+    fi
+
+    if [ -n "$pdeb_debugger_commands" ] ; then
+        pdeb_run_selected_debugger_commands 1
+        pdeb_status=$?
+    fi
+
+    pdeb_unload_command
+    return "$pdeb_status"
+}
+
+pid_is_attached()
+{
+    test_pid=$1
+
+    for pid in $pids ; do
+        if [ "$pid" = "$test_pid" ] ; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+require_selection()
+{
+    if [ -z "$selected_pids" ] ; then
+        echo "No PIDs selected. Use attach <pid> [pid...] first." >&2
+        return 1
+    fi
+
+    return 0
+}
+
+pid_count()
+{
+    count=0
+
+    for pid in "$@" ; do
+        count=$((count + 1))
+    done
+
+    printf "%s\n" "$count"
+}
+
+prompt_push()
+{
+    if [ -z "$prompt_stack" ] ; then
+        prompt_stack=$PROMPT
+    else
+        prompt_stack=$(printf "%s\n%s" "$PROMPT" "$prompt_stack")
+    fi
+    PROMPT=$1
+}
+
+prompt_pop()
+{
+    if [ -z "$prompt_stack" ] ; then
+        return 1
+    fi
+
+    PROMPT=$(printf "%s\n" "$prompt_stack" | sed -n '1p')
+    prompt_stack=$(printf "%s\n" "$prompt_stack" | sed '1d')
+}
+
+compressed_pids()
+{
+    set -- $*
+
+    if [ 0 -eq $# ] ; then
+        printf "none"
+        return
+    fi
+
+    if [ 4 -ge $# ] ; then
+        compressed_out=$1
+        shift
+        for compressed_pid in "$@" ; do
+            compressed_out="$compressed_out,$compressed_pid"
+        done
+        printf "%s" "$compressed_out"
+        return
+    fi
+
+    compressed_count=$#
+    compressed_first=$1
+    eval compressed_last=\${$compressed_count}
+    printf "%s..%s(%s)" "$compressed_first" "$compressed_last" "$compressed_count"
+}
+
+detach_pid_list()
+{
+    detach_pids=$*
+    wait_status=0
+
+    for pid in $detach_pids ; do
+        command_file="$tmpdir/$pid.commands"
+
+        if [ -f "$command_file" ] ; then
+            {
+                printf "detach\n"
+                printf "quit\n"
+            } >> "$command_file"
+        fi
+    done
+
+    for pid in $detach_pids ; do
+        debugger_pid_file="$tmpdir/$pid.debugger_pid"
+        tail_pid_file="$tmpdir/$pid.tail_pid"
+
+        if [ -f "$tail_pid_file" ] ; then
+            sleep 0.5
+            kill "$(sed -n '1p' "$tail_pid_file")" 2>/dev/null || true
+        fi
+
+        if [ -f "$debugger_pid_file" ] ; then
+            debugger_pid=$(sed -n '1p' "$debugger_pid_file")
+            if ! wait "$debugger_pid" 2>/dev/null ; then
+                wait_status=1
+            fi
+        fi
+    done
+
+    return "$wait_status"
+}
+
+remove_detached_pids()
+{
+    detached_pids=$*
+    remaining_pids=
+    remaining_selected_pids=
+
+    for pid in $pids ; do
+        keep=1
+        for detached_pid in $detached_pids ; do
+            if [ "$pid" = "$detached_pid" ] ; then
+                keep=0
+                break
+            fi
+        done
+        if [ 1 -eq "$keep" ] ; then
+            remaining_pids="$remaining_pids $pid"
+        fi
+    done
+
+    for pid in $selected_pids ; do
+        keep=1
+        for detached_pid in $detached_pids ; do
+            if [ "$pid" = "$detached_pid" ] ; then
+                keep=0
+                break
+            fi
+        done
+        if [ 1 -eq "$keep" ] ; then
+            remaining_selected_pids="$remaining_selected_pids $pid"
+        fi
+    done
+
+    pids=$(printf "%s\n" "$remaining_pids" | sed 's/^ *//')
+    selected_pids=$(printf "%s\n" "$remaining_selected_pids" | sed 's/^ *//')
+
+    if [ -z "$pids" ] ; then
+        program=
+        program_base=
+        attached=0
+    fi
+}
+
+command_debugger_passthrough()
+{
+    require_selection || return 1
+
+    pdeb_command_name=passthrough
+    pdeb_debugger_commands=$1
+    pdeb_output_dir="$tmpdir/passthrough.$$.$(date +%s)"
+
+    pdeb_run_selected_debugger_commands 0
+}
+
+interactive_loop()
+{
+    print_help
+    while : ; do
+        printf "%s[%s]> " "$PROMPT" "$(compressed_pids $selected_pids)"
+        if ! IFS= read -r line ; then
+            break
+        fi
+
+        if [ "" = "$line" ] ; then
+            continue
+        fi
+
+        set -- $line
+        command_name=$1
+        shift
+
+        case "$command_name" in
+        quit|exit)
+            break
+            ;;
+        help)
+            print_help
+            ;;
+        *)
+            if [ 0 -lt $# ] && [ "help" = "$1" ] ; then
+                print_command_help "$command_name"
+            elif pdeb_command_file "$command_name" >/dev/null ; then
+                pdeb_execute_command "$command_name" "$@"
+            else
+                command_debugger_passthrough "$line"
+            fi
+            ;;
+        esac
+    done
+}
+
+temp_parent=${TMPDIR:-/tmp}
+if ! tmpdir=$(mktemp -d "$temp_parent/pdb.XXXXXX") ; then
+    echo "Could not create temporary directory." >&2
+    exit 1
+fi
+
+trap 'rm -rf "$tmpdir"' EXIT HUP INT TERM
+
+if ! load_pdeb_helpers ; then
+    exit 1
+fi
+
+trap 'stop_debuggers; rm -rf "$tmpdir"' EXIT HUP INT TERM
+if [ -n "$initial_pids" ] ; then
+    pdeb_execute_command attach $initial_pids || exit 1
+elif [ -n "$program_base" ] ; then
+    if ! resolved_pids=$(find_pids) ; then
+        echo "Could not list processes for user $user_name." >&2
+        exit 1
+    fi
+    if [ -z "$resolved_pids" ] ; then
+        echo "No processes named '$program_base' owned by $user_name were found." >&2
+        exit 1
+    fi
+    pdeb_execute_command attach $resolved_pids || exit 1
+fi
+if [ -n "$dump_file" ] ; then
+    command=$(debugger_backtrace_command)
+    for pid in $pids ; do
+        run_debugger_commands "$pid" "$command" "$tmpdir/$pid.raw" || exit 1
+    done
+    if ! write_dump_file "$dump_file" ; then
+        exit 1
+    fi
+    printf "Wrote raw stack dump to %s\n" "$dump_file" >&2
+fi
+interactive_loop
+exit 0

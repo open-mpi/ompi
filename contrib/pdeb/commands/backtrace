@@ -1,0 +1,92 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  backtrace [raw] [file <filename>]\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+backtrace [raw] [file <filename>]
+  Collect a backtrace from every selected debugger.
+  Without raw, output is parsed into the common/different stack report.
+  With raw, debugger output is printed per PID without interpretation.
+  With file, output is written to filename instead of stdout.
+EOF
+}
+
+run()
+{
+    require_selection || return 1
+
+    bt_raw=0
+    bt_output_file=
+
+    while [ 0 -lt $# ] ; do
+        case "$1" in
+        raw)
+            bt_raw=1
+            ;;
+        file)
+            shift
+            if [ 0 -eq $# ] ; then
+                echo "backtrace file requires a filename." >&2
+                return 1
+            fi
+            bt_output_file=$1
+            ;;
+        help)
+            detailed_help
+            return 0
+            ;;
+        *)
+            echo "Unsupported backtrace argument: $1" >&2
+            return 1
+            ;;
+        esac
+        shift
+    done
+
+    pdeb_output_dir="$tmpdir/backtrace.$$.$(date +%s)"
+    pdeb_debugger_commands=$(debugger_backtrace_command)
+}
+
+output()
+{
+    if [ -z "$bt_output_file" ] ; then
+        bt_output_file="$tmpdir/backtrace.out"
+        bt_print_to_stdout=1
+    else
+        bt_print_to_stdout=0
+    fi
+
+    if [ 1 -eq "$bt_raw" ] ; then
+        {
+            for bt_raw_file in "$@" ; do
+                bt_pid=$(basename "$bt_raw_file" .raw)
+                printf "\nPID %s: %s\n" "$bt_pid" "$program_base"
+                printf "%s\n" "----------------------------------------------------------------"
+                cat "$bt_raw_file"
+            done
+        } > "$bt_output_file"
+    else
+        bt_saved_pids=$pids
+        pids=$pdeb_output_pids
+        generate_backtrace_report "$pdeb_output_dir" "$bt_output_file"
+        pids=$bt_saved_pids
+    fi
+
+    if [ 1 -eq "$bt_print_to_stdout" ] ; then
+        cat "$bt_output_file"
+    else
+        printf "Wrote backtrace output to %s\n" "$bt_output_file"
+    fi
+}

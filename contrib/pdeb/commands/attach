@@ -1,0 +1,75 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  attach <pid> [pid...]\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+attach <pid> [pid...]
+  Attach one debugger to each of the given PIDs and select all attached
+  PIDs.  The PIDs do not have to share an executable name.  If debuggers
+  are already attached, detach them first.  On success the prompt changes
+  to attach[<selected-pids>].
+EOF
+}
+
+run()
+{
+    if [ 0 -eq $# ] || [ "help" = "$1" ] ; then
+        detailed_help
+        return 0
+    fi
+
+    if ! args_are_pids "$@" ; then
+        echo "attach requires one or more PIDs." >&2
+        return 1
+    fi
+
+    if ! ensure_debugger ; then
+        return 1
+    fi
+
+    if [ 1 -eq "$attached" ] ; then
+        if ! detach_pid_list $pids ; then
+            echo "One or more debugger subprocesses did not exit cleanly." >&2
+        fi
+        remove_detached_pids $pids
+        prompt_pop
+    fi
+
+    attach_pids=
+    attach_first_pid=
+    for attach_pid in "$@" ; do
+        if ! pid_exists "$attach_pid" ; then
+            echo "No such process or not permitted: $attach_pid" >&2
+            return 1
+        fi
+        if [ -z "$attach_first_pid" ] ; then
+            attach_first_pid=$attach_pid
+        fi
+        attach_pids="$attach_pids $attach_pid"
+    done
+
+    pids=$(printf "%s\n" "$attach_pids" | sed 's/^ *//')
+    program_base=$(pid_command_base "$attach_first_pid")
+    if [ -z "$program_base" ] ; then
+        program_base=pids
+    fi
+    program=$program_base
+
+    start_debuggers || return 1
+    selected_pids=$pids
+    attached=1
+    prompt_push "attach"
+    printf "Attached %s to PIDs:%s\n" "$debugger" "$(printf " %s" $pids)"
+}
