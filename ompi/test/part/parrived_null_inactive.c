@@ -190,11 +190,14 @@ int main(int argc, char *argv[])
         /* Case 3b: mark the send partitions ready one at a time; each
            must eventually arrive on the receive side (MPI-5.0 section
            4.2.2: "Repeated calls to MPI_PARRIVED ... will eventually
-           return flag = true"). */
+           return flag = true if ... and all send partitions have been 
+           marked as ready."). */
         for (i = 0; i < PARTITIONS; ++i) {
             rc = MPI_Pready(i, sreq);
             check(MPI_SUCCESS == rc, "MPI_Pready failed");
+        }
 
+        for (i = 0; i < PARTITIONS; ++i) {
             flag = 0;
             for (j = 0; j < MAX_POLL && !flag; ++j) {
                 rc = MPI_Parrived(rreq, i, &flag);
