@@ -663,10 +663,10 @@ int mca_btl_portals4_finalize(struct mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&portals4_btl->portals_frag_user);
     OBJ_DESTRUCT(&portals4_btl->portals_recv_blocks);
 
-    free(portals4_btl);
-
     OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                          "mca_btl_portals4_finalize NI %d: OK\n", portals4_btl->interface_num));
+
+    free(portals4_btl);
 
     return OPAL_SUCCESS;
 }
