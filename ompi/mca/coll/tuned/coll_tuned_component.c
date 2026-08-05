@@ -64,6 +64,7 @@ int   ompi_coll_tuned_verbose = 0;
  * default algorithm selection. Changing this value will force using linear with
  * sync algorithm on certain message sizes. */
 int   ompi_coll_tuned_alltoall_max_requests  = 0; /* no limit for alltoall by default */
+int   ompi_coll_tuned_alltoallv_max_requests = 0; /* no limit for alltoallv by default */
 
 /* Disable by default */
 int   ompi_coll_tuned_scatter_intermediate_msg = 0;

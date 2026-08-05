@@ -620,27 +620,28 @@ int ompi_coll_tuned_alltoallv_intra_dec_fixed(const void *sbuf, ompi_count_array
     /** Algorithms:
      *  {1, "basic_linear"},
      *  {2, "pairwise"},
+     *  {3, "linear_sync"},
      *
      * We can only optimize based on com size
      */
     if (communicator_size < 4) {
-		alg = 2;
+        alg = 2;
     } else if (communicator_size < 64) {
-		alg = 1;
+        alg = 1;
     } else if (communicator_size < 128) {
-		alg = 2;
+        alg = 2;
     } else if (communicator_size < 256) {
-		alg = 1;
+        alg = 1;
     } else if (communicator_size < 1024) {
-		alg = 2;
+        alg = 2;
     } else {
-		alg = 1;
+        alg = 1;
     }
 
     return ompi_coll_tuned_alltoallv_intra_do_this (sbuf, scounts, sdisps, sdtype,
                                                     rbuf, rcounts, rdisps, rdtype,
                                                     comm, module,
-                                                    alg);
+                                                    alg, ompi_coll_tuned_alltoallv_max_requests);
 }
 
 

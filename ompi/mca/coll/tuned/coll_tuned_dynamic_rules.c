@@ -445,7 +445,7 @@ static const char* coll_rules_comm_rank_distro_table[] = {
 
 const char* coll_rules_comm_rank_distro_to_str(enum comm_rank_distro_t distro)
 {
-    if( (distro < 0) || (distro >= COLL_RULES_DISTRO_COUNT) ) {
+    if( (distro < COLL_RULES_DISTRO_ANY) || (distro >= COLL_RULES_DISTRO_COUNT) ) {
         return NULL;
     }
     return coll_rules_comm_rank_distro_table[distro];
