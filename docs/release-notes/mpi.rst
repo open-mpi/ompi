@@ -65,6 +65,17 @@ supported. This section contains a list of features added for the release.
 * Deprecated :ref:`MPI_Info_get()<mpi_info_get>` and
   :ref:`MPI_Info_get_valuelen()<mpi_info_get_valuelen>`.
 
+MPI-5.0 standard ABI support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Open MPI supports building C MPI applications against the standard MPI
+ABI defined in MPI-5.0.  When Open MPI is configured with standard ABI
+support, it installs ``libmpi_abi``, ``mpicc_abi``, and a standard ABI
+``mpi.h`` under ``$prefix/include/standard_abi``.
+
+This support is limited to C MPI applications in this release.  Open
+MPI does not currently provide a Fortran ABI compiler wrapper.
+
 Removed MPI APIs
 ----------------
 

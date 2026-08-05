@@ -228,7 +228,10 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
     if (NULL == newcomm) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    newcomm->c_name = (char*) malloc (OPAL_MAX_OBJECT_NAME);
+    /* Allocate the name buffer at the MPI Forum ABI maximum so the standard-ABI
+     * entry points can store full-length names.  The traditional OMPI entry
+     * points still limit themselves to OPAL_MAX_OBJECT_NAME. */
+    newcomm->c_name = (char*) malloc (OMPI_MPI_MAX_OBJECT_NAME_ABI);
     if (NULL == newcomm->c_name) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -470,7 +473,7 @@ int ompi_comm_create_w_info (ompi_communicator_t *comm, ompi_group_t *group, opa
     }
 
     /* Set name for debugging purposes */
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %s CREATE FROM %s",
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMMUNICATOR %s CREATE FROM %s",
 	     ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
 
     /* Activate the communicator and init coll-component */
@@ -695,7 +698,7 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
     if ( inter ) {
         OBJ_RELEASE(local_group);
         if (NULL != newcomp->c_local_comm) {
-            snprintf(newcomp->c_local_comm->c_name, MPI_MAX_OBJECT_NAME,
+            snprintf(newcomp->c_local_comm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI,
                      "MPI COMM %s SPLIT FROM %s", ompi_comm_print_cid (newcomp),
 		     ompi_comm_print_cid (comm));
         }
@@ -716,7 +719,7 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
     }
 
     /* Set name for debugging purposes */
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s SPLIT FROM %s",
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s SPLIT FROM %s",
 	     ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
 
     /* Copy info if there is one */
@@ -1317,7 +1320,7 @@ static int ompi_comm_split_type_core(ompi_communicator_t *comm,
         *newcomm = newcomp;
 
         /* Set name for debugging purposes */
-        snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s SPLIT_TYPE FROM %s",
+        snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s SPLIT_TYPE FROM %s",
         ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
         goto exit;
     }
@@ -1643,7 +1646,7 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
     }
 
     /* Set name for debugging purposes */
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s DUP FROM %s",
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s DUP FROM %s",
 	     ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
 
     // Copy info if there is one.
@@ -1808,7 +1811,7 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
     }
 
     /* Set name for debugging purposes */
-    snprintf(context->newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s DUP FROM %s",
+    snprintf(context->newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s DUP FROM %s",
 	     ompi_comm_print_cid (context->newcomp), ompi_comm_print_cid (context->comm));
 
     /* activate communicator and init coll-module */
@@ -1862,7 +1865,7 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
     }
 
     /* Set name for debugging purposes */
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s GROUP FROM %s",
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s GROUP FROM %s",
 	     ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
 
     /* activate communicator and init coll-module */
@@ -1897,7 +1900,7 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     }
 
     /* Set name for debugging purposes */
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMM %s FROM GROUP",
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s FROM GROUP",
 	     ompi_comm_print_cid (newcomp));
 
     newcomp->super.s_info = OBJ_NEW(opal_info_t);
@@ -2212,7 +2215,7 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
     }
 
     /* Set name for debugging purposes */
-    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI INTERCOMM %s FROM GROUP", ompi_comm_print_cid (newcomp));
+    snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI INTERCOMM %s FROM GROUP", ompi_comm_print_cid (newcomp));
 
     // Copy info if there is one.
     newcomp->super.s_info = OBJ_NEW(opal_info_t);
@@ -2338,7 +2341,10 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
 {
 
     OPAL_THREAD_LOCK(&(comm->c_lock));
-    opal_string_copy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
+    /* Bound the store by the full internal buffer size (the ABI maximum); the
+     * per-entry-point limit (OPAL_MAX_OBJECT_NAME for the OMPI bindings, the
+     * ABI maximum for the standard-ABI bindings) is applied by the caller. */
+    opal_string_copy(comm->c_name, name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
     comm->c_flags |= OMPI_COMM_NAMEISSET;
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
 
@@ -3026,7 +3032,7 @@ static int ompi_comm_fill_rest(ompi_communicator_t *comm,
     /* there is no cid at this stage ... make this right and make edgars
      * code call this function and remove dupli cde
      */
-    snprintf (comm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMMUNICATOR %s",
+    snprintf (comm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI_COMMUNICATOR %s",
 	      ompi_comm_print_cid (comm));
 
     /* determine the cube dimensions */

@@ -1,0 +1,81 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define generalized-request callbacks that validate extra_state,
+ *   status mutation, cancellation notification, query invocation, and
+ *   free invocation.  The body uses separate request instances for the
+ *   normal completion and cancellation flows.
+ */
+struct grequest_state {
+    int id;
+    int query_calls;
+    int free_calls;
+    int cancel_calls;
+    int cancel_complete_flag;
+    int failure_code;
+};
+
+static int grequest_query(void *extra_state, MPI_Status *status)
+{
+    struct grequest_state *state = (struct grequest_state *) extra_state;
+    if (NULL == state) {
+        return MPI_ERR_ARG;
+    }
+    if (NULL == status) {
+        state->failure_code = 101;
+        return MPI_SUCCESS;
+    }
+
+    int ret = MPI_Status_set_source(status, state->id);
+    if (MPI_SUCCESS != ret) {
+        state->failure_code = 102;
+        return ret;
+    }
+    ret = MPI_Status_set_tag(status, 7000 + state->id);
+    if (MPI_SUCCESS != ret) {
+        state->failure_code = 103;
+        return ret;
+    }
+    ret = MPI_Status_set_error(status, MPI_SUCCESS);
+    if (MPI_SUCCESS != ret) {
+        state->failure_code = 104;
+        return ret;
+    }
+    ret = MPI_Status_set_cancelled(status, state->cancel_calls > 0);
+    if (MPI_SUCCESS != ret) {
+        state->failure_code = 105;
+        return ret;
+    }
+
+    ++state->query_calls;
+    return MPI_SUCCESS;
+}
+
+static int grequest_free(void *extra_state)
+{
+    struct grequest_state *state = (struct grequest_state *) extra_state;
+    if (NULL == state) {
+        return MPI_ERR_ARG;
+    }
+    ++state->free_calls;
+    return MPI_SUCCESS;
+}
+
+static int grequest_cancel(void *extra_state, int complete)
+{
+    struct grequest_state *state = (struct grequest_state *) extra_state;
+    if (NULL == state) {
+        return MPI_ERR_ARG;
+    }
+    state->cancel_complete_flag = complete;
+    ++state->cancel_calls;
+    return MPI_SUCCESS;
+}

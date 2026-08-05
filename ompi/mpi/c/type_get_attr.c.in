@@ -31,7 +31,7 @@
 #include "ompi/memchecker.h"
 
 PROTOTYPE ERROR_CLASS type_get_attr (DATATYPE type,
-                                     INT type_keyval,
+                                     ATTR_KEY type_keyval,
                                      BUFFER_OUT attribute_val,
                                      INT_OUT flag)
 {

@@ -24,6 +24,6 @@ headers += \
         info/info.h                 \
         info/info_memkind.h
 
-lib@OMPI_LIBMPI_NAME@_la_SOURCES += \
+libopen_mpi_la_SOURCES += \
         info/info.c                 \
         info/info_memkind.c

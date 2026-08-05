@@ -23,6 +23,12 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler.h"
+/*
+ * if compiling for ABI include abi.h to suppress compiler warning about no prototype
+ */
+#ifdef OMPI_NO_MPI_PROTOTYPES
+#include "ompi/mpi/c/abi.h"
+#endif
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
@@ -52,3 +58,17 @@ int MPI_Pcontrol(const int level, ...)
     return MPI_SUCCESS;
 }
 
+#if OMPI_BUILD_MPI_PROFILING && !OPAL_HAVE_WEAK_ALIASES
+/*
+ * See the comment above about weak aliases.  MPI_Pcontrol is variadic, so its
+ * arguments cannot be forwarded to PMPI_Pcontrol.  Open MPI's implementation
+ * ignores them and simply returns MPI_SUCCESS (see the body above), and
+ * MPICH's weak MPI_Pcontrol does the same, so do that here.
+ */
+#undef MPI_Pcontrol
+__opal_attribute_weak__ int MPI_Pcontrol(const int level, ...)
+{
+    (void) level;
+    return MPI_SUCCESS;
+}
+#endif

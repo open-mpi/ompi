@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PARRIVED,
                            pmpi_parrived,
                            pmpi_parrived_,
                            pmpi_parrived__,
-                           pompi_parrived_f,
+                           ompi_parrived_f,
                            (MPI_Fint *request, MPI_Fint *partition, MPI_Fint *flag, MPI_Fint *ierr),
                            (request, partition, flag, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PARRIVED,
 #pragma weak MPI_Parrived_f = ompi_parrived_f
 #pragma weak MPI_Parrived_f08 = ompi_parrived_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_PARRIVED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_PARRIVED,
                            mpi_parrived,
                            mpi_parrived_,
                            mpi_parrived__,
                            ompi_parrived_f,
                            (MPI_Fint *request, MPI_Fint *partition, MPI_Fint *flag, MPI_Fint *ierr),
                            (request, partition, flag, ierr) )
-#else
-#define ompi_parrived_f pompi_parrived_f
-#endif
 #endif
 
 

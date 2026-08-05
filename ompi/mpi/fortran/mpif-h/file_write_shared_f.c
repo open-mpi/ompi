@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_SHARED,
                            pmpi_file_write_shared,
                            pmpi_file_write_shared_,
                            pmpi_file_write_shared__,
-                           pompi_file_write_shared_f,
+                           ompi_file_write_shared_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, count, datatype, status, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_SHARED,
 #pragma weak MPI_File_write_shared_f = ompi_file_write_shared_f
 #pragma weak MPI_File_write_shared_f08 = ompi_file_write_shared_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_SHARED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_WRITE_SHARED,
                            mpi_file_write_shared,
                            mpi_file_write_shared_,
                            mpi_file_write_shared__,
                            ompi_file_write_shared_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, buf, count, datatype, status, ierr) )
-#else
-#define ompi_file_write_shared_f pompi_file_write_shared_f
-#endif
 #endif
 
 

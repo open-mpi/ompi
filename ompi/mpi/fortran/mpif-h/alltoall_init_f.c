@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALL_INIT,
                             pmpi_alltoall_init,
                             pmpi_alltoall_init_,
                             pmpi_alltoall_init__,
-                            pompi_alltoall_init_f,
+                            ompi_alltoall_init_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, info, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALL_INIT,
 #pragma weak MPI_Alltoall_init_f = ompi_alltoall_init_f
 #pragma weak MPI_Alltoall_init_f08 = ompi_alltoall_init_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALL_INIT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_ALLTOALL_INIT,
                             mpi_alltoall_init,
                             mpi_alltoall_init_,
                             mpi_alltoall_init__,
                             ompi_alltoall_init_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, info, request, ierr) )
-#else
-#define ompi_alltoall_init_f pompi_alltoall_init_f
-#endif
 #endif
 
 

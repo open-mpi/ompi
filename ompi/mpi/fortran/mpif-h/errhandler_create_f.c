@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_CREATE,
                            pmpi_errhandler_create,
                            pmpi_errhandler_create_,
                            pmpi_errhandler_create__,
-                           pompi_errhandler_create_f,
+                           ompi_errhandler_create_f,
                            (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ERRHANDLER_CREATE,
 #pragma weak MPI_Errhandler_create_f = ompi_errhandler_create_f
 #pragma weak MPI_Errhandler_create_f08 = ompi_errhandler_create_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_CREATE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_ERRHANDLER_CREATE,
                            mpi_errhandler_create,
                            mpi_errhandler_create_,
                            mpi_errhandler_create__,
                            ompi_errhandler_create_f,
                            (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
-#else
-#define ompi_errhandler_create_f pompi_errhandler_create_f
-#endif
 #endif
 
 void ompi_errhandler_create_f(ompi_errhandler_fortran_handler_fn_t* function,

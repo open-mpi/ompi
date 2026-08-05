@@ -30,7 +30,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS type_delete_attr(DATATYPE type, INT type_keyval)
+PROTOTYPE ERROR_CLASS type_delete_attr(DATATYPE type, ATTR_KEY type_keyval)
 {
    int ret;
 

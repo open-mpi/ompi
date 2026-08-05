@@ -42,7 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PRECV_INIT,
                            pmpi_precv_init,
                            pmpi_precv_init_,
                            pmpi_precv_init__,
-                           pompi_precv_init_f,
+                           ompi_precv_init_f,
                            (char *buf, MPI_Fint *partitions, MPI_Count *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, partitions, count, datatype, dest, tag, comm, info, request, ierr) )
 #endif
@@ -57,17 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PRECV_INIT,
 #pragma weak MPI_Precv_init_f = ompi_precv_init_f
 #pragma weak MPI_Precv_init_f08 = ompi_precv_init_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_PRECV_INIT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_PRECV_INIT,
                            mpi_precv_init,
                            mpi_precv_init_,
                            mpi_precv_init__,
                            ompi_precv_init_f,
                            (char *buf, MPI_Fint *partitions, MPI_Count *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *info, MPI_Fint *request, MPI_Fint *ierr),
                            (buf, partitions, count, datatype, dest, tag, comm, info, request, ierr) )
-#else
-#define ompi_precv_init_f pompi_precv_init_f
-#endif
 #endif
 
 

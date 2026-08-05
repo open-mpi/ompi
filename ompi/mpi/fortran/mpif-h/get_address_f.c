@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ADDRESS,
                            pmpi_get_address,
                            pmpi_get_address_,
                            pmpi_get_address__,
-                           pompi_get_address_f,
+                           ompi_get_address_f,
                            (char *location, MPI_Aint *address, MPI_Fint *ierr),
                            (location, address, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_ADDRESS,
 #pragma weak MPI_Get_address_f = ompi_get_address_f
 #pragma weak MPI_Get_address_f08 = ompi_get_address_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GET_ADDRESS,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GET_ADDRESS,
                            mpi_get_address,
                            mpi_get_address_,
                            mpi_get_address__,
                            ompi_get_address_f,
                            (char *location, MPI_Aint *address, MPI_Fint *ierr),
                            (location, address, ierr) )
-#else
-#define ompi_get_address_f pompi_get_address_f
-#endif
 #endif
 
 

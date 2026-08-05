@@ -36,7 +36,7 @@
 #else
 OMPI_GENERATE_F77_BINDINGS(PMPI_TYPE_CREATE_KEYVAL, pmpi_type_create_keyval,
                            pmpi_type_create_keyval_, pmpi_type_create_keyval__,
-                           pompi_type_create_keyval_f,
+                           ompi_type_create_keyval_f,
                            (ompi_aint_copy_attr_function type_copy_attr_fn,
                             ompi_aint_delete_attr_function type_delete_attr_fn,
                             MPI_Fint *type_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
@@ -53,16 +53,12 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_TYPE_CREATE_KEYVAL, pmpi_type_create_keyval,
 #pragma weak MPI_Type_create_keyval_f = ompi_type_create_keyval_f
 #pragma weak MPI_Type_create_keyval_f08 = ompi_type_create_keyval_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS(MPI_TYPE_CREATE_KEYVAL, mpi_type_create_keyval, mpi_type_create_keyval_,
+OMPI_GENERATE_WEAK_F77_BINDINGS(MPI_TYPE_CREATE_KEYVAL, mpi_type_create_keyval, mpi_type_create_keyval_,
                            mpi_type_create_keyval__, ompi_type_create_keyval_f,
                            (ompi_aint_copy_attr_function type_copy_attr_fn,
                             ompi_aint_delete_attr_function type_delete_attr_fn,
                             MPI_Fint *type_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
                            (type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierr))
-#else
-#define ompi_type_create_keyval_f pompi_type_create_keyval_f
-#endif
 #endif
 
 static char FUNC_NAME[] = "MPI_Type_create_keyval_f";

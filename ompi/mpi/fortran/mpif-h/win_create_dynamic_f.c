@@ -26,7 +26,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_DYNAMIC,
                            pmpi_win_create_dynamic,
                            pmpi_win_create_dynamic_,
                            pmpi_win_create_dynamic__,
-                           pompi_win_create_dynamic_f,
+                           ompi_win_create_dynamic_f,
                            (MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (info, comm, win, ierr) )
 #endif
@@ -41,17 +41,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_DYNAMIC,
 #pragma weak MPI_Win_create_dynamic_f = ompi_win_create_dynamic_f
 #pragma weak MPI_Win_create_dynamic_f08 = ompi_win_create_dynamic_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_DYNAMIC,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_CREATE_DYNAMIC,
                            mpi_win_create_dynamic,
                            mpi_win_create_dynamic_,
                            mpi_win_create_dynamic__,
                            ompi_win_create_dynamic_f,
                            (MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (info, comm, win, ierr) )
-#else
-#define ompi_win_create_dynamic_f pompi_win_create_dynamic_f
-#endif
 #endif
 
 

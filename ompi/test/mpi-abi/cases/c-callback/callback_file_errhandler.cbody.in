@@ -1,0 +1,89 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise file errhandler callback creation, get/set/call,
+ *   callback invocation, predefined-handler restoration, file close,
+ *   and errhandler cleanup.  This validates MPI-IO errhandler callback
+ *   conversion through the ABI layer when MPI-IO support is configured.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+const char *filename = "abi-callback-file-errhandler.dat";
+(void) MPI_File_delete(filename, MPI_INFO_NULL);
+
+file_errhandler_state.file = MPI_FILE_NULL;
+file_errhandler_state.calls = 0;
+file_errhandler_state.error_code = MPI_SUCCESS;
+file_errhandler_state.failure_code = 0;
+
+ret = MPI_File_open(MPI_COMM_WORLD, filename,
+                    MPI_MODE_CREATE | MPI_MODE_RDWR,
+                    MPI_INFO_NULL, &file_errhandler_state.file);
+if (MPI_SUCCESS != ret || MPI_FILE_NULL == file_errhandler_state.file) {
+    return 2;
+}
+
+MPI_Errhandler errhandler = MPI_ERRHANDLER_NULL;
+ret = MPI_File_create_errhandler(file_errhandler_callback, &errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == errhandler) {
+    return 3;
+}
+
+ret = MPI_File_set_errhandler(file_errhandler_state.file, errhandler);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+
+MPI_Errhandler queried = MPI_ERRHANDLER_NULL;
+ret = MPI_File_get_errhandler(file_errhandler_state.file, &queried);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == queried) {
+    return 5;
+}
+ret = MPI_Errhandler_free(&queried);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != queried) {
+    return 6;
+}
+
+ret = MPI_File_call_errhandler(file_errhandler_state.file, MPI_ERR_OTHER);
+if (MPI_SUCCESS != ret || 0 != file_errhandler_state.failure_code ||
+    1 != file_errhandler_state.calls ||
+    MPI_ERR_OTHER != file_errhandler_state.error_code) {
+    return 7;
+}
+
+ret = MPI_File_set_errhandler(file_errhandler_state.file,
+                              MPI_ERRORS_RETURN);
+if (MPI_SUCCESS != ret) {
+    return 8;
+}
+ret = MPI_Errhandler_free(&errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL != errhandler ||
+    0 != file_errhandler_state.failure_code ||
+    1 != file_errhandler_state.calls) {
+    return 9;
+}
+
+ret = MPI_File_close(&file_errhandler_state.file);
+if (MPI_SUCCESS != ret || MPI_FILE_NULL != file_errhandler_state.file) {
+    return 10;
+}
+ret = MPI_File_delete(filename, MPI_INFO_NULL);
+if (MPI_SUCCESS != ret) {
+    return 11;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 12;
+}

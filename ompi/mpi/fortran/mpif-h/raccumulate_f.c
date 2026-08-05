@@ -42,7 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RACCUMULATE,
                             pmpi_raccumulate,
                             pmpi_raccumulate_,
                             pmpi_raccumulate__,
-                            pompi_raccumulate_f,
+                            ompi_raccumulate_f,
                             (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr),
                             (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request, ierr) )
 #endif
@@ -57,17 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_RACCUMULATE,
 #pragma weak MPI_Raccumulate_f = ompi_raccumulate_f
 #pragma weak MPI_Raccumulate_f08 = ompi_raccumulate_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_RACCUMULATE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_RACCUMULATE,
                             mpi_raccumulate,
                             mpi_raccumulate_,
                             mpi_raccumulate__,
                             ompi_raccumulate_f,
                             (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr),
                             (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win, request, ierr) )
-#else
-#define ompi_raccumulate_f pompi_raccumulate_f
-#endif
 #endif
 
 

@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_FREE,
                            pmpi_request_free,
                            pmpi_request_free_,
                            pmpi_request_free__,
-                           pompi_request_free_f,
+                           ompi_request_free_f,
                            (MPI_Fint *request, MPI_Fint *ierr),
                            (request, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_FREE,
 #pragma weak MPI_Request_free_f = ompi_request_free_f
 #pragma weak MPI_Request_free_f08 = ompi_request_free_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_FREE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_REQUEST_FREE,
                            mpi_request_free,
                            mpi_request_free_,
                            mpi_request_free__,
                            ompi_request_free_f,
                            (MPI_Fint *request, MPI_Fint *ierr),
                            (request, ierr) )
-#else
-#define ompi_request_free_f pompi_request_free_f
-#endif
 #endif
 
 

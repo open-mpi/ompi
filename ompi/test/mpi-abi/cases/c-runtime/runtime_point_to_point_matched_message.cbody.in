@@ -1,0 +1,120 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Validate matched-probe/message receive APIs and message conversion.
+ *   MPI_Imrecv returns a request, so completion is checked separately.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
+
+int send_value = rank + 70;
+int recv_value = -1;
+ret = MPI_Sendrecv(&send_value, 1, MPI_INT, 1 - rank, 970,
+                   &recv_value, 1, MPI_INT, 1 - rank, 970,
+                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || recv_value != 71 - rank) {
+    return 5;
+}
+
+int replace_value = rank + 80;
+ret = MPI_Sendrecv_replace(&replace_value, 1, MPI_INT, 1 - rank,
+                           971, 1 - rank, 971, MPI_COMM_WORLD,
+                           MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || replace_value != 81 - rank) {
+    return 6;
+}
+
+if (0 == rank) {
+    int value = 73;
+    ret = MPI_Send(&value, 1, MPI_INT, 1, 972, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 7;
+    }
+    value = 75;
+    ret = MPI_Send(&value, 1, MPI_INT, 1, 973, MPI_COMM_WORLD);
+    if (MPI_SUCCESS != ret) {
+        return 8;
+    }
+} else if (1 == rank) {
+    MPI_Message message = MPI_MESSAGE_NULL;
+    MPI_Status status;
+    ret = MPI_Mprobe(0, 972, MPI_COMM_WORLD, &message, &status);
+    if (MPI_SUCCESS != ret || MPI_MESSAGE_NULL == message ||
+        0 != status.MPI_SOURCE || 972 != status.MPI_TAG) {
+        return 9;
+    }
+    int abi_value = MPI_Message_toint(message);
+    if (MPI_Message_fromint(abi_value) != message) {
+        return 10;
+    }
+    int count = -1;
+    ret = MPI_Get_count(&status, MPI_INT, &count);
+    if (MPI_SUCCESS != ret || 1 != count) {
+        return 11;
+    }
+    recv_value = -1;
+    ret = MPI_Mrecv(&recv_value, 1, MPI_INT, &message, &status);
+    if (MPI_SUCCESS != ret || 73 != recv_value ||
+        MPI_MESSAGE_NULL != message) {
+        return 12;
+    }
+
+    int flag = 0;
+    for (int i = 0; i < 1000 && !flag; ++i) {
+        ret = MPI_Improbe(0, 973, MPI_COMM_WORLD, &flag, &message,
+                          &status);
+        if (MPI_SUCCESS != ret) {
+            return 13;
+        }
+    }
+    if (!flag || MPI_MESSAGE_NULL == message ||
+        0 != status.MPI_SOURCE || 973 != status.MPI_TAG) {
+        return 14;
+    }
+    /*
+     * MPI_Imrecv starts the matched receive but completes through a
+     * request.  Check the message is consumed immediately, then wait
+     * separately so a wrapper that confuses message and request ABI
+     * values cannot pass.
+     */
+    MPI_Request request = MPI_REQUEST_NULL;
+    recv_value = -1;
+    ret = MPI_Imrecv(&recv_value, 1, MPI_INT, &message, &request);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL == request ||
+        MPI_MESSAGE_NULL != message) {
+        return 15;
+    }
+    ret = MPI_Wait(&request, &status);
+    if (MPI_SUCCESS != ret || MPI_REQUEST_NULL != request ||
+        75 != recv_value) {
+        return 16;
+    }
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 17;
+}

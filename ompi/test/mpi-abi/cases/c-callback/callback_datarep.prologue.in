@@ -1,0 +1,112 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define MPI-IO datarep conversion callbacks that validate the ABI
+ *   datatype, count, position, extra_state, and file/user buffer
+ *   arguments passed back from Open MPI.  The body registers the
+ *   datarep and uses it in a file view to force read, write, and extent
+ *   callbacks when the MPI-IO implementation supports user datareps.
+ */
+struct datarep_state {
+    int read_calls;
+    int write_calls;
+    int extent_calls;
+    int failure_code;
+    int token;
+};
+
+static struct datarep_state datarep_state;
+
+static int datarep_type_size(MPI_Datatype datatype, int *size)
+{
+    int ret = MPI_Type_size(datatype, size);
+    if (MPI_SUCCESS != ret) {
+        datarep_state.failure_code = 101;
+        return ret;
+    }
+    if (MPI_INT != datatype || (int) sizeof(int) != *size) {
+        datarep_state.failure_code = 102;
+    }
+    return MPI_SUCCESS;
+}
+
+static int datarep_read(void *userbuf, MPI_Datatype datatype, int count,
+                        void *filebuf, MPI_Offset position,
+                        void *extra_state)
+{
+    struct datarep_state *state = (struct datarep_state *) extra_state;
+    int size = 0;
+    int ret = datarep_type_size(datatype, &size);
+    if (MPI_SUCCESS != ret) {
+        return ret;
+    }
+    if (&datarep_state != state || 12345 != state->token) {
+        state = &datarep_state;
+        state->failure_code = 111;
+    } else if (NULL == userbuf || NULL == filebuf) {
+        state->failure_code = 112;
+    } else if (count < 1) {
+        state->failure_code = 113;
+    } else if (position < 0) {
+        state->failure_code = 114;
+    } else {
+        memcpy(userbuf, filebuf, (size_t) count * (size_t) size);
+        ++state->read_calls;
+    }
+    return MPI_SUCCESS;
+}
+
+static int datarep_write(void *userbuf, MPI_Datatype datatype, int count,
+                         void *filebuf, MPI_Offset position,
+                         void *extra_state)
+{
+    struct datarep_state *state = (struct datarep_state *) extra_state;
+    int size = 0;
+    int ret = datarep_type_size(datatype, &size);
+    if (MPI_SUCCESS != ret) {
+        return ret;
+    }
+    if (&datarep_state != state || 12345 != state->token) {
+        state = &datarep_state;
+        state->failure_code = 121;
+    } else if (NULL == userbuf || NULL == filebuf) {
+        state->failure_code = 122;
+    } else if (count < 1) {
+        state->failure_code = 123;
+    } else if (position < 0) {
+        state->failure_code = 124;
+    } else {
+        memcpy(filebuf, userbuf, (size_t) count * (size_t) size);
+        ++state->write_calls;
+    }
+    return MPI_SUCCESS;
+}
+
+static int datarep_extent(MPI_Datatype datatype, MPI_Aint *extent,
+                          void *extra_state)
+{
+    struct datarep_state *state = (struct datarep_state *) extra_state;
+    int size = 0;
+    int ret = datarep_type_size(datatype, &size);
+    if (MPI_SUCCESS != ret) {
+        return ret;
+    }
+    if (&datarep_state != state || 12345 != state->token) {
+        state = &datarep_state;
+        state->failure_code = 131;
+    } else if (NULL == extent) {
+        state->failure_code = 132;
+    } else {
+        *extent = (MPI_Aint) size;
+        ++state->extent_calls;
+    }
+    return MPI_SUCCESS;
+}

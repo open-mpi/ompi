@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_VIEW,
                            pmpi_file_set_view,
                            pmpi_file_set_view_,
                            pmpi_file_set_view__,
-                           pompi_file_set_view_f,
+                           ompi_file_set_view_f,
                            (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr, int datarep_len),
                            (fh, disp, etype, filetype, datarep, info, ierr, datarep_len) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SET_VIEW,
 #pragma weak MPI_File_set_view_f = ompi_file_set_view_f
 #pragma weak MPI_File_set_view_f08 = ompi_file_set_view_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_VIEW,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_SET_VIEW,
                            mpi_file_set_view,
                            mpi_file_set_view_,
                            mpi_file_set_view__,
                            ompi_file_set_view_f,
                            (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr, int datarep_len),
                            (fh, disp, etype, filetype, datarep, info, ierr, datarep_len) )
-#else
-#define ompi_file_set_view_f pompi_file_set_view_f
-#endif
 #endif
 
 

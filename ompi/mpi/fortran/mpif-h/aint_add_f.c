@@ -41,10 +41,10 @@
 #pragma weak PMPI_Aint_add_f = ompi_aint_add_f
 #pragma weak PMPI_Aint_add_f08 = ompi_aint_add_f
 #else
-MPI_Aint PMPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
-MPI_Aint pmpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
-MPI_Aint pmpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
-MPI_Aint pmpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add_f(base, diff); }
+MPI_Aint PMPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+MPI_Aint pmpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
 #endif
 #endif
 
@@ -57,14 +57,10 @@ MPI_Aint pmpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return pompi_aint_add
 #pragma weak MPI_Aint_add_f = ompi_aint_add_f
 #pragma weak MPI_Aint_add_f08 = ompi_aint_add_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-MPI_Aint MPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
-MPI_Aint mpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
-MPI_Aint mpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
-MPI_Aint mpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
-#else
-#define ompi_aint_add_f pompi_aint_add_f
-#endif
+__opal_attribute_weak__ MPI_Aint MPI_AINT_ADD(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+__opal_attribute_weak__ MPI_Aint mpi_aint_add(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+__opal_attribute_weak__ MPI_Aint mpi_aint_add_(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
+__opal_attribute_weak__ MPI_Aint mpi_aint_add__(MPI_Aint *base, MPI_Aint *diff) { return ompi_aint_add_f(base, diff); }
 #endif
 
 MPI_Aint ompi_aint_add_f(MPI_Aint *base, MPI_Aint *diff)

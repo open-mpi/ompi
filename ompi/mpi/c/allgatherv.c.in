@@ -17,7 +17,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -38,7 +38,7 @@
 #include "ompi/runtime/ompi_spc.h"
 
 
-PROTOTYPE ERROR_CLASS allgatherv(BUFFER sendbuf, COUNT sendcount, DATATYPE sendtype,
+PROTOTYPE ERROR_CLASS allgatherv(BUFFER_CONST sendbuf, COUNT sendcount, DATATYPE sendtype,
                    BUFFER_OUT recvbuf, COUNT_ARRAY recvcounts,
                    DISP_ARRAY displs, DATATYPE recvtype, COMM comm)
 {

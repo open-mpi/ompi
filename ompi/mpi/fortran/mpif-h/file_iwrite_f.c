@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE,
                            pmpi_file_iwrite,
                            pmpi_file_iwrite_,
                            pmpi_file_iwrite__,
-                           pompi_file_iwrite_f,
+                           ompi_file_iwrite_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr),
                            (fh, buf, count, datatype, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE,
 #pragma weak MPI_File_iwrite_f = ompi_file_iwrite_f
 #pragma weak MPI_File_iwrite_f08 = ompi_file_iwrite_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_IWRITE,
                            mpi_file_iwrite,
                            mpi_file_iwrite_,
                            mpi_file_iwrite__,
                            ompi_file_iwrite_f,
                            (MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr),
                            (fh, buf, count, datatype, request, ierr) )
-#else
-#define ompi_file_iwrite_f pompi_file_iwrite_f
-#endif
 #endif
 
 

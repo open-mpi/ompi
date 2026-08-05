@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_RESIZED,
                            pmpi_type_create_resized,
                            pmpi_type_create_resized_,
                            pmpi_type_create_resized__,
-                           pompi_type_create_resized_f,
+                           ompi_type_create_resized_f,
                            (MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *newtype, MPI_Fint *ierr),
                            (oldtype, lb, extent, newtype, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_RESIZED,
 #pragma weak MPI_Type_create_resized_f = ompi_type_create_resized_f
 #pragma weak MPI_Type_create_resized_f08 = ompi_type_create_resized_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
                            mpi_type_create_resized,
                            mpi_type_create_resized_,
                            mpi_type_create_resized__,
                            ompi_type_create_resized_f,
                            (MPI_Fint *oldtype, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *newtype, MPI_Fint *ierr),
                            (oldtype, lb, extent, newtype, ierr) )
-#else
-#define ompi_type_create_resized_f pompi_type_create_resized_f
-#endif
 #endif
 
 

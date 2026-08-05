@@ -81,8 +81,12 @@ struct ompi_win_t {
 
     opal_mutex_t  w_lock;
 
+    /* Dynamically allocated to the MPI Forum ABI maximum
+     * (OMPI_MPI_MAX_OBJECT_NAME_ABI, from configure) so the standard-ABI entry
+     * points can store full-length names.  The traditional OMPI entry points
+     * still limit themselves to OPAL_MAX_OBJECT_NAME (== MPI_MAX_OBJECT_NAME). */
     char *w_name;
-  
+
     /* Group associated with this window. */
     ompi_group_t *w_group;
 
