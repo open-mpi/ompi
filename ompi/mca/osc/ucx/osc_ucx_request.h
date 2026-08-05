@@ -4,6 +4,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +16,7 @@
 #define OMPI_OSC_UCX_REQUEST_H
 
 #include "ompi/request/request.h"
+#include "opal/class/opal_list.h"
 
 
 enum req_type {
@@ -50,6 +52,7 @@ typedef struct ompi_osc_ucx_generic_request {
 
 typedef struct ompi_osc_ucx_accumulate_request {
     ompi_osc_ucx_request_t super;
+    opal_list_item_t pending_item;
     struct ompi_op_t *op;
     int phase;
     int acc_type;
@@ -102,6 +105,11 @@ OBJ_CLASS_DECLARATION(ompi_osc_ucx_accumulate_request_t);
                 if (module->ctx->num_incomplete_req_ops > 0) {                          \
                     opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);        \
                 }                                                                       \
+                /* Complete parked accumulate requests before re-checking the           \
+                 * free list.  Drain directly instead of going through                  \
+                 * opal_progress(), which has no recursion guard and may                \
+                 * already be on the stack when this macro runs. */                     \
+                ompi_osc_ucx_drain_pending_acc();                                       \
             }                                                                           \
         } while (item == NULL);                                                         \
         req = (ompi_osc_ucx_accumulate_request_t*) item;                                \
@@ -143,5 +151,9 @@ OBJ_CLASS_DECLARATION(ompi_osc_ucx_accumulate_request_t);
     } while (0)
 
 void ompi_osc_ucx_req_completion(void *request);
+
+/* Complete any accumulate requests parked by the completion callback.
+ * Returns the number of requests completed. */
+int ompi_osc_ucx_drain_pending_acc(void);
 
 #endif /* OMPI_OSC_UCX_REQUEST_H */

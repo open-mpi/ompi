@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2022 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,6 +12,8 @@
  */
 
 #include "ompi_config.h"
+
+#include <stddef.h>
 
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
@@ -638,6 +641,13 @@ static inline int ompi_osc_ucx_acc_lock(ompi_osc_ucx_module_t *module, int targe
             }
 
             opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
+            /* The accumulate lock held by a nonblocking accumulate is released
+             * by ompi_osc_ucx_nonblocking_ops_finalize(), which only runs from
+             * ompi_osc_ucx_process_acc_completion() on the drain path.  It is
+             * not reachable from ucp_worker_progress(), so progressing the
+             * worker alone would spin here forever.  Drain the parked requests
+             * as well so the holder of the lock can actually release it. */
+            ompi_osc_ucx_drain_pending_acc();
         }
 
         *lock_acquired = true;
@@ -1718,188 +1728,252 @@ static inline int ompi_osc_ucx_nonblocking_ops_finalize(ompi_osc_ucx_module_t *m
     return ret;
 }
 
-void ompi_osc_ucx_req_completion(void *request) {
-    ompi_osc_ucx_generic_request_t *ucx_req = (ompi_osc_ucx_generic_request_t *)request;
+static void ompi_osc_ucx_process_acc_completion(ompi_osc_ucx_accumulate_request_t *req) {
     int ret = OMPI_SUCCESS;
-    ompi_osc_ucx_module_t *module = ucx_req->super.module;
-    if (ucx_req->super.request_type == ACCUMULATE_REQ) {
-        /* This is an accumulate request */
-        ompi_osc_ucx_accumulate_request_t *req = (ompi_osc_ucx_accumulate_request_t *)request;
-        assert(req->phase != ACC_INIT);
-        void *free_addr = NULL;
-        bool release_lock = false;
-        ptrdiff_t temp_extent, temp_lb;
-        const void *origin_addr = req->origin_addr;
-        int origin_count = req->origin_count;
-        struct ompi_datatype_t *origin_dt = req->origin_dt;
-        void *temp_addr = req->stage_addr;
-        int temp_count = req->stage_count;
-        struct ompi_datatype_t *temp_dt = req->stage_dt;
-        int target = req->target;
-        int target_count = req->target_count;
-        int target_disp = req->target_disp;
-        struct ompi_datatype_t *target_dt = req->target_dt;
-        struct ompi_win_t *win = req->win;
-        struct ompi_op_t *op = req->op;
+    ompi_osc_ucx_module_t *module = req->super.module;
+    assert(req->phase != ACC_INIT);
+    void *free_addr = NULL;
+    bool release_lock = false;
+    ptrdiff_t temp_extent, temp_lb;
+    const void *origin_addr = req->origin_addr;
+    int origin_count = req->origin_count;
+    struct ompi_datatype_t *origin_dt = req->origin_dt;
+    void *temp_addr = req->stage_addr;
+    int temp_count = req->stage_count;
+    struct ompi_datatype_t *temp_dt = req->stage_dt;
+    int target = req->target;
+    int target_count = req->target_count;
+    int target_disp = req->target_disp;
+    struct ompi_datatype_t *target_dt = req->target_dt;
+    struct ompi_win_t *win = req->win;
+    struct ompi_op_t *op = req->op;
 
-        if (req->phase != ACC_FINALIZE) {
-            /* Avoid calling flush while we are already in progress */
-            module->mem->skip_periodic_flush = true;
-            module->state_mem->skip_periodic_flush = true;
+    if (req->phase != ACC_FINALIZE) {
+        /* Avoid calling flush while we are already in progress */
+        module->mem->skip_periodic_flush = true;
+        module->state_mem->skip_periodic_flush = true;
+    }
+
+    switch (req->phase) {
+        case ACC_FINALIZE:
+        {
+            if (req->free_ptr != NULL) {
+                free(req->free_ptr);
+                req->free_ptr = NULL;
+            }
+            if (origin_dt != NULL && !ompi_datatype_is_predefined(origin_dt)) {
+                OBJ_RELEASE(origin_dt);
+            }
+            if (target_dt != NULL && !ompi_datatype_is_predefined(target_dt)) {
+                OBJ_RELEASE(target_dt);
+            }
+            if (temp_dt != NULL && !ompi_datatype_is_predefined(temp_dt)) {
+                OBJ_RELEASE(temp_dt);
+            }
+            break;
         }
-
-        switch (req->phase) {
-            case ACC_FINALIZE:
-            {
-                if (req->free_ptr != NULL) {
-                    free(req->free_ptr);
-                    req->free_ptr = NULL;
-                }
-                if (origin_dt != NULL && !ompi_datatype_is_predefined(origin_dt)) {
-                    OBJ_RELEASE(origin_dt);
-                }
-                if (target_dt != NULL && !ompi_datatype_is_predefined(target_dt)) {
-                    OBJ_RELEASE(target_dt);
-                }
-                if (temp_dt != NULL && !ompi_datatype_is_predefined(temp_dt)) {
-                    OBJ_RELEASE(temp_dt);
-                }
-                break;
-            }
-            case ACC_GET_RESULTS_DATA:
-            {
-                /* This is a get-accumulate operation */
-                if (op == &ompi_mpi_op_no_op.op) {
-                    /* Done with reading the target data, so release the
-                     * acc lock and return */
-                    release_lock = true;
-                } else if (op == &ompi_mpi_op_replace.op) {
-                    assert(target_dt != NULL && origin_dt != NULL);
-                    /* Now that we have the results data, replace the target
-                     * buffer with origin buffer and then release the lock  */
-                    ret = ompi_osc_ucx_acc_rputget(NULL, 0, NULL, target, target_disp,
-                            target_count, target_dt, op, win, 0, origin_addr, origin_count,
-                            origin_dt, true, -1, NONE);
-                    if (ret != OMPI_SUCCESS) {
-                        OSC_UCX_ERROR("ompi_osc_ucx_acc_rputget failed ret= %d\n", ret);
-                        free(temp_addr);
-                        abort();
-                    }
-                    release_lock = true;
-                }
-                break;
-            }
-
-            case ACC_PUT_TARGET_DATA:
-            {
-                /* This is an accumulate (not get-accumulate) operation */
-                assert(op == &ompi_mpi_op_replace.op);
+        case ACC_GET_RESULTS_DATA:
+        {
+            /* This is a get-accumulate operation */
+            if (op == &ompi_mpi_op_no_op.op) {
+                /* Done with reading the target data, so release the
+                 * acc lock and return */
                 release_lock = true;
-                break;
-            }
-
-            case ACC_GET_STAGE_DATA:
-            {
-                assert(op != &ompi_mpi_op_replace.op && op != &ompi_mpi_op_no_op.op);
-                assert(origin_dt != NULL && temp_dt != NULL);
-
-                bool is_origin_contig =
-                    ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
-            
-                if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
-                    ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
-                } else {
-                    ucx_iovec_t *origin_ucx_iov = NULL;
-                    uint32_t origin_ucx_iov_count = 0;
-                    uint32_t origin_ucx_iov_idx = 0;
-
-                    ret = create_iov_list(origin_addr, origin_count, origin_dt,
-                                          &origin_ucx_iov, &origin_ucx_iov_count);
-                    if (ret != OMPI_SUCCESS) {
-                        OSC_UCX_ERROR("create_iov_list failed ret= %d\n", ret);
-                        free(temp_addr);
-                        abort();
-                    }
-
-                    if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
-                        ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
-                        size_t temp_size;
-                        char *curr_temp_addr = (char *)temp_addr;
-                        ompi_datatype_type_size(temp_dt, &temp_size);
-                        while (origin_ucx_iov_idx < origin_ucx_iov_count) {
-                            int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
-                            ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
-                                           curr_temp_addr, curr_count, temp_dt);
-                            curr_temp_addr += curr_count * temp_size;
-                            origin_ucx_iov_idx++;
-                        }
-                    } else {
-                        int i;
-                        void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-                        for (i = 0; i < (int)temp_count; i++) {
-                            ompi_op_reduce(op, curr_origin_addr,
-                                           (void *)((char *)temp_addr + i * temp_extent),
-                                           1, temp_dt);
-                            curr_origin_addr = (void *)((char *)curr_origin_addr + temp_extent);
-                            origin_ucx_iov_idx++;
-                            if (curr_origin_addr >= (void *)((char
-                                            *)origin_ucx_iov[origin_ucx_iov_idx].addr
-                                        +
-                                        origin_ucx_iov[origin_ucx_iov_idx].len))
-                            {
-                                origin_ucx_iov_idx++;
-                                curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                            }
-                        }
-                    }
-
-                    free(origin_ucx_iov);
-                }
-            
-                if (req->acc_type == GET_ACCUMULATE) {
-                    /* Do fence to make sure target results are received before
-                     * writing into target */
-                    ret = opal_common_ucx_wpmem_fence(module->mem);
-                    if (ret != OMPI_SUCCESS) {
-                        OSC_UCX_ERROR("opal_common_ucx_mem_fence failed: %d", ret);
-                        abort();
-                    }
-                }
-
+            } else if (op == &ompi_mpi_op_replace.op) {
+                assert(target_dt != NULL && origin_dt != NULL);
+                /* Now that we have the results data, replace the target
+                 * buffer with origin buffer and then release the lock  */
                 ret = ompi_osc_ucx_acc_rputget(NULL, 0, NULL, target, target_disp,
-                        target_count, target_dt, op, win, 0, temp_addr, temp_count,
-                        temp_dt, true, -1, NONE);
+                        target_count, target_dt, op, win, 0, origin_addr, origin_count,
+                        origin_dt, true, -1, NONE);
                 if (ret != OMPI_SUCCESS) {
                     OSC_UCX_ERROR("ompi_osc_ucx_acc_rputget failed ret= %d\n", ret);
                     free(temp_addr);
                     abort();
                 }
                 release_lock = true;
-                free_addr = temp_addr;
-                break;
+            }
+            break;
+        }
+
+        case ACC_PUT_TARGET_DATA:
+        {
+            /* This is an accumulate (not get-accumulate) operation */
+            assert(op == &ompi_mpi_op_replace.op);
+            release_lock = true;
+            break;
+        }
+
+        case ACC_GET_STAGE_DATA:
+        {
+            assert(op != &ompi_mpi_op_replace.op && op != &ompi_mpi_op_no_op.op);
+            assert(origin_dt != NULL && temp_dt != NULL);
+
+            bool is_origin_contig =
+                ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
+
+            if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
+                ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
+            } else {
+                ucx_iovec_t *origin_ucx_iov = NULL;
+                uint32_t origin_ucx_iov_count = 0;
+                uint32_t origin_ucx_iov_idx = 0;
+
+                ret = create_iov_list(origin_addr, origin_count, origin_dt,
+                                      &origin_ucx_iov, &origin_ucx_iov_count);
+                if (ret != OMPI_SUCCESS) {
+                    OSC_UCX_ERROR("create_iov_list failed ret= %d\n", ret);
+                    free(temp_addr);
+                    abort();
+                }
+
+                if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
+                    ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
+                    size_t temp_size;
+                    char *curr_temp_addr = (char *)temp_addr;
+                    ompi_datatype_type_size(temp_dt, &temp_size);
+                    while (origin_ucx_iov_idx < origin_ucx_iov_count) {
+                        int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
+                        ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
+                                       curr_temp_addr, curr_count, temp_dt);
+                        curr_temp_addr += curr_count * temp_size;
+                        origin_ucx_iov_idx++;
+                    }
+                } else {
+                    int i;
+                    void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
+                    ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
+                    for (i = 0; i < (int)temp_count; i++) {
+                        ompi_op_reduce(op, curr_origin_addr,
+                                       (void *)((char *)temp_addr + i * temp_extent),
+                                       1, temp_dt);
+                        curr_origin_addr = (void *)((char *)curr_origin_addr + temp_extent);
+                        origin_ucx_iov_idx++;
+                        if (curr_origin_addr >= (void *)((char
+                                        *)origin_ucx_iov[origin_ucx_iov_idx].addr
+                                    +
+                                    origin_ucx_iov[origin_ucx_iov_idx].len))
+                        {
+                            origin_ucx_iov_idx++;
+                            curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
+                        }
+                    }
+                }
+
+                free(origin_ucx_iov);
             }
 
-            default:
-            {
-                OSC_UCX_ERROR("accumulate progress failed\n");
+            if (req->acc_type == GET_ACCUMULATE) {
+                /* Do fence to make sure target results are received before
+                 * writing into target */
+                ret = opal_common_ucx_wpmem_fence(module->mem);
+                if (ret != OMPI_SUCCESS) {
+                    OSC_UCX_ERROR("opal_common_ucx_mem_fence failed: %d", ret);
+                    abort();
+                }
+            }
+
+            ret = ompi_osc_ucx_acc_rputget(NULL, 0, NULL, target, target_disp,
+                    target_count, target_dt, op, win, 0, temp_addr, temp_count,
+                    temp_dt, true, -1, NONE);
+            if (ret != OMPI_SUCCESS) {
+                OSC_UCX_ERROR("ompi_osc_ucx_acc_rputget failed ret= %d\n", ret);
+                free(temp_addr);
                 abort();
             }
+            release_lock = true;
+            free_addr = temp_addr;
+            break;
         }
 
-        if (release_lock) {
-            /* Ordering between previous put/get operations and unlock will be realized
-             * through the ucp fence inside the finalize function */
-            ompi_osc_ucx_nonblocking_ops_finalize(module, target,
-                    req->lock_acquired, win, free_addr);
+        default:
+        {
+            OSC_UCX_ERROR("accumulate progress failed\n");
+            abort();
         }
+    }
 
-        if (req->phase != ACC_FINALIZE) {
-            module->mem->skip_periodic_flush = false;
-            module->state_mem->skip_periodic_flush = false;
-        }
+    if (release_lock) {
+        /* Ordering between previous put/get operations and unlock will be realized
+         * through the ucp fence inside the finalize function */
+        ompi_osc_ucx_nonblocking_ops_finalize(module, target,
+                req->lock_acquired, win, free_addr);
+    }
+
+    if (req->phase != ACC_FINALIZE) {
+        module->mem->skip_periodic_flush = false;
+        module->state_mem->skip_periodic_flush = false;
     }
     assert(module->ctx->num_incomplete_req_ops > 0);
     OSC_UCX_DECREMENT_OUTSTANDING_NB_OPS(module);
+    ompi_request_complete(&(req->super.super), true);
+    assert(module->ctx->num_incomplete_req_ops >= 0);
+}
+
+void ompi_osc_ucx_req_completion(void *request) {
+    ompi_osc_ucx_generic_request_t *ucx_req = (ompi_osc_ucx_generic_request_t *)request;
+    ompi_osc_ucx_module_t *module = ucx_req->super.module;
+
+    if (ucx_req->super.request_type == ACCUMULATE_REQ) {
+        ompi_osc_ucx_accumulate_request_t *req =
+            (ompi_osc_ucx_accumulate_request_t *)request;
+        assert(req->phase != ACC_INIT);
+        if (req->phase != ACC_FINALIZE) {
+            opal_mutex_lock(&mca_osc_ucx_component.pending_acc_lock);
+            opal_list_append(&mca_osc_ucx_component.pending_acc_ops,
+                             &req->pending_item);
+            opal_mutex_unlock(&mca_osc_ucx_component.pending_acc_lock);
+            return;
+        }
+        ompi_osc_ucx_process_acc_completion(req);
+        return;
+    }
+
+    assert(module->ctx->num_incomplete_req_ops > 0);
+    OSC_UCX_DECREMENT_OUTSTANDING_NB_OPS(module);
     ompi_request_complete(&(ucx_req->super.super), true);
+}
+
+int ompi_osc_ucx_drain_pending_acc(void) {
+    opal_list_item_t *item;
+    int completed = 0;
+
+    /* ompi_osc_ucx_process_acc_completion() can issue new operations that
+     * block waiting for an accumulate lock, and those wait loops drain again,
+     * so this function is re-entrant.  A nested call must be allowed to
+     * complete requests that the outer call has not popped yet, otherwise the
+     * nested waiter can never make progress.  Bound the nesting instead of
+     * refusing it outright so the recursion cannot run away. */
+    opal_mutex_lock(&mca_osc_ucx_component.pending_acc_lock);
+    if (OSC_UCX_MAX_DRAIN_DEPTH <= mca_osc_ucx_component.drain_depth) {
+        opal_mutex_unlock(&mca_osc_ucx_component.pending_acc_lock);
+        return 0;
+    }
+    mca_osc_ucx_component.drain_depth++;
+
+    /* Pop one request at a time and process it with the lock dropped.  Holding
+     * pending_acc_lock across ompi_osc_ucx_process_acc_completion() would nest
+     * it inside the winfo mutex taken by the fence, and would hide the rest of
+     * the list from a nested drain. */
+    for (;;) {
+        ompi_osc_ucx_accumulate_request_t *req;
+
+        item = opal_list_remove_first(&mca_osc_ucx_component.pending_acc_ops);
+        if (NULL == item) {
+            break;
+        }
+        opal_mutex_unlock(&mca_osc_ucx_component.pending_acc_lock);
+
+        req = (ompi_osc_ucx_accumulate_request_t *)((char *)item -
+                offsetof(ompi_osc_ucx_accumulate_request_t, pending_item));
+        ompi_osc_ucx_process_acc_completion(req);
+        completed++;
+
+        opal_mutex_lock(&mca_osc_ucx_component.pending_acc_lock);
+    }
+
+    mca_osc_ucx_component.drain_depth--;
+    opal_mutex_unlock(&mca_osc_ucx_component.pending_acc_lock);
+
+    return completed;
 }
