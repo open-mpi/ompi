@@ -33,6 +33,7 @@
 #include <string.h>
 
 #include "accelerator_cuda.h"
+#include "accelerator_cuda_addr_cache.h"
 #include "opal/mca/accelerator/base/base.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/dl/base/base.h"
@@ -65,6 +66,8 @@ static opal_accelerator_cuda_nvlink_domain_t accelerator_cuda_nvlink_domain = {
 static char *accelerator_cuda_nvlink_domain_mca_string =
     "cuda_device=-1,cluster_uuid=00000000000000000000000000000000,clique_id=0";
 static bool accelerator_cuda_nvlink_domain_mca_string_owned = false;
+bool opal_accelerator_cuda_enable_vmm_check = true;
+bool opal_accelerator_cuda_enable_mpool_check = true;
 
 #define STRINGIFY2(x) #x
 #define STRINGIFY(x)  STRINGIFY2(x)
@@ -177,6 +180,50 @@ static int accelerator_cuda_component_register(void)
     (void) mca_base_var_register_synonym(ret, "opal", "accelerator", NULL,
                                          "nvlink_domain", 0);
     accelerator_cuda_nvlink_domain_mca_string_owned = true;
+
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "enable_vmm_check",
+                                           "Enable fallback classification of pointers via "
+                                           "cuMemRetainAllocationHandle for CUDA Virtual Memory "
+                                           "Management allocations. Disable if the application "
+                                           "does not use cuMemMap-based allocations to avoid the "
+                                           "per-call cost in check_addr.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_enable_vmm_check);
+
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "enable_mpool_check",
+                                           "Enable fallback classification of pointers via "
+                                           "cuPointerGetAttribute(MEMPOOL_HANDLE) for CUDA "
+                                           "stream-ordered memory pool allocations. Disable if "
+                                           "the application does not use cuMemAllocAsync to avoid "
+                                           "the per-call cost in check_addr.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_enable_mpool_check);
+
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "addr_cache_enable",
+                                           "Cache pointer classifications in check_addr to avoid "
+                                           "repeated CUDA driver queries on the per-message hot "
+                                           "path. Hits are validated by CU_POINTER_ATTRIBUTE_BUFFER_ID "
+                                           "for device memory and by opal_mem_hooks munmap "
+                                           "notifications for host memory. Disable to bypass the "
+                                           "cache, e.g. when comparing performance.",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_addr_cache_enabled);
+
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "addr_cache_size",
+                                           "Maximum number of allocation ranges retained by the "
+                                           "check_addr classification cache. Least-recently-used "
+                                           "entries are evicted once this many are cached. Values "
+                                           "less than 1 restore the built-in default.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_addr_cache_max_entries);
 
     return OPAL_SUCCESS;
 }
@@ -586,6 +633,11 @@ int opal_accelerator_cuda_delayed_init()
         opal_accelerator_cuda_mem_bw[i] = bw;
     }
 
+    /* Address-classification cache. Best-effort: any failure here
+     * leaves the cache disabled and check_addr falls back to the
+     * cold path. */
+    (void) opal_accelerator_cuda_addr_cache_init();
+
     result = OPAL_SUCCESS;
     opal_atomic_wmb();
     mca_accelerator_cuda_init_complete = true;
@@ -613,6 +665,12 @@ static opal_accelerator_base_module_t* accelerator_cuda_init(void)
 static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
 {
     CUresult result;
+
+    /* Tear down the address cache before any further CUDA calls so that
+     * its mem_hooks release callback is unregistered before opal teardown
+     * runs. Safe to call regardless of init state. */
+    opal_accelerator_cuda_addr_cache_finalize();
+
     /* This call is in here to make sure the context is still valid.
      * This was the one way of checking which did not cause problems
      * while calling into the CUDA library.  This check will detect if
