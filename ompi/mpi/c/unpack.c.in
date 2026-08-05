@@ -15,6 +15,7 @@
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +24,7 @@
  */
 #include "ompi_config.h"
 #include <stdio.h>
+#include <string.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -30,6 +32,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/mca/accelerator/accelerator.h"
 #include "ompi/memchecker.h"
 
 PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf, 
@@ -44,6 +47,8 @@ PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf,
     struct iovec outvec;
     unsigned int iov_count;
     size_t size;
+    size_t effective_count;
+    ompi_datatype_t *effective_datatype;
 
     MEMCHECKER(
         memchecker_datatype(datatype);
@@ -80,25 +85,62 @@ PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf,
     * vector that is processed one element at a time.
     *
     * So at the top level we morph the call if the count and datatype look
-    * like a good vector.
+    * like a good vector. Keep the common rejection checks inline: small
+    * counts and no-gap datatypes cannot benefit from consolidation and
+    * should not pay for an out-of-line function call on every MPI_Unpack.
     */
-    ompi_datatype_consolidate_t dtmod;
-    rc = ompi_datatype_consolidate_create(outcount, datatype, &dtmod,
-        OMPI_DATATYPE_CONSOLIDATE_THRESHOLD);
-    OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+    effective_datatype = datatype;
+    effective_count = (size_t) outcount;
+
+#if !OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    /*
+     * Without heterogeneous support, a no-gap datatype maps every output byte to one contiguous
+     * host region in the packed stream's native representation. Copy it directly instead of
+     * constructing a convertor only to reach its no-op unpack path. Heterogeneous-enabled builds
+     * must retain the convertor so unpack can translate the peer representation to the local one.
+     * Device and unified-memory destinations also retain the accelerator-aware convertor path.
+     */
+    if ((0 < insize) && (0 < outcount) && (datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
+        char *destination = (char *) outbuf + datatype->super.true_lb;
+        uint64_t accelerator_flags = 0;
+        int dev_id;
+
+        size = (size_t) outcount * datatype->super.size;
+        if (0 == opal_accelerator.check_addr(destination, &dev_id, &accelerator_flags)) {
+            if ((*position + size) > (size_t) insize) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
+            }
+            memcpy(destination, (const char *) inbuf + *position, size);
+            *position += size;
+            return MPI_SUCCESS;
+        }
+    }
+#endif
+
+    if ((0 < outcount) && (ompi_datatype_consolidate_threshold <= outcount)
+        && !(datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
+        rc = ompi_datatype_consolidate_create(outcount, datatype, &effective_datatype);
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+        if (effective_datatype != datatype) {
+            effective_count = 1;
+        }
+    }
 
     if( insize > 0 ) {
         int ret;
         OBJ_CONSTRUCT( &local_convertor, opal_convertor_t );
         /* the resulting convertor will be set the the position ZERO */
         opal_convertor_copy_and_prepare_for_recv( ompi_mpi_local_convertor,
-                                                  &(dtmod.dt->super), dtmod.count,
+                                                  &(effective_datatype->super), effective_count,
                                                   outbuf, 0, &local_convertor );
 
         /* Check for truncation */
         opal_convertor_get_packed_size( &local_convertor, &size );
         if( (*position + size) > (size_t)insize ) {
             OBJ_DESTRUCT( &local_convertor );
+            if (effective_datatype != datatype) {
+                (void) ompi_datatype_destroy(&effective_datatype);
+            }
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
         }
 
@@ -118,7 +160,9 @@ PROTOTYPE ERROR_CLASS unpack(BUFFER inbuf,
         }
     }
 
-    rc = ompi_datatype_consolidate_free(&dtmod);
+    if (effective_datatype != datatype) {
+        rc = ompi_datatype_destroy(&effective_datatype);
+    }
     rc = (rc_keep != MPI_SUCCESS) ? rc_keep : rc;
 
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

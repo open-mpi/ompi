@@ -277,11 +277,12 @@
 #    define OPAL_SIZEOF_FLOAT12 0
 #endif
 
-#if defined(HAVE__FLOAT128) &&  SIZEOF__FLOAT128 == 16
+/* Test feature values so a configuration that defines an unavailable type to 0 does not emit it. */
+#if defined(HAVE__FLOAT128) && HAVE__FLOAT128 && SIZEOF__FLOAT128 == 16
 #    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
         AV(_Float128, OPAL_ALIGNMENT__FLOAT128, FLOAT16, FLAGS)
 #    define OPAL_SIZEOF_FLOAT16 SIZEOF__FLOAT128
-#elif defined(HAVE___FLOAT128) &&  SIZEOF___FLOAT128 == 16
+#elif defined(HAVE___FLOAT128) && HAVE___FLOAT128 && SIZEOF___FLOAT128 == 16
 #    define OPAL_DATATYPE_HANDLE_FLOAT16(AV, NOTAV, FLAGS) \
         AV(__float128, OPAL_ALIGNMENT___FLOAT128, FLOAT16, FLAGS)
 #    define OPAL_SIZEOF_FLOAT16 SIZEOF___FLOAT128

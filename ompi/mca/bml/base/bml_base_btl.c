@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +23,6 @@
 
 #include "ompi/mca/bml/bml.h"
 #include "bml_base_btl.h"
-#include "opal/util/crc.h"
 #if OPAL_ENABLE_DEBUG_RELIABILITY
 #include "opal/util/alfg.h"
 #endif /* OPAL_ENABLE_DEBUG_RELIABILITY */

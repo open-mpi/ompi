@@ -38,8 +38,6 @@
 #if defined(VERBOSE)
 #    include "opal/util/output.h"
 
-extern int opal_datatype_dfd;
-
 #    define DDT_DUMP_STACK(PSTACK, STACK_POS, PDESC, NAME) \
         opal_datatype_dump_stack((PSTACK), (STACK_POS), (PDESC), (NAME))
 
@@ -100,6 +98,9 @@ extern int opal_datatype_dfd;
 #define OPAL_DATATYPE_UNSIGNED_LONG       26
 #define OPAL_DATATYPE_FLOAT128_COMPLEX    27
 #define OPAL_DATATYPE_UNAVAILABLE         28
+
+/* Predefined movers inline blocks through this length; larger blocks use the generic copy path. */
+#define OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN 8
 
 #ifndef OPAL_DATATYPE_MAX_PREDEFINED
 #    define OPAL_DATATYPE_MAX_PREDEFINED (OPAL_DATATYPE_UNAVAILABLE + 1)
@@ -251,11 +252,16 @@ struct opal_datatype_t;
 #if OPAL_ENABLE_DEBUG
 #    define OPAL_DATATYPE_SAFEGUARD_POINTER(ACTPTR, LENGTH, INITPTR, PDATA, COUNT)                \
         {                                                                                         \
-            unsigned char *__lower_bound = (INITPTR), *__upper_bound;                             \
+            unsigned char *__lower_bound = (INITPTR), *__upper_bound = (INITPTR);                 \
+            ptrdiff_t __span_disp = ((ptrdiff_t) (PDATA)->ub - (ptrdiff_t) (PDATA)->lb)           \
+                                    * (ptrdiff_t) ((COUNT) - 1);                                  \
             assert( (COUNT) != 0 );                                                               \
-            __lower_bound += (PDATA)->true_lb;                                                    \
-            __upper_bound = (INITPTR) + (PDATA)->true_ub +                                        \
-                            ((PDATA)->ub - (PDATA)->lb) * ((COUNT) -1);                           \
+            /* Instances may stride backward when the extent is negative, so the region          \
+             * touched by COUNT copies is the union over all of them: fold a negative span        \
+             * into the lower bound and a positive span into the upper bound rather than          \
+             * assuming the last copy sits at the highest address. */                             \
+            __lower_bound += (PDATA)->true_lb + ((__span_disp < 0) ? __span_disp : 0);            \
+            __upper_bound += (PDATA)->true_ub + ((__span_disp > 0) ? __span_disp : 0);            \
             if (((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound)) {                      \
                 opal_datatype_safeguard_pointer_debug_breakpoint((ACTPTR), (LENGTH), (INITPTR),   \
                                                                  (PDATA), (COUNT));               \
@@ -287,18 +293,32 @@ static inline int GET_FIRST_NON_LOOP(const union dt_elem_desc *_pElem)
     return element_index;
 }
 
-#define UPDATE_INTERNAL_COUNTERS(DESCRIPTION, POSITION, ELEMENT, COUNTER) \
-    do {                                                                  \
-        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                         \
-        if (OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type)            \
-            (COUNTER) = (ELEMENT)->loop.loops;                            \
-        else                                                              \
-            (COUNTER) = (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen; \
+/*
+ * Load a new descriptor and dispatch LOOP and END_LOOP entries directly to their handlers.
+ * DATA falls through after updating the counter so the caller can dispatch on its predefined
+ * type without loading the descriptor again.
+ */
+#define UPDATE_INTERNAL_COUNTERS(DESCRIPTION, POSITION, ELEMENT, COUNTER, LOOP_LABEL,          \
+                                 END_LOOP_LABEL)                                               \
+    do {                                                                                       \
+        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                                              \
+        if (!((ELEMENT)->elem.common.flags & OPAL_DATATYPE_FLAG_DATA)) {                       \
+            if (OPAL_DATATYPE_LOOP == (ELEMENT)->elem.common.type) {                           \
+                (COUNTER) = (ELEMENT)->loop.loops;                                             \
+                goto LOOP_LABEL;                                                               \
+            }                                                                                  \
+            assert(OPAL_DATATYPE_END_LOOP == (ELEMENT)->elem.common.type);                     \
+            goto END_LOOP_LABEL;                                                               \
+        }                                                                                      \
+        (COUNTER) = (size_t) (ELEMENT)->elem.count * (ELEMENT)->elem.blocklen;                 \
     } while (0)
+
+/* The optimizer changed this element's predefined type while preserving its byte layout. */
+#define OPAL_DATATYPE_OPTIMIZED_TYPE_CHANGED 0x0200
 
 OPAL_DECLSPEC int opal_datatype_contain_basic_datatypes(const struct opal_datatype_t *pData,
                                                         char *ptr, size_t length);
-OPAL_DECLSPEC int opal_datatype_dump_data_flags(unsigned short usflags, char *ptr, size_t length);
+OPAL_DECLSPEC int opal_datatype_dump_data_flags(uint32_t flags, char *ptr, size_t length);
 OPAL_DECLSPEC int opal_datatype_dump_data_desc(union dt_elem_desc *pDesc, int nbElems, char *ptr,
                                                size_t length);
 
@@ -307,6 +327,53 @@ extern bool opal_ddt_copy_debug;
 extern bool opal_ddt_unpack_debug;
 extern bool opal_ddt_pack_debug;
 extern bool opal_ddt_raw_debug;
+extern bool opal_datatype_check_missed_optimizations;
+extern int opal_datatype_dfd;
+
+/*
+ * Runtime-tunable pack/unpack/optimize policy thresholds.
+ *
+ * The medium-block typed pack/unpack movers choose between a typed copy loop and the generic
+ * predefined mover, and the descriptor optimizer decides how far to unroll and grow a datatype
+ * description, based on these thresholds. They are exposed as expert MCA parameters
+ * (opal_datatype_{pack,unpack,optimize}_*) so they can be retuned at launch without recompiling.
+ *
+ * The pack/unpack thresholds are read once per block run (not per element), and the optimize
+ * thresholds are read at datatype-commit time, so the runtime indirection is off the pack/unpack
+ * hot path.
+ *
+ * The default values, and the caveats about where they came from, are documented at the
+ * opal_datatype_config definition in opal_datatype_module.c.
+ */
+typedef struct opal_datatype_config_t {
+    struct {
+        size_t max_vectorized_blocklen;
+        size_t l1_cache_lines;
+        /* Contiguous per-block byte size below which a strided pack uses the byte memcpy
+         * path instead of the typed inline mover. Small strided blocks are faster through a tuned
+         * memcpy than through a runtime-count typed loop on some microarchitectures (notably
+         * x86); 0 disables the gate (typed mover always eligible). */
+        size_t min_typed_block_bytes;
+    } pack;
+    struct {
+        size_t max_vectorized_block_bytes;
+        size_t always_typed_block_bytes;
+        size_t compact_memcpy_max_bytes;
+        size_t min_scatter_gap_bytes;
+        size_t small_fragment_bytes;
+        size_t large_fragment_bytes;
+    } unpack;
+    struct {
+        size_t max_desc_growth;
+        size_t loop_unroll_max_items;
+        size_t loop_unroll_max_data_bytes;
+        /* Read before datatype commit; when false, mixed optimized regions are forced to
+         * OPAL_DATATYPE_UINT1 instead of a wider promoted integer type. */
+        bool preserve_type;
+    } optimize;
+} opal_datatype_config_t;
+
+extern opal_datatype_config_t opal_datatype_config;
 
 END_C_DECLS
 #endif /* OPAL_DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */

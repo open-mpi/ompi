@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -32,8 +32,8 @@
 
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype.h"
-#include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_internal.h"
+#include "opal/datatype/opal_datatype_memcpy.h"
 #include "opal/prefetch.h"
 #include "opal/util/output.h"
 #include "opal/mca/accelerator/accelerator.h"
@@ -73,17 +73,17 @@ static void *opal_datatype_accelerator_memcpy(void *dest, const void *src, size_
     src_type = opal_accelerator.check_addr(src, &src_dev, &flags);
     if (0 >= dst_type && 0 >= src_type) {
         return memcpy(dest, src, size);
+    } else if (0 >= dst_type && 0 < src_type) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
+    } else if (0 < dst_type && 0 >= src_type) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
     }
-    else if (0 >= dst_type && 0 < src_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
-    }
-    else if (0 < dst_type && 0 >= src_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
-    }
-    res = opal_accelerator.mem_copy(dst_dev, src_dev,
-				    dest, src, size, copy_type);
+    res = opal_accelerator.mem_copy(dst_dev, src_dev, dest, src, size, copy_type);
     if (OPAL_SUCCESS != res) {
-        opal_output(0, "Error in accelerator memcpy");
+        opal_output(0, "opal_datatype_accelerator_memcpy: accelerator mem_copy failed "
+                       "(rc=%d, direction=%d, dst_dev=%d, src_dev=%d, dest=%p, src=%p, "
+                       "size=%" PRIsize_t "); aborting",
+                    res, copy_type, dst_dev, src_dev, dest, (void *) src, size);
         abort();
     }
     return dest;
@@ -106,17 +106,17 @@ static void *opal_datatype_accelerator_memmove(void *dest, const void *src, size
     src_type = opal_accelerator.check_addr(src, &src_dev, &flags);
     if (0 >= dst_type && 0 >= src_type) {
         return memmove(dest, src, size);
+    } else if (0 >= dst_type && 0 < src_type) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
+    } else if (0 < dst_type && 0 >= src_type) {
+        copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
     }
-    else if (0 >= dst_type && 0 < src_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_DTOH;
-    }
-    else if (0 < dst_type && 0 >= src_type) {
-	copy_type = MCA_ACCELERATOR_TRANSFER_HTOD;
-    }
-    res = opal_accelerator.mem_move(dst_dev, src_dev,
-                                    dest, src, size, copy_type);
+    res = opal_accelerator.mem_move(dst_dev, src_dev, dest, src, size, copy_type);
     if (OPAL_SUCCESS != res) {
-        opal_output(0, "Error in accelerator memmove");
+        opal_output(0, "opal_datatype_accelerator_memmove: accelerator mem_move failed "
+                       "(rc=%d, direction=%d, dst_dev=%d, src_dev=%d, dest=%p, src=%p, "
+                       "size=%" PRIsize_t "); aborting",
+                    res, copy_type, dst_dev, src_dev, dest, (void *) src, size);
         abort();
     }
     return dest;
