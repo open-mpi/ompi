@@ -470,8 +470,10 @@ no_hmem:
         struct fi_info *tmp = info_list;
         while (tmp && NULL != unique_domains) {
             if (OPAL_SUCCESS == validate_info(tmp, required_caps, include_list, exclude_list)) {
-                const char *p = (NULL != tmp->fabric_attr) ? tmp->fabric_attr->prov_name : NULL;
-                const char *d = (NULL != tmp->domain_attr) ? tmp->domain_attr->name : NULL;
+                /* validate_info() succeeded, so it already dereferenced both
+                 * fabric_attr and domain_attr; they are guaranteed non-NULL. */
+                const char *p = tmp->fabric_attr->prov_name;
+                const char *d = tmp->domain_attr->name;
                 if (NULL == first_prov) first_prov = p;
                 if (NULL != first_prov && NULL != p && 0 == strcmp(first_prov, p) && NULL != d) {
                     /* Only count unique domain names */
@@ -527,9 +529,10 @@ no_hmem:
             if (OPAL_SUCCESS != validate_info(info, required_caps, include_list, exclude_list)) {
                 continue;
             }
-            const char *prov = (NULL != info->fabric_attr)
-                               ? info->fabric_attr->prov_name : NULL;
-            const char *d = (NULL != info->domain_attr) ? info->domain_attr->name : NULL;
+            /* validate_info() succeeded, so it already dereferenced both
+             * fabric_attr and domain_attr; they are guaranteed non-NULL. */
+            const char *prov = info->fabric_attr->prov_name;
+            const char *d = info->domain_attr->name;
             if (NULL != first_prov && NULL != prov && NULL != d
                 && 0 == strcmp(first_prov, prov) && 0 == strcmp(want, d)) {
                 (void) mca_btl_ofi_init_device(info);
