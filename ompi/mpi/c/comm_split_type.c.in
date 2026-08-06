@@ -17,6 +17,7 @@
  * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,6 +62,7 @@ PROTOTYPE ERROR_CLASS comm_split_type(COMM comm, INT split_type, INT key,
              MPI_COMM_TYPE_HW_GUIDED != split_type &&
              MPI_COMM_TYPE_RESOURCE_GUIDED != split_type &&
 	     OMPI_COMM_TYPE_CLUSTER != split_type &&
+	     OMPI_COMM_TYPE_NVLINK != split_type &&
 	     OMPI_COMM_TYPE_CU != split_type &&
 	     OMPI_COMM_TYPE_HOST != split_type &&
 	     OMPI_COMM_TYPE_BOARD != split_type &&
