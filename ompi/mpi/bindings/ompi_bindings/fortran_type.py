@@ -540,7 +540,10 @@ class CommType(FortranType):
         return f'INTEGER, INTENT(IN) :: {self.name}'
 
     def argument(self):
-        return f'{self.name}%MPI_VAL'
+        if not self.gen_f90:
+            return f'{self.name}%MPI_VAL'
+        else:
+            return f'{self.name}'
 
     def use(self):
         if self.gen_f90 == False:
@@ -586,7 +589,10 @@ class GroupType(FortranType):
         return f'INTEGER, INTENT(IN) :: {self.name}'
             
     def argument(self):
-        return f'{self.name}%MPI_VAL'
+        if not self.gen_f90:
+            return f'{self.name}%MPI_VAL'
+        else:
+            return f'{self.name}'
 
     def use(self):
         if self.gen_f90 == False:
@@ -631,8 +637,11 @@ class SessionType(FortranType):
         return f'INTEGER, INTENT(IN) :: {self.name}'
     
     def argument(self):
-        return f'{self.name}%MPI_VAL'
-        
+        if not self.gen_f90:
+            return f'{self.name}%MPI_VAL'
+        else:
+            return f'{self.name}'
+
     def use(self):
         if self.gen_f90 == False:
             return [('mpi_f08_types', 'MPI_Session')]
