@@ -87,7 +87,7 @@ def fortran_f08_generic_interface_name(fn_name):
     return f'MPI_{fn_name.capitalize()}'
 
 def break_param_lines_fortran(start, params, end):
-    """Break paramters for a fortran call onto multiple lines.
+    """Break parameters for a fortran call onto multiple lines.
 
     This is often necessary to avoid going over the max line length of 132
     characters.
