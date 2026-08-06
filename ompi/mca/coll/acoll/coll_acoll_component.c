@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-acoll-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2024 - 2025 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026        NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -322,48 +323,22 @@ static void mca_coll_acoll_module_destruct(mca_coll_acoll_module_t *module)
             }
         }
 
-        if (subc->local_comm != NULL) {
-            ompi_comm_free(&(subc->local_comm));
-            subc->local_comm = NULL;
-        }
-
-        if (subc->local_r_comm != NULL) {
-            ompi_comm_free(&(subc->local_r_comm));
-            subc->local_r_comm = NULL;
-        }
-
-        if (subc->leader_comm != NULL) {
-            ompi_comm_free(&(subc->leader_comm));
-            subc->leader_comm = NULL;
-        }
-
-        if (subc->subgrp_comm != NULL) {
-            ompi_comm_free(&(subc->subgrp_comm));
-            subc->subgrp_comm = NULL;
-        }
-        if (subc->socket_comm != NULL) {
-            ompi_comm_free(&(subc->socket_comm));
-            subc->socket_comm = NULL;
-        }
-
-        if (subc->socket_ldr_comm != NULL) {
-            ompi_comm_free(&(subc->socket_ldr_comm));
-            subc->socket_ldr_comm = NULL;
-        }
+        coll_acoll_subcomm_free(&(subc->local_comm));
+        coll_acoll_subcomm_free(&(subc->local_r_comm));
+        coll_acoll_subcomm_free(&(subc->leader_comm));
+        coll_acoll_subcomm_free(&(subc->subgrp_comm));
+        coll_acoll_subcomm_free(&(subc->socket_comm));
+        coll_acoll_subcomm_free(&(subc->socket_ldr_comm));
+        coll_acoll_subcomm_free(&(subc->numa_comm));
+        coll_acoll_subcomm_free(&(subc->numa_comm_ldrs));
         for (int k = 0; k < MCA_COLL_ACOLL_NUM_BASE_LYRS; k++) {
             for (int j = 0; j < MCA_COLL_ACOLL_NUM_LAYERS; j++) {
-                if (subc->base_comm[k][j] != NULL) {
-                    ompi_comm_free(&(subc->base_comm[k][j]));
-                    subc->base_comm[k][j] = NULL;
-                }
+                coll_acoll_subcomm_free(&(subc->base_comm[k][j]));
             }
         }
 
         for (int k = 0; k < MCA_COLL_ACOLL_SPLIT_FACTOR_LIST_LEN; ++k) {
-            if (subc->split_comm[k] != NULL) {
-                ompi_comm_free(&(subc->split_comm[k]));
-                subc->split_comm[k] = NULL;
-            }
+            coll_acoll_subcomm_free(&(subc->split_comm[k]));
         }
         subc->initialized = 0;
         free(subc);
