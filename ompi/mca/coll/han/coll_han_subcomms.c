@@ -285,7 +285,7 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     int low_rank, low_size, up_rank, w_rank, w_size, node_leader_w_rank;
     mca_coll_han_collectives_fallback_t fallbacks;
     ompi_communicator_t **low_comms = NULL, **up_comms = NULL;
-    int vrank, *vranks;
+    int vrank, *vranks = NULL;
     int rc;
     opal_info_t comm_info;
 
@@ -518,6 +518,15 @@ final_agree:
 
     if (!agree_flag) {
         han_module->enabled = false;  /* entire module set to pass-through from now on */
+        if (han_module->cached_low_comms == low_comms) {
+            han_module->cached_low_comms = NULL;
+        }
+        if (han_module->cached_up_comms == up_comms) {
+            han_module->cached_up_comms = NULL;
+        }
+        if (han_module->cached_vranks == vranks) {
+            han_module->cached_vranks = NULL;
+        }
         if (low_comms != NULL) {
             for(int i = 0; i < COLL_HAN_LOW_MODULES; i++) {
                 if (NULL != low_comms[i]) {
@@ -526,6 +535,7 @@ final_agree:
                 }
             }
             free(low_comms);
+            low_comms = NULL;
         }
         if (up_comms != NULL) {
             for(int i = 0; i < COLL_HAN_UP_MODULES; i++) {
@@ -535,6 +545,11 @@ final_agree:
                 }
             }
             free(up_comms);
+            up_comms = NULL;
+        }
+        if (NULL != vranks) {
+            free(vranks);
+            vranks = NULL;
         }
         return rc;  /* sub-communicator creation failed on at least one process */
     }
