@@ -16,7 +16,7 @@
 #include "btl_ofi_rdma.h"
 
 #if OPAL_HAVE_THREAD_LOCAL
-static opal_thread_local mca_btl_ofi_context_t *my_context = NULL;
+static opal_thread_local int64_t my_ctx_idx = -1;
 #endif /* OPAL_HAVE_THREAD_LOCAL */
 
 static int init_context_freelists(mca_btl_ofi_context_t *context)
@@ -67,7 +67,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
 {
     int rc;
     uint32_t cq_flags = FI_TRANSMIT | FI_SEND | FI_RECV;
-    char *linux_device_name = info->domain_attr->name;
+    char *domain_name = info->domain_attr->name;
 
     struct fi_cq_attr cq_attr = {0};
 
@@ -82,8 +82,8 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
     /* Don't really need to check, just avoiding compiler warning because
      * BTL_VERBOSE is a no op in performance build and the compiler will
      * complain about unused variable. */
-    if (NULL == linux_device_name) {
-        BTL_VERBOSE(("linux device name is NULL. This shouldn't happen."));
+    if (NULL == domain_name) {
+        BTL_VERBOSE(("domain name is NULL. This shouldn't happen."));
         goto single_fail;
     }
 
@@ -91,20 +91,20 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
     cq_attr.wait_obj = FI_WAIT_NONE;
     rc = fi_cq_open(domain, &cq_attr, &context->cq, NULL);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_cq_open with err=%s", linux_device_name, fi_strerror(-rc)));
+        BTL_VERBOSE(("%s failed fi_cq_open with err=%s", domain_name, fi_strerror(-rc)));
         goto single_fail;
     }
 
     rc = fi_ep_bind(ep, (fid_t) av, 0);
     if (0 != rc) {
-        BTL_VERBOSE(("%s failed fi_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
+        BTL_VERBOSE(("%s failed fi_ep_bind with err=%s", domain_name, fi_strerror(-rc)));
         goto single_fail;
     }
 
     rc = fi_ep_bind(ep, (fid_t) context->cq, cq_flags);
     if (0 != rc) {
         BTL_VERBOSE(
-            ("%s failed fi_scalable_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
+            ("%s failed fi_scalable_ep_bind with err=%s", domain_name, fi_strerror(-rc)));
         goto single_fail;
     }
 
@@ -117,7 +117,6 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_normal(struct fi_info *info,
     context->rx_ctx = ep;
     context->context_id = 0;
     context->btl = btl;
-    my_context = NULL;
 
     return context;
 
@@ -141,7 +140,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
 
     int rc;
     size_t i;
-    char *linux_device_name = info->domain_attr->name;
+    char *domain_name = info->domain_attr->name;
 
     struct fi_cq_attr cq_attr = {0};
     struct fi_tx_attr tx_attr = {0};
@@ -159,8 +158,8 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
     /* Don't really need to check, just avoiding compiler warning because
      * BTL_VERBOSE is a no op in performance build and the compiler will
      * complain about unused variable. */
-    if (NULL == linux_device_name) {
-        BTL_VERBOSE(("linux device name is NULL. This shouldn't happen."));
+    if (NULL == domain_name) {
+        BTL_VERBOSE(("domain name is NULL. This shouldn't happen."));
         goto scalable_fail;
     }
 
@@ -168,7 +167,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
     rc = fi_scalable_ep_bind(sep, (fid_t) av, 0);
     if (0 != rc) {
         BTL_VERBOSE(
-            ("%s failed fi_scalable_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
+            ("%s failed fi_scalable_ep_bind with err=%s", domain_name, fi_strerror(-rc)));
         goto scalable_fail;
     }
 
@@ -176,7 +175,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
         rc = fi_tx_context(sep, i, &tx_attr, &contexts[i].tx_ctx, NULL);
         if (0 != rc) {
             BTL_VERBOSE(
-                ("%s failed fi_tx_context with err=%s", linux_device_name, fi_strerror(-rc)));
+                ("%s failed fi_tx_context with err=%s", domain_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
@@ -186,7 +185,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
         rc = fi_rx_context(sep, i, &rx_attr, &contexts[i].rx_ctx, NULL);
         if (0 != rc) {
             BTL_VERBOSE(
-                ("%s failed fi_rx_context with err=%s", linux_device_name, fi_strerror(-rc)));
+                ("%s failed fi_rx_context with err=%s", domain_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
@@ -195,14 +194,14 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
         cq_attr.wait_obj = FI_WAIT_NONE;
         rc = fi_cq_open(domain, &cq_attr, &contexts[i].cq, NULL);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_cq_open with err=%s", linux_device_name, fi_strerror(-rc)));
+            BTL_VERBOSE(("%s failed fi_cq_open with err=%s", domain_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
         /* bind cq to transmit context */
         rc = fi_ep_bind(contexts[i].tx_ctx, (fid_t) contexts[i].cq, FI_TRANSMIT);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
+            BTL_VERBOSE(("%s failed fi_ep_bind with err=%s", domain_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
@@ -211,7 +210,7 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
             rc = fi_ep_bind(contexts[i].rx_ctx, (fid_t) contexts[i].cq, FI_RECV);
             if (0 != rc) {
                 BTL_VERBOSE(
-                    ("%s failed fi_ep_bind with err=%s", linux_device_name, fi_strerror(-rc)));
+                    ("%s failed fi_ep_bind with err=%s", domain_name, fi_strerror(-rc)));
                 goto scalable_fail;
             }
         }
@@ -219,13 +218,13 @@ mca_btl_ofi_context_t *mca_btl_ofi_context_alloc_scalable(struct fi_info *info,
         /* enable the context. */
         rc = fi_enable(contexts[i].tx_ctx);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_enable with err=%s", linux_device_name, fi_strerror(-rc)));
+            BTL_VERBOSE(("%s failed fi_enable with err=%s", domain_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
         rc = fi_enable(contexts[i].rx_ctx);
         if (0 != rc) {
-            BTL_VERBOSE(("%s failed fi_enable with err=%s", linux_device_name, fi_strerror(-rc)));
+            BTL_VERBOSE(("%s failed fi_enable with err=%s", domain_name, fi_strerror(-rc)));
             goto scalable_fail;
         }
 
@@ -287,20 +286,17 @@ void mca_btl_ofi_context_finalize(mca_btl_ofi_context_t *context, bool scalable_
 mca_btl_ofi_context_t *get_ofi_context(mca_btl_ofi_module_t *btl)
 {
 #if OPAL_HAVE_THREAD_LOCAL
-    /* With TLS, we cache the context we use. */
-    static volatile int64_t cur_num = 0;
+    /* With TLS, we cache a per-thread context slot index and always index
+     * into the requested module's own contexts array. Caching the context
+     * pointer itself would pin every module's traffic to whichever module
+     * was used first. */
+    static opal_atomic_int64_t cur_num = 0;
 
-    if (OPAL_UNLIKELY(my_context == NULL)) {
-        OPAL_THREAD_LOCK(&btl->module_lock);
-
-        my_context = &btl->contexts[cur_num];
-        cur_num = (cur_num + 1) % btl->num_contexts;
-
-        OPAL_THREAD_UNLOCK(&btl->module_lock);
+    if (OPAL_UNLIKELY(my_ctx_idx < 0)) {
+        my_ctx_idx = opal_atomic_fetch_add_64(&cur_num, 1);
     }
 
-    assert(my_context);
-    return my_context;
+    return &btl->contexts[my_ctx_idx % btl->num_contexts];
 #else
     return get_ofi_context_rr(btl);
 #endif
