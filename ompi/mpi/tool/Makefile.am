@@ -203,6 +203,9 @@ libmpi_mpit_profile_la_CPPFLAGS = -DOMPI_BUILD_MPI_PROFILING=1
 EXTRA_DIST = $(prototype_sources)
 
 MAINTAINERCLEANFILES = *_generated.c 
+if OPAL_DEVEL_BUILD
+CLEANFILES += *_generated.c 
+endif
 
 if OMPI_STANDARD_ABI
 include Makefile_abi.include
