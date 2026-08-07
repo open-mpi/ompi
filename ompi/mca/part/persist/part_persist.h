@@ -567,6 +567,13 @@ mca_part_persist_parrived(size_t min_part,
     int _flag = false;
     mca_part_persist_request_t *req = (mca_part_persist_request_t *)request;
 
+    // An inactive (never-started) precv request has no flags array yet.
+    // MPI-5.0 sec 4.2.2 (p.119): an inactive request is trivially arrived.
+    if(NULL == req->flags && OMPI_REQUEST_INACTIVE == request->req_state) {
+        *flag = 1;
+        return err;
+    }
+
     if(0 != req->flags) {
         _flag = 1;
         if(req->req_parts == req->real_parts) {
