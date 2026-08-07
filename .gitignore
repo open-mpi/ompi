@@ -512,6 +512,7 @@ test/class/opal_tree
 test/class/opal_value_array
 
 test/part/parrived_null_inactive
+test/part/partitioned_proc_null
 
 test/datatype/ddt_test
 test/datatype/ddt_pack
