@@ -58,7 +58,19 @@ typedef struct ompi_wait_sync_t {
  * extra atomics in the signalling function and keep it as fast
  * as possible. Note that the race window is small so spinning here
  * is more optimal than sleeping since this macro is called in
- * the critical path. */
+ * the critical path.
+ *
+ * An acquire barrier (rmb) is needed after observing signaling==false
+ * to ensure that the signaling thread's mutex unlock and all prior
+ * memory operations are visible before we proceed to destroy the
+ * mutex and condition variable. Without this barrier, weakly-ordered
+ * architectures (e.g., aarch64) may reorder the destroy operations
+ * before the signaling thread has fully released the mutex.
+ *
+ * Similarly, a release barrier (wmb) is needed in WAIT_SYNC_SIGNAL
+ * before storing signaling=false, to ensure the mutex unlock is
+ * globally visible before the flag is cleared. Together these form
+ * a release-acquire pair on the signaling field. */
 #define WAIT_SYNC_RELEASE(sync)                                \
     if (opal_using_threads()) {                                \
         while ((sync)->signaling) {                            \
@@ -67,6 +79,7 @@ typedef struct ompi_wait_sync_t {
             }                                                  \
             continue;                                          \
         }                                                      \
+        opal_atomic_rmb();                                     \
         opal_thread_internal_cond_destroy(&(sync)->condition); \
         opal_thread_internal_mutex_destroy(&(sync)->lock);     \
     }
@@ -82,6 +95,7 @@ typedef struct ompi_wait_sync_t {
         opal_thread_internal_mutex_lock(&(sync)->lock);       \
         opal_thread_internal_cond_signal(&(sync)->condition); \
         opal_thread_internal_mutex_unlock(&(sync)->lock);     \
+        opal_atomic_wmb();                                    \
         (sync)->signaling = false;                            \
     }
 
