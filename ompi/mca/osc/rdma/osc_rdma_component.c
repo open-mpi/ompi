@@ -610,7 +610,7 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
     if (module->single_node) {
         use_cpu_atomics = true;
     } else if (module->use_accelerated_btl) {
-        use_cpu_atomics = !!(module->accelerated_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
+        use_cpu_atomics = !!(module->accelerated_btl->btl_atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
     } else {
         /* using the shared state optimization that is enabled by
          * being able to use cpu atomics was never enabled for
