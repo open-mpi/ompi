@@ -48,6 +48,8 @@ int MPI_Precv_init(void* buf, int partitions, MPI_Count count, MPI_Datatype data
 {
     int rc;
 
+    SPC_RECORD(OMPI_SPC_PRECV_INIT, 1);
+
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
 
