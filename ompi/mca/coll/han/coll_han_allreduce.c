@@ -148,7 +148,7 @@ mca_coll_han_allreduce_intra(const void *sbuf,
     mca_coll_han_allreduce_args_t *t = malloc(sizeof(mca_coll_han_allreduce_args_t));
     mca_coll_han_set_allreduce_args(t, t0, (char *) sbuf, (char *) rbuf, seg_count, dtype, op,
                                     root_up_rank, root_low_rank, up_comm, low_comm, num_segments, 0,
-                                    w_rank, count - (num_segments - 1) * seg_count,
+                                    w_rank, count - (size_t) (num_segments - 1) * seg_count,
                                     low_rank != root_low_rank, NULL, completed);
     /* Init t0 task */
     init_task(t0, mca_coll_han_allreduce_t0_task, (void *) (t));

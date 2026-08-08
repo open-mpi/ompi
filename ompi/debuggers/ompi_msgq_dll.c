@@ -646,7 +646,7 @@ static int rebuild_communicator_list (mqs_process *proc)
         /* Get the communicator pointer */
         comm_ptr =
             ompi_fetch_pointer( proc,
-                                comm_addr_base + i * p_info->sizes.pointer_size,
+                                comm_addr_base + (mqs_taddr_t) i * p_info->sizes.pointer_size,
                                 p_info );
         DEBUG(VERBOSE_GENERAL,("Fetch communicator pointer 0x%llx\n", (long long)comm_ptr));
         if( 0 == comm_ptr ) continue;

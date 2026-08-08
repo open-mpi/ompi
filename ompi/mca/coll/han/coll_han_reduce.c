@@ -161,7 +161,7 @@ mca_coll_han_reduce_intra(const void *sbuf,
     mca_coll_han_reduce_args_t *t = malloc(sizeof(mca_coll_han_reduce_args_t));
     mca_coll_han_set_reduce_args(t, t0, (char *) sbuf, (char *) tmp_rbuf, seg_count, dtype,
                                  op, root_up_rank, root_low_rank, up_comm, low_comm,
-                                 num_segments, 0, w_rank, count - (num_segments - 1) * seg_count,
+                                 num_segments, 0, w_rank, count - (size_t) (num_segments - 1) * seg_count,
                                  low_rank != root_low_rank, is_tmp_rbuf);
     /* Init the first task */
     init_task(t0, mca_coll_han_reduce_t0_task, (void *) t);

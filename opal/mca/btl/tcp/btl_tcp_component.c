@@ -99,6 +99,10 @@
 #define MCA_BTL_TCP_BTL_BANDWIDTH 100
 #define MCA_BTL_TCP_BTL_LATENCY   100
 
+/* Upper bound for the btl_tcp_links MCA parameter: the number of BTL
+   modules (and sockets) instantiated per usable interface */
+#define MCA_BTL_TCP_MAX_LINKS 32
+
 /*
  * Local functions
  */
@@ -293,6 +297,15 @@ static int mca_btl_tcp_component_register(void)
     /* register TCP component parameters */
     mca_btl_tcp_param_register_uint("links", NULL, 1, OPAL_INFO_LVL_4,
                                     &mca_btl_tcp_component.tcp_num_links);
+    /* tcp_num_links multiplies the number of BTL modules instantiated
+       per interface; an absurdly large value is useless and can
+       overflow the sizing of the module array, so clamp it */
+    if (MCA_BTL_TCP_MAX_LINKS < mca_btl_tcp_component.tcp_num_links) {
+        opal_output(0, "btl/tcp: clamping btl_tcp_links from %u to %u",
+                    mca_btl_tcp_component.tcp_num_links,
+                    (unsigned int) MCA_BTL_TCP_MAX_LINKS);
+        mca_btl_tcp_component.tcp_num_links = MCA_BTL_TCP_MAX_LINKS;
+    }
     mca_btl_tcp_param_register_string(
         "if_include",
         "Comma-delimited list of devices and/or CIDR notation of networks to use for MPI "
@@ -909,7 +922,7 @@ static int mca_btl_tcp_component_create_instances(void)
 
     /* allocate memory for btls */
     mca_btl_tcp_component.tcp_btls = (mca_btl_tcp_module_t **) malloc(
-        mca_btl_tcp_component.tcp_num_links * kif_count * sizeof(mca_btl_tcp_module_t *));
+        (size_t) mca_btl_tcp_component.tcp_num_links * kif_count * sizeof(mca_btl_tcp_module_t *));
     if (NULL == mca_btl_tcp_component.tcp_btls) {
         ret = OPAL_ERR_OUT_OF_RESOURCE;
         goto cleanup;

@@ -360,7 +360,7 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, size_t scount,
 {
     int w_rank, w_size;
     struct ompi_datatype_t * dtype;
-    int count;
+    size_t count;
 
     w_rank = ompi_comm_rank(comm);
     w_size = ompi_comm_size(comm);
