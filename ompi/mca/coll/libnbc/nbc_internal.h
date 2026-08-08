@@ -32,6 +32,7 @@
 #include "mpi.h"
 
 #include "coll_libnbc.h"
+#include "opal_stdint.h"
 #include "opal/mca/accelerator/accelerator.h"
 #include "ompi/include/ompi/constants.h"
 #include "ompi/request/request.h"
@@ -279,6 +280,9 @@ int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
 
 /* some macros */
 
+static inline void NBC_Error (char *format, ...)
+    __opal_attribute_format__(__printf__, 1, 2);
+
 static inline void NBC_Error (char *format, ...) {
   va_list args;
 
@@ -409,27 +413,27 @@ static inline int nbc_get_noop_request(bool persistent, ompi_request_t **request
        case SEND: \
          printf("[%i]  SEND (offset %li) ", myrank, (long)p-(long)schedule); \
          NBC_GET_BYTES(p,sendargs); \
-         printf("*buf: %lu, count: %i, type: %lu, dest: %i)\n", (unsigned long)sendargs.buf, sendargs.count, (unsigned long)sendargs.datatype, sendargs.dest); \
+         printf("*buf: %lu, count: %" PRIsize_t ", type: %lu, dest: %i)\n", (unsigned long)sendargs.buf, sendargs.count, (unsigned long)sendargs.datatype, sendargs.dest); \
          break; \
        case RECV: \
          printf("[%i]  RECV (offset %li) ", myrank, (long)p-(long)schedule); \
          NBC_GET_BYTES(p,recvargs); \
-         printf("*buf: %lu, count: %i, type: %lu, source: %i)\n", (unsigned long)recvargs.buf, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source); \
+         printf("*buf: %lu, count: %" PRIsize_t ", type: %lu, source: %i)\n", (unsigned long)recvargs.buf, recvargs.count, (unsigned long)recvargs.datatype, recvargs.source); \
          break; \
        case OP: \
          printf("[%i]  OP   (offset %li) ", myrank, (long)p-(long)schedule); \
          NBC_GET_BYTES(p,opargs); \
-         printf("*buf1: %lu, buf2: %lu, count: %i, type: %lu)\n", (unsigned long)opargs.buf1, (unsigned long)opargs.buf2, opargs.count, (unsigned long)opargs.datatype); \
+         printf("*buf1: %lu, buf2: %lu, count: %" PRIsize_t ", type: %lu)\n", (unsigned long)opargs.buf1, (unsigned long)opargs.buf2, opargs.count, (unsigned long)opargs.datatype); \
          break; \
        case COPY: \
          printf("[%i]  COPY   (offset %li) ", myrank, (long)p-(long)schedule); \
          NBC_GET_BYTES(p,copyargs); \
-         printf("*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu, tgtcount: %i, tgttype: %lu)\n", (unsigned long)copyargs.src, copyargs.srccount, (unsigned long)copyargs.srctype, (unsigned long)copyargs.tgt, copyargs.tgtcount, (unsigned long)copyargs.tgttype); \
+         printf("*src: %lu, srccount: %" PRIsize_t ", srctype: %lu, *tgt: %lu, tgtcount: %" PRIsize_t ", tgttype: %lu)\n", (unsigned long)copyargs.src, copyargs.srccount, (unsigned long)copyargs.srctype, (unsigned long)copyargs.tgt, copyargs.tgtcount, (unsigned long)copyargs.tgttype); \
          break; \
        case UNPACK: \
          printf("[%i]  UNPACK   (offset %li) ", myrank, (long)p-(long)schedule); \
          NBC_GET_BYTES(p,unpackargs); \
-         printf("*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu\n",(unsigned long)unpackargs.inbuf, unpackargs.count, (unsigned long)unpackargs.datatype, (unsigned long)unpackargs.outbuf); \
+         printf("*src: %lu, srccount: %" PRIsize_t ", srctype: %lu, *tgt: %lu\n",(unsigned long)unpackargs.inbuf, unpackargs.count, (unsigned long)unpackargs.datatype, (unsigned long)unpackargs.outbuf); \
          break; \
        default: \
          printf("[%i] NBC_PRINT_ROUND: bad type %i at offset %li\n", myrank, type, (long)p-sizeof(type)-(long)schedule); \
@@ -463,6 +467,9 @@ static inline int nbc_get_noop_request(bool persistent, ompi_request_t **request
 /*
 #define NBC_DEBUG(level, ...) {}
 */
+
+static inline void NBC_DEBUG(int level, const char *fmt, ...)
+    __opal_attribute_format__(__printf__, 2, 3);
 
 static inline void NBC_DEBUG(int level, const char *fmt, ...)
 {
