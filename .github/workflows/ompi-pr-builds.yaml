@@ -139,6 +139,12 @@ jobs:
         # extension (this skips sources, Makefiles, and macOS .dSYM
         # bundles).  OpenSHMEM examples are launched with oshrun; all
         # others with mpirun.
+        #
+        # Every example should finish in seconds.  The launcher-level
+        # --timeout turns a hung example (e.g., a rank deadlocked in a
+        # PMIx fence, issue #14125) into a prompt failure of that one
+        # example instead of stalling the job until the 6-hour GitHub
+        # runner timeout kills it.
         for exe in *; do
           [ -f "$exe" ] && [ -x "$exe" ] || continue
           case "$exe" in *.*) continue ;; esac
@@ -147,7 +153,7 @@ jobs:
             *)                 launcher=mpirun ;;
           esac
           echo "==== Running $exe (via $launcher) ===="
-          if ! "$launcher" --map-by ppr:1:core "./$exe"; then
+          if ! "$launcher" --timeout 300 --map-by ppr:1:core "./$exe"; then
             echo "==== $exe FAILED"
             status=1
           fi
