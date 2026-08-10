@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2022 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,6 +131,56 @@ static inline int create_iov_list(const void *addr, int count, ompi_datatype_t *
     OBJ_DESTRUCT(&convertor);
 
     return ret;
+}
+
+/*
+ * Reduce a non-contiguous origin buffer into the accumulate staging buffer
+ * with MINLOC/MAXLOC.
+ *
+ * The staging buffer holds stage_count elements of stage_dt separated by
+ * stage_extent bytes, which is not the extent of stage_dt, so ompi_op_reduce
+ * has to be called once per element instead of once for the whole buffer.
+ *
+ * The origin cannot be traversed with an iovec list here.  The list built by
+ * create_iov_list() describes the origin's real-data runs, and those runs do
+ * not have to start on an element boundary: for a type with an internal hole
+ * and no trailing padding, such as MPI_SHORT_INT, the trailing member of one
+ * element and the leading member of the next are adjacent in memory and the
+ * convertor merges them into a single segment.  Copy the origin into a
+ * temporary array of stage_dt instead, which gives every element its own
+ * correctly laid out and correctly aligned slot whatever the origin's shape.
+ */
+static int reduce_noncontig_origin(ompi_op_t *op, const void *origin_addr,
+                                   size_t origin_count, ompi_datatype_t *origin_dt,
+                                   void *stage_addr, size_t stage_count,
+                                   ompi_datatype_t *stage_dt, ptrdiff_t stage_extent) {
+    ptrdiff_t lb, extent;
+    char *unpacked;
+    size_t i;
+    int ret;
+
+    ompi_datatype_get_extent(stage_dt, &lb, &extent);
+
+    unpacked = malloc((size_t)extent * stage_count);
+    if (unpacked == NULL) {
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    ret = ompi_datatype_sndrcv(origin_addr, origin_count, origin_dt,
+                               unpacked, stage_count, stage_dt);
+    if (ret != OMPI_SUCCESS) {
+        free(unpacked);
+        return ret;
+    }
+
+    for (i = 0; i < stage_count; i++) {
+        ompi_op_reduce(op, unpacked + i * extent,
+                       (char *)stage_addr + i * stage_extent, 1, stage_dt);
+    }
+
+    free(unpacked);
+
+    return OMPI_SUCCESS;
 }
 
 static inline int ddt_put_get(ompi_osc_ucx_module_t *module,
@@ -768,10 +819,13 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
 
         if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
             ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
-        } else {
+        } else if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
+                   ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
             ucx_iovec_t *origin_ucx_iov = NULL;
             uint32_t origin_ucx_iov_count = 0;
             uint32_t origin_ucx_iov_idx = 0;
+            char *curr_temp_addr = (char *)temp_addr;
+            size_t temp_size;
 
             ret = create_iov_list(origin_addr, origin_count, origin_dt,
                                   &origin_ucx_iov, &origin_ucx_iov_count);
@@ -780,35 +834,23 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
                 return ret;
             }
 
-            if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
-                ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
-                size_t temp_size;
-                char *curr_temp_addr = (char *)temp_addr;
-                ompi_datatype_type_size(temp_dt, &temp_size);
-                while (origin_ucx_iov_idx < origin_ucx_iov_count) {
-                    int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
-                    ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
-                                   curr_temp_addr, curr_count, temp_dt);
-                    curr_temp_addr += curr_count * temp_size;
-                    origin_ucx_iov_idx++;
-                }
-            } else {
-                int i;
-                void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                for (i = 0; i < (int)temp_count; i++) {
-                    ompi_op_reduce(op, curr_origin_addr,
-                                   (void *)((char *)temp_addr + i * temp_extent),
-                                   1, temp_dt);
-                    curr_origin_addr = (void *)((char *)curr_origin_addr + temp_extent);
-                    origin_ucx_iov_idx++;
-                    if (curr_origin_addr >= (void *)((char *)origin_ucx_iov[origin_ucx_iov_idx].addr + origin_ucx_iov[origin_ucx_iov_idx].len)) {
-                        origin_ucx_iov_idx++;
-                        curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                    }
-                }
+            ompi_datatype_type_size(temp_dt, &temp_size);
+            while (origin_ucx_iov_idx < origin_ucx_iov_count) {
+                int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
+                ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
+                               curr_temp_addr, curr_count, temp_dt);
+                curr_temp_addr += curr_count * temp_size;
+                origin_ucx_iov_idx++;
             }
 
             free(origin_ucx_iov);
+        } else {
+            ret = reduce_noncontig_origin(op, origin_addr, origin_count, origin_dt,
+                                          temp_addr, temp_count, temp_dt, temp_extent);
+            if (ret != OMPI_SUCCESS) {
+                free(temp_addr);
+                return ret;
+            }
         }
 
         ret = ompi_osc_ucx_put(temp_addr, (int)temp_count, temp_dt, target, target_disp,
@@ -1401,10 +1443,13 @@ int get_accumulate_req(const void *origin_addr, size_t origin_count,
 
             if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
                 ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
-            } else {
+            } else if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
+                       ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
                 ucx_iovec_t *origin_ucx_iov = NULL;
                 uint32_t origin_ucx_iov_count = 0;
                 uint32_t origin_ucx_iov_idx = 0;
+                char *curr_temp_addr = (char *)temp_addr;
+                size_t temp_size;
 
                 ret = create_iov_list(origin_addr, origin_count, origin_dt,
                                       &origin_ucx_iov, &origin_ucx_iov_count);
@@ -1412,34 +1457,22 @@ int get_accumulate_req(const void *origin_addr, size_t origin_count,
                     return ret;
                 }
 
-                if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
-                    ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
-                    size_t temp_size;
-                    char *curr_temp_addr = (char *)temp_addr;
-                    ompi_datatype_type_size(temp_dt, &temp_size);
-                    while (origin_ucx_iov_idx < origin_ucx_iov_count) {
-                        int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
-                        ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
-                                       curr_temp_addr, curr_count, temp_dt);
-                        curr_temp_addr += curr_count * temp_size;
-                        origin_ucx_iov_idx++;
-                    }
-                } else {
-                    int i;
-                    void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                    for (i = 0; i < (int)temp_count; i++) {
-                        ompi_op_reduce(op, curr_origin_addr,
-                                       (void *)((char *)temp_addr + i * temp_extent),
-                                       1, temp_dt);
-                        curr_origin_addr = (void *)((char *)curr_origin_addr + temp_extent);
-                        origin_ucx_iov_idx++;
-                        if (curr_origin_addr >= (void *)((char *)origin_ucx_iov[origin_ucx_iov_idx].addr + origin_ucx_iov[origin_ucx_iov_idx].len)) {
-                            origin_ucx_iov_idx++;
-                            curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                        }
-                    }
+                ompi_datatype_type_size(temp_dt, &temp_size);
+                while (origin_ucx_iov_idx < origin_ucx_iov_count) {
+                    int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
+                    ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
+                                   curr_temp_addr, curr_count, temp_dt);
+                    curr_temp_addr += curr_count * temp_size;
+                    origin_ucx_iov_idx++;
                 }
+
                 free(origin_ucx_iov);
+            } else {
+                ret = reduce_noncontig_origin(op, origin_addr, origin_count, origin_dt,
+                                              temp_addr, temp_count, temp_dt, temp_extent);
+                if (ret != OMPI_SUCCESS) {
+                    return ret;
+                }
             }
 
             ret = ompi_osc_ucx_put(temp_addr, (int)temp_count, temp_dt, target, target_disp,
@@ -1808,10 +1841,13 @@ void ompi_osc_ucx_req_completion(void *request) {
             
                 if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
                     ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
-                } else {
+                } else if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
+                           ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
                     ucx_iovec_t *origin_ucx_iov = NULL;
                     uint32_t origin_ucx_iov_count = 0;
                     uint32_t origin_ucx_iov_idx = 0;
+                    char *curr_temp_addr = (char *)temp_addr;
+                    size_t temp_size;
 
                     ret = create_iov_list(origin_addr, origin_count, origin_dt,
                                           &origin_ucx_iov, &origin_ucx_iov_count);
@@ -1821,40 +1857,25 @@ void ompi_osc_ucx_req_completion(void *request) {
                         abort();
                     }
 
-                    if ((op != &ompi_mpi_op_maxloc.op && op != &ompi_mpi_op_minloc.op) ||
-                        ompi_datatype_is_contiguous_memory_layout(temp_dt, temp_count)) {
-                        size_t temp_size;
-                        char *curr_temp_addr = (char *)temp_addr;
-                        ompi_datatype_type_size(temp_dt, &temp_size);
-                        while (origin_ucx_iov_idx < origin_ucx_iov_count) {
-                            int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
-                            ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
-                                           curr_temp_addr, curr_count, temp_dt);
-                            curr_temp_addr += curr_count * temp_size;
-                            origin_ucx_iov_idx++;
-                        }
-                    } else {
-                        int i;
-                        void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-                        for (i = 0; i < (int)temp_count; i++) {
-                            ompi_op_reduce(op, curr_origin_addr,
-                                           (void *)((char *)temp_addr + i * temp_extent),
-                                           1, temp_dt);
-                            curr_origin_addr = (void *)((char *)curr_origin_addr + temp_extent);
-                            origin_ucx_iov_idx++;
-                            if (curr_origin_addr >= (void *)((char
-                                            *)origin_ucx_iov[origin_ucx_iov_idx].addr
-                                        +
-                                        origin_ucx_iov[origin_ucx_iov_idx].len))
-                            {
-                                origin_ucx_iov_idx++;
-                                curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                            }
-                        }
+                    ompi_datatype_type_size(temp_dt, &temp_size);
+                    while (origin_ucx_iov_idx < origin_ucx_iov_count) {
+                        int curr_count = origin_ucx_iov[origin_ucx_iov_idx].len / temp_size;
+                        ompi_op_reduce(op, origin_ucx_iov[origin_ucx_iov_idx].addr,
+                                       curr_temp_addr, curr_count, temp_dt);
+                        curr_temp_addr += curr_count * temp_size;
+                        origin_ucx_iov_idx++;
                     }
 
                     free(origin_ucx_iov);
+                } else {
+                    ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
+                    ret = reduce_noncontig_origin(op, origin_addr, origin_count, origin_dt,
+                                                  temp_addr, temp_count, temp_dt, temp_extent);
+                    if (ret != OMPI_SUCCESS) {
+                        OSC_UCX_ERROR("reduce_noncontig_origin failed ret= %d\n", ret);
+                        free(temp_addr);
+                        abort();
+                    }
                 }
             
                 if (req->acc_type == GET_ACCUMULATE) {
