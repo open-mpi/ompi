@@ -38,11 +38,34 @@ typedef enum {
     OMPI_MPIT_ABI_STANDARD = 1  /* MPI Standard ABI: handle == integer handle */
 } ompi_mpit_abi_t;
 
-/* Hard-coded to the Open MPI ABI for now.  When the MPI Standard ABI lands
-   (open-mpi/ompi#13280), its MPI_T_event_register_callback entry point will set
-   this to OMPI_MPIT_ABI_STANDARD, and the producers' "else" branches (marked
-   "TODO ABI") will fill in the Standard-ABI handle values. */
+/* Defaults to the Open MPI ABI.  The MPI Standard ABI variants of MPI_Init,
+   MPI_Init_thread, and MPI_Session_init set this to OMPI_MPIT_ABI_STANDARD
+   (see open-mpi/ompi#13280), which makes the producer raise sites publish
+   Standard-ABI integer handle values instead of internal object pointers. */
 OMPI_DECLSPEC extern ompi_mpit_abi_t ompi_mpit_callback_abi;
+
+/* Convert an internal MPI object handle to the value an MPI Standard ABI
+   MPI_T tool expects to see in an event payload.  `object` is the internal
+   object pointer (ompi_communicator_t *, ompi_win_t *, ompi_instance_t *,
+   ompi_errhandler_t *, ompi_file_t *); `handle_kind` selects which object
+   class it is, using the public MPI_T_BIND_* binding constants
+   (MPI_T_BIND_MPI_COMM / _WIN / _SESSION / _ERRHANDLER / _FILE).  Returns the
+   Standard-ABI integer handle widened to uint64_t.
+
+   The intern->ABI converters live in libmpi_abi (the upper layer); the raise
+   sites live in libopen_mpi (the lower layer), which must not depend upward.
+   So the Standard-ABI init path installs this converter downward via
+   ompi_mpit_register_abi_handle_convert(), mirroring
+   ompi_mpi_instance_register_mpiext_init().  The raise sites call
+   ompi_mpit_abi_handle(), which forwards to the registered converter (or
+   returns 0 if none was registered -- the same fallback as the old stub). */
+typedef uint64_t (*ompi_mpit_abi_handle_convert_fn_t)(void *object,
+                                                      int handle_kind);
+
+OMPI_DECLSPEC void ompi_mpit_register_abi_handle_convert(
+    ompi_mpit_abi_handle_convert_fn_t fn);
+
+OMPI_DECLSPEC uint64_t ompi_mpit_abi_handle(void *object, int handle_kind);
 
 /* Event type handles for the in-tree producers.  NULL until (and unless) the
    producers are registered, so a raise site must NULL-check before raising. */

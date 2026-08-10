@@ -68,6 +68,8 @@ C_CALLBACK_CASES = \
         cases/c-callback/callback_comm_attr.prologue.in \
         cases/c-callback/callback_datarep.cbody.in \
         cases/c-callback/callback_datarep.prologue.in \
+        cases/c-callback/callback_mpit_event_handle.cbody.in \
+        cases/c-callback/callback_mpit_event_handle.prologue.in \
         cases/c-callback/callback_file_errhandler.cbody.in \
         cases/c-callback/callback_file_errhandler.prologue.in \
         cases/c-callback/callback_grequest.cbody.in \

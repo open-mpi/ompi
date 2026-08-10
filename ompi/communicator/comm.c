@@ -2362,8 +2362,8 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.handle = (uint64_t) (uintptr_t) comm;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value. */
-            payload.handle = 0;
+            /* MPI Standard ABI: publish the integer MPI_Comm handle. */
+            payload.handle = ompi_mpit_abi_handle(comm, MPI_T_BIND_MPI_COMM);
         }
         mca_base_event_raise_bound(ompi_event_comm_name_set, NULL, comm, &payload);
     }
@@ -2528,9 +2528,8 @@ int ompi_comm_free( ompi_communicator_t **comm )
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.handle = (uint64_t) (uintptr_t) *comm;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               communicator *comm. */
-            payload.handle = 0;
+            /* MPI Standard ABI: publish the integer MPI_Comm handle. */
+            payload.handle = ompi_mpit_abi_handle(*comm, MPI_T_BIND_MPI_COMM);
         }
         mca_base_event_raise(ompi_event_comm_freed, NULL, &payload);
     }
