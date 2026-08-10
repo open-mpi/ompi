@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Verify that Open MPI's MPI_T communicator-created event publishes the
+ *   MPI *Standard ABI* integer handle in its payload when the process runs
+ *   under the Standard ABI (open-mpi/ompi#13280), not an internal object
+ *   pointer or the old zero stub.  A Standard-ABI process links libmpi_abi,
+ *   whose MPI_Init installs the intern->ABI handle converter downward into
+ *   libopen_mpi; the producer raise site then converts the communicator to
+ *   the Standard-ABI handle.
+ *
+ *   For a freshly created (non-predefined) communicator, the Standard-ABI
+ *   handle the application holds is exactly the value the converter yields,
+ *   so the payload element must compare equal to the user's MPI_Comm handle.
+ *   Open MPI may expose the event APIs with no source able to allocate a
+ *   registration, or no communicator-created event; the body treats either
+ *   as a stable skip.
+ */
+struct mpit_created_state {
+    MPI_T_event_registration registration;
+    int calls;
+    int failure_code;
+    uint64_t handle;
+};
+
+static struct mpit_created_state mpit_created_state;
+
+static void mpit_created_callback(MPI_T_event_instance event_instance,
+                                  MPI_T_event_registration event_registration,
+                                  MPI_T_cb_safety cb_safety,
+                                  void *user_data)
+{
+    struct mpit_created_state *state =
+        (struct mpit_created_state *) user_data;
+    if (&mpit_created_state != state) {
+        mpit_created_state.failure_code = 201;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 202;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 203;
+    } else {
+        ++state->calls;
+        /* Element 1 of the communicator_created payload is the MPI_Comm
+           handle (element 0 is the int32 size). */
+        (void) MPI_T_event_read(event_instance, 1, &state->handle);
+    }
+}

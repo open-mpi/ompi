@@ -1,0 +1,155 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Drive the ompi.mpi.communicator_created event under the MPI Standard
+ *   ABI and confirm its payload carries the Standard-ABI integer MPI_Comm
+ *   handle (open-mpi/ompi#13280).  Skips stably (77) when the event APIs
+ *   are unavailable, the event is not registered, or no registration can
+ *   be allocated.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int provided = 0;
+ret = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+if (MPI_T_ERR_NOT_SUPPORTED == ret) {
+    (void) MPI_Finalize();
+    return 77;
+}
+if (MPI_SUCCESS != ret) {
+    (void) MPI_Finalize();
+    return 1;
+}
+
+/* Locate the communicator-created event by name. */
+int num_events = 0;
+ret = MPI_T_event_get_num(&num_events);
+if (MPI_SUCCESS != ret || num_events < 1) {
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 77;
+}
+
+int created_index = -1;
+for (int event_index = 0; event_index < num_events; ++event_index) {
+    char name[MPI_MAX_OBJECT_NAME];
+    int name_len = (int) sizeof(name);
+    int verbosity = 0;
+    MPI_Datatype datatypes[4];
+    MPI_Aint displacements[4];
+    int num_elements = 4;
+    MPI_T_enum enumtype = MPI_T_ENUM_NULL;
+    MPI_Info info = MPI_INFO_NULL;
+    char desc[MPI_MAX_INFO_VAL];
+    int desc_len = (int) sizeof(desc);
+    int bind = MPI_T_BIND_NO_OBJECT;
+
+    ret = MPI_T_event_get_info(event_index, name, &name_len, &verbosity,
+                               datatypes, displacements, &num_elements,
+                               &enumtype, &info, desc, &desc_len, &bind);
+    if (MPI_SUCCESS != ret) {
+        continue;
+    }
+    if (MPI_INFO_NULL != info) {
+        (void) MPI_Info_free(&info);
+    }
+    if (NULL != strstr(name, "communicator_created")) {
+        created_index = event_index;
+        break;
+    }
+}
+
+if (created_index < 0) {
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 77;
+}
+
+mpit_created_state.registration = (MPI_T_event_registration) 0;
+mpit_created_state.calls = 0;
+mpit_created_state.failure_code = 0;
+mpit_created_state.handle = 0;
+
+ret = MPI_T_event_handle_alloc(created_index, NULL, MPI_INFO_NULL,
+                               &mpit_created_state.registration);
+if (MPI_SUCCESS != ret ||
+    (MPI_T_event_registration) 0 == mpit_created_state.registration) {
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 77;
+}
+
+ret = MPI_T_event_register_callback(mpit_created_state.registration,
+                                    MPI_T_CB_REQUIRE_NONE, MPI_INFO_NULL,
+                                    &mpit_created_state,
+                                    mpit_created_callback);
+if (MPI_SUCCESS != ret) {
+    (void) MPI_T_event_handle_free(mpit_created_state.registration, NULL,
+                                   NULL);
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 2;
+}
+
+/* Create a communicator; this must raise communicator_created and deliver
+   the new communicator's Standard-ABI handle in payload element 1. */
+MPI_Comm dup = MPI_COMM_NULL;
+ret = MPI_Comm_dup(MPI_COMM_SELF, &dup);
+if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup) {
+    (void) MPI_T_event_handle_free(mpit_created_state.registration, NULL,
+                                   NULL);
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 3;
+}
+
+int local_failure = 0;
+if (0 != mpit_created_state.failure_code) {
+    local_failure = 4;
+} else if (mpit_created_state.calls < 1) {
+    local_failure = 5;
+} else if (mpit_created_state.handle !=
+           (uint64_t) (uintptr_t) dup) {
+    /* The payload must carry the Standard-ABI integer handle the
+       application holds for the new communicator, not 0 or an internal
+       pointer. */
+    fprintf(stderr, "ABI_FAIL:mpit:created_handle:%llu:%llu\n",
+            (unsigned long long) mpit_created_state.handle,
+            (unsigned long long) (uintptr_t) dup);
+    local_failure = 6;
+}
+
+ret = MPI_Comm_free(&dup);
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 7;
+}
+
+ret = MPI_T_event_handle_free(mpit_created_state.registration, NULL, NULL);
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 8;
+}
+
+ret = MPI_T_finalize();
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 9;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 10;
+}
+
+if (0 != local_failure) {
+    return local_failure;
+}
