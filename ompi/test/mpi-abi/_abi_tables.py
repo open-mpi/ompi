@@ -1427,6 +1427,220 @@ INSTALLED_C_CALLBACK_PROBES = (
         "body_file": "cases/c-callback/callback_mpit_events.cbody.in",
     },
     {
+        "name": "callback_mpit_event_handle",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Comm_call_errhandler",
+            "MPI_Comm_create_errhandler",
+            "MPI_Comm_dup",
+            "MPI_Comm_free",
+            "MPI_Comm_set_errhandler",
+            "MPI_Errhandler_free",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Info_free",
+            "MPI_Init",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_event_handle.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_event_handle.cbody.in",
+    },
+    {
+        "name": "callback_mpit_event_handle_init",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Init",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Info_free",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_event_handle_init.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_event_handle_init.cbody.in",
+    },
+    {
+        "name": "callback_mpit_event_handle_init_thread",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Init_thread",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Info_free",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_event_handle_init_thread.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_event_handle_init_thread.cbody.in",
+    },
+    {
+        "name": "callback_mpit_event_handle_session",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Session_finalize",
+            "MPI_Session_init",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Info_free",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_event_handle_session.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_event_handle_session.cbody.in",
+    },
+    {
+        "name": "callback_mpit_win_created",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Win_create",
+            "MPI_Win_free",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Info_free",
+            "MPI_Init",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_win_created.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_win_created.cbody.in",
+    },
+    {
+        "name": "callback_mpit_errhandler_file",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Errhandler_free",
+            "MPI_File_call_errhandler",
+            "MPI_File_close",
+            "MPI_File_create_errhandler",
+            "MPI_File_delete",
+            "MPI_File_open",
+            "MPI_File_set_errhandler",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Info_free",
+            "MPI_Init",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_errhandler_file.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_errhandler_file.cbody.in",
+    },
+    {
+        "name": "callback_mpit_errhandler_session",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Errhandler_free",
+            "MPI_Session_call_errhandler",
+            "MPI_Session_create_errhandler",
+            "MPI_Session_finalize",
+            "MPI_Session_init",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Info_free",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_errhandler_session.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_errhandler_session.cbody.in",
+    },
+    {
         "name": "lifetime_nonblocking_collective_arrays",
         "family": "callback_lifetime",
         "rank_count": 2,

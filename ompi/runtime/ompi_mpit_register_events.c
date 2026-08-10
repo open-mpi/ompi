@@ -17,6 +17,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/include/opal/sys/atomic.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
 #include "opal/mca/base/mca_base_event.h"
@@ -24,9 +25,96 @@
 
 #include "ompi/runtime/ompi_mpit_events.h"
 
-/* The MPI ABI of the registering MPI_T tool (process-global; see the header).
-   Hard-coded to the Open MPI ABI until open-mpi/ompi#13280. */
-ompi_mpit_abi_t ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
+/* The MPI ABI of the running process (process-global; see the header).
+   Defaults to the Open MPI ABI; the MPI Standard ABI init entry points set it
+   to OMPI_MPIT_ABI_STANDARD (open-mpi/ompi#13280).
+
+   THREAD SAFETY: Accessed with OPAL atomic operations (read barrier after load
+   at raise sites, write barrier before store during initialization) to avoid
+   data races under MPI_THREAD_MULTIPLE. */
+opal_atomic_int32_t ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
+
+/* Downward-installed converters from internal representations to MPI Standard
+   ABI values in event payloads.  NULL under the Open MPI ABI (never consulted
+   there); installed atomically by the Standard-ABI init path via
+   ompi_mpit_register_abi_converters().  See the header for why this indirection
+   is required (library layering).
+
+   THREAD SAFETY: The pointer is set once with a write barrier before the store,
+   before setting ompi_mpit_callback_abi to STANDARD, and read with a read barrier
+   after the load at raise sites.  The pointed-to struct is immutable after
+   initialization. Stored as opal_atomic_intptr_t and cast to/from pointer. */
+static opal_atomic_intptr_t ompi_mpit_abi_converters_ptr = 0;
+
+void ompi_mpit_register_abi_converters(const struct ompi_mpit_abi_converters *converters)
+{
+    /* Install the converter set with a write barrier so all struct fields are
+       visible before the pointer becomes non-NULL.  The caller must ensure
+       this is called BEFORE setting ompi_mpit_callback_abi to STANDARD. */
+    opal_atomic_wmb();
+    ompi_mpit_abi_converters_ptr = (intptr_t) converters;
+}
+
+uint64_t ompi_mpit_abi_handle(void *object, int handle_kind)
+{
+    /* Load the converter set pointer with a read barrier to synchronize with the
+       write barrier in ompi_mpit_register_abi_converters(). */
+    const struct ompi_mpit_abi_converters *converters
+        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
+    opal_atomic_rmb();
+
+    if (NULL != converters && NULL != converters->handle_convert) {
+        return converters->handle_convert(object, handle_kind);
+    }
+    /* No converter registered: fall back to 0 rather than publish an internal
+       pointer to a Standard-ABI tool (matches the old TODO-ABI stub). */
+    return 0;
+}
+
+int32_t ompi_mpit_abi_error(int32_t err_code)
+{
+    /* Load the converter set pointer with a read barrier. */
+    const struct ompi_mpit_abi_converters *converters
+        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
+    opal_atomic_rmb();
+
+    if (NULL != converters && NULL != converters->error_convert) {
+        return converters->error_convert(err_code);
+    }
+    /* No converter registered (Open MPI ABI): the internal encoding is what the
+       tool expects. */
+    return err_code;
+}
+
+int32_t ompi_mpit_abi_bind(int32_t object_bind)
+{
+    /* Load the converter set pointer with a read barrier. */
+    const struct ompi_mpit_abi_converters *converters
+        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
+    opal_atomic_rmb();
+
+    if (NULL != converters && NULL != converters->bind_convert) {
+        return converters->bind_convert(object_bind);
+    }
+    /* No converter registered (Open MPI ABI): the internal encoding is what the
+       tool expects. */
+    return object_bind;
+}
+
+int32_t ompi_mpit_abi_thread_level(int32_t thread_level)
+{
+    /* Load the converter set pointer with a read barrier. */
+    const struct ompi_mpit_abi_converters *converters
+        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
+    opal_atomic_rmb();
+
+    if (NULL != converters && NULL != converters->thread_level_convert) {
+        return converters->thread_level_convert(thread_level);
+    }
+    /* No converter registered (Open MPI ABI): the internal encoding is what the
+       tool expects. */
+    return thread_level;
+}
 
 mca_base_event_t *ompi_event_comm_created = NULL;
 mca_base_event_t *ompi_event_comm_freed = NULL;
