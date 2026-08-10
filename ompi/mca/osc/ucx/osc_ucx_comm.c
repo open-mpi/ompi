@@ -767,7 +767,8 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
         }
 
         if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
-            ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
+            ompi_op_reduce(op, (void *) ((intptr_t) origin_addr + origin_dt->super.true_lb),
+                           temp_addr, (int) temp_count, temp_dt);
         } else {
             ucx_iovec_t *origin_ucx_iov = NULL;
             uint32_t origin_ucx_iov_count = 0;
@@ -1400,7 +1401,8 @@ int get_accumulate_req(const void *origin_addr, size_t origin_count,
             }
 
             if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
-                ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
+                ompi_op_reduce(op, (void *) ((intptr_t) origin_addr + origin_dt->super.true_lb),
+                               temp_addr, (int) temp_count, temp_dt);
             } else {
                 ucx_iovec_t *origin_ucx_iov = NULL;
                 uint32_t origin_ucx_iov_count = 0;
@@ -1807,7 +1809,8 @@ void ompi_osc_ucx_req_completion(void *request) {
                     ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
             
                 if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
-                    ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
+                    ompi_op_reduce(op, (void *) ((intptr_t) origin_addr + origin_dt->super.true_lb),
+                                   temp_addr, (int) temp_count, temp_dt);
                 } else {
                     ucx_iovec_t *origin_ucx_iov = NULL;
                     uint32_t origin_ucx_iov_count = 0;
