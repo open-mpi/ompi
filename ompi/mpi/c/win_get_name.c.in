@@ -54,10 +54,13 @@ PROTOTYPE ERROR_CLASS win_get_name(WIN win, STRING_OUT win_name, INT_OUT resultl
        so that the output is bounded by @MPI_MAX_OBJECT_NAME@ -- the entry
        point's own MPI_MAX_OBJECT_NAME, which matches the size of the
        caller's buffer: OPAL_MAX_OBJECT_NAME for the OMPI binding, the MPI
-       Forum ABI maximum for the standard-ABI binding.  win->w_name is sized
-       to the ABI maximum and is always \0-terminated. */
+       Forum ABI maximum for the standard-ABI binding.  w_name is only
+       allocated the first time a name is set on the window: if it is still
+       NULL, the window's name is the empty string.  When allocated, it is
+       sized to the ABI maximum and is always \0-terminated. */
     OPAL_THREAD_LOCK(&(win->w_lock));
-    opal_string_copy(win_name, win->w_name, @MPI_MAX_OBJECT_NAME@);
+    const char *name = (NULL == win->w_name) ? "" : win->w_name;
+    opal_string_copy(win_name, name, @MPI_MAX_OBJECT_NAME@);
     /* The copy above may truncate (w_name holds up to the ABI maximum);
        resultlen must describe the name actually returned. */
     *resultlen = (int) strlen(win_name);

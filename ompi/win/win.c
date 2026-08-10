@@ -165,13 +165,6 @@ static int alloc_window(struct ompi_communicator_t *comm, opal_info_t *info, int
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    win->w_name = (char*) malloc (OMPI_MPI_MAX_OBJECT_NAME_ABI);
-    if (NULL == win->w_name) {
-        OBJ_RELEASE(win);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    win->w_name[0] = '\0';
-
     /* Copy the info for the info layer */
     win->super.s_info = OBJ_NEW(opal_info_t);
     if (info) {
@@ -457,6 +450,17 @@ int
 ompi_win_set_name(ompi_win_t *win, const char *win_name)
 {
     OPAL_THREAD_LOCK(&(win->w_lock));
+
+    /* Defer allocation of the storage for the window name until it is
+       actually needed (i.e. the first time a name is set). */
+    if (NULL == win->w_name) {
+        win->w_name = (char *) malloc (OMPI_MPI_MAX_OBJECT_NAME_ABI);
+        if (NULL == win->w_name) {
+            OPAL_THREAD_UNLOCK(&(win->w_lock));
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+    }
+
     /* Bound the store by the full internal buffer size (the ABI maximum); the
      * per-entry-point limit (OPAL_MAX_OBJECT_NAME for the OMPI bindings, the
      * ABI maximum for the standard-ABI bindings) is applied by the caller. */
@@ -471,10 +475,14 @@ int
 ompi_win_get_name(ompi_win_t *win, char *win_name, int *length)
 {
     OPAL_THREAD_LOCK(&(win->w_lock));
-    opal_string_copy(win_name, win->w_name, MPI_MAX_OBJECT_NAME);
-    /* w_name can hold up to the (larger) MPI Forum ABI maximum, so the
-       copy above may truncate; report the length of what was actually
-       returned, per MPI's requirement on resultlen. */
+
+    /* If no name has ever been set on this window, its name is the empty
+       string (per the MPI standard).  w_name can hold up to the (larger)
+       MPI Forum ABI maximum, so the copy below may truncate; report the
+       length of what was actually returned, per MPI's requirement on
+       resultlen. */
+    const char *name = (NULL == win->w_name) ? "" : win->w_name;
+    opal_string_copy(win_name, name, MPI_MAX_OBJECT_NAME);
     *length = (int)strlen(win_name);
     OPAL_THREAD_UNLOCK(&(win->w_lock));
 
