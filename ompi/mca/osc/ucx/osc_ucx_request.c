@@ -1,5 +1,6 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,7 +46,21 @@ static void request_construct(ompi_osc_ucx_generic_request_t *request)
     request->super.super.req_cancel = request_cancel;
 }
 
+static void acc_request_construct(ompi_osc_ucx_accumulate_request_t *request)
+{
+    /* Layout-compatible: both request types start with the same
+     * ompi_osc_ucx_request_t super member, which is all request_construct
+     * touches. */
+    request_construct((ompi_osc_ucx_generic_request_t *) request);
+    OBJ_CONSTRUCT(&request->pending_item, opal_list_item_t);
+}
+
+static void acc_request_destruct(ompi_osc_ucx_accumulate_request_t *request)
+{
+    OBJ_DESTRUCT(&request->pending_item);
+}
+
 OBJ_CLASS_INSTANCE(ompi_osc_ucx_generic_request_t, ompi_request_t,
                    request_construct, NULL);
 OBJ_CLASS_INSTANCE(ompi_osc_ucx_accumulate_request_t, ompi_request_t,
-                   request_construct, NULL);
+                   acc_request_construct, acc_request_destruct);

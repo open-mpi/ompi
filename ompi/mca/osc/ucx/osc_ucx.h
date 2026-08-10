@@ -1,6 +1,7 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
  * Copyright (c) 2025      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,9 +47,17 @@ typedef struct ompi_osc_ucx_component {
     unsigned int priority;
     /* directory where to place backing files */
     char *backing_directory;
+    opal_list_t pending_acc_ops;
+    int drain_depth; /* current nesting level of the pending-acc drain */
+    opal_mutex_t pending_acc_lock;
 } ompi_osc_ucx_component_t;
 
 OMPI_DECLSPEC extern ompi_osc_ucx_component_t mca_osc_ucx_component;
+
+/* Maximum nesting of ompi_osc_ucx_drain_pending_acc().  Nested drains are
+ * needed so that a blocking wait entered from a drain can still complete other
+ * parked requests, but the depth is capped to keep the recursion bounded. */
+#define OSC_UCX_MAX_DRAIN_DEPTH 8
 
 #define OSC_UCX_INCREMENT_OUTSTANDING_NB_OPS(_module)                               \
     do {                                                                            \

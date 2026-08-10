@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2025      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +46,11 @@ static void _osc_ucx_init_unlock(void)
 }
 
 static bool enable_nonblocking_accumulate = false;
+
+static inline bool osc_ucx_use_nb_accumulate(void)
+{
+    return enable_nonblocking_accumulate && !opal_using_threads();
+}
 
 static int component_open(void);
 static int component_close(void);
@@ -201,8 +207,14 @@ static int component_register(void) {
                                            description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &mca_osc_ucx_component.acc_single_intrinsic);
 
-    opal_asprintf(&description_str, "Enable nonblocking MPI_Accumulate and MPI_Get_accumulate  (default: %s)",
-                                           enable_nonblocking_accumulate  ? "true" : "false");
+    opal_asprintf(&description_str, "Enable nonblocking MPI_Accumulate and MPI_Get_accumulate. "
+                                    "EXPERIMENTAL: safe only for a single thread that flushes "
+                                    "after each accumulate. Piling up multiple accumulates before "
+                                    "a flush, or tearing a window down (MPI_Win_free) with "
+                                    "un-flushed accumulates outstanding, can deadlock. It is "
+                                    "automatically disabled (falls back to blocking accumulate) "
+                                    "under MPI_THREAD_MULTIPLE  (default: %s)",
+                                    enable_nonblocking_accumulate  ? "true" : "false");
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "enable_nonblocking_accumulate",
                                            description_str, MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &enable_nonblocking_accumulate);
@@ -244,6 +256,10 @@ static int progress_callback(void) {
         opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
     }
     return 0;
+}
+
+static int drain_acc_callback(void) {
+    return ompi_osc_ucx_drain_pending_acc();
 }
 
 static int ucp_context_init(bool enable_mt, int proc_world_size) {
@@ -367,6 +383,17 @@ static int component_finalize(void) {
     }
     opal_common_ucx_mca_deregister();
     if (mca_osc_ucx_component.env_initialized) {
+        /* Windows drain their parked accumulate requests in
+         * ompi_osc_ucx_free(), while the module they reference is still
+         * valid, so nothing should be left here.  Do not assert on it:
+         * an empty list is not something the user can be trusted to
+         * guarantee, and aborting is worse than reporting. */
+        if (!opal_list_is_empty(&mca_osc_ucx_component.pending_acc_ops)) {
+            OSC_UCX_VERBOSE(1, "%d accumulate request(s) still pending at finalize",
+                            (int) opal_list_get_size(&mca_osc_ucx_component.pending_acc_ops));
+        }
+        OBJ_DESTRUCT(&mca_osc_ucx_component.pending_acc_ops);
+        OBJ_DESTRUCT(&mca_osc_ucx_component.pending_acc_lock);
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
         OBJ_DESTRUCT(&mca_osc_ucx_component.accumulate_requests);
         OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
@@ -442,6 +469,12 @@ static void ompi_osc_ucx_unregister_progress()
         ret = opal_progress_unregister(progress_callback);
         if (OMPI_SUCCESS != ret) {
             OSC_UCX_VERBOSE(1, "opal_progress_unregister failed: %d", ret);
+        }
+        if (osc_ucx_use_nb_accumulate()) {
+            ret = opal_progress_unregister(drain_acc_callback);
+            if (OMPI_SUCCESS != ret) {
+                OSC_UCX_VERBOSE(1, "opal_progress_unregister failed: %d", ret);
+            }
         }
     }
 
@@ -619,6 +652,9 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, pt
             mca_osc_ucx_component.comm_world_size = ompi_proc_world_size();
             mca_osc_ucx_component.endpoints = calloc(mca_osc_ucx_component.comm_world_size, sizeof(ucp_ep_h));
         }
+        OBJ_CONSTRUCT(&mca_osc_ucx_component.pending_acc_ops, opal_list_t);
+        OBJ_CONSTRUCT(&mca_osc_ucx_component.pending_acc_lock, opal_mutex_t);
+        mca_osc_ucx_component.drain_depth = 0;
         /* Make sure that all memory updates performed above are globally
          * observable before (mca_osc_ucx_component.env_initialized = true)
          */
@@ -634,9 +670,19 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, pt
      */
     OSC_UCX_ASSERT(mca_osc_ucx_component.num_modules > 0);
     if (1 == mca_osc_ucx_component.num_modules) {
+        if (osc_ucx_use_nb_accumulate()) {
+            ret = opal_progress_register(drain_acc_callback);
+            if (OMPI_SUCCESS != ret) {
+                OSC_UCX_VERBOSE(1, "opal_progress_register failed: %d", ret);
+                goto select_unlock;
+            }
+        }
         ret = opal_progress_register(progress_callback);
         if (OMPI_SUCCESS != ret) {
             OSC_UCX_VERBOSE(1, "opal_progress_register failed: %d", ret);
+            if (osc_ucx_use_nb_accumulate()) {
+                opal_progress_unregister(drain_acc_callback);
+            }
             goto select_unlock;
         }
     }
@@ -658,7 +704,7 @@ select_unlock:
     memcpy(module, &ompi_osc_ucx_module_template, sizeof(ompi_osc_base_module_t));
 
     /* TODO Provide support for nonblocking operations with dynamic windows */
-    if (enable_nonblocking_accumulate && flavor != MPI_WIN_FLAVOR_DYNAMIC) {
+    if (osc_ucx_use_nb_accumulate() && flavor != MPI_WIN_FLAVOR_DYNAMIC) {
         module->super.osc_accumulate = ompi_osc_ucx_accumulate_nb;
         module->super.osc_get_accumulate = ompi_osc_ucx_get_accumulate_nb;
     }
@@ -1008,6 +1054,8 @@ error_nomem:
     if (env_initialized == true) {
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
         OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
+        OBJ_DESTRUCT(&mca_osc_ucx_component.pending_acc_ops);
+        OBJ_DESTRUCT(&mca_osc_ucx_component.pending_acc_lock);
         mca_osc_ucx_component.env_initialized = false;
     }
 
@@ -1211,10 +1259,17 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     }
     OBJ_DESTRUCT(&module->pending_posts);
 
-    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
-    if (OPAL_SUCCESS != ret) {
-        return ret;
-    }
+    /* Complete any accumulate requests that the completion callback parked:
+     * they reference this module, and once the window is gone there is
+     * nothing left that can complete them.  Processing a request can issue
+     * the next phase of the same accumulate, so alternate flushing and
+     * draining until a drain finds nothing left to do. */
+    do {
+        ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_WORKER, 0);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+    } while (ompi_osc_ucx_drain_pending_acc() > 0);
 
     ret = module->comm->c_coll->coll_barrier(module->comm,
                                              module->comm->c_coll->coll_barrier_module);
