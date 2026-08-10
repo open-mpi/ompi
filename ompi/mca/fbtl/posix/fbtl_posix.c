@@ -28,12 +28,16 @@
  */
 
 #include "ompi_config.h"
+#include "opal/opal_portable_platform.h"
 #include "mpi.h"
 
 #include <unistd.h>
 #include <sys/uio.h>
 #if HAVE_AIO_H
 #include <aio.h>
+#endif
+#if defined(PLATFORM_OS_DARWIN) && defined(HAVE_SYS_SYSCTL_H)
+#include <sys/sysctl.h>
 #endif
 
 int ompi_fbtl_posix_max_prd_active_reqs=2048;
@@ -104,10 +108,24 @@ int mca_fbtl_posix_component_file_unquery (ompio_file_t *file) {
 int mca_fbtl_posix_module_init (ompio_file_t *file) {
 
 #if defined (FBTL_POSIX_HAVE_AIO)
+#if defined(PLATFORM_OS_DARWIN) && defined(HAVE_SYS_SYSCTL_H)
+    /* On Darwin, sysconf(_SC_AIO_MAX) reports kern.aiomax, the limit on
+     * the number of outstanding aio requests across the entire machine.
+     * A single process is instead capped by kern.aioprocmax, which is
+     * much smaller. Submitting more than kern.aioprocmax requests at
+     * once fails with EAGAIN, so use the per-process limit here. */
+    int aioprocmax = 0;
+    size_t len = sizeof(aioprocmax);
+    if ( 0 == sysctlbyname("kern.aioprocmax", &aioprocmax, &len, NULL, 0) &&
+         0 < aioprocmax ) {
+        ompi_fbtl_posix_max_prd_active_reqs = aioprocmax;
+    }
+#else
     long val = sysconf(_SC_AIO_MAX);
     if ( -1 != val ) {
         ompi_fbtl_posix_max_prd_active_reqs = (int)val;
     }
+#endif
 #endif
     return OMPI_SUCCESS;
 }
@@ -190,8 +208,14 @@ bool mca_fbtl_posix_progress ( mca_ompio_request_t *req)
                 continue;
             }
             else {
-                /* an error occurred. Mark the request done, but
-                   set an error code in the status */
+                /* an error occurred. Call aio_return to release the
+                   resources associated with this aio request; without
+                   it the per-process aio slot is never freed. The
+                   return value is expected to be -1 here, since the
+                   operation failed (aio_error returned a real error),
+                   so we discard it. Mark the request done and set an
+                   error code in the status */
+                (void) aio_return ( &data->prd_aio.aio_reqs[i] );
                 req->req_ompi.req_status.MPI_ERROR = OMPI_ERROR;
                 req->req_ompi.req_status._ucount = data->prd_total_len;
                 ret = true;

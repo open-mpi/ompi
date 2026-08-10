@@ -453,7 +453,19 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
 					     &i, &total_bytes_written, &spc,
 					     &fh->f_io_array, &fh->f_num_of_io_entries);
 
-            fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
+            ssize_t fbtl_ret = fh->f_fbtl->fbtl_ipwritev (fh, (ompi_request_t *) ompio_req);
+            if (0 > fbtl_ret) {
+                /* The fbtl operation failed synchronously, before it
+                   could attach a progress function to the request. If we
+                   left the request as-is, ompio progress would treat it
+                   as a completed parent request and finish it with an
+                   uninitialized MPI_ERROR. Complete it here with an error
+                   status instead. */
+                ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_ERROR;
+                ompio_req->req_ompi.req_status._ucount = 0;
+                ompi_request_complete (&ompio_req->req_ompi, false);
+                ret = OMPI_ERROR;
+            }
         }
     } else {
         // This fbtl does not support non-blocking write operations

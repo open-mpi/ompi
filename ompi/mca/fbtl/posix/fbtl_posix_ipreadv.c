@@ -114,15 +114,47 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
 
     for (i=0; i < data->prd_last_active_req; i++) {
         int counter=0;
-        while ( MAX_ATTEMPTS > counter ) { 
+        while ( MAX_ATTEMPTS > counter ) {
             if  ( -1 != aio_read(&data->prd_aio.aio_reqs[i]) ) {
                 break;
             }
             counter++;
+            /* aio_read can fail transiently when the process is out of
+               aio slots (EAGAIN). Drive ompio progress here so that other
+               pending ompio requests can reap their completed operations
+               (via their req_progress_fn) and release slots, giving this
+               retry a chance to succeed. Note this cannot reap this
+               request's own already-posted operations: its req_progress_fn
+               is not assigned until after this submission loop completes. */
             mca_common_ompio_progress();
         }
         if ( MAX_ATTEMPTS == counter ) {
+           /* If aio_read failed because the process ran out of aio
+              slots (EAGAIN) but we have already queued at least one
+              request in this batch, then 'i' is the true per-process
+              limit. Shrink the batch size accordingly and stop posting;
+              the progress function will reap these operations and post
+              the remaining requests in subsequent batches. */
+           if ( EAGAIN == errno && i > data->prd_first_active_req ) {
+               data->prd_req_chunks      = i;
+               data->prd_last_active_req = i;
+               break;
+           }
            opal_output(1, "mca_fbtl_posix_ipreadv: error in aio_read(): errno %d %s", errno, strerror(errno));
+           /* Release the aio requests that were already posted in this
+              batch before the error. The aiocb array is freed below, so
+              each outstanding operation must first be canceled, drained
+              to completion, and reaped with aio_return; otherwise the
+              kernel could touch freed memory and the per-process aio
+              slots would leak. */
+           for ( int j=data->prd_first_active_req; j < i; j++ ) {
+               (void) aio_cancel(data->prd_aio.aio_reqs[j].aio_fildes,
+                                 &data->prd_aio.aio_reqs[j]);
+               while ( EINPROGRESS == aio_error(&data->prd_aio.aio_reqs[j]) ) {
+                   mca_common_ompio_progress();
+               }
+               (void) aio_return(&data->prd_aio.aio_reqs[j]);
+           }
            mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter);
            free(data->prd_aio.aio_reqs);
            free(data->prd_aio.aio_req_status);
