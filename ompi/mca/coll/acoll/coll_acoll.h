@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2024 - 2025 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2026        NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -264,5 +265,25 @@ struct mca_coll_acoll_module_t {
 
 typedef struct mca_coll_acoll_module_t mca_coll_acoll_module_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_acoll_module_t);
+
+/**
+ * Free a sub-communicator that was OBJ_RETAIN'd by the module.
+ * Releases the ownership reference safely: ompi_comm_free handles
+ * attribute cleanup + one OBJ_RELEASE; if the sub-comm survives
+ * (ownership ref still held), ompi_comm_lookup finds it and
+ * OBJ_RELEASE drops it to zero.
+ */
+static inline void coll_acoll_subcomm_free(ompi_communicator_t **comm)
+{
+    if (NULL != *comm) {
+        int cid = (*comm)->c_index;
+        ompi_comm_free(comm);
+        ompi_communicator_t *tmp = ompi_comm_lookup(cid);
+        if (NULL != tmp) {
+            OBJ_RELEASE(tmp);
+        }
+        *comm = NULL;
+    }
+}
 
 #endif /* MCA_COLL_ACOLL_EXPORT_H */
