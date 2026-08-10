@@ -501,16 +501,58 @@ bound-object resolution (sec. 6.1), because both must match the ABI of
 the tool that registered the callback:
 
 - A process-global flag `ompi_mpit_callback_abi`
-  (`OMPI_MPIT_ABI_OMPI` / `_STANDARD`) records which ABI the registering
-  tool uses. It is set by `MPI_T_event_register_callback` and is, for now,
-  hard-coded to the Open MPI ABI.
+  (`OMPI_MPIT_ABI_OMPI` / `_STANDARD`) records which ABI the process uses.
+  It defaults to the Open MPI ABI and is set to `OMPI_MPIT_ABI_STANDARD`
+  by the Standard-ABI variants of `MPI_Init`, `MPI_Init_thread`, and
+  `MPI_Session_init` (and re-asserted in the Standard-ABI copy of
+  `MPI_T_event_register_callback`). Keying off process init -- rather than
+  callback registration alone -- also covers the world-model
+  `ompi.mpi.initialization` event, which is raised during `MPI_Init`
+  before any tool can register a callback.
 - Each handle-emitting raise site branches on this flag. The Open MPI ABI
-  branch emits the internal pointer; the Standard ABI branch is a marked
-  `TODO ABI` stub (handle `0`) that #13280 will fill in.
+  branch emits the internal object pointer; the Standard ABI branch emits
+  the Standard-ABI integer handle. The intern->ABI converters
+  (`ompi_convert_comm_ompi_to_standard()` and friends, generated into
+  `abi_converters.h`) live in `libmpi_abi`, a *higher* layer than the
+  raise sites in `libopen_mpi`; a direct upward call would violate the
+  OPAL->OMPI linker boundary. The Standard-ABI init path therefore
+  installs all converters downward atomically via
+  `ompi_mpit_register_abi_converters()` (storing converter function
+  pointers in `libopen_mpi`, mirroring
+  `ompi_mpi_instance_register_mpiext_init()`), and the raise sites call
+  them through `ompi_mpit_abi_handle()` / `ompi_mpit_abi_error()` /
+  `ompi_mpit_abi_bind()` / `ompi_mpit_abi_thread_level()`. The handle
+  converter itself is `ompi_mpit_abi_handle_convert_impl()` in
+  `ompi/mpi/c/mpit_abi_handle_convert.c` (compiled only into
+  `libmpi_abi`), which dispatches on the object's `MPI_T_BIND_*` kind.
+  When no converter is registered (e.g. the Open MPI ABI, which never
+  installs one), `ompi_mpit_abi_handle()` returns `0` rather than a wrong
+  pointer value.
+- Some payloads also carry integer *values* whose numeric encoding
+  differs between the two ABIs: MPI error codes (roughly a third of the
+  `MPI_ERR_*` space) and the `MPI_T_BIND_*` object-binding kind (the
+  Standard-ABI values are the internal values + 1). The
+  `ompi.mpi.errhandler_invoked` payload carries both (`err_code`,
+  `object_type`). These are handled the same way as handles: the
+  Standard-ABI init path installs all value converters (along with the
+  handle converter) downward atomically via
+  `ompi_mpit_register_abi_converters()`, and the raise sites call them
+  through `ompi_mpit_abi_error()` / `ompi_mpit_abi_bind()`. The converter
+  implementations (`ompi_mpit_abi_error_convert_impl()` /
+  `ompi_mpit_abi_bind_convert_impl()`, wrapping the generated
+  `ompi_convert_intern_error_abi_error()` /
+  `ompi_convert_t_bind_ompi_to_standard()`) live in `libmpi_abi`. When no
+  converter is registered (the Open MPI ABI), the value is returned
+  unchanged, which is the encoding a tool linked against that ABI expects.
 - Bound-object resolution (sec. 6.1) dereferences the tool's `obj_handle`
   to the internal identity; under the Open MPI ABI the MPI handle *is*
-  that pointer, so a single deref suffices. The Standard ABI must convert
-  its integer handle to the internal pointer there (marked `XXX ABI`).
+  that pointer, so a single deref suffices. Under the Standard ABI the
+  tool's `obj_handle` is the address of a Standard-ABI *integer* handle,
+  which must be converted to the internal pointer before it can be matched
+  against the object a raise site binds to. The generated Standard-ABI
+  binding in `event_handle_alloc_abi_generated.c` performs this conversion
+  using `ompi_convert_abi_obj_handle_intern_obj_handle()`, which handles
+  both predefined and user-created objects.
 
 Because the engine's `mca_base_event_read` is a raw `memcpy` with no ABI
 translation, a tool always reads back the representation the producer
@@ -535,6 +577,17 @@ producer's responsibility, hence the per-raise-site branch.
   `MPI_Comm_set_name` (`mpi_t_event_comm_name.c`, confirming bound
   delivery isolation, the payload handle, and name re-query); plus
   smoke/self/reinit/inert tests.
+- **MPI Standard ABI coverage** (`ompi/test/mpi-abi/`, run by the ABI
+  harness): the `callback_mpit_event_handle` probe drives the
+  `ompi.mpi.communicator_created` event under a `libmpi_abi`-linked
+  process and asserts the payload handle is the Standard-ABI integer
+  handle of the new communicator (sec. 10), exercising the downward
+  converter registration and the raise-site conversion. Note this probe
+  is *not* object-bound, so it does not exercise the binding side: under
+  the Standard ABI, converting the tool's `obj_handle` in
+  `event_handle_alloc.c.in` remains deferred work (see sec. 10), so
+  object-bound delivery for predefined handles is not yet covered
+  end-to-end.
 
 ---
 
