@@ -43,6 +43,8 @@ check_PROGRAMS = \
 	info_mpi \
 	request \
 	win \
+	win_notify \
+	win_notify_unsupported \
 	instance \
 	file \
 	message
@@ -107,6 +109,14 @@ request_DEPENDENCIES = $(ompi_test_ldadd)
 win_SOURCES = win.c
 win_LDADD = $(ompi_test_ldadd)
 win_DEPENDENCIES = $(ompi_test_ldadd)
+
+win_notify_SOURCES = win_notify.c
+win_notify_LDADD = $(ompi_test_ldadd)
+win_notify_DEPENDENCIES = $(ompi_test_ldadd)
+
+win_notify_unsupported_SOURCES = win_notify_unsupported.c
+win_notify_unsupported_LDADD = $(ompi_test_ldadd)
+win_notify_unsupported_DEPENDENCIES = $(ompi_test_ldadd)
 
 instance_SOURCES = instance.c
 instance_LDADD = $(ompi_test_ldadd)

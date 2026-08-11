@@ -276,6 +276,8 @@ ompi/test/general/proc
 ompi/test/general/request
 ompi/test/general/seq_tracker
 ompi/test/general/win
+ompi/test/general/win_notify
+ompi/test/general/win_notify_unsupported
 
 ompi/test/monitoring/monitoring_test
 ompi/test/monitoring/check_monitoring
