@@ -36,6 +36,10 @@ PROTOTYPE ERROR_CLASS win_reset_notify_value(WIN win, INT notification_idx, ELEM
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
     }
 
+    if (NULL == win->w_osc_module->osc_win_reset_notify_value) {
+        return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_UNSUPPORTED_OPERATION, FUNC_NAME);
+    }
+
     rc = win->w_osc_module->osc_win_reset_notify_value(win, notification_idx, value);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

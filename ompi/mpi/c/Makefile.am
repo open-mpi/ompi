@@ -56,6 +56,7 @@ headers = bindings.h
 prototype_sources = \
         abort.c.in \
         accumulate.c.in \
+        accumulate_notify.c.in \
         add_error_class.c.in \
         add_error_code.c.in \
         add_error_string.c.in \
@@ -221,6 +222,7 @@ prototype_sources = \
 	gatherv.c.in \
 	gatherv_init.c.in \
 	get_accumulate.c.in \
+	get_accumulate_notify.c.in \
 	get_address.c.in \
 	get.c.in \
 	get_notify.c.in \
@@ -345,6 +347,7 @@ prototype_sources = \
 	put_notify.c.in \
 	query_thread.c.in \
 	raccumulate.c.in \
+	raccumulate_notify.c.in \
         recv.c.in \
 	recv_init.c.in \
 	reduce.c.in \
@@ -366,8 +369,11 @@ prototype_sources = \
 	request_get_status_any.c.in \
 	request_get_status_some.c.in \
 	rget_accumulate.c.in \
+	rget_accumulate_notify.c.in \
 	rget.c.in \
+	rget_notify.c.in \
 	rput.c.in \
+	rput_notify.c.in \
 	rsend.c.in \
 	rsend_init.c.in \
         scan.c.in \
@@ -532,6 +538,7 @@ endif
 interface_profile_sources = \
 	abort_generated.c \
 	accumulate_generated.c \
+	accumulate_notify_generated.c \
 	add_error_class_generated.c \
 	add_error_code_generated.c \
 	add_error_string_generated.c \
@@ -697,6 +704,7 @@ interface_profile_sources = \
 	gatherv_generated.c \
 	gatherv_init_generated.c \
 	get_accumulate_generated.c \
+	get_accumulate_notify_generated.c \
 	get_address_generated.c \
 	get_generated.c \
 	get_count_generated.c \
@@ -821,6 +829,7 @@ interface_profile_sources = \
 	put_notify_generated.c \
 	query_thread_generated.c \
 	raccumulate_generated.c \
+	raccumulate_notify_generated.c \
 	recv_generated.c \
 	recv_init_generated.c \
 	reduce_generated.c \
@@ -842,8 +851,11 @@ interface_profile_sources = \
 	request_get_status_any_generated.c \
 	request_get_status_some_generated.c \
 	rget_accumulate_generated.c \
+	rget_accumulate_notify_generated.c \
 	rget_generated.c \
+	rget_notify_generated.c \
 	rput_generated.c \
+	rput_notify_generated.c \
 	rsend_generated.c \
 	rsend_init_generated.c \
 	scan_generated.c \

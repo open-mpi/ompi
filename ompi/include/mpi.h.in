@@ -1463,6 +1463,14 @@ OMPI_DECLSPEC  int MPI_Accumulate(const void *origin_addr, int origin_count, MPI
 OMPI_DECLSPEC  int MPI_Accumulate_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                                     int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                     MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Accumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                         int target_rank, MPI_Aint target_disp, int target_count,
+                                         MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                         MPI_Win win);
+OMPI_DECLSPEC  int MPI_Accumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                           int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                           MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                           MPI_Win win);
 OMPI_DECLSPEC  int MPI_Add_error_class(int *errorclass);
 OMPI_DECLSPEC  int MPI_Add_error_code(int errorclass, int *errorcode);
 OMPI_DECLSPEC  int MPI_Add_error_string(int errorcode, const char *string);
@@ -1938,6 +1946,16 @@ OMPI_DECLSPEC  int MPI_Get_accumulate_c(const void *origin_addr, MPI_Count origi
                                         void *result_addr, MPI_Count result_count, MPI_Datatype result_datatype,
                                         int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Get_accumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                             void *result_addr, int result_count, MPI_Datatype result_datatype,
+                                             int target_rank, MPI_Aint target_disp, int target_count,
+                                             MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                             MPI_Win win);
+OMPI_DECLSPEC  int MPI_Get_accumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                               void *result_addr, MPI_Count result_count, MPI_Datatype result_datatype,
+                                               int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                               MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                               MPI_Win win);
 OMPI_DECLSPEC  int MPI_Get_library_version(char *version, int *resultlen);
 OMPI_DECLSPEC  int MPI_Get_processor_name(char *name, int *resultlen);
 OMPI_DECLSPEC  int MPI_Get_version(int *version, int *subversion);
@@ -2206,6 +2224,14 @@ OMPI_DECLSPEC  int MPI_Raccumulate(const void *origin_addr, int origin_count, MP
 OMPI_DECLSPEC  int MPI_Raccumulate_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                                      int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                      MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Raccumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                          int target_rank, MPI_Aint target_disp, int target_count,
+                                          MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                          MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Raccumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                            int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                            MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                            MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
                                  int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Recv_init_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
@@ -2284,6 +2310,14 @@ OMPI_DECLSPEC  int MPI_Rget(void *origin_addr, int origin_count, MPI_Datatype or
 OMPI_DECLSPEC  int MPI_Rget_c(void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                               int target_rank, MPI_Aint target_disp, MPI_Count target_count, MPI_Datatype target_datatype,
                               MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Rget_notify(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                   int target_rank, MPI_Aint target_disp, int target_count,
+                                   MPI_Datatype target_datatype, int notification_idx,
+                                   MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Rget_notify_c(void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                     int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                     MPI_Datatype target_datatype, int notification_idx,
+                                     MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Rget_accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                        void *result_addr, int result_count, MPI_Datatype result_datatype,
                                        int target_rank, MPI_Aint target_disp, int target_count,
@@ -2294,12 +2328,30 @@ OMPI_DECLSPEC  int MPI_Rget_accumulate_c(const void *origin_addr, MPI_Count orig
                                          int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                          MPI_Datatype target_datatype, MPI_Op op,
                                          MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Rget_accumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                              void *result_addr, int result_count, MPI_Datatype result_datatype,
+                                              int target_rank, MPI_Aint target_disp, int target_count,
+                                              MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                              MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Rget_accumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                                void *result_addr, MPI_Count result_count, MPI_Datatype result_datatype,
+                                                int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                                MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                                MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Rput(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                             int target_rank, MPI_Aint target_disp, int target_cout,
                             MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Rput_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                               int target_rank, MPI_Aint target_disp, MPI_Count target_cout,
                               MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Rput_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                   int target_rank, MPI_Aint target_disp, int target_count,
+                                   MPI_Datatype target_datatype, int notification_idx,
+                                   MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Rput_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                     int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                     MPI_Datatype target_datatype, int notification_idx,
+                                     MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int MPI_Rsend(const void *ibuf, int count, MPI_Datatype datatype, int dest,
                              int tag, MPI_Comm comm);
 OMPI_DECLSPEC  int MPI_Rsend_c(const void *ibuf, MPI_Count count, MPI_Datatype datatype, int dest,
@@ -2655,6 +2707,14 @@ OMPI_DECLSPEC  int PMPI_Accumulate(const void *origin_addr, int origin_count, MP
 OMPI_DECLSPEC  int PMPI_Accumulate_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                                      int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                      MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Accumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                          int target_rank, MPI_Aint target_disp, int target_count,
+                                          MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                          MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Accumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                            int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                            MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                            MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Add_error_class(int *errorclass);
 OMPI_DECLSPEC  int PMPI_Add_error_code(int errorclass, int *errorcode);
 OMPI_DECLSPEC  int PMPI_Add_error_string(int errorcode, const char *string);
@@ -3130,6 +3190,16 @@ OMPI_DECLSPEC  int PMPI_Get_accumulate_c(const void *origin_addr, MPI_Count orig
                                          void *result_addr, MPI_Count result_count, MPI_Datatype result_datatype,
                                          int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                          MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Get_accumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                              void *result_addr, int result_count, MPI_Datatype result_datatype,
+                                              int target_rank, MPI_Aint target_disp, int target_count,
+                                              MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                              MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Get_accumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                                void *result_addr, MPI_Count result_count, MPI_Datatype result_datatype,
+                                                int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                                MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                                MPI_Win win);
 OMPI_DECLSPEC  int PMPI_Get_library_version(char *version, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Get_processor_name(char *name, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Get_version(int *version, int *subversion);
@@ -3398,6 +3468,14 @@ OMPI_DECLSPEC  int PMPI_Raccumulate(const void *origin_addr, int origin_count, M
 OMPI_DECLSPEC  int PMPI_Raccumulate_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                                       int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                       MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Raccumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                           int target_rank, MPI_Aint target_disp, int target_count,
+                                           MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                           MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Raccumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                             int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                             MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                             MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Recv_init(void *buf, int count, MPI_Datatype datatype, int source,
                                   int tag, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Recv_init_c(void *buf, MPI_Count count, MPI_Datatype datatype, int source,
@@ -3476,6 +3554,14 @@ OMPI_DECLSPEC  int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype o
 OMPI_DECLSPEC  int PMPI_Rget_c(void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                                int target_rank, MPI_Aint target_disp, MPI_Count target_count, MPI_Datatype target_datatype,
                                MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Rget_notify(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                    int target_rank, MPI_Aint target_disp, int target_count,
+                                    MPI_Datatype target_datatype, int notification_idx,
+                                    MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Rget_notify_c(void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                      int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                      MPI_Datatype target_datatype, int notification_idx,
+                                      MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Rget_accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                                         void *result_addr, int result_count, MPI_Datatype result_datatype,
                                         int target_rank, MPI_Aint target_disp, int target_count,
@@ -3486,12 +3572,30 @@ OMPI_DECLSPEC  int PMPI_Rget_accumulate_c(const void *origin_addr, MPI_Count ori
                                           int target_rank, MPI_Aint target_disp, MPI_Count target_count,
                                           MPI_Datatype target_datatype, MPI_Op op,
                                           MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Rget_accumulate_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                               void *result_addr, int result_count, MPI_Datatype result_datatype,
+                                               int target_rank, MPI_Aint target_disp, int target_count,
+                                               MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                               MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Rget_accumulate_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                                 void *result_addr, MPI_Count result_count, MPI_Datatype result_datatype,
+                                                 int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                                 MPI_Datatype target_datatype, MPI_Op op, int notification_idx,
+                                                 MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Rput(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
                              int target_rank, MPI_Aint target_disp, int target_cout,
                              MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Rput_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
                                int target_rank, MPI_Aint target_disp, MPI_Count target_cout,
                                MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Rput_notify(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                                    int target_rank, MPI_Aint target_disp, int target_count,
+                                    MPI_Datatype target_datatype, int notification_idx,
+                                    MPI_Win win, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Rput_notify_c(const void *origin_addr, MPI_Count origin_count, MPI_Datatype origin_datatype,
+                                      int target_rank, MPI_Aint target_disp, MPI_Count target_count,
+                                      MPI_Datatype target_datatype, int notification_idx,
+                                      MPI_Win win, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Rsend(const void *ibuf, int count, MPI_Datatype datatype, int dest,
                               int tag, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Rsend_c(const void *ibuf, MPI_Count count, MPI_Datatype datatype, int dest,

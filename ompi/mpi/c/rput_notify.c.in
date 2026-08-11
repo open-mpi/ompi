@@ -29,19 +29,21 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/win/win.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/ompi_spc.h"
 
-PROTOTYPE ERROR_CLASS put_notify(BUFFER origin_addr, COUNT origin_count, DATATYPE origin_datatype,
-                          INT target_rank, AINT target_disp, COUNT target_count,
-                          DATATYPE target_datatype, INT notification_idx, WIN win)
+PROTOTYPE ERROR_CLASS rput_notify(BUFFER origin_addr, COUNT origin_count, DATATYPE origin_datatype,
+                                  INT target_rank, AINT target_disp, COUNT target_count,
+                                  DATATYPE target_datatype, INT notification_idx, WIN win,
+                                  REQUEST_INOUT request)
 {
     int rc;
 
-    SPC_RECORD(OMPI_SPC_PUT_NOTIFY, 1);
+    SPC_RECORD(OMPI_SPC_RPUT_NOTIFY, 1);
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
@@ -61,6 +63,9 @@ PROTOTYPE ERROR_CLASS put_notify(BUFFER origin_addr, COUNT origin_count, DATATYP
         } else if ( MPI_WIN_FLAVOR_DYNAMIC != win->w_flavor && target_disp < 0 ) {
             rc = MPI_ERR_DISP;
         } else if (notification_idx < 0) {
+            /* The upper bound depends on how many counters the *target* has
+               attached, which only the osc module can see, so the range check
+               proper happens there. */
             rc = MPI_ERR_RMA_NOTIFICATION;
         } else {
             OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, origin_datatype, origin_count);
@@ -71,14 +76,18 @@ PROTOTYPE ERROR_CLASS put_notify(BUFFER origin_addr, COUNT origin_count, DATATYP
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
     }
 
-    if (NULL == win->w_osc_module->osc_put_notify) {
+    if (NULL == win->w_osc_module->osc_rput_notify) {
         return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_UNSUPPORTED_OPERATION, FUNC_NAME);
     }
 
-    if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
+    if (MPI_PROC_NULL == target_rank) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
+    }
 
-    rc = win->w_osc_module->osc_put_notify(origin_addr, origin_count, origin_datatype,
-                                    target_rank, target_disp, target_count,
-                                    target_datatype, notification_idx, win);
+    rc = win->w_osc_module->osc_rput_notify(origin_addr, origin_count, origin_datatype,
+                                            target_rank, target_disp, target_count,
+                                            target_datatype, notification_idx, win,
+                                            request);
     OMPI_ERRHANDLER_RETURN(rc, win, rc, FUNC_NAME);
 }

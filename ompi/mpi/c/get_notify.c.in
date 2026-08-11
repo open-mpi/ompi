@@ -68,6 +68,10 @@ PROTOTYPE ERROR_CLASS get_notify(BUFFER_OUT origin_addr, COUNT origin_count,
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
     }
 
+    if (NULL == win->w_osc_module->osc_get_notify) {
+        return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_UNSUPPORTED_OPERATION, FUNC_NAME);
+    }
+
     if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
     rc = win->w_osc_module->osc_get_notify(origin_addr, origin_count, origin_datatype,
