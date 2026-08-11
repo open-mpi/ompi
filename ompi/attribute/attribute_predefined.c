@@ -143,6 +143,9 @@ int ompi_attr_create_predefined_keyvals(void)
             OMPI_SUCCESS != (rc = create_win(MPI_WIN_CREATE_FLAVOR)) ||
             OMPI_SUCCESS != (rc = create_win(MPI_WIN_MODEL)) ||
             OMPI_SUCCESS != (rc = create_comm(MPI_FT, false)) || /* not #if conditional on OPAL_ENABLE_FT_MPI for ABI */
+            OMPI_SUCCESS != (rc = create_win(MPI_WIN_NOTIFICATION_NUM_SB)) ||
+            OMPI_SUCCESS != (rc = create_win(MPI_WIN_NOTIFICATION_NUM_UB)) ||
+            OMPI_SUCCESS != (rc = create_win(MPI_WIN_NOTIFICATION_VALUE_UB)) ||
             0) {
             ret = rc;
         }
@@ -227,7 +230,10 @@ int ompi_attr_free_predefined(void)
             OMPI_SUCCESS != (rc = free_win(MPI_WIN_SIZE)) ||
             OMPI_SUCCESS != (rc = free_win(MPI_WIN_DISP_UNIT)) ||
             OMPI_SUCCESS != (rc = free_win(MPI_WIN_CREATE_FLAVOR)) ||
-            OMPI_SUCCESS != (rc = free_win(MPI_WIN_MODEL))) {
+            OMPI_SUCCESS != (rc = free_win(MPI_WIN_MODEL)) ||
+            OMPI_SUCCESS != (rc = free_win(MPI_WIN_NOTIFICATION_NUM_SB)) ||
+            OMPI_SUCCESS != (rc = free_win(MPI_WIN_NOTIFICATION_NUM_UB)) ||
+            OMPI_SUCCESS != (rc = free_win(MPI_WIN_NOTIFICATION_VALUE_UB))) {
             ret = rc;
         }
 

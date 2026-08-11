@@ -411,6 +411,37 @@ ompi_osc_sm_win_get_num_notify(struct ompi_win_t *win,
 }
 
 int
+ompi_osc_sm_win_get_notify_bounds(struct ompi_win_t *win,
+                                  int *num_sb,
+                                  int *num_ub,
+                                  OMPI_MPI_COUNT_TYPE *value_ub)
+{
+    ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
+
+    if (0 != module->notify_max_assert) {
+        /* The window was sized on the strength of mpi_assert_max_num_notify, so
+         * that value is both the hard bound and the number we can serve without
+         * further allocation. */
+        *num_sb = (int) module->notify_max_assert;
+        *num_ub = (int) module->notify_max_assert;
+    } else {
+        /* MPI-5.1 section 12.6.1: NUM_SB is what the implementation "supports
+         * efficiently", which here is what was reserved at window creation --
+         * beyond it MPI_WIN_SET_NUM_NOTIFY has to build a new shared segment.
+         * Nothing bounds NUM_UB short of the type of the notification index
+         * itself, since growth is on demand. */
+        *num_sb = (int) mca_osc_sm_component.num_notify_counters;
+        *num_ub = INT_MAX;
+    }
+
+    /* Counters are int64_t and only ever incremented by one per notified
+     * operation, so the representable maximum is the real bound. */
+    *value_ub = (OMPI_MPI_COUNT_TYPE) INT64_MAX;
+
+    return OMPI_SUCCESS;
+}
+
+int
 ompi_osc_sm_rput(const void *origin_addr,
                  size_t origin_count,
                  struct ompi_datatype_t *origin_dt,

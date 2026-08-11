@@ -88,6 +88,7 @@ ompi_osc_sm_module_t ompi_osc_sm_module_template = {
         .osc_win_reset_notify_value = ompi_osc_sm_win_reset_notify_value,
         .osc_win_set_num_notify = ompi_osc_sm_win_set_num_notify,
         .osc_win_get_num_notify = ompi_osc_sm_win_get_num_notify,
+        .osc_win_get_notify_bounds = ompi_osc_sm_win_get_notify_bounds,
         .osc_accumulate = ompi_osc_sm_accumulate,
         .osc_accumulate_notify = ompi_osc_sm_accumulate_notify,
         .osc_compare_and_swap = ompi_osc_sm_compare_and_swap,

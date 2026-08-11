@@ -674,6 +674,14 @@ enum {
 
     /* MPI-4 */
     MPI_FT, /* used by OPAL_ENABLE_FT_MPI */
+
+    /* MPI-5.1 notified RMA (section 12.2.6, Table 12.1).  Appended here rather
+       than beside the other MPI_WIN_* keyvals so that the existing values stay
+       put; the Annex A.1.1 attribute-key table assigns these no ABI value. */
+    MPI_WIN_NOTIFICATION_NUM_SB,
+    MPI_WIN_NOTIFICATION_NUM_UB,
+    MPI_WIN_NOTIFICATION_VALUE_UB,
+
     MPI_ATTR_PREDEFINED_KEY_MAX,
 };
 

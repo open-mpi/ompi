@@ -249,6 +249,45 @@ config_window(void *base, size_t size, ptrdiff_t disp_unit,
                             MPI_WIN_MODEL, model, true);
     if (OMPI_SUCCESS != ret) return ret;
 
+    /* MPI-5.1 section 12.2.6, Table 12.1: the notification bounds are cached on
+     * every window, whether or not its component implements notified
+     * communication.  A component that does not leaves the query NULL and the
+     * attributes read as zero -- no counter may be attached to such a window,
+     * which is exactly what MPI_Win_set_num_notify would report by returning
+     * MPI_ERR_UNSUPPORTED_OPERATION. */
+    int notify_num_sb = 0, notify_num_ub = 0;
+    MPI_Count notify_value_ub = 0;
+
+    if (NULL != win->w_osc_module->osc_win_get_notify_bounds) {
+        ret = win->w_osc_module->osc_win_get_notify_bounds(win, &notify_num_sb,
+                                                           &notify_num_ub,
+                                                           &notify_value_ub);
+        if (OMPI_SUCCESS != ret) return ret;
+    }
+
+    ret = ompi_attr_set_int(WIN_ATTR, win,
+                            &win->w_keyhash,
+                            MPI_WIN_NOTIFICATION_NUM_SB, notify_num_sb, true);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    ret = ompi_attr_set_int(WIN_ATTR, win,
+                            &win->w_keyhash,
+                            MPI_WIN_NOTIFICATION_NUM_UB, notify_num_ub, true);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    /* MPI-5.1 Table 12.1 types this attribute MPI_Count *, and the attribute
+     * machinery has no MPI_Count slot -- every other predefined attribute is
+     * integer- or address-valued.  Storing it as an MPI_Aint is safe because
+     * MPI_Aint tracks the pointer width and Open MPI no longer supports 32-bit
+     * environments, so the two are the same width wherever this runs and the
+     * value round-trips to the user unchanged.  Should 32-bit ever come back,
+     * this needs a real MPI_Count slot in attribute_value_t instead. */
+    ret = ompi_attr_set_aint(WIN_ATTR, win,
+                             &win->w_keyhash,
+                             MPI_WIN_NOTIFICATION_VALUE_UB,
+                             (MPI_Aint) notify_value_ub, true);
+    if (OMPI_SUCCESS != ret) return ret;
+
     win->w_f_to_c_index = opal_pointer_array_add(&ompi_mpi_windows, win);
     if (-1 == win->w_f_to_c_index) return OMPI_ERR_OUT_OF_RESOURCE;
 
