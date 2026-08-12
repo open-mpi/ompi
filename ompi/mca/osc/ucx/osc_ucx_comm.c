@@ -623,7 +623,7 @@ osc_ucx_notify_counter_addr(ompi_osc_ucx_module_t *module, int target, int notif
  * rank's attached count. */
 #define CHECK_NOTIFY_IDX(module, notify, rank)                                \
     if ((notify) < 0 || (notify) >= (module)->notify_counts[rank]) {          \
-        return MPI_ERR_NOTIFY_IDX;                                            \
+        return MPI_ERR_RMA_NOTIFICATION;                                      \
     }
 
 /* Notification counters live in the window's registered memory region, which
