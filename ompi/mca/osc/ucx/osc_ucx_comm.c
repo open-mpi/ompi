@@ -17,6 +17,8 @@
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 
+#include <stdint.h>
+
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
 
@@ -615,9 +617,9 @@ osc_ucx_notify_counter_addr(ompi_osc_ucx_module_t *module, int target, int notif
            + (uint64_t)notify * sizeof(uint64_t);
 }
 
-/* A fixed region of OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS notification counters is
- * registered per rank at window creation (see osc_ucx_component.c), but only
- * the first notify_counts[rank] of them are considered *attached* by
+/* A region of module->notify_capacity notification counters is registered per
+ * rank at window creation (see osc_ucx_component.c), but only the first
+ * notify_counts[rank] of them are considered *attached* by
  * MPI_WIN_SET_NUM_NOTIFY.  Per the MPI Standard it is erroneous to reference a
  * counter that is out of range at the target, so validate against the target
  * rank's attached count. */
@@ -634,6 +636,22 @@ osc_ucx_notify_counter_addr(ompi_osc_ucx_module_t *module, int target, int notif
         return MPI_ERR_RMA_FLAVOR;                                            \
     }
 
+/* Increments the target's notification counter once the preceding data
+ * operation has been ordered ahead of it.  Shared by every notified
+ * operation; they differ only in which base operation they issue first and
+ * in whether a fence or a flush is needed to order it. */
+static inline int
+osc_ucx_notify_target(ompi_osc_ucx_module_t *module, int target, int notify,
+                      ucp_ep_h *ep)
+{
+    int ret = opal_common_ucx_wpmem_post(module->mem,
+                                         UCP_ATOMIC_POST_OP_ADD, 1,
+                                         target, sizeof(uint64_t),
+                                         osc_ucx_notify_counter_addr(module, target, notify),
+                                         ep);
+    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+}
+
 int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
                                       OMPI_MPI_COUNT_TYPE *value)
 {
@@ -644,7 +662,7 @@ int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
     CHECK_NOTIFY_IDX(module, notify, my_rank);
 
     volatile uint64_t *counter =
-        (volatile uint64_t *)(module->addrs[my_rank] + module->size) + notify;
+        (volatile uint64_t *)osc_ucx_notify_counter_addr(module, my_rank, notify);
     *value = (OMPI_MPI_COUNT_TYPE)*counter;
     opal_atomic_rmb();
     return OMPI_SUCCESS;
@@ -704,54 +722,90 @@ int ompi_osc_ucx_win_set_num_notify(struct ompi_win_t *win, struct opal_info_t *
 {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
     int my_rank = ompi_comm_rank(module->comm);
-    int my_count;
-    int ret;
+    int comm_size = ompi_comm_size(module->comm);
+    int requested = num_notifications;
+    int ret, i;
 
     (void) info; /* "mpi_assert_same_num_notifications" is an optimization hint only */
 
-    if (num_notifications < 0) {
-        return MPI_ERR_ARG;
-    }
-
-    /* Notification counters live in the window's registered memory region,
-     * which is not allocated for dynamic windows. */
+    /* Notification counters live in the window's registered memory region, which
+     * is not allocated for dynamic windows.  The flavor is uniform across the
+     * group, so returning here cannot desynchronize the collective below. */
     CHECK_NOTIFY_FLAVOR(module);
 
-    /* A fixed region of OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS counters is registered
-     * once at window creation (the effective MPI_WIN_NOTIFICATION_NUM_UB), so
-     * we can attach up to that many without re-registering memory.  Requesting
-     * more than the capacity is out of range. */
-    if (num_notifications > OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS) {
-        return MPI_ERR_ARG;
-    }
-
-    /* The number of attached notification counters is never decreased
-     * (§12.6.1). */
-    if (num_notifications > module->notify_counts[my_rank]) {
-        module->notify_counts[my_rank] = num_notifications;
+    /* The counters are registered once at window creation and that registration
+     * cannot grow, so notify_capacity is a hard upper bound (reported as
+     * MPI_WIN_NOTIFICATION_NUM_UB).  This is a synchronizing collective, so a
+     * rank with a bad argument must not return before the allgather below --
+     * that would leave the rest of the group blocked in it.  Mark the request
+     * instead and let every rank discover the error from the gathered values. */
+    if (requested < 0 || (unsigned int) requested > module->notify_capacity) {
+        requested = -1;
     }
 
     /* All notification counters (existing and newly attached) are reset to zero
      * by this call.  It is erroneous to call MPI_WIN_SET_NUM_NOTIFY while an
      * access epoch is open, so no concurrent network atomics touch the counters
-     * and a plain local reset is sufficient. */
-    if (0 != module->addrs[my_rank]) {
-        memset((void *)(module->addrs[my_rank] + module->size), 0,
-               OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t));
+     * and a plain local reset is sufficient.  Resetting before the allgather
+     * means no rank can leave the collective and then observe a peer's stale
+     * counter. */
+    if (0 <= requested && 0 != module->addrs[my_rank]) {
+        memset((void *)osc_ucx_notify_counter_addr(module, my_rank, 0), 0,
+               module->notify_capacity * sizeof(uint64_t));
     }
     opal_atomic_wmb();
 
-    /* Publish every rank's attached count to the whole group so that origins
-     * can validate notification indices against the target's count.  This is
-     * the blocking, synchronizing collective required by the standard. */
-    my_count = module->notify_counts[my_rank];
-    ret = module->comm->c_coll->coll_allgather(&my_count, 1, MPI_INT,
+    /* Publish every rank's attached count to the whole group so that origins can
+     * validate notification indices against the target's count.  This is the
+     * blocking, synchronizing collective required by the standard.  Gathering
+     * the requested value directly is what makes MPI_WIN_GET_NUM_NOTIFY return
+     * the value given here, including when it lowers the count. */
+    ret = module->comm->c_coll->coll_allgather(&requested, 1, MPI_INT,
                                                module->notify_counts, 1, MPI_INT,
                                                module->comm,
                                                module->comm->c_coll->coll_allgather_module);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
+
+    for (i = 0; i < comm_size; i++) {
+        if (0 > module->notify_counts[i]) {
+            /* Some rank asked for a count outside [0, notify_capacity].  Report
+             * the error on every rank rather than leaving part of the group
+             * believing the window was reconfigured. */
+            module->notify_counts[i] = 0;
+            ret = MPI_ERR_ARG;
+        }
+    }
+
+    return ret;
+}
+
+int ompi_osc_ucx_win_get_notify_bounds(struct ompi_win_t *win, int *num_sb, int *num_ub,
+                                       OMPI_MPI_COUNT_TYPE *value_ub)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+
+    /* Dynamic windows have no registered data region to append counters to, so
+     * they support none; reporting zero is what tells a conforming program not
+     * to attempt notified communication on them. */
+    if (MPI_WIN_FLAVOR_DYNAMIC == module->flavor) {
+        *num_sb = 0;
+        *num_ub = 0;
+        *value_ub = 0;
+        return OMPI_SUCCESS;
+    }
+
+    /* The counters share the window's memory registration, which cannot grow
+     * after window creation, so the reservation is both the efficiently
+     * supported count and the hard upper bound. */
+    *num_sb = (int) module->notify_capacity;
+    *num_ub = (int) module->notify_capacity;
+
+    /* Counters are uint64_t and only ever incremented by one per notified
+     * operation, but they are returned to the user as a signed MPI_Count, so
+     * the representable maximum of that type is the real bound. */
+    *value_ub = (OMPI_MPI_COUNT_TYPE) INT64_MAX;
 
     return OMPI_SUCCESS;
 }
@@ -786,12 +840,7 @@ int ompi_osc_ucx_put_notify(const void *origin_addr, size_t origin_count,
 
     /* Atomically increment the target's notify counter in-place using the
      * same mem handle as the window data. */
-    ret = opal_common_ucx_wpmem_post(module->mem,
-                                     UCP_ATOMIC_POST_OP_ADD, 1,
-                                     target, sizeof(uint64_t),
-                                     osc_ucx_notify_counter_addr(module, target, notify),
-                                     ep);
-    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+    return osc_ucx_notify_target(module, target, notify, ep);
 }
 
 int ompi_osc_ucx_get_notify(void *origin_addr, size_t origin_count,
@@ -822,12 +871,7 @@ int ompi_osc_ucx_get_notify(void *origin_addr, size_t origin_count,
         return OMPI_ERROR;
     }
 
-    ret = opal_common_ucx_wpmem_post(module->mem,
-                                     UCP_ATOMIC_POST_OP_ADD, 1,
-                                     target, sizeof(uint64_t),
-                                     osc_ucx_notify_counter_addr(module, target, notify),
-                                     ep);
-    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+    return osc_ucx_notify_target(module, target, notify, ep);
 }
 
 int ompi_osc_ucx_rput_notify(const void *origin_addr, size_t origin_count,
@@ -859,12 +903,7 @@ int ompi_osc_ucx_rput_notify(const void *origin_addr, size_t origin_count,
         return OMPI_ERROR;
     }
 
-    ret = opal_common_ucx_wpmem_post(module->mem,
-                                     UCP_ATOMIC_POST_OP_ADD, 1,
-                                     target, sizeof(uint64_t),
-                                     osc_ucx_notify_counter_addr(module, target, notify),
-                                     ep);
-    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+    return osc_ucx_notify_target(module, target, notify, ep);
 }
 
 int ompi_osc_ucx_rget_notify(void *origin_addr, size_t origin_count,
@@ -896,12 +935,147 @@ int ompi_osc_ucx_rget_notify(void *origin_addr, size_t origin_count,
         return OMPI_ERROR;
     }
 
-    ret = opal_common_ucx_wpmem_post(module->mem,
-                                     UCP_ATOMIC_POST_OP_ADD, 1,
-                                     target, sizeof(uint64_t),
-                                     osc_ucx_notify_counter_addr(module, target, notify),
-                                     ep);
-    return (OPAL_SUCCESS == ret) ? OMPI_SUCCESS : OMPI_ERROR;
+    return osc_ucx_notify_target(module, target, notify, ep);
+}
+
+int ompi_osc_ucx_accumulate_notify(const void *origin_addr, size_t origin_count,
+                                   struct ompi_datatype_t *origin_dt,
+                                   int target, ptrdiff_t target_disp, size_t target_count,
+                                   struct ompi_datatype_t *target_dt,
+                                   struct ompi_op_t *op, int notify,
+                                   struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_accumulate(origin_addr, origin_count, origin_dt,
+                                  target, target_disp, target_count, target_dt,
+                                  op, win);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Fence so that the accumulate is applied at the target before the counter
+     * increment, as §12.6.4 requires. */
+    ret = opal_common_ucx_wpmem_fence(module->mem);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    return osc_ucx_notify_target(module, target, notify, ep);
+}
+
+int ompi_osc_ucx_get_accumulate_notify(const void *origin_addr, size_t origin_count,
+                                       struct ompi_datatype_t *origin_dt,
+                                       void *result_addr, size_t result_count,
+                                       struct ompi_datatype_t *result_dt,
+                                       int target, ptrdiff_t target_disp, size_t target_count,
+                                       struct ompi_datatype_t *target_dt,
+                                       struct ompi_op_t *op, int notify,
+                                       struct ompi_win_t *win)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_get_accumulate(origin_addr, origin_count, origin_dt,
+                                      result_addr, result_count, result_dt,
+                                      target, target_disp, target_count, target_dt,
+                                      op, win);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Flush rather than fence: the result buffer must be locally valid, and the
+     * update must have been applied at the target, before the target may
+     * observe the notification. */
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    return osc_ucx_notify_target(module, target, notify, ep);
+}
+
+int ompi_osc_ucx_raccumulate_notify(const void *origin_addr, size_t origin_count,
+                                    struct ompi_datatype_t *origin_dt,
+                                    int target, ptrdiff_t target_disp, size_t target_count,
+                                    struct ompi_datatype_t *target_dt,
+                                    struct ompi_op_t *op, int notify,
+                                    struct ompi_win_t *win,
+                                    struct ompi_request_t **request)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_raccumulate(origin_addr, origin_count, origin_dt,
+                                   target, target_disp, target_count, target_dt,
+                                   op, win, request);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Fence to order the accumulate ahead of the counter increment. */
+    ret = opal_common_ucx_wpmem_fence(module->mem);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    return osc_ucx_notify_target(module, target, notify, ep);
+}
+
+int ompi_osc_ucx_rget_accumulate_notify(const void *origin_addr, size_t origin_count,
+                                        struct ompi_datatype_t *origin_dt,
+                                        void *result_addr, size_t result_count,
+                                        struct ompi_datatype_t *result_dt,
+                                        int target, ptrdiff_t target_disp, size_t target_count,
+                                        struct ompi_datatype_t *target_dt,
+                                        struct ompi_op_t *op, int notify,
+                                        struct ompi_win_t *win,
+                                        struct ompi_request_t **request)
+{
+    ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t *)win->w_osc_module;
+    ucp_ep_h *ep;
+    int ret;
+
+    CHECK_NOTIFY_FLAVOR(module);
+    CHECK_NOTIFY_IDX(module, notify, target);
+
+    OSC_UCX_GET_DEFAULT_EP(ep, module, target);
+
+    ret = ompi_osc_ucx_rget_accumulate(origin_addr, origin_count, origin_dt,
+                                       result_addr, result_count, result_dt,
+                                       target, target_disp, target_count, target_dt,
+                                       op, win, request);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* Flush so the fetched result is locally valid and the update has landed at
+     * the target before it can observe the notification. */
+    ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
+    if (OPAL_SUCCESS != ret) {
+        return OMPI_ERROR;
+    }
+
+    return osc_ucx_notify_target(module, target, notify, ep);
 }
 
 static inline bool ompi_osc_need_acc_lock(ompi_osc_ucx_module_t *module, int target)

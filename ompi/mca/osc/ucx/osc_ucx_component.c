@@ -25,6 +25,8 @@
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
 #include "opal/util/sys_limits.h"
+#include "opal/util/info.h"
+#include "opal/class/opal_cstring.h"
 
 #define memcpy_off(_dst, _src, _len, _off)        \
     memcpy(((char*)(_dst)) + (_off), _src, _len); \
@@ -106,10 +108,15 @@ ompi_osc_ucx_module_t ompi_osc_ucx_module_template = {
         .osc_get_notify = ompi_osc_ucx_get_notify,
         .osc_rput_notify = ompi_osc_ucx_rput_notify,
         .osc_rget_notify = ompi_osc_ucx_rget_notify,
+        .osc_accumulate_notify = ompi_osc_ucx_accumulate_notify,
+        .osc_get_accumulate_notify = ompi_osc_ucx_get_accumulate_notify,
+        .osc_raccumulate_notify = ompi_osc_ucx_raccumulate_notify,
+        .osc_rget_accumulate_notify = ompi_osc_ucx_rget_accumulate_notify,
         .osc_win_get_notify_value = ompi_osc_ucx_win_get_notify_value,
         .osc_win_reset_notify_value = ompi_osc_ucx_win_reset_notify_value,
         .osc_win_set_num_notify = ompi_osc_ucx_win_set_num_notify,
         .osc_win_get_num_notify = ompi_osc_ucx_win_get_num_notify,
+        .osc_win_get_notify_bounds = ompi_osc_ucx_win_get_notify_bounds,
 
         .osc_rput = ompi_osc_ucx_rput,
         .osc_rget = ompi_osc_ucx_rget,
@@ -157,6 +164,46 @@ static bool check_config_value_bool (char *key, opal_info_t *info)
     }
 
     return flag_value[0];
+}
+
+/* Read the mpi_assert_max_num_notify info key (MPI-5.1 section 12.2) to decide
+ * how many notification counters to reserve per MPI process.  The counters are
+ * registered as part of the window's memory region and that registration cannot
+ * grow later, so the reservation is a hard upper bound on
+ * MPI_WIN_SET_NUM_NOTIFY for the lifetime of the window. */
+static int osc_ucx_reserved_notify_counters(opal_info_t *info, unsigned int *reserved)
+{
+    opal_cstring_t *value_string;
+    int flag = 0, value = 0;
+
+    *reserved = mca_osc_ucx_component.num_notify_counters;
+
+    if (NULL == info) {
+        return OMPI_SUCCESS;
+    }
+
+    if (OMPI_SUCCESS != opal_info_get(info, "mpi_assert_max_num_notify",
+                                      &value_string, &flag) || !flag) {
+        return OMPI_SUCCESS;
+    }
+
+    if (OPAL_SUCCESS != opal_cstring_to_int(value_string, &value)) {
+        OBJ_RELEASE(value_string);
+        return MPI_ERR_INFO;
+    }
+    OBJ_RELEASE(value_string);
+
+    /* A negative value is a malformed key rather than "no assertion"; only 0
+     * carries the "assume nothing" meaning. */
+    if (value < 0) {
+        return MPI_ERR_INFO;
+    }
+
+    if (0 != value) {
+        *reserved = (unsigned int) value;
+    }
+
+    return OMPI_SUCCESS;
 }
 
 static int component_open(void) {
@@ -227,6 +274,23 @@ static int component_register(void) {
     (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version, "outstanding_ops_flush_threshold",
                                            description_str, MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_GROUP, &ompi_osc_ucx_outstanding_ops_flush_threshold);
+    free(description_str);
+
+    mca_osc_ucx_component.num_notify_counters = OMPI_OSC_UCX_DEFAULT_NOTIFY_COUNTERS;
+
+    opal_asprintf(&description_str,
+                  "Number of RMA notification counters reserved per MPI process "
+                  "in the registered memory region of each window.  Windows whose "
+                  "info gives an mpi_assert_max_num_notify value use that instead. "
+                  "This is a hard upper bound: the counters share the window's "
+                  "registration, so MPI_Win_set_num_notify cannot exceed it "
+                  "(default: %u)",
+                  mca_osc_ucx_component.num_notify_counters);
+    (void) mca_base_component_var_register(&mca_osc_ucx_component.super.osc_version,
+                                           "num_notify_counters", description_str,
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_GROUP,
+                                           &mca_osc_ucx_component.num_notify_counters);
     free(description_str);
 
     opal_common_ucx_mca_var_register(&mca_osc_ucx_component.super.osc_version);
@@ -681,6 +745,27 @@ select_unlock:
 
     module->flavor = flavor;
     module->size = size;
+
+    /* How many notification counters to reserve per MPI process.  Read before
+     * the window memory is sized, since the reservation is part of its layout. */
+    unsigned int notify_reserved = 0;
+    ret = osc_ucx_reserved_notify_counters(info, &notify_reserved);
+    if (OMPI_SUCCESS != ret) {
+        goto error;
+    }
+    /* info is allowed to differ between MPI processes, but the SHARED-flavor
+     * segment is laid out from a single per-rank stride, so agree on one
+     * reservation for the whole window.  Taking the maximum keeps every rank's
+     * own assertion satisfiable. */
+    int notify_reserved_int = (int) notify_reserved;
+    ret = module->comm->c_coll->coll_allreduce(MPI_IN_PLACE, &notify_reserved_int, 1,
+                                              MPI_INT, MPI_MAX, module->comm,
+                                              module->comm->c_coll->coll_allreduce_module);
+    if (OMPI_SUCCESS != ret) {
+        goto error;
+    }
+    module->notify_capacity = (unsigned int) notify_reserved_int;
+
     module->no_locks = check_config_value_bool ("no_locks", info);
     module->acc_single_intrinsic = check_config_value_bool ("acc_single_intrinsic", info);
     module->skip_sync_check = false;
@@ -794,7 +879,7 @@ select_unlock:
         /* create the segment */
 
         size_t total = 0;
-        size_t notify_size = OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
+        size_t notify_size = module->notify_capacity * sizeof(uint64_t);
         for (i = 0 ; i < comm_size ; ++i) {
             /* each rank's slot holds its window data plus its notify counters */
             total += ompi_osc_ucx_get_size(module, i) + notify_size;
@@ -904,7 +989,7 @@ select_unlock:
      * extra bytes so that remote atomic operations on the counters can use
      * the same rkey as the window data. */
     size_t notify_reg_size = (flavor == MPI_WIN_FLAVOR_DYNAMIC) ? 0 :
-                             OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t);
+                             module->notify_capacity * sizeof(uint64_t);
     ret = opal_common_ucx_wpmem_create(module->ctx, mem_base,
                                      module->size + notify_reg_size,
                                      mem_type, &exchange_len_info,
@@ -988,7 +1073,7 @@ select_unlock:
      * base + size, immediately after the window data */
     if (flavor != MPI_WIN_FLAVOR_DYNAMIC && *base != NULL) {
         memset((char *)*base + module->size, 0,
-               OMPI_OSC_UCX_MAX_NOTIFY_COUNTERS * sizeof(uint64_t));
+               module->notify_capacity * sizeof(uint64_t));
     }
     for (i = 0; i < OMPI_OSC_UCX_ATTACH_MAX; i++) {
         module->local_dynamic_win_info[i].refcnt = 0;
