@@ -654,6 +654,15 @@ int ompi_osc_ucx_win_get_notify_value(struct ompi_win_t *win, int notify,
 
     CHECK_NOTIFY_IDX(module, notify, my_rank);
 
+    /* Origins increment this counter with a UCX atomic, which the transport may
+     * emulate in software on the local worker rather than offload to the NIC.
+     * In that case the counter only advances while the worker is progressed, so
+     * a consumer spinning on MPI_WIN_GET_NOTIFY_VALUE -- the natural way to wait
+     * for a notification -- would never observe the update.  Progress the worker
+     * here so that such a loop makes forward progress on its own, as every other
+     * spin-wait in this component does. */
+    opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
+
     volatile uint64_t *counter =
         (volatile uint64_t *)osc_ucx_notify_counter_addr(module, my_rank, notify);
     *value = (OMPI_MPI_COUNT_TYPE)*counter;
