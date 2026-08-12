@@ -27,6 +27,11 @@ PROTOTYPE ERROR_CLASS win_get_num_notify(WIN win, INT target_rank, INT_OUT num_n
 
         if (ompi_win_invalid(win)) {
             return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_WIN, FUNC_NAME);
+        } else if (ompi_win_peer_invalid(win, target_rank)) {
+            /* target_rank is specified as a nonnegative integer in the group of
+             * the window; unlike the notified communication operations,
+             * MPI_PROC_NULL is not permitted here. */
+            rc = MPI_ERR_RANK;
         } else if (NULL == num_notifications) {
             rc = MPI_ERR_ARG;
         }
