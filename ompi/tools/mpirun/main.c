@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
      * child environment because it is easier and we're not going to
      * be around long enough for it to matter (since we exec prterun
      * asap */
-    setenv("PRTE_MCA_schizo_proxy", "ompi", 1);
+    setenv("PRTE_MCA_personality", "ompi", 1);
     setenv("OMPI_VERSION", OMPI_VERSION, 1);
     char *base_tool_name = opal_basename(argv[0]);
     setenv("OMPI_TOOL_NAME", base_tool_name, 1);
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
  * Copyright (c) 2020-2022 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2022      Triad National Security, LLC. All rights
+ * Copyright (c) 2022-2026 Triad National Security, LLC. All rights
  *                         reserved.
 
  * $COPYRIGHT$
