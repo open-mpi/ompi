@@ -27,27 +27,12 @@
 
 #include "osc_sm.h"
 
-/* Where this process finds the target's notification counters.  A single
- * indexed load: the address is precomputed per target by
- * ompi_osc_sm_refresh_notify_bases() so that neither the single-rank special
- * case nor the possibility that the counters have been moved to an overflow
- * segment costs anything on the path of every notified operation. */
 static inline opal_atomic_int64_t *
 osc_sm_target_notify_base(ompi_osc_sm_module_t *module, int target)
 {
     return module->notify_bases[target];
 }
 
-/* MPI-5.1 section 12.6.1: "The notification counter referenced by a notified
- * communication operation must be attached to the window at the target before
- * the operation is initiated at the origin.  Initiating a notified
- * communication operation that references a notification counter that is out of
- * range at the target is erroneous."
- *
- * The check is therefore against the *target's* attached count, and it must
- * happen before any data is moved -- otherwise an erroneous call would still
- * have overwritten the target window (or, for get, the origin buffer) by the
- * time the error is reported. */
 static inline int
 osc_sm_check_notify_idx(ompi_osc_sm_module_t *module, int target, int notify)
 {
@@ -58,23 +43,6 @@ osc_sm_check_notify_idx(ompi_osc_sm_module_t *module, int target, int notify)
     return OMPI_SUCCESS;
 }
 
-/* Publish the notification for an operation in the accumulate family.
- *
- * The fence is a full barrier rather than opal_atomic_wmb() because every
- * accumulate-family operation both reads and writes the target window: plain
- * accumulate is a read-modify-write of the target for any op other than
- * MPI_REPLACE, and get-accumulate additionally copies the target's prior value
- * out to the result buffer.  MPI-5.1 section 12.6.4 requires that "the window
- * locations have been accessed and that the notification counter has then been
- * updated (in that order)" -- accesses include loads, so a store-store fence
- * would not constrain the reads.  opal_atomic_add() is relaxed (see
- * opal/include/opal/sys/atomic_stdc.h) and supplies no ordering of its own.
- *
- * Called after the accumulate lock has been dropped.  Holding the lock across
- * the increment is unnecessary: the fence already guarantees this operation's
- * accesses are visible before its own increment lands, and a concurrent origin
- * whose accumulate becomes visible earlier than its increment does not violate
- * anything the standard promises about a counter that merely counts. */
 static inline void
 osc_sm_notify_accumulate_done(ompi_osc_sm_module_t *module, int target, int notify)
 {
@@ -96,17 +64,6 @@ ompi_osc_sm_win_get_notify_value(struct ompi_win_t *win,
         return ret;
     }
 
-    /* Acquire ordering: sample the counter first, then fence, so that window
-     * loads issued by the caller after this call cannot be satisfied by values
-     * read before the notification was observed.  A barrier placed ahead of the
-     * counter load would order nothing useful.  MPI-5.1 section 12.6.2 requires
-     * this procedure to synchronize the public and private window copies as if
-     * MPI_WIN_SYNC had been called; osc/sm is a unified-memory-model component,
-     * so the barrier is the whole of that synchronization.
-     *
-     * The load itself is atomic because the counters are opal_atomic_int64_t:
-     * remote origins bump the same location concurrently, and the standard's
-     * usage model is to poll this procedure in a loop. */
     *value = (OMPI_MPI_COUNT_TYPE) osc_sm_target_notify_base(module, rank)[notify];
     opal_atomic_rmb();
 
@@ -127,9 +84,7 @@ ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
         return ret;
     }
 
-    /* Atomically swap the counter to 0 and return the previous value.  Must be
-     * a single atomic so that increments arriving from other MPI processes
-     * between the read and the zeroing are not lost. */
+    /* Atomically swap the counter to 0 and return the previous value. */
     *value = (OMPI_MPI_COUNT_TYPE) opal_atomic_swap_64(
                  &osc_sm_target_notify_base(module, rank)[notify], 0);
     opal_atomic_rmb();
@@ -140,10 +95,7 @@ ompi_osc_sm_win_reset_notify_value(struct ompi_win_t *win,
 /* Move every rank's notification counters into a newly created shared segment
  * sized for the capacities in new_caps.  Collective over the window's
  * communicator; every MPI process must call it with an identical new_caps.
- *
- * Only reachable when the window was created without an
- * mpi_assert_max_num_notify assertion, since that assertion is precisely a
- * promise that this will not be needed. */
+ */
 static int
 osc_sm_grow_notify_counters(ompi_osc_sm_module_t *module, const unsigned long *new_caps,
                             unsigned long new_count)
@@ -168,18 +120,11 @@ osc_sm_grow_notify_counters(ompi_osc_sm_module_t *module, const unsigned long *n
     memset(&new_seg_ds, 0, sizeof(new_seg_ds));
 
     if (0 == rank) {
-        /* The cid alone does not distinguish successive segments for the same
-         * window, so include the generation implied by whether we already have
-         * an overflow segment plus the new size. */
         ret = opal_asprintf(&data_file, "%s" OPAL_PATH_SEP "osc_sm_notify.%s.%x.%d.%s.%lu",
                             mca_osc_sm_component.backing_directory, ompi_process_info.nodename,
                             OMPI_PROC_MY_NAME->jobid, (int) OMPI_PROC_MY_NAME->vpid,
                             ompi_comm_print_cid(module->comm), total_counters);
         if (ret > 0) {
-            /* On failure leave new_seg_ds zeroed; the empty seg_name is the
-             * signal to every other MPI process that this collective failed,
-             * so that all of them return an error together instead of some
-             * hanging in the bcast that follows. */
             (void) opal_shmem_segment_create(&new_seg_ds, data_file, seg_size);
             free(data_file);
         }
@@ -199,11 +144,7 @@ osc_sm_grow_notify_counters(ompi_osc_sm_module_t *module, const unsigned long *n
     new_base = opal_shmem_segment_attach(&new_seg_ds);
 
     /* Attach can fail at some MPI processes and not others.  Agree on the
-     * outcome before touching any shared state: if even one process could not
-     * map the new segment, every process must keep using the old one, or those
-     * that moved would be incrementing counters that those that stayed never
-     * read.  Nothing above this point has been mutated, so backing out is just
-     * dropping our own new mapping. */
+     * outcome before touching any shared state */
     status = (NULL == new_base) ? 1 : 0;
     ret = module->comm->c_coll->coll_allreduce(MPI_IN_PLACE, &status, 1, MPI_INT, MPI_MAX,
                                                module->comm,
@@ -234,17 +175,9 @@ osc_sm_grow_notify_counters(ompi_osc_sm_module_t *module, const unsigned long *n
 
     ompi_osc_sm_refresh_notify_bases(module);
 
-    /* Zero our own counters in their new home.  This is also the first touch of
-     * these pages: if the backing filesystem cannot supply them the fault
-     * surfaces here rather than at some later notified operation. */
     memset((void *) module->notify_bases[rank], 0,
            module->node_states[rank].notify_counter_capacity * sizeof(int64_t));
 
-    /* Only now raise the attached count to what was asked for.  Until the
-     * space behind it exists, the count must not exceed the capacity: an origin
-     * validates notification indices against this count, so a count larger than
-     * the allocation would let a notified operation write past the end of our
-     * counters. */
     module->node_states[rank].notify_counter_count = (uint32_t) new_count;
     opal_atomic_wmb();
 
@@ -297,36 +230,11 @@ ompi_osc_sm_win_set_num_notify(struct ompi_win_t *win,
         return MPI_ERR_ARG;
     }
 
-    /* When the window was created with an mpi_assert_max_num_notify value the
-     * user asserted they would not exceed it, and we reserved exactly that
-     * many.  Hold them to it rather than silently reallocating: honouring the
-     * assertion is the only reason the reservation is not generous. */
     if (0 != module->notify_max_assert &&
         requested > (unsigned long) module->notify_max_assert) {
         return MPI_ERR_ARG;
     }
 
-    /* MPI-5.1 section 12.6.1: "A subsequent call to MPI_WIN_GET_NUM_NOTIFY will
-     * return the value given to MPI_WIN_SET_NUM_NOTIFY."  The count is set to
-     * exactly what was asked for -- note this differs from earlier drafts of
-     * the chapter, which forbade decreasing it.
-     *
-     * "All notification counters (both existing and newly attached) are reset
-     * to zero by this call."  Zero the whole reserved region rather than just
-     * the attached prefix, so that counters left over from a previous, larger
-     * attachment cannot resurface if the count is raised again.  It is
-     * erroneous to call this while an access epoch is open, so no origin can be
-     * incrementing our counters concurrently and plain stores are sufficient.
-     *
-     * Done before the allgather so that the allgather doubles as the
-     * synchronization the standard requires: once it returns, every MPI process
-     * has both reset its counters and published its new count.
-     *
-     * The published count is clamped to what we have actually allocated.  When
-     * growth is needed it is raised to the requested value only once the larger
-     * allocation exists, so that a growth that fails leaves behind a count an
-     * origin can safely validate against rather than one that would admit
-     * writes past the end of our counters. */
     memset((void *) module->notify_bases[rank], 0,
            module->node_states[rank].notify_counter_capacity * sizeof(int64_t));
     module->node_states[rank].notify_counter_count =
@@ -357,10 +265,6 @@ ompi_osc_sm_win_set_num_notify(struct ompi_win_t *win,
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
-    /* Ranks may pass different values, so the new layout cannot be computed
-     * without everyone's request.  This also makes the grow/no-grow decision
-     * identical at every MPI process, which it must be: creating the new
-     * segment is itself collective. */
     ret = module->comm->c_coll->coll_allgather(&requested, 1, MPI_UNSIGNED_LONG,
                                                new_caps, 1, MPI_UNSIGNED_LONG,
                                                module->comm,
@@ -402,9 +306,6 @@ ompi_osc_sm_win_get_num_notify(struct ompi_win_t *win,
         return MPI_ERR_RANK;
     }
 
-    /* MPI-5.1 section 12.6.1: local procedure returning the number of counters
-     * attached at target_rank.  Every rank's count is published in the shared
-     * segment by MPI_WIN_SET_NUM_NOTIFY, so this is a plain read. */
     *num_notifications = (int) module->node_states[target_rank].notify_counter_count;
 
     return OMPI_SUCCESS;
@@ -419,17 +320,9 @@ ompi_osc_sm_win_get_notify_bounds(struct ompi_win_t *win,
     ompi_osc_sm_module_t *module = (ompi_osc_sm_module_t *) win->w_osc_module;
 
     if (0 != module->notify_max_assert) {
-        /* The window was sized on the strength of mpi_assert_max_num_notify, so
-         * that value is both the hard bound and the number we can serve without
-         * further allocation. */
         *num_sb = (int) module->notify_max_assert;
         *num_ub = (int) module->notify_max_assert;
     } else {
-        /* MPI-5.1 section 12.6.1: NUM_SB is what the implementation "supports
-         * efficiently", which here is what was reserved at window creation --
-         * beyond it MPI_WIN_SET_NUM_NOTIFY has to build a new shared segment.
-         * Nothing bounds NUM_UB short of the type of the notification index
-         * itself, since growth is on demand. */
         *num_sb = (int) mca_osc_sm_component.num_notify_counters;
         *num_ub = INT_MAX;
     }
@@ -519,9 +412,7 @@ ompi_osc_sm_rput_notify(const void *origin_addr,
     }
 
     /* Release ordering: the data must be visible at the target before the
-     * notification is (MPI-5.1 section 12.3, "The notification counter will be
-     * updated at the target only after the completion of the data movement
-     * operation at the target"). */
+     * notification is */
     opal_atomic_wmb();
     opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
@@ -610,12 +501,6 @@ ompi_osc_sm_rget_notify(void *origin_addr,
         return ret;
     }
 
-    /* Full barrier, not opal_atomic_rmb(): the notification tells the target
-     * that this get has read the window, so the loads above must not be
-     * reordered after the counter increment below -- that is a load-before-store
-     * constraint, which a load-load fence does not express.  opal_atomic_add()
-     * is relaxed (see opal/include/opal/sys/atomic_stdc.h) and supplies no
-     * ordering of its own. */
     opal_atomic_mb();
     opal_atomic_add(&osc_sm_target_notify_base(module, target)[notify], 1);
 
@@ -933,8 +818,7 @@ ompi_osc_sm_put_notify(const void *origin_addr,
         return ret;
     }
 
-    /* Release ordering: the data must be visible at the target before the
-     * notification is (MPI-5.1 section 12.3, "The notification counter will be
+    /* (MPI-5.1 section 12.3, "The notification counter will be
      * updated at the target only after the completion of the data movement
      * operation at the target"). */
     opal_atomic_wmb();

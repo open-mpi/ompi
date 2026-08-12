@@ -172,18 +172,7 @@ static int component_register (void)
 }
 
 
-/* Read the mpi_assert_max_num_notify info key (MPI-5.1 section 12.2).
- *
- * A non-zero value is an assertion by the user that no call to
- * MPI_WIN_SET_NUM_NOTIFY on this window will ask for more counters than this,
- * which lets us reserve exactly that many and never reallocate.  The key's
- * default is 0, which the standard defines as "no limit is assumed" -- so it is
- * not a request for zero counters, it means we pick, and we must stay able to
- * grow on demand later.
- *
- * Returns the number of counters to reserve per MPI process; *assert_value is
- * the raw key value (0 when absent), which the caller keeps to decide whether
- * growth is permitted. */
+/* Read the mpi_assert_max_num_notify info key (MPI-5.1 section 12.2). */
 static int osc_sm_reserved_notify_counters(opal_info_t *info, unsigned int *assert_value,
                                            unsigned int *reserved)
 {
@@ -363,16 +352,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
         if (NULL == module->posts) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         module->posts[0] = (osc_sm_post_atomic_type_t *) (module->posts + 1);
 
-        /* Notification counters for the single process case.  There is no
-         * shared segment here, so they are a plain heap allocation owned by
-         * this module and reached through notify_bases[0].
-         *
-         * NOTE: osc/sm pre-attaches the reserved capacity, whereas osc/ucx
-         * starts at zero and requires MPI_WIN_SET_NUM_NOTIFY before any counter
-         * may be referenced.  MPI-5.1 section 12.6.1 does not state what the
-         * initial attached count is, so neither is provably wrong, but the
-         * divergence means a program that omits MPI_WIN_SET_NUM_NOTIFY works
-         * here and fails on ucx.  Left as-is pending a decision. */
+        /* Notification counters for the single process case. */
         module->notify_bases[0] = calloc(notify_reserved, sizeof(int64_t));
         if (NULL == module->notify_bases[0]) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         module->node_states[0].notify_counter_capacity = notify_reserved;
@@ -537,11 +517,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
 
         ompi_osc_sm_refresh_notify_bases(module);
 
-        /* Zero only this process's own counters.  A freshly created segment
-         * already reads as zero, but do not depend on the backing store for
-         * that; zeroing just our own slice keeps the cost proportional to what
-         * we reserved instead of touching -- and so committing -- every page of
-         * every rank's region. */
+        /* Zero only this process's own counters. */
         memset((void *) module->notify_bases[ompi_comm_rank(module->comm)], 0,
                notify_reserved * sizeof(int64_t));
 
@@ -706,10 +682,6 @@ ompi_osc_sm_free(struct ompi_win_t *win)
         module->comm->c_coll->coll_barrier(module->comm,
                                           module->comm->c_coll->coll_barrier_module);
 
-        /* The counters live either inline in the main segment or, once
-         * MPI_WIN_SET_NUM_NOTIFY grew them, in an overflow segment of their
-         * own.  Either way they are shared memory, so there is nothing to
-         * free -- only the overflow mapping to drop. */
         if (NULL != module->notify_segment_base) {
             opal_shmem_segment_detach (&module->notify_seg_ds);
         }
@@ -776,10 +748,7 @@ ompi_osc_sm_get_info(struct ompi_win_t *win, struct opal_info_t **info_used)
                       (module->noncontig) ? "true" : "false");
     }
 
-    /* Report the assertion back only when one was actually given.  Its default
-     * is 0, meaning "no limit is assumed", and osc/sm honours that by growing on
-     * demand rather than by adopting any particular bound -- so there is no
-     * value to report in that case. */
+    /* Report the assertion back only when one was actually given. */
     if (0 != module->notify_max_assert) {
         char value_str[16];
         snprintf(value_str, sizeof(value_str), "%u", module->notify_max_assert);

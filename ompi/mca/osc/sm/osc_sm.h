@@ -26,14 +26,7 @@ typedef opal_atomic_uint64_t osc_sm_post_atomic_type_t;
 /* Per-rank notification counter capacity reserved inline in the main shared
  * segment at window creation, and the value reported as
  * MPI_WIN_NOTIFICATION_NUM_SB -- the number of counters osc/sm supports without
- * any further allocation.  Overridden by the osc_sm_num_notify_counters MCA
- * parameter, and per window by the mpi_assert_max_num_notify info key.
- *
- * This is a reservation, not a limit.  When no info assertion was given,
- * MPI_WIN_SET_NUM_NOTIFY may ask for more than this and osc/sm will move the
- * counters to a larger, separately allocated shared segment; see
- * ompi_osc_sm_win_set_num_notify().  How many counters are actually *attached*
- * is a third, per-rank quantity (MPI-5.1 section 12.6.1). */
+ * any further allocation. */
 #define OSC_SM_DEFAULT_NOTIFY_COUNTERS 16
 
 /* data shared across all peers */
@@ -60,20 +53,8 @@ struct ompi_osc_sm_node_state_t {
     opal_atomic_int32_t complete_count;
     ompi_osc_sm_lock_t lock;
     opal_atomic_lock_t accumulate_lock;
-    /* Number of notification counters currently *attached* at this rank
-     * (MPI-5.1 section 12.6.1).  Lives in the shared segment so that an origin
-     * can validate a notification index against the target's attached count
-     * without any communication. */
     uint32_t notify_counter_count;
-    /* Number of counters currently *reserved* for this rank, i.e. how many it
-     * may attach without reallocating.  This is the rank's
-     * MPI_WIN_NOTIFICATION_NUM_UB when the window was created with an
-     * mpi_assert_max_num_notify assertion. */
     uint32_t notify_counter_capacity;
-    /* Offset of this rank's counters within whichever segment currently holds
-     * them -- the main segment initially, an overflow segment after a growth.
-     * An offset rather than a pointer because the segment is mapped at a
-     * different address in every process. */
     uint64_t notify_counter_offset;
 };
 typedef struct ompi_osc_sm_node_state_t ompi_osc_sm_node_state_t;
@@ -112,25 +93,9 @@ struct ompi_osc_sm_module_t {
     void **bases;
     ptrdiff_t *disp_units;
 
-    /* notify_bases[i] is *this* process's address for rank i's notification
-     * counters.  Private to each process, since the segment holding the
-     * counters is mapped at a different address in every process, and
-     * recomputed by ompi_osc_sm_refresh_notify_bases() whenever the counters
-     * move.  Typed atomic so that plain loads are atomic (and never hoisted out
-     * of a caller's polling loop) while remote origins increment the same
-     * location with opal_atomic_add(). */
     opal_atomic_int64_t **notify_bases;
-    /* Overflow segment holding the counters once MPI_WIN_SET_NUM_NOTIFY has
-     * grown them past what was reserved inline in the main segment.  NULL base
-     * while the counters still live in the main segment.  For a single-rank
-     * window there is no shared segment at all and notify_bases[0] is a plain
-     * heap allocation owned by this module. */
     opal_shmem_ds_t notify_seg_ds;
     void *notify_segment_base;
-    /* Value of the mpi_assert_max_num_notify info key, or 0 if none was given.
-     * Non-zero makes the reservation a hard cap: the user asserted they would
-     * not exceed it, so MPI_WIN_SET_NUM_NOTIFY refuses to grow past it rather
-     * than silently reallocating. */
     unsigned int notify_max_assert;
 
 
@@ -159,10 +124,6 @@ int ompi_osc_sm_detach(struct ompi_win_t *win, const void *base);
 
 int ompi_osc_sm_free(struct ompi_win_t *win);
 
-/* Recompute notify_bases[] from the segment that currently holds the counters.
- * Must be called by every MPI process after the counters move, and at window
- * creation.  Not used for single-rank windows, whose counters are a plain heap
- * allocation. */
 void ompi_osc_sm_refresh_notify_bases(ompi_osc_sm_module_t *module);
 
 

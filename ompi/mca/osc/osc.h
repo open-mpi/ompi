@@ -253,33 +253,14 @@ typedef int (*ompi_osc_base_module_win_reset_notify_value_fn_t)(struct ompi_win_
                                                                 int notify,
                                                                 OMPI_MPI_COUNT_TYPE *value);
 
-/* MPI-5.1 section 12.6.1.  Blocking, synchronizing collective; sets the number
- * of notification counters attached at the calling MPI process to exactly
- * num_notifications and resets every counter to zero. */
 typedef int (*ompi_osc_base_module_win_set_num_notify_fn_t)(struct ompi_win_t *win,
                                                             struct opal_info_t *info,
                                                             int num_notifications);
 
-/* MPI-5.1 section 12.6.1.  Local; returns the number of notification counters
- * attached at target_rank. */
 typedef int (*ompi_osc_base_module_win_get_num_notify_fn_t)(struct ompi_win_t *win,
                                                             int target_rank,
                                                             int *num_notifications);
 
-/* Supplies the three notification-related window attributes of MPI-5.1
- * section 12.2.6, Table 12.1, which are cached on the window at creation:
- *
- *   num_sb    MPI_WIN_NOTIFICATION_NUM_SB    suggested maximum number of
- *                                            counters, i.e. how many the
- *                                            component supports efficiently
- *   num_ub    MPI_WIN_NOTIFICATION_NUM_UB    upper bound on the number of
- *                                            counters
- *   value_ub  MPI_WIN_NOTIFICATION_VALUE_UB  upper bound on a counter value
- *
- * Local, and called once per window from ompi_win_t configuration.  A component
- * that does not implement notified communication leaves this NULL, and all
- * three attributes are then cached as zero -- an honest report that no
- * notification counter can be attached to such a window. */
 typedef int (*ompi_osc_base_module_win_get_notify_bounds_fn_t)(struct ompi_win_t *win,
                                                                int *num_sb,
                                                                int *num_ub,
@@ -501,7 +482,6 @@ typedef int (*ompi_osc_base_module_flush_local_all_fn_t)(struct ompi_win_t *win)
  * free to create a structure that inherits this one for use as the
  * module structure.
  */
-
 struct ompi_osc_base_module_4_0_0_t {
     ompi_osc_base_module_win_shared_query_fn_t osc_win_shared_query;
 
