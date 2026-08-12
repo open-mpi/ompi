@@ -134,10 +134,13 @@ typedef struct ompi_osc_ucx_module {
                           * rank (size comm_size), as set by MPI_WIN_SET_NUM_NOTIFY and
                           * kept consistent across the group by an allgather.  Always
                           * <= notify_capacity. */
-    unsigned int notify_capacity; /* notification counters reserved per rank in the
-                                   * registered region at window creation.  Agreed on
-                                   * across the group, and a hard upper bound: the
-                                   * registration cannot grow afterwards. */
+    unsigned int notify_capacity; /* notification counters reserved per rank at window
+                                   * creation.  Agreed on across the group, and a hard
+                                   * upper bound: the registration cannot grow
+                                   * afterwards. */
+    uint64_t *notify_addrs;  /* per-rank base address of the notification counters
+                              * (size comm_size) */
+    void *notify_base;       /* this rank's counters; notify_capacity uint64_t */
     size_t   *sizes; /* used if not every process has the same size */
     uint64_t *addrs;
     uint64_t *state_addrs;
@@ -165,6 +168,11 @@ typedef struct ompi_osc_ucx_module {
     opal_common_ucx_ctx_t *ctx;
     opal_common_ucx_wpmem_t *mem;
     opal_common_ucx_wpmem_t *state_mem;
+    /* Notification counters get their own registration rather than being
+     * appended to the window data: the data region for MPI_WIN_FLAVOR_CREATE
+     * belongs to the user and has no room for them, and a dynamic window has
+     * no data region at all. */
+    opal_common_ucx_wpmem_t *notify_mem;
     ompi_osc_ucx_mem_ranges_t *epoc_outstanding_ops_mems;
     bool skip_sync_check;
     bool noncontig_shared_win;
