@@ -274,7 +274,7 @@ static int event_compute_buffer_size(int num_elements, const mca_base_var_type_t
     for (i = 0; i < num_elements; ++i) {
         size_t tsize, end;
 
-        if (element_types[i] < 0 || element_types[i] >= MCA_BASE_VAR_TYPE_MAX) {
+        if (element_types[i] >= MCA_BASE_VAR_TYPE_MAX) {
             return OPAL_ERR_BAD_PARAM;
         }
         tsize = ompi_var_type_sizes[element_types[i]];

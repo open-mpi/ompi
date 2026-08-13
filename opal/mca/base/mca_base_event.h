@@ -455,6 +455,14 @@ OPAL_DECLSPEC bool mca_base_event_memory_test_bump(int64_t count, int64_t bytes)
     a test.  Set before attaching a listener. */
 OPAL_DECLSPEC void mca_base_event_memory_test_suppress_hook(bool suppress);
 
+/** Test-only seam: return the number of times an instance was acquired from
+    the pool (useful for verifying drop-restore behaviour). */
+OPAL_DECLSPEC int64_t mca_base_event_test_pool_acquires(void);
+
+/** Test-only seam: when set to true, make the instance pool appear exhausted
+    so the drop-restore path can be exercised without a size-1 pool. */
+OPAL_DECLSPEC void mca_base_event_test_set_force_exhaustion(bool v);
+
 END_C_DECLS
 
 #endif /* OPAL_MCA_BASE_EVENT_H */

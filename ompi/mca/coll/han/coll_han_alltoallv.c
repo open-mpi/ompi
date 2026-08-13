@@ -187,7 +187,7 @@ static size_t ddt_unpack_datatype(opal_datatype_t* type, uint8_t* buf)
       provider attempts to use CMA to implement send/recv, then errors will
       occur!
 */
-static inline int alltoallv_sendrecv_w_direct_for_debugging(
+static inline int __opal_attribute_unused__ alltoallv_sendrecv_w_direct_for_debugging(
             void **send_from_addrs,
             size_t *send_counts,
             opal_datatype_t **send_types,
@@ -201,7 +201,7 @@ static inline int alltoallv_sendrecv_w_direct_for_debugging(
             struct ompi_communicator_t *comm) {
 
 
-    const int MAX_BUF_COUNT=8;
+    enum { MAX_BUF_COUNT = 8 };
     int nreqs = MAX_BUF_COUNT;
     ompi_request_t *requests[MAX_BUF_COUNT];
     const char* problem_hint;
@@ -309,7 +309,7 @@ static int alltoallv_sendrecv_w(
 
 
 
-    const int MAX_BUF_COUNT=8;
+    enum { MAX_BUF_COUNT = 8 };
     ompi_request_t *requests[MAX_BUF_COUNT];
     opal_free_list_item_t *buf_items[MAX_BUF_COUNT];
 
@@ -321,7 +321,7 @@ static int alltoallv_sendrecv_w(
             nbufs = jbuf;
             opal_output_verbose(30, mca_coll_han_component.han_output,
                 "alltoallv_sendrecv_w: Number of buffers reduced to %d instead of %d.  "
-                "Check mca parameter coll_han_packbuf_max_count (currently %ld).\n",
+                "Check mca parameter coll_han_packbuf_max_count (currently %" PRId64 ").\n",
                 nbufs, MAX_BUF_COUNT, mca_coll_han_component.han_packbuf_max_count);
             break;
         }
@@ -333,14 +333,14 @@ static int alltoallv_sendrecv_w(
     if (nbufs < 2) {
         opal_output_verbose(1, mca_coll_han_component.han_output,
                     "ERROR: Need at least 2 buffers from HAN pack buffers!  "
-                    "Check mca parameter coll_han_packbuf_max_count (currently %ld)\n",
+                    "Check mca parameter coll_han_packbuf_max_count (currently %" PRId64 ")\n",
                     mca_coll_han_component.han_packbuf_max_count);
         return MPI_ERR_NO_MEM;
     }
     if (buf_len < 16) {
         opal_output_verbose(1, mca_coll_han_component.han_output,
                     "ERROR: Need a buffer that can hold at least 16 bytes!  "
-                    "Check mca parameter coll_han_packbuf_bytes (currently %ld)\n",
+                    "Check mca parameter coll_han_packbuf_bytes (currently %" PRId64 ")\n",
                     mca_coll_han_component.han_packbuf_bytes);
         return MPI_ERR_NO_MEM;
     }
@@ -743,7 +743,7 @@ cleanup1:
     if (comm_rank == 0) {
         opal_output_verbose(10, mca_coll_han_component.han_output, "alltoallv: decide_to_use_smsc_alg: "
             "Ranks with GPU buffers: %lld (limit is 0).  "
-            "Average send_size: %.1f bytes (limit is %ld).  "
+            "Average send_size: %.1f bytes (limit is %" PRId64 ").  "
             "Fraction with non-contiguous buffers: %.3f (activation limit: %.3f).  "
             "Continue with SMSC? ==>%s.\n",
             reduce_buf_output[0],

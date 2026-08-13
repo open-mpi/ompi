@@ -297,7 +297,7 @@ get_module(COLLTYPE_T coll_id,
      * No dynamic rule from file
      * Use rule from mca parameter
      */
-    if(mca_rule_component < 0 || mca_rule_component >= COMPONENTS_COUNT) {
+    if(mca_rule_component >= COMPONENTS_COUNT) {
         /*
          * Invalid MCA parameter value
          * Warn the user and return NULL

@@ -734,7 +734,7 @@ int mca_base_event_register_callback(mca_base_event_registration_t *reg,
     mca_base_event_cb_t *old_slot, *new_slot = NULL;
     bool was_active;
 
-    if (cb_safety < 0 || cb_safety >= MCA_BASE_EVENT_CB_REQUIRE_MAX) {
+    if (cb_safety >= MCA_BASE_EVENT_CB_REQUIRE_MAX) {
         return OPAL_ERR_BAD_PARAM;
     }
 
