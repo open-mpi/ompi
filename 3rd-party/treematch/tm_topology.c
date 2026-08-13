@@ -19,12 +19,10 @@ OMPI_HIDDEN void tm_free_topology(tm_topology_t *topology);
 OMPI_HIDDEN tm_topology_t *tm_load_topology(char *arch_filename, tm_file_type_t arch_file_type);
 OMPI_HIDDEN void tm_optimize_topology(tm_topology_t **topology);
 OMPI_HIDDEN int  tm_topology_add_binding_constraints(char *constraints_filename, tm_topology_t *topology);
-static int topo_nb_proc(hwloc_topology_t topology,int N);
 static void topology_arity_cpy(tm_topology_t *topology,int **arity,int *nb_levels);
 static void topology_constraints_cpy(tm_topology_t *topology,int **constraints,int *nb_constraints);
 static void topology_cost_cpy(tm_topology_t *topology,double **cost);
 static void topology_numbering_cpy(tm_topology_t *topology,int **numbering,int *nb_nodes);
-static double ** topology_to_arch(hwloc_topology_t topology);
 static void   build_synthetic_proc_id(tm_topology_t *topology);
 tm_topology_t  *tm_build_synthetic_topology(int *arity, double *cost, int nb_levels, int *core_numbering, int nb_core_per_nodes);
 OMPI_HIDDEN void tm_set_numbering(tm_numbering_t new_val); /* TM_NUMBERING_LOGICAL or TM_NUMBERING_PHYSICAL */
@@ -128,19 +126,6 @@ int tm_nb_processing_units(tm_topology_t *topology)
   return topology->nb_proc_units;
 }
 
-static inline int topo_nb_proc(hwloc_topology_t topology,int N)
-{
-  hwloc_obj_t *objs = NULL;
-  int nb_proc;
-
-  objs = (hwloc_obj_t*)MALLOC(sizeof(hwloc_obj_t)*N);
-  objs[0] = hwloc_get_next_obj_by_type(topology,HWLOC_OBJ_PU,NULL);
-  nb_proc = 1 + hwloc_get_closest_objs(topology,objs[0],objs+1,N-1);
-  FREE(objs);
-  return nb_proc;
-}
-
-
 static double link_cost(int depth)
 {
   /*
@@ -157,33 +142,6 @@ static double link_cost(int depth)
    return (depth+1);
    return (long int)pow(100,depth);
   */
-}
-
-static inline double ** topology_to_arch(hwloc_topology_t topology)
-{
-  int nb_proc,i,j;
-  hwloc_obj_t obj_proc1,obj_proc2,obj_res;
-  double **arch = NULL;
-
-  nb_proc = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-  if (nb_proc < 0) {
-    return NULL;
-  }
-  arch = (double**)malloc(sizeof(double*)*nb_proc);
-  if (NULL == arch) {
-    return NULL;
-  }
-  for( i = 0 ; i < nb_proc ; i++ ){
-    obj_proc1 = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,i);
-    arch[obj_proc1->os_index] = (double*)MALLOC(sizeof(double)*nb_proc);
-    for( j = 0 ; j < nb_proc ; j++ ){
-      obj_proc2 = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,j);
-      obj_res = hwloc_get_common_ancestor_obj(topology,obj_proc1,obj_proc2);
-      /* printf("arch[%d][%d] <- %ld\n",obj_proc1->os_index,obj_proc2->os_index,*((long int*)(obj_res->userdatab))); */
-      arch[obj_proc1->os_index][obj_proc2->os_index]=link_cost(obj_res->depth+1);
-    }
-  }
-  return arch;
 }
 
 static int symetric(hwloc_topology_t topology)
