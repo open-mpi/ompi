@@ -18,14 +18,14 @@
 #include "ompi/proc/proc.h"
 #include "ompi/op/op.h"
 
+#include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
+
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
 #pragma weak MPIX_Comm_ishrink = PMPIX_Comm_ishrink
 #endif
 #define MPIX_Comm_ishrink PMPIX_Comm_ishrink
 #endif
-
-#include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 
 static const char FUNC_NAME[] = "MPIX_Comm_ishrink";
 
