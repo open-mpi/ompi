@@ -104,6 +104,21 @@ and [`docs/contributing.rst`](docs/contributing.rst):
 - **MPI back-end code must never call public `MPI_*()` APIs.** The
   bindings are thin wrappers; call the internal `ompi_*` routines, not
   the user-facing entry points.
+- **Be very careful with `OMPI_HIDDEN` (and `OPAL_HIDDEN` /
+  `OSHMEM_HIDDEN`).** These mark a symbol as *not* exported from the
+  shared library that defines it. As of Open MPI v6.0 the MPI interface
+  is split across `libmpi` (Open MPI ABI) and `libmpi_abi` (standard MPI
+  ABI), both linked against the internal `libopen_mpi`. If you hide an
+  `ompi_*` symbol that is defined in `libopen_mpi` but *used* from the
+  bindings compiled into `libmpi` and `libmpi_abi` (e.g., predefined
+  handle objects like `ompi_mpi_comm_parent`, or helpers like
+  `ompi_comm_split_type_hw_guided_support`), those two library links
+  fail with unresolved symbols. Rule of thumb: if a symbol crosses a
+  library boundary, use `OMPI_DECLSPEC` (or leave it un-annotated) —
+  never `OMPI_HIDDEN`. Only hide symbols you are certain are private to a
+  single DSO. See the "Symbol Visibility" section of
+  [`docs/developers/source-code.rst`](docs/developers/source-code.rst)
+  and [`ompi/mpi/README_ABI.md`](ompi/mpi/README_ABI.md).
 - **New files need the standard copyright/license header.** Copy the
   multi-institution BSD header block — including the `$COPYRIGHT$` and
   `$HEADER$` tokens — from a neighboring file. If you substantially
