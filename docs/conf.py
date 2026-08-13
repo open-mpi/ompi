@@ -321,6 +321,15 @@ templates_path = ['_templates']
 # Hence, listing prrte-rst-content in exclude_patterns means that
 # Sphinx won't complain about the .rst files in that tree that we are
 # not referencing from here in the OMPI docs.
+#
+# The schizo-ompi-rst-content/ directory is excluded for a similar
+# reason: the only file we use from it is schizo-ompi-cli.rstxt (via
+# ".. include::" in mpirun.1.rst, which still works for excluded
+# paths).  In ReadTheDocs builds, that directory is a full copy of
+# PRRTE's src/mca/schizo/ompi source directory (see
+# .readthedocs-pre-create-environment.sh), which can contain Markdown
+# files (e.g., AGENTS.md) that Sphinx would otherwise parse as source
+# documents and then warn about their unresolvable relative links.
 # Note: llms-src/ holds the committed curated Markdown sources for the
 # LLM-friendly docs, and llms-build/ is the generated LLM artifact staging
 # tree.  Both contain Markdown that must NOT be picked up as Sphinx source
@@ -334,6 +343,7 @@ templates_path = ['_templates']
 # also be excluded so Sphinx does not re-parse those copies as source.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'venv', 'py*/**',
                     'tuning-apps/_include', 'prrte-rst-content',
+                    'schizo-ompi-rst-content',
                     'llms-src', 'llms-build', 'html', 'man' ]
 
 
