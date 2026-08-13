@@ -35,6 +35,7 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/test/general/Makefile
         ompi/test/monitoring/Makefile
         ompi/test/spc/Makefile
+        ompi/test/hwpc_cxi/Makefile
         ompi/test/mpi-abi/Makefile
         ompi/test/reexport/Makefile
         ompi/test/bindings-generator/Makefile

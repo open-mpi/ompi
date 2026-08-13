@@ -1,0 +1,3 @@
+"cxiperfstats", "LPE_RNDZV_PUTS",
+"rh:sct_timeouts", "rh:spt_timeouts", "rh:spt_timeouts_u", "lpe_net_match_priority_0", 
+"lpe_net_match_overflow_0", "lpe_net_match_request_0", "lpe_rndzv_puts_0", "lpe_rndzv_puts_offloaded_0"
