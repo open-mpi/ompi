@@ -745,6 +745,20 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     }
 
 
+    /* If the modex fence was launched in the background, it must complete
+     * before we go any further: everything below this point reads peer
+     * modex data (proc archs/locality, and the BTL/SMSC endpoint blobs
+     * fetched during add_procs).  PMIx does not defer a get for a peer
+     * that has not yet committed its data -- it returns NOT_FOUND -- so a
+     * peer that is merely slow to reach its fence reads as a peer that
+     * posted nothing, and its endpoint is silently never wired up.
+     * Waiting here still overlaps the fence with all of the framework
+     * initialization above.
+     */
+    if (background_fence && active) {
+        OMPI_LAZY_WAIT_FOR_COMPLETION(active);
+    }
+
     /* identify the architectures of remote procs and setup
      * their datatype convertors, if required
      */
