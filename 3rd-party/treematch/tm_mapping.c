@@ -48,7 +48,6 @@ OMPI_HIDDEN tm_affinity_mat_t * tm_new_affinity_mat(double **mat, double *sum_ro
 OMPI_HIDDEN int tm_compute_nb_leaves_from_level(int depth,tm_topology_t *topology);
 static void depth_first(tm_tree_t *comm_tree, int *proc_list,int *i);
 OMPI_HIDDEN int  tm_fill_tab(int **new_tab,int *tab, int n, int start, int max_val, int shift);
-static long int init_mat(char *filename,int N, double **mat, double *sum_row);
 OMPI_HIDDEN void tm_map_topology(tm_topology_t *topology,tm_tree_t *comm_tree, int level,
 		  int *sigma, int nb_processes, int **k, int nb_compute_units);
 static int nb_leaves(tm_tree_t *comm_tree);
@@ -57,7 +56,6 @@ OMPI_HIDDEN void tm_print_1D_tab(int *tab,int N);
 tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree);
 void tm_free_affinity_mat(tm_affinity_mat_t *aff_mat);
 OMPI_HIDDEN tm_affinity_mat_t *tm_load_aff_mat(char *filename);
-static void update_comm_speed(double **comm_speed,int old_size,int new_size);
 tm_affinity_mat_t * tm_build_affinity_mat(double **mat, int order);
 
 
@@ -112,60 +110,6 @@ static int nb_lines(char *filename)
   return N;
 }
 
-
-
-static inline long int  init_mat(char *filename,int N, double **mat, double *sum_row){
-  FILE *pf = NULL;
-  char *ptr= NULL;
-  char line[LINE_SIZE];
-  int i,j;
-  unsigned int vl = tm_get_verbose_level();
-  long int nnz = 0;
-
-  if(!(pf=fopen(filename,"r"))){
-    if(vl >= CRITICAL)
-      fprintf(stderr,"Cannot open %s\n",filename);
-    exit(-1);
-  }
-
-  j = -1;
-  i = 0;
-
-  while(fgets(line,LINE_SIZE,pf)){
-    char *l = line;
-    j = 0;
-    sum_row[i] = 0;
-    while((ptr=strtok(l," \t"))){
-      l = NULL;
-      if((ptr[0]!='\n')&&(!isspace(ptr[0]))&&(*ptr)){
-  	mat[i][j] = atof(ptr);
-	if(mat[i][j]) nnz++;
-  	sum_row[i] += mat [i][j];
-  	if(mat[i][j]<0){
-  	  if(vl >= WARNING)
-  	    fprintf(stderr,"Warning: negative value in com matrix! mat[%d][%d]=%f\n",i,j,mat[i][j]);
-  	}
-  	j++;
-      }
-    }
-    if( j != N){
-      if(vl >= CRITICAL)
-  	fprintf(stderr,"Error at %d %d (%d!=%d). Too many columns for %s\n",i,j,j,N,filename);
-      exit(-1);
-    }
-    i++;
-  }
-
-
-  if( i != N ){
-    if(vl >= CRITICAL)
-      fprintf(stderr,"Error at %d %d. Too many rows for %s\n",i,j,filename);
-    exit(-1);
-  }
-
-  fclose (pf);
-  return nnz;
-}
 
 
 static size_t get_filesize(char* filename) {
@@ -547,35 +491,6 @@ tm_solution_t * tm_compute_mapping(tm_topology_t *topology,tm_tree_t *comm_tree)
 
   return solution;
 }
-
-
-
-static inline void update_comm_speed(double **comm_speed,int old_size,int new_size)
-{
-  double *old_tab = NULL,*new_tab= NULL;
-  int i;
-  unsigned int vl = tm_get_verbose_level();
-
-  if(vl >= DEBUG)
-    printf("comm speed [%p]: ",(void *)*comm_speed);
-
-  old_tab = *comm_speed;
-  new_tab = (double*)MALLOC(sizeof(double)*new_size);
-  *comm_speed = new_tab;
-
-  for( i = 0 ; i < new_size ; i++ ){
-    if( i < old_size)
-      new_tab[i] = old_tab[i];
-    else
-      new_tab[i] = new_tab[i-1];
-
-    if(vl >= DEBUG)
-      printf("%f ",new_tab[i]);
-  }
-  if(vl >= DEBUG)
-    printf("\n");
-}
-
 
 
 

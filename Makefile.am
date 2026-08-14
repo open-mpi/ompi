@@ -65,7 +65,8 @@ install-exec-hook:
 	        --top_builddir=$(top_builddir) \
 	        --top_srcdir=$(top_srcdir) \
 	        --objext=$(OBJEXT) \
-	        --skipdir=3rd-party ; \
+	        --skipdir=3rd-party \
+	        --skipdir=test ; \
 	fi
 
 ACLOCAL_AMFLAGS = -I config

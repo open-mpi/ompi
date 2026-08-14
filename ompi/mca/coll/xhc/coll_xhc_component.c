@@ -160,7 +160,7 @@ int mca_coll_xhc_component_init_query(bool enable_progress_threads,
 }
 
 COLLTYPE_T mca_coll_xhc_colltype_to_universal(XHC_COLLTYPE_T xhc_colltype) {
-    if(xhc_colltype < 0 || xhc_colltype >= XHC_COLLCOUNT) {
+    if(xhc_colltype >= XHC_COLLCOUNT) {
         return -1;
     }
 
@@ -172,7 +172,7 @@ const char *mca_coll_xhc_colltype_to_str(XHC_COLLTYPE_T colltype) {
 }
 
 const char *mca_coll_xhc_config_source_to_str(xhc_config_source_t source) {
-    return (source >= 0 && source < XHC_CONFIG_SOURCE_COUNT ?
+    return (source < XHC_CONFIG_SOURCE_COUNT ?
         xhc_config_source_to_str_map[source] : NULL);
 }
 

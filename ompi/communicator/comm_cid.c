@@ -882,7 +882,7 @@ static inline void ompi_comm_set_disjointness_nb_complete(ompi_comm_cid_context_
 static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
 {
     int ret;
-    ompi_communicator_t **newcomm = context->newcommp, *comm = context->comm;
+    ompi_communicator_t **newcomm = context->newcommp;
 
     /**
      * Determine the new communicator's disjointness based on

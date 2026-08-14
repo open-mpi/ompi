@@ -60,10 +60,6 @@ ceil_of_log2 (int val) {
     return ret;
 }
 
-/* true/false */
-#define true 1
-#define false 0
-
 /* all collectives */
 #define NBC_ALLGATHER 0
 #define NBC_ALLGATHERV 1

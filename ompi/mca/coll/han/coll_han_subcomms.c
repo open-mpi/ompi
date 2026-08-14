@@ -55,7 +55,7 @@
 int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
                                  mca_coll_han_module_t *han_module)
 {
-    int low_rank, low_size, up_rank, w_rank, w_size, node_leader_w_rank;
+    int low_rank, low_size, up_rank, w_size, node_leader_w_rank;
     ompi_communicator_t **low_comm = &(han_module->sub_comm[INTRA_NODE]);
     ompi_communicator_t **up_comm = &(han_module->sub_comm[INTER_NODE]);
     mca_coll_han_collectives_fallback_t fallbacks;
@@ -129,7 +129,6 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
     OBJ_CONSTRUCT(&comm_info, opal_info_t);
 
     /* Create topological sub-communicators */
-    w_rank = ompi_comm_rank(comm);
     w_size = ompi_comm_size(comm);
 
     /*
@@ -282,7 +281,7 @@ return_with_error:
 int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
                              mca_coll_han_module_t *han_module)
 {
-    int low_rank, low_size, up_rank, w_rank, w_size, node_leader_w_rank;
+    int low_rank, low_size, up_rank, w_size, node_leader_w_rank;
     mca_coll_han_collectives_fallback_t fallbacks;
     ompi_communicator_t **low_comms = NULL, **up_comms = NULL;
     int vrank, *vranks = NULL;
@@ -356,7 +355,6 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     }
 
     /* create communicators if there is no cached communicator */
-    w_rank = ompi_comm_rank(comm);
     w_size = ompi_comm_size(comm);
     low_comms = (struct ompi_communicator_t **)calloc(COLL_HAN_LOW_MODULES,
                                                       sizeof(struct ompi_communicator_t *));

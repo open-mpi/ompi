@@ -24,13 +24,6 @@ void tm_intCIV_init(int_CIVector * v, int size, int init_value)
   v->vec = malloc(sizeof(int)*size);
 }
 
-static inline void intCIV_exit(int_CIVector * v)
-{
-  free(v->to);
-  free(v->from);
-  free(v->vec);
- }
-
 int tm_intCIV_set(int_CIVector * v, int i, int val)
 {
   if(v == NULL)
