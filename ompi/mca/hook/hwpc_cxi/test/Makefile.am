@@ -26,7 +26,16 @@ if HWPC_CXI_ENABLE
         hwpc_cxi_mpi_t_pvars_test \
         hwpc_cxi_mpi_t_pvars_enabled_test
 
-    TESTS = $(check_PROGRAMS)
+    TESTS = \
+        hwpc_cxi_constants_lookup_test \
+        hwpc_cxi_constants_validation_test \
+        hwpc_cxi_report_level_0_test \
+        hwpc_cxi_mpi_init_test \
+        hwpc_cxi_mpi_init_finalize_level_0_test \
+        hwpc_cxi_mpi_init_finalize_level_1_test \
+        hwpc_cxi_mpi_init_finalize_level_2_test \
+        hwpc_cxi_mpi_init_finalize_level_5_test \
+        hwpc_cxi_mpi_t_pvars_test
 
     AM_CPPFLAGS = -I$(top_srcdir)/ompi/mca/hook/hwpc_cxi
 
@@ -42,6 +51,8 @@ if HWPC_CXI_ENABLE
         hwpc_cxi_constants_validation_test.c \
         ../hook_hwpc_cxi_constants.c
 
+    hwpc_cxi_constants_lookup_test_CPPFLAGS = $(AM_CPPFLAGS)
+    hwpc_cxi_constants_validation_test_CPPFLAGS = $(AM_CPPFLAGS)
     hwpc_cxi_constants_lookup_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     hwpc_cxi_constants_validation_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 
@@ -55,6 +66,7 @@ if HWPC_CXI_ENABLE
 
     hwpc_cxi_report_level_0_test_LDADD = \
         $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
@@ -80,37 +92,34 @@ if HWPC_CXI_ENABLE
     hwpc_cxi_mpi_t_pvars_enabled_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 
     hwpc_cxi_mpi_init_test_LDADD = \
-        $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     hwpc_cxi_mpi_init_finalize_level_0_test_LDADD = \
-        $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     hwpc_cxi_mpi_init_finalize_level_1_test_LDADD = \
-        $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     hwpc_cxi_mpi_init_finalize_level_2_test_LDADD = \
-        $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     hwpc_cxi_mpi_init_finalize_level_5_test_LDADD = \
-        $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     hwpc_cxi_mpi_t_pvars_test_LDADD = \
-        $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
     hwpc_cxi_mpi_t_pvars_enabled_test_LDADD = \
-        $(top_builddir)/ompi/mca/hook/hwpc_cxi/libmca_hook_hwpc_cxi.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
-
-    # Distribute test scripts and documentation
-    EXTRA_DIST = run_hwpc_cxi_validate.sh README.md HWPC_CXI_GUIDE.md
 endif # HWPC_CXI_ENABLE
 
 distclean-local:

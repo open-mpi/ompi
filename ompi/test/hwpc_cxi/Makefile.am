@@ -13,6 +13,14 @@
 
 # This test requires CXI hardware and multiple processes to run.
 # "make check" tests can be found inside the mca hook module directory for hwpc_cxi
+EXTRA_DIST = \
+    build_with_env_and_run.sh \
+    run_hwpc_cxi_validate.sh \
+    README.md \
+    HWPC_CXI_GUIDE.md \
+    my_desired_cxi_counters.txt \
+    my_desired_fake_cxi_counters.txt
+
 if HWPC_CXI_ENABLE
     noinst_PROGRAMS = hwpc_cxi_sendrecv_test
 
@@ -22,10 +30,9 @@ if HWPC_CXI_ENABLE
     hwpc_cxi_sendrecv_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
     hwpc_cxi_sendrecv_test_LDADD = \
         $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
-    # Distribute test scripts and documentation
-    EXTRA_DIST = run_hwpc_cxi_validate.sh README.md HWPC_CXI_GUIDE.md
 endif # HWPC_CXI_ENABLE
 
 distclean-local:
