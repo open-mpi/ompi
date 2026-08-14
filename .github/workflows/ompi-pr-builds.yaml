@@ -125,6 +125,15 @@ jobs:
         PRTE_MCA_rmaps_default_mapping_policy: ":OVERSUBSCRIBE"
       run: make -C ompi/test/mpi-abi check-abi VERBOSE=1
 
+    - name: Run the tests that need mpirun
+      # Like check-abi above, this runs after "make install": "make check"
+      # can only run non-MPI tests and MPI singletons (Automake runs each
+      # test binary directly), and the build-tree mpirun is only a wrapper
+      # that exec's the *installed* prterun.  Nothing else in CI enables
+      # the asynchronous modex, so without this step that code path gets
+      # no coverage at all.
+      run: make -C ompi/test/mpirun check-mpirun
+
     - name: Build all examples
       run: |
         cd examples
