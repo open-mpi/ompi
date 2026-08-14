@@ -382,6 +382,8 @@ opal/tools/wrappers/opal.pc
 opal/util/show_help_content.c
 opal/util/keyval/keyval_lex.c
 
+ompi/test/mpirun/async_modex_wireup
+
 test/simple/abort
 test/simple/accept
 test/simple/attach
