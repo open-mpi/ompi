@@ -22,7 +22,7 @@ typedefs to the ``_function`` names).
 INPUT PARAMETER
 ---------------
 
-* ``function`` : User-defined error handling procedure (function).
+* ``comm_errhandler_fn`` : User-defined error handling procedure (function).
 
 OUTPUT PARAMETERS
 -----------------
