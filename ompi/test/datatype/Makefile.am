@@ -9,7 +9,7 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
-## $COPYRIGHT$
+# $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
@@ -35,6 +35,7 @@ TESTS = \
         ddt_raw2 \
         unpack_ooo \
         ddt_pack \
+        resized_extent \
         external32 \
         large_data \
         partial \
@@ -42,7 +43,7 @@ TESTS = \
         mpi_datatype_bigcount \
         sizedtypes
 
-MPI_CHECKS = to_self reduce_local
+MPI_CHECKS = to_self pack_description_sweep reduce_local
 
 check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
 
@@ -88,6 +89,10 @@ ddt_pack_SOURCES = ddt_pack.c
 ddt_pack_LDFLAGS = $(common_ldflags)
 ddt_pack_LDADD = $(internal_ldadd)
 
+resized_extent_SOURCES = resized_extent.c
+resized_extent_LDFLAGS = $(common_ldflags)
+resized_extent_LDADD = $(common_ldadd)
+
 position_SOURCES = position.c
 position_LDFLAGS = $(common_ldflags)
 position_LDADD = $(internal_ldadd)
@@ -99,6 +104,10 @@ position_noncontig_LDADD = $(internal_ldadd)
 to_self_SOURCES = to_self.c
 to_self_LDFLAGS = $(common_ldflags)
 to_self_LDADD = $(mpi_ldadd)
+
+pack_description_sweep_SOURCES = pack_description_sweep.c
+pack_description_sweep_LDFLAGS = $(common_ldflags)
+pack_description_sweep_LDADD = $(common_ldadd)
 
 large_data_SOURCES = large_data.c
 large_data_LDFLAGS = $(common_ldflags)
