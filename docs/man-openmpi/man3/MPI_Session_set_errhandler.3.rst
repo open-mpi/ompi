@@ -16,9 +16,12 @@ INPUT/OUTPUT PARAMETER
 ----------------------
 * ``session``: Session (handle).
 
-OUTPUT PARAMETERS
------------------
+INPUT PARAMETER
+---------------
 * ``errhandler``: New error handler for session (handle).
+
+OUTPUT PARAMETER
+----------------
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION
