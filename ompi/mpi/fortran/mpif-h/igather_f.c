@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IGATHER,
                             pmpi_igather,
                             pmpi_igather_,
                             pmpi_igather__,
-                            pompi_igather_f,
+                            ompi_igather_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_IGATHER,
 #pragma weak MPI_Igather_f = ompi_igather_f
 #pragma weak MPI_Igather_f08 = ompi_igather_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_IGATHER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_IGATHER,
                             mpi_igather,
                             mpi_igather_,
                             mpi_igather__,
                             ompi_igather_f,
                             (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr),
                             (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request, ierr) )
-#else
-#define ompi_igather_f pompi_igather_f
-#endif
 #endif
 
 

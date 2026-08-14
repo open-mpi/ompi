@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_ABORT,
                            pmpi_abort,
                            pmpi_abort_,
                            pmpi_abort__,
-                           pompi_abort_f,
+                           ompi_abort_f,
                            (MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr),
                            (comm, errorcode, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_ABORT,
 #pragma weak MPI_Abort_f = ompi_abort_f
 #pragma weak MPI_Abort_f08 = ompi_abort_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS(MPI_ABORT,
+OMPI_GENERATE_WEAK_F77_BINDINGS(MPI_ABORT,
                            mpi_abort,
                            mpi_abort_,
                            mpi_abort__,
                            ompi_abort_f,
                            (MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr),
                            (comm, errorcode, ierr) )
-#else
-#define ompi_abort_f pompi_abort_f
-#endif
 #endif
 
 

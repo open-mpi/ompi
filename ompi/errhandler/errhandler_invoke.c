@@ -16,7 +16,7 @@
  *                         reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2023      Triad National Security, LLC. All rights
+ * Copyright (c) 2023-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
@@ -126,7 +126,12 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         comm = (ompi_communicator_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
+            if (NULL != errhandler->eh_converter_fn) {
+                errhandler->eh_converter_fn((void *)&comm, object_type, &err_code);
+            }
+            if (NULL != errhandler->eh_comm_fn) {
+                errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
@@ -141,7 +146,12 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         win = (ompi_win_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_win_fn(&win, &err_code, message, NULL);
+            if (NULL != errhandler->eh_converter_fn) {
+                errhandler->eh_converter_fn((void *)&win, object_type, &err_code);
+            }
+            if (NULL != errhandler->eh_win_fn) {
+                errhandler->eh_win_fn(&win, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
@@ -156,7 +166,12 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         file = (ompi_file_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_file_fn(&file, &err_code, message, NULL);
+            if (NULL != errhandler->eh_converter_fn) {
+                errhandler->eh_converter_fn((void *)&file, object_type, &err_code);
+            }
+            if (NULL != errhandler->eh_file_fn) {
+                errhandler->eh_file_fn(&file, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:
@@ -171,7 +186,12 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         instance = (ompi_instance_t *) mpi_object;
         switch (errhandler->eh_lang) {
         case OMPI_ERRHANDLER_LANG_C:
-            errhandler->eh_instance_fn(&instance, &err_code, message, NULL);
+            if (NULL != errhandler->eh_converter_fn) {
+                errhandler->eh_converter_fn((void *)&instance, object_type, &err_code);
+            }
+            if (NULL != errhandler->eh_instance_fn) {
+                errhandler->eh_instance_fn(&instance, &err_code, message, NULL);
+            }
             break;
 
         case OMPI_ERRHANDLER_LANG_FORTRAN:

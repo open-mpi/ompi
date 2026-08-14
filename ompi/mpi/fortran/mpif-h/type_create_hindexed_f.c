@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_HINDEXED,
                            pmpi_type_create_hindexed,
                            pmpi_type_create_hindexed_,
                            pmpi_type_create_hindexed__,
-                           pompi_type_create_hindexed_f,
+                           ompi_type_create_hindexed_f,
                            (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Aint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_blocklengths, array_of_displacements, oldtype, newtype, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_HINDEXED,
 #pragma weak MPI_Type_create_hindexed_f = ompi_type_create_hindexed_f
 #pragma weak MPI_Type_create_hindexed_f08 = ompi_type_create_hindexed_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_HINDEXED,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_CREATE_HINDEXED,
                            mpi_type_create_hindexed,
                            mpi_type_create_hindexed_,
                            mpi_type_create_hindexed__,
                            ompi_type_create_hindexed_f,
                            (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Aint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, array_of_blocklengths, array_of_displacements, oldtype, newtype, ierr) )
-#else
-#define ompi_type_create_hindexed_f pompi_type_create_hindexed_f
-#endif
 #endif
 
 

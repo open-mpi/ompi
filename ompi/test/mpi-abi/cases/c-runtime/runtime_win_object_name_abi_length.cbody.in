@@ -1,0 +1,61 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Like runtime_object_name_abi_length, but for a window's name (also a fixed
+ *   in-handle buffer).  Verify that a name longer than the historical 64-byte
+ *   Open MPI limit but shorter than the MPI Forum ABI MPI_MAX_OBJECT_NAME
+ *   round-trips through the standard-ABI MPI_Win_set_name / MPI_Win_get_name
+ *   entry points.
+ */
+int i;
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int long_len = MPI_MAX_OBJECT_NAME - 16;
+if (long_len <= 64) {
+    /* The ABI maximum is unexpectedly small; the test assumptions do not hold. */
+    return 2;
+}
+char long_name[MPI_MAX_OBJECT_NAME];
+for (i = 0; i < long_len; i++) {
+    long_name[i] = (char) ('A' + (i % 26));
+}
+long_name[long_len] = '\0';
+
+MPI_Win win = MPI_WIN_NULL;
+ret = MPI_Win_create_dynamic(MPI_INFO_NULL, MPI_COMM_SELF, &win);
+if (MPI_SUCCESS != ret || MPI_WIN_NULL == win) {
+    return 3;
+}
+ret = MPI_Win_set_name(win, long_name);
+if (MPI_SUCCESS != ret) {
+    return 4;
+}
+char got_name[MPI_MAX_OBJECT_NAME];
+int got_len = -1;
+got_name[0] = '\0';
+ret = MPI_Win_get_name(win, got_name, &got_len);
+if (MPI_SUCCESS != ret || got_len != long_len ||
+    0 != strcmp(got_name, long_name)) {
+    return 5;
+}
+ret = MPI_Win_free(&win);
+if (MPI_SUCCESS != ret) {
+    return 6;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 7;
+}
+return 0;

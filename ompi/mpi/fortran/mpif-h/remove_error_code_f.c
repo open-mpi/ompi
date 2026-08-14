@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REMOVE_ERROR_CODE,
                            pmpi_remove_error_code,
                            pmpi_remove_error_code_,
                            pmpi_remove_error_code__,
-                           pompi_remove_error_code_f,
+                           ompi_remove_error_code_f,
                            (MPI_Fint *errorcode, MPI_Fint *ierr),
                            (errorcode, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REMOVE_ERROR_CODE,
 #pragma weak MPI_Remove_error_code_f = ompi_remove_error_code_f
 #pragma weak MPI_Remove_error_code_f08 = ompi_remove_error_code_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_REMOVE_ERROR_CODE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_REMOVE_ERROR_CODE,
                            mpi_remove_error_code,
                            mpi_remove_error_code_,
                            mpi_remove_error_code__,
                            ompi_remove_error_code_f,
                            (MPI_Fint *errorcode, MPI_Fint *ierr),
                            (errorcode, ierr) )
-#else
-#define ompi_remove_error_code_f pompi_remove_error_code_f
-#endif
 #endif
 
 

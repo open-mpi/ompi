@@ -26,8 +26,15 @@ if OPAL_INSTALL_BINARIES
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ompi.pc ompi-c.pc
 
+if OMPI_STANDARD_ABI
+pkgconfig_DATA += ompi-abi.pc ompi-abi-c.pc
+endif
+
 if OMPI_HAVE_CXX_COMPILER
 pkgconfig_DATA += ompi-cxx.pc
+if OMPI_STANDARD_ABI
+pkgconfig_DATA += ompi-abi-cxx.pc
+endif
 endif
 
 if OMPI_HAVE_FORTRAN_COMPILER
@@ -90,6 +97,9 @@ bin_SCRIPTS = mpijavac.pl
 endif
 
 nodist_ompidata_DATA = mpicc-wrapper-data.txt
+if OMPI_STANDARD_ABI
+nodist_ompidata_DATA += mpicc_abi-wrapper-data.txt
+endif
 
 if OMPI_HAVE_CXX_COMPILER
 nodist_ompidata_DATA += mpic++-wrapper-data.txt
@@ -102,6 +112,9 @@ endif
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc$(EXEEXT))
+if OMPI_STANDARD_ABI
+	(cd $(DESTDIR)$(bindir); rm -f mpicc_abi$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc_abi$(EXEEXT))
+endif
 if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpic++$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicxx$(EXEEXT))
@@ -139,9 +152,10 @@ uninstall-local-always:
 	$(DESTDIR)$(pkgdatadir)/mpif90-wrapper-data.txt \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f77.pc \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f90.pc \
-	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc \
-	$(DESTDIR)$(bindir)/mpijavac \
-	$(DESTDIR)$(bindir)/mpijavac.pl
+	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc
+if OMPI_STANDARD_ABI
+	rm -f $(DESTDIR)$(bindir)/mpicc_abi$(EXEEXT)
+endif
 
 if CASE_SENSITIVE_FS_AND_HAVE_CXX_COMPILER
 install-exec-hook: install-exec-hook-always

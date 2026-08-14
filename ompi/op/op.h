@@ -82,6 +82,14 @@ typedef void (ompi_op_java_handler_fn_t)(const void *, void *, int *,
                                          void *jnienv, void *object);
 
 /*
+ * MPI-5 ABI: Typedef for MPI-5 ABI datatype converter function to use
+ * to convert from the OMPI internal datatype to the MPI-5
+ * variant when invoking a user defined op.
+ */
+
+typedef ompi_datatype_t * (*ompi_op_type_convert_to_abi_fn_t)(ompi_datatype_t *);
+
+/*
  * Flags for MPI_Op
  */
 /** Set if the MPI_Op is a built-in operation */
@@ -175,6 +183,7 @@ struct ompi_op_t {
     /** 3-buffer functions, which is only for intrinsic ops.  No need
         for the C/C++/Fortran user-defined functions. */
     ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
+    ompi_op_type_convert_to_abi_fn_t o_datatype_converter;
 };
 
 /**
@@ -601,6 +610,12 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
                                           op->o_func.java_data.object);
         return;
     }
+    /*
+     * MPI-5 ABI: see if we need to translate the datatype
+     */
+    if (NULL != op->o_datatype_converter) {
+        dtype = op->o_datatype_converter(dtype);
+    }
     if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {
         op->o_func.c_fn(source, target, &count, &dtype);
     } else {
@@ -613,6 +628,12 @@ static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, v
                                        void * restrict result, size_t full_count, struct ompi_datatype_t *dtype)
 {
     ompi_datatype_copy_content_same_ddt (dtype, full_count, (char*)result, (char*)source1);
+    /*
+     * MPI-5 ABI: see if we need to translate the datatype
+     */
+    if (NULL != op->o_datatype_converter) {
+        dtype = op->o_datatype_converter(dtype);
+    }
     if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {
         assert(full_count <= INT_MAX);
         int count = (int)full_count;  /* protected by loop in only caller of this function */

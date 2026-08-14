@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
                            pmpi_waitany,
                            pmpi_waitany_,
                            pmpi_waitany__,
-                           pompi_waitany_f,
+                           ompi_waitany_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, indx, status, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
 #pragma weak MPI_Waitany_f = ompi_waitany_f
 #pragma weak MPI_Waitany_f08 = ompi_waitany_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WAITANY,
                            mpi_waitany,
                            mpi_waitany_,
                            mpi_waitany__,
                            ompi_waitany_f,
                            (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, MPI_Fint *status, MPI_Fint *ierr),
                            (count, array_of_requests, indx, status, ierr) )
-#else
-#define ompi_waitany_f pompi_waitany_f
-#endif
 #endif
 
 

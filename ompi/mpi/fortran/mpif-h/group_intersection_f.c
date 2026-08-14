@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_INTERSECTION,
                            pmpi_group_intersection,
                            pmpi_group_intersection_,
                            pmpi_group_intersection__,
-                           pompi_group_intersection_f,
+                           ompi_group_intersection_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_INTERSECTION,
 #pragma weak MPI_Group_intersection_f = ompi_group_intersection_f
 #pragma weak MPI_Group_intersection_f08 = ompi_group_intersection_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_INTERSECTION,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GROUP_INTERSECTION,
                            mpi_group_intersection,
                            mpi_group_intersection_,
                            mpi_group_intersection__,
                            ompi_group_intersection_f,
                            (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr),
                            (group1, group2, newgroup, ierr) )
-#else
-#define ompi_group_intersection_f pompi_group_intersection_f
-#endif
 #endif
 
 

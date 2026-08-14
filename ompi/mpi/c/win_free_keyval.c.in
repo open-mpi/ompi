@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/attribute/attribute.h"
 
-PROTOTYPE ERROR_CLASS win_free_keyval(INT_OUT win_keyval)
+PROTOTYPE ERROR_CLASS win_free_keyval(ATTR_KEY_INOUT win_keyval)
 {
    int ret;
 

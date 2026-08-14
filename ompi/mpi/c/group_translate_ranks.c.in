@@ -32,8 +32,8 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/group/group.h"
 
-PROTOTYPE ERROR_CLASS group_translate_ranks(GROUP group1, INT n_ranks, INT_ARRAY ranks1,
-                                            GROUP group2, INT_OUT ranks2)
+PROTOTYPE ERROR_CLASS group_translate_ranks(GROUP group1, INT n_ranks, SOURCE_ARRAY ranks1:n_ranks,
+                                            GROUP group2, SOURCE_ARRAY_OUT ranks2:n_ranks)
 {
     int err;
 

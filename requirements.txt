@@ -1,0 +1,14 @@
+# This requirements file is meant to be the union of all the
+# requirements.txt files throughout the Open MPI code base.
+# Installing all the Python packages from this file (e.g., into a
+# virtual environment) will give you all that you need to run any of
+# Open MPI's Python code.
+#
+# Note: these Python packages are typically needed only by those who
+# are developing Open MPI itself.  If you are just downloading an Open
+# MPI tarball to build and install it for the purpose of building and
+# running MPI applications, you probably don't need to install the
+# Python packages enumerated by this file.
+
+-r docs/requirements.txt
+-r ompi/test/mpi-abi/requirements.txt

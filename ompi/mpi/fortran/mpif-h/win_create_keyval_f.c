@@ -35,7 +35,7 @@
 #pragma weak PMPI_Win_create_keyval_f08 = ompi_win_create_keyval_f
 #else
 OMPI_GENERATE_F77_BINDINGS(PMPI_WIN_CREATE_KEYVAL, pmpi_win_create_keyval, pmpi_win_create_keyval_,
-                           pmpi_win_create_keyval__, pompi_win_create_keyval_f,
+                           pmpi_win_create_keyval__, ompi_win_create_keyval_f,
                            (ompi_aint_copy_attr_function win_copy_attr_fn,
                             ompi_aint_delete_attr_function win_delete_attr_fn, MPI_Fint *win_keyval,
                             MPI_Aint *extra_state, MPI_Fint *ierr),
@@ -52,16 +52,12 @@ OMPI_GENERATE_F77_BINDINGS(PMPI_WIN_CREATE_KEYVAL, pmpi_win_create_keyval, pmpi_
 #pragma weak MPI_Win_create_keyval_f = ompi_win_create_keyval_f
 #pragma weak MPI_Win_create_keyval_f08 = ompi_win_create_keyval_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS(MPI_WIN_CREATE_KEYVAL, mpi_win_create_keyval, mpi_win_create_keyval_,
+OMPI_GENERATE_WEAK_F77_BINDINGS(MPI_WIN_CREATE_KEYVAL, mpi_win_create_keyval, mpi_win_create_keyval_,
                            mpi_win_create_keyval__, ompi_win_create_keyval_f,
                            (ompi_aint_copy_attr_function win_copy_attr_fn,
                             ompi_aint_delete_attr_function win_delete_attr_fn, MPI_Fint *win_keyval,
                             MPI_Aint *extra_state, MPI_Fint *ierr),
                            (win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr))
-#else
-#define ompi_win_create_keyval_f pompi_win_create_keyval_f
-#endif
 #endif
 
 static char FUNC_NAME[] = "MPI_Win_create_keyval";

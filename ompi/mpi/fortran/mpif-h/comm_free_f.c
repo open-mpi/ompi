@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_FREE,
                            pmpi_comm_free,
                            pmpi_comm_free_,
                            pmpi_comm_free__,
-                           pompi_comm_free_f,
+                           ompi_comm_free_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_FREE,
 #pragma weak MPI_Comm_free_f = ompi_comm_free_f
 #pragma weak MPI_Comm_free_f08 = ompi_comm_free_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_FREE,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_FREE,
                            mpi_comm_free,
                            mpi_comm_free_,
                            mpi_comm_free__,
                            ompi_comm_free_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
-#else
-#define ompi_comm_free_f pompi_comm_free_f
-#endif
 #endif
 
 

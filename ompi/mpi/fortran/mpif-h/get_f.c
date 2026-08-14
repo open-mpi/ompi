@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET,
                            pmpi_get,
                            pmpi_get_,
                            pmpi_get__,
-                           pompi_get_f,
+                           ompi_get_f,
                            (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr),
                            (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, ierr) )
 #endif
@@ -54,17 +54,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET,
 #pragma weak MPI_Get_f = ompi_get_f
 #pragma weak MPI_Get_f08 = ompi_get_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GET,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GET,
                            mpi_get,
                            mpi_get_,
                            mpi_get__,
                            ompi_get_f,
                            (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr),
                            (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, win, ierr) )
-#else
-#define ompi_get_f pompi_get_f
-#endif
 #endif
 
 

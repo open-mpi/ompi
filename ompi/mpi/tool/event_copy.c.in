@@ -1,0 +1,40 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * Copyright (c) 2012-2018 Los Alamos National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2017      IBM Corporation. All rights reserved.
+ * Copyright (c) 2025      Triad National Security, LLC. All rights
+ *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include "ompi/mpi/tool/mpit-internal.h"
+
+
+PROTOTYPE ERROR_CLASS event_copy (EVENT_INSTANCE event, VOID buffer)
+{
+    int rc;
+
+    if (!mpit_is_initialized ()) {
+        return MPI_T_ERR_NOT_INITIALIZED;
+    }
+
+    if (MPI_PARAM_CHECK && NULL == buffer) {
+        return MPI_ERR_ARG;
+    }
+
+    rc = mca_base_event_copy (ompit_event_inst (event), buffer);
+    if (OPAL_SUCCESS != rc) {
+        return MPI_T_ERR_INVALID_HANDLE;
+    }
+
+    return MPI_SUCCESS;
+}

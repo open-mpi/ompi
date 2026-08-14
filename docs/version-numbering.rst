@@ -25,7 +25,8 @@ Open MPI version Y is backward compatible with Open MPI version X
 
 Note that this definition encompasses several things:
 
-* Application Binary Interface (ABI)
+* Open MPI Application Binary Interface (ABI) (which is different than
+  the MPI Forum ABI)
 * MPI / OpenSHMEM run time system
 * ``mpirun`` / ``oshrun`` command line options
 * MCA parameter names / values / meanings
@@ -166,12 +167,12 @@ Here's how we apply those rules specifically to Open MPI:
    * ``libmpi_java``
    * ``liboshmem``
 
-API and ABI Compatibility
--------------------------
+API and Open MPI ABI Compatibility
+----------------------------------
 
 Open MPI provides the following Application Programming Interface
-(API) and Application Binary Interface (ABI) compatibility guarantees
-for applications:
+(API) and Open MPI Application Binary Interface (ABI) compatibility
+guarantees for applications:
 
 #. Open MPI is source code compatible (i.e., API compatible) across all
    versions.  This means that you can compile and link your compliant MPI
@@ -181,24 +182,12 @@ for applications:
 
 #. Open MPI provided forward application binary interface (ABI)
    compatibility within a major series for MPI applications starting
-   with v1.3.2.  Prior to that version, no ABI guarantees were
-   provided.
+   with v1.3.2.  Prior to that version, no Open MPI ABI guarantees
+   were provided.
 
-#. Open MPI reserves the right to break ABI compatibility at new major
-   release series.
+#. Open MPI reserves the right to break Open MPI ABI compatibility at
+   new major release series.
 
-Open MPI |ompi_series| ABI compatibility
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Open MPI |ompi_series| series shared libraries are ABI compatible
-with Open MPI v4.0.x and v4.1.x, with a few exceptions for Fortran.
-
-* If your Fortran application was compiled in such a way that the size
-  of an integer in C is different than the size of an integer in
-  Fortran, you will need to rebuild and relink your application
-  against Open MPI |ompi_series|.
-
-* There are also Fortran API changes involving intents and
-  ``ASYNCHRONOUS``, and some interfaces changed from named to unnamed.
-  These may require changes to an application's source code, followed
-  by recompilation and relinking.
+For details about Open MPI |ompi_series| ABI compatibility with
+previous Open MPI release series, see :ref:`ABI compatibility to
+previous versions of Open MPI <label-binary-compatibility>`.

@@ -62,7 +62,10 @@ PROTOTYPE ERROR_CLASS type_get_name(DATATYPE type, STRING_OUT type_name, INT_OUT
        Note that type->name is guaranteed to be \0-terminated and
        able to completely fit into MPI_MAX_OBJECT_NAME bytes (i.e.,
        name+\0). */
-   *resultlen = (int)strlen(type->name);
-   opal_string_copy(type_name, type->name, MPI_MAX_OBJECT_NAME);
+   /* The copy below may truncate (the internal name storage holds up
+      to the ABI maximum); resultlen must describe the name actually
+      returned. */
+   opal_string_copy(type_name, type->name, @MPI_MAX_OBJECT_NAME@);
+   *resultlen = (int)strlen(type_name);
    return MPI_SUCCESS;
 }

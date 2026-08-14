@@ -1,0 +1,163 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise broader blocking collective families with checked two-rank
+ *   data movement, including alltoall, gather/scatter, and scans.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+int size = 0;
+int rank = -1;
+ret = MPI_Comm_size(MPI_COMM_WORLD, &size);
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+ret = MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+if (MPI_SUCCESS != ret) {
+    return 3;
+}
+if (size != @EXPECTED_RANKS@ || rank < 0 || rank >= size) {
+    return 4;
+}
+
+int send = rank + 1;
+int recv[2] = {-1, -1};
+ret = MPI_Allgather(&send, 1, MPI_INT, recv, 1, MPI_INT,
+                    MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || 1 != recv[0] || 2 != recv[1]) {
+    return 5;
+}
+int counts[2] = {1, 1};
+int displs[2] = {0, 1};
+recv[0] = -1;
+recv[1] = -1;
+ret = MPI_Allgatherv(&send, 1, MPI_INT, recv, counts, displs,
+                     MPI_INT, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || 1 != recv[0] || 2 != recv[1]) {
+    return 6;
+}
+
+int alltoall_send[2] = {rank * 10, rank * 10 + 1};
+int alltoall_recv[2] = {-1, -1};
+ret = MPI_Alltoall(alltoall_send, 1, MPI_INT, alltoall_recv, 1,
+                   MPI_INT, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret ||
+    alltoall_recv[0] != rank ||
+    alltoall_recv[1] != 10 + rank) {
+    return 7;
+}
+alltoall_recv[0] = -1;
+alltoall_recv[1] = -1;
+ret = MPI_Alltoallv(alltoall_send, counts, displs, MPI_INT,
+                    alltoall_recv, counts, displs, MPI_INT,
+                    MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret ||
+    alltoall_recv[0] != rank ||
+    alltoall_recv[1] != 10 + rank) {
+    return 8;
+}
+MPI_Datatype types[2] = {MPI_INT, MPI_INT};
+/*
+ * The standard ABI Alltoallw prototype uses int byte displacements
+ * here, not element displacements.  Use explicit byte offsets so the
+ * probe checks the ABI signature correctly.
+ */
+int byte_displs[2] = {0, (int) sizeof(int)};
+alltoall_recv[0] = -1;
+alltoall_recv[1] = -1;
+ret = MPI_Alltoallw(alltoall_send, counts, byte_displs, types,
+                    alltoall_recv, counts, byte_displs, types,
+                    MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret ||
+    alltoall_recv[0] != rank ||
+    alltoall_recv[1] != 10 + rank) {
+    return 9;
+}
+
+int gather_recv[2] = {-1, -1};
+ret = MPI_Gather(&send, 1, MPI_INT, gather_recv, 1, MPI_INT, 0,
+                 MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+if (0 == rank && (1 != gather_recv[0] || 2 != gather_recv[1])) {
+    return 11;
+}
+gather_recv[0] = -1;
+gather_recv[1] = -1;
+ret = MPI_Gatherv(&send, 1, MPI_INT, gather_recv, counts, displs,
+                  MPI_INT, 0, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret) {
+    return 12;
+}
+if (0 == rank && (1 != gather_recv[0] || 2 != gather_recv[1])) {
+    return 13;
+}
+
+int scatter_send[2] = {17, 19};
+int scatter_recv = -1;
+ret = MPI_Scatter(scatter_send, 1, MPI_INT, &scatter_recv, 1,
+                  MPI_INT, 0, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || scatter_recv != 17 + 2 * rank) {
+    return 14;
+}
+scatter_recv = -1;
+ret = MPI_Scatterv(scatter_send, counts, displs, MPI_INT,
+                   &scatter_recv, 1, MPI_INT, 0, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || scatter_recv != 17 + 2 * rank) {
+    return 15;
+}
+
+int reduce_send[2] = {rank + 1, rank + 3};
+int reduce_recv = -1;
+ret = MPI_Reduce_scatter_block(reduce_send, &reduce_recv, 1,
+                               MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || reduce_recv != (0 == rank ? 3 : 7)) {
+    return 16;
+}
+reduce_recv = -1;
+ret = MPI_Reduce_scatter(reduce_send, &reduce_recv, counts,
+                         MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret || reduce_recv != (0 == rank ? 3 : 7)) {
+    return 17;
+}
+
+int scan_recv = -1;
+ret = MPI_Scan(&send, &scan_recv, 1, MPI_INT, MPI_SUM,
+               MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret ||
+    scan_recv != (0 == rank ? 1 : 3)) {
+    return 18;
+}
+int exscan_recv = -1;
+ret = MPI_Exscan(&send, &exscan_recv, 1, MPI_INT, MPI_SUM,
+                 MPI_COMM_WORLD);
+if (MPI_SUCCESS != ret) {
+    return 19;
+}
+if (1 == rank && 1 != exscan_recv) {
+    return 20;
+}
+
+int local_in[2] = {1, 2};
+int local_inout[2] = {3, 4};
+ret = MPI_Reduce_local(local_in, local_inout, 2, MPI_INT, MPI_SUM);
+if (MPI_SUCCESS != ret || 4 != local_inout[0] ||
+    6 != local_inout[1]) {
+    return 21;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 22;
+}

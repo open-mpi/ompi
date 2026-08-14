@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_REAL,
                            pmpi_type_create_f90_real,
                            pmpi_type_create_f90_real_,
                            pmpi_type_create_f90_real__,
-                           pompi_type_create_f90_real_f,
+                           ompi_type_create_f90_real_f,
                            (MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr),
                            (p, r, newtype, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_F90_REAL,
 #pragma weak MPI_Type_create_f90_real_f = ompi_type_create_f90_real_f
 #pragma weak MPI_Type_create_f90_real_f08 = ompi_type_create_f90_real_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_F90_REAL,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_CREATE_F90_REAL,
                            mpi_type_create_f90_real,
                            mpi_type_create_f90_real_,
                            mpi_type_create_f90_real__,
                            ompi_type_create_f90_real_f,
                            (MPI_Fint *p, MPI_Fint *r, MPI_Fint *newtype, MPI_Fint *ierr),
                            (p, r, newtype, ierr) )
-#else
-#define ompi_type_create_f90_real_f pompi_type_create_f90_real_f
-#endif
 #endif
 
 

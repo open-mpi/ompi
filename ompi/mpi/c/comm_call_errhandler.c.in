@@ -28,7 +28,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS comm_call_errhandler(COMM comm, INT errorcode)
+PROTOTYPE ERROR_CLASS comm_call_errhandler(COMM comm, ERROR_CODE errorcode)
 {
     MEMCHECKER(
         memchecker_comm(comm);

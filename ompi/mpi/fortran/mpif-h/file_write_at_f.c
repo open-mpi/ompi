@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_AT,
                            pmpi_file_write_at,
                            pmpi_file_write_at_,
                            pmpi_file_write_at__,
-                           pompi_file_write_at_f,
+                           ompi_file_write_at_f,
                            (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, status, ierr) )
 #endif
@@ -55,19 +55,14 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_AT,
 #pragma weak MPI_File_write_at_f = ompi_file_write_at_f
 #pragma weak MPI_File_write_at_f08 = ompi_file_write_at_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_WRITE_AT,
                            mpi_file_write_at,
                            mpi_file_write_at_,
                            mpi_file_write_at__,
                            ompi_file_write_at_f,
                            (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, status, ierr) )
-#endif
 
-#if OMPI_BUILD_MPI_PROFILING && ! OPAL_HAVE_WEAK_ALIASES
-#define ompi_file_write_at_f pompi_file_write_at_f
-#endif
 #endif
 
 

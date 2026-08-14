@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BARRIER,
                            pmpi_barrier,
                            pmpi_barrier_,
                            pmpi_barrier__,
-                           pompi_barrier_f,
+                           ompi_barrier_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_BARRIER,
 #pragma weak MPI_Barrier_f = ompi_barrier_f
 #pragma weak MPI_Barrier_f08 = ompi_barrier_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_BARRIER,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_BARRIER,
                            mpi_barrier,
                            mpi_barrier_,
                            mpi_barrier__,
                            ompi_barrier_f,
                            (MPI_Fint *comm, MPI_Fint *ierr),
                            (comm, ierr) )
-#else
-#define ompi_barrier_f pompi_barrier_f
-#endif
 #endif
 
 

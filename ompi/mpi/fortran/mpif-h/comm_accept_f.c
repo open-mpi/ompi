@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_ACCEPT,
                            pmpi_comm_accept,
                            pmpi_comm_accept_,
                            pmpi_comm_accept__,
-                           pompi_comm_accept_f,
+                           ompi_comm_accept_f,
                            (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, int port_name_len),
                            (port_name, info, root, comm, newcomm, ierr, port_name_len) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_ACCEPT,
 #pragma weak MPI_Comm_accept_f = ompi_comm_accept_f
 #pragma weak MPI_Comm_accept_f08 = ompi_comm_accept_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_ACCEPT,
                            mpi_comm_accept,
                            mpi_comm_accept_,
                            mpi_comm_accept__,
                            ompi_comm_accept_f,
                            (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, int port_name_len),
                            (port_name, info, root, comm, newcomm, ierr, port_name_len) )
-#else
-#define ompi_comm_accept_f pompi_comm_accept_f
-#endif
 #endif
 
 

@@ -1,0 +1,40 @@
+/*
+ * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * This template generates the F08 binding wrapper for MPI_Abi_set_fortran_booleans.
+ *
+ * LOGICAL_PTR type: This special type is used because the C implementation
+ * needs to read directly from the bit pattern of the Fortran LOGICAL variables,
+ * not integer representations. The LOGICAL_PTR type generates code that:
+ * 1. Creates a LOGICAL temporary variable in Fortran
+ * 2. Copies the input parameter to the temporary
+ * 3. Passes the temporary's address (via C_LOC) as a void* to this C wrapper
+ * 4. The C wrapper passes that void* unchanged to the inner C implementation
+ *
+ * This is different from mpif-h where LOGICAL values are converted to integers.
+ * The F08 bindings use direct memory access to preserve the exact bit patterns.
+ */
+
+PROTOTYPE VOID abi_set_fortran_booleans(INT logical_size, LOGICAL_PTR logical_true,
+                                        LOGICAL_PTR logical_false)
+{
+    int c_ierr;
+
+    /* c_logical_true and c_logical_false are void* pointers to LOGICAL temporaries.
+     * They are passed unchanged to the inner C implementation which reads the
+     * actual LOGICAL bit patterns directly. */
+    c_ierr = @INNER_CALL@(OMPI_FINT_2_INT(*logical_size),
+                          c_logical_true,
+                          c_logical_false);
+    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+}
+
+

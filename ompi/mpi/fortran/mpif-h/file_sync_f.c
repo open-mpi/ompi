@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SYNC,
                            pmpi_file_sync,
                            pmpi_file_sync_,
                            pmpi_file_sync__,
-                           pompi_file_sync_f,
+                           ompi_file_sync_f,
                            (MPI_Fint *fh, MPI_Fint *ierr),
                            (fh, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SYNC,
 #pragma weak MPI_File_sync_f = ompi_file_sync_f
 #pragma weak MPI_File_sync_f08 = ompi_file_sync_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SYNC,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_FILE_SYNC,
                            mpi_file_sync,
                            mpi_file_sync_,
                            mpi_file_sync__,
                            ompi_file_sync_f,
                            (MPI_Fint *fh, MPI_Fint *ierr),
                            (fh, ierr) )
-#else
-#define ompi_file_sync_f pompi_file_sync_f
-#endif
 #endif
 
 

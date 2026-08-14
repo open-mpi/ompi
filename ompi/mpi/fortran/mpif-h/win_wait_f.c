@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_WAIT,
                            pmpi_win_wait,
                            pmpi_win_wait_,
                            pmpi_win_wait__,
-                           pompi_win_wait_f,
+                           ompi_win_wait_f,
                            (MPI_Fint *win, MPI_Fint *ierr),
                            (win, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_WAIT,
 #pragma weak MPI_Win_wait_f = ompi_win_wait_f
 #pragma weak MPI_Win_wait_f08 = ompi_win_wait_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_WIN_WAIT,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_WIN_WAIT,
                            mpi_win_wait,
                            mpi_win_wait_,
                            mpi_win_wait__,
                            ompi_win_wait_f,
                            (MPI_Fint *win, MPI_Fint *ierr),
                            (win, ierr) )
-#else
-#define ompi_win_wait_f pompi_win_wait_f
-#endif
 #endif
 
 

@@ -30,7 +30,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/memchecker.h"
 
-PROTOTYPE ERROR_CLASS type_free(DATATYPE_OUT type)
+PROTOTYPE ERROR_CLASS type_free(DATATYPE_INOUT type)
 {
    int rc;
 
@@ -40,7 +40,8 @@ PROTOTYPE ERROR_CLASS type_free(DATATYPE_OUT type)
 
    if( MPI_PARAM_CHECK ) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == type || NULL == *type || MPI_DATATYPE_NULL == *type ||
+      if (NULL == type || NULL == *type ||
+          MPI_DATATYPE_NULL == *type ||
           ompi_datatype_is_predefined(*type)) {
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_TYPE,
                                       FUNC_NAME );

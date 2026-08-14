@@ -27,9 +27,11 @@
 
 opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
-volatile uint32_t ompi_mpit_init_count = 0;
-
-int ompi_mpit_thread_level = MPI_THREAD_SINGLE;
+/* ompi_mpit_init_count and ompi_mpit_thread_level are read by the lower
+   libopen_mpi layer (the instance and world-model init paths), which
+   cannot reference symbols defined up here in libmpi.  They are
+   therefore defined alongside the other process-wide thread flags in
+   ompi/runtime/ompi_mpi_init.c. */
 
 bool ompi_mpit_init_failed = false;
 

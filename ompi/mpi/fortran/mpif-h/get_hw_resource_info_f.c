@@ -38,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_HW_RESOURCE_INFO,
                            pmpi_get_hw_resource_info,
                            pmpi_get_hw_resource_info_,
                            pmpi_get_hw_resource_info__,
-                           pompi_get_hw_resource_info_f,
+                           ompi_get_hw_resource_info_f,
                            (MPI_Fint *info, MPI_Fint *ierr),
                            (info, ierr) )
 #endif
@@ -53,17 +53,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GET_HW_RESOURCE_INFO,
 #pragma weak MPI_Get_hw_resource_info_f = ompi_get_hw_resource_info_f
 #pragma weak MPI_Get_hw_resource_info_f08 = ompi_get_hw_resource_info_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_GET_HW_RESOURCE_INFO,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_GET_HW_RESOURCE_INFO,
                            mpi_get_hw_resource_info,
                            mpi_get_hw_resource_info_,
                            mpi_get_hw_resource_info__,
                            ompi_get_hw_resource_info_f,
                            (MPI_Fint *info, MPI_Fint *ierr),
                            (info, ierr) )
-#else
-#define ompi_get_hw_resource_info_f pompi_get_hw_resource_info_f
-#endif
 #endif
 
 

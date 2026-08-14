@@ -26,39 +26,13 @@
  */
 #include "ompi_config.h"
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-#include <stdio.h>
-#ifdef HAVE_TIME_H
-#include <time.h>
-#endif  /* HAVE_TIME_H */
-
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/ompi_spc.h"
 
-#include "opal/util/clock_gettime.h"
-
-/**
- * Use this as a base time set early during MPI initialization to improve the range
- * and accuracy of the user visible timer.
- * More info: https://github.com/mpi-forum/mpi-issues/issues/77#issuecomment-369663119
- */
-extern struct timespec ompi_wtime_time_origin;
-
 PROTOTYPE DOUBLE wtime()
 {
-    double wtime;
-
     SPC_RECORD(OMPI_SPC_WTIME, 1);
 
-    // We intentionally don't use the OPAL timer framework here.  See
-    // https://github.com/open-mpi/ompi/issues/3003 for more details.
-    struct timespec tp;
-    (void) opal_clock_gettime(&tp);
-    wtime  = (double)(tp.tv_nsec - ompi_wtime_time_origin.tv_nsec)/1.0e+9;
-    wtime += (tp.tv_sec - ompi_wtime_time_origin.tv_sec);
-
-    return wtime;
+    return ompi_wtime();
 }

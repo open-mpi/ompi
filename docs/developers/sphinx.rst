@@ -35,8 +35,16 @@ internet.
    recommends **against** this.  Instead, you should use ``pip`` to
    install Sphinx.
 
-There are three general ways to install Sphinx; you only need one of
-them.
+Open MPI consolidates *all* of the Python packages that its developers
+need into a single top-level ``requirements.txt`` file.  Installing
+from this one file provides everything Open MPI's Python tooling
+requires: Sphinx for building the documentation and man pages, as well
+as the packages used by other developer tooling (e.g., the MPI ABI
+test suite).  The commands below therefore install Sphinx *and* the
+rest of Open MPI's developer Python packages in a single step.
+
+There are three general ways to install these Python packages; you only
+need one of them.
 
 Install Sphinx in a Python virtual environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -45,24 +53,24 @@ The preferred method of installing Sphinx for Open MPI documentation
 development is to install Sphinx in a Python virtual environment.
 This places Sphinx in a sandbox that will not conflict with other
 ``pip``-installed Python modules.  This example installs Sphinx and
-other Python modules in the ``ompi-docs-venv`` tree under your Open
+other Python modules in the ``venv`` tree under your Open
 MPI Git clone directory:
 
 .. code-block:: sh
 
    # Create the Python virtual environment
    shell$ cd TOP_OF_OPEN_MPI_GIT_CLONE
-   shell$ python3 -m venv ompi-docs-venv
-   # Or: python3 -m virtualenv ompi-docs-venv
-   # Or: virtualenv --python=python3 ompi-docs-venv
+   shell$ python3 -m venv venv
+   # Or: python3 -m virtualenv venv
+   # Or: virtualenv --python=python3 venv
 
    # Activate the virtual environment
-   shell$ . ./ompi-docs-venv/bin/activate
+   shell$ . ./venv/bin/activate
 
    # Notice that the shell prompt changes
    # Now install the required Python modules
-   (ompi-docs-venv) shell$ pip3 install -r docs/requirements.txt
-   # Or: python3 -m pip install install -r docs/requirements.txt
+   (venv) shell$ pip3 install -r requirements.txt
+   # Or: python3 -m pip install -r requirements.txt
 
 Note that sourcing the ``activate`` script will change your prompt to
 put the name of your virtual environment directory at the front, just
@@ -83,11 +91,11 @@ root privileges):
 .. code-block:: sh
 
    shell$ cd TOP_OF_OPEN_MPI_GIT_CLONE
-   shell$ pip3 install -r docs/requirements.txt
-   # Or: python3 -m pip install install -r docs/requirements.txt
+   shell$ pip3 install -r requirements.txt
+   # Or: python3 -m pip install -r requirements.txt
 
-This will install Sphinx and some Python modules required for building
-the Open MPI documentation in a system-wide location.
+This will install Sphinx and the rest of Open MPI's developer Python
+packages in a system-wide location.
 
 This will likely install the ``sphinx-build`` executable in a location
 that is already in your ``PATH``.  If the location is not already in
@@ -109,12 +117,12 @@ permissions to run this command):
 .. code-block:: sh
 
    shell$ cd TOP_OF_OPEN_MPI_GIT_CLONE
-   shell$ pip3 install --user -r docs/requirements.txt
-   # Or: python3 -m pip install install -r docs/requirements.txt
+   shell$ pip3 install --user -r requirements.txt
+   # Or: python3 -m pip install --user -r requirements.txt
 
-This will install Sphinx and some Python modules required for building
-the Open MPI documentation in a user-specific location, likely
-somewhere under ``$HOME``
+This will install Sphinx and the rest of Open MPI's developer Python
+packages in a user-specific location, likely somewhere under
+``$HOME``
 
 You will likely need to find the location where ``sphinx-build`` was
 installed and add it to your ``PATH`` (e.g., on macOS, it might appear

@@ -1,0 +1,40 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Define an MPI-IO error-handler callback that validates the ABI file
+ *   handle and error-code values received from Open MPI.  The body
+ *   performs the file lifecycle needed to install and invoke the
+ *   callback on a real MPI_File object.
+ */
+struct file_errhandler_state {
+    MPI_File file;
+    int calls;
+    int error_code;
+    int failure_code;
+};
+
+static struct file_errhandler_state file_errhandler_state;
+
+static void file_errhandler_callback(MPI_File *file, int *error_code, ...)
+{
+    if (NULL == file) {
+        file_errhandler_state.failure_code = 101;
+    } else if (*file != file_errhandler_state.file) {
+        file_errhandler_state.failure_code = 102;
+    } else if (NULL == error_code) {
+        file_errhandler_state.failure_code = 103;
+    } else if (MPI_ERR_OTHER != *error_code) {
+        file_errhandler_state.failure_code = 104;
+    } else {
+        file_errhandler_state.error_code = *error_code;
+        ++file_errhandler_state.calls;
+    }
+}

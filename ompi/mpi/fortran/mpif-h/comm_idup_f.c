@@ -40,7 +40,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_IDUP,
                            pmpi_comm_idup,
                            pmpi_comm_idup_,
                            pmpi_comm_idup__,
-                           pompi_comm_idup_f,
+                           ompi_comm_idup_f,
                             (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr),
                             (comm, newcomm, request, ierr) )
 #endif
@@ -55,17 +55,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_IDUP,
 #pragma weak MPI_Comm_idup_f = ompi_comm_idup_f
 #pragma weak MPI_Comm_idup_f08 = ompi_comm_idup_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_COMM_IDUP,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_COMM_IDUP,
                             mpi_comm_idup,
                             mpi_comm_idup_,
                             mpi_comm_idup__,
                             ompi_comm_idup_f,
                             (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr),
                             (comm, newcomm, request, ierr) )
-#else
-#define ompi_comm_idup_f pompi_comm_idup_f
-#endif
 #endif
 
 

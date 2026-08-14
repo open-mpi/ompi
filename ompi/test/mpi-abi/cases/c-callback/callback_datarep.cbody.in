@@ -1,0 +1,99 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Exercise MPI_Register_datarep with real read, write, and extent
+ *   callbacks.  Some MPI-IO configurations expose the API but do not
+ *   support user-defined datareps; those paths return 77 so the runner
+ *   records a stable datarep_unsupported skip instead of a false
+ *   runtime failure.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+datarep_state.read_calls = 0;
+datarep_state.write_calls = 0;
+datarep_state.extent_calls = 0;
+datarep_state.failure_code = 0;
+datarep_state.token = 12345;
+
+ret = MPI_Register_datarep("abi_callback_datarep",
+                           datarep_read, datarep_write,
+                           datarep_extent, &datarep_state);
+if (MPI_ERR_UNSUPPORTED_DATAREP == ret ||
+    MPI_ERR_UNSUPPORTED_OPERATION == ret) {
+    (void) MPI_Finalize();
+    return 77;
+}
+if (MPI_SUCCESS != ret) {
+    return 2;
+}
+
+const char *filename = "abi-callback-datarep.dat";
+(void) MPI_File_delete(filename, MPI_INFO_NULL);
+
+MPI_File file = MPI_FILE_NULL;
+ret = MPI_File_open(MPI_COMM_WORLD, filename,
+                    MPI_MODE_CREATE | MPI_MODE_RDWR,
+                    MPI_INFO_NULL, &file);
+if (MPI_SUCCESS != ret || MPI_FILE_NULL == file) {
+    return 3;
+}
+
+ret = MPI_File_set_view(file, 0, MPI_INT, MPI_INT,
+                        "abi_callback_datarep", MPI_INFO_NULL);
+if (MPI_ERR_UNSUPPORTED_DATAREP == ret ||
+    MPI_ERR_UNSUPPORTED_OPERATION == ret) {
+    (void) MPI_File_close(&file);
+    (void) MPI_File_delete(filename, MPI_INFO_NULL);
+    (void) MPI_Finalize();
+    return 77;
+}
+if (MPI_SUCCESS != ret || 0 != datarep_state.failure_code ||
+    datarep_state.extent_calls < 1) {
+    return 4;
+}
+
+int value = 314159;
+ret = MPI_File_write_at(file, 0, &value, 1, MPI_INT, MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || 0 != datarep_state.failure_code ||
+    datarep_state.write_calls < 1) {
+    return 5;
+}
+
+ret = MPI_File_set_view(file, 0, MPI_INT, MPI_INT,
+                        "abi_callback_datarep", MPI_INFO_NULL);
+if (MPI_SUCCESS != ret || 0 != datarep_state.failure_code) {
+    return 6;
+}
+
+int read_value = 0;
+ret = MPI_File_read_at(file, 0, &read_value, 1, MPI_INT,
+                       MPI_STATUS_IGNORE);
+if (MPI_SUCCESS != ret || 314159 != read_value ||
+    0 != datarep_state.failure_code || datarep_state.read_calls < 1) {
+    return 7;
+}
+
+ret = MPI_File_close(&file);
+if (MPI_SUCCESS != ret || MPI_FILE_NULL != file) {
+    return 8;
+}
+ret = MPI_File_delete(filename, MPI_INFO_NULL);
+if (MPI_SUCCESS != ret) {
+    return 9;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 10;
+}

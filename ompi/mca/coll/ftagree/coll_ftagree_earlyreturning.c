@@ -3278,7 +3278,7 @@ int mca_coll_ftagree_era_inter(void *contrib,
     shadowcomm->c_contextid = comm->c_contextid;
     shadowcomm->c_epoch = comm->c_epoch;
     shadowcomm->c_index = comm->c_index;
-    snprintf(shadowcomm->c_name, MPI_MAX_OBJECT_NAME, "SHADOW OF %s", &comm->c_name[0]);
+    snprintf(shadowcomm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "SHADOW OF %s", &comm->c_name[0]);
     shadowcomm->any_source_offset = comm->any_source_offset;
     shadowcomm->agreement_specific = comm->agreement_specific;
 

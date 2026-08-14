@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CONTIGUOUS,
                            pmpi_type_contiguous,
                            pmpi_type_contiguous_,
                            pmpi_type_contiguous__,
-                           pompi_type_contiguous_f,
+                           ompi_type_contiguous_f,
                            (MPI_Fint *count, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, oldtype, newtype, ierr) )
 #endif
@@ -52,17 +52,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CONTIGUOUS,
 #pragma weak MPI_Type_contiguous_f = ompi_type_contiguous_f
 #pragma weak MPI_Type_contiguous_f08 = ompi_type_contiguous_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CONTIGUOUS,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_TYPE_CONTIGUOUS,
                            mpi_type_contiguous,
                            mpi_type_contiguous_,
                            mpi_type_contiguous__,
                            ompi_type_contiguous_f,
                            (MPI_Fint *count, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr),
                            (count, oldtype, newtype, ierr) )
-#else
-#define ompi_type_contiguous_f pompi_type_contiguous_f
-#endif
 #endif
 
 

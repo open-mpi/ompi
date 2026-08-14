@@ -42,7 +42,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS_SOME,
                            pmpi_request_get_status_some,
                            pmpi_request_get_status_some_,
                            pmpi_request_get_status_some__,
-                           pompi_request_get_status_some_f,
+                           ompi_request_get_status_some_f,
                            (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr) )
 #endif
@@ -57,17 +57,13 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REQUEST_GET_STATUS_SOME,
 #pragma weak MPI_Request_get_status_some_f = ompi_request_get_status_some_f
 #pragma weak MPI_Request_get_status_some_f08 = ompi_request_get_status_some_f
 #else
-#if ! OMPI_BUILD_MPI_PROFILING
-OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS_SOME,
+OMPI_GENERATE_WEAK_F77_BINDINGS (MPI_REQUEST_GET_STATUS_SOME,
                            mpi_request_get_status_some,
                            mpi_request_get_status_some_,
                            mpi_request_get_status_some__,
                            ompi_request_get_status_some_f,
                            (MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr),
                            (incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr) )
-#else
-#define ompi_request_get_status_some_f pompi_request_get_status_some_f
-#endif
 #endif
 
 
