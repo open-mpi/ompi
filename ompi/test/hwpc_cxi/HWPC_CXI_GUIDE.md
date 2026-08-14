@@ -34,35 +34,34 @@ Helper files in this directory:
 
 ## Build Open MPI
 
-If you are building manually, make sure HWPC_CXI is enabled at configure time (--enable-hwpc-cxi) and Open MPI finishes building before compiling the test suite.
+Configure Open MPI with `--enable-hwpc-cxi` and complete the main build before
+building this test. The source and build roots are the same for an in-tree
+build; for a VPATH build, they are different directories.
 
 ## Build The Tests
 
 ### Recommended
 
 ```bash
-cd "$PROJECT_ROOT/test/hwpc_cxi"
+export HWPC_CXI_BUILD_ROOT=/path/to/configured/open-mpi-build
+cd /path/to/open-mpi-source/ompi/test/hwpc_cxi
 ./build_with_env_and_run.sh
 ```
 
-### Manual Build With Environment Variables - Example
+### Manual Configured Build
 
 ```bash
-cd "$PROJECT_ROOT/test/hwpc_cxi"
-
-export LIBFABRIC_PREFIX=/path/to/libfabric/install/prefix
-export OMPI_PREFIX=/path/to/ompi/install/prefix
-export LD_LIBRARY_PATH="$LIBFABRIC_PREFIX/lib:$OMPI_PREFIX/lib:${LD_LIBRARY_PATH:-}"
-
-make clean
-LIBFABRIC_PREFIX="$LIBFABRIC_PREFIX" \
-OMPI_PREFIX="$OMPI_PREFIX" \
-make all
+export HWPC_CXI_BUILD_ROOT=/path/to/configured/open-mpi-build
+make -C "$HWPC_CXI_BUILD_ROOT/ompi/test/hwpc_cxi" hwpc_cxi_sendrecv_test
 ```
 
-### Note On The Two Builder Scripts
+For an in-tree build, set `HWPC_CXI_BUILD_ROOT` to the Open MPI source root.
+For a VPATH build, set it to the directory from which Open MPI was configured.
 
-- `build_with_env_and_run.sh` is the preferred path for the standard build environment
+### Build Helper
+
+`build_with_env_and_run.sh` is the preferred path for the standard configured
+build environment.
 
 ## Runtime Environment
 
@@ -83,15 +82,15 @@ Typical environment variables used by the build system:
 | Variable | Purpose |
 | --- | --- |
 | `LIBFABRIC_PREFIX` | libfabric install prefix |
-| `CPPFLAGS` | includes libfabric and OpenMPI headers |
-| `LDFLAGS` | libfabric and OpenMPI link and rpath flags |
+| `CPPFLAGS` | includes libfabric and Open MPI headers |
+| `LDFLAGS` | libfabric and Open MPI link and rpath flags |
 
 ## Run The Tests
 
 ### Run The Maintained Validation Flow
 
 ```bash
-cd "$PROJECT_ROOT/test/hwpc_cxi"
+cd "$PROJECT_ROOT/ompi/test/hwpc_cxi"
 ./run_hwpc_cxi_validate.sh 4 2 100
 ```
 

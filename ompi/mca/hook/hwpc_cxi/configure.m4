@@ -10,6 +10,12 @@
 # $HEADER$
 #
 # Make this a static component
+AC_DEFUN([MCA_ompi_hook_hwpc_cxi_COMPILE_MODE], [
+    AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
+    $4="static"
+    AC_MSG_RESULT([$$4])
+])
+
 #
 # MCA_hook_hwpc_cxi_CONFIG([action-if-can-compile],
 #                          [action-if-cant-compile])
@@ -30,10 +36,7 @@ AC_DEFUN([MCA_ompi_hook_hwpc_cxi_CONFIG],[
     AC_MSG_RESULT([$enable_hwpc_cxi])
     ompi_hook_hwpc_cxi_happy=no
     AS_IF([test "$enable_hwpc_cxi" = "yes"], [
-        AC_CHECK_HEADERS([cxi_prov_hw.h], [ompi_hook_hwpc_cxi_happy=yes])
-    ])
-    AS_IF([test "$enable_hwpc_cxi" = "yes" && test "$ompi_hook_hwpc_cxi_happy" != "yes"], [
-        AC_MSG_WARN([--enable-hwpc-cxi was requested, but cxi_prov_hw.h was not found; disabling hwpc_cxi support])
+        ompi_hook_hwpc_cxi_happy=yes
     ])
     AS_IF([test "$ompi_hook_hwpc_cxi_happy" = "yes"],
           [
@@ -48,5 +51,4 @@ AC_DEFUN([MCA_ompi_hook_hwpc_cxi_CONFIG],[
                        [$HWPC_CXI_ENABLE],
                        [If the hardware-based performance counters capability for HPE's Cassini devices should be enabled.])
     AM_CONDITIONAL([HWPC_CXI_ENABLE], [test "$HWPC_CXI_ENABLE" = "1"])
-    AM_CONDITIONAL([OMPI_HAVE_CXI_PROVIDER_HEADER], [test "$ompi_hook_hwpc_cxi_happy" = "yes"])
 ])

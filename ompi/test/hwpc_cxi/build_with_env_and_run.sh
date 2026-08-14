@@ -21,10 +21,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 # Environment defaults (override via shell env before invocation)
 LIBFABRIC_PREFIX="${LIBFABRIC_PREFIX:-__REPLACE_ME_LIBFABRIC_PREFIX__}"
 OMPI_PREFIX="${OMPI_PREFIX:-__REPLACE_ME_OMPI_PREFIX__}"
+HWPC_CXI_BUILD_ROOT="${HWPC_CXI_BUILD_ROOT:-${SOURCE_ROOT}}"
+HWPC_CXI_BUILD_DIR="${HWPC_CXI_BUILD_ROOT}/ompi/test/hwpc_cxi"
 
 # Runtime defaults
 NUM_PROCS=4
@@ -48,6 +51,7 @@ Options:
   -h, --help           Show this help text
 
 Environment overrides:
+    HWPC_CXI_BUILD_ROOT  Configured Open MPI build root (default: source root)
     LIBFABRIC_PREFIX     Path to a non-default libfabric install prefix
                                              (unset or placeholder uses the system default)
     OMPI_PREFIX          Path to Open MPI install prefix (optional if mpirun in PATH)
@@ -123,22 +127,20 @@ else
 fi
 
 echo "HWPC_CXI combined build/run environment:"
+echo "  HWPC_CXI_BUILD_DIR:            $HWPC_CXI_BUILD_DIR"
 echo "  LIBFABRIC_PREFIX:              $LIBFABRIC_DISPLAY"
 echo "  OMPI_PREFIX:                   ${OMPI_PREFIX:-<PATH default>}"
 echo "  LD_LIBRARY_PATH:               ${LD_LIBRARY_PATH:-<system default>}"
 echo "  HWPC_CXI_RUNTIME_LD_LIBRARY_PATH: $HWPC_CXI_RUNTIME_LD_LIBRARY_PATH"
 echo
 
-cd "$SCRIPT_DIR"
-
 if [[ "$DO_BUILD" == "true" ]]; then
     echo "Building HWPC_CXI test binary..."
-    make clean
     LIBFABRIC_PREFIX="$LIBFABRIC_PREFIX" \
-    make all
+    make -C "$HWPC_CXI_BUILD_DIR" hwpc_cxi_sendrecv_test
     echo "Build complete."
-    if [[ -x "hwpc_cxi_sendrecv_test" ]]; then
-        ls -lh hwpc_cxi_sendrecv_test | awk '{print "  Binary: " $9 " (" $5 ")"}'
+    if [[ -x "$HWPC_CXI_BUILD_DIR/hwpc_cxi_sendrecv_test" ]]; then
+        ls -lh "$HWPC_CXI_BUILD_DIR/hwpc_cxi_sendrecv_test" | awk '{print "  Binary: " $9 " (" $5 ")"}'
     fi
     echo
 fi
@@ -150,8 +152,8 @@ if [[ "$DO_RUN" == "true" ]]; then
         exit 1
     fi
 
-    if [[ "$OMPI_PREFIX" == __REPLACE_ME_* ]] && ! command -v mpirun >/dev/null 2>&1; then
-        echo "ERROR: mpirun not found in PATH, and OMPI_PREFIX is a placeholder." >&2
+    if [[ -z "$OMPI_PREFIX" ]] && ! command -v mpirun >/dev/null 2>&1; then
+        echo "ERROR: mpirun not found in PATH, and OMPI_PREFIX is not set." >&2
         echo "Set OMPI_PREFIX to your Open MPI install prefix or add mpirun to PATH." >&2
         exit 1
     fi
@@ -163,6 +165,7 @@ if [[ "$DO_RUN" == "true" ]]; then
     fi
     RUN_ARGS+=("$NUM_PROCS" "$NUM_PPN" "$LOOPS")
 
-    "$RUN_SCRIPT" "${RUN_ARGS[@]}"
+    HWPC_CXI_TEST_BIN="$HWPC_CXI_BUILD_DIR/hwpc_cxi_sendrecv_test" \
+        "$RUN_SCRIPT" "${RUN_ARGS[@]}"
     echo "Validation run complete."
 fi

@@ -21,8 +21,8 @@
  * These helpers are implemented in hook_hwpc_cxi_counters.c.
  * They are intentionally not part of the public hook header API.
  */
-extern void ompi_hwpc_cxi_init(void);
-extern void ompi_hwpc_cxi_fini(void);
+extern void ompi_hook_hwpc_cxi_init(void);
+extern void ompi_hook_hwpc_cxi_fini(void);
 
 int main(void)
 {
@@ -33,8 +33,8 @@ int main(void)
      */
     mca_hook_hwpc_cxi_counter_report = 0;
 
-    ompi_hwpc_cxi_init();
-    ompi_hwpc_cxi_fini();
+    ompi_hook_hwpc_cxi_init();
+    ompi_hook_hwpc_cxi_fini();
 
     return EXIT_SUCCESS;
 }

@@ -23,15 +23,15 @@ part of the maintained workflow.
 ## Recommended Workflow
 
 1. Build Open MPI with HWPC_CXI enabled.
-2. Build `test/hwpc_cxi`.
+2. Build `ompi/test/hwpc_cxi`.
 3. Set runtime library paths.
 4. Run `run_hwpc_cxi_validate.sh`.
 
 ## Build
 
 ```bash
-cd /path/to/hpc-openmpi/test/hwpc_cxi
-./build_and_run.sh
+cd /path/to/hpc-openmpi/ompi/test/hwpc_cxi
+./build_with_env_and_run.sh
 ```
 
 This builds `hwpc_cxi_sendrecv_test` and prints the expected runtime
@@ -51,7 +51,7 @@ scripts will fail fast and print a clear error.
 ## Run Validation
 
 ```bash
-cd /path/to/hpc-openmpi/test/hwpc_cxi
+cd /path/to/hpc-openmpi/ompi/test/hwpc_cxi
 ./run_hwpc_cxi_validate.sh [num_procs] [num_ppn] [loops]
 ```
 

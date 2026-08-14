@@ -16,12 +16,13 @@
 #include <stdlib.h>
 
 #include "mpi.h"
-#include "hook_hwpc_cxi.h"
 
 int main(int argc, char **argv)
 {
-    mca_hook_hwpc_cxi_counter_report = 2;
-    mca_hook_hwpc_cxi_counter_summary_filter_zeros = false;
+    if (0 != setenv("OMPI_MCA_ompi_hook_hwpc_cxi_counter_report", "2", 1)
+        || 0 != setenv("OMPI_MCA_ompi_hook_hwpc_cxi_counter_summary_filter_zeros", "false", 1)) {
+        return EXIT_FAILURE;
+    }
 
     int rc = MPI_Init(&argc, &argv);
     if (MPI_SUCCESS != rc) {

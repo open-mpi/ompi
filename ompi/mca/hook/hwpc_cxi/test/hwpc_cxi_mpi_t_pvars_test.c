@@ -18,7 +18,6 @@
 #include <string.h>
 
 #include "mpi.h"
-#include "hook_hwpc_cxi.h"
 
 #ifndef HWPC_CXI_MPI_T_PVARS_ENABLED_TEST
 #    define HWPC_CXI_MPI_T_PVARS_ENABLED_TEST 0
@@ -29,6 +28,7 @@ int main(int argc, char **argv)
     int provided;
     int num_pvars;
     int num_hwpc_cxi_pvars = 0;
+    int hwpc_cxi_pvar_index = -1;
     int rc;
 
 #if HWPC_CXI_MPI_T_PVARS_ENABLED_TEST
@@ -37,8 +37,10 @@ int main(int argc, char **argv)
     }
 #endif
 
-    mca_hook_hwpc_cxi_counter_report = 2;
-    mca_hook_hwpc_cxi_counter_summary_filter_zeros = false;
+    if (0 != setenv("OMPI_MCA_ompi_hook_hwpc_cxi_counter_report", "2", 1)
+        || 0 != setenv("OMPI_MCA_ompi_hook_hwpc_cxi_counter_summary_filter_zeros", "false", 1)) {
+        return EXIT_FAILURE;
+    }
 
     rc = MPI_Init(&argc, &argv);
     if (MPI_SUCCESS != rc) {
@@ -95,6 +97,9 @@ int main(int argc, char **argv)
         printf("PVAR Index: %d Description: %s\n", pvar_index, description);
 
         if (0 == strncmp(name, "hook_hwpc_cxi_", strlen("hook_hwpc_cxi_"))) {
+            if (0 > hwpc_cxi_pvar_index) {
+                hwpc_cxi_pvar_index = pvar_index;
+            }
             ++num_hwpc_cxi_pvars;
         }
     }
@@ -104,6 +109,32 @@ int main(int argc, char **argv)
         fprintf(stderr, "No HWPC_CXI MPI_T pvars were registered when registration was enabled\n");
         MPI_T_finalize();
         MPI_Finalize();
+        return EXIT_FAILURE;
+    }
+
+    rc = MPI_Finalize();
+    if (MPI_SUCCESS != rc) {
+        MPI_T_finalize();
+        return EXIT_FAILURE;
+    }
+
+    int verbosity;
+    int var_class;
+    int bind;
+    int readonly;
+    int continuous;
+    int atomic;
+    MPI_Datatype datatype;
+    MPI_T_enum enumtype;
+
+    name_buffer_size = sizeof(name);
+    description_buffer_size = sizeof(description);
+    rc = MPI_T_pvar_get_info(hwpc_cxi_pvar_index, name, &name_buffer_size, &verbosity, &var_class,
+                             &datatype, &enumtype, description, &description_buffer_size, &bind,
+                             &readonly, &continuous, &atomic);
+    if (MPI_T_ERR_INVALID_INDEX != rc && MPI_T_ERR_INVALID != rc) {
+        fprintf(stderr, "HWPC_CXI MPI_T pvar remained valid after MPI_Finalize\n");
+        MPI_T_finalize();
         return EXIT_FAILURE;
     }
 #else
@@ -118,14 +149,18 @@ int main(int argc, char **argv)
 
     rc = MPI_T_finalize();
     if (MPI_SUCCESS != rc) {
+#if !HWPC_CXI_MPI_T_PVARS_ENABLED_TEST
         MPI_Finalize();
+#endif
         return EXIT_FAILURE;
     }
 
+#if !HWPC_CXI_MPI_T_PVARS_ENABLED_TEST
     rc = MPI_Finalize();
     if (MPI_SUCCESS != rc) {
         return EXIT_FAILURE;
     }
+#endif
 
     return EXIT_SUCCESS;
 }

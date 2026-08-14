@@ -116,11 +116,12 @@ Path to a file with an alternate list of counter names to collect.
 ``ompi_hook_hwpc_cxi_counter_report_file``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Optional filename prefix for writing detailed reports to host-specific files.
+Filename prefix for writing detailed reports to host-specific files.
 
 * Used by report levels ``3``, ``4``, and ``5``.
 * Output naming pattern: ``<hwpc_cxi_counter_report_file>.<hostname>``
 * Useful on large jobs where stdout can be mixed or truncated.
+* Required for levels ``3``, ``4``, and ``5`` to write detailed output.
 * Default: not set
 
 Output Behavior Summary
@@ -130,10 +131,11 @@ At finalize time, output may include:
 
 * A one-line network timeout summary (for non-quiet modes).
 * A global CXI summary table with min/mean/max and rates (levels ``2``).
-* NIC-level detailed counters in stdout or report files (levels ``3``).
+* NIC-level detailed counters in host-specific report files (levels ``3``,
+  ``4``, and ``5``) when a report-file prefix is configured.
 
-If no report-file prefix is set, module defaults are used for detail output
-naming.
+If no report-file prefix is set, detailed host files are not produced. Summary
+output for the selected report level is still written to stdout.
 
 Counter Naming And Inputs
 -------------------------
@@ -152,5 +154,5 @@ Notes
 
 * Zero filtering applies to summary counter rows; headings and context lines may
   still appear depending on report mode.
-* If no ``counter_report_file`` is provided, the module generates a default
-  prefix.
+* Levels ``3``, ``4``, and ``5`` require ``counter_report_file`` to produce
+  detailed host files; the module does not generate a default prefix.

@@ -65,6 +65,16 @@ bool mca_hook_hwpc_cxi_counter_verbose = false;
 bool mca_hook_hwpc_cxi_counter_summary_filter_zeros = true;
 bool mca_hook_hwpc_cxi_counter_mpi_t_enable = false;
 
+static const mca_base_var_enum_value_t ompi_hook_hwpc_cxi_counter_report_levels[] = {
+    {.value = 0, .string = "quiet"},
+    {.value = 1, .string = "timeouts"},
+    {.value = 2, .string = "summary"},
+    {.value = 3, .string = "timeout-details"},
+    {.value = 4, .string = "details"},
+    {.value = 5, .string = "details-and-descriptions"},
+    {.string = NULL},
+};
+
 static int ompi_hook_hwpc_cxi_component_open(void)
 {
     /* Nothing to do */
@@ -79,6 +89,9 @@ static int ompi_hook_hwpc_cxi_component_close(void)
 
 static int ompi_hook_hwpc_cxi_component_register(void)
 {
+    mca_base_var_enum_t *counter_report_enum;
+    int ret;
+
     mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_file",
                                  "Specifies an absolute filepath to a file containing a comma-delimited list of hardware-based performance counters (HWPCs) and counter groups to enable for HPE's Cassini devices.",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -86,12 +99,22 @@ static int ompi_hook_hwpc_cxi_component_register(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_hwpc_cxi_counter_file);
 
-    mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_report",
-                                 "An integer value between 0 and 5 to enable and control the level of reporting of HWPC counters for HPE's Cassini devices.",
-                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
-                                 OPAL_INFO_LVL_4,
-                                 MCA_BASE_VAR_SCOPE_READONLY,
-                                 &mca_hook_hwpc_cxi_counter_report);
+    ret = mca_base_var_enum_create("ompi_hook_hwpc_cxi_counter_report",
+                                   ompi_hook_hwpc_cxi_counter_report_levels,
+                                   &counter_report_enum);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+    ret = mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_report",
+                                          "Reporting level for HWPC counters on HPE Cassini devices.",
+                                          MCA_BASE_VAR_TYPE_INT, counter_report_enum, 0, 0,
+                                          OPAL_INFO_LVL_4,
+                                          MCA_BASE_VAR_SCOPE_READONLY,
+                                          &mca_hook_hwpc_cxi_counter_report);
+    OBJ_RELEASE(counter_report_enum);
+    if (0 > ret) {
+        return ret;
+    }
 
     mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_report_file",
                                  "Specifies an optional output filename prefix for the HWPC counter reports for HPE's Cassini devices to be written.",
