@@ -5,6 +5,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,7 +36,7 @@
 
 bool opal_pmix_collect_all_data = true;
 int opal_pmix_verbose_output = -1;
-bool opal_pmix_base_async_modex = false;
+bool opal_pmix_base_async_modex = true;
 opal_pmix_base_t opal_pmix_base = {.timeout = 0,
                                    .initialized = 0,
                                    .lock = {.mutex = OPAL_MUTEX_STATIC_INIT,
@@ -44,7 +45,7 @@ opal_pmix_base_t opal_pmix_base = {.timeout = 0,
 
 static int opal_pmix_base_frame_register(mca_base_register_flag_t flags)
 {
-    opal_pmix_base_async_modex = false;
+    opal_pmix_base_async_modex = true;
     (void) mca_base_var_register("opal", "pmix", "base", "async_modex",
                                  "Use asynchronous modex mode", MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
                                  OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,

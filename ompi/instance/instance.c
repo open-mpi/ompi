@@ -651,7 +651,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
                 active = true;
                 OPAL_POST_OBJECT(&active);
                 PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-                rc = PMIx_Fence_nb(NULL, 0, NULL, 0, fence_release, (void*)&active);
+                rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
                 if (PMIX_SUCCESS != rc) {
                     active = false;
                     if (PMIX_OPERATION_SUCCEEDED == rc) {
