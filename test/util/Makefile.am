@@ -191,7 +191,7 @@ opal_bit_ops_SOURCES = opal_bit_ops.c
 opal_bit_ops_LDADD = \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         $(top_builddir)/test/support/libsupport.a
-opal_bit_ops_DEPENDENCIES = $(opal_path_nfs_LDADD)
+opal_bit_ops_DEPENDENCIES = $(opal_bit_ops_LDADD)
 
 opal_path_nfs_SOURCES = opal_path_nfs.c
 opal_path_nfs_LDADD = \
