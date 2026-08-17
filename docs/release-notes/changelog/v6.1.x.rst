@@ -36,13 +36,6 @@ Open MPI version v6.1.0
     operation using the same communicator, peer, and tag, which then
     never completed.
 
-- MPI_T event producers now emit the correct MPI object handle
-  representation for the tool's MPI ABI.  When a process runs under the
-  MPI Standard ABI, the communicator, window, session, error-handler,
-  and file handles carried in MPI_T event payloads are now the Standard
-  ABI integer handles instead of a placeholder value; under the Open MPI
-  ABI they remain the internal object handle as before.
-
 - Renamed the ``--enable-weak-symbols`` configure option to
   ``--enable-weak-aliases``, which more accurately reflects the linker
   feature (weak symbol *aliases*) that Open MPI actually tests for and
