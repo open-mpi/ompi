@@ -14,7 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2021-2025 Nanook Consulting  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
@@ -1116,7 +1116,7 @@ void ompi_rte_breakpoint(char *name)
     size_t handler = SIZE_MAX;
 
     if (NULL != name
-        && NULL != (evar = getenv("OMPI_BREAKPOINT"))
+        && NULL != (evar = getenv("PMIX_BREAKPOINT"))
         && 0 != strcasecmp(evar, name)) {
         /* they don't want to stop here */
         return;
