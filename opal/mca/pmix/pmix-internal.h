@@ -68,6 +68,27 @@ OPAL_DECLSPEC extern bool opal_pmix_collect_all_data;
 OPAL_DECLSPEC extern bool opal_pmix_base_async_modex;
 OPAL_DECLSPEC extern int opal_pmix_verbose_output;
 
+/* Whether a peer's MPI connection keys may still be unpublished, in
+ * which case a Get for one is answered rather than issued: an absent
+ * key would mean "not yet", not "that BTL is unused". NULL means every
+ * Get is allowed. Handed down by the layer running the exchange, which
+ * sits above this one; installing it is also permission to fetch, since
+ * being asked about an unpublished peer is what starts the fetch. */
+typedef bool (*opal_pmix_modex_not_ready_fn_t)(const opal_process_name_t *p);
+OPAL_DECLSPEC extern opal_pmix_modex_not_ready_fn_t opal_pmix_modex_not_ready;
+
+static inline bool opal_pmix_modex_peer_not_ready(const opal_process_name_t *p)
+{
+    /* Installed before anything can build an endpoint and cleared after
+     * the last one is gone, so the load needs no ordering of its own. */
+    opal_pmix_modex_not_ready_fn_t not_ready = opal_pmix_modex_not_ready;
+
+    if (NULL == not_ready) {
+        return false;
+    }
+    return not_ready(p);
+}
+
 /* define a caddy for pointing to pmix_info_t that
  * are to be included in an answer */
 typedef struct {
@@ -272,6 +293,23 @@ typedef struct {
         OPAL_MODEX_SEND_STRING((r), (sc), _key, (d), (sz)); \
         free(_key);                                         \
     } while (0);
+
+/**
+ * Which status the retrieval macros below return is not the same for
+ * all of them. Success agrees (both zero), but the failure numberings
+ * collide: PMIX_ERR_NOT_FOUND is -46, the value OPAL gives
+ * OPAL_ERR_TAKE_NEXT_OPTION, so testing a specific failure means
+ * knowing which macro was called.
+ *
+ * OPAL_MODEX_RECV_STRING, its LOCAL and IMMEDIATE variants, and the
+ * OPAL_MODEX_RECV wrappers over them return OPAL statuses and alone
+ * consult opal_pmix_modex_not_ready(), so only they tell
+ * OPAL_ERR_NOT_READY (the peer's data may still arrive) from
+ * OPAL_ERR_NOT_FOUND (absent from data that is all here); never run
+ * their result through opal_pmix_convert_status(). The
+ * OPAL_MODEX_RECV_VALUE family and OPAL_MODEX_RECV_STRING_OPTIONAL
+ * return the raw PMIx status, ungated, for runtime-published keys.
+ */
 
 /**
  * Provide a simplified macro for retrieving modex data

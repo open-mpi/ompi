@@ -31,6 +31,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/ompi_mpit_events.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/mpiruntime.h"
 
 #include "ompi/interlib/interlib.h"
@@ -43,6 +44,7 @@
 #include "ompi/attribute/attribute.h"
 #include "ompi/op/op.h"
 #include "ompi/dpm/dpm.h"
+#include "ompi/proc/proc.h"
 #include "ompi/file/file.h"
 #include "ompi/mca/hook/base/base.h"
 #include "ompi/mca/op/base/base.h"
@@ -422,7 +424,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     ompi_proc_t **procs;
     size_t nprocs;
     volatile bool active;
-    bool background_fence = false;
+    bool eager_add_procs;
     pmix_info_t info[2];
     pmix_status_t rc;
     opal_pmix_lock_t mylock;
@@ -636,57 +638,10 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     }
 #endif
 
-   if (! opal_process_info.is_singleton) {
-        if (opal_pmix_base_async_modex) {
-            /* if we are doing an async modex, but we are collecting all
-             * data, then execute the non-blocking modex in the background.
-             * All calls to modex_recv will be cached until the background
-             * modex completes. If collect_all_data is false, then we skip
-             * the fence completely and retrieve data on-demand from the
-             * source node.
-             */
-            if (opal_pmix_collect_all_data) {
-                /* execute the fence_nb in the background to collect
-                 * the data */
-                background_fence = true;
-                active = true;
-                OPAL_POST_OBJECT(&active);
-                PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-                rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
-                if (PMIX_SUCCESS != rc) {
-                    active = false;
-                    if (PMIX_OPERATION_SUCCEEDED == rc) {
-                        // can return operation_succeeded if atomically completed
-                        ret = MPI_SUCCESS;
-                    } else {
-                        ret = opal_pmix_convert_status(rc);
-                        return ompi_instance_print_error ("PMIx_Fence_nb() failed", ret);
-                    }
-                }
-            }
-        } else {
-            /* we want to do the modex - we block at this point, but we must
-             * do so in a manner that allows us to call opal_progress so our
-             * event library can be cycled as we have tied PMIx to that
-             * event base */
-            active = true;
-            OPAL_POST_OBJECT(&active);
-            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-            rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
-            if (PMIX_SUCCESS != rc) {
-                active = false;
-                if (PMIX_OPERATION_SUCCEEDED == rc) {
-                    // can return operation_succeeded if atomically completed
-                    ret = MPI_SUCCESS;
-                } else {
-                    ret = opal_pmix_convert_status(rc);
-                    return ompi_instance_print_error ("PMIx_Fence() failed", ret);
-                }
-            } else {
-                /* cannot just wait on thread as we need to call opal_progress */
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            }
-        }
+    /* All of this rank's publishes must be committed before this. */
+    ret = ompi_modex_start_exchange();
+    if (OMPI_SUCCESS != ret) {
+        return ompi_instance_print_error ("ompi_modex_start_exchange() failed", ret);
     }
 
     OMPI_TIMING_NEXT("modex");
@@ -772,59 +727,63 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     }
 
 
-    /* If the modex fence was launched in the background, it must complete
-     * before we go any further: everything below this point reads peer
-     * modex data (proc archs/locality, and the BTL/SMSC endpoint blobs
-     * fetched during add_procs).  PMIx does not defer a get for a peer
-     * that has not yet committed its data -- it returns NOT_FOUND -- so a
-     * peer that is merely slow to reach its fence reads as a peer that
-     * posted nothing, and its endpoint is silently never wired up.
-     * Waiting here still overlaps the fence with all of the framework
-     * initialization above.
-     */
-    if (background_fence && active) {
-        OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-    }
-
     /* identify the architectures of remote procs and setup
-     * their datatype convertors, if required
+     * their datatype convertors, if required. Remote procs stay
+     * skeletons until first use unless we take the eager path.
      */
     if (OMPI_SUCCESS != (ret = ompi_proc_complete_init())) {
         return ompi_instance_print_error ("ompi_proc_complete_init failed", ret);
     }
 
-    /* start PML/BTL's */
+    /* start PML/BTL's (listen sockets / progress). Does not add_procs. */
     ret = MCA_PML_CALL(enable(true));
     if( OMPI_SUCCESS != ret ) {
         return ompi_instance_print_error ("PML control failed", ret);
     }
 
-    /* some btls/mtls require we call add_procs with all procs in the job.
-     * since the btls/mtls have no visibility here it is up to the pml to
-     * convey this requirement */
-    if (requires_world) {
-        if (NULL == (procs = ompi_proc_world (&nprocs))) {
-            return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
+    eager_add_procs = mca_pml_base_requires_sync_init() ||
+                      mca_pml_base_requires_world();
+    if (eager_add_procs) {
+        /* some btls/mtls require we call add_procs with all procs in the job.
+         * since the btls/mtls have no visibility here it is up to the pml to
+         * convey this requirement */
+        ret = ompi_modex_wait_if_needed();
+        if (OMPI_SUCCESS != ret) {
+            return ompi_instance_print_error ("ompi_modex_wait_if_needed() failed", ret);
         }
-    } else {
-        /* add all allocated ompi_proc_t's to PML (below the add_procs limit this
-         * behaves identically to ompi_proc_world ()) */
-        if (NULL == (procs = ompi_proc_get_allocated (&nprocs))) {
-            return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
-        }
-    }
 
-    ret = MCA_PML_CALL(add_procs(procs, nprocs));
-    free(procs);
-    /* If we got "unreachable", then print a specific error message.
-       Otherwise, if we got some other failure, fall through to print
-       a generic message. */
-    if (OMPI_ERR_UNREACH == ret) {
-        opal_show_help("help-mpi-runtime.txt",
-                       "mpi_init:startup:pml-add-procs-fail", true);
-        return ret;
-    } else if (OMPI_SUCCESS != ret) {
-        return ompi_instance_print_error ("PML add procs failed", ret);
+        if (requires_world) {
+            if (NULL == (procs = ompi_proc_world (&nprocs))) {
+                return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
+            }
+        } else {
+            /* add all allocated ompi_proc_t's to PML (below the add_procs limit this
+             * behaves identically to ompi_proc_world ()) */
+            if (NULL == (procs = ompi_proc_get_allocated (&nprocs))) {
+                return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
+            }
+        }
+
+        for (size_t i = 0; i < nprocs; ++i) {
+            ret = ompi_proc_complete_init_single(procs[i]);
+            if (OMPI_SUCCESS != ret) {
+                free(procs);
+                return ompi_instance_print_error ("ompi_proc_complete_init_single failed", ret);
+            }
+        }
+
+        ret = MCA_PML_CALL(add_procs(procs, nprocs));
+        free(procs);
+        /* If we got "unreachable", then print a specific error message.
+           Otherwise, if we got some other failure, fall through to print
+           a generic message. */
+        if (OMPI_ERR_UNREACH == ret) {
+            opal_show_help("help-mpi-runtime.txt",
+                           "mpi_init:startup:pml-add-procs-fail", true);
+            return ret;
+        } else if (OMPI_SUCCESS != ret) {
+            return ompi_instance_print_error ("PML add procs failed", ret);
+        }
     }
 
     /* Determine the overall threadlevel support of all processes
@@ -843,15 +802,19 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     /* Next timing measurement */
     OMPI_TIMING_NEXT("modex-barrier");
 
+    /* The exchange fence may still be in flight over these same procs, and
+     * PMIx names a collective by its participants: the barrier below would
+     * join it rather than start its own, and since the two disagree about
+     * collecting data the server fails both while reporting success to
+     * each. This is also the last place that can wait for it; past here
+     * the fence outlives init and meets whatever fence comes next. */
+    ret = ompi_modex_wait_if_needed();
+    if (OMPI_SUCCESS != ret) {
+        return ompi_instance_print_error ("ompi_modex_wait_if_needed() failed", ret);
+    }
+
     if (!opal_process_info.is_singleton) {
-        /* if we executed the above fence in the background, then
-         * we have to wait here for it to complete. However, there
-         * is no reason to do two barriers! */
-        if (background_fence) {
-            if (active) {
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            }
-        } else if (!ompi_async_mpi_init) {
+        if (!ompi_async_mpi_init) {
             /* wait for everyone to reach this point - this is a hard
              * barrier requirement at this time, though we hope to relax
              * it at a later point */
@@ -1233,6 +1196,8 @@ static int ompi_mpi_instance_finalize_common (void)
             return ret;
         }
     }
+
+    ompi_modex_finalize();
 
     /* Leave the RTE */
     if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
