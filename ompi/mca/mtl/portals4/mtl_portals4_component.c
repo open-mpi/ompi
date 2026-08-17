@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -308,7 +309,8 @@ ompi_mtl_portals4_component_query(mca_base_module_t **module, int *priority)
     if (NEED_ALL_PROCS) {
         /* let the pml know we need add_procs to be calls with all the
          * procs in the job */
-        ompi_mtl_portals4.base.mtl_flags |= MCA_MTL_BASE_FLAG_REQUIRE_WORLD;
+        ompi_mtl_portals4.base.mtl_flags |= MCA_MTL_BASE_FLAG_REQUIRE_WORLD |
+                                            MCA_MTL_BASE_FLAG_REQUIRE_SYNC_INIT;
     }
 
     return OMPI_SUCCESS;

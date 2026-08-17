@@ -12,6 +12,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2019      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,7 +66,7 @@ struct mca_btl_tcp_proc_t {
 typedef struct mca_btl_tcp_proc_t mca_btl_tcp_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_proc_t);
 
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc);
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status);
 mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name);
 int mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);
 int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);

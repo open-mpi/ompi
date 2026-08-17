@@ -9,6 +9,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022-2025 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,8 +37,8 @@ mca_smsc_endpoint_t *mca_smsc_xpmem_get_endpoint(opal_proc_t *peer_proc)
     size_t modex_size;
     mca_smsc_xpmem_modex_t *modex;
 
-    OPAL_MODEX_RECV_IMMEDIATE(rc, &mca_smsc_xpmem_component.super.smsc_version,
-                              &peer_proc->proc_name, (void **) &modex, &modex_size);
+    OPAL_MODEX_RECV_LOCAL(rc, &mca_smsc_xpmem_component.super.smsc_version,
+                          &peer_proc->proc_name, (void **) &modex, &modex_size);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return NULL;
     }
