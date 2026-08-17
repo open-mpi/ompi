@@ -293,3 +293,45 @@ is used to control what symbols are visible in the ``libmpi.so`` scope.
    `__declspec <https://docs.microsoft.com/en-us/cpp/cpp/declspec?view=msvc-170>`_.
    While support for Windows has been dropped from Open MPI, the symbol
    visibility macros remain.
+
+Hiding symbols with ``OMPI_HIDDEN``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The complement of ``OMPI_DECLSPEC`` is ``OMPI_HIDDEN`` (and, similarly,
+``OPAL_HIDDEN`` and ``OSHMEM_HIDDEN``).  It marks a symbol with "hidden"
+ELF visibility, meaning the symbol is *not* exported from the shared
+library in which it is defined and therefore cannot be resolved by any
+*other* shared library at link or run time.  Use it for symbols that are
+genuinely private to a single DSO.
+
+.. warning:: **Do not add ``OMPI_HIDDEN`` to a symbol that must be shared
+   across Open MPI's libraries.** As of Open MPI v6.0 the MPI interface
+   is split into multiple libraries that link against a shared internal
+   implementation library:
+
+   * ``libopen_mpi`` -- the internal OMPI implementation library
+   * ``libmpi`` -- the Open MPI ABI library (linked by ``mpicc``)
+   * ``libmpi_abi`` -- the standardized MPI ABI library (linked by
+     ``mpicc_abi``; only built with ``--enable-standard-abi``, which is
+     the default)
+
+   See ``ompi/mpi/README_ABI.md`` for the full picture of this library
+   structure.
+
+   Many ``ompi_*`` symbols are *defined* in ``libopen_mpi`` but *used*
+   from the binding code that is compiled into both ``libmpi`` and
+   ``libmpi_abi``.  If such a symbol is marked ``OMPI_HIDDEN``, it is not
+   exported from ``libopen_mpi``, so the links of ``libmpi`` **and**
+   ``libmpi_abi`` fail with unresolved-symbol errors.  This includes the
+   predefined MPI handle objects (for example,
+   ``ompi_mpi_comm_parent``) and internal helpers reached from the
+   bindings (for example, ``ompi_comm_split_type_hw_guided_support`` and
+   the ``ompi_comm_split_type_hwloc_*`` helpers).
+
+   The safe rule of thumb: if a symbol crosses a library boundary --
+   defined in one of the libraries above and referenced from another --
+   it must be ``OMPI_DECLSPEC`` (exported), never ``OMPI_HIDDEN``.  Only
+   mark a symbol ``OMPI_HIDDEN`` when you are certain every user of it is
+   compiled into the *same* DSO that defines it.  When in doubt, prefer
+   ``OMPI_DECLSPEC`` or leave the symbol un-annotated rather than risk a
+   link failure that only appears in an ABI-enabled build.
