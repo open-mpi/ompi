@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2017-2018 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
@@ -22,13 +22,6 @@
 
 #include "opal_config.h"
 #include "opal/datatype/opal_datatype_pack_unpack_predefined.h"
-
-#if !defined(CHECKSUM)
-/* Make use of existing macro to do device style memcpy */
-#    undef MEMCPY_CSUM
-#    define MEMCPY_CSUM(DST, SRC, BLENGTH, CONVERTOR) \
-        CONVERTOR->cbmemcpy((DST), (SRC), (BLENGTH), (CONVERTOR))
-#endif
 
 /**
  * This function deals only with partial elements. The COUNT points however to the whole leftover
@@ -70,7 +63,7 @@ static inline int pack_partial_blocklen(opal_convertor_t *CONVERTOR, const dt_el
     DO_DEBUG(opal_output(0, "pack memcpy( %p, %p, %lu ) => space %lu [partial]\n", (void *) _packed,
                          (void *) _memory, (unsigned long) do_now_bytes,
                          (unsigned long) (*(SPACE))););
-    MEMCPY_CSUM(_packed, _memory, do_now_bytes, (CONVERTOR));
+    (CONVERTOR)->cbmemcpy(_packed, _memory, do_now_bytes, (CONVERTOR));
     *(memory) += (ptrdiff_t) do_now_bytes;
     if (do_now == left_in_block) /* compensate if completed a blocklen */
         *(memory) += _elem->extent
@@ -86,9 +79,9 @@ static inline int pack_partial_blocklen(opal_convertor_t *CONVERTOR, const dt_el
  * Pack entire blocks, plus a possible remainder if SPACE is constrained to less than COUNT
  * elements.
  */
-static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_elem_desc_t *ELEM,
-                                        size_t *COUNT, unsigned char **memory,
-                                        unsigned char **packed, size_t *SPACE)
+__opal_attribute_always_inline__ static inline void
+pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_elem_desc_t *ELEM, size_t *COUNT,
+                     unsigned char **memory, unsigned char **packed, size_t *SPACE)
 {
     const ddt_elem_desc_t *_elem = &((ELEM)->elem);
     size_t blocklen_bytes = opal_datatype_basicDatatypes[_elem->common.type]->size;
@@ -102,14 +95,12 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
     if ((blocklen_bytes * cando_count) > *(SPACE))
         cando_count = (*SPACE) / blocklen_bytes;
 
-    /* preemptively update the number of COUNT we will return. */
+    /* Every path below consumes the same number of elements.  Update the caller's progress before
+     * entering the large inline mover so the compiler does not keep COUNT live across the copy. */
     *(COUNT) -= cando_count;
 
-    if (_elem->blocklen < 9) {
-        if (!(CONVERTOR->flags & CONVERTOR_ACCELERATOR)
-            && OPAL_LIKELY(
-                OPAL_SUCCESS
-                == opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem))) {
+    if (_elem->blocklen <= OPAL_DATATYPE_PREDEFINED_MAX_INLINE_BLOCKLEN) {
+        if (OPAL_LIKELY(OPAL_SUCCESS == opal_datatype_pack_predefined_element(&_memory, &_packed, cando_count, _elem))) {
             goto update_and_return;
         }
         /* else unrecognized _elem->common.type, use the memcpy path */
@@ -122,7 +113,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
             DO_DEBUG(opal_output(0, "pack memcpy( %p, %p, %lu ) => space %lu [blen = 1]\n",
                                  (void *) _packed, (void *) _memory, (unsigned long) blocklen_bytes,
                                  (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-            MEMCPY_CSUM(_packed, _memory, blocklen_bytes, (CONVERTOR));
+            (CONVERTOR)->cbmemcpy(_packed, _memory, blocklen_bytes, (CONVERTOR));
             _packed += blocklen_bytes;
             _memory += _elem->extent;
         }
@@ -138,7 +129,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
             DO_DEBUG(opal_output(0, "pack 2. memcpy( %p, %p, %lu ) => space %lu\n",
                                  (void *) _packed, (void *) _memory, (unsigned long) blocklen_bytes,
                                  (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-            MEMCPY_CSUM(_packed, _memory, blocklen_bytes, (CONVERTOR));
+            (CONVERTOR)->cbmemcpy(_packed, _memory, blocklen_bytes, (CONVERTOR));
             _packed += blocklen_bytes;
             _memory += _elem->extent;
             cando_count -= _elem->blocklen;
@@ -157,7 +148,7 @@ static inline void pack_predefined_data(opal_convertor_t *CONVERTOR, const dt_el
         DO_DEBUG(opal_output(0, "pack 3. memcpy( %p, %p, %lu ) => space %lu [epilog]\n",
                              (void *) _packed, (void *) _memory, (unsigned long) do_now_bytes,
                              (unsigned long) (*(SPACE) - (_packed - *(packed)))););
-        MEMCPY_CSUM(_packed, _memory, do_now_bytes, (CONVERTOR));
+        (CONVERTOR)->cbmemcpy(_packed, _memory, do_now_bytes, (CONVERTOR));
         _memory += do_now_bytes;
         _packed += do_now_bytes;
     }
@@ -185,7 +176,7 @@ static inline void pack_contiguous_loop(opal_convertor_t *CONVERTOR, const dt_el
         DO_DEBUG(opal_output(0, "pack 3. memcpy( %p, %p, %lu ) => space %lu\n", (void *) *(packed),
                              (void *) _memory, (unsigned long) _end_loop->size,
                              (unsigned long) (*(SPACE) -_i * _end_loop->size)););
-        MEMCPY_CSUM(*(packed), _memory, _end_loop->size, (CONVERTOR));
+        (CONVERTOR)->cbmemcpy(*(packed), _memory, _end_loop->size, (CONVERTOR));
         *(packed) += _end_loop->size;
         _memory += _loop->extent;
     }

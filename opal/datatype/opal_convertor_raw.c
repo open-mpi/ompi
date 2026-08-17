@@ -7,6 +7,7 @@
  * Copyright (c) 2013      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,9 +70,11 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
     uint32_t pos_desc;  /* actual position in the description of the derived datatype */
     size_t count_desc;  /* the number of items already done in the actual pos_desc */
     size_t do_now, blength;
-    dt_elem_desc_t *description, *pElem;
+    const dt_elem_desc_t *description, *pElem;
+    const ddt_elem_desc_t *current;
     unsigned char *source_base; /* origin of the data */
     size_t sum_iov_len = 0;     /* sum of raw data lengths in the iov_len fields */
+    ptrdiff_t local_disp;
     uint32_t index = 0;         /* the iov index and a simple counter */
 
     assert((*iov_count) > 0);
@@ -126,11 +129,9 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
      * and will simplify the loop handling.
      */
     if (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
-        const ddt_elem_desc_t *current = &(pElem->elem);
+        current = &(pElem->elem);
 
-        if (count_desc
-            != ((size_t) current->count
-                * current->blocklen)) { /* Not the full element description */
+        if (count_desc != ((size_t) current->count * current->blocklen)) { /* Not the full element description */
             if ((do_now = count_desc % current->blocklen)) {
                 do_now = current->blocklen - do_now; /* how much left in the block */
                 source_base += current->disp;
@@ -146,8 +147,7 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
                 count_desc -= do_now;
 
                 source_base += (blength
-                                - current->blocklen
-                                      * opal_datatype_basicDatatypes[current->common.type]->size
+                                - current->blocklen * opal_datatype_basicDatatypes[current->common.type]->size
                                 + current->extent - current->disp);
             }
         }
@@ -155,7 +155,8 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
 
     while (1) {
         while (pElem->elem.common.flags & OPAL_DATATYPE_FLAG_DATA) {
-            const ddt_elem_desc_t *current = &(pElem->elem);
+        process_data:
+            current = &(pElem->elem);
             source_base += current->disp;
 
             do_now = current->count;
@@ -183,18 +184,18 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
             if (0 == count_desc) { /* completed */
                 source_base = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++; /* advance to the next data */
-                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-                continue;
+                UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                         process_loop, process_end_loop);
+                goto process_data;
             }
             source_base -= current->disp;
             goto complete_loop;
         }
         if (OPAL_DATATYPE_END_LOOP == pElem->elem.common.type) { /* end of the current loop */
+        process_end_loop:
             DO_DEBUG(opal_output(0,
-                                 "raw end_loop count %" PRIsize_t " stack_pos %d"
-                                 " pos_desc %d disp %ld space %" PRIsize_t "\n",
-                                 pStack->count, pConvertor->stack_pos, pos_desc,
-                                 (long) pStack->disp, sum_iov_len););
+                                 "raw end_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %" PRIsize_t "\n",
+                                 pStack->count, pConvertor->stack_pos, pos_desc, (long) pStack->disp, sum_iov_len););
             if (--(pStack->count) == 0) { /* end of loop */
                 if (0 == pConvertor->stack_pos) {
                     /* we're done. Force the exit of the main for loop (around iovec) */
@@ -210,21 +211,22 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
                     pStack->disp += (pData->ub - pData->lb);
                 } else {
                     assert(OPAL_DATATYPE_LOOP == description[pStack->index].loop.common.type);
-                    pStack->disp += description[pStack->index]
-                                        .loop.extent; /* jump by the loop extent */
+                    pStack->disp += description[pStack->index].loop.extent; /* jump by the loop extent */
                 }
             }
             source_base = pConvertor->pBaseBuf + pStack->disp;
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
             DO_DEBUG(opal_output(0,
-                                 "raw new_loop count %" PRIsize_t " stack_pos %d "
-                                 "pos_desc %d disp %ld space %" PRIsize_t "\n",
-                                 pStack->count, pConvertor->stack_pos, pos_desc,
-                                 (long) pStack->disp, sum_iov_len););
+                                 "raw new_loop count %" PRIsize_t " stack_pos %d pos_desc %d disp %ld space %" PRIsize_t "\n",
+                                 pStack->count, pConvertor->stack_pos, pos_desc, (long) pStack->disp, sum_iov_len););
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
         if (OPAL_DATATYPE_LOOP == pElem->elem.common.type) {
-            ptrdiff_t local_disp = (ptrdiff_t) source_base;
-            ddt_endloop_desc_t *end_loop = (ddt_endloop_desc_t *) (pElem + pElem->loop.items);
+        process_loop:
+            local_disp = (ptrdiff_t) source_base;
+            const ddt_endloop_desc_t *end_loop =
+                (const ddt_endloop_desc_t *) (pElem + pElem->loop.items);
 
             if (pElem->loop.common.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) {
                 ptrdiff_t offset = end_loop->first_elem_disp;
@@ -242,13 +244,9 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
                     source_base += pElem->loop.extent;
                     sum_iov_len += end_loop->size;
                     count_desc--;
-                    DO_DEBUG(opal_output(
-                                 0,
-                                 "raw contig loop generate iov[%d] = {base %p, length %" PRIsize_t
-                                 "}"
-                                 "space %" PRIsize_t " [pos_desc %d]\n",
-                                 index, iov[index].iov_base, iov[index].iov_len, sum_iov_len,
-                                 pos_desc););
+                    DO_DEBUG(opal_output( 0,
+                                 "raw contig loop generate iov[%d] = {base %p, length %" PRIsize_t "} space %" PRIsize_t " [pos_desc %d]\n",
+                                 index, iov[index].iov_base, iov[index].iov_len, sum_iov_len, pos_desc););
                 }
                 source_base -= offset;
                 pos_desc += pElem->loop.items + 1;
@@ -259,8 +257,11 @@ int32_t opal_convertor_raw(opal_convertor_t *pConvertor, struct iovec *iov, uint
                 pos_desc++;
             }
             source_base = pConvertor->pBaseBuf + pStack->disp;
-            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc);
-            DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop");
+            DDT_DUMP_STACK(pConvertor->pStack, pConvertor->stack_pos, &description[pos_desc],
+                           "advance loop");
+            UPDATE_INTERNAL_COUNTERS(description, pos_desc, pElem, count_desc,
+                                     process_loop, process_end_loop);
+            goto process_data;
         }
     }
 complete_loop:
