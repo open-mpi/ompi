@@ -14,7 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2021-2025 Nanook Consulting  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  */
@@ -968,7 +968,7 @@ int ompi_rte_finalize(void)
         opal_process_info.job_session_dir = NULL;
         destroy_job_session_dir = false;
     }
-    
+
     if (NULL != opal_process_info.top_session_dir && destroy_top_session_dir) {
         opal_os_dirpath_destroy(opal_process_info.top_session_dir,
                                 true, check_file);
@@ -1079,7 +1079,7 @@ void ompi_rte_breakpoint(char *name)
     opal_process_name_t pname;
 
     if (NULL != name
-        && NULL != (evar = getenv("OMPI_BREAKPOINT"))
+        && NULL != (evar = getenv("PMIX_BREAKPOINT"))
         && 0 != strcasecmp(evar, name)) {
         /* they don't want to stop here */
         return;
