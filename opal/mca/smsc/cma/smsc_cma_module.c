@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2021      Google, Inc. All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,8 +50,8 @@ mca_smsc_endpoint_t *mca_smsc_cma_get_endpoint(opal_proc_t *peer_proc)
     int rc;
     size_t modex_size;
     mca_smsc_cma_modex_t *modex;
-    OPAL_MODEX_RECV_IMMEDIATE(rc, &mca_smsc_cma_component.smsc_version, &peer_proc->proc_name,
-                              (void **) &modex, &modex_size);
+    OPAL_MODEX_RECV_LOCAL(rc, &mca_smsc_cma_component.smsc_version, &peer_proc->proc_name,
+                          (void **) &modex, &modex_size);
     if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         OBJ_RELEASE(endpoint);
         return NULL;
