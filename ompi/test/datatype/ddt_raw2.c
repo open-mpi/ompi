@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
     datatype->super.ub = 218344;
     datatype->super.nbElems = 31684;
     datatype->super.align = 1;
-    datatype->super.loops = 1146;
+    datatype->super.stack_depth = 1146;
     datatype->super.desc.length = 3351;
     datatype->super.desc.used = 184;
     datatype->super.desc.desc = descs;

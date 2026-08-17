@@ -704,16 +704,16 @@ static void test_fake_stack_direct(uint32_t remote_arch)
 /*
  * test_set_position_and_resume
  *
- * Exercises the convertor set-position path (which internally calls
- * opal_convertor_set_position_nocheck) then resumes unpacking.
+ * Exercises the convertor set-position path then resumes unpacking.
  *
  * We send 4 int32_t values one at a time, verifying that we can seek
  * to an arbitrary byte offset mid-array and continue unpacking from
  * that point.
  *
  * This path also exercises the fake_stack indirectly via
- * opal_convertor_set_position -> set_position_nocheck ->
- * (for contiguous types) create_stack_with_pos_contig.
+ * opal_convertor_set_position -> convertor->fPosition. Heterogeneous
+ * convertors use the generic positioner (descriptor walk), not the
+ * contiguous O(1) shortcut.
  */
 static void test_set_position_and_resume(uint32_t remote_arch)
 {
