@@ -1,5 +1,6 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -149,6 +150,8 @@ mca_pml_ucx_component_init(int* priority, bool enable_progress_threads,
 
     /** this pml supports the extended CID space */
     ompi_pml_ucx.super.pml_flags |= MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID;
+    /* Keep today's eager add_procs; lazy UCX is a later pass. */
+    ompi_pml_ucx.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_SYNC_INIT;
 
     return &ompi_pml_ucx.super;
 }

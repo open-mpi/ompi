@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -78,15 +79,6 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
     if (false == uct_module->initialized) {
         mca_btl_uct_tl_t *am_tl = uct_module->am_tl;
 
-        /* NTH: might want to vary this size based off the universe size (if
-         * one exists). the table is only used for connection lookup and
-         * endpoint removal. */
-        rc = opal_hash_table_init(&uct_module->id_to_endpoint, 512);
-        if (OPAL_SUCCESS != rc) {
-            BTL_ERROR(("error initializing the endpoint hash. rc = %d", rc));
-            return rc;
-        }
-
         if (am_tl) {
             rc = opal_free_list_init(&uct_module->short_frags, sizeof(mca_btl_uct_base_frag_t),
                                      opal_cache_line_size, OBJ_CLASS(mca_btl_uct_base_frag_t),
@@ -114,7 +106,9 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        opal_bitmap_set_bit(reachable, i);
+        if (NULL != reachable) {
+            opal_bitmap_set_bit(reachable, i);
+        }
     }
 
     return OPAL_SUCCESS;
@@ -278,6 +272,8 @@ mca_btl_uct_module_t *mca_btl_uct_alloc_module(mca_btl_uct_md_t *md,
     *module = mca_btl_uct_module_template;
 
     OBJ_CONSTRUCT(&module->id_to_endpoint, opal_hash_table_t);
+    /* Incoming connection requests can arrive before add_procs(). */
+    (void) opal_hash_table_init(&module->id_to_endpoint, 512);
     OBJ_CONSTRUCT(&module->endpoint_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->short_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&module->eager_frags, opal_free_list_t);

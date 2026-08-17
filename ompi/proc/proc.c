@@ -44,6 +44,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
 
@@ -119,6 +120,13 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
 
     /* by default we consider process to be remote */
     proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
+
+    /* Built after the exchange delivered, so what this peer published is
+     * local already; its architecture still has to be read out of it. */
+    if (ompi_modex_all_ready()) {
+        opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
+    }
+
     *procp = proc;
 
     return OMPI_SUCCESS;
@@ -138,8 +146,20 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
 {
     if ((OMPI_CAST_RTE_NAME(&proc->super.proc_name)->jobid == OMPI_PROC_MY_NAME->jobid) &&
         (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid  == OMPI_PROC_MY_NAME->vpid)) {
-        /* nothing else to do */
+        /* nothing else to do; what we published we can read */
+        opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
         return OMPI_SUCCESS;
+    }
+
+    if (OPAL_PROC_NON_LOCAL == proc->super.proc_flags ||
+        0 == proc->super.proc_flags) {
+        uint16_t u16, *u16ptr = &u16;
+        int loc_ret;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(loc_ret, PMIX_LOCALITY, &proc->super.proc_name,
+                                       &u16ptr, PMIX_UINT16);
+        if (OPAL_SUCCESS == loc_ret) {
+            proc->super.proc_flags = u16;
+        }
     }
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -209,11 +229,9 @@ static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_na
         goto exit;
     }
 
-    /* finish filling in the important proc data fields */
-    ret = ompi_proc_complete_init_single (proc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        goto exit;
-    }
+    /* Leave the proc as a skeleton (name + default convertor). Arch,
+     * locality and convertor are filled in when the PML constructs the
+     * BML endpoint, after the peer blob is local. */
 exit:
     return proc;
 }
@@ -262,6 +280,7 @@ int ompi_proc_init(void)
     ompi_proc_local_proc = proc;
     proc->super.proc_flags = OPAL_PROC_ALL_LOCAL;
     proc->super.proc_arch = opal_local_arch;
+    opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
     /* Register the local proc with OPAL */
     opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -347,26 +366,8 @@ int ompi_proc_complete_init(void)
         }
     }
 
-    /* if cutoff is larger than # of procs - add all processes
-     * NOTE that local procs will be automatically skipped as they
-     * are already in the hash table
-     */
-    if (ompi_process_info.num_procs < ompi_add_procs_cutoff) {
-        /* since ompi_proc_for_name is locking internally -
-         * we need to release lock here
-         */
-        opal_mutex_unlock (&ompi_proc_lock);
-
-        for (ompi_vpid_t i = 0 ; i < ompi_process_info.num_procs ; ++i ) {
-            opal_process_name_t proc_name;
-            proc_name.jobid = OMPI_PROC_MY_NAME->jobid;
-            proc_name.vpid = i;
-            (void) ompi_proc_for_name (proc_name);
-        }
-
-        /* acquire lock back for the next step - sort */
-        opal_mutex_lock (&ompi_proc_lock);
-    }
+    /* Do not force-create every remote rank. Groups keep sentinels;
+     * the PML materializes a skeleton on first use. */
 
     opal_list_sort (&ompi_proc_list, ompi_proc_compare_vid);
 
@@ -606,6 +607,7 @@ int ompi_proc_refresh(void)
             ompi_proc_local_proc = proc;
             proc->super.proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->super.proc_arch = opal_local_arch;
+            opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
             opal_proc_local_set(&proc->super);
         } else {
             ret = ompi_proc_complete_init_single (proc);

@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,6 +81,8 @@ struct mca_pml_ob1_t {
     opal_list_t send_pending;
     opal_list_t recv_pending;
     opal_list_t rdma_pending;
+    /* send requests waiting for a peer's connection-info blob */
+    opal_list_t modex_pending;
     /* List of pending fragments without a matching communicator */
     opal_list_t non_existing_communicator_pending;
     bool enabled;
@@ -119,6 +122,26 @@ extern int mca_pml_ob1_add_procs(
     struct ompi_proc_t **procs,
     size_t nprocs
 );
+
+struct mca_pml_ob1_send_request_t;
+
+/* Construct the BML endpoint if the peer blob is local; else NULL. */
+extern struct mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc);
+
+/* Recv-side constructor: add_proc so BTL progress is registered and
+ * (for sm) the sender's endpoint exists before we poll. If the blob
+ * is not local yet nothing is parked; the posted recv stays in the
+ * queue and whatever needs the endpoint asks again. */
+extern void mca_pml_ob1_prepare_recv_proc(ompi_proc_t *proc);
+
+/* Stage a send until the dest blob arrives, then start it. */
+extern int mca_pml_ob1_stage_or_start(struct mca_pml_ob1_send_request_t *sendreq,
+                                      int32_t seqn);
+
+/* Start whatever staged sends can now reach their peer, and report how
+ * many left the queue. Driven from mca_pml_ob1_progress(), which each park
+ * keeps registered by way of one progress count. */
+extern int mca_pml_ob1_drain_staged_sends(void);
 
 extern int mca_pml_ob1_del_procs(
     struct ompi_proc_t **procs,

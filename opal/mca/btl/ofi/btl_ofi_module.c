@@ -18,6 +18,7 @@
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022-2024 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,14 +80,16 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
 
             /* Add this endpoint to the lookup table */
             (void) opal_hash_table_set_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) proc,
-                                                    (void **) &ep);
+                                                    peers[i]);
         }
 
         OPAL_MODEX_RECV(rc, &mca_btl_ofi_component.super.btl_version, &peers[i]->ep_proc->proc_name,
                         (void **) &ep_name, &namelen);
         if (OPAL_SUCCESS != rc) {
-            BTL_ERROR(("error receiving modex"));
-            MCA_BTL_OFI_ABORT();
+            BTL_VERBOSE(("error receiving ofi modex for %s: %d",
+                         OPAL_NAME_PRINT(proc->proc_name), rc));
+            peers[i] = NULL;
+            continue;
         }
 
         /* The modex blob is packed as: uint32 nmodules, then per module:
@@ -101,7 +104,8 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             if (0 == nm) {
                 free(ep_name);
                 BTL_VERBOSE(("peer published 0 modules"));
-                MCA_BTL_OFI_ABORT();
+                peers[i] = NULL;
+                continue;
             }
 
             int target = ofi_btl->module_index % (int) nm;
@@ -123,10 +127,12 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
         /* if succeed, add this proc and mark reachable */
         if (peers[i]->peer_addr != FI_ADDR_NOTAVAIL && count == 1) {
             opal_list_append(&ofi_btl->endpoints, &peers[i]->super);
-            opal_bitmap_set_bit(reachable, i);
+            if (NULL != reachable) {
+                opal_bitmap_set_bit(reachable, i);
+            }
         } else {
             BTL_VERBOSE(("fi_av_insert failed for module %d", ofi_btl->module_index));
-            MCA_BTL_OFI_ABORT();
+            peers[i] = NULL;
         }
     }
 

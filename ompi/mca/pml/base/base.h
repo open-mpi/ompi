@@ -69,6 +69,10 @@ OMPI_DECLSPEC int mca_pml_base_revoke_comm(struct ompi_communicator_t *comm, boo
 /*
  * Globals
  */
+/* The component every rank publishes its selected PML name under. The
+ * key it maps to is also the one used to tell whether a peer has
+ * committed its connection info at all. */
+OMPI_DECLSPEC extern mca_base_component_t mca_pml_base_modex_component;
 OMPI_DECLSPEC extern mca_pml_base_component_t mca_pml_base_selected_component;
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 OMPI_DECLSPEC extern opal_pointer_array_t mca_pml_base_pml;

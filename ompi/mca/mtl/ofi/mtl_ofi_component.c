@@ -8,6 +8,7 @@
  * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1133,7 +1134,12 @@ select_prov:
     ompi_mtl_ofi.is_initialized = false;
     ompi_mtl_ofi.has_posted_initial_buffer = false;
     
-    ompi_mtl_ofi.base.mtl_flags |= MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID;
+    /* ompi_mtl_ofi_add_procs() treats a modex read that is not yet
+     * available as fatal, and its lazy caller answers with exit(1), so
+     * the connection-info exchange has to have completed before the
+     * first send. */
+    ompi_mtl_ofi.base.mtl_flags |= MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID
+                                 | MCA_MTL_BASE_FLAG_REQUIRE_SYNC_INIT;
 
     return &ompi_mtl_ofi.base;
 

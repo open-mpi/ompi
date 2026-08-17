@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012-2024 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -558,9 +558,11 @@ int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         n_local_procs++;
 
         /* add this proc to shared memory accessibility list */
-        return_code = opal_bitmap_set_bit(reachability, proc);
-        if (OPAL_SUCCESS != return_code)
-            goto CLEANUP;
+        if (NULL != reachability) {
+            return_code = opal_bitmap_set_bit(reachability, proc);
+            if (OPAL_SUCCESS != return_code)
+                goto CLEANUP;
+        }
     }
 
     /* jump out if there's not someone we can talk to */

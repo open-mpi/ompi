@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -390,10 +391,16 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
         }
 
         ret = create_endpoint(portals4_btl->interface_num, curr_proc, &btl_peer_data[i]);
+        if (OPAL_SUCCESS != ret) {
+            btl_peer_data[i] = NULL;
+            continue;
+        }
 
         OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_num_procs, 1);
         /* and here we can reach */
-        opal_bitmap_set_bit(reachable, i);
+        if (NULL != reachable) {
+            opal_bitmap_set_bit(reachable, i);
+        }
 
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                              "add_procs: rank=%lx nid=%x pid=%x for NI %d", i,

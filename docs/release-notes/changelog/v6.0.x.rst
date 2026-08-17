@@ -8,6 +8,13 @@ Open MPI version v6.0.0
 --------------------------
 :Date: ...fill me in...
 
+- ``MPI_Init`` with the default ``ob1`` PML no longer waits for the
+  connection-info modex or calls BTL ``add_procs`` unless a selected
+  transport requires a synchronizing initialization (for example
+  ``usnic``). The first send or receive to a peer constructs that
+  endpoint once the peer's modex is local; an ``MPI_Isend`` posted
+  earlier is staged in the PML until then.
+
 - Added support for the MPI-4.0 embiggened APIs (i.e., functions with
   ``MPI_Count`` parameters).
 

@@ -15,6 +15,7 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -530,6 +531,12 @@ typedef int (*mca_pml_base_module_dump_fn_t)(
 #define MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID 0x00000002
 
 /**
+ * PML (or a selected BTL/MTL underneath it) needs the connection-info
+ * modex to complete and an eager add_procs during MPI_Init.
+ */
+#define MCA_PML_BASE_FLAG_REQUIRE_SYNC_INIT 0x00000004
+
+/**
  *  PML instance.
  */
 
@@ -603,6 +610,11 @@ static inline bool mca_pml_base_requires_world (void)
 static inline bool mca_pml_base_supports_extended_cid (void)
 {
     return !!(mca_pml.pml_flags & MCA_PML_BASE_FLAG_SUPPORTS_EXT_CID);
+}
+
+static inline bool mca_pml_base_requires_sync_init (void)
+{
+    return !!(mca_pml.pml_flags & MCA_PML_BASE_FLAG_REQUIRE_SYNC_INIT);
 }
 
 END_C_DECLS

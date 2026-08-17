@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2014      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2014-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2014-2015 Los Alamos National Security, LLC. All rights
@@ -371,6 +371,67 @@ static void mca_bml_r2_compute_endpoint_metrics (mca_bml_base_endpoint_t *bml_en
     }
 }
 
+static int mca_bml_r2_add_procs(size_t nprocs,
+                                struct ompi_proc_t **procs,
+                                struct opal_bitmap_t *reachable);
+
+/*
+ * SM indexes endpoints by local rank and polls one FIFO. A single-proc
+ * add_proc leaves the other slots empty; the next fifo_read then
+ * faults. When the target is node-local, wire every local proc
+ * (including self) the way add_procs(world) used to.
+ */
+static int mca_bml_r2_add_local_procs(void)
+{
+    ompi_proc_t **allocated, **locals;
+    size_t nalloc = 0, nlocals = 0;
+    opal_bitmap_t reachable;
+    int rc;
+
+    allocated = ompi_proc_get_allocated(&nalloc);
+    if (NULL == allocated) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    locals = (ompi_proc_t **) malloc(nalloc * sizeof(ompi_proc_t *));
+    if (NULL == locals) {
+        free(allocated);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (size_t i = 0; i < nalloc; ++i) {
+        ompi_proc_t *p = allocated[i];
+        if (p != ompi_proc_local_proc &&
+            !OPAL_PROC_ON_LOCAL_NODE(p->super.proc_flags)) {
+            continue;
+        }
+        if (NULL != p->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
+            continue;
+        }
+        (void) ompi_proc_complete_init_single(p);
+        locals[nlocals++] = p;
+    }
+    free(allocated);
+
+    if (0 == nlocals) {
+        free(locals);
+        return OMPI_SUCCESS;
+    }
+
+    OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
+    rc = opal_bitmap_init(&reachable, (int) nlocals);
+    if (OMPI_SUCCESS != rc) {
+        free(locals);
+        OBJ_DESTRUCT(&reachable);
+        return rc;
+    }
+
+    rc = mca_bml_r2_add_procs(nlocals, locals, &reachable);
+    OBJ_DESTRUCT(&reachable);
+    free(locals);
+    return rc;
+}
+
 static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
 {
     mca_bml_base_endpoint_t *bml_endpoint;
@@ -386,6 +447,17 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
         OBJ_RETAIN(proc);
         return OMPI_SUCCESS;
+    }
+
+    if (proc == ompi_proc_local_proc ||
+        OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+        rc = mca_bml_r2_add_local_procs();
+        if (OMPI_SUCCESS != rc) {
+            return rc;
+        }
+        if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
+            return OMPI_SUCCESS;
+        }
     }
 
     /* add btls if not already done */

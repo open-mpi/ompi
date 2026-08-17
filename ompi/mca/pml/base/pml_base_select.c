@@ -240,8 +240,10 @@ int mca_pml_base_select(bool enable_progress_threads,
 }
 
 /* need a "commonly" named PML structure so everything ends up in the
-   same modex field */
-static mca_base_component_t pml_base_component = {
+   same modex field. Not static: ompi_modex.c probes the same key to learn
+   whether a peer has committed, and two copies of this would drift into a
+   Get on a key nobody published. */
+mca_base_component_t mca_pml_base_modex_component = {
     OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 0, 0),
     .mca_component_name = "base",
     .mca_component_major_version = 2,
@@ -271,7 +273,7 @@ mca_pml_base_pml_selected(const char *name)
     int rc = 0;
 
     if (!opal_pmix_collect_all_data || 0 == OMPI_PROC_MY_NAME->vpid) {
-        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name,
+        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_pml_base_modex_component, name,
                         strlen(name) + 1);
     }
     return rc;
@@ -292,7 +294,7 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
         return OMPI_SUCCESS;
     }
     OPAL_MODEX_RECV_STRING(ret,
-                           mca_base_component_to_string(&pml_base_component),
+                           mca_base_component_to_string(&mca_pml_base_modex_component),
                            &proc_name, (void**) &remote_pml, &size);
     if (PMIX_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,

@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2020-2022 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,8 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
 static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
                         struct opal_bitmap_t *reachability);
+
+static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc);
 
 mca_btl_sm_t mca_btl_sm = {
     {&mca_btl_sm_component.super, .btl_add_procs = sm_add_procs, .btl_del_procs = sm_del_procs,
@@ -143,6 +146,17 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     /* set flag indicating btl has been inited */
     sm_btl->btl_inited = true;
 
+    /* Completions written back into our FIFO are tagged with our local
+     * rank. That slot must exist even when add_procs never included
+     * self (lazy single-peer wire-up). */
+    {
+        struct mca_btl_base_endpoint_t *self_ep = NULL;
+        rc = init_sm_endpoint(&self_ep, opal_proc_local_get());
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
     return OPAL_SUCCESS;
 }
 
@@ -163,6 +177,9 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
 
     mca_btl_base_endpoint_t *ep = component->endpoints + peer_local_rank;
     *ep_out = ep;
+    if (NULL != ep->fifo) {
+        return OPAL_SUCCESS;
+    }
 
     OBJ_CONSTRUCT(ep, mca_btl_sm_endpoint_t);
 

@@ -435,6 +435,13 @@ bcast_rportlen:
                 new_proc_list[i] = proc;
                 opal_list_remove_item(&ilist, (opal_list_item_t*)cd);  // TODO: do we need to release cd ?
                 OBJ_RELEASE(cd);
+                /* PMIx_Connect() above downloaded what these procs
+                 * published, so from here on a read for one of them is
+                 * local -- the same thing a fence says about our own job,
+                 * said for the procs a connect brings in. Said before the
+                 * init below, so that its architecture read is a cache hit
+                 * rather than a fetch nobody waits for. */
+                opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
                 /* ompi_proc_complete_init_single() initializes and optionally retrieves
                  * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
                  * them, we are just fine */

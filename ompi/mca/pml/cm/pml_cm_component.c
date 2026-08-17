@@ -16,6 +16,7 @@
  *                         All Rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -140,6 +141,10 @@ mca_pml_cm_component_init(int* priority,
 
     if (ompi_mtl->mtl_flags & MCA_MTL_BASE_FLAG_REQUIRE_WORLD) {
         ompi_pml_cm.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
+    }
+
+    if (ompi_mtl->mtl_flags & MCA_MTL_BASE_FLAG_REQUIRE_SYNC_INIT) {
+        ompi_pml_cm.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_SYNC_INIT;
     }
 
     if (ompi_mtl->mtl_flags & MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID) {

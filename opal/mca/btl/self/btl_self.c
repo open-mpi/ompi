@@ -16,6 +16,7 @@
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -103,7 +104,9 @@ static int mca_btl_self_add_procs(struct mca_btl_base_module_t *btl, size_t npro
 {
     for (int i = 0; i < (int) nprocs; i++) {
         if (0 == opal_compare_proc(procs[i]->proc_name, OPAL_PROC_MY_NAME)) {
-            opal_bitmap_set_bit(reachability, i);
+            if (NULL != reachability) {
+                opal_bitmap_set_bit(reachability, i);
+            }
             /* need to return something to keep the bml from ignoring us */
             peers[i] = (struct mca_btl_base_endpoint_t *) 1;
             break; /* there will always be only one ... */

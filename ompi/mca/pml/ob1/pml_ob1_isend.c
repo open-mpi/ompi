@@ -30,6 +30,7 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/ompi_modex.h"
 #if MPI_VERSION >= 4
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #endif
@@ -161,9 +162,17 @@ int mca_pml_ob1_isend(const void *buf,
     mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
     mca_pml_ob1_send_request_t *sendreq = NULL;
     ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
-    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_endpoint_peek (dst_proc);
     int16_t seqn = 0;
     int rc;
+
+    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > tag) {
+        seqn = (uint16_t) OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
+    }
+
+    if (NULL == endpoint) {
+        endpoint = mca_pml_ob1_ensure_endpoint (dst_proc);
+    }
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
 #if OPAL_ENABLE_FT_MPI
@@ -171,11 +180,21 @@ int mca_pml_ob1_isend(const void *buf,
             goto alloc_ft_req;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
+        if (!ompi_modex_proc_ready(dst_proc)) {
+            MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+            if (NULL == sendreq) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
+                                          comm, sendmode, false, ob1_proc);
+            PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                                     &(sendreq)->req_send.req_base,
+                                     PERUSE_SEND);
+            rc = mca_pml_ob1_stage_or_start(sendreq, seqn);
+            *request = (ompi_request_t *) sendreq;
+            return rc;
+        }
         return OMPI_ERR_UNREACH;
-    }
-
-    if (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > tag) {
-        seqn = (uint16_t) OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
     }
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
@@ -256,10 +275,14 @@ int mca_pml_ob1_send(const void *buf,
 {
     mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
     ompi_proc_t *dst_proc = ob1_proc->ompi_proc;
-    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (dst_proc);
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_endpoint_peek (dst_proc);
     mca_pml_ob1_send_request_t *sendreq = NULL;
     int16_t seqn = 0;
     int rc;
+
+    if (NULL == endpoint) {
+        endpoint = mca_pml_ob1_ensure_endpoint (dst_proc);
+    }
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
 #if OPAL_ENABLE_FT_MPI
@@ -267,6 +290,17 @@ int mca_pml_ob1_send(const void *buf,
             return MPI_ERR_PROC_FAILED;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
+        if (!ompi_modex_proc_ready(dst_proc)) {
+            ompi_request_t *request;
+            rc = mca_pml_ob1_isend (buf, count, datatype, dst, tag, sendmode, comm, &request);
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+                return rc;
+            }
+            ompi_request_wait_completion (request);
+            rc = request->req_status.MPI_ERROR;
+            ompi_request_free (&request);
+            return rc;
+        }
         return OMPI_ERR_UNREACH;
     }
 

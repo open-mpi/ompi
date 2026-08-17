@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
@@ -460,10 +460,24 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
     return rc;
 }
 
-static inline int
-mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml_base_endpoint_t* endpoint, int32_t seqn)
+/**
+ * Make this request live, once.
+ *
+ * After this the request is OMPI_REQUEST_ACTIVE, which is to say the user
+ * may be waiting on it and a wait may have hung its sync off req_complete.
+ * So nothing that runs later may do this again: MCA_PML_BASE_SEND_START()
+ * stores REQUEST_PENDING over that field, which would detach the sync and
+ * leave the waiter to sleep through the completion.
+ *
+ * A request parked for a peer this process cannot reach yet is live in
+ * exactly this sense -- the user holds it and MPI says it is in progress
+ * -- while nothing of it has gone to a btl. Hence the split: parking
+ * does this half, and mca_pml_ob1_send_request_start_endpoint() below
+ * does the other half whenever the peer turns up.
+ */
+static inline void
+mca_pml_ob1_send_request_activate (mca_pml_ob1_send_request_t* sendreq, int32_t seqn)
 {
-    sendreq->req_endpoint = endpoint;
     sendreq->req_state = 0;
     sendreq->req_lock = 0;
     sendreq->req_pipeline_depth = 0;
@@ -483,6 +497,19 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
     }
 
     MCA_PML_BASE_SEND_START( &sendreq->req_send );
+}
+
+/**
+ * Hand an already-live request to the btls.
+ *
+ * Re-arms nothing, so this is equally the first thing that happens to a
+ * fresh request and the thing that happens to a parked one once its peer
+ * turns out to be reachable.
+ */
+static inline int
+mca_pml_ob1_send_request_start_endpoint (mca_pml_ob1_send_request_t* sendreq, mca_bml_base_endpoint_t* endpoint)
+{
+    sendreq->req_endpoint = endpoint;
 
     for(size_t i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
         mca_bml_base_btl_t* bml_btl;
@@ -522,23 +549,47 @@ mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml
 }
 
 static inline int
+mca_pml_ob1_send_request_start_seq (mca_pml_ob1_send_request_t* sendreq, mca_bml_base_endpoint_t* endpoint, int32_t seqn)
+{
+    mca_pml_ob1_send_request_activate (sendreq, seqn);
+
+    return mca_pml_ob1_send_request_start_endpoint (sendreq, endpoint);
+}
+
+static inline int
 mca_pml_ob1_send_request_start( mca_pml_ob1_send_request_t* sendreq )
 {
-    mca_bml_base_endpoint_t *endpoint = mca_bml_base_get_endpoint (sendreq->req_send.req_base.req_proc);
     ompi_communicator_t *comm = sendreq->req_send.req_base.req_comm;
     mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, sendreq->req_send.req_base.req_peer);
+    mca_bml_base_endpoint_t *endpoint = mca_bml_base_endpoint_peek (sendreq->req_send.req_base.req_proc);
     int32_t seqn;
+    int rc;
 
+    seqn = OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
+
+    if (NULL == endpoint) {
+        endpoint = mca_pml_ob1_ensure_endpoint (sendreq->req_send.req_base.req_proc, &rc);
+    }
     if (OPAL_UNLIKELY(NULL == endpoint)) {
 #if OPAL_ENABLE_FT_MPI
         if (!sendreq->req_send.req_base.req_proc->proc_active) {
             return MPI_ERR_PROC_FAILED;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
-        return OMPI_ERR_UNREACH;
+        return mca_pml_ob1_stage_or_start(sendreq, seqn);
     }
 
-    seqn = OPAL_THREAD_ADD_FETCH32(&ob1_proc->send_sequence, 1);
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    /* This is the persistent path, and MPI_Send_init prepared the
+     * convertor without ever touching the bml, so it may have been built
+     * for an architecture we had not learned yet. The peer is seeded by
+     * now -- getting the endpoint above is what does it -- so the two
+     * architectures disagree only if that is what happened. */
+    if (OPAL_UNLIKELY(sendreq->req_send.req_base.req_convertor.remoteArch
+                      != sendreq->req_send.req_base.req_proc->super.proc_convertor->remoteArch)) {
+        mca_pml_ob1_reprepare_send_convertor (sendreq);
+    }
+#endif
 
     return mca_pml_ob1_send_request_start_seq (sendreq, endpoint, seqn);
 }

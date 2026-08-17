@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
@@ -1300,6 +1300,22 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     req->req_ack_sent = false;
 
     MCA_PML_BASE_RECV_START(&req->req_recv);
+
+    /* Build the BML/BTL endpoint before waiting. Otherwise a recv-first
+     * rank never registers BTL progress (sm never polls its FIFO). */
+    if (OMPI_ANY_SOURCE != req->req_recv.req_base.req_peer) {
+        mca_pml_ob1_prepare_recv_proc(
+            mca_pml_ob1_peer_lookup(comm, req->req_recv.req_base.req_peer)->ompi_proc);
+    } else {
+        int comm_size = ompi_comm_size(comm);
+        int comm_rank = ompi_comm_rank(comm);
+        for (int i = 0; i < comm_size; ++i) {
+            if (i == comm_rank) {
+                continue;
+            }
+            mca_pml_ob1_prepare_recv_proc(ompi_comm_peer_lookup(comm, i));
+        }
+    }
 
     OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     /**

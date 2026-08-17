@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012-2013 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -272,6 +272,11 @@ typedef uint8_t mca_btl_base_tag_t;
  * completion by nature.
  */
 #define MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION 0x800000
+
+/** The BTL needs a completed connection-info modex and an eager
+ * add_procs (typically the world set) during MPI initialization. It
+ * cannot operate on potential/pending peers. */
+#define MCA_BTL_FLAGS_REQUIRE_SYNC_INIT 0x1000000
 
 /* End of btl flags. if additional flags are added please update
  * mca_btl_base_flag_enum_flags in btl_base_frame.c */

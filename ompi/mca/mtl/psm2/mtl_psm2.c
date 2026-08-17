@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -192,7 +193,9 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
     /* register the psm2 progress function */
     opal_progress_register(ompi_mtl_psm2_progress);
 
-    ompi_mtl_psm2.super.mtl_flags |= MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE;
+    ompi_mtl_psm2.super.mtl_flags |= MCA_MTL_BASE_FLAG_ACCELERATOR_INIT_DISABLE |
+                                     MCA_MTL_BASE_FLAG_REQUIRE_SYNC_INIT |
+                                     MCA_MTL_BASE_FLAG_REQUIRE_WORLD;
 
     return OMPI_SUCCESS;
 }

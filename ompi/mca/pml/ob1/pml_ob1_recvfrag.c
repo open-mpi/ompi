@@ -25,6 +25,7 @@
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -471,14 +472,9 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
 
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
-    if(OPAL_UNLIKELY(NULL == comm_ptr)) {
-        /* This is a special case. A message for a not yet existing
-         * communicator can happens. Instead of doing a matching we
-         * will temporarily add it the a pending queue in the PML.
-         * Later on, when the communicator is completely instantiated,
-         * this pending queue will be searched and all matching fragments
-         * moved to the right communicator.
-         */
+    if(OPAL_UNLIKELY(NULL == comm_ptr || NULL == comm_ptr->c_pml_comm)) {
+        /* Communicator not yet known, or add_comm() has not run.
+         * BTL listen sockets can deliver MATCH during MPI_Init. */
         append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending, btl,
                              hdr, segments, num_segments, NULL );
         return;
@@ -1065,14 +1061,9 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
 
     /* communicator pointer */
     comm_ptr = ompi_comm_lookup(hdr->hdr_ctx);
-    if(OPAL_UNLIKELY(NULL == comm_ptr)) {
-        /* This is a special case. A message for a not yet existing
-         * communicator can happens. Instead of doing a matching we
-         * will temporarily add it the a pending queue in the PML.
-         * Later on, when the communicator is completely instantiated,
-         * this pending queue will be searched and all matching fragments
-         * moved to the right communicator.
-         */
+    if(OPAL_UNLIKELY(NULL == comm_ptr || NULL == comm_ptr->c_pml_comm)) {
+        /* Communicator not yet known, or add_comm() has not run.
+         * BTL listen sockets can deliver RNDV/RGET during MPI_Init. */
         append_frag_to_list( &mca_pml_ob1.non_existing_communicator_pending, btl,
                              hdr, segments, num_segments, NULL );
         return OMPI_SUCCESS;
@@ -1276,7 +1267,7 @@ void mca_pml_ob1_recv_frag_callback_cid (mca_btl_base_module_t* btl,
 
     /* find the communicator with this extended CID */
     comm = ompi_comm_lookup_cid (hdr->hdr_cid.hdr_cid);
-    if (OPAL_UNLIKELY(NULL == comm)) {
+    if (OPAL_UNLIKELY(NULL == comm || NULL == comm->c_pml_comm)) {
         if (segments->seg_len > 0) {
             /* This is a special case. A message for a not yet existing
              * communicator can happens. Instead of doing a matching we

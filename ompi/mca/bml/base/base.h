@@ -29,6 +29,7 @@
 #include "opal/mca/base/mca_base_framework.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/proc/proc.h"
+#include "ompi/runtime/ompi_modex.h"
 
 
 /*
@@ -63,14 +64,27 @@ OMPI_DECLSPEC extern mca_base_framework_t ompi_bml_base_framework;
 OMPI_DECLSPEC extern opal_mutex_t mca_bml_lock;
 OMPI_DECLSPEC extern bool mca_bml_component_init_called;
 
+static inline struct mca_bml_base_endpoint_t *
+mca_bml_base_endpoint_peek (struct ompi_proc_t *proc)
+{
+    return (struct mca_bml_base_endpoint_t *)
+        proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+}
+
 static inline struct mca_bml_base_endpoint_t *mca_bml_base_get_endpoint (struct ompi_proc_t *proc) {
-    if (OPAL_UNLIKELY(NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML])) {
-        OPAL_THREAD_LOCK(&mca_bml_lock);
-        if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-            mca_bml.bml_add_proc (proc);
-        }
-        OPAL_THREAD_UNLOCK(&mca_bml_lock);
+    if (OPAL_LIKELY(NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML])) {
+        return (struct mca_bml_base_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     }
+    /* Do not add_proc until this peer's blob is local — otherwise
+     * OPAL_MODEX_RECV returns NOT_FOUND and the endpoint is never wired. */
+    if (!ompi_modex_proc_ready(proc)) {
+        return NULL;
+    }
+    OPAL_THREAD_LOCK(&mca_bml_lock);
+    if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
+        mca_bml.bml_add_proc (proc);
+    }
+    OPAL_THREAD_UNLOCK(&mca_bml_lock);
 
     return (struct mca_bml_base_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 }
