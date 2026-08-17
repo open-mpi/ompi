@@ -249,7 +249,10 @@ int ompi_comm_init_mpi3 (void)
     ompi_mpi_comm_world.comm.c_cube_dim     = opal_cube_dim ((int) group->grp_proc_count);
     ompi_mpi_comm_world.comm.error_handler  = ompi_initial_error_handler_eh;
     OBJ_RETAIN( ompi_mpi_comm_world.comm.error_handler );
-    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
+    /* OMPI_COMM_PML_ADDED means the PML has run add_comm; setting it any
+     * earlier lets a MATCH callback dereference a NULL c_pml_comm once
+     * the BTL listen sockets are up. Set after add_comm, as comm_cid.c
+     * does. */
     opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
     ompi_mpi_comm_world.comm.c_name = ompi_comm_predefined_name("MPI_COMM_WORLD");
@@ -308,7 +311,6 @@ int ompi_comm_init_mpi3 (void)
     OBJ_RETAIN(ompi_mpi_comm_self.comm.c_remote_group);
     ompi_mpi_comm_self.comm.error_handler  = ompi_initial_error_handler_eh;
     OBJ_RETAIN( ompi_mpi_comm_self.comm.error_handler );
-    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
     ompi_mpi_comm_self.comm.c_name = ompi_comm_predefined_name("MPI_COMM_SELF");

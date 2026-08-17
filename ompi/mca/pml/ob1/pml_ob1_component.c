@@ -20,6 +20,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -319,7 +320,10 @@ mca_pml_ob1_component_init( int* priority,
 
         if (btl->btl_flags & MCA_BTL_FLAGS_SINGLE_ADD_PROCS) {
             mca_pml_ob1.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_WORLD;
-            break;
+        }
+
+        if (btl->btl_flags & MCA_BTL_FLAGS_REQUIRE_SYNC_INIT) {
+            mca_pml_ob1.super.pml_flags |= MCA_PML_BASE_FLAG_REQUIRE_SYNC_INIT;
         }
 
     }
@@ -362,9 +366,16 @@ int mca_pml_ob1_component_fini(void)
         mca_pml_ob1_sendreq = NULL;
     }
 
+    /* A staged send is never complete, and finalize is unreachable with
+     * a request outstanding, so the drain must have emptied this.
+     * Asserted because OBJ_DESTRUCT only re-initializes the list, so a
+     * request left linked here would otherwise go unnoticed. */
+    assert(opal_list_is_empty(&mca_pml_ob1.modex_pending));
+
     OBJ_DESTRUCT(&mca_pml_ob1.rdma_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.modex_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.non_existing_communicator_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.buffers);

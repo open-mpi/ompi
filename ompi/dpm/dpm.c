@@ -672,6 +672,11 @@ bcast_rportlen:
                 }
             }
 
+            /* PMIx_Connect() above downloaded what these procs published, so
+             * reads for them are local from here on. Done before the init
+             * below, whose architecture read would otherwise be a fetch
+             * nobody waits for. */
+            opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
             /* ompi_proc_complete_init_single() initializes and optionally retrieves
              * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
              * them, we are just fine */

@@ -28,6 +28,7 @@
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2026      Stony Brook University. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -55,6 +56,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_spc.h"
+#include "ompi/runtime/ompi_modex.h"
 
 #include "pml_ob1.h"
 #include "pml_ob1_component.h"
@@ -65,6 +67,8 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_accelerator.h"
+
+static int mca_pml_ob1_register_btl_callbacks(void);
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {
@@ -169,6 +173,7 @@ int mca_pml_ob1_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.pckt_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.modex_pending, opal_list_t);
 
     /* missing communicator pending list */
     OBJ_CONSTRUCT(&mca_pml_ob1.non_existing_communicator_pending, opal_list_t);
@@ -204,7 +209,158 @@ int mca_pml_ob1_enable(bool enable)
 
     mca_pml_ob1.enabled = true;
 
+    /* Here, and nowhere else. These used to be registered from
+     * add_procs, which the lazy path no longer calls -- and once every
+     * peer is wired on demand, "wherever wire-up happens" would mean once
+     * per peer, needing a flag to suppress the repeat. There is nothing
+     * per peer about it: a tag names a fragment type and is stored in a
+     * table of the BTL base that every btl reads on delivery, so a peer
+     * arriving cannot make it stale.
+     *
+     * Once per enable is also once per instance, which is what a second
+     * MPI_Init in a static build needs: nothing is remembered here, so
+     * there is nothing left from the first instance to skip the work.
+     *
+     * Before any peer can be wired, and before this returns and progress
+     * begins -- so nobody arrives to find the upcall table empty, and a
+     * failure to fill it fails the job here. */
+    int cb_rc = mca_pml_ob1_register_btl_callbacks();
+    if (OMPI_SUCCESS != cb_rc) {
+        return cb_rc;
+    }
+
     return OMPI_SUCCESS;
+}
+
+static void mca_pml_ob1_reprepare_send_convertor(mca_pml_ob1_send_request_t *sendreq)
+{
+    mca_pml_base_send_request_t *req = &sendreq->req_send;
+
+    if (0 == req->req_base.req_count) {
+        return;
+    }
+    opal_convertor_cleanup(&req->req_base.req_convertor);
+    opal_convertor_copy_and_prepare_for_send(req->req_base.req_proc->super.proc_convertor,
+                                             &req->req_base.req_datatype->super,
+                                             req->req_base.req_count,
+                                             req->req_base.req_addr,
+                                             0,
+                                             &req->req_base.req_convertor);
+    opal_convertor_get_packed_size(&req->req_base.req_convertor, &req->req_bytes_packed);
+}
+
+mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc)
+{
+    mca_bml_base_endpoint_t *ep = mca_bml_base_endpoint_peek(proc);
+
+    if (NULL != ep) {
+        return ep;
+    }
+    if (!ompi_modex_proc_ready(proc)) {
+        return NULL;
+    }
+    (void) ompi_proc_complete_init_single(proc);
+
+    return mca_bml_base_get_endpoint(proc);
+}
+
+/* Opportunistic: nothing is parked here, so nothing has to be retried
+ * either. Everything that genuinely needs this endpoint asks again on its
+ * own -- an ACK or FIN with nowhere to go queues on pckt_pending -- and
+ * that retry builds the endpoint itself. */
+void mca_pml_ob1_prepare_recv_proc(ompi_proc_t *proc)
+{
+    if (NULL == proc || proc == ompi_proc_local_proc) {
+        return;
+    }
+    if (NULL != mca_bml_base_endpoint_peek(proc)) {
+        return;
+    }
+    (void) mca_pml_ob1_ensure_endpoint(proc);
+}
+
+/* One progress count per staged request, held until that request is
+ * started or failed. That is what keeps mca_pml_ob1_progress() registered
+ * while anything is parked here. */
+int mca_pml_ob1_stage_or_start(mca_pml_ob1_send_request_t *sendreq, int32_t seqn)
+{
+    ompi_proc_t *proc = sendreq->req_send.req_base.req_proc;
+    mca_bml_base_endpoint_t *ep = mca_pml_ob1_ensure_endpoint(proc);
+
+    if (NULL != ep) {
+        return mca_pml_ob1_send_request_start_seq(sendreq, ep, seqn);
+    }
+
+    /* Live before the caller is handed it: MPI says the request is in
+     * progress from then on, and a wait on an inactive one returns. */
+    mca_pml_ob1_send_request_activate(sendreq, seqn);
+
+    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+    opal_list_append(&mca_pml_ob1.modex_pending, (opal_list_item_t *) sendreq);
+    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+    mca_pml_ob1_enable_progress(1);
+
+    return OMPI_SUCCESS;
+}
+
+/* True once this request is off our hands, either started or completed
+ * with an error; false while it is still waiting on its peer. */
+static bool mca_pml_ob1_start_staged(mca_pml_ob1_send_request_t *sendreq)
+{
+    ompi_proc_t *proc = sendreq->req_send.req_base.req_proc;
+    mca_bml_base_endpoint_t *ep;
+    int rc;
+
+    mca_pml_ob1_reprepare_send_convertor(sendreq);
+    ep = mca_pml_ob1_ensure_endpoint(proc);
+    if (NULL == ep) {
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_ERR_UNREACH;
+        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+        return true;
+    }
+
+    /* Already live since it was parked, so the wire half alone:
+     * activating twice would store REQUEST_PENDING over req_complete,
+     * detaching the sync a waiter has by now hung there. */
+    rc = mca_pml_ob1_send_request_start_endpoint(sendreq, ep);
+    if (OMPI_SUCCESS != rc && OMPI_ERR_OUT_OF_RESOURCE != rc) {
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = rc;
+        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+    }
+    return true;
+}
+
+int mca_pml_ob1_drain_staged_sends(void)
+{
+    opal_list_t ready;
+    mca_pml_ob1_send_request_t *sendreq, *next;
+    int started = 0;
+
+    /* Unlocked: runs on every tick and is almost always empty. A park
+     * racing this read is missed until the next tick at worst, which the
+     * progress count that park takes guarantees. */
+    if (opal_list_is_empty(&mca_pml_ob1.modex_pending)) {
+        return 0;
+    }
+
+    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+    /* Emptied here and worked outside the lock, because starting a request
+     * reaches the BTLs, which take locks of their own. */
+    OBJ_CONSTRUCT(&ready, opal_list_t);
+    OPAL_LIST_FOREACH_SAFE(sendreq, next, &mca_pml_ob1.modex_pending,
+                           mca_pml_ob1_send_request_t) {
+        opal_list_remove_item(&mca_pml_ob1.modex_pending, (opal_list_item_t *) sendreq);
+        opal_list_append(&ready, (opal_list_item_t *) sendreq);
+    }
+    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+
+    OPAL_LIST_FOREACH_SAFE(sendreq, next, &ready, mca_pml_ob1_send_request_t) {
+        opal_list_remove_item(&ready, (opal_list_item_t *) sendreq);
+        started += mca_pml_ob1_start_staged(sendreq) ? 1 : 0;
+    }
+    OBJ_DESTRUCT(&ready);
+
+    return started;
 }
 
 static const char*
@@ -246,6 +402,11 @@ mca_pml_ob1_set_allow_overtake(opal_infosubscriber_t* obj,
 
 int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 {
+    /* World-model MPI_Init may call add_comm after instance already did. */
+    if (NULL != comm->c_pml_comm) {
+        return OMPI_SUCCESS;
+    }
+
     /* allocate pml specific comm data */
     mca_pml_ob1_comm_t* pml_comm = OBJ_NEW(mca_pml_ob1_comm_t);
     mca_pml_ob1_recv_frag_t *frag, *next_frag;
@@ -370,6 +531,80 @@ int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 }
 
 
+static int mca_pml_ob1_register_btl_callbacks(void)
+{
+    int rc;
+
+    if (NULL == mca_bml.bml_register) {
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_MATCH,
+                               mca_pml_ob1_recv_frag_callback_match,
+                               NULL );
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RNDV,
+                               mca_pml_ob1_recv_frag_callback_rndv,
+                               NULL );
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RGET,
+                               mca_pml_ob1_recv_frag_callback_rget,
+                               NULL );
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_ACK,
+                               mca_pml_ob1_recv_frag_callback_ack,
+                               NULL );
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FRAG,
+                               mca_pml_ob1_recv_frag_callback_frag,
+                               NULL );
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_PUT,
+                               mca_pml_ob1_recv_frag_callback_put,
+                               NULL );
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FIN,
+                               mca_pml_ob1_recv_frag_callback_fin,
+                               NULL );
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = mca_bml.bml_register (MCA_PML_OB1_HDR_TYPE_CID,
+                               mca_pml_ob1_recv_frag_callback_cid,
+                               NULL);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    if (NULL != mca_bml.bml_register_error) {
+        rc = mca_bml.bml_register_error(mca_pml_ob1_error_handler);
+        if (OMPI_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    return OMPI_SUCCESS;
+}
+
 /*
  *   For each proc setup a datastructure that indicates the BTLs
  *   that can be used to reach the destination.
@@ -474,66 +709,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 #endif /* OPAL_CUDA_GDR_SUPPORT */
     }
 
-
-    /* TODO: Move these callback registration to another place */
-    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_MATCH,
-                               mca_pml_ob1_recv_frag_callback_match,
-                               NULL );
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RNDV,
-                               mca_pml_ob1_recv_frag_callback_rndv,
-                               NULL );
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_RGET,
-                               mca_pml_ob1_recv_frag_callback_rget,
-                               NULL );
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_ACK,
-                               mca_pml_ob1_recv_frag_callback_ack,
-                               NULL );
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FRAG,
-                               mca_pml_ob1_recv_frag_callback_frag,
-                               NULL );
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_PUT,
-                               mca_pml_ob1_recv_frag_callback_put,
-                               NULL );
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_register( MCA_PML_OB1_HDR_TYPE_FIN,
-                               mca_pml_ob1_recv_frag_callback_fin,
-                               NULL );
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_register (MCA_PML_OB1_HDR_TYPE_CID,
-                               mca_pml_ob1_recv_frag_callback_cid,
-                               NULL);
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    /* register error handlers */
-    return  mca_bml.bml_register_error(mca_pml_ob1_error_handler);
+    return OMPI_SUCCESS;
 }
 
 /*
