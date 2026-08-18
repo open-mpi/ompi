@@ -356,7 +356,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         if (OPAL_UNLIKELY(NULL == ctx)) {
             cuCtxSetCurrent(mem_ctx);
         }
-        return 1;
     }
 
     is_vmm = accelerator_cuda_check_vmm(dbuf, &vmm_mem_type, &vmm_dev_id);
