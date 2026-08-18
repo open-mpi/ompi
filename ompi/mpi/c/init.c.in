@@ -70,6 +70,8 @@ PROTOTYPE INT init(INT_OUT argc, ARGV argv)
      * registration above. */
     ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
     ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
+    ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
+    ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
 #endif
 
     /* Call the back-end initialization function (we need to put as

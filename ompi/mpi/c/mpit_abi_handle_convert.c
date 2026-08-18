@@ -75,3 +75,15 @@ uint64_t ompi_mpit_abi_handle_convert_impl(void *object, int handle_kind)
         return 0;
     }
 }
+
+int32_t ompi_mpit_abi_error_convert_impl(int32_t err_code)
+{
+    /* Map an internal MPI error code to its MPI Standard ABI value. */
+    return (int32_t) ompi_convert_intern_error_abi_error((int) err_code);
+}
+
+int32_t ompi_mpit_abi_bind_convert_impl(int32_t object_bind)
+{
+    /* Map an internal MPI_T_BIND_* value to its MPI Standard ABI value. */
+    return (int32_t) ompi_convert_t_bind_ompi_to_standard((int) object_bind);
+}

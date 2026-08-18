@@ -67,6 +67,26 @@ OMPI_DECLSPEC void ompi_mpit_register_abi_handle_convert(
 
 OMPI_DECLSPEC uint64_t ompi_mpit_abi_handle(void *object, int handle_kind);
 
+/* Some event payloads also carry integer values whose numeric encoding differs
+   between the Open MPI ABI and the MPI Standard ABI -- notably MPI error codes
+   (roughly a third of the MPI_ERR_* space differs) and the MPI_T_BIND_* object
+   binding kind (the Standard-ABI values are the internal values + 1).  These
+   value converters live in libmpi_abi (the upper layer) just like the handle
+   converter, so they are installed downward the same way.  The raise sites call
+   ompi_mpit_abi_error() / ompi_mpit_abi_bind(), which forward to the registered
+   converter, or return the value unchanged if none was registered (the Open MPI
+   ABI never installs one, and there the internal encoding is what the tool
+   expects). */
+typedef int32_t (*ompi_mpit_abi_value_convert_fn_t)(int32_t value);
+
+OMPI_DECLSPEC void ompi_mpit_register_abi_error_convert(
+    ompi_mpit_abi_value_convert_fn_t fn);
+OMPI_DECLSPEC void ompi_mpit_register_abi_bind_convert(
+    ompi_mpit_abi_value_convert_fn_t fn);
+
+OMPI_DECLSPEC int32_t ompi_mpit_abi_error(int32_t err_code);
+OMPI_DECLSPEC int32_t ompi_mpit_abi_bind(int32_t object_bind);
+
 /* Event type handles for the in-tree producers.  NULL until (and unless) the
    producers are registered, so a raise site must NULL-check before raising. */
 OMPI_DECLSPEC extern mca_base_event_t *ompi_event_comm_created;

@@ -72,18 +72,24 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         payload.err_code = (int32_t) err_code;
         payload.object_type = object_bind;
         /* The MPI_Errhandler handle and the invoking object's handle must match
-           the registering MPI_T tool's ABI (ompi_mpit_callback_abi). */
+           the registering MPI_T tool's ABI (ompi_mpit_callback_abi).  So must
+           the err_code and object_type integer values, whose encodings differ
+           between the two ABIs. */
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.errhandler_handle = (uint64_t) (uintptr_t) errhandler;
             payload.object_handle = (uint64_t) (uintptr_t) mpi_object;
         } else {
-            /* MPI Standard ABI: publish integer handles.  The errhandler is
-               converted as an MPI_Errhandler; the invoking object is converted
-               per its binding kind (MPI_Comm / MPI_Win / MPI_File /
-               MPI_Session).  An object with no binding (e.g. a predefined
-               handler routed before MPI_INIT) has object_bind == NO_OBJECT and
-               a 0 object_handle, matching the Open MPI ABI's "0 when not
-               available" behavior. */
+            /* MPI Standard ABI: publish integer handles and Standard-ABI
+               integer values.  The errhandler is converted as an
+               MPI_Errhandler; the invoking object is converted per its binding
+               kind (MPI_Comm / MPI_Win / MPI_File / MPI_Session).  An object
+               with no binding (e.g. a predefined handler routed before
+               MPI_INIT) has object_bind == NO_OBJECT and a 0 object_handle,
+               matching the Open MPI ABI's "0 when not available" behavior.  The
+               err_code and object_type integer values are remapped to their
+               Standard-ABI encodings. */
+            payload.err_code = ompi_mpit_abi_error((int32_t) err_code);
+            payload.object_type = ompi_mpit_abi_bind(object_bind);
             payload.errhandler_handle
                 = ompi_mpit_abi_handle(errhandler, MPI_T_BIND_MPI_ERRHANDLER);
             payload.object_handle

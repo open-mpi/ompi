@@ -50,6 +50,44 @@ uint64_t ompi_mpit_abi_handle(void *object, int handle_kind)
     return 0;
 }
 
+/* Downward-installed value converters for the payload elements whose numeric
+   encoding differs between the two ABIs (MPI error codes and MPI_T_BIND_*
+   binding kinds).  NULL under the Open MPI ABI, where the internal encoding is
+   already what the tool expects; installed by the Standard-ABI init path.  See
+   the header. */
+static ompi_mpit_abi_value_convert_fn_t ompi_mpit_abi_error_convert_fn = NULL;
+static ompi_mpit_abi_value_convert_fn_t ompi_mpit_abi_bind_convert_fn = NULL;
+
+void ompi_mpit_register_abi_error_convert(ompi_mpit_abi_value_convert_fn_t fn)
+{
+    ompi_mpit_abi_error_convert_fn = fn;
+}
+
+void ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_value_convert_fn_t fn)
+{
+    ompi_mpit_abi_bind_convert_fn = fn;
+}
+
+int32_t ompi_mpit_abi_error(int32_t err_code)
+{
+    if (NULL != ompi_mpit_abi_error_convert_fn) {
+        return ompi_mpit_abi_error_convert_fn(err_code);
+    }
+    /* No converter registered (Open MPI ABI): the internal encoding is what the
+       tool expects. */
+    return err_code;
+}
+
+int32_t ompi_mpit_abi_bind(int32_t object_bind)
+{
+    if (NULL != ompi_mpit_abi_bind_convert_fn) {
+        return ompi_mpit_abi_bind_convert_fn(object_bind);
+    }
+    /* No converter registered (Open MPI ABI): the internal encoding is what the
+       tool expects. */
+    return object_bind;
+}
+
 mca_base_event_t *ompi_event_comm_created = NULL;
 mca_base_event_t *ompi_event_comm_freed = NULL;
 mca_base_event_t *ompi_event_comm_name_set = NULL;
