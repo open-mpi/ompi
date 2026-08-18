@@ -34,8 +34,6 @@
 #include "ompi/constants.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
-#define MAX_ATTEMPTS 10
-
 ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
                                ompi_request_t *request)
 {
@@ -112,24 +110,24 @@ ssize_t mca_fbtl_posix_ipreadv (ompio_file_t *fh,
         return OMPI_ERROR;
     }
 
-    for (i=0; i < data->prd_last_active_req; i++) {
-        int counter=0;
-        while ( MAX_ATTEMPTS > counter ) { 
-            if  ( -1 != aio_read(&data->prd_aio.aio_reqs[i]) ) {
-                break;
-            }
-            counter++;
-            mca_common_ompio_progress();
-        }
-        if ( MAX_ATTEMPTS == counter ) {
-           opal_output(1, "mca_fbtl_posix_ipreadv: error in aio_read(): errno %d %s", errno, strerror(errno));
-           mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter);
-           free(data->prd_aio.aio_reqs);
-           free(data->prd_aio.aio_req_status);
-           free(data);
-           return OMPI_ERROR;
-        }
+    ret = mca_fbtl_posix_post_reqs ( data, data->prd_first_active_req,
+                                     data->prd_last_active_req, &i );
+    if ( OMPI_SUCCESS != ret ) {
+       opal_output(1, "mca_fbtl_posix_ipreadv: error in aio_read(): errno %d %s", errno, strerror(errno));
+       /* Reap what did get posted; see the same place in
+        * fbtl_posix_ipwritev.c for why this cannot be skipped.
+        */
+       mca_fbtl_posix_drain_reqs ( data, data->prd_first_active_req, i );
+       mca_fbtl_posix_unlock ( &data->prd_lock, data->prd_fh, &data->prd_lock_counter);
+       free(data->prd_aio.aio_reqs);
+       free(data->prd_aio.aio_req_status);
+       free(data);
+       return OMPI_ERROR;
     }
+    /* Whatever the queue would not take stays for mca_fbtl_posix_progress; see
+     * fbtl_posix_ipwritev.c.
+     */
+    data->prd_last_active_req = i;
 
     req->req_data = data;
     req->req_progress_fn = mca_fbtl_posix_progress;
