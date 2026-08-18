@@ -8,6 +8,28 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Nonblocking file I/O no longer loses data when the operating system's
+  asynchronous I/O queue fills, which on macOS it readily does: the
+  ``posix`` ``fbtl`` component sized its batch of concurrent ``aio_write``
+  calls from ``sysconf(_SC_AIO_MAX)``, which there reports the
+  machine-wide ``kern.aiomax`` (90 by default) rather than the
+  ``kern.aioprocmax`` a single process is held to (16).  The component
+  now bounds the batch by the per-process limit, defers requests the
+  queue will not accept instead of discarding them, and reaps the
+  operations it has posted before releasing their control blocks -- an
+  unreaped operation used to cost the process a queue slot permanently,
+  so one refusal disabled nonblocking file I/O for the rest of its life.
+  The new ``fbtl_posix_max_aio_reqs`` MCA parameter overrides the limit.
+  A nonblocking operation the ``fbtl`` cannot post is now reported as
+  ``MPI_ERR_IO``; previously ``MPI_File_iwrite_all`` and ``MPI_Wait``
+  both returned ``MPI_SUCCESS`` for a write that never reached the file.
+
+- Reporting an error for a failed nonblocking file operation no longer
+  crashes the process.  ``MPI_Wait`` and ``MPI_Test`` reach a file's
+  error handler through the request, and a nonblocking file request did
+  not record which file it came from, so invoking the error handler
+  dereferenced a null pointer.
+
 - ``MPI_Info_set`` now accepts a zero-length (empty) value string.  It
   previously raised ``MPI_ERR_INFO_VALUE`` for an empty value, but
   MPI-5.0 chapter 10 only limits the *maximum* length of an info
