@@ -355,8 +355,22 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
 
     if (CU_MEMORYTYPE_DEVICE == mem_type && NULL != mem_ctx) {
         result = cuCtxGetCurrent(&ctx);
+        if (CUDA_SUCCESS != result) {
+            opal_output(0,
+                        "CUDA: error calling cuCtxGetCurrent: "
+                        "result=%d, ptr=%p",
+                        result, addr);
+            return OPAL_ERROR;
+        }
         if (OPAL_UNLIKELY(NULL == ctx)) {
-            cuCtxSetCurrent(mem_ctx);
+            result = cuCtxSetCurrent(mem_ctx);
+            if (CUDA_SUCCESS != result) {
+                opal_output(0,
+                            "CUDA: error calling cuCtxSetCurrent: "
+                            "result=%d, ptr=%p",
+                            result, addr);
+                return OPAL_ERROR;
+            }
         }
     }
 
