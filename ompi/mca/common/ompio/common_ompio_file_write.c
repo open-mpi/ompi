@@ -364,6 +364,11 @@ int mca_common_ompio_file_iwrite (ompio_file_t *fh,
     }
 
     mca_common_ompio_request_alloc (&ompio_req, MCA_OMPIO_REQUEST_WRITE);
+    /* The error handler that MPI_Wait and friends invoke for a failed request
+     * is reached through req_mpi_object, so an IO request needs the file it
+     * came from.
+     */
+    ompio_req->req_ompi.req_mpi_object.file = fh->f_fh;
 
     if (0 == count || 0 == fh->f_fview.f_iov_count) {
         ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;

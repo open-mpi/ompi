@@ -276,12 +276,23 @@ int ompi_errhandler_request_invoke(int count,
                                       mpi_object.comm->errhandler_type,
                                       ec, message);
         break;
-    case OMPI_REQUEST_IO:
-        return ompi_errhandler_invoke(mpi_object.file->error_handler,
-                                      mpi_object.file,
-                                      mpi_object.file->errhandler_type,
+    case OMPI_REQUEST_IO: {
+        /* An IO request whose file handle could not be determined when it was
+         * created -- an ompio_file_t that no MPI_File_open owns, as the
+         * sharedfp components allocate for their own bookkeeping -- still has
+         * to reach an error handler rather than a NULL dereference.  Falling
+         * back to MPI_FILE_NULL's handler mirrors what
+         * ompi_grequest_construct does with MPI_COMM_WORLD for a generalized
+         * request.
+         */
+        struct ompi_file_t *file = (NULL != mpi_object.file) ? mpi_object.file
+                                                            : &ompi_mpi_file_null.file;
+        return ompi_errhandler_invoke(file->error_handler,
+                                      file,
+                                      file->errhandler_type,
                                       ec, message);
         break;
+    }
     case OMPI_REQUEST_WIN:
         return ompi_errhandler_invoke(mpi_object.win->error_handler,
                                       mpi_object.win,
