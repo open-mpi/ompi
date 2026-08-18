@@ -32,6 +32,16 @@ BEGIN_C_DECLS
 OMPI_DECLSPEC uint64_t ompi_mpit_abi_handle_convert_impl(void *object,
                                                          int handle_kind);
 
+/* Convert an internal MPI error code to its MPI Standard ABI value.  This is
+   the ompi_mpit_abi_value_convert_fn_t installed via
+   ompi_mpit_register_abi_error_convert(). */
+OMPI_DECLSPEC int32_t ompi_mpit_abi_error_convert_impl(int32_t err_code);
+
+/* Convert an internal MPI_T_BIND_* binding kind to its MPI Standard ABI value.
+   This is the ompi_mpit_abi_value_convert_fn_t installed via
+   ompi_mpit_register_abi_bind_convert(). */
+OMPI_DECLSPEC int32_t ompi_mpit_abi_bind_convert_impl(int32_t object_bind);
+
 END_C_DECLS
 
 #endif /* OMPI_MPI_C_MPIT_ABI_HANDLE_CONVERT_H */
