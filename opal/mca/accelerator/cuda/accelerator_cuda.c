@@ -357,7 +357,6 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
         if (OPAL_UNLIKELY(NULL == ctx)) {
             cuCtxSetCurrent(mem_ctx);
         }
-        return 1;
     }
 
     /* cuPointerGetAttributes succeeds with mem_type left at 0 for a pointer
