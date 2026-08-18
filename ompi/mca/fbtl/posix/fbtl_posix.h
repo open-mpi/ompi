@@ -35,6 +35,7 @@ extern bool mca_fbtl_posix_write_datasieving;
 extern size_t mca_fbtl_posix_max_block_size;
 extern size_t mca_fbtl_posix_max_gap_size;
 extern size_t mca_fbtl_posix_max_tmpbuf_size;
+extern int mca_fbtl_posix_max_aio_reqs;
 
 BEGIN_C_DECLS
 
@@ -97,6 +98,13 @@ struct mca_fbtl_posix_request_data_t {
 
 };
 typedef struct mca_fbtl_posix_request_data_t mca_fbtl_posix_request_data_t;
+
+#if defined (FBTL_POSIX_HAVE_AIO)
+int mca_fbtl_posix_post_reqs ( mca_fbtl_posix_request_data_t *data,
+                               int first, int last, int *posted );
+void mca_fbtl_posix_drain_reqs ( mca_fbtl_posix_request_data_t *data,
+                                 int first, int last );
+#endif
 
 
 /* define constants for AIO requests */
