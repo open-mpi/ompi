@@ -8,6 +8,16 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Fixed the ``INTENT`` for the ``info_used`` parameter of ``MPI_Win_get_info``,
+  the ``errhandler`` parameter of ``MPI_Session_set_errhandler`` and the
+  ``flag`` parameter of ``MPI_Parrived`` in the ``use mpi`` Fortran
+  bindings.
+
+- Adjusted many Fortran ``use mpi`` API bindings to use the argument
+  names as defined by the standard. Calling these functions using
+  argument keywords will now require the standard-conformant naming
+  scheme.
+
 - ``MPI_Info_set`` now accepts a zero-length (empty) value string.  It
   previously raised ``MPI_ERR_INFO_VALUE`` for an empty value, but
   MPI-5.0 chapter 10 only limits the *maximum* length of an info

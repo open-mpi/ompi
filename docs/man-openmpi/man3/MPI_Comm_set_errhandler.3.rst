@@ -16,9 +16,12 @@ INPUT/OUTPUT PARAMETER
 ----------------------
 * ``comm``: Communicator (handle).
 
-OUTPUT PARAMETERS
------------------
+INPUT PARAMETER
+---------------
 * ``errhandler``: New error handler for communicator (handle).
+
+OUTPUT PARAMETER
+----------------
 * ``ierror``: Fortran only: Error status (integer).
 
 DESCRIPTION

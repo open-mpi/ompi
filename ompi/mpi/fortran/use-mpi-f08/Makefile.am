@@ -470,8 +470,9 @@ endif
 f08_name_check_handwritten = $(filter-out api_f08_generated.F90,$(mpi_api_files))
 
 check-local:
-	@$(PYTHON) $(top_srcdir)/ompi/mpi/bindings/check_f08_names.py \
+	@$(PYTHON) $(top_srcdir)/ompi/mpi/bindings/check_fortran_param_names.py \
 	    --label "mpi_f08 bindings (generated + hand-written)" \
+	    --lang f08 \
 	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
 	    api_f08_generated.F90 $(f08_name_check_handwritten:%=$(srcdir)/%)
 
