@@ -134,6 +134,9 @@ int main(int argc, char *argv[])
      * child environment because it is easier and we're not going to
      * be around long enough for it to matter (since we exec prterun
      * asap */
+    setenv("PRTE_MCA_schizo_proxy", "ompi", 1);
+    /* schizo_proxy is deprecated in favor of personality.
+     * Set both for compatibility with older and newer PRRTE versions. */
     setenv("PRTE_MCA_personality", "ompi", 1);
     setenv("OMPI_VERSION", OMPI_VERSION, 1);
     char *base_tool_name = opal_basename(argv[0]);
