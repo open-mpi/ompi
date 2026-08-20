@@ -31,6 +31,7 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/btl/sm/btl_sm.h"
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_types.h"
 #include "opal/mca/btl/sm/btl_sm_virtual.h"
@@ -84,13 +85,23 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read(sm_fifo_t *fifo, struct mca_btl_bas
     value = fifo->fifo_head;
 
     uint16_t rank = (uint16_t) (value >> MCA_BTL_SM_OFFSET_BITS);
-    /* rank is the sender's SMP local rank, not an MPI rank. A peer
-     * can write our FIFO before add_proc has attached its segment;
-     * relative2virtual needs that segment_base. Leave the item until
-     * add_proc finishes. */
-    if (OPAL_UNLIKELY(NULL == mca_btl_sm_component.endpoints[rank].segment_base)) {
-        return NULL;
+    /* rank is the sender's SMP local rank, not an MPI rank. Taking the
+     * item needs the whole node mapped, not just this sender: returning
+     * it chains it onto whichever local peer wrote the sender's fifo
+     * last. Map the node if the send path never did (one-way traffic);
+     * otherwise leave the item to come back on the next tick.
+     *
+     * No read barrier, deliberately -- this is the hottest path in this
+     * btl. endpoints is published behind a barrier only once every
+     * segment is mapped, and everything read afterwards is addressed off
+     * the value loaded here, so that dependency orders those reads. */
+    if (OPAL_UNLIKELY(NULL == mca_btl_sm_component.endpoints)) {
+        if (OPAL_SUCCESS != mca_btl_sm_attach_local_peers()) {
+            return NULL;
+        }
     }
+
+    assert(rank <= (uint16_t) MCA_BTL_SM_NUM_LOCAL_PEERS);
 
     *ep = &mca_btl_sm_component.endpoints[rank];
     hdr = (mca_btl_sm_hdr_t *) relative2virtual(value);
@@ -128,6 +139,9 @@ static inline void sm_fifo_init(sm_fifo_t *fifo)
     mca_btl_sm_component.my_fifo = fifo;
 }
 
+/* Callers hold an endpoint, which is only handed out once every local
+ * peer is mapped -- necessarily so: chaining onto the previous item is a
+ * store into the segment of whichever local peer posted it. */
 static inline void sm_fifo_write(sm_fifo_t *fifo, fifo_value_t value)
 {
     fifo_value_t prev;
