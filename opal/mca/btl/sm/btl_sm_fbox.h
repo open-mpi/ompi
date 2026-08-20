@@ -5,6 +5,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2025 Google, LLC. All rights reserveed.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -319,6 +320,26 @@ static inline int mca_btl_sm_check_fboxes(void)
     }
 
     return total_processed;
+}
+
+/* Stop polling a peer's fast box. The poll list is walked by index and
+ * its order means nothing, so close the hole with the last entry rather
+ * than shifting the tail down. */
+static inline void mca_btl_sm_fbox_in_unregister(mca_btl_base_endpoint_t *ep)
+{
+    mca_btl_sm_component_t *component = &mca_btl_sm_component;
+
+    for (unsigned int i = 0; i < component->num_fbox_in_endpoints; ++i) {
+        if (ep != component->fbox_in_endpoints[i]) {
+            continue;
+        }
+
+        component->num_fbox_in_endpoints--;
+        component->fbox_in_endpoints[i]
+            = component->fbox_in_endpoints[component->num_fbox_in_endpoints];
+        component->fbox_in_endpoints[component->num_fbox_in_endpoints] = NULL;
+        return;
+    }
 }
 
 static inline void mca_btl_sm_try_fbox_setup(mca_btl_base_endpoint_t *ep, mca_btl_sm_hdr_t *hdr)
