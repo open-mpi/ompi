@@ -932,10 +932,7 @@ static bool check_file(const char *root, const char *path)
      */
     if (0 == strncmp(path, "output-", strlen("output-"))) {
         fullpath = opal_os_path(false, root, path, NULL);
-        if (NULL == fullpath || 0 != stat(fullpath, &st)) {
-            free(fullpath);
-            return false;
-        }
+        stat(fullpath, &st);
         free(fullpath);
         if (0 == st.st_size) {
             return true;
