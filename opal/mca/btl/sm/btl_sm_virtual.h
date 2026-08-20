@@ -65,6 +65,9 @@ static inline fifo_value_t virtual2relativepeer(struct mca_btl_base_endpoint_t *
            | ((fifo_value_t) endpoint->peer_smp_rank << MCA_BTL_SM_OFFSET_BITS);
 }
 
+/* The rank in an offset names whichever local peer owns that memory --
+ * on the posting path neither the sender nor the destination, but
+ * whoever wrote the destination's fifo before. */
 static inline void *relative2virtual(fifo_value_t offset)
 {
     return (void *) (intptr_t)(

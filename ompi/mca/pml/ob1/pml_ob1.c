@@ -207,21 +207,10 @@ int mca_pml_ob1_enable(bool enable)
 
     mca_pml_ob1.enabled = true;
 
-    /* Here, and nowhere else. These used to be registered from
-     * add_procs, which the lazy path no longer calls -- and once every
-     * peer is wired on demand, "wherever wire-up happens" would mean once
-     * per peer, needing a flag to suppress the repeat. There is nothing
-     * per peer about it: a tag names a fragment type and is stored in a
-     * table of the BTL base that every btl reads on delivery, so a peer
-     * arriving cannot make it stale.
-     *
-     * Once per enable is also once per instance, which is what a second
-     * MPI_Init in a static build needs: nothing is remembered here, so
-     * there is nothing left from the first instance to skip the work.
-     *
-     * Before any peer can be wired, and before this returns and progress
-     * begins -- so nobody arrives to find the upcall table empty, and a
-     * failure to fill it fails the job here. */
+    /* Per fragment type, not per peer, so exactly once per enable -- and
+     * before this returns, since progress begins on return and a fragment
+     * arriving to an empty upcall table is lost. It also adds the BTLs
+     * and their progress functions, which a receive-only rank needs. */
     int cb_rc = mca_pml_ob1_register_btl_callbacks();
     if (OMPI_SUCCESS != cb_rc) {
         return cb_rc;
