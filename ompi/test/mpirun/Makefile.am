@@ -41,6 +41,7 @@
 
 EXTRA_DIST = \
         async_modex_wireup.c \
+        any_source_oneway.c \
         wireup_stress.c
 
 # Deliberately built by the check-mpirun target rather than by Automake:
@@ -84,12 +85,17 @@ check-mpirun:
 	else \
 	    set -e; \
 	    $(MPICC) -g "$(srcdir)/async_modex_wireup.c" -o async_modex_wireup; \
+	    $(MPICC) -g "$(srcdir)/any_source_oneway.c" -o any_source_oneway; \
 	    echo "=== async modex wire-up, shared memory only ==="; \
 	    OMPI_MCA_pmix_base_async_modex=1 \
 	        $(mpirun_runner) --mca btl self,sm ./async_modex_wireup; \
 	    echo "=== async modex wire-up, default transports ==="; \
 	    OMPI_MCA_pmix_base_async_modex=1 \
 	        $(mpirun_runner) ./async_modex_wireup; \
+	    echo "=== ANY_SOURCE one-way, shared memory only ==="; \
+	    $(mpirun_runner) --mca btl self,sm ./any_source_oneway; \
+	    echo "=== ANY_SOURCE one-way, default transports ==="; \
+	    $(mpirun_runner) ./any_source_oneway; \
 	    $(MPICC) -g "$(srcdir)/wireup_stress.c" -o wireup_stress; \
 	    for pattern in ring bcast reduce alltoall; do \
 	        echo "=== wireup stress p2p $$pattern ==="; \
@@ -103,4 +109,5 @@ check-mpirun:
 
 clean-local:
 	rm -rf async_modex_wireup async_modex_wireup.dSYM \
+	    any_source_oneway any_source_oneway.dSYM \
 	    wireup_stress wireup_stress.dSYM

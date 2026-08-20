@@ -131,10 +131,9 @@ struct mca_pml_ob1_send_request_t;
 extern struct mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc,
                                                                    int *status);
 
-/* Recv-side constructor: add_proc so BTL progress is registered and
- * (for sm) the sender's endpoint exists before we poll. If the blob
- * is not local yet nothing is parked; the posted recv stays in the
- * queue and whatever needs the endpoint asks again. */
+/* Recv-side constructor for a named source: add_proc so that peer's
+ * send endpoint exists before we wait. ANY_SOURCE does not call this
+ * for every rank; BTL progress is registered at PML enable. */
 extern void mca_pml_ob1_prepare_recv_proc(ompi_proc_t *proc);
 
 /* Stage a send until the dest blob arrives, then start it. */

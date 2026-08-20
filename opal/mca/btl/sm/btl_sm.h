@@ -92,6 +92,16 @@ static inline void sm_memmove(void *dst, void *src, size_t size)
 }
 
 /**
+ * Attach the shared-memory segment of a local peer we have not wired yet.
+ *
+ * Called when an incoming FIFO item names a sender no add_procs has
+ * covered, so the fragment can be translated and completed back.
+ *
+ * @param local_rank (IN)  local rank of the sender
+ */
+int mca_btl_sm_attach_peer(uint16_t local_rank);
+
+/**
  * Initiate a send to the peer.
  *
  * @param btl (IN)      BTL module

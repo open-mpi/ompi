@@ -217,6 +217,10 @@ int mca_pml_ob1_enable(bool enable)
      * Once per enable is also once per instance, which is what a second
      * MPI_Init in a static build needs: nothing is remembered here, so
      * there is nothing left from the first instance to skip the work.
+     * That matters beyond the callbacks now, since bml_register is also
+     * what adds the BTLs and registers their progress functions -- it is
+     * how a rank that only receives comes to poll sm without an add_proc
+     * for every peer.
      *
      * Before any peer can be wired, and before this returns and progress
      * begins -- so nobody arrives to find the upcall table empty, and a

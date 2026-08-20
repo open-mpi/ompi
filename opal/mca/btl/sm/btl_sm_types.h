@@ -20,6 +20,7 @@
  * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  *
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,6 +132,7 @@ struct mca_btl_sm_component_t {
 
     mca_btl_base_endpoint_t
         *endpoints; /**< array of local endpoints (one for each local peer including myself) */
+    struct opal_proc_t **local_procs; /**< opal_proc_t * indexed by SMP local rank */
     mca_btl_base_endpoint_t **fbox_in_endpoints; /**< array of fast box in endpoints */
     unsigned int num_fbox_in_endpoints;          /**< number of fast boxes to poll */
     struct sm_fifo_t *my_fifo;                   /**< pointer to the local fifo */

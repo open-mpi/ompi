@@ -36,7 +36,9 @@
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
 #include "opal/mca/smsc/smsc.h"
+#include "opal/util/argv.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static int sm_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
@@ -78,9 +80,19 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     }
     component->endpoints[n].peer_smp_rank = -1;
 
+    component->local_procs = (opal_proc_t **) calloc(n + 1, sizeof(opal_proc_t *));
+    if (NULL == component->local_procs) {
+        free(component->endpoints);
+        component->endpoints = NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
     component->fbox_in_endpoints = calloc(n + 1, sizeof(void *));
     if (NULL == component->fbox_in_endpoints) {
+        free(component->local_procs);
+        component->local_procs = NULL;
         free(component->endpoints);
+        component->endpoints = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -90,7 +102,12 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
                                                                - MCA_BTL_SM_FIFO_SIZE),
                                               64);
     if (NULL == component->mpool) {
+        free(component->fbox_in_endpoints);
+        component->fbox_in_endpoints = NULL;
+        free(component->local_procs);
+        component->local_procs = NULL;
         free(component->endpoints);
+        component->endpoints = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
@@ -145,17 +162,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* set flag indicating btl has been inited */
     sm_btl->btl_inited = true;
-
-    /* Completions written back into our FIFO are tagged with our local
-     * rank. That slot must exist even when add_procs never included
-     * self (lazy single-peer wire-up). */
-    {
-        struct mca_btl_base_endpoint_t *self_ep = NULL;
-        rc = init_sm_endpoint(&self_ep, opal_proc_local_get());
-        if (OPAL_SUCCESS != rc) {
-            return rc;
-        }
-    }
 
     return OPAL_SUCCESS;
 }
@@ -334,6 +340,101 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
     return OPAL_SUCCESS;
 }
 
+static int sm_ensure_inited(void)
+{
+    mca_btl_sm_component_t *component = &mca_btl_sm_component;
+    int rc = OPAL_SUCCESS;
+
+    if (!mca_btl_sm.btl_inited) {
+        OPAL_THREAD_LOCK(&component->lock);
+        if (!mca_btl_sm.btl_inited) {
+            rc = sm_btl_first_time_init(&mca_btl_sm, 1 + MCA_BTL_SM_NUM_LOCAL_PEERS);
+        }
+        OPAL_THREAD_UNLOCK(&component->lock);
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    /* Completions written back into our FIFO are tagged with our local
+     * rank. That slot must exist even when add_procs never included
+     * self (lazy single-peer wire-up). */
+    if (NULL == component->endpoints[MCA_BTL_SM_LOCAL_RANK].fifo) {
+        struct mca_btl_base_endpoint_t *self_ep = NULL;
+        rc = init_sm_endpoint(&self_ep, opal_proc_local_get());
+    }
+    return rc;
+}
+
+static opal_proc_t *sm_proc_for_local_rank(uint16_t local_rank)
+{
+    mca_btl_sm_component_t *component = &mca_btl_sm_component;
+    opal_process_name_t wildcard, name;
+    char *peers_str = NULL;
+    char **peers;
+    int rc;
+
+    if (NULL != component->local_procs[local_rank]) {
+        return component->local_procs[local_rank];
+    }
+
+    wildcard = OPAL_PROC_MY_NAME;
+    wildcard.vpid = OPAL_VPID_WILDCARD;
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS, &wildcard, &peers_str, PMIX_STRING);
+    if (OPAL_SUCCESS != rc || NULL == peers_str) {
+        return NULL;
+    }
+
+    peers = opal_argv_split(peers_str, ',');
+    free(peers_str);
+    if (NULL == peers) {
+        return NULL;
+    }
+
+    name.jobid = OPAL_PROC_MY_NAME.jobid;
+    for (int i = 0; NULL != peers[i]; ++i) {
+        uint16_t lr, *ptr = &lr;
+        name.vpid = (opal_vpid_t) strtoul(peers[i], NULL, 10);
+        OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &name, &ptr, PMIX_UINT16);
+        if (OPAL_SUCCESS != rc || lr > MCA_BTL_SM_NUM_LOCAL_PEERS) {
+            continue;
+        }
+        if (NULL == component->local_procs[lr]) {
+            component->local_procs[lr] = opal_proc_for_name(name);
+        }
+    }
+    opal_argv_free(peers);
+
+    return component->local_procs[local_rank];
+}
+
+int mca_btl_sm_attach_peer(uint16_t local_rank)
+{
+    mca_btl_base_endpoint_t *ep = NULL;
+    opal_proc_t *proc;
+    int rc;
+
+    rc = sm_ensure_inited();
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    if (local_rank > MCA_BTL_SM_NUM_LOCAL_PEERS) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    if (NULL != mca_btl_sm_component.endpoints[local_rank].segment_base) {
+        return OPAL_SUCCESS;
+    }
+
+    proc = sm_proc_for_local_rank(local_rank);
+    if (NULL == proc) {
+        return OPAL_ERR_NOT_READY;
+    }
+
+    return init_sm_endpoint(&ep, proc);
+}
+
 static int fini_sm_endpoint(struct mca_btl_base_endpoint_t *ep)
 {
     /* check if the endpoint is initialized. avoids a double-destruct */
@@ -362,9 +463,10 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
                         opal_bitmap_t *reachability)
 {
-    mca_btl_sm_t *sm_btl = (mca_btl_sm_t *) btl;
     const opal_proc_t *my_proc;
     int rc = OPAL_SUCCESS;
+
+    (void) btl;
 
     /* initializion */
 
@@ -378,11 +480,9 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         return OPAL_SUCCESS;
     }
 
-    if (!sm_btl->btl_inited) {
-        rc = sm_btl_first_time_init(sm_btl, 1 + MCA_BTL_SM_NUM_LOCAL_PEERS);
-        if (rc != OPAL_SUCCESS) {
-            return rc;
-        }
+    rc = sm_ensure_inited();
+    if (rc != OPAL_SUCCESS) {
+        return rc;
     }
 
     bool not_ready = false;
@@ -475,6 +575,9 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
 
     free(component->endpoints);
     component->endpoints = NULL;
+
+    free(component->local_procs);
+    component->local_procs = NULL;
 
     sm_btl->btl_inited = false;
 

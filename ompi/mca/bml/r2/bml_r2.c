@@ -50,6 +50,8 @@ extern mca_bml_base_component_t mca_bml_r2_component;
 /* Names of all the BTL components that this BML is aware of */
 static char *btl_names = NULL;
 
+static void mca_bml_r2_register_progress(mca_btl_base_module_t *btl, bool hp);
+
 static int btl_exclusivity_compare(const void* arg1, const void* arg2)
 {
     mca_btl_base_module_t* btl1 = *(struct mca_btl_base_module_t**)arg1;
@@ -118,6 +120,12 @@ static int mca_bml_r2_add_btls( void )
           sizeof(struct mca_btl_base_module_t*),
           btl_exclusivity_compare);
     mca_bml_r2.btls_added = true;
+
+    /* Recv-first / ANY_SOURCE must poll BTLs that have a progress
+     * function (sm FIFO) without add_proc of every peer. */
+    for (size_t p = 0; p < mca_bml_r2.num_btl_modules; ++p) {
+        mca_bml_r2_register_progress(mca_bml_r2.btl_modules[p], true);
+    }
     return OMPI_SUCCESS;
 }
 
@@ -1057,13 +1065,18 @@ static int mca_bml_r2_register( mca_btl_base_tag_t tag,
                                 mca_btl_base_module_recv_cb_fn_t cbfunc,
                                 void* data )
 {
+    int rc = mca_bml_r2_add_btls();
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
     mca_btl_base_active_message_trigger[tag].cbfunc = cbfunc;
     mca_btl_base_active_message_trigger[tag].cbdata = data;
     /* Give an opportunity to the BTLs to do something special
      * for each registration.
      */
     {
-        int i, rc;
+        int i;
         mca_btl_base_module_t *btl;
 
         for(i = 0; i < (int)mca_bml_r2.num_btl_modules; i++) {

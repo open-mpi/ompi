@@ -30,6 +30,7 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/btl/sm/btl_sm.h"
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_types.h"
 #include "opal/mca/btl/sm/btl_sm_virtual.h"
@@ -83,12 +84,15 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read(sm_fifo_t *fifo, struct mca_btl_bas
     value = fifo->fifo_head;
 
     uint16_t rank = (uint16_t) (value >> MCA_BTL_SM_OFFSET_BITS);
-    /* rank is the sender's SMP local rank, not an MPI rank. A peer
-     * can write our FIFO before add_proc has attached its segment;
-     * relative2virtual needs that segment_base. Leave the item until
-     * add_proc finishes. */
-    if (OPAL_UNLIKELY(NULL == mca_btl_sm_component.endpoints[rank].segment_base)) {
-        return NULL;
+    /* rank is the sender's SMP local rank, not an MPI rank. Incoming
+     * items live in the sender's segment; attach that peer if the
+     * send path never did (one-way traffic). Leave the item if the
+     * blob is not local yet. */
+    if (OPAL_UNLIKELY(NULL == mca_btl_sm_component.endpoints
+                      || NULL == mca_btl_sm_component.endpoints[rank].segment_base)) {
+        if (OPAL_SUCCESS != mca_btl_sm_attach_peer(rank)) {
+            return NULL;
+        }
     }
 
     *ep = &mca_btl_sm_component.endpoints[rank];

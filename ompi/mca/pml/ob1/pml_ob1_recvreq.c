@@ -1311,20 +1311,13 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     MCA_PML_BASE_RECV_START(&req->req_recv);
 
-    /* Build the BML/BTL endpoint before waiting. Otherwise a recv-first
-     * rank never registers BTL progress (sm never polls its FIFO). */
+    /* Named recvs still construct that one peer so a send-side
+     * endpoint exists before the wait. ANY_SOURCE must not wire every
+     * comm rank: BTL progress is registered at PML enable, and sm
+     * attaches the sender on the first incoming FIFO item. */
     if (OMPI_ANY_SOURCE != req->req_recv.req_base.req_peer) {
         mca_pml_ob1_prepare_recv_proc(
             mca_pml_ob1_peer_lookup(comm, req->req_recv.req_base.req_peer)->ompi_proc);
-    } else {
-        int comm_size = ompi_comm_size(comm);
-        int comm_rank = ompi_comm_rank(comm);
-        for (int i = 0; i < comm_size; ++i) {
-            if (i == comm_rank) {
-                continue;
-            }
-            mca_pml_ob1_prepare_recv_proc(ompi_comm_peer_lookup(comm, i));
-        }
     }
 
     OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
