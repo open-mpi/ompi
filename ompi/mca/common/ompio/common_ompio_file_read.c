@@ -420,6 +420,10 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
     }
 
     mca_common_ompio_request_alloc (&ompio_req, MCA_OMPIO_REQUEST_READ);
+    /* See mca_common_ompio_file_iwrite: the error handler for a failed request
+     * is reached through req_mpi_object.
+     */
+    ompio_req->req_ompi.req_mpi_object.file = fh->f_fh;
 
     if (0 == count || 0 == fh->f_fview.f_iov_count) {
         ompio_req->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
@@ -509,7 +513,16 @@ int mca_common_ompio_file_iread (ompio_file_t *fh,
                                              &tbr, &spc,
                                              &fh->f_io_array, &fh->f_num_of_io_entries);
 
-            fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req);
+            if (OMPI_SUCCESS != fh->f_fbtl->fbtl_ipreadv (fh, (ompi_request_t *) ompio_req)) {
+                /* See the same place in common_ompio_file_write.c: without this
+                 * the failure is indistinguishable from a completed request and
+                 * MPI_Wait reports MPI_SUCCESS for a read that never happened.
+                 */
+                ret = MPI_ERR_IO;
+                ompio_req->req_ompi.req_status.MPI_ERROR = MPI_ERR_IO;
+                ompio_req->req_ompi.req_status._ucount = 0;
+                ompi_request_complete (&ompio_req->req_ompi, false);
+            }
         }
     }
     else {
