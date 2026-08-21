@@ -185,7 +185,6 @@ if os.environ.get('READTHEDOCS') == 'True':
 # ones.
 import sphinx_rtd_theme
 extensions = [
-    'recommonmark',
     "sphinx_rtd_theme",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
