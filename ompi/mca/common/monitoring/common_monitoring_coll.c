@@ -78,11 +78,29 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
             tmp_procs[0] = '\0';
             /* Build procs list */
             for(i = 0; i < size; ++i) {
-                if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, data->p_comm->c_remote_group, &world_rank) )
-                    pos += snprintf(&tmp_procs[pos], bufsize - pos, "%d,", world_rank);
+                if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, data->p_comm->c_remote_group, &world_rank) ) {
+                    int written = snprintf(&tmp_procs[pos], bufsize - pos, "%d,", world_rank);
+                    if( 0 > written || written >= bufsize - pos ) {
+                        /* The buffer is full; drop the partial entry
+                           and stop appending */
+                        tmp_procs[pos] = '\0';
+                        break;
+                    }
+                    pos += written;
+                }
             }
-            tmp_procs[pos - 1] = '\0'; /* Remove final coma */
-            data->procs = realloc(tmp_procs, pos * sizeof(char)); /* Adjust to size required */
+            /* This block may be re-entered if the cached string is
+               still empty; release any previously cached buffer */
+            free(data->procs);
+            if( 0 == pos ) {
+                /* No entry fit in the buffer; keep the empty string */
+                data->procs = tmp_procs;
+            } else {
+                char*shrunk;
+                tmp_procs[pos - 1] = '\0'; /* Remove final coma */
+                shrunk = realloc(tmp_procs, pos * sizeof(char)); /* Adjust to size required */
+                data->procs = (NULL != shrunk) ? shrunk : tmp_procs;
+            }
         }
     }
 }
