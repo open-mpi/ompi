@@ -35,6 +35,12 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/constants.h"
 #include "ompi/mpiext/mpiext.h"
+#include "ompi/runtime/ompi_mpit_events.h"
+/* Declares ompi_mpit_abi_handle_convert_impl(); only *referenced* in the
+   Standard-ABI compile (guarded by OMPI_ABI_SRC in the body below), but
+   included unconditionally because OMPI_ABI_SRC is not yet defined this early
+   in the generated file. */
+#include "ompi/mpi/c/mpit_abi_handle_convert.h"
 
 PROTOTYPE INT init(INT_OUT argc, ARGV argv)
 {
@@ -55,6 +61,17 @@ PROTOTYPE INT init(INT_OUT argc, ARGV argv)
      * through the registered function pointer, avoiding a direct symbol dependency on libmpi.
      * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI. */
     ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init);
+#else
+    /* This is the MPI Standard ABI entry point, so a tool observing MPI_T
+     * events from this process must see Standard-ABI integer handles in event
+     * payloads.  Record the process ABI and install the intern->ABI handle
+     * converter downward into libopen_mpi (the converter lives here in
+     * libmpi_abi; see mpit_abi_handle_convert.c), mirroring the mpiext_init
+     * registration above. */
+    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
+    ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
+    ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
+    ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
 #endif
 
     /* Call the back-end initialization function (we need to put as
