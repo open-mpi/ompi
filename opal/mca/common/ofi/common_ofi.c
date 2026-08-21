@@ -256,6 +256,19 @@ int opal_common_ofi_close(void)
         return OPAL_SUCCESS;
     }
 
+    /* Close any fabric that was left open with ref_count==0 (deferred from
+     * opal_common_ofi_fabric_release to avoid a use-after-free in libfabric). */
+    if (opal_common_ofi.fabric) {
+        ret = fi_close(&opal_common_ofi.fabric->fid);
+        if (0 != ret) {
+            opal_output_verbose(1, opal_common_ofi.output,
+                                "%s:%d: fi_close failed for fabric: %s (%d)",
+                                __FILE__, __LINE__, fi_strerror(-ret), ret);
+        }
+        opal_common_ofi.fabric = NULL;
+        opal_common_ofi.fabric_ref_count = 0;
+    }
+
     ret = opal_common_ofi_remove_memory_monitor();
     if (OPAL_SUCCESS != ret) {
         return ret;
@@ -1282,6 +1295,11 @@ int opal_common_ofi_fi_fabric(struct fi_fabric_attr *fabric_attr,
         opal_output_verbose(1, opal_common_ofi.output, "Reusing existing fabric: %s",
                             fabric_attr->name);
     } else {
+        /* Close any idle tracked fabric before creating a new one. */
+        if (opal_common_ofi.fabric && 0 == opal_common_ofi.fabric_ref_count) {
+            (void) fi_close(&opal_common_ofi.fabric->fid);
+            opal_common_ofi.fabric = NULL;
+        }
         ret = fi_fabric(fabric_attr, fabric, NULL);
         if (0 != ret) {
             OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
@@ -1350,15 +1368,10 @@ int opal_common_ofi_fabric_release(struct fid_fabric *fabric)
     
     if (fabric == opal_common_ofi.fabric && opal_common_ofi.fabric_ref_count > 0) {
         opal_common_ofi.fabric_ref_count--;
-        if (opal_common_ofi.fabric_ref_count == 0) {
-            ret = fi_close(&fabric->fid);
-            if (0 != ret) {
-                opal_output_verbose(1, opal_common_ofi.output,
-                                    "%s:%d: fi_close failed for fabric: %s (%d)",
-                                    __FILE__, __LINE__, fi_strerror(-ret), ret);
-            }
-            opal_common_ofi.fabric = NULL;
-        }
+        /* Defer fi_close for the tracked fabric to opal_common_ofi_close(). Closing
+         * it here leaves a dangling pointer in libfabric's internal fabric list:
+         * the CXI provider frees the fabric object in fi_close without first removing
+         * it from that list, so a subsequent fi_getinfo call dereferences freed memory. */
     } else {
         ret = fi_close(&fabric->fid);
         if (0 != ret) {
