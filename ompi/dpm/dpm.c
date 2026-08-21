@@ -16,7 +16,6 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -25,6 +24,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2023      NVIDIA Corporation.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -561,14 +561,12 @@ bcast_rportlen:
     return rc;
 }
 
-static int construct_peers(ompi_group_t *group, opal_list_t *peers)
+static int construct_peers(ompi_group_t *group, pmix_proc_t *procs)
 {
-    int i;
-    opal_namelist_t *nm, *n2;
     ompi_proc_t *proct;
     opal_process_name_t proc_name;
 
-    for (i=0; i < group->grp_proc_count; i++) {
+    for (int i=0; i < group->grp_proc_count; i++) {
         if (OMPI_GROUP_IS_DENSE(group)) {
             proct = group->grp_proc_pointers[i];
         } else {
@@ -583,23 +581,7 @@ static int construct_peers(ompi_group_t *group, opal_list_t *peers)
         } else {
             proc_name = proct->super.proc_name;
         }
-
-        /* add to the list of peers */
-        nm = OBJ_NEW(opal_namelist_t);
-        nm->name = proc_name;
-        /* need to maintain an ordered list to ensure the tracker signatures
-         * match across all procs */
-        OPAL_LIST_FOREACH(n2, peers, opal_namelist_t) {
-            if (opal_compare_proc(nm->name, n2->name) < 0) {
-                opal_list_insert_pos(peers, &n2->super, &nm->super);
-                nm = NULL;
-                break;
-            }
-        }
-        if (NULL != nm) {
-            /* append to the end */
-            opal_list_append(peers, &nm->super);
-        }
+        OPAL_PMIX_CONVERT_NAME(&procs[i], &proc_name);
     }
     return OMPI_SUCCESS;
 }
@@ -608,9 +590,6 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
 {
     int ret;
     pmix_status_t rc;
-    ompi_group_t *group;
-    opal_list_t coll;
-    opal_namelist_t *nm;
     pmix_proc_t *procs;
     size_t nprocs, n;
 
@@ -619,31 +598,40 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
        ompi/runtime/ompi_mpi_finalize.c for a much more detailed
        rationale. */
 
-    /* setup the collective */
-    OBJ_CONSTRUCT(&coll, opal_list_t);
-    /* RHC: assuming for now that this must flow across all
-     * local and remote group members */
-    group = comm->c_local_group;
-    if (OMPI_SUCCESS != (ret = construct_peers(group, &coll))) {
-        OMPI_ERROR_LOG(ret);
-        OPAL_LIST_DESTRUCT(&coll);
-        return ret;
+
+    nprocs = n = ompi_group_size(comm->c_local_group);
+    if( comm->c_local_group != comm->c_remote_group ) {
+        nprocs += ompi_group_size(comm->c_remote_group);
     }
-    /* do the same for the remote group */
-    group = comm->c_remote_group;
-    if (OMPI_SUCCESS != (ret = construct_peers(group, &coll))) {
-        OMPI_ERROR_LOG(ret);
-        OPAL_LIST_DESTRUCT(&coll);
-        return ret;
-    }
-    nprocs = opal_list_get_size(&coll);
     PMIX_PROC_CREATE(procs, nprocs);
-    n = 0;
-    OPAL_LIST_FOREACH(nm, &coll, opal_namelist_t) {
-        OPAL_PMIX_CONVERT_NAME(&procs[n], &nm->name);
-        ++n;
+
+    if (OMPI_SUCCESS != (ret = construct_peers(comm->c_local_group, procs))) {
+        OMPI_ERROR_LOG(ret);
+        PMIX_PROC_FREE(procs, nprocs);
+        return ret;
     }
-    OPAL_LIST_DESTRUCT(&coll);
+    if( comm->c_local_group != comm->c_remote_group ) {
+        /* need to maintain an ordered list to ensure the tracker signatures
+         * match across all procs. Build the remote group list independently
+         * and then merge them based on the order of the first proc on each list.
+         */
+        pmix_proc_t* tmp_procs;
+        PMIX_PROC_CREATE(tmp_procs, nprocs-n);
+        if (OMPI_SUCCESS != (ret = construct_peers(comm->c_remote_group, tmp_procs))) {
+            OMPI_ERROR_LOG(ret);
+            PMIX_PROC_FREE(tmp_procs, nprocs-n);
+            PMIX_PROC_FREE(procs, nprocs);
+            return ret;
+        }
+        if(strcmp(procs[0].nspace, tmp_procs[0].nspace) < 0) {
+            /* local group is already forward */
+            memcpy(&procs[n], tmp_procs, (nprocs - n) * sizeof(pmix_proc_t));  /* put remote group backward */
+        } else {
+            memmove(&procs[nprocs - n], procs, n * sizeof(pmix_proc_t));  /* move local group backward */
+            memcpy(procs, tmp_procs, (nprocs - n) * sizeof(pmix_proc_t)); /* put remote group first */
+        }
+        PMIX_PROC_FREE(tmp_procs, nprocs-n);
+    }
 
     /* ensure we tell the host RM to disconnect us - this
      * is a blocking operation so just use a fence */
