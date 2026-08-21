@@ -787,6 +787,8 @@ static inline int ompi_osc_rdma_put_w_req (ompi_osc_rdma_sync_t *sync, const voi
 
     /* optimize communication with peers that we can do direct load and store operations on */
     if (ompi_osc_rdma_peer_local_base (peer)) {
+        ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
+        target_address = ex_peer->local_base + target_address - ex_peer->base;
         return ompi_osc_rdma_copy_local (origin_addr, origin_count, origin_datatype, (void *) (intptr_t) target_address,
                                          target_count, target_datatype, request);
     }
@@ -827,6 +829,8 @@ static inline int ompi_osc_rdma_get_w_req (ompi_osc_rdma_sync_t *sync, void *ori
 
     /* optimize self/local communication */
     if (ompi_osc_rdma_peer_local_base (peer)) {
+        ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
+        source_address = ex_peer->local_base + source_address - ex_peer->base;
         return ompi_osc_rdma_copy_local ((void *) (intptr_t) source_address, source_count, source_datatype,
                                          origin_addr, origin_count, origin_datatype, request);
     }
