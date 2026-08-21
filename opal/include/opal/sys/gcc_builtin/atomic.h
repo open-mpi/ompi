@@ -162,21 +162,21 @@ static inline bool opal_atomic_compare_exchange_strong_128(opal_atomic_int128_t 
 static inline int32_t opal_atomic_swap_32(opal_atomic_int32_t *addr, int32_t newval)
 {
     int32_t oldval;
-    __atomic_exchange(addr, &newval, &oldval, __ATOMIC_RELAXED);
+    __atomic_exchange(addr, &newval, &oldval, __ATOMIC_SEQ_CST);
     return oldval;
 }
 
 static inline int64_t opal_atomic_swap_64(opal_atomic_int64_t *addr, int64_t newval)
 {
     int64_t oldval;
-    __atomic_exchange(addr, &newval, &oldval, __ATOMIC_RELAXED);
+    __atomic_exchange(addr, &newval, &oldval, __ATOMIC_SEQ_CST);
     return oldval;
 }
 
 static inline intptr_t opal_atomic_swap_ptr(opal_atomic_intptr_t *addr, intptr_t newval)
 {
     intptr_t oldval;
-    __atomic_exchange(addr, &newval, &oldval, __ATOMIC_RELAXED);
+    __atomic_exchange(addr, &newval, &oldval, __ATOMIC_SEQ_CST);
     return oldval;
 }
 
