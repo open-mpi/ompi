@@ -611,7 +611,7 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
     if (tree->tree_nextsize > 0) {
         size_t num_allocate_elems = mca_coll_adapt_component.adapt_inbuf_free_list_min;
         if (((size_t) tree->tree_nextsize * num_segs) < num_allocate_elems) {
-            num_allocate_elems = tree->tree_nextsize * num_segs;
+            num_allocate_elems = (size_t) tree->tree_nextsize * num_segs;
         }
         opal_free_list_init(&con->inbuf_list,
                             sizeof(ompi_coll_adapt_inbuf_t) + real_seg_size,
