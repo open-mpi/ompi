@@ -72,3 +72,11 @@ Open MPI version v6.1.0
   run-time MCA parameters), and a manifest, all indexed from
   ``llms.txt``. See the "LLM-friendly documentation artifacts" page in
   the developer documentation.
+
+- OFI / Libfabric updates:
+
+  - The ``ofi`` BTL now supports multi-rail / multi-NIC operation for
+    ``ob1`` traffic when multiple Libfabric NICs are available.  Open MPI
+    automatically gives each process on a node its own share of the
+    available NICs, which can significantly improve both single-rank and
+    total node bandwidth on multi-NIC systems such as AWS EFA.

@@ -77,6 +77,45 @@ Each component also has its own component-specific parameters; use
 For more information, refer to the `Libfabric web site
 <https://libfabric.org/>`_.
 
+OFI BTL: multi-rail / multi-NIC support
+---------------------------------------
+
+Starting with Open MPI v6.0.0, the ``ofi`` BTL can use multiple
+Libfabric NICs per process when more than one NIC is available for the
+selected provider.  This primarily benefits ``ob1``-based traffic
+patterns, allowing a single MPI rank to spread its traffic across
+multiple NICs instead of being limited to the bandwidth of a single
+device.
+
+Open MPI first counts the distinct physical NICs the selected provider
+reports on the local node, ignoring duplicates (some providers report
+the same physical NIC more than once), and lists them in a fixed order
+so that every process on the node agrees on that order.  It then gives
+each process an even share of those NICs, computed automatically as
+roughly the number of NICs divided by the number of processes on the
+node (always at least one NIC per process).
+
+Each process is assigned a different portion of the NIC list, so when
+there are at least as many NICs as processes on the node, the processes
+use non-overlapping sets of NICs rather than all competing for the same
+device.  On nodes with many NICs, this can improve both the bandwidth
+seen by a single rank and the total bandwidth of the node.
+
+This behavior is automatic; there is no MCA parameter to manually assign
+per-rank NIC slices.  The ``ofi`` BTL still selects Libfabric providers
+through its normal provider include / exclude MCA parameters.
+
+For example, to force ``ob1`` to use the ``ofi`` BTL together with the
+usual loopback support:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca pml ob1 --mca btl ofi,self ./mpi_hello
+
+On multi-NIC Libfabric systems such as AWS EFA instances, this lets a
+single rank's traffic use multiple NICs, and also spreads the processes
+on a node across different NICs.
+
 Omni-Path: multi-rail with multiple HFI cards
 ---------------------------------------------
 
