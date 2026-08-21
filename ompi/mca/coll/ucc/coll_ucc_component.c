@@ -256,5 +256,6 @@ static int mca_coll_ucc_open(void)
 
 static int mca_coll_ucc_close(void)
 {
+    mca_coll_ucc_finalize_ctx();
     return OMPI_SUCCESS;
 }
