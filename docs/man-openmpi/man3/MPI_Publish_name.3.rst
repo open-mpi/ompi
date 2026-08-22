@@ -41,75 +41,70 @@ The following keys for *info* are recognized:
    Key                   Type      Description
    ---                   ----      -----------
 
-   ompi_global_scope     bool      If set to true, publish the name in
-                                   the global scope.  Publish in the local
-                                   scope otherwise.  See the NAME SCOPE
-                                   section for more details.
+   range                 char *    Scope in which to publish the service
+                                   name.  See the NAME SCOPE section
+                                   below.
 
-   ompi_unique           bool      If set to true, return an error if the
-                                   specified service_name already exists.
-                                   Default to overwriting any pre-existing
-                                   value.
+   persistence           char *    How long the published service name is
+                                   retained.  See below.
 
-*bool* info keys are actually strings but are evaluated as follows: if
-the string value is a number, it is converted to an integer and cast to
-a boolean (meaning that zero integers are false and non-zero values are
-true). If the string value is (case-insensitive) "yes" or "true", the
-boolean is true. If the string value is (case-insensitive) "no" or
-"false", the boolean is false. All other string values are unrecognized,
-and therefore false.
+The *range* info key accepts one of two string values:
 
-If no info key is provided, the function will first check to see if a
-global server has been specified and is available. If so, then the
-publish function will default to global scope first, followed by local.
-Otherwise, the data will default to publish with local scope.
+*nspace*: Restrict the operation to processes in the same MPI job (PMIx
+   namespace) as the calling process.
+
+*session*: Apply the operation across all processes in the same session.
+
+If the *info* argument is ``MPI_INFO_NULL``, or is a valid info object
+that does not contain a *range* key, *session* scope is used. Because
+:ref:`MPI_Publish_name`, :ref:`MPI_Lookup_name`, and
+:ref:`MPI_Unpublish_name` all share this default, a name published with
+``MPI_INFO_NULL`` is found by a lookup with ``MPI_INFO_NULL``.
+
+Any other value for *range* results in an error.
+
+The *persistence* info key accepts one of four string values:
+
+*indef*: Retain the service name until it is explicitly unpublished.
+
+*proc*: Retain the service name until the publishing process terminates.
+
+*app*: Retain the service name until the publishing application
+   terminates.
+
+*session*: Retain the service name until the session terminates. This is
+   the default if the *persistence* key is not given.
+
+Any other value for *persistence* results in an error.
 
 
 NAME SCOPE
 ----------
 
-Open MPI supports two name scopes: *global* and *local*. Local scope
-will place the specified service/port pair in a data store located on
-the mpirun of the calling process' job. Thus, data published with local
-scope will only be accessible to processes in jobs spawned by that
-mpirun - e.g., processes in the calling process' job, or in jobs spawned
-via :ref:`MPI_Comm_spawn`.
+Open MPI supports two name scopes, selected by the *range* info key:
+*nspace* and *session*.
 
-Global scope places the specified service/port pair in a data store
-located on a central server that is accessible to all jobs running in
-the cluster or environment. Thus, data published with global scope can
-be accessed by multiple mpiruns and used for :ref:`MPI_Comm_Connect` and
-:ref:`MPI_Comm_accept` between jobs.
+*nspace* scope restricts the (service_name, port_name) pair to processes
+in the publisher's own MPI job, i.e., processes sharing the publisher's
+PMIx namespace.
 
-Note that global scope operations require both the presence of the
-central server and that the calling process be able to communicate to
-that server. :ref:`MPI_Publish_name` will return an error if global scope is
-specified and a global server is either not specified or cannot be
-found.
+*session* scope makes the pair visible to every process in the same PMIx
+session. This includes jobs started by separate ``mpirun`` invocations
+that share a persistent DVM or scheduler allocation, as well as jobs
+created via :ref:`MPI_Comm_spawn`. *session* is the default scope.
 
-Open MPI provides a server called *ompi-server* to support global scope
-operations. Please refer to its manual page for a more detailed
-description of data store/lookup operations.
+The same scope must be used to publish, look up, and unpublish a given
+service name. :ref:`MPI_Unpublish_name` returns an error if the service
+name is not found in the indicated scope.
 
-As an example of the impact of these scoping rules, consider the case
-where a job has been started with mpirun - call this job "job1". A
-process in job1 creates and publishes a service/port pair using a local
-scope. Open MPI will store this data in the data store within mpirun.
-
-A process in job1 (perhaps the same as did the publish, or perhaps some
-other process in the job) subsequently calls :ref:`MPI_Comm_spawn` to start
-another job (call it "job2") under this mpirun. Since the two jobs share
-a common mpirun, both jobs have access to local scope data. Hence, a
-process in job2 can perform an :ref:`MPI_Lookup_name` with a local scope to
-retrieve the information.
-
-However, assume another user starts a job using mpirun - call this job
-"job3". Because the service/port data published by job1 specified local
-scope, processes in job3 cannot access that data. In contrast, if the
-data had been published using global scope, then any process in job3
-could access the data, provided that mpirun was given knowledge of how
-to contact the central server and the process could establish
-communication with it.
+As an example of the impact of these scoping rules, consider a job
+started with ``mpirun`` -- call it "job1". A process in job1 publishes a
+service/port pair using *nspace* scope. A process in a job that job1
+subsequently starts via :ref:`MPI_Comm_spawn` -- call it "job2" -- is in
+a different namespace, and so cannot retrieve that pair. Had job1
+published with *session* scope (the default), processes in job2 could
+retrieve it, as could processes in any other job sharing the same
+session.
 
 
 ERRORS
