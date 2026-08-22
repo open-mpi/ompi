@@ -101,6 +101,7 @@ PROTOTYPE ERROR_CLASS lookup_name(STRING service_name, INFO info, STRING_OUT por
             ret = MPI_ERR_NAME;
         }
 
+        PMIX_PDATA_DESTRUCT(&pdat);
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
 
