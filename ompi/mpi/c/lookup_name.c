@@ -111,6 +111,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
             ret = MPI_ERR_NAME;
         }
 
+        PMIX_PDATA_DESTRUCT(&pdat);
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
 
