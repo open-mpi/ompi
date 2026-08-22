@@ -42,39 +42,44 @@ The following keys for *info* are recognized:
    Key                   Type      Description
    ---                   ----      -----------
 
-   ompi_lookup_order     char *    Resolution order for name lookup.
+   range                 char *    Scope in which to search for the
+                                   service name.  See the NAME SCOPE
+                                   section below.
 
-The *ompi_lookup_order* info key can specify one of four valid string
-values (see the NAME SCOPE section below for more information on name
-scopes):
+The *range* info key accepts one of two string values:
 
-*local*: Only search the local scope for name resolution.
+*nspace*: Restrict the operation to processes in the same MPI job (PMIx
+   namespace) as the calling process.
 
-*global*: Only search the global scope for name resolution.
+*session*: Apply the operation across all processes in the same session.
 
-*local,global*: Search the local scope for name resolution. If
-   not found, try searching the global scope for name resolution. This
-   behavior is the default if the *ompi_lookup_order* info key is not
-   specified.
+If the *info* argument is ``MPI_INFO_NULL``, or is a valid info object
+that does not contain a *range* key, *session* scope is used. Because
+:ref:`MPI_Publish_name`, :ref:`MPI_Lookup_name`, and
+:ref:`MPI_Unpublish_name` all share this default, a name published with
+``MPI_INFO_NULL`` is found by a lookup with ``MPI_INFO_NULL``.
 
-*global,local*: Search the global scope for name resolution. If
-   not found, try searching the local scope for name resolution.
-
-If no info key is provided, the search will first check to see if a
-global server has been specified and is available. If so, then the
-search will default to global scope first, followed by local. Otherwise,
-the search will default to local.
+Any other value for *range* results in an error.
 
 
 NAME SCOPE
 ----------
 
-Open MPI supports two name scopes: *global* and *local*. Local scope
-values are placed in a data store located on the mpirun of the calling
-process' job, while global scope values reside on a central server.
-Calls to :ref:`MPI_Unpublish_name` must correctly specify the scope to be used
-in finding the value to be removed. The function will return an error if
-the specified service name is not found on the indicated location.
+Open MPI supports two name scopes, selected by the *range* info key:
+*nspace* and *session*.
+
+*nspace* scope restricts the (service_name, port_name) pair to processes
+in the publisher's own MPI job, i.e., processes sharing the publisher's
+PMIx namespace.
+
+*session* scope makes the pair visible to every process in the same PMIx
+session. This includes jobs started by separate ``mpirun`` invocations
+that share a persistent DVM or scheduler allocation, as well as jobs
+created via :ref:`MPI_Comm_spawn`. *session* is the default scope.
+
+The same scope must be used to publish, look up, and unpublish a given
+service name. :ref:`MPI_Unpublish_name` returns an error if the service
+name is not found in the indicated scope.
 
 For a more detailed description of scoping rules, please see the
 :ref:`MPI_Publish_name` man page.
