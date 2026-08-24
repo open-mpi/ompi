@@ -17,7 +17,7 @@
 
 major=5
 minor=0
-release=10
+release=11
 
 # MPI Standard Compliance Level
 mpi_standard_version=3
@@ -41,7 +41,7 @@ flex_min_version=2.5.4
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc2
+greek=rc1
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -62,7 +62,7 @@ tarball_version=gitclone
 
 # The date when this release was created
 
-date="20 January 2026"
+date="August 2026"
 
 # The shared library version of each of Open MPI's public libraries.
 # These versions are maintained in accordance with the "Library
@@ -94,14 +94,14 @@ date="20 January 2026"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=80:7:40
-libmpi_mpifh_so_version=80:1:40
+libmpi_so_version=80:8:40
+libmpi_mpifh_so_version=80:2:40
 libmpi_usempi_tkr_so_version=80:1:40
 libmpi_usempi_ignore_tkr_so_version=80:1:40
 libmpi_usempif08_so_version=80:3:40
-libopen_pal_so_version=80:5:0
+libopen_pal_so_version=80:6:0
 libmpi_java_so_version=80:1:40
-liboshmem_so_version=80:4:40
+liboshmem_so_version=80:5:40
 libompitrace_so_version=80:0:40
 
 # "Common" components install standalone libraries that are run-time
@@ -114,8 +114,8 @@ libmca_ompi_common_ompio_so_version=80:1:0
 libmca_ompi_common_monitoring_so_version=80:0:0
 
 # OPAL layer
-libmca_opal_common_cuda_so_version=80:0:0
-libmca_opal_common_ofi_so_version=80:4:0
-libmca_opal_common_sm_so_version=80:1:0
+libmca_opal_common_cuda_so_version=80:1:0
+libmca_opal_common_ofi_so_version=80:5:0
+libmca_opal_common_sm_so_version=80:2:0
 libmca_opal_common_ucx_so_version=80:1:0
 libmca_opal_common_ugni_so_version=80:0:0
