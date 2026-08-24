@@ -112,7 +112,7 @@ OPAL_DECLSPEC void *opal_calloc(size_t nmembers, size_t size, const char *file, 
  * configure (or by default if you're building in a SVN checkout).
  */
 OPAL_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int line)
-    __opal_attribute_malloc__ __opal_attribute_warn_unused_result__;
+    __opal_attribute_warn_unused_result__;
 
 /**
  * \internal
