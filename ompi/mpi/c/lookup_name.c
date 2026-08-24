@@ -52,7 +52,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
     pmix_status_t rc;
     pmix_pdata_t pdat;
     pmix_info_t pinfo;
-    pmix_data_range_t rng;
+    pmix_data_range_t rng = PMIX_RANGE_SESSION;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -111,6 +111,7 @@ int MPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name)
             ret = MPI_ERR_NAME;
         }
 
+        PMIX_PDATA_DESTRUCT(&pdat);
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
 
