@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
- * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
@@ -20,7 +20,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 #include "ompi/info/info.h"
 
-PROTOTYPE ERROR_CLASS event_handle_alloc (INT event_index, VOID obj_handle, INFO info,
+PROTOTYPE ERROR_CLASS event_handle_alloc (INT event_index, OBJ_HANDLE obj_handle, INFO info,
                                           EVENT_REGISTRATION_OUT event_registration)
 {
     mca_base_event_registration_t *reg;

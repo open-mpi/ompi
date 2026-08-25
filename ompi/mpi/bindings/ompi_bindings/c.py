@@ -540,6 +540,59 @@ class ABIConverterBuilder:
         self.dump_lines(lines);
         self.dump('}')
 
+    def generate_obj_handle_convert_fn(self, header_only=False):
+        if header_only == True:
+            self.dump(f'void * ompi_convert_abi_obj_handle_intern_obj_handle(void *obj_handle);')
+            return
+        self.dump(f'void * ompi_convert_abi_obj_handle_intern_obj_handle(void *obj_handle)')
+        self.dump('{')
+        lines = []
+        lines.append('uint64_t obj_value = (uint64_t)obj_handle;')
+        lines.append('if (NULL == obj_handle) {')
+        lines.append('return obj_handle;')
+        lines.append('};')
+        lines.append('if ((obj_value >= (uint64_t)MPI_COMM_NULL_ABI_INTERNAL) && ')
+        lines.append('   (obj_value <= (uint64_t)MPI_COMM_SELF_ABI_INTERNAL)) {')
+        lines.append(f'return (void *){ConvertFuncs.COMM}(obj_handle);')
+        lines.append('};')
+        lines.append('if ((obj_value >= (uint64_t)MPI_DATATYPE_NULL_ABI_INTERNAL) && ')
+        lines.append('   (obj_value <= (uint64_t)MPI_2INTEGER_ABI_INTERNAL)) {')
+        lines.append(f'return (void *){ConvertFuncs.DATATYPE}(obj_handle);')
+        lines.append('};')
+        lines.append('if ((obj_value >= (uint64_t)MPI_ERRHANDLER_NULL_ABI_INTERNAL) && ')
+        lines.append('   (obj_value <= (uint64_t)MPI_ERRORS_RETURN_ABI_INTERNAL)) {')
+        lines.append(f'return (void *){ConvertFuncs.ERRHANDLER}(obj_handle);')
+        lines.append('};')
+        lines.append('if (obj_value == (uint64_t)MPI_FILE_NULL_ABI_INTERNAL) { ')
+        lines.append(f'return (void *){ConvertFuncs.FILE}(obj_handle);')
+        lines.append('};')
+        lines.append('if (obj_value == (uint64_t)MPI_GROUP_NULL_ABI_INTERNAL) { ')
+        lines.append(f'return (void *){ConvertFuncs.GROUP}(obj_handle);')
+        lines.append('};')
+        lines.append('if ((obj_value >= (uint64_t)MPI_OP_NULL_ABI_INTERNAL) && ')
+        lines.append('   (obj_value <= (uint64_t)MPI_NO_OP_ABI_INTERNAL)) {')
+        lines.append(f'return (void *){ConvertFuncs.OP}(obj_handle);')
+        lines.append('};')
+        lines.append('if (obj_value == (uint64_t)MPI_REQUEST_NULL_ABI_INTERNAL) { ')
+        lines.append(f'return (void *){ConvertFuncs.REQUEST}(obj_handle);')
+        lines.append('};')
+        lines.append('if (obj_value == (uint64_t)MPI_WIN_NULL_ABI_INTERNAL) { ')
+        lines.append(f'return (void *){ConvertFuncs.WIN}(obj_handle);')
+        lines.append('};')
+        lines.append('if ((obj_value >= (uint64_t)MPI_MESSAGE_NULL_ABI_INTERNAL) && ')
+        lines.append('   (obj_value <= (uint64_t)MPI_MESSAGE_NO_PROC_ABI_INTERNAL)) {')
+        lines.append(f'return (void *){ConvertFuncs.MESSAGE}(obj_handle);')
+        lines.append('};')
+        lines.append('if (obj_value == (uint64_t)MPI_INFO_NULL_ABI_INTERNAL) { ')
+        lines.append(f'return (void *){ConvertFuncs.INFO}(obj_handle);')
+        lines.append('};')
+        lines.append('if (obj_value == (uint64_t)MPI_SESSION_NULL_ABI_INTERNAL) { ')
+        lines.append(f'return (void *){ConvertFuncs.SESSION}(obj_handle);')
+        lines.append('};')
+        lines.append('return obj_handle;')
+        self.dump_lines(lines);
+        self.dump('}')
+
     def define(self, type_, name, value):
         self.dump(f'#define {name} OMPI_CAST_CONSTANT({type_}, {value})')
 
@@ -603,6 +656,7 @@ extern "C" {
         #        
         self.dump('\n')
         self.generate_errhandler_args_convert_fn_intern_to_abi(header_only=True)
+        self.generate_obj_handle_convert_fn(header_only=True)
         self.dump('\n')
 
         # Now generate the conversion code - there's a reason for the order here
@@ -718,8 +772,10 @@ extern "C" {
         #
         # special case converters:
         #    - errhandler functions convert
+        #    - object_handle (MPI_T)
         #
         self.generate_errhandler_args_convert_fn_intern_to_abi()
+        self.generate_obj_handle_convert_fn()
 
 def print_profiling_header(fn_name, out, weak_mpi_symbol=False):
     """Print the profiling header code.

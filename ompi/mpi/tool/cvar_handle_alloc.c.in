@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2025      Triad National Security, LLC. All rights
+ * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -23,7 +23,7 @@
 
 #include "ompi/mpi/tool/mpit-internal.h"
 
-PROTOTYPE ERROR_CLASS cvar_handle_alloc (INT cvar_index, VOID obj_handle,
+PROTOTYPE ERROR_CLASS cvar_handle_alloc (INT cvar_index, OBJ_HANDLE obj_handle,
                               CVAR_HANDLE_OUT handle, INT_OUT count)
 {
     ompi_mpit_cvar_handle_t *new_handle;

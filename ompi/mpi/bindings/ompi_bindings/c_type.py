@@ -3631,5 +3631,19 @@ class TypeClassStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('OBJ_HANDLE', abi_type=['ompi'])
+class TypeObjHandle(Type):
 
+    def type_text(self, enable_count=False):
+        return 'void *'
+
+@Type.add_type('OBJ_HANDLE', abi_type=['standard'])
+class TypeObjHandleStandard(StandardABIType):
+
+    @property
+    def init_code(self):
+        return [f'void * {self.tmpname} = {ConvertFuncs.OBJ_HANDLE}({self.name});']
+
+    def type_text(self, enable_count=False):
+        return 'void *'
 
