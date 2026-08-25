@@ -539,57 +539,54 @@ class ABIConverterBuilder:
         self.dump_lines(lines);
         self.dump('}')
 
+    # Predefined-handle families understood by the MPI_T obj_handle
+    # dispatcher, each paired with the converter that translates that family
+    # from the standard ABI to the internal representation.  This is driven
+    # off the same consts.* lists the individual per-type converters use, so
+    # the dispatch cannot drift away from the ABI header: adding a predefined
+    # handle to one of these lists automatically routes it here as well.
+    OBJ_HANDLE_FAMILIES = [
+        ('RESERVED_COMMUNICATORS', ConvertFuncs.COMM),
+        ('PREDEFINED_DATATYPES', ConvertFuncs.DATATYPE),
+        ('PREDEFINED_OPTIONAL_FORTRAN_DATATYPES', ConvertFuncs.DATATYPE),
+        ('RESERVED_ERRHANDLERS', ConvertFuncs.ERRHANDLER),
+        ('RESERVED_FILES', ConvertFuncs.FILE),
+        ('RESERVED_GROUPS', ConvertFuncs.GROUP),
+        ('RESERVED_OPS', ConvertFuncs.OP),
+        ('RESERVED_REQUESTS', ConvertFuncs.REQUEST),
+        ('RESERVED_WINDOWS', ConvertFuncs.WIN),
+        ('RESERVED_MESSAGES', ConvertFuncs.MESSAGE),
+        ('RESERVED_INFOS', ConvertFuncs.INFO),
+        ('RESERVED_SESSIONS', ConvertFuncs.SESSION),
+    ]
+
     def generate_obj_handle_convert_fn(self, header_only=False):
+        fn = 'void *ompi_convert_abi_obj_handle_intern_obj_handle(void *obj_handle)'
         if header_only == True:
-            self.dump(f'void * ompi_convert_abi_obj_handle_intern_obj_handle(void *obj_handle);')
+            self.dump(f'{fn};')
             return
-        self.dump(f'void * ompi_convert_abi_obj_handle_intern_obj_handle(void *obj_handle)')
+        self.dump(fn)
         self.dump('{')
         lines = []
-        lines.append('uint64_t obj_value = (uint64_t)obj_handle;')
+        # The standard-ABI predefined handles are small integers; user-created
+        # handles are real internal pointers with large addresses.  Match each
+        # predefined value explicitly and hand anything else back untouched.
+        lines.append('uintptr_t obj_value = (uintptr_t) obj_handle;')
         lines.append('if (NULL == obj_handle) {')
         lines.append('return obj_handle;')
-        lines.append('};')
-        lines.append('if ((obj_value >= (uint64_t)MPI_COMM_NULL_ABI_INTERNAL) && ')
-        lines.append('   (obj_value <= (uint64_t)MPI_COMM_SELF_ABI_INTERNAL)) {')
-        lines.append(f'return (void *){ConvertFuncs.COMM}(obj_handle);')
-        lines.append('};')
-        lines.append('if ((obj_value >= (uint64_t)MPI_DATATYPE_NULL_ABI_INTERNAL) && ')
-        lines.append('   (obj_value <= (uint64_t)MPI_2INTEGER_ABI_INTERNAL)) {')
-        lines.append(f'return (void *){ConvertFuncs.DATATYPE}(obj_handle);')
-        lines.append('};')
-        lines.append('if ((obj_value >= (uint64_t)MPI_ERRHANDLER_NULL_ABI_INTERNAL) && ')
-        lines.append('   (obj_value <= (uint64_t)MPI_ERRORS_RETURN_ABI_INTERNAL)) {')
-        lines.append(f'return (void *){ConvertFuncs.ERRHANDLER}(obj_handle);')
-        lines.append('};')
-        lines.append('if (obj_value == (uint64_t)MPI_FILE_NULL_ABI_INTERNAL) { ')
-        lines.append(f'return (void *){ConvertFuncs.FILE}(obj_handle);')
-        lines.append('};')
-        lines.append('if (obj_value == (uint64_t)MPI_GROUP_NULL_ABI_INTERNAL) { ')
-        lines.append(f'return (void *){ConvertFuncs.GROUP}(obj_handle);')
-        lines.append('};')
-        lines.append('if ((obj_value >= (uint64_t)MPI_OP_NULL_ABI_INTERNAL) && ')
-        lines.append('   (obj_value <= (uint64_t)MPI_NO_OP_ABI_INTERNAL)) {')
-        lines.append(f'return (void *){ConvertFuncs.OP}(obj_handle);')
-        lines.append('};')
-        lines.append('if (obj_value == (uint64_t)MPI_REQUEST_NULL_ABI_INTERNAL) { ')
-        lines.append(f'return (void *){ConvertFuncs.REQUEST}(obj_handle);')
-        lines.append('};')
-        lines.append('if (obj_value == (uint64_t)MPI_WIN_NULL_ABI_INTERNAL) { ')
-        lines.append(f'return (void *){ConvertFuncs.WIN}(obj_handle);')
-        lines.append('};')
-        lines.append('if ((obj_value >= (uint64_t)MPI_MESSAGE_NULL_ABI_INTERNAL) && ')
-        lines.append('   (obj_value <= (uint64_t)MPI_MESSAGE_NO_PROC_ABI_INTERNAL)) {')
-        lines.append(f'return (void *){ConvertFuncs.MESSAGE}(obj_handle);')
-        lines.append('};')
-        lines.append('if (obj_value == (uint64_t)MPI_INFO_NULL_ABI_INTERNAL) { ')
-        lines.append(f'return (void *){ConvertFuncs.INFO}(obj_handle);')
-        lines.append('};')
-        lines.append('if (obj_value == (uint64_t)MPI_SESSION_NULL_ABI_INTERNAL) { ')
-        lines.append(f'return (void *){ConvertFuncs.SESSION}(obj_handle);')
-        lines.append('};')
+        lines.append('}')
+        for list_name, convert_fn in self.OBJ_HANDLE_FAMILIES:
+            value_names = getattr(consts, list_name)
+            conditions = ['(uintptr_t) %s == obj_value' % self.mangle_name(name)
+                          for name in value_names]
+            for i, condition in enumerate(conditions):
+                prefix = 'if (' if 0 == i else ''
+                suffix = ') {' if len(conditions) - 1 == i else ' ||'
+                lines.append(f'{prefix}{condition}{suffix}')
+            lines.append(f'return (void *) {convert_fn}(obj_handle);')
+            lines.append('}')
         lines.append('return obj_handle;')
-        self.dump_lines(lines);
+        self.dump_lines(lines)
         self.dump('}')
 
     def define(self, type_, name, value):
