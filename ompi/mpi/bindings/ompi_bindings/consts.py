@@ -654,6 +654,7 @@ class ConvertFuncs:
     TYPECLASS = 'ompi_convert_typeclass_intern_typeclass'
     WIN_LOCK = 'ompi_convert_lock_assert_intern_lock_assert'
     BUFFER = 'ompi_convert_abi_buffer_intern_buffer'
+    OBJ_HANDLE = 'ompi_convert_abi_obj_handle_intern_obj_handle'
 
 class ConvertOMPIToStandard:
     """Generated function for converting from OMPI to standard ABI."""
