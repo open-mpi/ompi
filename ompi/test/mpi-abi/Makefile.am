@@ -16,6 +16,8 @@ C_ABI_CASES = \
         cases/c-abi/converter_predefined_handles.cbody.in \
         cases/c-abi/converter_status_sentinels.cbody.in \
         cases/c-abi/init_finalize.cbody.in \
+        cases/c-abi/mpit_obj_handle_predefined.cbody.in \
+        cases/c-abi/mpit_obj_handle_predefined.prologue.in \
         cases/c-abi/sendrecv_two_rank.cbody.in
 
 C_RUNTIME_CASES = \
