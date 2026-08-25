@@ -163,6 +163,14 @@ static int posix_runtime_query(mca_base_module_t **module, int *priority, const 
                          "starting run-time test...\n"));
     /* shmem_posix_shm_open successfully shm_opened - we can use posix sm! */
     if (-1 != (fd = opal_shmem_posix_shm_open(tmp_buff, OPAL_SHMEM_POSIX_FILE_LEN_MAX - 1))) {
+        /* the run-time test only needed to know that the shm_open(2)
+         * succeeded.  close the descriptor it handed back -- shm_unlink(3)
+         * below removes the name, but the descriptor would otherwise stay
+         * open for the life of the process, and this query runs on every
+         * opal_init().
+         */
+        (void) close(fd);
+
         /* free up allocated resources before we return */
         if (0 != shm_unlink(tmp_buff)) {
             int err = errno;
