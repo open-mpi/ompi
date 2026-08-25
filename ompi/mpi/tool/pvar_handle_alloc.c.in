@@ -9,7 +9,7 @@
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2025      Triad National Security, LLC. All rights
+ * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -24,7 +24,7 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 
 PROTOTYPE ERROR_CLASS pvar_handle_alloc(PVAR_SESSION session, INT pvar_index,
-                                        VOID obj_handle, PVAR_HANDLE_OUT handle, INT_OUT count)
+                                        OBJ_HANDLE obj_handle, PVAR_HANDLE_OUT handle, INT_OUT count)
 {
     const mca_base_pvar_t *pvar;
     int ret;
