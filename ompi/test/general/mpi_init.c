@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      Yongqiang Tian.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,9 +19,16 @@
 
 #include "ompi_config.h"
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 #include "support.h"
 
 #include "mpi.h"
+#include "opal/util/os_path.h"
+#include "opal/util/proc.h"
 
 int main(int argc, char *argv[])
 {
@@ -39,8 +47,33 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_SELF, &self_size);
     test_verify("MPI_COMM_SELF size is 1", 1 == self_size);
 
+    char *empty_output = NULL;
+    test_verify("singleton process session directory is available",
+                NULL != opal_process_info.proc_session_dir);
+    if (NULL != opal_process_info.proc_session_dir) {
+        empty_output = opal_os_path(false, opal_process_info.proc_session_dir,
+                                    "output-empty-regression", NULL);
+    }
+    test_verify("singleton session output path is available", NULL != empty_output);
+
+    FILE *stream = NULL;
+    if (NULL != empty_output) {
+        stream = fopen(empty_output, "w");
+    }
+    test_verify("empty singleton output file can be created", NULL != stream);
+    if (NULL != stream) {
+        fclose(stream);
+    }
+
     rc = MPI_Finalize();
     test_verify("MPI_Finalize returns MPI_SUCCESS", MPI_SUCCESS == rc);
+
+    if (NULL != empty_output) {
+        errno = 0;
+        test_verify("MPI_Finalize removes empty singleton output",
+                    -1 == access(empty_output, F_OK) && ENOENT == errno);
+        free(empty_output);
+    }
 
     return test_finalize();
 }
