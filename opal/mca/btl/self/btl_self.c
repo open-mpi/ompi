@@ -100,13 +100,14 @@ static int mca_btl_self_memcpy(void *dst, const void *src, size_t size)
 static int mca_btl_self_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                                   struct opal_proc_t **procs,
                                   struct mca_btl_base_endpoint_t **peers,
-                                  opal_bitmap_t *reachability)
+                                  opal_bitmap_t *status)
 {
     for (int i = 0; i < (int) nprocs; i++) {
         if (0 == opal_compare_proc(procs[i]->proc_name, OPAL_PROC_MY_NAME)) {
-            if (NULL != reachability) {
-                opal_bitmap_set_bit(reachability, i);
-            }
+            /* Nothing has to be exchanged with ourselves, so this answer
+             * needs no modex and is never a "not yet". Every other proc
+             * keeps the default MCA_BTL_PROC_NOT_ELIGIBLE. */
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
             /* need to return something to keep the bml from ignoring us */
             peers[i] = (struct mca_btl_base_endpoint_t *) 1;
             break; /* there will always be only one ... */

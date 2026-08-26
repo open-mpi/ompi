@@ -15,6 +15,7 @@
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -132,7 +133,7 @@ extern int mca_btl_template_finalize(struct mca_btl_base_module_t *btl);
  * @param nprocs (IN)     Number of processes
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
- * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
+ * @param status (OUT)    What this BTL has to say about each process.
  * @return     OPAL_SUCCESS or error status on failure.
  *
  */
@@ -140,7 +141,7 @@ extern int mca_btl_template_finalize(struct mca_btl_base_module_t *btl);
 extern int mca_btl_template_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                                       struct opal_proc_t **procs,
                                       struct mca_btl_base_endpoint_t **peers,
-                                      opal_bitmap_t *reachable);
+                                      opal_bitmap_t *status);
 
 /**
  * PML->BTL notification of change in the process list.

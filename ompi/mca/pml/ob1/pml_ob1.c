@@ -639,7 +639,6 @@ static int mca_pml_ob1_register_btl_callbacks(void)
 int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     mca_btl_base_selected_module_t *sm;
-    opal_bitmap_t reachable;
     int rc;
 
     if(nprocs == 0)
@@ -656,14 +655,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         return OMPI_ERR_UNREACH;
     }
 
-    OBJ_CONSTRUCT(&reachable, opal_bitmap_t);
-    rc = opal_bitmap_init(&reachable, (int)nprocs);
-    if (OMPI_SUCCESS != rc) {
-        return rc;
-    }
-
-    rc = mca_bml.bml_add_procs (nprocs, procs, &reachable);
-    OBJ_DESTRUCT(&reachable);
+    rc = mca_bml.bml_add_procs (nprocs, procs);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }

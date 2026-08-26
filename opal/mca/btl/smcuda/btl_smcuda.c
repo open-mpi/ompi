@@ -506,7 +506,7 @@ static struct mca_btl_base_endpoint_t *create_sm_endpoint(int local_proc, struct
 
 int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                              struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                             opal_bitmap_t *reachability)
+                             opal_bitmap_t *status)
 {
     int return_code = OPAL_SUCCESS;
     int32_t n_local_procs = 0, proc, j, my_smp_rank = -1;
@@ -531,7 +531,9 @@ int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
      * of local procs in the procs list. */
     for (proc = 0; proc < (int32_t) nprocs; proc++) {
         /* check to see if this proc can be reached via shmem (i.e.,
-           if they're on my local host and in my job) */
+           if they're on my local host and in my job). Neither question
+           needs anything the peer published, so a no here is final:
+           leave the default MCA_BTL_PROC_NOT_ELIGIBLE. */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid
             || !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
@@ -557,12 +559,8 @@ int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
 
         n_local_procs++;
 
-        /* add this proc to shared memory accessibility list */
-        if (NULL != reachability) {
-            return_code = opal_bitmap_set_bit(reachability, proc);
-            if (OPAL_SUCCESS != return_code)
-                goto CLEANUP;
-        }
+        /* this proc is reachable through shared memory */
+        MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_CONNECTED);
     }
 
     /* jump out if there's not someone we can talk to */

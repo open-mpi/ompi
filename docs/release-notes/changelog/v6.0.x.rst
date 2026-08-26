@@ -19,6 +19,15 @@ Open MPI version v6.0.0
   ``sync_init``, ``full``) to select when the TCP BTL constructs
   peer endpoints relative to ``MPI_Init``.
 
+- The BTL interface is now version 3.4.0. The last argument of
+  ``btl_add_procs()`` changed meaning: it is no longer a reachability
+  bit per process, but a two-bit status per process, set with
+  ``MCA_BTL_PROC_STATUS_SET()``, that also distinguishes a process
+  whose connection information has not arrived yet from one this BTL
+  cannot reach. The argument kept its type, so a BTL outside the Open
+  MPI tree that still calls ``opal_bitmap_set_bit()`` on it will
+  compile and misreport; such components must be updated.
+
 - Added support for the MPI-4.0 embiggened APIs (i.e., functions with
   ``MPI_Count`` parameters).
 

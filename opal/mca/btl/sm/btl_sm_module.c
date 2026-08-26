@@ -57,7 +57,7 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
 
 static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                        struct opal_bitmap_t *reachability);
+                        struct opal_bitmap_t *status);
 
 static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc);
 
@@ -520,14 +520,12 @@ static int fini_sm_endpoint(struct mca_btl_base_endpoint_t *ep)
  *
  */
 
-static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+static int sm_add_procs(struct mca_btl_base_module_t *btl __opal_attribute_unused__, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                        opal_bitmap_t *reachability)
+                        opal_bitmap_t *status)
 {
     const opal_proc_t *my_proc;
     int rc = OPAL_SUCCESS;
-
-    (void) btl;
 
     /* initializion */
 
@@ -536,7 +534,8 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* jump out if there's not someone we can talk to */
+    /* jump out if there's not someone we can talk to. Every proc keeps
+     * the default MCA_BTL_PROC_NOT_ELIGIBLE. */
     if (1 > MCA_BTL_SM_NUM_LOCAL_PEERS) {
         return OPAL_SUCCESS;
     }
@@ -546,11 +545,11 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         return rc;
     }
 
-    bool not_ready = false;
-
     for (int32_t proc = 0; proc < (int32_t) nprocs; ++proc) {
         /* check to see if this proc can be reached via shmem (i.e.,
-           if they're on my local host and in my job) */
+           if they're on my local host and in my job). Neither question
+           needs anything the peer published, so a no here is final:
+           leave the default MCA_BTL_PROC_NOT_ELIGIBLE. */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid
             || !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
@@ -560,9 +559,20 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         /* setup endpoint */
         rc = init_sm_endpoint(peers + proc, procs[proc]);
         if (OPAL_ERR_NOT_READY == rc) {
-            /* Peer has not published yet; leave unwired and keep going. */
+            /* The peer's segment has not reached us yet. It is a local
+             * peer of the same job, so it will: say that rather than
+             * let a btl of lower exclusivity carry it in the meantime. */
             peers[proc] = NULL;
-            not_ready = true;
+            MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_NO_INFO);
+            rc = OPAL_SUCCESS;
+            continue;
+        }
+        if (OPAL_ERR_NOT_FOUND == rc) {
+            /* Its data is local and holds no shared memory of ours, so
+             * this btl is not one of its own. Final, and only for this
+             * peer: leave the default MCA_BTL_PROC_NOT_ELIGIBLE and keep
+             * answering about the others. */
+            peers[proc] = NULL;
             rc = OPAL_SUCCESS;
             continue;
         }
@@ -571,17 +581,16 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
             break;
         }
 
-        if (my_proc != procs[proc] && NULL != reachability) {
-            int brc = opal_bitmap_set_bit(reachability, proc);
-            if (OPAL_SUCCESS != brc) {
-                return brc;
-            }
+        /* Self gets an endpoint but no claim. The endpoint is what
+         * translates the fragments that come back through our own fifo,
+         * and what a one-sided operation on ourselves lands in; the
+         * absence of a claim is how this btl says "do not pick me to
+         * message myself", leaving that to self. */
+        if (my_proc != procs[proc]) {
+            MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_CONNECTED);
         }
     }
 
-    if (OPAL_SUCCESS == rc && not_ready) {
-        return OPAL_ERR_NOT_READY;
-    }
     return rc;
 }
 

@@ -75,12 +75,11 @@ static int mca_btl_tcp_register_error_cb(struct mca_btl_base_module_t *btl,
 
 int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                           struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                          opal_bitmap_t *reachable)
+                          opal_bitmap_t *status)
 {
     mca_btl_tcp_module_t *tcp_btl = (mca_btl_tcp_module_t *) btl;
     const opal_proc_t *my_proc; /* pointer to caller's proc structure */
     int i, rc;
-    bool not_ready = false;
 
     /* get pointer to my proc structure */
     if (NULL == (my_proc = opal_proc_local_get())) {
@@ -94,14 +93,17 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         mca_btl_base_endpoint_t *tcp_endpoint;
         bool existing_found = false;
 
-        /* Do not create loopback TCP connections */
+        /* Do not create loopback TCP connections. Nothing about that can
+         * change, so leave the default MCA_BTL_PROC_NOT_ELIGIBLE. */
         if (my_proc == opal_proc) {
             continue;
         }
 
         if (NULL == (tcp_proc = mca_btl_tcp_proc_create(opal_proc, &rc))) {
             if (OPAL_ERR_NOT_READY == rc) {
-                not_ready = true;
+                /* The peer's addresses have not reached us yet, so this
+                 * is not an answer, it is a "not yet". */
+                MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
             }
             continue;
         }
@@ -130,6 +132,9 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
             tcp_endpoint->endpoint_btl = tcp_btl;
             rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
             if (rc != OPAL_SUCCESS) {
+                /* No interface of this module can reach any of the peer's,
+                 * which its addresses -- which we have -- settle. Leave
+                 * the default MCA_BTL_PROC_NOT_ELIGIBLE. */
                 OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
                 OBJ_RELEASE(tcp_endpoint);
                 continue;
@@ -142,16 +147,14 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
 
         OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
 
-        if (NULL != reachable) {
-            opal_bitmap_set_bit(reachable, i);
-        }
+        /* The socket is opened on the first send and this module queues
+         * what it cannot write yet, so an endpoint is usable as soon as
+         * it exists. */
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
 
         peers[i] = tcp_endpoint;
     }
 
-    if (not_ready) {
-        return OPAL_ERR_NOT_READY;
-    }
     return OPAL_SUCCESS;
 }
 

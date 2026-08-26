@@ -90,13 +90,13 @@ static int channel_addr2str(opal_btl_usnic_module_t *module, int channel, char *
  */
 static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module, size_t block_offset,
                                             size_t block_len, opal_proc_t **procs,
-                                            mca_btl_base_endpoint_t **endpoints)
+                                            mca_btl_base_endpoint_t **endpoints,
+                                            opal_bitmap_t *status)
 {
     int rc;
     opal_proc_t *my_proc;
     size_t num_created = 0;
     char *errhost;
-    bool not_ready = false;
 
     /* get pointer to my proc structure */
     my_proc = opal_proc_local_get();
@@ -148,7 +148,9 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module, siz
             }
             continue;
         } else if (OPAL_ERR_NOT_READY == rc) {
-            not_ready = true;
+            /* The peer's modex info has not reached us yet, so we do not
+             * know whether we want this peer or not. */
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
             continue;
         } else if (OPAL_SUCCESS != rc) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -203,9 +205,6 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module, siz
     }
 
     opal_output_verbose(5, USNIC_OUT, "btl:usnic: made %" PRIsize_t " endpoints", num_created);
-    if (not_ready) {
-        return OPAL_ERR_NOT_READY;
-    }
     return OPAL_SUCCESS;
 }
 
@@ -416,7 +415,8 @@ static int add_procs_block_reap_fi_av_inserts(opal_btl_usnic_module_t *module, s
  */
 static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, size_t nprocs,
                                       struct opal_proc_t **procs,
-                                      struct mca_btl_base_endpoint_t **endpoints)
+                                      struct mca_btl_base_endpoint_t **endpoints,
+                                      opal_bitmap_t *status)
 {
     /* We need to ensure that we don't overrun the libfabric AV EQ.
        Divide up all the peer address resolutions we need to do into a
@@ -448,7 +448,6 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, si
     /* Per above, loop over creating the endpoints so that we do not
        overrun the libfabric AV EQ. */
     int rc;
-    bool not_ready = false;
     for (size_t block_offset = 0, block = 0; block < num_blocks;
          block_offset += block_len, ++block) {
         /* Adjust for the last block */
@@ -458,10 +457,9 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, si
 
         /* First, create endpoints (and procs, if they're not already
            created) for the usnic-reachable procs we were given. */
-        rc = add_procs_block_create_endpoints(module, block_offset, block_len, procs, endpoints);
-        if (OPAL_ERR_NOT_READY == rc) {
-            not_ready = true;
-        } else if (OPAL_SUCCESS != rc) {
+        rc = add_procs_block_create_endpoints(module, block_offset, block_len, procs, endpoints,
+                                              status);
+        if (OPAL_SUCCESS != rc) {
             return rc;
         }
 
@@ -476,9 +474,6 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, si
         }
     }
 
-    if (not_ready) {
-        return OPAL_ERR_NOT_READY;
-    }
     return OPAL_SUCCESS;
 }
 
@@ -501,21 +496,24 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, si
  */
 static int usnic_add_procs(struct mca_btl_base_module_t *base_module, size_t nprocs,
                            struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **endpoints,
-                           opal_bitmap_t *reachable)
+                           opal_bitmap_t *status)
 {
     opal_btl_usnic_module_t *module = (opal_btl_usnic_module_t *) base_module;
     int rc;
 
     /* Go create the endpoints (including all relevant address
        resolution) */
-    rc = add_procs_create_endpoints(module, nprocs, procs, endpoints);
-    if (OPAL_ERR_NOT_READY != rc && OPAL_SUCCESS != rc) {
+    rc = add_procs_create_endpoints(module, nprocs, procs, endpoints, status);
+    if (OPAL_SUCCESS != rc) {
         goto fail;
     }
 
-    /* Find all the endpoints with a complete set of USD destinations
-       and mark them as reachable */
-    for (size_t i = 0; NULL != reachable && i < nprocs; ++i) {
+    /* Report the endpoints with a complete set of USD destinations as
+       usable. Reaping the AV inserts already released the endpoints
+       whose addresses could not be resolved at all, so an incomplete
+       set here is one still coming up: claim the peer anyway, so that a
+       btl of lower exclusivity does not take it while that happens. */
+    for (size_t i = 0; i < nprocs; ++i) {
         if (NULL != endpoints[i]) {
             bool happy = true;
             for (int channel = 0; channel < USNIC_NUM_CHANNELS; ++channel) {
@@ -525,9 +523,8 @@ static int usnic_add_procs(struct mca_btl_base_module_t *base_module, size_t npr
                 }
             }
 
-            if (happy) {
-                opal_bitmap_set_bit(reachable, i);
-            }
+            MCA_BTL_PROC_STATUS_SET(status, i,
+                                    happy ? MCA_BTL_PROC_CONNECTED : MCA_BTL_PROC_CONNECTING);
         }
     }
 

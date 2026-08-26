@@ -14,6 +14,7 @@
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -190,7 +191,7 @@ int mca_btl_portals4_finalize(struct mca_btl_base_module_t *btl_base);
 
 int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t nprocs,
                                struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                               opal_bitmap_t *reachable);
+                               opal_bitmap_t *status);
 
 int mca_btl_portals4_del_procs(struct mca_btl_base_module_t *btl_base, size_t nprocs,
                                struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers);

@@ -72,7 +72,7 @@ struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t 
 
 static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
                                  opal_proc_t **opal_procs, mca_btl_base_endpoint_t **peers,
-                                 opal_bitmap_t *reachable)
+                                 opal_bitmap_t *status)
 {
     mca_btl_uct_module_t *uct_module = (mca_btl_uct_module_t *) btl;
     int rc;
@@ -100,22 +100,23 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
         uct_module->initialized = true;
     }
 
-    bool not_ready = false;
-
     for (size_t i = 0; i < nprocs; ++i) {
         mca_btl_uct_modex_t *modex = NULL;
         size_t msg_size = 0;
 
         /* Connection is still lazy, but the peer must have published a
-         * UCT blob. Otherwise BML would treat this BTL as wired. */
+         * UCT blob for us to want it at all. */
         OPAL_MODEX_RECV(rc, &mca_btl_uct_component.super.btl_version, &opal_procs[i]->proc_name,
                         (void **) &modex, &msg_size);
         if (OPAL_ERR_NOT_READY == rc) {
+            /* Nothing to decide with yet. */
             peers[i] = NULL;
-            not_ready = true;
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
             continue;
         }
         if (OPAL_SUCCESS != rc) {
+            /* No blob means this peer has no transport we speak: leave
+             * the default MCA_BTL_PROC_NOT_ELIGIBLE. */
             peers[i] = NULL;
             continue;
         }
@@ -126,14 +127,12 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        if (NULL != reachable) {
-            opal_bitmap_set_bit(reachable, i);
-        }
+        /* The UCT connection comes up on demand, and until it does the
+         * send path answers with "retry" on its own, so the endpoint is
+         * usable as far as the caller is concerned. */
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
     }
 
-    if (not_ready) {
-        return OPAL_ERR_NOT_READY;
-    }
     return OPAL_SUCCESS;
 }
 

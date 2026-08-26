@@ -120,6 +120,9 @@
 #define OPAL_MCA_BTL_H
 
 #include "opal_config.h"
+
+#include <assert.h>
+
 #include "opal/class/opal_bitmap.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/mca.h"
@@ -285,6 +288,87 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_EXCLUSIVITY_HIGH    (64 * 1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT 1024 /* GM/IB/etc. */
 #define MCA_BTL_EXCLUSIVITY_LOW     0 /* TCP used as a last resort */
+
+/**
+ * What a btl_add_procs() call has to say about one peer.
+ *
+ * The answer is per peer, not per call: with connections built on first
+ * use, one call routinely mixes peers whose addressing has arrived with
+ * peers whose has not, and the caller has to tell "this peer is not
+ * mine" apart from "ask me again". The values are ordered so both
+ * questions are a mask test, and so that the all-zero state left by
+ * opal_bitmap_clear_all_bits(), or by a loop that simply skips a peer,
+ * reads as "not mine".
+ */
+enum {
+    /** Addressing is available and this peer does not qualify. Also the
+     *  state of any peer the btl did not look at. */
+    MCA_BTL_PROC_NOT_ELIGIBLE = 0x0,
+    /** Cannot decide yet: the peer's addressing is not available
+     *  locally. The caller is expected to come back. */
+    MCA_BTL_PROC_NO_INFO = 0x1,
+    /** This peer qualifies and establishment is under way, but the
+     *  endpoint cannot carry traffic yet. Claimed, not usable. */
+    MCA_BTL_PROC_CONNECTING = 0x2,
+    /** This peer qualifies and its endpoint is ready to use. */
+    MCA_BTL_PROC_CONNECTED = 0x3,
+};
+
+/** This btl wants the peer, whether or not it can carry traffic yet. */
+#define MCA_BTL_PROC_CLAIMED(status) (0 != ((status) & MCA_BTL_PROC_CONNECTING))
+/** The endpoint handed back for this peer can be used now. */
+#define MCA_BTL_PROC_USABLE(status)  (MCA_BTL_PROC_CONNECTED == (status))
+/** An answer that will not change until something else happens. */
+#define MCA_BTL_PROC_DECIDED(status) (MCA_BTL_PROC_NO_INFO != (status))
+
+#define MCA_BTL_PROC_STATUS_BITS 2
+#define MCA_BTL_PROC_STATUS_MASK 0x3
+/** Peers per bitmap word. 2 bits and a 64-bit word divide evenly, so a
+ *  peer's pair never straddles two words. */
+#define MCA_BTL_PROC_STATUS_PER_WORD ((int) (8 * sizeof(uint64_t)) / MCA_BTL_PROC_STATUS_BITS)
+/** Bits a bitmap must be initialized with to hold nprocs statuses. */
+#define MCA_BTL_PROC_STATUS_NBITS(nprocs) ((int) (nprocs) *MCA_BTL_PROC_STATUS_BITS)
+
+/**
+ * Record this btl's answer about procs[index].
+ *
+ * Both bits live in one word, so this neither reads a half-written
+ * status nor grows the bitmap the way opal_bitmap_set_bit() would if
+ * the caller undersized it. Passing NULL is allowed: a caller that does
+ * not care about the answers does not have to provide a bitmap.
+ */
+static inline void mca_btl_base_proc_status_set(struct opal_bitmap_t *status, size_t index,
+                                                int value)
+{
+    if (NULL != status) {
+        int word = (int) index / MCA_BTL_PROC_STATUS_PER_WORD;
+        int shift = MCA_BTL_PROC_STATUS_BITS
+                    * ((int) index % MCA_BTL_PROC_STATUS_PER_WORD);
+
+        assert(word < status->array_size);
+
+        status->bitmap[word] = (status->bitmap[word]
+                                & ~((uint64_t) MCA_BTL_PROC_STATUS_MASK << shift))
+                               | ((uint64_t) (value & MCA_BTL_PROC_STATUS_MASK) << shift);
+    }
+}
+
+/**
+ * The answer recorded for procs[index].
+ */
+static inline int mca_btl_base_proc_status_get(struct opal_bitmap_t *status, size_t index)
+{
+    int word = (int) index / MCA_BTL_PROC_STATUS_PER_WORD;
+    int shift = MCA_BTL_PROC_STATUS_BITS * ((int) index % MCA_BTL_PROC_STATUS_PER_WORD);
+
+    assert(word < status->array_size);
+
+    return (int) ((status->bitmap[word] >> shift) & MCA_BTL_PROC_STATUS_MASK);
+}
+
+#define MCA_BTL_PROC_STATUS_SET(status, index, value) \
+    mca_btl_base_proc_status_set((status), (index), (value))
+#define MCA_BTL_PROC_STATUS_GET(status, index) mca_btl_base_proc_status_get((status), (index))
 
 /* error callback flags */
 #define MCA_BTL_ERROR_FLAGS_FATAL        0x1
@@ -684,28 +768,47 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(struct mca_btl_base_module_t *b
  * modex_recv() function. The BTL may utilize this information to
  * determine reachability of each peer process.
  *
- * The caller may pass a "reachable" bitmap pointer.  If it is not
- * NULL, for each process that is reachable by the BTL, the bit
- * corresponding to the index into the proc array (nprocs) should be
- * set in the reachable bitmask. The BTL will return an array of
- * pointers to a data structure defined by the BTL that is then
- * returned to the BTL on subsequent calls to the BTL data transfer
- * functions (e.g btl_send). This may be used by the BTL to cache any
- * addressing or connection information (e.g. TCP socket, IB queue
- * pair).
+ * The BTL will return an array of pointers to a data structure defined
+ * by the BTL that is then returned to the BTL on subsequent calls to
+ * the BTL data transfer functions (e.g btl_send). This may be used by
+ * the BTL to cache any addressing or connection information (e.g. TCP
+ * socket, IB queue pair).
+ *
+ * For each process the BTL records one of MCA_BTL_PROC_NOT_ELIGIBLE,
+ * MCA_BTL_PROC_NO_INFO, MCA_BTL_PROC_CONNECTING or
+ * MCA_BTL_PROC_CONNECTED in the status bitmap, indexed by position in
+ * the proc array, using MCA_BTL_PROC_STATUS_SET(). A process left
+ * untouched reads as MCA_BTL_PROC_NOT_ELIGIBLE, so a BTL only has to
+ * record the peers it has something to say about. Note that a claim and
+ * a usable endpoint are separate answers: a BTL that wants a peer but
+ * cannot carry its traffic yet says MCA_BTL_PROC_CONNECTING, which
+ * keeps the caller from handing that peer to a BTL of lower
+ * exclusivity while this one comes up.
+ *
+ * The distinction between MCA_BTL_PROC_NO_INFO and
+ * MCA_BTL_PROC_NOT_ELIGIBLE matters: the first says the answer may
+ * change once the peer's addressing arrives, and the caller is expected
+ * to ask again, while the second is final. Reporting the second when
+ * the modex read merely has not completed makes the caller commit to a
+ * BTL set that this BTL should have been part of.
+ *
+ * The return code covers the call, not individual peers: a peer whose
+ * addressing has not arrived is reported in the status bitmap, not by
+ * returning OPAL_ERR_NOT_READY. Return an error only for a failure that
+ * makes the whole call meaningless (out of resources, for instance).
  *
  * @param[IN] btl             BTL module
  * @param[IN] nprocs          Number of processes
  * @param[IN] procs           Array of processes
  * @param[OUT] endpoint       Array of mca_btl_base_endpoint_t structures by BTL.
- * @param[OUT] reachable      Bitmask indicating set of peer processes that
- *                            are reachable by this BTL.
+ * @param[OUT] status         Per-process answers, two bits each. May be NULL
+ *                            if the caller does not want them.
  * @return                    OPAL_SUCCESS or error status on failure.
  */
 typedef int (*mca_btl_base_module_add_procs_fn_t)(struct mca_btl_base_module_t *btl, size_t nprocs,
                                                   struct opal_proc_t **procs,
                                                   struct mca_btl_base_endpoint_t **endpoints,
-                                                  struct opal_bitmap_t *reachable);
+                                                  struct opal_bitmap_t *status);
 
 /**
  * Notification of change to the process list.
@@ -1257,25 +1360,30 @@ struct mca_btl_base_module_t {
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 #define MCA_BTL_BASE_MAJOR_VERSION 3
-#define MCA_BTL_BASE_MINOR_VERSION 3
+#define MCA_BTL_BASE_MINOR_VERSION 4
 #define MCA_BTL_BASE_PATCH_VERSION 0
 
 /*
- * Macro for use in modules that are of type btl v3.2.0
+ * Macro for use in modules that are of type btl v3.4.0
+ *
+ * 3.4.0 redefined the last argument of btl_add_procs() from a bitmap of
+ * reachable peers to two status bits per peer. A 3.3.0 module setting
+ * one bit per peer would write into the wrong peer's status, so the
+ * version has to keep those modules from loading.
  */
-#define MCA_BTL_BASE_VERSION_3_3_0                                                             \
+#define MCA_BTL_BASE_VERSION_3_4_0                                                             \
     OPAL_MCA_BASE_VERSION_2_1_0("btl", MCA_BTL_BASE_MAJOR_VERSION, MCA_BTL_BASE_MINOR_VERSION, \
                                 MCA_BTL_BASE_PATCH_VERSION)
 
 #define MCA_BTL_DEFAULT_VERSION(name)                                                \
-    MCA_BTL_BASE_VERSION_3_3_0, .mca_component_name = name,                          \
+    MCA_BTL_BASE_VERSION_3_4_0, .mca_component_name = name,                          \
                                 MCA_BASE_MAKE_VERSION(component, OPAL_MAJOR_VERSION, \
                                                       OPAL_MINOR_VERSION, OPAL_RELEASE_VERSION)
 
 /**
  * Convenience macro for detecting the BTL interface version.
  */
-#define BTL_VERSION 330
+#define BTL_VERSION 340
 
 END_C_DECLS
 

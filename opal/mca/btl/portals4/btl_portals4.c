@@ -370,7 +370,7 @@ static int create_maptable(struct mca_btl_portals4_module_t *portals4_btl, size_
 int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t nprocs,
                                struct opal_proc_t **procs,
                                struct mca_btl_base_endpoint_t **btl_peer_data,
-                               opal_bitmap_t *reachable)
+                               opal_bitmap_t *status)
 {
     struct mca_btl_portals4_module_t *portals4_btl = (struct mca_btl_portals4_module_t *) btl_base;
     int ret;
@@ -401,20 +401,21 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
 
         ret = create_endpoint(portals4_btl->interface_num, curr_proc, &btl_peer_data[i]);
         if (OPAL_ERR_NOT_READY == ret) {
+            /* The peer's blob has not reached us yet. */
             btl_peer_data[i] = NULL;
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
             not_ready = true;
             continue;
         }
         if (OPAL_SUCCESS != ret) {
+            /* Leave the default MCA_BTL_PROC_NOT_ELIGIBLE. */
             btl_peer_data[i] = NULL;
             continue;
         }
 
         OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_num_procs, 1);
         /* and here we can reach */
-        if (NULL != reachable) {
-            opal_bitmap_set_bit(reachable, i);
-        }
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
 
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                              "add_procs: rank=%lx nid=%x pid=%x for NI %d", i,
@@ -422,9 +423,15 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
                              btl_peer_data[i]->ptl_proc.phys.pid, portals4_btl->interface_num));
     }
 
-    /* Logical mapping needs every peer's blob in one shot. */
+    /* Logical mapping needs every peer's blob in one shot: the endpoints
+     * are indices into a map table that cannot be built while one is
+     * missing, so a single peer that has not published turns the whole
+     * batch into a "not yet". */
     if (not_ready && mca_btl_portals4_component.use_logical) {
-        return OPAL_ERR_NOT_READY;
+        for (i = 0; i < nprocs; ++i) {
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
+        }
+        return OPAL_SUCCESS;
     }
 
     if (mca_btl_portals4_component.need_init && portals4_btl->portals_num_procs > 0) {
@@ -449,9 +456,6 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
         mca_btl_portals4_component.need_init = 0;
     }
 
-    if (not_ready) {
-        return OPAL_ERR_NOT_READY;
-    }
     return OPAL_SUCCESS;
 }
 
