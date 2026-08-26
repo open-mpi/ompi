@@ -599,7 +599,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   if (handle->row_offset) {
     res = NBC_Progress(handle);
     if ((NBC_OK != res) && (NBC_CONTINUE != res)) {
-      return OMPI_ERROR;
+      return res;
     }
   }
 
