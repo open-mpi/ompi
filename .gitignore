@@ -540,6 +540,7 @@ test/runtime/orte_init_finalize
 test/threads/opal_condition
 test/threads/opal_thread
 test/threads/opal_atomic_thread_bench
+test/mpi/environment/hw_resource_info
 
 test/util/aaa
 test/util/test_session_dir_out
