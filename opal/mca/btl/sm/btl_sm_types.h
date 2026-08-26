@@ -151,7 +151,9 @@ typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
  */
 struct mca_btl_sm_t {
     mca_btl_base_module_t super; /**< base BTL interface */
-    bool btl_inited;             /**< flag indicating if btl has been inited */
+    /** 0 before the first init, 1 once inited. A failed init stores its
+     *  (negative) opal status here, which disables this btl for good. */
+    int btl_inited;
     mca_btl_base_module_error_cb_fn_t error_cb;
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;

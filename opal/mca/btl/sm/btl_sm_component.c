@@ -422,7 +422,7 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
     btls[0] = (mca_btl_base_module_t *) &mca_btl_sm;
 
     /* set flag indicating btl not inited */
-    mca_btl_sm.btl_inited = false;
+    mca_btl_sm.btl_inited = 0;
 
     /*
      * Use a method similar to `mca_btl_smcuda_component_init` to register segment finalize
