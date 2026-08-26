@@ -42,7 +42,7 @@ PROTOTYPE ERROR_CLASS lookup_name(STRING service_name, INFO info, STRING_OUT por
     pmix_status_t rc;
     pmix_pdata_t pdat;
     pmix_info_t pinfo;
-    pmix_data_range_t rng;
+    pmix_data_range_t rng = PMIX_RANGE_SESSION;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -101,6 +101,7 @@ PROTOTYPE ERROR_CLASS lookup_name(STRING service_name, INFO info, STRING_OUT por
             ret = MPI_ERR_NAME;
         }
 
+        PMIX_PDATA_DESTRUCT(&pdat);
         return OMPI_ERRHANDLER_NOHANDLE_INVOKE(ret, FUNC_NAME);
     }
 
