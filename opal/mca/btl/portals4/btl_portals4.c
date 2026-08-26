@@ -712,7 +712,7 @@ void mca_btl_portals4_free_module(mca_btl_portals4_module_t *portals4_btl)
         portals4_btl->recv_idx = (ptl_pt_index_t) ~0UL;
     }
 
-    if (PTL_EQ_NONE != portals4_btl->recv_eq_h) {
+    if (!PtlHandleIsEqual(portals4_btl->recv_eq_h, PTL_EQ_NONE)) {
         ret = PtlEQFree(portals4_btl->recv_eq_h);
         if (PTL_OK != ret)
             OPAL_OUTPUT_VERBOSE(
