@@ -60,7 +60,8 @@ For ``MPI_COMM_TYPE_HW_GUIDED`` and ``MPI_COMM_TYPE_RESOURCE_GUIDED``,
 ``mpi_hw_resource_type`` accepts the hwloc URI values returned by
 :ref:`MPI_Get_hw_resource_info`: ``hwloc://NUMANode``,
 ``hwloc://Package``, ``hwloc://L3Cache``, ``hwloc://L2Cache``,
-``hwloc://L1Cache``, ``hwloc://Core``, and ``hwloc://PU``. The existing
+``hwloc://L1Cache``, ``hwloc://Core``, and ``hwloc://PU``. Open MPI also
+accepts ``hwloc://Machine`` (host). The existing
 Open MPI-specific values ``numanode``, ``socket``, ``l3cache``, ``l2cache``,
 ``l1cache``, ``core``, and ``hwthread`` are also accepted.
 

@@ -74,7 +74,7 @@
  * topology to test for a MPI_COMM_TYPE_HW_UNGUIDED communicator split. Therefore,
  * the order in this array must be from largest topology class to smallest.
  */
-const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[] = {
+OMPI_DECLSPEC const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[] = {
     {.info_value = "cluster",  .split_type = OMPI_COMM_TYPE_CLUSTER,  .use_for_unguided = false},
     {.info_value = "nvlink",   .split_type = OMPI_COMM_TYPE_NVLINK,   .use_for_unguided = false},
     {.info_value = "cu",       .split_type = OMPI_COMM_TYPE_CU,       .use_for_unguided = true},

@@ -28,11 +28,11 @@ typedef struct {
     bool report_in_hw_resource_info;
 } ompi_comm_split_type_hw_guided_t;
 
-extern const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[];
+OMPI_DECLSPEC extern const ompi_comm_split_type_hw_guided_t ompi_comm_split_type_hw_guided_support[];
 
-bool ompi_comm_split_type_hwloc_topology_available(void);
-int ompi_comm_split_type_hwloc_get_process_cpuset(hwloc_cpuset_t cpuset);
-bool ompi_comm_split_type_hwloc_get_object(
+OMPI_DECLSPEC bool ompi_comm_split_type_hwloc_topology_available(void);
+OMPI_DECLSPEC int ompi_comm_split_type_hwloc_get_process_cpuset(hwloc_cpuset_t cpuset);
+OMPI_DECLSPEC bool ompi_comm_split_type_hwloc_get_object(
     hwloc_const_cpuset_t cpuset, hwloc_obj_type_t type,
     hwloc_obj_t *resource_object);
 
