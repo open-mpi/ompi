@@ -64,6 +64,11 @@ static inline fifo_value_t virtual2relativepeer(struct mca_btl_base_endpoint_t *
            | ((fifo_value_t) endpoint->peer_smp_rank << MCA_BTL_SM_OFFSET_BITS);
 }
 
+/* The rank an offset carries names whichever local peer owns that
+ * memory, which on the posting path is neither the sender nor the
+ * destination but whoever wrote the destination's fifo before. Hence
+ * component.endpoints being published only once every local peer is
+ * mapped: reaching here at all is what says the rank resolves. */
 static inline void *relative2virtual(fifo_value_t offset)
 {
     return (void *) (intptr_t)(

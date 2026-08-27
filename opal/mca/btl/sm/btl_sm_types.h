@@ -131,8 +131,20 @@ struct mca_btl_sm_component_t {
     unsigned int max_inline_send; /**< Limit for copy-in-copy-out fragments */
 
     mca_btl_base_endpoint_t
-        *endpoints; /**< array of local endpoints (one for each local peer including myself) */
+        *endpoints_storage; /**< array of local endpoints (one for each local peer including
+                             *   myself), as the setup paths see it while they fill it in */
+    mca_btl_base_endpoint_t
+        *endpoints; /**< the same array, published once every local peer's segment is mapped,
+                     *   and NULL until then. Posting a fragment chains it onto the previous
+                     *   item in the destination's fifo, and that item lives in the segment of
+                     *   whichever local peer posted it -- a third process -- so holding a
+                     *   peer's own segment is not enough to send to it. This btl is therefore
+                     *   usable when the whole node is mapped, or not at all, and one pointer
+                     *   is what says so: a fragment path establishes it with a single load,
+                     *   and needs no barrier because everything it reads afterwards is
+                     *   addressed off the value loaded here */
     struct opal_proc_t **local_procs; /**< opal_proc_t * indexed by SMP local rank */
+    bool local_procs_mapped;          /**< local_procs has been filled in */
     mca_btl_base_endpoint_t **fbox_in_endpoints; /**< array of fast box in endpoints */
     unsigned int num_fbox_in_endpoints;          /**< number of fast boxes to poll */
     struct sm_fifo_t *my_fifo;                   /**< pointer to the local fifo */

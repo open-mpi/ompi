@@ -92,14 +92,20 @@ static inline void sm_memmove(void *dst, void *src, size_t size)
 }
 
 /**
- * Attach the shared-memory segment of a local peer we have not wired yet.
+ * Map the shared-memory segment of every local peer, and publish the
+ * endpoint array once they are all there.
  *
- * Called when an incoming FIFO item names a sender no add_procs has
- * covered, so the fragment can be translated and completed back.
+ * The node is the unit here, not the peer: a fragment is posted by
+ * chaining it onto the previous item in the destination's fifo, and that
+ * item lives in the segment of whichever local peer posted it, so a
+ * process that holds only the segments of the peers it talks to cannot
+ * translate it. Peers of another job are not covered and cannot be:
+ * this btl only ever addresses its own.
  *
- * @param local_rank (IN)  local rank of the sender
+ * @return OPAL_SUCCESS once this btl can be used, OPAL_ERR_NOT_READY
+ *         while some local peer's blob has not reached this process.
  */
-int mca_btl_sm_attach_peer(uint16_t local_rank);
+int mca_btl_sm_attach_local_peers(void);
 
 /**
  * Initiate a send to the peer.
