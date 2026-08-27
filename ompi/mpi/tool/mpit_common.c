@@ -8,7 +8,7 @@
  * Copyright (c) 2020      The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2025      Triad National Security, LLC. All rights
+ * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
+OMPI_HIDDEN opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
 /* ompi_mpit_init_count and ompi_mpit_thread_level are read by the lower
    libopen_mpi layer (the instance and world-model init paths), which
@@ -33,7 +33,7 @@ opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
    therefore defined alongside the other process-wide thread flags in
    ompi/runtime/ompi_mpi_init.c. */
 
-bool ompi_mpit_init_failed = false;
+OMPI_HIDDEN bool ompi_mpit_init_failed = false;
 
 #if OPAL_ENABLE_DEBUG
 /* Per-thread depth of MPI_T big-lock sections this thread holds (debug only),
@@ -42,7 +42,7 @@ bool ompi_mpit_init_failed = false;
 static opal_thread_local int ompi_mpit_locked_depth = 0;
 #endif
 
-void ompi_mpit_lock (void)
+OMPI_HIDDEN void ompi_mpit_lock (void)
 {
     opal_mutex_lock (&ompi_mpit_big_lock);
 #if OPAL_ENABLE_DEBUG
@@ -50,7 +50,7 @@ void ompi_mpit_lock (void)
 #endif
 }
 
-void ompi_mpit_unlock (void)
+OMPI_HIDDEN void ompi_mpit_unlock (void)
 {
 #if OPAL_ENABLE_DEBUG
     --ompi_mpit_locked_depth;
@@ -60,7 +60,7 @@ void ompi_mpit_unlock (void)
 
 /* --- MPI_T events: callback contexts, trampolines, debug hook ------------ */
 
-ompi_mpit_event_cb_ctx_t *ompit_event_cb_ctx_new (ompit_generic_fn_t fn, void *user_data)
+OMPI_HIDDEN ompi_mpit_event_cb_ctx_t *ompit_event_cb_ctx_new (ompit_generic_fn_t fn, void *user_data)
 {
     ompi_mpit_event_cb_ctx_t *ctx = malloc (sizeof (*ctx));
     if (NULL != ctx) {
@@ -70,12 +70,12 @@ ompi_mpit_event_cb_ctx_t *ompit_event_cb_ctx_new (ompit_generic_fn_t fn, void *u
     return ctx;
 }
 
-void ompit_event_ctx_release (void *user_data)
+OMPI_HIDDEN void ompit_event_ctx_release (void *user_data)
 {
     free (user_data);
 }
 
-void ompit_event_cb_trampoline (mca_base_event_instance_t *inst,
+OMPI_HIDDEN void ompit_event_cb_trampoline (mca_base_event_instance_t *inst,
                                 mca_base_event_registration_t *reg,
                                 mca_base_event_cb_safety_t cb_safety, void *user_data)
 {
@@ -86,7 +86,7 @@ void ompit_event_cb_trampoline (mca_base_event_instance_t *inst,
         (MPI_T_cb_safety) cb_safety, ctx->user_data);
 }
 
-void ompit_event_dropped_trampoline (opal_count_t count, mca_base_event_registration_t *reg,
+OMPI_HIDDEN void ompit_event_dropped_trampoline (opal_count_t count, mca_base_event_registration_t *reg,
                                      int source_index, mca_base_event_cb_safety_t cb_safety,
                                      void *user_data)
 {
@@ -97,7 +97,7 @@ void ompit_event_dropped_trampoline (opal_count_t count, mca_base_event_registra
         ctx->user_data);
 }
 
-void ompit_event_free_trampoline (mca_base_event_registration_t *reg,
+OMPI_HIDDEN void ompit_event_free_trampoline (mca_base_event_registration_t *reg,
                                   mca_base_event_cb_safety_t cb_safety, void *user_data)
 {
     ompi_mpit_event_cb_ctx_t *ctx = (ompi_mpit_event_cb_ctx_t *) user_data;
@@ -118,7 +118,7 @@ static void ompit_event_assert_no_big_lock (void)
 }
 #endif
 
-void ompit_install_event_debug_hook (void)
+OMPI_HIDDEN void ompit_install_event_debug_hook (void)
 {
 #if OPAL_ENABLE_DEBUG
     mca_base_event_debug_raise_check_fn = ompit_event_assert_no_big_lock;
@@ -152,7 +152,7 @@ static MPI_Datatype mca_to_mpi_datatypes[MCA_BASE_VAR_TYPE_MAX] = {
     [MCA_BASE_VAR_TYPE_UINT64_T] = MPI_UINT64_T,
 };
 
-int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
+OMPI_HIDDEN int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype)
 {
     if (!datatype) {
         return OMPI_SUCCESS;
@@ -164,7 +164,7 @@ int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype
     return OMPI_SUCCESS;
 }
 
-int ompit_opal_to_mpit_error (int rc)
+OMPI_HIDDEN int ompit_opal_to_mpit_error (int rc)
 {
     if (rc >= 0) {
         /* Already an MPI error (always >= 0) */
@@ -186,7 +186,7 @@ int ompit_opal_to_mpit_error (int rc)
  * Check whether a MPI object is valid or not.
  * If invalid return true, otherwise false.
  */
-bool ompit_obj_invalid(void *obj_handle)
+OMPI_HIDDEN bool ompit_obj_invalid(void *obj_handle)
 {
     bool ret = true; /* by default return obj is invalid */
     opal_object_t *opal_obj = NULL;
