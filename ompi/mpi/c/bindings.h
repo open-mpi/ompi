@@ -12,6 +12,8 @@
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,14 +120,14 @@ BEGIN_C_DECLS
     } while (0)
 
 
-int ompi_sendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, 
+OMPI_HIDDEN int ompi_sendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag,
                   void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Status *status);
-int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, 
+OMPI_HIDDEN int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag,
                    void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Request * request);
-int ompi_abi_get_fortran_info(ompi_info_t **info);
-int ompi_abi_set_fortran_info(ompi_info_t *info);
-int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
-int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false);
+OMPI_HIDDEN int ompi_abi_get_fortran_info(ompi_info_t **info);
+OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info);
+OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set);
+OMPI_HIDDEN int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false);
 
 END_C_DECLS
 
