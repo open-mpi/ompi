@@ -223,6 +223,9 @@ static int ompi_proc_seed_arch (ompi_proc_t *proc)
         }
     }
 
+    /* The convertor has to be in place before the flag that announces
+     * it: readers test the flag without the lock. */
+    opal_atomic_wmb();
     opal_proc_learned(&proc->super, OPAL_PROC_FLAG_INITIALIZED);
 
     return OMPI_SUCCESS;
@@ -258,6 +261,11 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
         if (OPAL_SUCCESS == loc_ret) {
             proc->super.proc_flags = u16;
         }
+        /* A miss is final: ompi_rte_init() computes locality for every
+         * PMIX_LOCAL_PEERS name before any proc exists, so absence only
+         * means not node-local -- the OPAL_PROC_NON_LOCAL default. This
+         * macro returns the raw PMIx code anyway, where a miss is
+         * PMIX_ERR_NOT_FOUND == -46 == OPAL_ERR_TAKE_NEXT_OPTION. */
     }
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -904,10 +912,13 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
              * to us
              */
             newprocs[newprocs_len++] = plist[i];
+        }
 
+        /* A proc we already know can still be an unseeded skeleton, and
+         * it will not find these values in a modex never sent to us. */
+        if (!opal_proc_known(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED)) {
             /* update all the values from the packed proc, not the modex */
             plist[i]->super.proc_arch = new_arch;
-            opal_proc_learned(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED);
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->super.proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -925,6 +936,10 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
             }
+
+            /* Announce the convertor only once it is the peer's. */
+            opal_atomic_wmb();
+            opal_proc_learned(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED);
 
             /* get the locality information - all RTEs are required
              * to provide this information at startup */

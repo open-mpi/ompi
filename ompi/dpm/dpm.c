@@ -65,6 +65,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
 
@@ -724,6 +725,16 @@ bcast_rportlen:
 
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+        if (OMPI_ERR_NOT_READY == rc) {
+            /* This call is collective and blocking with nowhere to defer
+             * the work to, so wait for the exchange and ask once more; a
+             * peer still unwired then is one no btl will ever claim. */
+            (void) ompi_modex_wait_if_needed();
+            rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+            if (OMPI_ERR_NOT_READY == rc) {
+                rc = OMPI_ERR_UNREACH;
+            }
+        }
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {

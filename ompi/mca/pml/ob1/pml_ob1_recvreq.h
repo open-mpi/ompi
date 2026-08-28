@@ -231,9 +231,8 @@ extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
 
 static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
 {
-    /* A wildcard recv matches peers this rank may never have sent to,
-     * so their architecture (hence convertor) can still be unknown.
-     * Read it before the convertor is copied. */
+    /* An ANY_SOURCE recv wires nothing, so no endpoint has seeded this
+     * peer's architecture; it is first needed here. */
     (void) ompi_proc_ensure_arch(req->req_recv.req_base.req_proc);
 
     if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
@@ -264,8 +263,19 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
 
     if(req->req_recv.req_bytes_packed > 0) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {
-            /* non wildcard prepared during post recv */
+        const bool wildcard = (MPI_ANY_SOURCE == req->req_recv.req_base.req_peer);
+
+        /* A wildcard recv had no peer to build a convertor from until
+         * this match. A named one built its own at post time assuming
+         * the peer's architecture is ours, so rebuild if that was wrong
+         * -- cleaned up first, as OPAL_CONVERTOR_PREPARE wants a clean
+         * convertor. Unseeded peers' fragments are parked, never matched. */
+        if(wildcard
+           || OPAL_UNLIKELY(req->req_recv.req_base.req_convertor.remoteArch
+                            != req->req_recv.req_base.req_proc->super.proc_convertor->remoteArch)) {
+            if(!wildcard) {
+                opal_convertor_cleanup(&req->req_recv.req_base.req_convertor);
+            }
             prepare_recv_req_converter(req);
         }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
