@@ -145,9 +145,7 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
 #endif
 
     /* make sure remote procs are using the same PML as us */
-    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected("cm",
-                                                              procs,
-                                                              nprocs))) {
+    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected(procs, nprocs))) {
         return ret;
     }
 
@@ -182,8 +180,17 @@ mca_pml_cm_del_procs(struct ompi_proc_t** procs, size_t nprocs)
 
 int mca_pml_cm_ensure_proc(ompi_proc_t *proc)
 {
+    int rc;
+
     if (OPAL_LIKELY(opal_proc_known(&proc->super, OPAL_PROC_FLAG_WIRED))) {
         return OMPI_SUCCESS;
+    }
+
+    /* add_procs below checks this too but can only report it; on a first
+     * send or receive a mismatched peer has to be fatal. */
+    rc = mca_pml_base_pml_check_peer(proc);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
     }
 
     /* No lock on purpose: reading the connection info can progress the
