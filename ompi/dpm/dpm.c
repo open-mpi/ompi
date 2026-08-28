@@ -25,6 +25,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +61,7 @@
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
 
@@ -481,6 +483,18 @@ bcast_rportlen:
 
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
+        if (OMPI_ERR_NOT_READY == rc) {
+            /* A btl has yet to see one of these peers' connection info.
+             * This call is collective and blocking, and it has nowhere
+             * to defer the work to, so wait for the exchange and ask
+             * once more; a peer that still cannot be wired is one no
+             * btl will ever claim. */
+            (void) ompi_modex_wait_if_needed();
+            rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
+            if (OMPI_ERR_NOT_READY == rc) {
+                rc = OMPI_ERR_UNREACH;
+            }
+        }
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {

@@ -179,6 +179,9 @@ static int ompi_proc_seed_arch (ompi_proc_t *proc)
         }
     }
 
+    /* The convertor has to be in place before the flag that announces
+     * it: readers test the flag without the lock. */
+    opal_atomic_wmb();
     opal_proc_learned(&proc->super, OPAL_PROC_FLAG_INITIALIZED);
 
     return OMPI_SUCCESS;
@@ -215,6 +218,20 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
         if (OPAL_SUCCESS == loc_ret) {
             proc->super.proc_flags = u16;
         }
+        /* A miss is final, and there is nothing to come back for, unlike
+         * the architecture read below. This key is not something a peer
+         * publishes and we then wait for: ompi_rte_init() computes it
+         * locally for every name in PMIX_LOCAL_PEERS and stores it with
+         * PMIx_Store_internal() before any proc exists, failing init
+         * outright if that store fails. So it is present for a
+         * node-local peer of ours and absent for every other, which is
+         * exactly what the OPAL_PROC_NON_LOCAL default already says.
+         *
+         * Nor could the status say otherwise if it wanted to:
+         * OPAL_MODEX_RECV_VALUE_OPTIONAL is one of the macros that hands
+         * back what PMIx said, ungated on whether the peer's data has
+         * arrived, so a miss is PMIX_ERR_NOT_FOUND -- which is -46, the
+         * number OPAL gives OPAL_ERR_TAKE_NEXT_OPTION. */
     }
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -833,11 +850,16 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
              * to us
              */
             newprocs[newprocs_len++] = plist[i];
+        }
 
+        /* A proc we already know can still be an unseeded skeleton -- a
+         * wild receive or a sentinel resolution builds one -- so it
+         * needs these values as much as a new one does, and it will not
+         * find them in a modex this peer never sent us. */
+        if (!opal_proc_known(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED)) {
             /* update all the values. The architecture came in the
              * packed proc, so nothing has to be read from the modex. */
             plist[i]->super.proc_arch = new_arch;
-            opal_proc_learned(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED);
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->super.proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -855,6 +877,10 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
             }
+
+            /* Announce the convertor only once it is the peer's. */
+            opal_atomic_wmb();
+            opal_proc_learned(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED);
 
             /* get the locality information - all RTEs are required
              * to provide this information at startup */

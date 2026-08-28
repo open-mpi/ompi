@@ -37,6 +37,7 @@ static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
     proc->expected_sequence = 1;
     proc->send_sequence = 0;
     proc->frags_cant_match = NULL;
+    proc->frags_unseeded = false;
     /* don't know the index of this communicator yet */
     proc->comm_index = -1;
 #if !MCA_PML_OB1_CUSTOM_MATCH
@@ -49,6 +50,7 @@ static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
 static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
 {
     assert(NULL == proc->frags_cant_match);
+    assert(!proc->frags_unseeded);
 #if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_DESTRUCT(&proc->specific_receives);
     OBJ_DESTRUCT(&proc->unexpected_frags);

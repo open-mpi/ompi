@@ -169,7 +169,14 @@ OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
  * seeded when the PML reposts it.
  *
  * Free in a build without heterogeneous support, and a single load once
- * the peer has been seeded.
+ * the peer has been seeded. No read barrier: the convertor this
+ * announces is a second location, so a thread that sees the flag flip
+ * is not formally guaranteed to see the convertor behind it. Ordering
+ * that would cost either a barrier on a path that runs once per
+ * message, or a second published word -- too much for a window that
+ * needs a heterogeneous build, MPI_THREAD_MULTIPLE, peers of differing
+ * architecture, and two threads reaching the same peer's first use at
+ * the same instant.
  *
  * @retval OMPI_SUCCESS       proc_convertor matches the peer.
  * @retval OMPI_ERR_NOT_READY the peer has not published its

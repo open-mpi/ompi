@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -178,6 +179,22 @@ ompi_pml_ob1_check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
  * function is necessary when allow_overtake info key is transition to set.
  */
 int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm );
+
+/**
+ * This peer has a fragment parked on its architecture. Called with the
+ * matching lock held, once per peer rather than once per fragment: the
+ * count it takes on mca_pml_ob1_progress() is what brings the drain below
+ * back, and it is given back when that peer is drained.
+ */
+void mca_pml_ob1_note_unseeded_frags (mca_pml_ob1_comm_proc_t *proc);
+
+/**
+ * Re-drive, in every communicator, the fragments parked because their
+ * sender's architecture was not known when they arrived, and report how
+ * many peers were freed up. Runs from mca_pml_ob1_progress(), so on a
+ * progress tick and never from a btl callback.
+ */
+int mca_pml_ob1_drain_unseeded_frags (void);
 
 void ompi_pml_ob1_append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
                                                   mca_pml_ob1_recv_frag_t* frag,

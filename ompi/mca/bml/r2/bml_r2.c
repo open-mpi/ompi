@@ -443,23 +443,19 @@ static int mca_bml_r2_add_procs(size_t nprocs,
  */
 static int mca_bml_r2_add_local_procs(void)
 {
-    ompi_proc_t **allocated, **locals;
+    ompi_proc_t **locals;
     size_t nalloc = 0, nlocals = 0;
     int rc;
 
-    allocated = ompi_proc_get_allocated(&nalloc);
-    if (NULL == allocated) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    locals = (ompi_proc_t **) malloc(nalloc * sizeof(ompi_proc_t *));
+    /* Compacted in place: the array is ours, and the procs that survive
+     * the filter keep their relative order. */
+    locals = ompi_proc_get_allocated(&nalloc);
     if (NULL == locals) {
-        free(allocated);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for (size_t i = 0; i < nalloc; ++i) {
-        ompi_proc_t *p = allocated[i];
+        ompi_proc_t *p = locals[i];
         if (p != ompi_proc_local_proc &&
             !OPAL_PROC_ON_LOCAL_NODE(p->super.proc_flags)) {
             continue;
@@ -481,7 +477,6 @@ static int mca_bml_r2_add_local_procs(void)
         }
         locals[nlocals++] = p;
     }
-    free(allocated);
 
     if (0 == nlocals) {
         free(locals);
@@ -507,8 +502,12 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
         return OMPI_SUCCESS;
     }
 
+    /* The batch below walks the whole proc list, and the lazy path
+     * retries this call from every progress tick until the peer's blob
+     * lands. Nothing can come of the walk while the peer that asked for
+     * it is not ready itself, so do not pay for it. */
     if (proc == ompi_proc_local_proc ||
-        OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+        (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags) && ompi_modex_proc_ready(proc))) {
         rc = mca_bml_r2_add_local_procs();
         if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
             return OMPI_SUCCESS;
@@ -585,14 +584,23 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         return OMPI_SUCCESS;
     }
 
-    if(OMPI_SUCCESS != (rc = mca_bml_r2_add_btls()) ) {
-        return rc;
+    /* The module array this walks is global and is built (and sorted)
+     * right below, so two threads adding procs at once -- two
+     * MPI_Comm_accept, or a first send racing one -- must not rebuild it
+     * while the other iterates it. This is also what makes the
+     * publication below the only writer of an endpoint at a time. */
+    OPAL_THREAD_LOCK(&mca_bml_lock);
+
+    if(OMPI_SUCCESS != (ret = mca_bml_r2_add_btls()) ) {
+        goto release_arrays;
     }
 
     if (nprocs > MCA_BML_R2_ADD_PROCS_STATIC) {
         scratch = (void **) malloc(MCA_BML_R2_ADD_PROCS_WORDS(nprocs) * sizeof(*scratch));
         if (NULL == scratch) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            scratch = static_scratch;
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto release_arrays;
         }
     }
 
@@ -864,6 +872,8 @@ publish:
     }
 
 release_arrays:
+    OPAL_THREAD_UNLOCK(&mca_bml_lock);
+
     if (scratch != static_scratch) {
         free(scratch);
     }
@@ -1194,9 +1204,15 @@ static int mca_bml_r2_register( mca_btl_base_tag_t tag,
                                 mca_btl_base_module_recv_cb_fn_t cbfunc,
                                 void* data )
 {
-    int rc = mca_bml_r2_add_btls();
+    int rc;
+
+    /* Builds the global module array and then walks it, so it takes the
+     * same lock add_procs does. */
+    OPAL_THREAD_LOCK(&mca_bml_lock);
+
+    rc = mca_bml_r2_add_btls();
     if (OMPI_SUCCESS != rc) {
-        return rc;
+        goto done;
     }
 
     mca_btl_base_active_message_trigger[tag].cbfunc = cbfunc;
@@ -1204,22 +1220,22 @@ static int mca_bml_r2_register( mca_btl_base_tag_t tag,
     /* Give an opportunity to the BTLs to do something special
      * for each registration.
      */
-    {
-        int i;
-        mca_btl_base_module_t *btl;
+    for (uint32_t i = 0; i < mca_bml_r2.num_btl_modules; i++) {
+        mca_btl_base_module_t *btl = mca_bml_r2.btl_modules[i];
 
-        for(i = 0; i < (int)mca_bml_r2.num_btl_modules; i++) {
-            btl = mca_bml_r2.btl_modules[i];
-            if( NULL == btl->btl_register )
-                continue;
-            rc = btl->btl_register(btl, tag, cbfunc, data);
-            if(OMPI_SUCCESS != rc) {
-                return rc;
-            }
+        if (NULL == btl->btl_register) {
+            continue;
+        }
+        rc = btl->btl_register(btl, tag, cbfunc, data);
+        if (OMPI_SUCCESS != rc) {
+            goto done;
         }
     }
 
-    return OMPI_SUCCESS;
+done:
+    OPAL_THREAD_UNLOCK(&mca_bml_lock);
+
+    return rc;
 }
 
 

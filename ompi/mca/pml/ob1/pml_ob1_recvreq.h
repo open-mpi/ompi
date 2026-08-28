@@ -230,9 +230,11 @@ extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
 
 static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
 {
-    /* A wildcard recv matches peers this rank may never have sent to,
-     * so their architecture (hence convertor) can still be unknown.
-     * Read it before the convertor is copied. */
+    /* Everywhere else a peer is seeded by the endpoint being built for
+     * it, so nothing has to ask. Not here: an ANY_SOURCE recv is the one
+     * path that deliberately wires nothing (see mca_pml_ob1_recv_req_start)
+     * and learns its peer only when a fragment matches, so this is where
+     * that peer's architecture, hence its convertor, is first needed. */
     (void) ompi_proc_ensure_arch(req->req_recv.req_base.req_proc);
 
     if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
@@ -263,8 +265,23 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
 
     if(req->req_recv.req_bytes_packed > 0) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {
-            /* non wildcard prepared during post recv */
+        const bool wildcard = (MPI_ANY_SOURCE == req->req_recv.req_base.req_peer);
+
+        /* A wildcard recv has had no peer to build a convertor from until
+         * this match. A named one built its own when it was posted, and
+         * posting asks nothing of the peer -- an ompi_proc_t is born
+         * assuming the peer's architecture is ours -- so that convertor
+         * can predate learning otherwise, and is rebuilt here when it
+         * does. Its stack goes back first: OPAL_CONVERTOR_PREPARE wants a
+         * convertor that is clean. Either way the sender is seeded by now,
+         * because a fragment from a peer whose architecture is unknown is
+         * parked rather than matched. */
+        if(wildcard
+           || OPAL_UNLIKELY(req->req_recv.req_base.req_convertor.remoteArch
+                            != req->req_recv.req_base.req_proc->super.proc_convertor->remoteArch)) {
+            if(!wildcard) {
+                opal_convertor_cleanup(&req->req_recv.req_base.req_convertor);
+            }
             prepare_recv_req_converter(req);
         }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */

@@ -140,6 +140,10 @@ extern void mca_pml_ob1_prepare_recv_proc(ompi_proc_t *proc);
 extern int mca_pml_ob1_stage_or_start(struct mca_pml_ob1_send_request_t *sendreq,
                                       int32_t seqn);
 
+/* Rebuild a send convertor that was prepared before its peer's
+ * architecture was known. */
+extern void mca_pml_ob1_reprepare_send_convertor(struct mca_pml_ob1_send_request_t *sendreq);
+
 /* Start whatever staged sends can now reach their peer, and report how
  * many left the queue. Driven from mca_pml_ob1_progress(), which each park
  * keeps registered by way of one progress count. */

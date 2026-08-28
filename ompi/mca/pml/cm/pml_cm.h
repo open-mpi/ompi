@@ -72,7 +72,11 @@ OMPI_DECLSPEC extern int mca_pml_cm_ensure_proc(struct ompi_proc_t *proc);
 /** Wire a peer, waiting for the exchange if need be. */
 OMPI_DECLSPEC extern int mca_pml_cm_wait_proc(struct ompi_proc_t *proc);
 
-/** Park a request until its peer is wired, and replay it then. */
+/**
+ * Park a request until its peer is wired, and replay it then. The peer is
+ * the request's own, read back from it on each attempt, so this takes no
+ * proc: nothing is recorded against one.
+ */
 OMPI_DECLSPEC extern int mca_pml_cm_stage_request(mca_pml_cm_request_t *req);
 
 /** Take a parked request back off the list; false if it was not there. */

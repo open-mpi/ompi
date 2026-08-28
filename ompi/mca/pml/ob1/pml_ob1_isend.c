@@ -55,6 +55,12 @@ int mca_pml_ob1_isend_init(const void *buf,
 {
     mca_pml_ob1_comm_proc_t *ob1_proc = mca_pml_ob1_peer_lookup (comm, dst);
     mca_pml_ob1_send_request_t *sendreq = NULL;
+
+    /* Alone among the send entry points, this one never consults the
+     * bml, so building an endpoint is not what seeds this peer, and the
+     * convertor prepared below may be for an architecture we do not know
+     * yet. Nothing to do about it here -- Send_init does not block --
+     * mca_pml_ob1_send_request_start() rebuilds it if it went stale. */
     MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
     if (NULL == sendreq)
         return OMPI_ERR_OUT_OF_RESOURCE;

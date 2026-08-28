@@ -47,6 +47,13 @@ struct mca_pml_ob1_comm_proc_t {
     int16_t comm_index;           /**< index of this communicator on the receiver size (-1 - not set) */
     opal_atomic_int32_t send_sequence; /**< send side sequence number */
     struct mca_pml_ob1_recv_frag_t* frags_cant_match;  /**< out-of-order fragment queues */
+    /* Some of the above cannot be matched because this peer's architecture
+     * is still unknown, rather than because of a gap in the sequence. Set
+     * and cleared under the matching lock, and it is what a park owes one
+     * progress count for -- so it also answers "have I counted this peer
+     * already", which is why the queue above cannot answer it: it holds
+     * both kinds of fragment. */
+    bool frags_unseeded;
 #if !MCA_PML_OB1_CUSTOM_MATCH
     opal_list_t specific_receives; /**< queues of unmatched specific receives */
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
