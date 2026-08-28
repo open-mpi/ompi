@@ -58,7 +58,7 @@ mca_btl_template_module_t mca_btl_template_module = {
 
 int mca_btl_template_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                                struct opal_proc_t **opal_procs,
-                               struct mca_btl_base_endpoint_t **peers, opal_bitmap_t *reachable)
+                               struct mca_btl_base_endpoint_t **peers, opal_bitmap_t *status)
 {
     mca_btl_template_module_t *template_btl = (mca_btl_template_module_t *) btl;
     int i, rc;
@@ -102,14 +102,15 @@ int mca_btl_template_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         template_endpoint->endpoint_btl = template_btl;
         rc = mca_btl_template_proc_insert(template_proc, template_endpoint);
         if (rc != OPAL_SUCCESS) {
+            /* Addresses in hand and no interface matches: final, so
+             * leave MCA_BTL_PROC_NOT_ELIGIBLE. Had the addresses not
+             * arrived, record MCA_BTL_PROC_NO_INFO instead. */
             OBJ_RELEASE(template_endpoint);
             OPAL_THREAD_UNLOCK(&template_proc->proc_lock);
             continue;
         }
 
-        if (NULL != reachable) {
-            opal_bitmap_set_bit(reachable, i);
-        }
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
         OPAL_THREAD_UNLOCK(&template_proc->proc_lock);
         peers[i] = template_endpoint;
     }

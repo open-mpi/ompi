@@ -39,6 +39,7 @@
 #    include <sys/un.h>
 #endif
 
+#include "opal/constants.h"
 #include "opal/hash_string.h"
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
@@ -489,12 +490,54 @@ typedef struct {
              PMIx_Get_attribute_name(s)));                                                         \
         *(d) = NULL;                                                                               \
         *(sz) = 0;                                                                                 \
+        if (opal_pmix_modex_peer_not_ready(p)) {                                                   \
+            (r) = OPAL_ERR_NOT_READY;                                                              \
+            break;                                                                                 \
+        }                                                                                          \
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                                       \
         PMIX_INFO_LOAD(&_info, PMIX_IMMEDIATE, NULL, PMIX_BOOL);                                   \
         (r) = PMIx_Get(&(_proc), (s), &_info, 1, &(_kv));                                          \
         PMIX_INFO_DESTRUCT(&_info);                                                                \
-        if (NULL == _kv) {                                                                         \
-            (r) = PMIX_ERR_NOT_FOUND;                                                              \
+        if (NULL == _kv || PMIX_ERR_NOT_FOUND == (r)) {                                            \
+            (r) = OPAL_ERR_NOT_FOUND;                                                              \
+        } else if (PMIX_SUCCESS == (r)) {                                                          \
+            *(d) = (uint8_t *) _kv->data.bo.bytes;                                                 \
+            *(sz) = _kv->data.bo.size;                                                             \
+            _kv->data.bo.bytes = NULL; /* protect the data */                                      \
+        }                                                                                          \
+        if (NULL != _kv) {                                                                         \
+            PMIX_VALUE_RELEASE(_kv);                                                               \
+        }                                                                                          \
+    } while (0);
+
+/**
+ * Retrieve a PMIX_LOCAL connection blob from the local PMIx server. The
+ * collecting fence only distributes PMIX_REMOTE/GLOBAL keys into the
+ * client cache; LOCAL keys stay in the node-level GDS after the peer
+ * Commits, so this Get names that scope. Returns OPAL_ERR_NOT_READY
+ * instead of blocking in PMIx_Get before the fence completes.
+ */
+#define OPAL_MODEX_RECV_STRING_LOCAL(r, s, p, d, sz)                                               \
+    do {                                                                                           \
+        pmix_proc_t _proc;                                                                         \
+        pmix_value_t *_kv = NULL;                                                                  \
+        pmix_info_t _info;                                                                         \
+        pmix_scope_t _scope = PMIX_LOCAL;                                                          \
+        OPAL_OUTPUT_VERBOSE(                                                                       \
+            (1, opal_pmix_verbose_output, "%s[%s:%d] MODEX RECV LOCAL FOR PROC %s KEY %s",         \
+             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__, OPAL_NAME_PRINT(*(p)), (s))); \
+        *(d) = NULL;                                                                               \
+        *(sz) = 0;                                                                                 \
+        if (opal_pmix_modex_peer_not_ready(p)) {                                                   \
+            (r) = OPAL_ERR_NOT_READY;                                                              \
+            break;                                                                                 \
+        }                                                                                          \
+        OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                                       \
+        PMIX_INFO_LOAD(&_info, PMIX_DATA_SCOPE, &_scope, PMIX_SCOPE);                              \
+        (r) = PMIx_Get(&(_proc), (s), &_info, 1, &(_kv));                                          \
+        PMIX_INFO_DESTRUCT(&_info);                                                                \
+        if (NULL == _kv || PMIX_ERR_NOT_FOUND == (r)) {                                            \
+            (r) = OPAL_ERR_NOT_FOUND;                                                              \
         } else if (PMIX_SUCCESS == (r)) {                                                          \
             *(d) = (uint8_t *) _kv->data.bo.bytes;                                                 \
             *(sz) = _kv->data.bo.size;                                                             \
@@ -527,10 +570,14 @@ typedef struct {
              OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__, OPAL_NAME_PRINT(*(p)), (s))); \
         *(d) = NULL;                                                                               \
         *(sz) = 0;                                                                                 \
+        if (opal_pmix_modex_peer_not_ready(p)) {                                                   \
+            (r) = OPAL_ERR_NOT_READY;                                                              \
+            break;                                                                                 \
+        }                                                                                          \
         OPAL_PMIX_CONVERT_NAME(&_proc, (p));                                                       \
         (r) = PMIx_Get(&(_proc), (s), NULL, 0, &(_kv));                                            \
-        if (NULL == _kv) {                                                                         \
-            (r) = PMIX_ERR_NOT_FOUND;                                                              \
+        if (NULL == _kv || PMIX_ERR_NOT_FOUND == (r)) {                                            \
+            (r) = OPAL_ERR_NOT_FOUND;                                                              \
         } else if (PMIX_SUCCESS == (r)) {                                                          \
             *(d) = (uint8_t *) _kv->data.bo.bytes;                                                 \
             *(sz) = _kv->data.bo.size;                                                             \
@@ -573,7 +620,11 @@ typedef struct {
 
 /**
  * Provide a simplified macro for retrieving modex data
- * from another process:
+ * from another process without blocking in PMIx_Get.
+ *
+ * Returns OPAL_ERR_NOT_READY before the collect fence completes (the
+ * peer may still publish this key), otherwise the status of a
+ * PMIX_IMMEDIATE Get.
  *
  * r - the integer return status from the modex op (int)
  * s - the MCA component that posted the data (mca_base_component_t*)
@@ -597,6 +648,27 @@ typedef struct {
             (r) = OPAL_ERR_OUT_OF_RESOURCE;                                          \
         } else {                                                                     \
             OPAL_MODEX_RECV_STRING_IMMEDIATE((r), _key, (p), (d), (sz));             \
+            free(_key);                                                              \
+        }                                                                            \
+    } while (0);
+
+/**
+ * Retrieve a PMIX_LOCAL blob from the local PMIx server (see
+ * OPAL_MODEX_RECV_STRING_LOCAL).
+ */
+#define OPAL_MODEX_RECV_LOCAL(r, s, p, d, sz)                                        \
+    do {                                                                             \
+        char *_key;                                                                  \
+        _key = mca_base_component_to_string((s));                                    \
+        OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,                            \
+                             "%s[%s:%d] MODEX RECV LOCAL FOR PROC %s KEY %s",        \
+                             OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), __FILE__, __LINE__, \
+                             OPAL_NAME_PRINT(*(p)), _key));                          \
+        if (NULL == _key) {                                                          \
+            OPAL_ERROR_LOG(OPAL_ERR_OUT_OF_RESOURCE);                                \
+            (r) = OPAL_ERR_OUT_OF_RESOURCE;                                          \
+        } else {                                                                     \
+            OPAL_MODEX_RECV_STRING_LOCAL((r), _key, (p), (d), (sz));                 \
             free(_key);                                                              \
         }                                                                            \
     } while (0);

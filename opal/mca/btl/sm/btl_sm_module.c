@@ -56,7 +56,7 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
 
 static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                        struct opal_bitmap_t *reachability);
+                        struct opal_bitmap_t *status);
 
 static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc);
 
@@ -161,19 +161,62 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     return OPAL_SUCCESS;
 }
 
+/* Tell a transient Get miss from a final one; the peer's own state says
+ * which. NOT_READY while the peer's data can still arrive -- the key may
+ * simply not have reached the node server yet. Once
+ * OPAL_PROC_FLAG_AVAILABLE promises everything that peer published is
+ * local, a missing key is missing for good: the peer does not use this
+ * btl. NOT_READY there would be an unbounded retry -- the peer is never
+ * declared unreachable, so a send to it is re-driven from every progress
+ * tick for the life of the job.
+ *
+ * Statuses here are OPAL, converted where they enter: PMIx numbers its
+ * errors from the same small negatives and means different things by
+ * them -- PMIx "not found" is -46, which is OPAL_ERR_TAKE_NEXT_OPTION. */
+static int sm_modex_not_ready(const struct opal_proc_t *proc, int rc)
+{
+    if (OPAL_ERR_NOT_READY == rc) {
+        return OPAL_ERR_NOT_READY;
+    }
+    if (OPAL_ERR_NOT_FOUND != rc) {
+        return rc;
+    }
+    if (!opal_proc_known(proc, OPAL_PROC_FLAG_AVAILABLE)) {
+        return OPAL_ERR_NOT_READY;
+    }
+
+    /* Final either way; the flag only decides what is reported.
+     * FETCH_FAILED is never set on its own, so the check above suffices. */
+    if (opal_proc_known(proc, OPAL_PROC_FLAG_FETCH_FAILED)) {
+        BTL_VERBOSE(("no shared memory for peer %s: nothing this peer published was ever "
+                     "fetched, so this btl is unavailable for the whole node",
+                     OPAL_NAME_PRINT(proc->proc_name)));
+    } else {
+        BTL_VERBOSE(("peer %s published no shared memory of its own, so it does not use "
+                     "this btl and neither can the rest of the node",
+                     OPAL_NAME_PRINT(proc->proc_name)));
+    }
+
+    return OPAL_ERR_NOT_FOUND;
+}
+
 static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc)
 {
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
-    mca_btl_sm_modex_t *modex;
+    mca_btl_sm_modex_t *modex = NULL;
     size_t msg_size;
     int rc;
 
     uint16_t peer_local_rank;
     uint16_t *ptr = &peer_local_rank;
     OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &proc->proc_name, &ptr, PMIX_UINT16);
-    if (OPAL_SUCCESS != rc) {
+    if (PMIX_SUCCESS != rc) {
         BTL_VERBOSE(("could not read the local rank for peer. rc=%d", rc));
-        return rc;
+        /* That macro reports what PMIx said, unlike its
+         * OPAL_MODEX_RECV_LOCAL neighbour below, so convert it: the two
+         * sets of codes overlap numerically and disagree on what the
+         * numbers mean. */
+        return sm_modex_not_ready(proc, opal_pmix_convert_status(rc));
     }
 
     mca_btl_base_endpoint_t *ep = component->endpoints + peer_local_rank;
@@ -182,17 +225,30 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
         return OPAL_SUCCESS;
     }
 
+    if (peer_local_rank != MCA_BTL_SM_LOCAL_RANK) {
+        OPAL_MODEX_RECV_LOCAL(rc, &component->super.btl_version, &proc->proc_name,
+                              (void **) &modex, &msg_size);
+        if (OPAL_SUCCESS != rc) {
+            *ep_out = NULL;
+            return sm_modex_not_ready(proc, rc);
+        }
+    }
+
+    OPAL_THREAD_LOCK(&component->lock);
+    if (NULL != ep->fifo) {
+        OPAL_THREAD_UNLOCK(&component->lock);
+        if (NULL != modex) {
+            free(modex);
+        }
+        *ep_out = ep;
+        return OPAL_SUCCESS;
+    }
+
     OBJ_CONSTRUCT(ep, mca_btl_sm_endpoint_t);
 
     ep->peer_smp_rank = peer_local_rank;
 
     if (!mca_btl_is_self_endpoint(ep)) {
-        OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version, &proc->proc_name,
-                                  (void **) &modex, &msg_size);
-        if (OPAL_SUCCESS != rc) {
-            return rc;
-        }
-
         /* attach to the remote segment */
         ep->smsc_endpoint = NULL;  /* assume no one sided support */
         if( NULL != mca_smsc ) {
@@ -213,6 +269,9 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
                 || msg_size < modex_hdr_size
                 || (size_t) modex->seg_ds_size > msg_size - modex_hdr_size) {
                 free(modex);
+                OBJ_DESTRUCT(ep);
+                *ep_out = NULL;
+                OPAL_THREAD_UNLOCK(&component->lock);
                 return OPAL_ERR_BAD_PARAM;
             }
 
@@ -222,6 +281,9 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
             ep->seg_ds = calloc(1, sizeof(opal_shmem_ds_t));
             if (NULL == ep->seg_ds) {
                 free(modex);
+                OBJ_DESTRUCT(ep);
+                *ep_out = NULL;
+                OPAL_THREAD_UNLOCK(&component->lock);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
@@ -233,6 +295,10 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
 
             ep->segment_base = opal_shmem_segment_attach(ep->seg_ds);
             if (NULL == ep->segment_base) {
+                free(modex);
+                OBJ_DESTRUCT(ep);
+                *ep_out = NULL;
+                OPAL_THREAD_UNLOCK(&component->lock);
                 return OPAL_ERROR;
             }
 
@@ -245,6 +311,7 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
     }
 
     ep->fifo = (struct sm_fifo_t *) ep->segment_base;
+    OPAL_THREAD_UNLOCK(&component->lock);
 
     return OPAL_SUCCESS;
 }
@@ -273,9 +340,9 @@ static int fini_sm_endpoint(struct mca_btl_base_endpoint_t *ep)
  *
  */
 
-static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+static int sm_add_procs(struct mca_btl_base_module_t *btl __opal_attribute_unused__, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                        opal_bitmap_t *reachability)
+                        opal_bitmap_t *status)
 {
     mca_btl_sm_t *sm_btl = (mca_btl_sm_t *) btl;
     const opal_proc_t *my_proc;
@@ -288,7 +355,8 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* jump out if there's not someone we can talk to */
+    /* jump out if there's not someone we can talk to. Every proc keeps
+     * the default MCA_BTL_PROC_NOT_ELIGIBLE. */
     if (1 > MCA_BTL_SM_NUM_LOCAL_PEERS) {
         return OPAL_SUCCESS;
     }
@@ -302,25 +370,44 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
 
     for (int32_t proc = 0; proc < (int32_t) nprocs; ++proc) {
         /* check to see if this proc can be reached via shmem (i.e.,
-           if they're on my local host and in my job) */
+           if they're on my local host and in my job). Neither test needs
+           anything the peer published, so a no is final: leave the
+           default MCA_BTL_PROC_NOT_ELIGIBLE. */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid
             || !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
             continue;
         }
 
-        if (my_proc != procs[proc] && NULL != reachability) {
-            /* add this proc to shared memory accessibility list */
-            rc = opal_bitmap_set_bit(reachability, proc);
-            if (OPAL_SUCCESS != rc) {
-                return rc;
-            }
-        }
-
         /* setup endpoint */
         rc = init_sm_endpoint(peers + proc, procs[proc]);
+        if (OPAL_ERR_NOT_READY == rc) {
+            /* The peer's segment has not reached us yet. It is a local
+             * peer of the same job, so it will: say that rather than
+             * let a btl of lower exclusivity carry it in the meantime. */
+            peers[proc] = NULL;
+            MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_NO_INFO);
+            rc = OPAL_SUCCESS;
+            continue;
+        }
+        if (OPAL_ERR_NOT_FOUND == rc) {
+            /* Final, and only for this peer: its data is local and names
+             * no shared memory, so it does not use this btl. Leave the
+             * default MCA_BTL_PROC_NOT_ELIGIBLE. */
+            peers[proc] = NULL;
+            rc = OPAL_SUCCESS;
+            continue;
+        }
         if (OPAL_SUCCESS != rc) {
+            peers[proc] = NULL;
             break;
+        }
+
+        /* Self gets an endpoint -- it translates the fragments returning
+         * through our own fifo -- but no claim, so that self, not this
+         * btl, is picked for messaging ourselves. */
+        if (my_proc != procs[proc]) {
+            MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_CONNECTED);
         }
     }
 
@@ -550,6 +637,8 @@ static void mca_btl_sm_endpoint_constructor(mca_btl_sm_endpoint_t *ep)
     ep->fbox_in.buffer = NULL;
     ep->fbox_out.buffer = NULL;
     ep->fbox_out.fbox = NULL;
+    ep->seg_ds = NULL;
+    ep->smsc_endpoint = NULL;
 }
 
 static void mca_btl_sm_endpoint_destructor(mca_btl_sm_endpoint_t *ep)

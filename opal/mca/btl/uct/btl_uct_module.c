@@ -28,6 +28,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
+#include <stdlib.h>
 #include <string.h>
 
 #include "btl_uct.h"
@@ -72,7 +73,7 @@ struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t 
 
 static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
                                  opal_proc_t **opal_procs, mca_btl_base_endpoint_t **peers,
-                                 opal_bitmap_t *reachable)
+                                 opal_bitmap_t *status)
 {
     mca_btl_uct_module_t *uct_module = (mca_btl_uct_module_t *) btl;
     int rc;
@@ -101,15 +102,32 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
     }
 
     for (size_t i = 0; i < nprocs; ++i) {
-        /* all endpoints are reachable for uct */
+        mca_btl_uct_modex_t *modex = NULL;
+        size_t msg_size = 0;
+
+        /* Connection stays lazy, but the peer must publish a UCT blob. */
+        OPAL_MODEX_RECV(rc, &mca_btl_uct_component.super.btl_version, &opal_procs[i]->proc_name,
+                        (void **) &modex, &msg_size);
+        if (OPAL_ERR_NOT_READY == rc) {
+            peers[i] = NULL;
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
+            continue;
+        }
+        if (OPAL_SUCCESS != rc) {
+            /* No blob: no transport we speak, and that is final. */
+            peers[i] = NULL;
+            continue;
+        }
+        free(modex);
+
         peers[i] = mca_btl_uct_get_ep(btl, opal_procs[i]);
         if (OPAL_UNLIKELY(NULL == peers[i])) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        if (NULL != reachable) {
-            opal_bitmap_set_bit(reachable, i);
-        }
+        /* The connection comes up on demand and the send path answers
+         * "retry" until it does, so the endpoint counts as usable. */
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
     }
 
     return OPAL_SUCCESS;

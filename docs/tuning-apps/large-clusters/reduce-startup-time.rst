@@ -32,6 +32,11 @@ These are activated by setting the corresponding MCA parameter, and include:
   example the ``usnic`` BTL, or ``psm2``) advertise
   ``REQUIRE_SYNC_INIT`` and restore the previous wait-plus-world
   ``add_procs`` during ``MPI_Init``.
+  The TCP BTL exposes the same choice as ``btl_tcp_connect_mode``
+  (``lazy``, ``sync_init``, or ``full``). To restore a synchronizing
+  ``MPI_Init`` over TCP without involving the shared-memory BTL, use
+  ``--mca pml ob1 --mca btl self,tcp --mca btl_tcp_connect_mode
+  sync_init`` (or ``full``).
 
 * Setting the ``pmix_base_async_modex`` MCA parameter will eliminate a
   global out-of-band collective operation during ``MPI_INIT``. This
