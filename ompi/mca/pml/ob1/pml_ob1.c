@@ -56,6 +56,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_spc.h"
+
 #include "pml_ob1.h"
 #include "pml_ob1_component.h"
 #include "pml_ob1_comm.h"
@@ -219,7 +220,7 @@ int mca_pml_ob1_enable(bool enable)
     return OMPI_SUCCESS;
 }
 
-static void mca_pml_ob1_reprepare_send_convertor(mca_pml_ob1_send_request_t *sendreq)
+void mca_pml_ob1_reprepare_send_convertor(mca_pml_ob1_send_request_t *sendreq)
 {
     mca_pml_base_send_request_t *req = &sendreq->req_send;
 
@@ -250,10 +251,8 @@ mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc, int *sta
     return mca_bml_base_get_endpoint(proc, status);
 }
 
-/* Opportunistic: nothing is parked here, so nothing has to be retried
- * either. Everything that genuinely needs this endpoint asks again on its
- * own -- an ACK or FIN with nowhere to go queues on pckt_pending -- and
- * that retry builds the endpoint itself. */
+/* Opportunistic: failure is neither recorded nor retried. Anything that
+ * needs this endpoint builds it on its own retry. */
 void mca_pml_ob1_prepare_recv_proc(ompi_proc_t *proc)
 {
     int rc;
@@ -310,8 +309,11 @@ static bool mca_pml_ob1_start_staged(mca_pml_ob1_send_request_t *sendreq)
             OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
             return false;
         }
-        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = rc;
-        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+        /* The user already holds this request, so failure can only be
+         * reported through its status, which carries MPI codes. */
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+            ompi_errcode_get_mpi_code(rc);
+        send_request_pml_complete(sendreq);
         return true;
     }
 
@@ -324,8 +326,9 @@ static bool mca_pml_ob1_start_staged(mca_pml_ob1_send_request_t *sendreq)
      * detaching the sync a waiter has by now hung there. */
     rc = mca_pml_ob1_send_request_start_endpoint(sendreq, ep);
     if (OMPI_SUCCESS != rc && OMPI_ERR_OUT_OF_RESOURCE != rc) {
-        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = rc;
-        MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+            ompi_errcode_get_mpi_code(rc);
+        send_request_pml_complete(sendreq);
     }
     return true;
 }
@@ -344,9 +347,9 @@ int mca_pml_ob1_drain_staged_sends(void)
     }
 
     OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-    /* Emptied here and worked outside the lock, because starting a request
-     * reaches the BTLs and re-parks it when its peer is still not
-     * reachable, both of which take locks of their own. */
+    /* Emptied here, started outside the lock: starting reaches the BTLs
+     * and may re-park, both of which take locks. Taking the whole list
+     * also asks about every parked peer, starting an on-demand fetch. */
     OBJ_CONSTRUCT(&ready, opal_list_t);
     OPAL_LIST_FOREACH_SAFE(sendreq, next, &mca_pml_ob1.modex_pending,
                            mca_pml_ob1_send_request_t) {
@@ -479,6 +482,19 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * proc, or into the out-of-order (cant_match) list.
          */
         pml_proc = mca_pml_ob1_peer_lookup(comm, hdr->hdr_src);
+
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+        /* This fragment predates the communicator, hence anything that
+         * would have seeded its sender. Not a btl callback, so seeding
+         * can happen here; if it fails the fragment waits with the
+         * out-of-sequence ones. */
+        if (OMPI_SUCCESS != ompi_proc_ensure_arch(pml_proc->ompi_proc)) {
+            ompi_pml_ob1_append_frag_to_ordered_list(&pml_proc->frags_cant_match, frag,
+                                                     pml_proc->expected_sequence);
+            mca_pml_ob1_note_unseeded_frags(pml_proc);
+            continue;
+        }
+#endif
 
         if (OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm)) {
 #if !MCA_PML_OB1_CUSTOM_MATCH
