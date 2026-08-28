@@ -159,19 +159,15 @@ OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
 
 /**
  * Make sure this proc's architecture, and therefore its convertor, is
- * the peer's and not just our own default.
+ * the peer's and not our own default; a peer is seeded on first use.
  *
- * A peer is seeded on first use: when its endpoint is built for a send,
- * or when a receive matches it. An operation that had to be staged is
- * seeded when the PML reposts it.
+ * No read barrier on purpose: the convertor this flag announces is a
+ * second location, so a thread seeing the flip is not formally
+ * guaranteed to see it. Ordering that costs a barrier per message, for
+ * a window needing MPI_THREAD_MULTIPLE and mismatched architectures.
  *
- * Free in a build without heterogeneous support, and a single load once
- * the peer has been seeded.
- *
- * @retval OMPI_SUCCESS       proc_convertor matches the peer.
- * @retval OMPI_ERR_NOT_READY the peer has not published its
- *                            architecture yet; nothing may be
- *                            converted for it.
+ * Returns OMPI_SUCCESS once proc_convertor matches the peer, or
+ * OMPI_ERR_NOT_READY if it has not published its architecture yet.
  */
 static inline int ompi_proc_ensure_arch(ompi_proc_t *proc)
 {

@@ -69,34 +69,30 @@ mca_bml_base_endpoint_t *mca_bml_base_endpoint_create (ompi_proc_t *proc, int *s
         return endpoint;
     }
 
-    /* add_proc selects BTLs from the peer's locality, which a proc
-     * created on demand does not have yet. In a heterogeneous build
-     * this also seeds the peer's architecture, hence its convertor:
-     * that comes from the same blob the BTL keys live in, so a failure
-     * here would repeat inside add_proc. Report it now rather than hand
-     * out an endpoint we would pack for with the local convertor. */
+    /* Must precede add_proc: it selects BTLs from the peer's locality,
+     * which an on-demand proc does not have yet, and in a heterogeneous
+     * build seeds the peer's architecture, hence its convertor. The btls
+     * read proc_arch as a plain value -- tcp byte-swaps modex addresses
+     * on OPAL_ARCH_ISBIGENDIAN, portals4 refuses a peer whose arch is
+     * not ours -- and would see their own architecture if this ran
+     * after them. */
     rc = ompi_proc_complete_init_single (proc);
     if (OMPI_SUCCESS != rc) {
         *status = rc;
         return NULL;
     }
 
-    OPAL_THREAD_LOCK(&mca_bml_lock);
+    /* add_proc serializes on mca_bml_lock itself, and publishes at most
+     * one endpoint per proc however many threads race here. */
+    rc = mca_bml.bml_add_proc (proc);
     endpoint = mca_bml_base_endpoint_peek (proc);
-    if (NULL == endpoint) {
-        rc = mca_bml.bml_add_proc (proc);
-        endpoint = mca_bml_base_endpoint_peek (proc);
-        if (NULL != endpoint) {
-            /* add_proc can report a per-BTL failure and still publish a
-             * usable endpoint built from the BTLs that did claim the
-             * peer. */
-            rc = OMPI_SUCCESS;
-        } else if (OMPI_SUCCESS == rc) {
-            /* add_proc claimed success without publishing an endpoint. */
-            rc = OMPI_ERR_UNREACH;
-        }
+    if (NULL != endpoint) {
+        /* add_proc can report a per-BTL failure and still publish a
+         * usable endpoint built from the btls that claimed the peer. */
+        rc = OMPI_SUCCESS;
+    } else if (OMPI_SUCCESS == rc) {
+        rc = OMPI_ERR_UNREACH;
     }
-    OPAL_THREAD_UNLOCK(&mca_bml_lock);
 
     *status = rc;
 

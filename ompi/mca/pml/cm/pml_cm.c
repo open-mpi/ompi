@@ -26,6 +26,7 @@
 #include "opal/runtime/opal_progress.h"
 
 #include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errcode-internal.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/base.h"
@@ -288,7 +289,10 @@ static bool mca_pml_cm_start_staged(mca_pml_cm_request_t *req)
             MCA_PML_CM_HVY_SEND_REQUEST_POST(sendreq, rc);
         }
         if (OMPI_SUCCESS != rc) {
-            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = rc;
+            /* The user holds this request; its status is the only
+             * channel left. */
+            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR =
+                ompi_errcode_get_mpi_code(rc);
             MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(sendreq);
         }
     } else {
@@ -298,7 +302,8 @@ static bool mca_pml_cm_start_staged(mca_pml_cm_request_t *req)
             MCA_PML_CM_HVY_RECV_REQUEST_POST(recvreq, rc);
         }
         if (OMPI_SUCCESS != rc) {
-            recvreq->req_base.req_ompi.req_status.MPI_ERROR = rc;
+            recvreq->req_base.req_ompi.req_status.MPI_ERROR =
+                ompi_errcode_get_mpi_code(rc);
             MCA_PML_CM_HVY_RECV_REQUEST_PML_COMPLETE(recvreq);
         }
     }
