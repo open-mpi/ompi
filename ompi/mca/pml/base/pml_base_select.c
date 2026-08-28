@@ -320,6 +320,14 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     }
     OPAL_MODEX_RECV_STRING(ret, key, &proc_name, (void**) &remote_pml, &size);
     free(key);
+    if (OPAL_ERR_NOT_READY == ret) {
+        /* Distinct from NOT_FOUND: the peer did publish, so the caller
+         * must come back later rather than declare it unreachable. */
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+                            "check:select: PML modex for process %s not local yet",
+                            OMPI_NAME_PRINT(&proc_name));
+        return OMPI_ERR_NOT_READY;
+    }
     if (PMIX_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for process %s not found",
