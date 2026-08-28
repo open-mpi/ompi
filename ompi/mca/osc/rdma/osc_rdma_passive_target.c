@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2013 Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2018      Intel, Inc. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -216,6 +217,11 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int mpi_assert, ompi_w
     int ret = OMPI_SUCCESS;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "lock: %d, %d, %d, %s", lock_type, target, mpi_assert, win->w_name);
+
+    if (OPAL_UNLIKELY(NULL == peer)) {
+        OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "target %d is unreachable", target);
+        return OMPI_ERR_UNREACH;
+    }
 
     if (module->no_locks) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "attempted to lock with no_locks set");

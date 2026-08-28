@@ -2,6 +2,7 @@
  * Copyright (c) 2013-2021 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  *
  * $COPYRIGHT$
@@ -214,12 +215,28 @@ static void ompi_comm_rbcast_bml_recv_cb(
 }
 
 int ompi_comm_rbcast_send_msg(ompi_proc_t* proc, ompi_comm_rbcast_message_t* msg, size_t size) {
-    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
-    assert( NULL != endpoint );
-    mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_eager, 0);
-    assert( NULL != bml_btl );
     mca_btl_base_descriptor_t *des;
     int ret;
+    /* Unlike the PML, this path cannot stage the message until the peer's
+     * connection info shows up. Both topologies above route around an
+     * UNREACH edge but abort the whole broadcast on any other code,
+     * leaving a revoke or a failure notification that reached nobody --
+     * so a peer merely not connected yet must be reported as UNREACH,
+     * while a hard add_proc failure still stops everything. */
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc, &ret);
+    if( OPAL_UNLIKELY(NULL == endpoint) ) {
+        OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
+            "%s %s: no endpoint for %s (%d), dropping rbcast for comm %3d:%d",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&proc->super.proc_name), ret, msg->cid, msg->epoch));
+        return (OMPI_ERR_NOT_READY == ret)? OMPI_ERR_UNREACH: ret;
+    }
+    mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_eager, 0);
+    if( OPAL_UNLIKELY(NULL == bml_btl) ) {
+        OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
+            "%s %s: no eager btl for %s, dropping rbcast for comm %3d:%d",
+            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, OMPI_NAME_PRINT(&proc->super.proc_name), msg->cid, msg->epoch));
+        return OMPI_ERR_UNREACH;
+    }
 
     if(!ompi_proc_is_active(proc)) {
         opal_output_verbose(5, ompi_ftmpi_output_handle,

@@ -104,6 +104,9 @@ mca_pml_cm_component_open(void)
 {
     int ret;
 
+    OBJ_CONSTRUCT(&ompi_pml_cm.modex_pending, opal_list_t);
+    OBJ_CONSTRUCT(&ompi_pml_cm.lock, opal_mutex_t);
+
     ret = mca_base_framework_open(&ompi_mtl_base_framework, 0);
     if (OMPI_SUCCESS == ret) {
       /* If no MTL components initialized CM component can be unloaded */
@@ -119,6 +122,15 @@ mca_pml_cm_component_open(void)
 static int
 mca_pml_cm_component_close(void)
 {
+    /* Finalize cannot be reached with a request still outstanding, so
+     * the progress callback has necessarily emptied this. Asserted
+     * because the list destructor only re-initializes, which would hide
+     * a request that completed to the application while still linked. */
+    assert(opal_list_is_empty(&ompi_pml_cm.modex_pending));
+
+    OBJ_DESTRUCT(&ompi_pml_cm.modex_pending);
+    OBJ_DESTRUCT(&ompi_pml_cm.lock);
+
     return mca_base_framework_close(&ompi_mtl_base_framework);
 }
 

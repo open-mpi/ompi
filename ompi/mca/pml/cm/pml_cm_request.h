@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ struct mca_pml_cm_request_t {
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     opal_convertor_t req_convertor;       /**< convertor that describes the memory layout */
 /* END: These fields have to match the definition of the mca_pml_base_request_t */
+    bool req_staged;                      /**< waiting for the peer's connection info to arrive */
 };
 typedef struct mca_pml_cm_request_t mca_pml_cm_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_cm_request_t);
