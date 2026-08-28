@@ -644,6 +644,14 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_modex_start_exchange() failed", ret);
     }
 
+    /* Verify that this job agrees on the PML. Reads what a peer published,
+     * so the exchange must have started, but does not wait for it; kept
+     * separate from the eager add_procs, which no longer always runs. */
+    ret = mca_pml_base_pml_check_start();
+    if (OMPI_SUCCESS != ret) {
+        return ompi_instance_print_error ("mca_pml_base_pml_check_start() failed", ret);
+    }
+
     OMPI_TIMING_NEXT("modex");
 
     /* select buffered send allocator component to be used */
