@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,6 @@
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
-#include "ompi/runtime/ompi_modex.h"
 #if MPI_VERSION >= 4
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #endif
@@ -171,7 +171,7 @@ int mca_pml_ob1_isend(const void *buf,
     }
 
     if (NULL == endpoint) {
-        endpoint = mca_pml_ob1_ensure_endpoint (dst_proc);
+        endpoint = mca_pml_ob1_ensure_endpoint (dst_proc, &rc);
     }
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
@@ -180,21 +180,18 @@ int mca_pml_ob1_isend(const void *buf,
             goto alloc_ft_req;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
-        if (!ompi_modex_proc_ready(dst_proc)) {
-            MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
-            if (NULL == sendreq) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
-                                          comm, sendmode, false, ob1_proc);
-            PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                                     &(sendreq)->req_send.req_base,
-                                     PERUSE_SEND);
-            rc = mca_pml_ob1_stage_or_start(sendreq, seqn);
-            *request = (ompi_request_t *) sendreq;
-            return rc;
+        MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq);
+        if (NULL == sendreq) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        return OMPI_ERR_UNREACH;
+        MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
+                                      comm, sendmode, false, ob1_proc);
+        PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
+                                 &(sendreq)->req_send.req_base,
+                                 PERUSE_SEND);
+        rc = mca_pml_ob1_stage_or_start(sendreq, seqn);
+        *request = (ompi_request_t *) sendreq;
+        return rc;
     }
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS != sendmode) {
@@ -281,7 +278,7 @@ int mca_pml_ob1_send(const void *buf,
     int rc;
 
     if (NULL == endpoint) {
-        endpoint = mca_pml_ob1_ensure_endpoint (dst_proc);
+        endpoint = mca_pml_ob1_ensure_endpoint (dst_proc, &rc);
     }
 
     if (OPAL_UNLIKELY(NULL == endpoint)) {
@@ -290,18 +287,15 @@ int mca_pml_ob1_send(const void *buf,
             return MPI_ERR_PROC_FAILED;
         }
 #endif /* OPAL_ENABLE_FT_MPI */
-        if (!ompi_modex_proc_ready(dst_proc)) {
-            ompi_request_t *request;
-            rc = mca_pml_ob1_isend (buf, count, datatype, dst, tag, sendmode, comm, &request);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-                return rc;
-            }
-            ompi_request_wait_completion (request);
-            rc = request->req_status.MPI_ERROR;
-            ompi_request_free (&request);
+        ompi_request_t *request;
+        rc = mca_pml_ob1_isend (buf, count, datatype, dst, tag, sendmode, comm, &request);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             return rc;
         }
-        return OMPI_ERR_UNREACH;
+        ompi_request_wait_completion (request);
+        rc = request->req_status.MPI_ERROR;
+        ompi_request_free (&request);
+        return rc;
     }
 
     if (OPAL_UNLIKELY(MCA_PML_BASE_SEND_BUFFERED == sendmode)) {

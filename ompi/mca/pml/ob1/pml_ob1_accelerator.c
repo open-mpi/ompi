@@ -14,7 +14,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -451,7 +451,17 @@ int mca_pml_ob1_accelerator_need_buffers(void * rreq,
                                          mca_btl_base_module_t* btl)
 {
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)rreq;
-    mca_bml_base_endpoint_t* bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc);
+    int eprc;
+    mca_bml_base_endpoint_t* bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc,
+                                                                      &eprc);
+
+    /* No endpoint to that peer yet, so nothing tells us this btl can get
+     * from accelerator memory. Answer conservatively and let the caller
+     * fall back on copy in/out. */
+    if (OPAL_UNLIKELY(NULL == bml_endpoint)) {
+        return true;
+    }
+
     mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
 
     /* A btl could be in the rdma list but not in the send list so check there also */

@@ -8,6 +8,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,11 +20,14 @@
 #define PML_CM_H
 
 #include "ompi_config.h"
+#include "opal/class/opal_list.h"
+#include "opal/mca/threads/mutex.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/proc/proc.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/mtl/mtl.h"
 
@@ -45,6 +49,9 @@ struct ompi_pml_cm_t {
     int                   free_list_num;
     int                   free_list_max;
     int                   free_list_inc;
+    /** requests waiting for a peer's connection info to arrive */
+    opal_list_t           modex_pending;
+    opal_mutex_t          lock;
 };
 typedef struct ompi_pml_cm_t ompi_pml_cm_t;
 extern ompi_pml_cm_t ompi_pml_cm;
@@ -52,6 +59,82 @@ extern ompi_pml_cm_t ompi_pml_cm;
 /* PML interface functions */
 OMPI_DECLSPEC extern int mca_pml_cm_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 OMPI_DECLSPEC extern int mca_pml_cm_del_procs(struct ompi_proc_t **procs, size_t nprocs);
+
+/**
+ * Wire a peer if it is not wired yet.
+ *
+ * Returns OMPI_ERR_NOT_READY when the peer's connection info has not
+ * arrived: the caller either stages the operation or, when it is
+ * allowed to block, calls mca_pml_cm_wait_proc() instead.
+ */
+OMPI_DECLSPEC extern int mca_pml_cm_ensure_proc(struct ompi_proc_t *proc);
+
+/** Wire a peer, waiting for the exchange if need be. */
+OMPI_DECLSPEC extern int mca_pml_cm_wait_proc(struct ompi_proc_t *proc);
+
+/** Park a request until its peer is wired, and replay it then. */
+OMPI_DECLSPEC extern int mca_pml_cm_stage_request(mca_pml_cm_request_t *req);
+
+/** Take a parked request back off the list; false if it was not there. */
+OMPI_DECLSPEC extern bool mca_pml_cm_unstage_request(mca_pml_cm_request_t *req);
+
+/**
+ * Wire the peer of a persistent request being started. Returns
+ * OMPI_ERR_NOT_READY once the request has been parked instead, in which
+ * case the caller must not start it.
+ */
+OMPI_DECLSPEC extern int mca_pml_cm_start_peer(mca_pml_cm_request_t *req, int peer,
+                                               bool must_wait);
+
+/**
+ * Can an operation on this peer go straight to the MTL? A peer is wired
+ * on first use, and MPI_ANY_SOURCE names no peer at all.
+ */
+__opal_attribute_always_inline__ static inline bool
+mca_pml_cm_peer_wired(ompi_communicator_t *comm, int rank)
+{
+    ompi_proc_t *proc;
+
+    if (MPI_ANY_SOURCE == rank) {
+        return true;
+    }
+    proc = ompi_comm_peer_lookup(comm, rank);
+
+    return (NULL != proc && opal_proc_known(&proc->super, OPAL_PROC_FLAG_WIRED));
+}
+
+/**
+ * Slow paths for an operation whose peer is not wired yet. They build a
+ * heavy request, which unlike a thin one remembers enough to be
+ * replayed, and park it if the connection info has still not arrived.
+ */
+OMPI_DECLSPEC extern int mca_pml_cm_isend_slow(const void *buf, size_t count,
+                                               ompi_datatype_t *datatype, int dst,
+                                               int tag,
+                                               mca_pml_base_send_mode_t sendmode,
+                                               ompi_communicator_t *comm,
+                                               ompi_request_t **request);
+OMPI_DECLSPEC extern int mca_pml_cm_irecv_slow(void *addr, size_t count,
+                                               ompi_datatype_t *datatype, int src,
+                                               int tag, ompi_communicator_t *comm,
+                                               ompi_request_t **request);
+
+/**
+ * Wire a peer for an operation that is allowed to block, so that the
+ * call below it can assume the peer is usable.
+ */
+__opal_attribute_always_inline__ static inline int
+mca_pml_cm_peer_wire_wait(ompi_communicator_t *comm, int rank)
+{
+    ompi_proc_t *proc;
+
+    if (OPAL_LIKELY(mca_pml_cm_peer_wired(comm, rank))) {
+        return OMPI_SUCCESS;
+    }
+    proc = ompi_comm_peer_lookup(comm, rank);
+
+    return (NULL == proc) ? OMPI_ERR_UNREACH : mca_pml_cm_wait_proc(proc);
+}
 
 OMPI_DECLSPEC extern int mca_pml_cm_enable(bool enable);
 OMPI_DECLSPEC extern int mca_pml_cm_progress(void);
@@ -102,6 +185,10 @@ mca_pml_cm_irecv(void *addr,
     ompi_proc_t* ompi_proc = NULL;
 #endif
 
+    if (OPAL_UNLIKELY(!mca_pml_cm_peer_wired(comm, src))) {
+        return mca_pml_cm_irecv_slow(addr, count, datatype, src, tag, comm, request);
+    }
+
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
     if( OPAL_UNLIKELY(NULL == recvreq) ) return OMPI_ERR_OUT_OF_RESOURCE;
 
@@ -133,6 +220,13 @@ mca_pml_cm_recv(void *addr,
     int ret;
     uint32_t flags = 0;
     mca_pml_cm_thin_recv_request_t *recvreq;
+
+    if (OPAL_UNLIKELY(!mca_pml_cm_peer_wired(comm, src))) {
+        ret = mca_pml_cm_peer_wire_wait(comm, src);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
+    }
 
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq);
     if (OPAL_UNLIKELY(NULL == recvreq))
@@ -216,6 +310,11 @@ mca_pml_cm_isend(const void* buf,
     int ret;
     uint32_t flags = 0;
 
+    if (OPAL_UNLIKELY(!mca_pml_cm_peer_wired(comm, dst))) {
+        return mca_pml_cm_isend_slow(buf, count, datatype, dst, tag, sendmode,
+                                     comm, request);
+    }
+
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED ) {
         mca_pml_cm_hvy_send_request_t* sendreq;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -290,6 +389,13 @@ mca_pml_cm_send(const void *buf,
     uint32_t flags = 0;
     ompi_proc_t * ompi_proc;
 
+    if (OPAL_UNLIKELY(!mca_pml_cm_peer_wired(comm, dst))) {
+        ret = mca_pml_cm_peer_wire_wait(comm, dst);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
+    }
+
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED) {
         mca_pml_cm_hvy_send_request_t *sendreq;
 
@@ -361,6 +467,19 @@ mca_pml_cm_iprobe(int src, int tag,
                    struct ompi_communicator_t *comm,
                    int *matched, ompi_status_public_t * status)
 {
+    if (OPAL_UNLIKELY(!mca_pml_cm_peer_wired(comm, src))) {
+        /* Nothing can have been received from a peer we have not wired
+         * yet, and "no match yet" is an answer a probe is allowed to
+         * give. Wiring it here would make the next probe conclusive. */
+        ompi_proc_t *proc = ompi_comm_peer_lookup(comm, src);
+        int ret = (NULL == proc) ? OMPI_ERR_UNREACH : mca_pml_cm_ensure_proc(proc);
+
+        if (OMPI_SUCCESS != ret) {
+            *matched = 0;
+            return (OMPI_ERR_NOT_READY == ret) ? OMPI_SUCCESS : ret;
+        }
+    }
+
     return OMPI_MTL_CALL(iprobe(ompi_mtl,
                                 comm, src, tag,
                                 matched, status));
@@ -372,6 +491,11 @@ mca_pml_cm_probe(int src, int tag,
                   ompi_status_public_t * status)
 {
     int ret, matched = 0;
+
+    ret = mca_pml_cm_peer_wire_wait(comm, src);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return ret;
+    }
 
     while (true) {
         ret = OMPI_MTL_CALL(iprobe(ompi_mtl,
@@ -393,6 +517,17 @@ mca_pml_cm_improbe(int src,
                    struct ompi_message_t **message,
                    ompi_status_public_t* status)
 {
+    if (OPAL_UNLIKELY(!mca_pml_cm_peer_wired(comm, src))) {
+        ompi_proc_t *proc = ompi_comm_peer_lookup(comm, src);
+        int ret = (NULL == proc) ? OMPI_ERR_UNREACH : mca_pml_cm_ensure_proc(proc);
+
+        if (OMPI_SUCCESS != ret) {
+            *matched = 0;
+            *message = MPI_MESSAGE_NULL;
+            return (OMPI_ERR_NOT_READY == ret) ? OMPI_SUCCESS : ret;
+        }
+    }
+
     return OMPI_MTL_CALL(improbe(ompi_mtl,
                                  comm, src, tag,
                                  matched, message,
@@ -407,6 +542,11 @@ mca_pml_cm_mprobe(int src,
                   ompi_status_public_t* status)
 {
     int ret, matched = 0;
+
+    ret = mca_pml_cm_peer_wire_wait(comm, src);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        return ret;
+    }
 
     while (true) {
         ret = OMPI_MTL_CALL(improbe(ompi_mtl,

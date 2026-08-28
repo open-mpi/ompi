@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
@@ -576,7 +576,8 @@ static int mca_btl_sm_component_progress(void)
 
     mca_btl_sm_progress_endpoints();
 
-    if (SM_FIFO_FREE == mca_btl_sm_component.my_fifo->fifo_head) {
+    if (NULL == mca_btl_sm_component.my_fifo
+        || SM_FIFO_FREE == mca_btl_sm_component.my_fifo->fifo_head) {
         lock = 0;
         return count;
     }

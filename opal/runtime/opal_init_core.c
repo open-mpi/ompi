@@ -26,6 +26,7 @@
  *                         reserved.
  * Copyright (c) 2020      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,6 +131,9 @@ static int opal_err2str(int errnum, const char **errmsg)
         break;
     case OPAL_ERR_NOT_FOUND:
         retval = "Not found";
+        break;
+    case OPAL_ERR_NOT_READY:
+        retval = "Not ready";
         break;
     case OPAL_EXISTS:
         retval = "Exists";

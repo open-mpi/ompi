@@ -392,10 +392,13 @@ do {                                                                    \
  } while(0);
 
 
-#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                              \
+/* The mtl half alone. A request parked for an unreachable peer has had
+ * the setup above done to it already, since the user holds it and MPI
+ * says it is in progress; repeating that would store REQUEST_PENDING
+ * over a req_complete where a waiter has hung its sync. */
+#define MCA_PML_CM_HVY_SEND_REQUEST_POST(sendreq, ret)                               \
 do {                                                                                 \
     ret = OMPI_SUCCESS;                                                              \
-    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);                       \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {             \
         MCA_PML_CM_HVY_SEND_REQUEST_BSEND_ALLOC(sendreq, ret);                       \
     }                                                                                \
@@ -417,6 +420,12 @@ do {                                                                            
             }                                                                        \
         }                                                                            \
     }                                                                                \
+ } while (0)
+
+#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                              \
+do {                                                                                 \
+    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);                       \
+    MCA_PML_CM_HVY_SEND_REQUEST_POST(sendreq, ret);                                  \
  } while (0)
 
 /*

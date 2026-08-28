@@ -27,6 +27,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
+#include <stdlib.h>
 #include <string.h>
 
 #include "btl_uct.h"
@@ -99,8 +100,27 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
         uct_module->initialized = true;
     }
 
+    bool not_ready = false;
+
     for (size_t i = 0; i < nprocs; ++i) {
-        /* all endpoints are reachable for uct */
+        mca_btl_uct_modex_t *modex = NULL;
+        size_t msg_size = 0;
+
+        /* Connection is still lazy, but the peer must have published a
+         * UCT blob. Otherwise BML would treat this BTL as wired. */
+        OPAL_MODEX_RECV(rc, &mca_btl_uct_component.super.btl_version, &opal_procs[i]->proc_name,
+                        (void **) &modex, &msg_size);
+        if (OPAL_ERR_NOT_READY == rc) {
+            peers[i] = NULL;
+            not_ready = true;
+            continue;
+        }
+        if (OPAL_SUCCESS != rc) {
+            peers[i] = NULL;
+            continue;
+        }
+        free(modex);
+
         peers[i] = mca_btl_uct_get_ep(btl, opal_procs[i]);
         if (OPAL_UNLIKELY(NULL == peers[i])) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -111,6 +131,9 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
         }
     }
 
+    if (not_ready) {
+        return OPAL_ERR_NOT_READY;
+    }
     return OPAL_SUCCESS;
 }
 

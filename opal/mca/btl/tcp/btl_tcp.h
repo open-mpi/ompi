@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2019-2020 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +54,13 @@
 #include "opal/util/fd.h"
 
 #define MCA_BTL_TCP_STATISTICS 0
+
+enum {
+    MCA_BTL_TCP_CONNECT_LAZY = 0,
+    MCA_BTL_TCP_CONNECT_SYNC_INIT,
+    MCA_BTL_TCP_CONNECT_FULL
+};
+
 BEGIN_C_DECLS
 
 extern opal_event_base_t *mca_btl_tcp_event_base;
@@ -132,6 +140,7 @@ struct mca_btl_tcp_component_t {
      */
     int tcp_recv_timeout;
     int tcp_handshake_timeout;
+    int tcp_connect_mode; /* MCA_BTL_TCP_CONNECT_* */
 
     /* free list of fragment descriptors */
     opal_free_list_t tcp_frag_eager;

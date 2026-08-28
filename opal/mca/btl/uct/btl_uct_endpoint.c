@@ -5,6 +5,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2019-2025 Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -401,7 +402,12 @@ int mca_btl_uct_endpoint_connect(mca_btl_uct_module_t *uct_btl, mca_btl_uct_endp
         OPAL_MODEX_RECV(rc, &mca_btl_uct_component.super.btl_version, &endpoint->ep_proc->proc_name,
                         (void **) &modex, &msg_size);
         if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
-            BTL_ERROR(("error receiving modex"));
+            if (OPAL_ERR_NOT_READY == rc) {
+                /* Same "not yet" as a connection already in flight. */
+                rc = OPAL_ERR_OUT_OF_RESOURCE;
+            } else if (OPAL_ERR_NOT_FOUND != rc) {
+                BTL_ERROR(("error receiving modex"));
+            }
             break;
         }
 

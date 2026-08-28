@@ -14,6 +14,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -230,7 +231,7 @@ do {                                                                    \
  * @param request  Receive request.
  * @return         OMPI_SUCESS or error status on failure.
  */
-#define MCA_PML_CM_THIN_RECV_REQUEST_START(request, comm, tag, src, ret) \
+#define MCA_PML_CM_RECV_REQUEST_START_SETUP(request)                    \
 do {                                                                    \
     /* init/re-init the request */                                      \
     request->req_base.req_pml_complete = false;                         \
@@ -244,6 +245,11 @@ do {                                                                    \
     request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;       \
     request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
     request->req_base.req_ompi.req_status._cancelled = 0;               \
+} while (0)
+
+#define MCA_PML_CM_THIN_RECV_REQUEST_START(request, comm, tag, src, ret) \
+do {                                                                    \
+    MCA_PML_CM_RECV_REQUEST_START_SETUP(request);                       \
     ret = OMPI_MTL_CALL(irecv(ompi_mtl,                                 \
                               comm,                                     \
                               src,                                      \
@@ -254,18 +260,7 @@ do {                                                                    \
 
 #define MCA_PML_CM_THIN_RECV_REQUEST_MATCHED_START(request, message, ret) \
 do {                                                                    \
-    /* init/re-init the request */                                      \
-    request->req_base.req_pml_complete = false;                         \
-    request->req_base.req_ompi.req_complete = REQUEST_PENDING;          \
-    request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
-                                                                        \
-    /* always set the req_status.MPI_TAG to ANY_TAG before starting the \
-     * request. This field is used if cancelled to find out if the request \
-     * has been matched or not.                                         \
-     */                                                                 \
-    request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;       \
-    request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
-    request->req_base.req_ompi.req_status._cancelled = 0;               \
+    MCA_PML_CM_RECV_REQUEST_START_SETUP(request);                       \
     ret = OMPI_MTL_CALL(imrecv(ompi_mtl,                                \
                                &recvreq->req_base.req_convertor,        \
                                message,                                 \
@@ -273,27 +268,25 @@ do {                                                                    \
 } while (0)
 
 
-#define MCA_PML_CM_HVY_RECV_REQUEST_START(request, ret)                 \
+/* The mtl half alone. A request parked for an unreachable peer has had
+ * the setup above done to it already, since the user holds it and MPI
+ * says it is in progress; repeating that would store REQUEST_PENDING
+ * over a req_complete where a waiter has hung its sync. */
+#define MCA_PML_CM_HVY_RECV_REQUEST_POST(request, ret)                  \
 do {                                                                    \
-/*     opal_output(0, "posting hvy request %d\n", request);                */ \
-    /* init/re-init the request */                                      \
-    request->req_base.req_pml_complete = false;                         \
-    request->req_base.req_ompi.req_complete = REQUEST_PENDING;          \
-    request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
-                                                                        \
-    /* always set the req_status.MPI_TAG to ANY_TAG before starting the \
-     * request. This field is used if cancelled to find out if the request \
-     * has been matched or not.                                         \
-     */                                                                 \
-    request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;       \
-    request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
-    request->req_base.req_ompi.req_status._cancelled = 0;               \
     ret = OMPI_MTL_CALL(irecv(ompi_mtl,                                 \
                               request->req_base.req_comm,               \
                               request->req_peer,                        \
                               request->req_tag,                         \
                               &recvreq->req_base.req_convertor,         \
                               &recvreq->req_mtl));                      \
+} while (0)
+
+#define MCA_PML_CM_HVY_RECV_REQUEST_START(request, ret)                 \
+do {                                                                    \
+/*     opal_output(0, "posting hvy request %d\n", request);                */ \
+    MCA_PML_CM_RECV_REQUEST_START_SETUP(request);                       \
+    MCA_PML_CM_HVY_RECV_REQUEST_POST(request, ret);                     \
 } while (0)
 
 

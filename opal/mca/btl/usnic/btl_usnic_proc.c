@@ -13,6 +13,7 @@
  *                         reserved.
  * Copyright (c) 2013-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -185,6 +186,9 @@ static int create_proc(opal_proc_t *opal_proc, opal_btl_usnic_proc_t **usnic_pro
     if (OPAL_ERR_NOT_FOUND == rc) {
         OBJ_RELEASE(proc);
         return OPAL_ERR_UNREACH;
+    } else if (OPAL_ERR_NOT_READY == rc) {
+        OBJ_RELEASE(proc);
+        return OPAL_ERR_NOT_READY;
     } else if (OPAL_SUCCESS != rc) {
         opal_show_help("help-mpi-btl-usnic.txt", "internal error during init", true,
                        opal_process_info.nodename, "<none>", "<none>", "opal_modex_recv() failed",

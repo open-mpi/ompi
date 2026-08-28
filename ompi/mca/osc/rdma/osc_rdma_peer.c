@@ -6,6 +6,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 #include "osc_rdma_comm.h"
 
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/runtime/ompi_modex.h"
 
 #define NODE_ID_TO_RANK(module, peer_data, node_id) ((int)(peer_data)->len)
 
@@ -40,7 +42,20 @@ static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *modul
                                             struct mca_btl_base_endpoint_t **endpoint)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup (module->comm, peer_id);
-    mca_bml_base_endpoint_t *bml_endpoint = mca_bml_base_get_endpoint(proc);
+    int rc;
+    mca_bml_base_endpoint_t *bml_endpoint = mca_bml_base_get_endpoint(proc, &rc);
+
+    if (NULL == bml_endpoint) {
+        /* NOT_READY is not a failure: that peer's connection info has not
+         * landed yet. The caller resolves it, see
+         * ompi_osc_rdma_peer_lookup(). */
+        opal_output_verbose(OMPI_ERR_NOT_READY == rc ? MCA_BASE_VERBOSE_INFO
+                                                    : MCA_BASE_VERBOSE_ERROR,
+                            ompi_osc_base_framework.framework_output,
+                            "rank %d: no endpoint for peer %d (%d)",
+                            ompi_comm_rank(module->comm), peer_id, rc);
+        return rc;
+    }
 
     if (module->use_accelerated_btl) {
         opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
@@ -54,6 +69,22 @@ static int ompi_osc_rdma_peer_btl_endpoint (struct ompi_osc_rdma_module_t *modul
 
             return OMPI_SUCCESS;
         }
+
+        /* The window committed to this btl at creation because every rank
+         * was reachable with it, and creation waited for every peer's
+         * connection info first, so the one cause this used to have is
+         * gone. What is left would be a genuine asymmetry -- our peers
+         * offering a btl to each other that they do not offer to us. The
+         * window is not usable: ranks that kept this btl also sized their
+         * state for it. */
+        opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                            "rank %d: btl %s was selected for this window but cannot reach "
+                            "peer %d; the ranks did not agree on the accelerated btl",
+                            ompi_comm_rank(module->comm),
+                            module->accelerated_btl->btl_component->btl_version.mca_component_name,
+                            peer_id);
+
+        return OMPI_ERR_UNREACH;
     } else {
         mca_bml_base_btl_t *bml_btl;
         opal_output_verbose(MCA_BASE_VERBOSE_TRACE, ompi_osc_base_framework.framework_output,
@@ -183,7 +214,9 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     /* lookup the btl endpoint needed to retrieve the mapping */
     ret = ompi_osc_rdma_peer_btl_endpoint (module, node_rank, &array_btl_index, &array_endpoint);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return OMPI_ERR_UNREACH;
+        /* Keep the reason: NOT_READY on the node leader is what the
+         * caller retries, UNREACH is final. */
+        return ret;
     }
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "reading region data for %d from rank: %d, index: %d, pointer: 0x%" PRIx64
@@ -210,7 +243,7 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     ret = ompi_osc_rdma_peer_btl_endpoint (module, NODE_ID_TO_RANK(module, node_peer_data, rank_data.node_id),
                                            &peer->state_btl_index, &peer->state_endpoint);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return OPAL_ERR_UNREACH;
+        return ret;
     }
 
     /* nothing more to do for dynamic memory windows */
@@ -291,6 +324,7 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
  *
  * @param[in] module         osc rdma module
  * @param[in] peer_id        rank of remote peer (in module communicator)
+ * @param[out] status        why the lookup failed (ignored when NULL)
  *
  * @returns peer object on success
  * @returns NULL on error
@@ -299,12 +333,17 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
  * function requires the peer lock to be held and is only expected to be called from itself or
  * the ompi_osc_rdma_peer_lookup() helper function.
  */
-static struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup_internal (struct ompi_osc_rdma_module_t *module, int peer_id)
+static struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup_internal (struct ompi_osc_rdma_module_t *module,
+                                                                        int peer_id, int *status)
 {
     ompi_osc_rdma_peer_t *peer;
     int ret;
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_DEBUG, "looking up peer data for rank %d", peer_id);
+
+    if (NULL != status) {
+        *status = OMPI_SUCCESS;
+    }
 
     peer = ompi_osc_module_get_peer (module, peer_id);
     if (NULL != peer) {
@@ -313,35 +352,62 @@ static struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup_internal (struct o
 
     ret = ompi_osc_rdma_new_peer (module, peer_id, &peer);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        return NULL;
+        goto failed;
     }
 
     ret = ompi_osc_rdma_peer_setup (module, peer);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         OBJ_RELEASE(peer);
-        return NULL;
+        goto failed;
     }
 
     ret = ompi_osc_module_add_peer (module, peer);
     if (OPAL_SUCCESS != ret) {
         /* out of memory */
         OBJ_RELEASE(peer);
-        return NULL;
+        goto failed;
     }
 
     /* ensure the peer hash is updated before we drop the lock */
     opal_atomic_wmb ();
 
     return peer;
+
+failed:
+    if (NULL != status) {
+        *status = ret;
+    }
+
+    return NULL;
 }
 
-struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_module_t *module, int peer_id)
+struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_module_t *module, int peer_id,
+                                                        int *status)
 {
     struct ompi_osc_rdma_peer_t *peer;
+    int rc;
 
     opal_mutex_lock (&module->peer_lock);
-    peer = ompi_osc_rdma_peer_lookup_internal (module, peer_id);
+    peer = ompi_osc_rdma_peer_lookup_internal (module, peer_id, &rc);
     opal_mutex_unlock (&module->peer_lock);
+
+    if (OPAL_UNLIKELY(NULL == peer && OMPI_ERR_NOT_READY == rc)) {
+        /* Window creation waits for every peer of its communicator, so
+         * this is a backstop rather than the path taken: it costs a test
+         * on an error return, and it is the difference between failing an
+         * operation to a live peer and completing it. The peer lock is
+         * released first: the wait runs progress, which can come back
+         * through this path. */
+        (void) ompi_modex_wait_if_needed ();
+
+        opal_mutex_lock (&module->peer_lock);
+        peer = ompi_osc_rdma_peer_lookup_internal (module, peer_id, &rc);
+        opal_mutex_unlock (&module->peer_lock);
+    }
+
+    if (NULL != status) {
+        *status = rc;
+    }
 
     return peer;
 }

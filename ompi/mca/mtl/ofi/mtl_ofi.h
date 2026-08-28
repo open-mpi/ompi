@@ -703,6 +703,10 @@ ompi_mtl_ofi_send_excid(struct mca_mtl_base_module_t *mtl,
 
     ompi_proc = ompi_comm_peer_lookup(comm, dest);
     endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        ret = OMPI_ERR_UNREACH;
+        goto fn_exit;
+    }
 
     /* For Scalable Endpoints, gather target receive context */
     sep_peer_fiaddr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
@@ -850,6 +854,9 @@ ompi_mtl_ofi_send_generic(struct mca_mtl_base_module_t *mtl,
 
     ompi_proc = ompi_comm_peer_lookup(comm, dest);
     endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
 
     /* For Scalable Endpoints, gather target receive context */
     sep_peer_fiaddr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
@@ -1020,6 +1027,16 @@ ompi_mtl_ofi_gen_ssend_ack(struct fi_cq_tagged_entry *wc,
      */
     ompi_proc = ompi_comm_peer_lookup(ofi_req->comm, src);
     endpoint = ompi_mtl_ofi_get_endpoint(ofi_req->mtl, ompi_proc);
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        /* We received from this peer, so it can reach us, but we have
+         * no way back to it and the synchronous send it is waiting on
+         * cannot be acknowledged. */
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d: no endpoint for peer %d, cannot acknowledge "
+                            "its synchronous send\n",
+                            __FILE__, __LINE__, src);
+        return OMPI_ERR_UNREACH;
+    }
     ofi_req->remote_addr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
 
     tagged_msg.msg_iov = &d_iovec;
@@ -1099,6 +1116,9 @@ ompi_mtl_ofi_isend_generic(struct mca_mtl_base_module_t *mtl,
 
     ompi_proc = ompi_comm_peer_lookup(comm, dest);
     endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        return OMPI_ERR_UNREACH;
+    }
 
     /* For Scalable Endpoints, gather target receive context */
     sep_peer_fiaddr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
@@ -1363,6 +1383,9 @@ ompi_mtl_ofi_irecv_generic(struct mca_mtl_base_module_t *mtl,
         if (MPI_ANY_SOURCE != src) {
             ompi_proc = ompi_comm_peer_lookup(comm, src);
             endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+            if (OPAL_UNLIKELY(NULL == endpoint)) {
+                return OMPI_ERR_UNREACH;
+            }
             remote_addr = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
         }
 
@@ -1649,6 +1672,9 @@ ompi_mtl_ofi_iprobe_generic(struct mca_mtl_base_module_t *mtl,
         if (MPI_ANY_SOURCE != src) {
             ompi_proc = ompi_comm_peer_lookup( comm, src );
             endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+            if (OPAL_UNLIKELY(NULL == endpoint)) {
+                return OMPI_ERR_UNREACH;
+            }
             remote_proc = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
         }
 
@@ -1757,6 +1783,10 @@ ompi_mtl_ofi_improbe_generic(struct mca_mtl_base_module_t *mtl,
         if (MPI_ANY_SOURCE != src) {
             ompi_proc = ompi_comm_peer_lookup( comm, src );
             endpoint = ompi_mtl_ofi_get_endpoint(mtl, ompi_proc);
+            if (OPAL_UNLIKELY(NULL == endpoint)) {
+                free(ofi_req);
+                return OMPI_ERR_UNREACH;
+            }
             remote_proc = fi_rx_addr(endpoint->peer_fiaddr, ctxt_id, ompi_mtl_ofi.rx_ctx_bits);
         }
 

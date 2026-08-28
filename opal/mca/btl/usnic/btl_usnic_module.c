@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -95,6 +96,7 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module, siz
     opal_proc_t *my_proc;
     size_t num_created = 0;
     char *errhost;
+    bool not_ready = false;
 
     /* get pointer to my proc structure */
     my_proc = opal_proc_local_get();
@@ -144,6 +146,9 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module, siz
                             usnic_compat_proc_name_print(&opal_proc->proc_name), errhost);
                 free(errhost);
             }
+            continue;
+        } else if (OPAL_ERR_NOT_READY == rc) {
+            not_ready = true;
             continue;
         } else if (OPAL_SUCCESS != rc) {
             return OPAL_ERR_OUT_OF_RESOURCE;
@@ -198,6 +203,9 @@ static int add_procs_block_create_endpoints(opal_btl_usnic_module_t *module, siz
     }
 
     opal_output_verbose(5, USNIC_OUT, "btl:usnic: made %" PRIsize_t " endpoints", num_created);
+    if (not_ready) {
+        return OPAL_ERR_NOT_READY;
+    }
     return OPAL_SUCCESS;
 }
 
@@ -440,6 +448,7 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, si
     /* Per above, loop over creating the endpoints so that we do not
        overrun the libfabric AV EQ. */
     int rc;
+    bool not_ready = false;
     for (size_t block_offset = 0, block = 0; block < num_blocks;
          block_offset += block_len, ++block) {
         /* Adjust for the last block */
@@ -450,7 +459,9 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, si
         /* First, create endpoints (and procs, if they're not already
            created) for the usnic-reachable procs we were given. */
         rc = add_procs_block_create_endpoints(module, block_offset, block_len, procs, endpoints);
-        if (OPAL_SUCCESS != rc) {
+        if (OPAL_ERR_NOT_READY == rc) {
+            not_ready = true;
+        } else if (OPAL_SUCCESS != rc) {
             return rc;
         }
 
@@ -465,6 +476,9 @@ static int add_procs_create_endpoints(struct opal_btl_usnic_module_t *module, si
         }
     }
 
+    if (not_ready) {
+        return OPAL_ERR_NOT_READY;
+    }
     return OPAL_SUCCESS;
 }
 
@@ -495,7 +509,7 @@ static int usnic_add_procs(struct mca_btl_base_module_t *base_module, size_t npr
     /* Go create the endpoints (including all relevant address
        resolution) */
     rc = add_procs_create_endpoints(module, nprocs, procs, endpoints);
-    if (OPAL_SUCCESS != rc) {
+    if (OPAL_ERR_NOT_READY != rc && OPAL_SUCCESS != rc) {
         goto fail;
     }
 
@@ -530,7 +544,7 @@ static int usnic_add_procs(struct mca_btl_base_module_t *base_module, size_t npr
         opal_btl_usnic_connectivity_map();
     }
 
-    return OPAL_SUCCESS;
+    return rc;
 
 fail:
     /* If we get here, it means something went terribly wrong.  Scorch

@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -364,12 +365,16 @@ cleanup:
  * datastructure.
  */
 
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status)
 {
     mca_btl_tcp_proc_t *btl_proc;
     int rc, local_proc_is_left;
     mca_btl_tcp_modex_addr_t *remote_addrs = NULL;
     size_t size;
+
+    if (NULL != status) {
+        *status = OPAL_SUCCESS;
+    }
 
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, proc->proc_name,
@@ -396,7 +401,7 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
     OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version, &proc->proc_name,
                     (uint8_t **) &remote_addrs, &size);
     if (OPAL_SUCCESS != rc) {
-        if (OPAL_ERR_NOT_FOUND != rc) {
+        if (OPAL_ERR_NOT_FOUND != rc && OPAL_ERR_NOT_READY != rc) {
             BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
         }
         goto cleanup;
@@ -460,6 +465,9 @@ cleanup:
 
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
+    if (NULL != status) {
+        *status = rc;
+    }
     return btl_proc;
 }
 

@@ -15,6 +15,10 @@ Open MPI version v6.0.0
   endpoint once the peer's modex is local; an ``MPI_Isend`` posted
   earlier is staged in the PML until then.
 
+- Added the ``btl_tcp_connect_mode`` MCA parameter (``lazy``,
+  ``sync_init``, ``full``) to select when the TCP BTL constructs
+  peer endpoints relative to ``MPI_Init``.
+
 - Added support for the MPI-4.0 embiggened APIs (i.e., functions with
   ``MPI_Count`` parameters).
 

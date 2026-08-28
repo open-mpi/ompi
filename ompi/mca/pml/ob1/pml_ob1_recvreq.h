@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -229,6 +230,11 @@ extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
 
 static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
 {
+    /* A wildcard recv matches peers this rank may never have sent to,
+     * so their architecture (hence convertor) can still be unknown.
+     * Read it before the convertor is copied. */
+    (void) ompi_proc_ensure_arch(req->req_recv.req_base.req_proc);
+
     if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
         opal_convertor_copy_and_prepare_for_recv(
                 req->req_recv.req_base.req_proc->super.proc_convertor,
@@ -412,16 +418,23 @@ static inline void mca_pml_ob1_recv_request_schedule(
 }
 
 static inline void mca_pml_ob1_add_ack_to_pending(ompi_proc_t *proc, uintptr_t src_req, void *dst_req,
-                                                  uint64_t send_offset, uint64_t send_size) {
+                                                  uint64_t send_offset, uint64_t send_size,
+                                                  bool nordma) {
     mca_pml_ob1_hdr_t hdr = {
         .hdr_ack = {
-            .hdr_common = { .hdr_type = MCA_PML_OB1_HDR_TYPE_ACK },
+            .hdr_common = { .hdr_type = MCA_PML_OB1_HDR_TYPE_ACK,
+                            .hdr_flags = nordma ? MCA_PML_OB1_HDR_FLAGS_NORDMA : 0 },
             .hdr_src_req = { .lval = src_req },
             .hdr_dst_req = { .pval = dst_req },
             .hdr_send_offset = send_offset,
             .hdr_send_size = send_size,
         },
     };
+
+    /* What goes on the pending list is what goes on the wire: the retry
+     * copies the header out verbatim, so convert it here, exactly like the
+     * fin and cid headers are converted before they are handed over. */
+    ob1_hdr_hton(&hdr, MCA_PML_OB1_HDR_TYPE_ACK, proc);
 
     mca_pml_ob1_add_to_pending(proc, /*bml_btl=*/NULL, /*order=*/0,
                                &hdr, sizeof(hdr.hdr_ack));
@@ -438,10 +451,21 @@ mca_pml_ob1_recv_request_ack_send(mca_btl_base_module_t* btl,
                                   uint64_t size, bool nordma)
 {
     size_t i;
+    int rc;
     mca_bml_base_btl_t* bml_btl;
-    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc);
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc, &rc);
 
-    assert (NULL != endpoint);
+    /* That peer reached us before we had any reason to wire it back, and
+     * our copy of its connection info may still be in flight. Queue the
+     * ack; the pending list is retried from progress, which resolves the
+     * endpoint. Queue it whatever the reason we have no endpoint: the
+     * sender is blocked on this ack, and dropping it while answering
+     * "retry me" hangs both peers. */
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        mca_pml_ob1_add_ack_to_pending(proc, hdr_src_req, hdr_dst_req,
+                                       hdr_send_offset, size, nordma);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /**
      * If a btl has been requested then send the ack using that specific device, otherwise
@@ -458,7 +482,7 @@ mca_pml_ob1_recv_request_ack_send(mca_btl_base_module_t* btl,
     }
 
     mca_pml_ob1_add_ack_to_pending(proc, hdr_src_req, hdr_dst_req,
-                                   hdr_send_offset, size);
+                                   hdr_send_offset, size, nordma);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
 }

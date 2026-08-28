@@ -125,8 +125,11 @@ extern int mca_pml_ob1_add_procs(
 
 struct mca_pml_ob1_send_request_t;
 
-/* Construct the BML endpoint if the peer blob is local; else NULL. */
-extern struct mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc);
+/* Construct the BML endpoint if the peer blob is local, else NULL with
+ * status set (see mca_bml_base_get_endpoint; status is required here
+ * too). */
+extern struct mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc,
+                                                                   int *status);
 
 /* Recv-side constructor: add_proc so BTL progress is registered and
  * (for sm) the sender's endpoint exists before we poll. If the blob

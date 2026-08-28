@@ -8,6 +8,7 @@
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  *
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -2116,6 +2117,7 @@ static void send_msg(ompi_communicator_t *comm,
     uint64_t my_seqnum;
     unsigned int to_send, sent;
     long unsigned int payload_size;
+    int eprc;
 
 #if defined(FTAGREE_DEBUG_FAILURE_INJECT)
     if( (double)rand() / (double)RAND_MAX < mca_coll_ftagree_rank_fault_proba ) {
@@ -2183,10 +2185,14 @@ static void send_msg(ompi_communicator_t *comm,
         peer = ompi_comm_peer_lookup(comm, dst);
     }
     assert(NULL != peer);
-    endpoint = mca_bml_base_get_endpoint(peer);
+    /* This runs from the BTL callback as well as from the agreement
+     * itself, so it cannot block waiting for a peer's connection info to
+     * land. A peer that is merely not connected yet is reported as such
+     * and left to the result-request path, which retries. */
+    endpoint = mca_bml_base_get_endpoint(peer, &eprc);
     if(NULL == endpoint) {
       opal_output_verbose(5, ompi_ftmpi_output_handle,
-                             "%s ftagree:agreement (ERA) CANNOT send message [(%d.%d).%d, %s, %08x.%d.%d..] to %d/%s (no endpoint)\n",
+                             "%s ftagree:agreement (ERA) CANNOT send message [(%d.%d).%d, %s, %08x.%d.%d..] to %d/%s (%s)\n",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
                              agreement_id.ERAID_FIELDS.contextid,
                              agreement_id.ERAID_FIELDS.epoch,
@@ -2196,7 +2202,8 @@ static void send_msg(ompi_communicator_t *comm,
                              value->header.ret,
                              value->header.nb_new_dead,
                              dst,
-                             NULL != proc_name ? OMPI_NAME_PRINT(proc_name) : "(null)");
+                             NULL != proc_name ? OMPI_NAME_PRINT(proc_name) : "(null)",
+                             OMPI_ERR_NOT_READY == eprc ? "peer not connected yet" : "no endpoint");
       return; /* bail out: the algorithm should reconnect when the failed proc is detected */
     }
     bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_eager, 0);

@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -67,6 +67,7 @@
 #endif /* HAVE_UNISTD_H */
 
 #include "opal/constants.h"
+#include "opal/mca/base/mca_base_var_enum.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/base/btl_base_error.h"
 #include "opal/mca/btl/btl.h"
@@ -230,6 +231,13 @@ static inline unsigned int mca_btl_tcp_param_register_uint(const char *param_nam
     return *storage;
 }
 
+static const mca_base_var_enum_value_t mca_btl_tcp_connect_mode_values[] = {
+    {.value = MCA_BTL_TCP_CONNECT_LAZY, .string = "lazy"},
+    {.value = MCA_BTL_TCP_CONNECT_SYNC_INIT, .string = "sync_init"},
+    {.value = MCA_BTL_TCP_CONNECT_FULL, .string = "full"},
+    {.string = NULL},
+};
+
 /*
  * Data structure for accepting connections.
  */
@@ -289,6 +297,8 @@ static int mca_btl_tcp_component_verify(void)
 static int mca_btl_tcp_component_register(void)
 {
     char *message;
+    mca_base_var_enum_t *new_enum = NULL;
+    int rc;
 
     /* register TCP component parameters */
     mca_btl_tcp_param_register_uint("links", NULL, 1, OPAL_INFO_LVL_4,
@@ -375,6 +385,26 @@ static int mca_btl_tcp_component_register(void)
                                    1 * 1000000  /* 1s */, OPAL_INFO_LVL_4,
                                    &mca_btl_tcp_component.tcp_handshake_timeout);
 
+    mca_btl_tcp_component.tcp_connect_mode = MCA_BTL_TCP_CONNECT_LAZY;
+    rc = mca_base_var_enum_create("btl_tcp_connect_mode", mca_btl_tcp_connect_mode_values,
+                                  &new_enum);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+    (void) mca_base_component_var_register(
+        &mca_btl_tcp_component.super.btl_version, "connect_mode",
+        "How the TCP BTL constructs peer endpoints relative to MPI_Init "
+        "(default: lazy). lazy: on first send, receive, or incoming fragment. "
+        "sync_init: wait for the connection-info modex and construct endpoints "
+        "during MPI_Init. full: like sync_init, and require a single add_procs "
+        "of the whole job. The ob1 PML ORs these requirements across selected "
+        "BTLs; to exercise TCP's setting without the shared-memory BTL, use "
+        "--mca pml ob1 --mca btl self,tcp. Multiple TCP modules with MPI or "
+        "progress threads still force full regardless of this setting.",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_btl_tcp_component.tcp_connect_mode);
+    OBJ_RELEASE(new_enum);
+
     /* Check if we should support async progress */
     mca_btl_tcp_param_register_int("progress_thread", NULL, 0, OPAL_INFO_LVL_1,
                                    &mca_btl_tcp_component.tcp_enable_progress_thread);
@@ -409,6 +439,13 @@ static int mca_btl_tcp_component_register(void)
 
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
                                 &mca_btl_tcp_module.super);
+    /* Apply after mca_btl_base_param_register so btl_tcp_flags cannot
+     * strip these bits. Modules memcpy this template in create(). */
+    if (MCA_BTL_TCP_CONNECT_SYNC_INIT == mca_btl_tcp_component.tcp_connect_mode) {
+        mca_btl_tcp_module.super.btl_flags |= MCA_BTL_FLAGS_REQUIRE_SYNC_INIT;
+    } else if (MCA_BTL_TCP_CONNECT_FULL == mca_btl_tcp_component.tcp_connect_mode) {
+        mca_btl_tcp_module.super.btl_flags |= MCA_BTL_FLAGS_SINGLE_ADD_PROCS;
+    }
     if (mca_btl_tcp_module.super.btl_rdma_pipeline_frag_size > ((1UL << 31) - 1024)) {
         /* Assume a hard limit. A test in configure would be a better solution, but until then
          * kicking-in the pipeline RDMA for extremely large data is good enough. */

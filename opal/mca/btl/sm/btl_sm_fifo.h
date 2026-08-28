@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,7 +82,16 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read(sm_fifo_t *fifo, struct mca_btl_bas
 
     value = fifo->fifo_head;
 
-    *ep = &mca_btl_sm_component.endpoints[value >> MCA_BTL_SM_OFFSET_BITS];
+    uint16_t rank = (uint16_t) (value >> MCA_BTL_SM_OFFSET_BITS);
+    /* rank is the sender's SMP local rank, not an MPI rank. A peer
+     * can write our FIFO before add_proc has attached its segment;
+     * relative2virtual needs that segment_base. Leave the item until
+     * add_proc finishes. */
+    if (OPAL_UNLIKELY(NULL == mca_btl_sm_component.endpoints[rank].segment_base)) {
+        return NULL;
+    }
+
+    *ep = &mca_btl_sm_component.endpoints[rank];
     hdr = (mca_btl_sm_hdr_t *) relative2virtual(value);
 
     fifo->fifo_head = SM_FIFO_FREE;

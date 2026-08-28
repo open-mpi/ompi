@@ -222,6 +222,10 @@ static int create_endpoint(int interface, opal_proc_t *proc, mca_btl_base_endpoi
                              "btl/portals4: Portals 4 BTL not available on peer: %s",
                              opal_strerror(ret)));
         return ret;
+    } else if (OPAL_ERR_NOT_READY == ret) {
+        OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+                             "btl/portals4: peer not ready: %s", opal_strerror(ret)));
+        return ret;
     } else if (OPAL_SUCCESS != ret) {
         opal_output_verbose(0, opal_btl_base_framework.framework_output,
                             "btl/portals4: opal_modex_recv failed: %s", opal_strerror(ret));
@@ -263,6 +267,10 @@ static int create_peer_and_endpoint(int interface, opal_proc_t *proc, ptl_proces
         OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
                              "btl/portals4: Portals 4 BTL not available on peer: %s",
                              opal_strerror(ret)));
+        return ret;
+    } else if (OPAL_ERR_NOT_READY == ret) {
+        OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+                             "btl/portals4: peer not ready: %s", opal_strerror(ret)));
         return ret;
     } else if (OPAL_SUCCESS != ret) {
         opal_output_verbose(0, opal_btl_base_framework.framework_output,
@@ -367,6 +375,7 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
     struct mca_btl_portals4_module_t *portals4_btl = (struct mca_btl_portals4_module_t *) btl_base;
     int ret;
     size_t i;
+    bool not_ready = false;
 
     opal_output_verbose(50, opal_btl_base_framework.framework_output,
                         "mca_btl_portals4_add_procs: Adding %d procs (%d) for NI %d", (int) nprocs,
@@ -391,6 +400,11 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
         }
 
         ret = create_endpoint(portals4_btl->interface_num, curr_proc, &btl_peer_data[i]);
+        if (OPAL_ERR_NOT_READY == ret) {
+            btl_peer_data[i] = NULL;
+            not_ready = true;
+            continue;
+        }
         if (OPAL_SUCCESS != ret) {
             btl_peer_data[i] = NULL;
             continue;
@@ -406,6 +420,11 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
                              "add_procs: rank=%lx nid=%x pid=%x for NI %d", i,
                              btl_peer_data[i]->ptl_proc.phys.nid,
                              btl_peer_data[i]->ptl_proc.phys.pid, portals4_btl->interface_num));
+    }
+
+    /* Logical mapping needs every peer's blob in one shot. */
+    if (not_ready && mca_btl_portals4_component.use_logical) {
+        return OPAL_ERR_NOT_READY;
     }
 
     if (mca_btl_portals4_component.need_init && portals4_btl->portals_num_procs > 0) {
@@ -430,6 +449,9 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
         mca_btl_portals4_component.need_init = 0;
     }
 
+    if (not_ready) {
+        return OPAL_ERR_NOT_READY;
+    }
     return OPAL_SUCCESS;
 }
 

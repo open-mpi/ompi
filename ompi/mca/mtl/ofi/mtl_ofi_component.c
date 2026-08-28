@@ -1134,12 +1134,7 @@ select_prov:
     ompi_mtl_ofi.is_initialized = false;
     ompi_mtl_ofi.has_posted_initial_buffer = false;
     
-    /* ompi_mtl_ofi_add_procs() treats a modex read that is not yet
-     * available as fatal, and its lazy caller answers with exit(1), so
-     * the connection-info exchange has to have completed before the
-     * first send. */
-    ompi_mtl_ofi.base.mtl_flags |= MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID
-                                 | MCA_MTL_BASE_FLAG_REQUIRE_SYNC_INIT;
+    ompi_mtl_ofi.base.mtl_flags |= MCA_MTL_BASE_FLAG_SUPPORTS_EXT_CID;
 
     return &ompi_mtl_ofi.base;
 

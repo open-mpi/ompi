@@ -12,6 +12,7 @@
  * Copyright (c) 2016      Intel, Inc. All rights reserved.
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +44,7 @@ enum {
     OMPI_ERR_IN_ERRNO               = OPAL_ERR_IN_ERRNO,
     OMPI_ERR_UNREACH                = OPAL_ERR_UNREACH,
     OMPI_ERR_NOT_FOUND              = OPAL_ERR_NOT_FOUND,
+    OMPI_ERR_NOT_READY              = OPAL_ERR_NOT_READY,
     OMPI_EXISTS                     = OPAL_EXISTS, /* indicates that the specified object already exists */
     OMPI_ERR_TIMEOUT                = OPAL_ERR_TIMEOUT,
     OMPI_ERR_NOT_AVAILABLE          = OPAL_ERR_NOT_AVAILABLE,

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014-2018 Intel, Inc. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -99,7 +100,9 @@ enum {
     OPAL_ERR_FILE_ALERT = (OPAL_ERR_BASE - 68),
     OPAL_ERR_MODEL_DECLARED = (OPAL_ERR_BASE - 69),
     OPAL_PMIX_LAUNCH_DIRECTIVE = (OPAL_ERR_BASE - 70),
-    OPAL_OPERATION_SUCCEEDED = (OPAL_ERR_BASE - 71)
+    OPAL_OPERATION_SUCCEEDED = (OPAL_ERR_BASE - 71),
+    /* Peer has not finished the connection-info exchange yet; retry. */
+    OPAL_ERR_NOT_READY = (OPAL_ERR_BASE - 72)
 };
 
 #define OPAL_ERR_MAX (OPAL_ERR_BASE - 100)

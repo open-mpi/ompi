@@ -55,8 +55,6 @@
 #include "ompi/errhandler/errhandler.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_spc.h"
-#include "ompi/runtime/ompi_modex.h"
-
 #include "pml_ob1.h"
 #include "pml_ob1_component.h"
 #include "pml_ob1_comm.h"
@@ -248,19 +246,18 @@ static void mca_pml_ob1_reprepare_send_convertor(mca_pml_ob1_send_request_t *sen
     opal_convertor_get_packed_size(&req->req_base.req_convertor, &req->req_bytes_packed);
 }
 
-mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc)
+mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc, int *status)
 {
     mca_bml_base_endpoint_t *ep = mca_bml_base_endpoint_peek(proc);
 
+    assert(NULL != status);
+
     if (NULL != ep) {
+        *status = OMPI_SUCCESS;
         return ep;
     }
-    if (!ompi_modex_proc_ready(proc)) {
-        return NULL;
-    }
-    (void) ompi_proc_complete_init_single(proc);
 
-    return mca_bml_base_get_endpoint(proc);
+    return mca_bml_base_get_endpoint(proc, status);
 }
 
 /* Opportunistic: nothing is parked here, so nothing has to be retried
@@ -269,22 +266,26 @@ mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc)
  * that retry builds the endpoint itself. */
 void mca_pml_ob1_prepare_recv_proc(ompi_proc_t *proc)
 {
+    int rc;
+
     if (NULL == proc || proc == ompi_proc_local_proc) {
         return;
     }
     if (NULL != mca_bml_base_endpoint_peek(proc)) {
         return;
     }
-    (void) mca_pml_ob1_ensure_endpoint(proc);
+    (void) mca_pml_ob1_ensure_endpoint(proc, &rc);
 }
 
 /* One progress count per staged request, held until that request is
  * started or failed. That is what keeps mca_pml_ob1_progress() registered
- * while anything is parked here. */
+ * while anything is parked here, so the re-park below deliberately does not
+ * take a second one: the count the first park took is still outstanding. */
 int mca_pml_ob1_stage_or_start(mca_pml_ob1_send_request_t *sendreq, int32_t seqn)
 {
     ompi_proc_t *proc = sendreq->req_send.req_base.req_proc;
-    mca_bml_base_endpoint_t *ep = mca_pml_ob1_ensure_endpoint(proc);
+    int rc;
+    mca_bml_base_endpoint_t *ep = mca_pml_ob1_ensure_endpoint(proc, &rc);
 
     if (NULL != ep) {
         return mca_pml_ob1_send_request_start_seq(sendreq, ep, seqn);
@@ -313,13 +314,24 @@ static bool mca_pml_ob1_start_staged(mca_pml_ob1_send_request_t *sendreq)
     mca_bml_base_endpoint_t *ep;
     int rc;
 
-    mca_pml_ob1_reprepare_send_convertor(sendreq);
-    ep = mca_pml_ob1_ensure_endpoint(proc);
+    ep = mca_pml_ob1_ensure_endpoint(proc, &rc);
     if (NULL == ep) {
-        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_ERR_UNREACH;
+        /* A LOCAL Get can miss a blob that is on its way. NOT_READY means
+         * try again on a later tick; anything else is final. */
+        if (OMPI_ERR_NOT_READY == rc) {
+            OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+            opal_list_append(&mca_pml_ob1.modex_pending, (opal_list_item_t *) sendreq);
+            OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+            return false;
+        }
+        sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = rc;
         MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq, true);
         return true;
     }
+
+    /* Only now is the peer's architecture, hence its convertor, known:
+     * building the endpoint is what seeds it. */
+    mca_pml_ob1_reprepare_send_convertor(sendreq);
 
     /* Live since it was parked, so this is the wire half alone: making it
      * live a second time would store REQUEST_PENDING over req_complete,
@@ -348,7 +360,8 @@ int mca_pml_ob1_drain_staged_sends(void)
 
     OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
     /* Emptied here and worked outside the lock, because starting a request
-     * reaches the BTLs, which take locks of their own. */
+     * reaches the BTLs and re-parks it when its peer is still not
+     * reachable, both of which take locks of their own. */
     OBJ_CONSTRUCT(&ready, opal_list_t);
     OPAL_LIST_FOREACH_SAFE(sendreq, next, &mca_pml_ob1.modex_pending,
                            mca_pml_ob1_send_request_t) {
@@ -880,7 +893,9 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
             continue;
         }
 
-        mca_bml_base_endpoint_t* ep = mca_bml_base_get_endpoint(proc->ompi_proc);
+        /* Only report what is already wired: a dump must not connect
+         * to a peer we never talked to. */
+        mca_bml_base_endpoint_t* ep = mca_bml_base_endpoint_peek(proc->ompi_proc);
         size_t n;
 
         opal_output(0, "[Rank %d] expected_seq %d ompi_proc %p send_seq %d\n",
@@ -904,6 +919,11 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
             mca_pml_ob1_dump_frag_list(&proc->unexpected_frags, false);
         }
 #endif
+        if (NULL == ep) {
+            opal_output(0, "no endpoint (peer not connected)\n");
+            continue;
+        }
+
         /* dump all btls used for eager messages */
         for( n = 0; n < ep->btl_eager.arr_size; n++ ) {
             mca_bml_base_btl_t* bml_btl = &ep->btl_eager.bml_btls[n];
@@ -977,10 +997,20 @@ int mca_pml_ob1_send_control_btl (mca_bml_base_btl_t *bml_btl, int order, mca_pm
 int mca_pml_ob1_send_control_any (ompi_proc_t *proc, int order, mca_pml_ob1_hdr_t *hdr, size_t hdr_size,
                                   bool add_to_pending)
 {
-    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc);
     int rc;
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc, &rc);
 
-    assert (NULL != endpoint);
+    /* Control messages (fin, ack, cid) can be the first traffic towards a
+     * peer that reached us first, so the endpoint may not exist yet. Queue
+     * the packet; the retry resolves the endpoint. The reason we have no
+     * endpoint does not change that: returning OUT_OF_RESOURCE promises a
+     * retry, and this queue is the only thing that performs it. */
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        if (add_to_pending) {
+            mca_pml_ob1_add_to_pending (proc, NULL, order, hdr, hdr_size);
+        }
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     for (size_t i = 0 ; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager) ; ++i) {
         mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_next (&endpoint->btl_eager);

@@ -103,6 +103,9 @@ mca_pml_cm_component_open(void)
 {
     int ret;
 
+    OBJ_CONSTRUCT(&ompi_pml_cm.modex_pending, opal_list_t);
+    OBJ_CONSTRUCT(&ompi_pml_cm.lock, opal_mutex_t);
+
     ret = mca_base_framework_open(&ompi_mtl_base_framework, 0);
     if (OMPI_SUCCESS == ret) {
       /* If no MTL components initialized CM component can be unloaded */
@@ -118,6 +121,17 @@ mca_pml_cm_component_open(void)
 static int
 mca_pml_cm_component_close(void)
 {
+    /* A staged request is not complete, and neither MPI_Finalize nor a
+     * session's can be reached with a request still outstanding, so the
+     * progress callback has necessarily emptied this -- and unregistered
+     * itself when it did. Said out loud because the list destructor only
+     * re-initializes: were a request to complete to the application while
+     * still linked here, that bug would go unnoticed. */
+    assert(opal_list_is_empty(&ompi_pml_cm.modex_pending));
+
+    OBJ_DESTRUCT(&ompi_pml_cm.modex_pending);
+    OBJ_DESTRUCT(&ompi_pml_cm.lock);
+
     return mca_base_framework_close(&ompi_mtl_base_framework);
 }
 

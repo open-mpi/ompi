@@ -13,6 +13,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,11 +26,12 @@
 
 #include "ompi_config.h"
 
+#include <assert.h>
+
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/proc/proc.h"
-#include "ompi/runtime/ompi_modex.h"
 
 
 /*
@@ -71,22 +73,41 @@ mca_bml_base_endpoint_peek (struct ompi_proc_t *proc)
         proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 }
 
-static inline struct mca_bml_base_endpoint_t *mca_bml_base_get_endpoint (struct ompi_proc_t *proc) {
+/**
+ * Slow path of mca_bml_base_get_endpoint: call that one instead.
+ * status is required there, so it is required here too.
+ */
+OMPI_DECLSPEC struct mca_bml_base_endpoint_t *
+mca_bml_base_endpoint_create (struct ompi_proc_t *proc, int *status);
+
+/**
+ * This peer's endpoint, constructed on first use. Completes whatever
+ * proc data add_proc needs, then lets the BML select the BTLs.
+ *
+ * A NULL return is not necessarily fatal, so the reason is reported
+ * separately in status, which is always written and must not be NULL:
+ *
+ *   OMPI_ERR_NOT_READY  the peer's connection info is not local yet.
+ *                       The caller may stage the operation and retry;
+ *                       ob1 does exactly that.
+ *   OMPI_ERR_UNREACH    the info is available and no BTL claimed the
+ *                       peer.
+ *   anything else        a hard failure from add_proc.
+ *
+ * Callers that cannot defer work must check the return value: with a
+ * lazy MPI_Init any peer can be NOT_READY on first use. A caller with
+ * nothing to do about the reason still passes an int and ignores it.
+ */
+static inline struct mca_bml_base_endpoint_t *
+mca_bml_base_get_endpoint (struct ompi_proc_t *proc, int *status) {
+    assert (NULL != status);
+
     if (OPAL_LIKELY(NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML])) {
+        *status = OMPI_SUCCESS;
         return (struct mca_bml_base_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
     }
-    /* Do not add_proc until this peer's blob is local — otherwise
-     * OPAL_MODEX_RECV returns NOT_FOUND and the endpoint is never wired. */
-    if (!ompi_modex_proc_ready(proc)) {
-        return NULL;
-    }
-    OPAL_THREAD_LOCK(&mca_bml_lock);
-    if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-        mca_bml.bml_add_proc (proc);
-    }
-    OPAL_THREAD_UNLOCK(&mca_bml_lock);
 
-    return (struct mca_bml_base_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
+    return mca_bml_base_endpoint_create (proc, status);
 }
 
 

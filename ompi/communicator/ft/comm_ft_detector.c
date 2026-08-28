@@ -7,6 +7,7 @@
  *                         reserved.
  *
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -362,10 +363,23 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, rank, ompi_comm_print_cid(comm), comm->c_epoch, detector->hb_rstamp-startdate ));
 
         if( comm_detector_use_rdma_hb ) {
-            mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
-            assert( NULL != endpoint );
+            int eprc;
+            mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc, &eprc);
+            if( NULL == endpoint ) {
+                /* Cannot put to that peer (its connection info may not be
+                 * local yet); look for another process to observe. */
+                OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
+                                     "%s %s: No endpoint to observe %d on communicator %s:%d (%d), trying the next rank",
+                                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, rank, ompi_comm_print_cid(comm), comm->c_epoch, eprc));
+                continue;
+            }
             mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, 0);
-            assert( NULL != bml_btl );
+            if( NULL == bml_btl ) {
+                OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
+                                     "%s %s: No rdma btl to observe %d on communicator %s:%d, trying the next rank",
+                                     OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, rank, ompi_comm_print_cid(comm), comm->c_epoch));
+                continue;
+            }
 
             /* register mem for the flag and cache the reg key */
             /* remove previous registration if any */
@@ -424,10 +438,19 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
     if( comm_detector_use_rdma_hb ) {
         ompi_proc_t* proc = ompi_comm_peer_lookup(detector->comm, msg->from);
         assert( NULL != proc );
-        mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc);
-        assert( NULL != endpoint );
-        mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, 0);
-        assert( NULL != bml_btl );
+        int eprc;
+        mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc, &eprc);
+        mca_bml_base_btl_t *bml_btl = (NULL != endpoint)?
+            mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, 0): NULL;
+        if( NULL == bml_btl ) {
+            /* No rdma path back to the observer yet. Leave hb_rdma_raddr
+             * at 0 so the put stays a no-op rather than using a stale
+             * btl; the observer will request again. */
+            opal_output_verbose(1, ompi_ftmpi_output_handle,
+                                "%s %s: No rdma endpoint to heartbeat observer %d on communicator %s:%d (%d), ignoring the request",
+                                OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch, eprc);
+            return false; /* never forward on the rbcast */
+        }
 
         OPAL_THREAD_LOCK(&detector->fd_mutex);
         /* registration for the local rank */

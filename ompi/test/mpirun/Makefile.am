@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -29,16 +30,18 @@
 #
 # Ground rules for anything added here:
 #
-# 1. Use no more than 2 ranks.  These run on CI machines with very few
-#    cores, alongside whatever else the job is doing; a test that needs
-#    a big job does not belong here.
+# 1. Use no more than 2 ranks, unless the test cannot distinguish its
+#    cases with a pair (wireup_stress uses 4, oversubscribed).  These
+#    run on CI machines with very few cores, alongside whatever else the
+#    job is doing; a test that needs a big job does not belong here.
 #
 # 2. Always pass --timeout.  A bug in this area is at least as likely to
 #    hang as it is to fail, and a hang must not stall CI until the
 #    job-level timeout kills it.
 
 EXTRA_DIST = \
-        async_modex_wireup.c
+        async_modex_wireup.c \
+        wireup_stress.c
 
 # Deliberately built by the check-mpirun target rather than by Automake:
 # these are compiled with the *installed* wrapper compiler.
@@ -53,6 +56,13 @@ MPIRUN_TIMEOUT = 60
 
 mpirun_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) \
         -n $(MPIRUN_NP) --map-by ppr:$(MPIRUN_NP):node
+
+# Ring / star / all-to-all only differ with more than two ranks.  Four
+# processes, oversubscribed onto one node, is enough to tell those
+# topologies apart without turning this into a "big job".
+WIREUP_NP = 4
+wireup_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) --oversubscribe \
+        -n $(WIREUP_NP) --map-by ppr:$(WIREUP_NP):node
 
 # The asynchronous modex has to be enabled in the *MPI processes'*
 # environment; "mpirun --mca pmix_base_async_modex 1" does not reach
@@ -80,7 +90,17 @@ check-mpirun:
 	    echo "=== async modex wire-up, default transports ==="; \
 	    OMPI_MCA_pmix_base_async_modex=1 \
 	        $(mpirun_runner) ./async_modex_wireup; \
+	    $(MPICC) -g "$(srcdir)/wireup_stress.c" -o wireup_stress; \
+	    for pattern in ring bcast reduce alltoall; do \
+	        echo "=== wireup stress p2p $$pattern ==="; \
+	        $(wireup_runner) ./wireup_stress $$pattern p2p; \
+	    done; \
+	    for pattern in bcast reduce alltoall; do \
+	        echo "=== wireup stress coll $$pattern ==="; \
+	        $(wireup_runner) ./wireup_stress $$pattern coll; \
+	    done; \
 	fi
 
 clean-local:
-	rm -rf async_modex_wireup async_modex_wireup.dSYM
+	rm -rf async_modex_wireup async_modex_wireup.dSYM \
+	    wireup_stress wireup_stress.dSYM

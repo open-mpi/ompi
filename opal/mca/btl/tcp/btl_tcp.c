@@ -18,6 +18,7 @@
  * Copyright (c) 2019      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,6 +80,7 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
     mca_btl_tcp_module_t *tcp_btl = (mca_btl_tcp_module_t *) btl;
     const opal_proc_t *my_proc; /* pointer to caller's proc structure */
     int i, rc;
+    bool not_ready = false;
 
     /* get pointer to my proc structure */
     if (NULL == (my_proc = opal_proc_local_get())) {
@@ -97,7 +99,10 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
             continue;
         }
 
-        if (NULL == (tcp_proc = mca_btl_tcp_proc_create(opal_proc))) {
+        if (NULL == (tcp_proc = mca_btl_tcp_proc_create(opal_proc, &rc))) {
+            if (OPAL_ERR_NOT_READY == rc) {
+                not_ready = true;
+            }
             continue;
         }
 
@@ -144,6 +149,9 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         peers[i] = tcp_endpoint;
     }
 
+    if (not_ready) {
+        return OPAL_ERR_NOT_READY;
+    }
     return OPAL_SUCCESS;
 }
 

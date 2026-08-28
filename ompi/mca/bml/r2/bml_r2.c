@@ -35,7 +35,6 @@
 
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/argv.h"
-#include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
@@ -44,6 +43,7 @@
 #include "ompi/mca/bml/base/bml_base_btl.h"
 #include "bml_r2.h"
 #include "ompi/proc/proc.h"
+#include "ompi/runtime/ompi_modex.h"
 
 extern mca_bml_base_component_t mca_bml_r2_component;
 
@@ -408,7 +408,18 @@ static int mca_bml_r2_add_local_procs(void)
         if (NULL != p->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
             continue;
         }
-        (void) ompi_proc_complete_init_single(p);
+        /* Do not batch-wire a local peer whose connection blob is not
+         * local yet. add_proc of that peer falls through to a
+         * single-proc attempt, which returns NOT_READY. */
+        if (p != ompi_proc_local_proc && !ompi_modex_proc_ready(p)) {
+            continue;
+        }
+        /* Never wire a peer whose architecture could not be read: its
+         * convertor would still be the local one. The blob is local at
+         * this point, so this only trips on a hard failure. */
+        if (OMPI_SUCCESS != ompi_proc_complete_init_single(p)) {
+            continue;
+        }
         locals[nlocals++] = p;
     }
     free(allocated);
@@ -437,6 +448,7 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     mca_bml_base_endpoint_t *bml_endpoint;
     /* at least one btl is in use */
     bool btl_in_use = false;
+    bool not_ready = false;
     int rc;
 
     if (OPAL_UNLIKELY(NULL == proc)) {
@@ -452,12 +464,14 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     if (proc == ompi_proc_local_proc ||
         OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
         rc = mca_bml_r2_add_local_procs();
-        if (OMPI_SUCCESS != rc) {
-            return rc;
-        }
         if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
             return OMPI_SUCCESS;
         }
+        if (OMPI_SUCCESS != rc && OMPI_ERR_NOT_READY != rc) {
+            return rc;
+        }
+        /* This local peer was not in the ready batch; try it alone
+         * so the BTL can return NOT_READY for just this proc. */
     }
 
     /* add btls if not already done */
@@ -470,9 +484,23 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    /* Modules are sorted highest exclusivity first. If SM (HIGH)
+     * returns NOT_READY, do not fall back to TCP (LOW): that would
+     * publish a TCP-only endpoint while the peer may still wire SM,
+     * and the two sides never meet.
+     *
+     * TODO: lazy add_proc still walks every module for every peer,
+     * including intra-node BTLs for off-node ranks. A BTL-advertised
+     * LOCAL scope would let those be skipped. */
+    uint32_t pending_excl = 0;
+
     for (size_t p_index = 0 ; p_index < mca_bml_r2.num_btl_modules ; ++p_index) {
         mca_btl_base_module_t *btl = mca_bml_r2.btl_modules[p_index];
         struct mca_btl_base_endpoint_t *btl_endpoint = NULL;
+
+        if (pending_excl > btl->btl_exclusivity) {
+            continue;
+        }
 
         /* if the r2 can reach the destination proc it sets the
          * corresponding bit (proc index) in the reachable bitmap
@@ -480,6 +508,13 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
          * that is passed back to the r2 on data transfer calls
          */
         rc = btl->btl_add_procs (btl, 1, (opal_proc_t **) &proc, &btl_endpoint, NULL);
+        if (OMPI_ERR_NOT_READY == rc) {
+            not_ready = true;
+            if (btl->btl_exclusivity > pending_excl) {
+                pending_excl = btl->btl_exclusivity;
+            }
+            continue;
+        }
         if (OMPI_SUCCESS != rc || NULL == btl_endpoint) {
             /* This BTL has troubles adding the nodes. Let's continue maybe some other BTL
              * can take care of this task. */
@@ -498,18 +533,12 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     if (!btl_in_use) {
         proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = NULL;
         OBJ_RELEASE(bml_endpoint);
-        /* no btl is available for this proc */
-        if (mca_bml_r2.show_unreach_errors) {
-            char *errhost = opal_get_proc_hostname(&proc->super);
-            char *localhost = opal_get_proc_hostname(&ompi_proc_local_proc->super);
-            opal_show_help ("help-mca-bml-r2.txt", "unreachable proc", true,
-                            OMPI_NAME_PRINT(&(ompi_proc_local_proc->super.proc_name)),
-                            localhost,
-                            OMPI_NAME_PRINT(&(proc->super.proc_name)),
-                            errhost,
-                            btl_names);
-            free(errhost);
-            free(localhost);
+        /* A BTL may return NOT_FOUND while a LOCAL Get is still racing
+         * the node GDS, even after the fence flag is set. add_proc is
+         * called from the send/recv path and will be retried; do not
+         * print the fatal "job is going to abort" help here. */
+        if (not_ready || !ompi_modex_proc_ready(proc)) {
+            return OMPI_ERR_NOT_READY;
         }
 
         return OMPI_ERR_UNREACH;
@@ -539,6 +568,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;
     struct ompi_proc_t** new_procs = NULL;
     int rc, ret = OMPI_SUCCESS;
+    bool saw_not_ready = false;
 
     if(0 == nprocs) {
         return OMPI_SUCCESS;
@@ -584,9 +614,37 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    /* new_procs[0, n_try) are still candidates for the current BTL.
+     * The tail is procs we must not pass to a lower-exclusivity BTL
+     * (local peers a higher-exclusivity BTL has already said are not
+     * ready). Compact in place so this path stays two arrays. */
+    size_t n_try = n_new_procs;
+    uint32_t prev_excl = 0;
+
     for (size_t p_index = 0 ; p_index < mca_bml_r2.num_btl_modules ; ++p_index) {
         mca_btl_base_module_t *btl = mca_bml_r2.btl_modules[p_index];
         int btl_inuse = 0;
+
+        if (0 != prev_excl && prev_excl > btl->btl_exclusivity && saw_not_ready) {
+            size_t i = 0;
+            while (i < n_try) {
+                ompi_proc_t *proc = new_procs[i];
+                if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] &&
+                    (proc == ompi_proc_local_proc ||
+                     OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags))) {
+                    --n_try;
+                    new_procs[i] = new_procs[n_try];
+                    new_procs[n_try] = proc;
+                } else {
+                    ++i;
+                }
+            }
+        }
+        prev_excl = btl->btl_exclusivity;
+
+        if (0 == n_try) {
+            continue;
+        }
 
         /* if the r2 can reach the destination proc it sets the
          * corresponding bit (proc index) in the reachable bitmap
@@ -594,22 +652,28 @@ static int mca_bml_r2_add_procs( size_t nprocs,
          * that is passed back to the r2 on data transfer calls
          */
         opal_bitmap_clear_all_bits(reachable);
-        memset(btl_endpoints, 0, nprocs *sizeof(struct mca_btl_base_endpoint_t*));
+        memset(btl_endpoints, 0, n_try * sizeof(struct mca_btl_base_endpoint_t*));
 
-        rc = btl->btl_add_procs(btl, n_new_procs, (opal_proc_t**)new_procs, btl_endpoints, reachable);
-        if (OMPI_SUCCESS != rc) {
+        rc = btl->btl_add_procs(btl, n_try, (opal_proc_t**)new_procs, btl_endpoints, reachable);
+        if (OMPI_ERR_NOT_READY == rc) {
+            /* Some peers are not published yet; still take any that
+             * this BTL did wire. Unwired local procs stay in the tail
+             * once exclusivity drops, so TCP is not asked to connect
+             * them while SM may still succeed. */
+            saw_not_ready = true;
+        } else if (OMPI_SUCCESS != rc) {
             /* This BTL encountered an error while adding procs. Continue in case some other
              * BTL(s) can be used. */
             continue;
         }
 
         /* for each proc that is reachable */
-        for (size_t p = 0 ; p < n_new_procs ; ++p) {
-            if (!opal_bitmap_is_set_bit(reachable, p)) {
+        for (size_t i = 0 ; i < n_try ; ++i) {
+            if (!opal_bitmap_is_set_bit(reachable, i)) {
                 continue;
             }
 
-            ompi_proc_t *proc = new_procs[p];
+            ompi_proc_t *proc = new_procs[i];
             mca_bml_base_endpoint_t *bml_endpoint =
                 (mca_bml_base_endpoint_t *) proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML];
 
@@ -623,9 +687,9 @@ static int mca_bml_r2_add_procs( size_t nprocs,
                 }
             }
 
-            rc = mca_bml_r2_endpoint_add_btl (proc, bml_endpoint, btl, btl_endpoints[p]);
+            rc = mca_bml_r2_endpoint_add_btl (proc, bml_endpoint, btl, btl_endpoints[i]);
             if (OMPI_SUCCESS != rc) {
-                btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &btl_endpoints[p]);
+                btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &btl_endpoints[i]);
                 continue;
             }
 
@@ -654,20 +718,14 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         ompi_proc_t *proc = new_procs[p];
 
         if (NULL == proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-            ret = OMPI_ERR_UNREACH;
-            if (mca_bml_r2.show_unreach_errors) {
-                char *errhost = opal_get_proc_hostname(&proc->super);
-                char *localhost = opal_get_proc_hostname(&ompi_proc_local_proc->super);
-                opal_show_help("help-mca-bml-r2.txt", "unreachable proc", true,
-                               OMPI_NAME_PRINT(&(ompi_proc_local_proc->super.proc_name)),
-                               localhost,
-                               OMPI_NAME_PRINT(&(proc->super.proc_name)),
-                               errhost,
-                               btl_names);
-                free(errhost);
-                free(localhost);
+            if (saw_not_ready || !ompi_modex_proc_ready(proc)) {
+                ret = OMPI_ERR_NOT_READY;
+                break;
             }
-
+            /* Same as add_proc: this path is used for lazy local
+             * wire-up and may be retried. Leave the help to a caller
+             * that is actually giving up. */
+            ret = OMPI_ERR_UNREACH;
             break;
         }
     }

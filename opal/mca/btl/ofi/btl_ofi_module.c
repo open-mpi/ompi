@@ -42,6 +42,14 @@
 #include "btl_ofi_endpoint.h"
 #include "btl_ofi_frag.h"
 
+static void mca_btl_ofi_drop_unwired_endpoint(mca_btl_ofi_module_t *ofi_btl, opal_proc_t *proc,
+                                             mca_btl_base_endpoint_t **peer)
+{
+    (void) opal_hash_table_remove_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) proc);
+    OBJ_RELEASE(*peer);
+    *peer = NULL;
+}
+
 static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
                                  opal_proc_t **opal_procs, mca_btl_base_endpoint_t **peers,
                                  opal_bitmap_t *reachable)
@@ -50,6 +58,7 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
     int count = 0;
     char *ep_name = NULL;
     size_t namelen = mca_btl_ofi_component.namelen;
+    bool not_ready = false;
 
     opal_proc_t *proc;
     mca_btl_base_endpoint_t *ep;
@@ -68,27 +77,33 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             BTL_VERBOSE(
                 ("returning existing endpoint for proc %s", OPAL_NAME_PRINT(proc->proc_name)));
             peers[i] = ep;
-
-        } else {
-            /* We don't have this endpoint yet, create one */
-            peers[i] = mca_btl_ofi_endpoint_create(proc, ofi_btl->ofi_endpoint);
-            BTL_VERBOSE(("creating peer %p", (void *) peers[i]));
-
-            if (OPAL_UNLIKELY(NULL == peers[i])) {
-                return OPAL_ERR_OUT_OF_RESOURCE;
+            if (NULL != reachable) {
+                opal_bitmap_set_bit(reachable, i);
             }
-
-            /* Add this endpoint to the lookup table */
-            (void) opal_hash_table_set_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) proc,
-                                                    peers[i]);
+            continue;
         }
+
+        /* We don't have this endpoint yet, create one */
+        peers[i] = mca_btl_ofi_endpoint_create(proc, ofi_btl->ofi_endpoint);
+        BTL_VERBOSE(("creating peer %p", (void *) peers[i]));
+
+        if (OPAL_UNLIKELY(NULL == peers[i])) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+
+        /* Add this endpoint to the lookup table */
+        (void) opal_hash_table_set_value_uint64(&ofi_btl->id_to_endpoint, (intptr_t) proc,
+                                                peers[i]);
 
         OPAL_MODEX_RECV(rc, &mca_btl_ofi_component.super.btl_version, &peers[i]->ep_proc->proc_name,
                         (void **) &ep_name, &namelen);
         if (OPAL_SUCCESS != rc) {
             BTL_VERBOSE(("error receiving ofi modex for %s: %d",
                          OPAL_NAME_PRINT(proc->proc_name), rc));
-            peers[i] = NULL;
+            if (OPAL_ERR_NOT_READY == rc) {
+                not_ready = true;
+            }
+            mca_btl_ofi_drop_unwired_endpoint(ofi_btl, proc, &peers[i]);
             continue;
         }
 
@@ -104,7 +119,7 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             if (0 == nm) {
                 free(ep_name);
                 BTL_VERBOSE(("peer published 0 modules"));
-                peers[i] = NULL;
+                mca_btl_ofi_drop_unwired_endpoint(ofi_btl, proc, &peers[i]);
                 continue;
             }
 
@@ -132,10 +147,13 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
             }
         } else {
             BTL_VERBOSE(("fi_av_insert failed for module %d", ofi_btl->module_index));
-            peers[i] = NULL;
+            mca_btl_ofi_drop_unwired_endpoint(ofi_btl, proc, &peers[i]);
         }
     }
 
+    if (not_ready) {
+        return OPAL_ERR_NOT_READY;
+    }
     return OPAL_SUCCESS;
 }
 
