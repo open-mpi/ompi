@@ -19,6 +19,15 @@ Open MPI version v6.0.0
   ``sync_init``, ``full``) to select when the TCP BTL constructs
   peer endpoints relative to ``MPI_Init``.
 
+- ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
+  detect that the two jobs selected different PMLs, and fail with a
+  message naming both instead of failing obscurely later. The two
+  roots find this out through the information they already exchange on
+  the port, which now also names the PML. A connect against an Open
+  MPI version that does not send it is therefore no longer possible;
+  the content of that exchange has never been compatible across
+  versions.
+
 - The BTL interface is now version 3.4.0. The last argument of
   ``btl_add_procs()`` changed meaning: it is no longer a reachability
   bit per process, but a two-bit status per process, set with

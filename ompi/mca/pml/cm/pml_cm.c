@@ -145,10 +145,10 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
     }
 #endif
 
-    /* make sure remote procs are using the same PML as us */
-    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected("cm",
-                                                              procs,
-                                                              nprocs))) {
+    /* make sure remote procs are using the same PML as us. The lazy path
+     * comes through here one proc at a time, so a peer wired on first
+     * use is checked as it is wired. */
+    if (OMPI_SUCCESS != (ret = mca_pml_base_pml_check_selected(procs, nprocs))) {
         return ret;
     }
 
@@ -183,8 +183,20 @@ mca_pml_cm_del_procs(struct ompi_proc_t** procs, size_t nprocs)
 
 int mca_pml_cm_ensure_proc(ompi_proc_t *proc)
 {
+    int rc;
+
     if (OPAL_LIKELY(opal_proc_known(&proc->super, OPAL_PROC_FLAG_WIRED))) {
         return OMPI_SUCCESS;
+    }
+
+    /* Ahead of add_procs below, which checks the same thing but can only
+     * report it: this is a first send or a first receive, so a peer
+     * speaking another protocol has to be fatal here rather than one
+     * failed request. Cheap after the first peer, and free in the mode
+     * where the comparison was made once at init. */
+    rc = mca_pml_base_pml_check_peer(proc);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
     }
 
     /* No lock here on purpose: reading the connection info can progress

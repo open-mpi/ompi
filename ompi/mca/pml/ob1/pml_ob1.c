@@ -254,12 +254,26 @@ void mca_pml_ob1_reprepare_send_convertor(mca_pml_ob1_send_request_t *sendreq)
 mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc, int *status)
 {
     mca_bml_base_endpoint_t *ep = mca_bml_base_endpoint_peek(proc);
+    int rc;
 
     assert(NULL != status);
 
     if (NULL != ep) {
         *status = OMPI_SUCCESS;
         return ep;
+    }
+
+    /* The one place this PML wires a peer on its own, so the one place
+     * the peer's choice of PML can still be checked. Only does anything
+     * in the mode where every rank published that choice; the other mode
+     * is a single comparison made once, at init. Ahead of the wire-up
+     * because there is no point building an endpoint for a peer that
+     * speaks another protocol -- and because this Get is what pulls that
+     * peer's data into the cache the wire-up then reads. */
+    rc = mca_pml_base_pml_check_peer(proc);
+    if (OMPI_SUCCESS != rc) {
+        *status = rc;
+        return NULL;
     }
 
     return mca_bml_base_get_endpoint(proc, status);
@@ -667,9 +681,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         return OMPI_SUCCESS;
 
     /* make sure remote procs are using the same PML as us */
-    if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected("ob1",
-                                                              procs,
-                                                              nprocs))) {
+    if (OMPI_SUCCESS != (rc = mca_pml_base_pml_check_selected(procs, nprocs))) {
         return rc;
     }
 

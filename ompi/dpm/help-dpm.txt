@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
 # Copyright (c) 2022      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -45,6 +46,19 @@ the number of procs for each resource and the type of resource to be used.
   Specified value:  %s
 
 We are not able to proceed. Please correct your application.
+#
+[pml-mismatch]
+The two jobs being connected selected different point-to-point
+messaging layers (PMLs), and cannot exchange messages:
+
+  This job selected:    %s
+  The other selected:   %s
+
+Both jobs must select the same PML. This usually means the two were
+started with different settings for the "pml" MCA parameter, or in
+environments whose available networks led each to a different choice.
+
+We are not able to proceed.
 #
 [execv-error]
 
