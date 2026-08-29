@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2016-2017 Los Alamos National Security, LLC. All rights
 dnl                         reserved.
-dnl Copyright (c) 2021-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2021-2026 Amazon.com, Inc. or its affiliates. All Rights reserved.
 dnl Copyright (c) 2023      Triad National Security, LLC. All rights
 dnl                         reserved.
 dnl $COPYRIGHT$
@@ -175,7 +175,16 @@ AC_DEFUN([OPAL_CHECK_OFI],[
 
            AC_DEFINE_UNQUOTED([OPAL_OFI_HAVE_FI_HMEM_DEVICE_ONLY],
                               [${opal_check_fi_hmem_device_only}],
-                              [check if OPAL_OFI_HAVE_FI_HMEM_DEVICE_ONLY available])])
+                              [check if OPAL_OFI_HAVE_FI_HMEM_DEVICE_ONLY available])
+
+           AC_CHECK_DECL([FI_PROGRESS_CONTROL_UNIFIED],
+                         [opal_check_fi_progress_control_unified=1],
+                         [opal_check_fi_progress_control_unified=0],
+                         [#include <rdma/fabric.h>])
+
+           AC_DEFINE_UNQUOTED([OPAL_OFI_HAVE_FI_PROGRESS_CONTROL_UNIFIED],
+                              [${opal_check_fi_progress_control_unified}],
+                              [check if FI_PROGRESS_CONTROL_UNIFIED is available])])
 
     CPPFLAGS=${opal_check_ofi_save_CPPFLAGS}
     LDFLAGS=${opal_check_ofi_save_LDFLAGS}
