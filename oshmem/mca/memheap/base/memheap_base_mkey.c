@@ -30,6 +30,9 @@
 #include "opal/util/timings.h"
 #include "opal/mca/pmix/pmix-internal.h"
 
+#include <limits.h>
+#include <stdint.h>
+
 /* Turn ON/OFF debug output from build (default 0) */
 #ifndef MEMHEAP_BASE_DEBUG
 #define MEMHEAP_BASE_DEBUG    0
@@ -41,6 +44,19 @@
 
 #define MEMHEAP_MKEY_MAXSIZE   4096
 #define MEMHEAP_RECV_REQS_MAX  16
+
+#define MEMHEAP_LAYOUT_VERSION 1U
+#define MEMHEAP_LAYOUT_TERMINATOR_VALUE 0x4d484c31U
+
+static uint8_t memheap_layout_terminator[] = {
+    0x4d, 0x48, 0x4c, 0x31};
+
+typedef struct {
+    uint32_t type;
+    uint64_t size;
+    int64_t hints;
+    uint64_t static_offset;
+} memheap_layout_descriptor_t;
 
 typedef struct oob_comm_request {
     opal_list_item_t super;
@@ -86,14 +102,417 @@ int mca_memheap_seg_cmp(const void *k, const void *v)
     return 0;
 }
 
+static int pack_values(pmix_data_buffer_t *msg, void *value, int32_t count,
+                       pmix_data_type_t type)
+{
+    pmix_status_t rc;
+
+    if (NULL == msg || NULL == value || count < 0) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    rc = PMIx_Data_pack(NULL, msg, value, count, type);
+    if (PMIX_SUCCESS != rc) {
+        PMIX_ERROR_LOG(rc);
+        return (int) rc;
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
+static int get_layout_descriptor(int seg,
+                                 memheap_layout_descriptor_t *descriptor)
+{
+    const map_segment_t *segment;
+    int rc;
+
+    if (NULL == descriptor || NULL == memheap_map
+        || NULL == memheap_map->mem_segs || seg < 0
+        || seg >= memheap_map->n_segments) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    segment = &memheap_map->mem_segs[seg];
+    if ((uintmax_t) segment->seg_size > UINT64_MAX
+        || (uintmax_t) segment->type >= (uintmax_t) MAP_SEGMENT_UNKNOWN) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    if (sizeof(long) > sizeof(int64_t)
+        && (segment->alloc_hints < (long) INT64_MIN
+            || segment->alloc_hints > (long) INT64_MAX)) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    descriptor->type = (uint32_t) segment->type;
+    descriptor->size = (uint64_t) segment->seg_size;
+    descriptor->hints = (int64_t) segment->alloc_hints;
+    descriptor->static_offset = 0;
+
+    if (MAP_SEGMENT_STATIC == segment->type) {
+        rc = mca_memheap_base_static_segment_offset(
+            segment, &descriptor->static_offset);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
+static int pack_memheap_layout(pmix_data_buffer_t *msg)
+{
+    memheap_layout_descriptor_t descriptor;
+    uint32_t version = MEMHEAP_LAYOUT_VERSION;
+    uint32_t segment_count;
+    int rc;
+    int seg;
+
+    if (NULL == msg || NULL == memheap_map || memheap_map->n_segments < 0
+        || (uintmax_t) memheap_map->n_segments > UINT32_MAX) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    segment_count = (uint32_t) memheap_map->n_segments;
+    rc = pack_values(msg, &version, 1, PMIX_UINT32);
+    if (OSHMEM_SUCCESS != rc) {
+        return rc;
+    }
+    rc = pack_values(msg, &segment_count, 1, PMIX_UINT32);
+    if (OSHMEM_SUCCESS != rc) {
+        return rc;
+    }
+
+    for (seg = 0; seg < memheap_map->n_segments; ++seg) {
+        rc = get_layout_descriptor(seg, &descriptor);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = pack_values(msg, &descriptor.type, 1, PMIX_UINT32);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = pack_values(msg, &descriptor.size, 1, PMIX_UINT64);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = pack_values(msg, &descriptor.hints, 1, PMIX_INT64);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = pack_values(msg, &descriptor.static_offset, 1, PMIX_UINT64);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+    }
+
+    /*
+     * End the variable-length descriptor stream with fixed bytes. This lets
+     * the receiver detect a truncated flex-encoded final descriptor before
+     * interpreting any following bytes as remote keys.
+     */
+    rc = pack_values(msg, memheap_layout_terminator,
+                     (int32_t) sizeof(memheap_layout_terminator), PMIX_BYTE);
+    if (OSHMEM_SUCCESS != rc) {
+        return rc;
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
+static int select_peer_payload(pmix_data_buffer_t *message,
+                               size_t total_size, int offset, int size)
+{
+    size_t peer_offset;
+    size_t peer_size;
+
+    if (NULL == message || NULL == message->base_ptr || offset < 0
+        || size < 0) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    peer_offset = (size_t) offset;
+    peer_size = (size_t) size;
+    if (total_size > message->bytes_allocated || peer_size > total_size
+        || peer_offset > total_size - peer_size) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    message->unpack_ptr = message->base_ptr + peer_offset;
+    /*
+     * Bundled PMIx checks pack_ptr, rather than bytes_used, when deciding
+     * whether an unpack would cross the end of a buffer.
+     */
+    message->pack_ptr = message->base_ptr + peer_offset + peer_size;
+    message->bytes_used = peer_offset + peer_size;
+    return OSHMEM_SUCCESS;
+}
+
+static void report_layout_header_problem(int local_pe, int remote_pe,
+                                         const char *field,
+                                         uint64_t local_value,
+                                         uint64_t remote_value,
+                                         pmix_status_t decode_rc)
+{
+    if (0 != local_pe) {
+        return;
+    }
+
+    if (PMIX_SUCCESS == decode_rc) {
+        oshmem_output(oshmem_memheap_base_framework.framework_output,
+                      "Error %s:%d - %s()", __SPML_FILE__, __LINE__,
+                      __func__,
+                      "OSHMEM memheap layout mismatch: local PE %d, "
+                      "remote PE %d, field %s, local %llu, remote %llu; "
+                      "remote keys cannot be associated safely",
+                      local_pe, remote_pe, field,
+                      (unsigned long long) local_value,
+                      (unsigned long long) remote_value);
+    } else {
+        oshmem_output(oshmem_memheap_base_framework.framework_output,
+                      "Error %s:%d - %s()", __SPML_FILE__, __LINE__,
+                      __func__,
+                      "OSHMEM memheap layout mismatch: local PE %d, "
+                      "remote PE %d, field %s decode failure (%d), "
+                      "local %llu, remote %llu; remote keys cannot be "
+                      "associated safely",
+                      local_pe, remote_pe, field, (int) decode_rc,
+                      (unsigned long long) local_value,
+                      (unsigned long long) remote_value);
+    }
+}
+
+static void report_layout_descriptor_problem(
+    int local_pe, int remote_pe, uint32_t segment, const char *field,
+    const memheap_layout_descriptor_t *local,
+    const memheap_layout_descriptor_t *remote, pmix_status_t decode_rc)
+{
+    if (0 != local_pe) {
+        return;
+    }
+
+    if (PMIX_SUCCESS == decode_rc) {
+        oshmem_output(oshmem_memheap_base_framework.framework_output,
+                      "Error %s:%d - %s()", __SPML_FILE__, __LINE__,
+                      __func__,
+                      "OSHMEM memheap layout mismatch: local PE %d, "
+                      "remote PE %d, segment %u, field %s, local "
+                      "{type=%u,size=%llu,hints=%lld,static_offset=%llu}, "
+                      "remote {type=%u,size=%llu,hints=%lld,"
+                      "static_offset=%llu}; remote keys cannot be "
+                      "associated safely",
+                      local_pe, remote_pe, segment, field, local->type,
+                      (unsigned long long) local->size,
+                      (long long) local->hints,
+                      (unsigned long long) local->static_offset,
+                      remote->type, (unsigned long long) remote->size,
+                      (long long) remote->hints,
+                      (unsigned long long) remote->static_offset);
+    } else {
+        oshmem_output(oshmem_memheap_base_framework.framework_output,
+                      "Error %s:%d - %s()", __SPML_FILE__, __LINE__,
+                      __func__,
+                      "OSHMEM memheap layout mismatch: local PE %d, "
+                      "remote PE %d, segment %u, field descriptor[%u].%s "
+                      "decode failure (%d), local "
+                      "{type=%u,size=%llu,hints=%lld,static_offset=%llu}, "
+                      "remote {type=%u,size=%llu,hints=%lld,"
+                      "static_offset=%llu}; remote keys cannot be "
+                      "associated safely",
+                      local_pe, remote_pe, segment, segment, field,
+                      (int) decode_rc, local->type,
+                      (unsigned long long) local->size,
+                      (long long) local->hints,
+                      (unsigned long long) local->static_offset,
+                      remote->type, (unsigned long long) remote->size,
+                      (long long) remote->hints,
+                      (unsigned long long) remote->static_offset);
+    }
+}
+
+static int unpack_descriptor_field(
+    pmix_data_buffer_t *message, void *value, pmix_data_type_t type,
+    int remote_pe, int local_pe, uint32_t segment, const char *field,
+    const memheap_layout_descriptor_t *local,
+    const memheap_layout_descriptor_t *remote)
+{
+    int32_t count = 1;
+    pmix_status_t rc;
+
+    rc = PMIx_Data_unpack(NULL, message, value, &count, type);
+    if (PMIX_SUCCESS != rc || 1 != count) {
+        if (PMIX_SUCCESS == rc) {
+            rc = PMIX_ERR_BAD_PARAM;
+        }
+        report_layout_descriptor_problem(local_pe, remote_pe, segment, field,
+                                         local, remote, rc);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
+static int unpack_and_validate_layout(pmix_data_buffer_t *message,
+                                      int remote_pe, int local_pe)
+{
+    memheap_layout_descriptor_t local_descriptor;
+    memheap_layout_descriptor_t remote_descriptor;
+    uint32_t local_count;
+    uint32_t remote_count = 0;
+    uint8_t remote_terminator[sizeof(memheap_layout_terminator)] = {0};
+    uint64_t remote_terminator_value = 0;
+    uint32_t remote_version = 0;
+    uint32_t segment;
+    const char *mismatch;
+    int32_t count;
+    pmix_status_t pmix_rc;
+    int rc;
+
+    if (NULL == message || NULL == memheap_map || remote_pe < 0
+        || local_pe < 0 || memheap_map->n_segments < 0
+        || memheap_map->n_segments > INT_MAX
+        || (uintmax_t) memheap_map->n_segments > UINT32_MAX) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    local_count = (uint32_t) memheap_map->n_segments;
+    count = 1;
+    pmix_rc = PMIx_Data_unpack(NULL, message, &remote_version, &count,
+                              PMIX_UINT32);
+    if (PMIX_SUCCESS != pmix_rc || 1 != count) {
+        if (PMIX_SUCCESS == pmix_rc) {
+            pmix_rc = PMIX_ERR_BAD_PARAM;
+        }
+        report_layout_header_problem(local_pe, remote_pe, "version",
+                                     MEMHEAP_LAYOUT_VERSION, remote_version,
+                                     pmix_rc);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    if (MEMHEAP_LAYOUT_VERSION != remote_version) {
+        report_layout_header_problem(local_pe, remote_pe, "version",
+                                     MEMHEAP_LAYOUT_VERSION, remote_version,
+                                     PMIX_SUCCESS);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    count = 1;
+    pmix_rc = PMIx_Data_unpack(NULL, message, &remote_count, &count,
+                              PMIX_UINT32);
+    if (PMIX_SUCCESS != pmix_rc || 1 != count) {
+        if (PMIX_SUCCESS == pmix_rc) {
+            pmix_rc = PMIX_ERR_BAD_PARAM;
+        }
+        report_layout_header_problem(local_pe, remote_pe, "count",
+                                     local_count, remote_count, pmix_rc);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    if (remote_count > INT_MAX || local_count != remote_count) {
+        report_layout_header_problem(local_pe, remote_pe, "count",
+                                     local_count, remote_count, PMIX_SUCCESS);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    for (segment = 0; segment < remote_count; ++segment) {
+        rc = get_layout_descriptor((int) segment, &local_descriptor);
+        if (OSHMEM_SUCCESS != rc) {
+            MEMHEAP_ERROR("failed to construct local layout descriptor %u",
+                          segment);
+            return rc;
+        }
+        memset(&remote_descriptor, 0, sizeof(remote_descriptor));
+
+        rc = unpack_descriptor_field(
+            message, &remote_descriptor.type, PMIX_UINT32, remote_pe,
+            local_pe, segment, "type", &local_descriptor,
+            &remote_descriptor);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = unpack_descriptor_field(
+            message, &remote_descriptor.size, PMIX_UINT64, remote_pe,
+            local_pe, segment, "size", &local_descriptor,
+            &remote_descriptor);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = unpack_descriptor_field(
+            message, &remote_descriptor.hints, PMIX_INT64, remote_pe,
+            local_pe, segment, "hints", &local_descriptor,
+            &remote_descriptor);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = unpack_descriptor_field(
+            message, &remote_descriptor.static_offset, PMIX_UINT64,
+            remote_pe, local_pe, segment, "static_offset",
+            &local_descriptor, &remote_descriptor);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+
+        mismatch = NULL;
+        if (remote_descriptor.type >= (uint32_t) MAP_SEGMENT_UNKNOWN
+            || local_descriptor.type != remote_descriptor.type) {
+            mismatch = "type";
+        } else if (local_descriptor.size != remote_descriptor.size) {
+            mismatch = "size";
+        } else if (local_descriptor.hints != remote_descriptor.hints) {
+            mismatch = "hints";
+        } else if (local_descriptor.static_offset
+                   != remote_descriptor.static_offset) {
+            mismatch = "static_offset";
+        }
+        if (NULL != mismatch) {
+            report_layout_descriptor_problem(
+                local_pe, remote_pe, segment, mismatch, &local_descriptor,
+                &remote_descriptor, PMIX_SUCCESS);
+            return OSHMEM_ERR_BAD_PARAM;
+        }
+    }
+
+    count = (int32_t) sizeof(remote_terminator);
+    pmix_rc = PMIx_Data_unpack(NULL, message, remote_terminator, &count,
+                              PMIX_BYTE);
+    if (PMIX_SUCCESS != pmix_rc) {
+        report_layout_header_problem(
+            local_pe, remote_pe, "terminator",
+            MEMHEAP_LAYOUT_TERMINATOR_VALUE, 0, pmix_rc);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    for (segment = 0; segment < sizeof(remote_terminator); ++segment) {
+        remote_terminator_value = (remote_terminator_value << 8)
+                                  | remote_terminator[segment];
+    }
+    if (count != (int32_t) sizeof(remote_terminator)
+        || 0 != memcmp(remote_terminator, memheap_layout_terminator,
+                       sizeof(remote_terminator))) {
+        report_layout_header_problem(
+            local_pe, remote_pe, "terminator",
+            MEMHEAP_LAYOUT_TERMINATOR_VALUE, remote_terminator_value,
+            PMIX_SUCCESS);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    return OSHMEM_SUCCESS;
+}
+
 static int pack_local_mkeys(pmix_data_buffer_t *msg, int pe, int seg)
 {
     int i, n;
+    int rc;
     sshmem_mkey_t *mkey;
+    uint32_t packed_value;
 
     /* go over all transports and pack mkeys */
     n = memheap_map->num_transports;
-    PMIx_Data_pack(NULL, msg, &n, 1, PMIX_UINT32);
+    if (n < 0 || (uintmax_t) n > UINT32_MAX) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    packed_value = (uint32_t) n;
+    rc = pack_values(msg, &packed_value, 1, PMIX_UINT32);
+    if (OSHMEM_SUCCESS != rc) {
+        return rc;
+    }
     MEMHEAP_VERBOSE(5, "found %d transports to %d", n, pe);
     for (i = 0; i < n; i++) {
         mkey = mca_memheap_base_get_mkey(mca_memheap_seg2base_va(seg), i);
@@ -102,14 +521,31 @@ static int pack_local_mkeys(pmix_data_buffer_t *msg, int pe, int seg)
                           seg, i);
             return OSHMEM_ERROR;
         }
-        PMIx_Data_pack(NULL, msg, &i, 1, PMIX_UINT32);
-        PMIx_Data_pack(NULL, msg, &mkey->va_base, 1, PMIX_UINT64);
+        packed_value = (uint32_t) i;
+        rc = pack_values(msg, &packed_value, 1, PMIX_UINT32);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
+        rc = pack_values(msg, &mkey->va_base, 1, PMIX_UINT64);
+        if (OSHMEM_SUCCESS != rc) {
+            return rc;
+        }
         if (0 == mkey->va_base) {
-            PMIx_Data_pack(NULL, msg, &mkey->u.key, 1, PMIX_UINT64);
+            rc = pack_values(msg, &mkey->u.key, 1, PMIX_UINT64);
+            if (OSHMEM_SUCCESS != rc) {
+                return rc;
+            }
         } else {
-            PMIx_Data_pack(NULL, msg, &mkey->len, 1, PMIX_UINT16);
+            rc = pack_values(msg, &mkey->len, 1, PMIX_UINT16);
+            if (OSHMEM_SUCCESS != rc) {
+                return rc;
+            }
             if (0 < mkey->len) {
-                PMIx_Data_pack(NULL, msg, mkey->u.data, mkey->len, PMIX_BYTE);
+                rc = pack_values(msg, mkey->u.data, mkey->len,
+                                 PMIX_BYTE);
+                if (OSHMEM_SUCCESS != rc) {
+                    return rc;
+                }
             }
         }
         MEMHEAP_VERBOSE(5,
@@ -524,22 +960,26 @@ void mca_memheap_modex_recv_all(void)
     void *send_buffer = NULL;
     char *rcv_buffer = NULL;
     size_t size;
+    int send_size;
     int *rcv_size = NULL;
     int *rcv_n_transports = NULL;
     int *rcv_offsets = NULL;
     int rc = OSHMEM_SUCCESS;
-    size_t buffer_size;
+    size_t buffer_size = 0;
 
     OPAL_TIMING_ENV_INIT(recv_all);
 
-    if (!mca_memheap_base_key_exchange) {
-        oshmem_shmem_barrier();
-        return;
-    }
-    OPAL_TIMING_ENV_NEXT(recv_all, "barrier");
+    OPAL_TIMING_ENV_NEXT(recv_all, "start");
     nprocs = oshmem_num_procs();
     my_pe = oshmem_my_proc_id();
     OPAL_TIMING_ENV_NEXT(recv_all, "proc position");
+
+    if (nprocs <= 0 || my_pe < 0 || my_pe >= nprocs
+        || (size_t) nprocs > SIZE_MAX / sizeof(int)) {
+        rc = OSHMEM_ERR_BAD_PARAM;
+        goto exit_fatal;
+    }
+
     /* buffer allocation for num_transports
      * message sizes and offsets */
 
@@ -558,8 +998,8 @@ void mca_memheap_modex_recv_all(void)
     }
 
     rcv_n_transports = (int *)malloc(nprocs * sizeof(int));
-    if (NULL == rcv_offsets) {
-        MEMHEAP_ERROR("failed to get rcv_offsets buffer");
+    if (NULL == rcv_n_transports) {
+        MEMHEAP_ERROR("failed to get rcv_n_transports buffer");
         rc = OSHMEM_ERR_OUT_OF_RESOURCE;
         goto exit_fatal;
     }
@@ -573,18 +1013,31 @@ void mca_memheap_modex_recv_all(void)
         goto exit_fatal;
     }
 
-    for (j = 0; j < memheap_map->n_segments; j++) {
-        pack_local_mkeys(msg, 0, j);
+    rc = pack_memheap_layout(msg);
+    if (OSHMEM_SUCCESS != rc) {
+        MEMHEAP_ERROR("failed to pack local memheap layout");
+        goto exit_fatal;
     }
-
-    /* we assume here that int32_t returned by opal_dss.unload
-     * is equal to size of int we use for MPI_Allgather, MPI_Allgatherv */
-
-    assert(sizeof(int32_t) == sizeof(int));
+    if (mca_memheap_base_key_exchange) {
+        for (j = 0; j < memheap_map->n_segments; j++) {
+            rc = pack_local_mkeys(msg, my_pe, j);
+            if (OSHMEM_SUCCESS != rc) {
+                MEMHEAP_ERROR("failed to pack local keys for segment %d", j);
+                goto exit_fatal;
+            }
+        }
+    }
 
     /* Do allgather */
     PMIX_DATA_BUFFER_UNLOAD(msg, send_buffer, size);
-    MEMHEAP_VERBOSE(1, "local keys packed into %d bytes, %" PRIsize_t " segments", size, memheap_map->n_segments);
+    if (0 == size || size > INT_MAX) {
+        MEMHEAP_ERROR("invalid local key payload size: %" PRIsize_t, size);
+        rc = OSHMEM_ERR_BAD_PARAM;
+        goto exit_fatal;
+    }
+    send_size = (int) size;
+    MEMHEAP_VERBOSE(1, "local memheap payload packed into %d bytes, %d segments",
+                    send_size, memheap_map->n_segments);
 
     OPAL_TIMING_ENV_NEXT(recv_all, "serialize data");
 
@@ -601,7 +1054,7 @@ void mca_memheap_modex_recv_all(void)
     OPAL_TIMING_ENV_NEXT(recv_all, "allgather: transport cnt");
 
 
-    rc = oshmem_shmem_allgather(&size, rcv_size, sizeof(int));
+    rc = oshmem_shmem_allgather(&send_size, rcv_size, sizeof(int));
     if (MPI_SUCCESS != rc) {
         MEMHEAP_ERROR("allgather failed");
         goto exit_fatal;
@@ -611,12 +1064,33 @@ void mca_memheap_modex_recv_all(void)
 
     /* calculating offsets (displacements) for allgatherv */
 
-    rcv_offsets[0] = 0;
-    for (i = 1; i < nprocs; i++) {
-        rcv_offsets[i] = rcv_offsets[i - 1] + rcv_size[i - 1];
+    for (i = 0; i < nprocs; ++i) {
+        if (rcv_n_transports[i] < 0 || rcv_size[i] < 0
+            || buffer_size > INT_MAX) {
+            MEMHEAP_ERROR("invalid receive metadata from PE %d", i);
+            rc = OSHMEM_ERR_BAD_PARAM;
+            goto exit_fatal;
+        }
+        rcv_offsets[i] = (int) buffer_size;
+        if ((size_t) rcv_size[i] > SIZE_MAX - buffer_size) {
+            MEMHEAP_ERROR("receive payload size overflows at PE %d", i);
+            rc = OSHMEM_ERR_BAD_PARAM;
+            goto exit_fatal;
+        }
+        buffer_size += (size_t) rcv_size[i];
+        if (buffer_size > INT_MAX) {
+            MEMHEAP_ERROR("receive displacement exceeds INT_MAX at PE %d",
+                          i);
+            rc = OSHMEM_ERR_BAD_PARAM;
+            goto exit_fatal;
+        }
     }
 
-    buffer_size = rcv_offsets[nprocs - 1] + rcv_size[nprocs - 1];
+    if (0 == buffer_size) {
+        MEMHEAP_ERROR("empty collective key payload");
+        rc = OSHMEM_ERR_BAD_PARAM;
+        goto exit_fatal;
+    }
 
     rcv_buffer = malloc (buffer_size);
     if (NULL == rcv_buffer) {
@@ -627,9 +1101,11 @@ void mca_memheap_modex_recv_all(void)
 
     OPAL_TIMING_ENV_NEXT(recv_all, "alloc data buf");
 
-    rc = oshmem_shmem_allgatherv(send_buffer, rcv_buffer, size, rcv_size, rcv_offsets);
+    rc = oshmem_shmem_allgatherv(send_buffer, rcv_buffer, send_size,
+                                 rcv_size, rcv_offsets);
     if (MPI_SUCCESS != rc) {
         free (rcv_buffer);
+        rcv_buffer = NULL;
         MEMHEAP_ERROR("allgatherv failed");
         goto exit_fatal;
     }
@@ -637,41 +1113,88 @@ void mca_memheap_modex_recv_all(void)
     OPAL_TIMING_ENV_NEXT(recv_all, "Perform mkey exchange");
 
     PMIX_DATA_BUFFER_LOAD(msg, rcv_buffer, buffer_size);
+    rcv_buffer = NULL;
 
-    /* deserialize mkeys */
+    /*
+     * Pass 1 validates every peer, including self. It intentionally holds no
+     * lock and performs no remote-key allocation, unpack, or mutation.
+     */
+    for (i = 0; i < nprocs; i++) {
+        rc = select_peer_payload(msg, buffer_size, rcv_offsets[i],
+                                 rcv_size[i]);
+        if (OSHMEM_SUCCESS != rc) {
+            goto exit_fatal;
+        }
+        rc = unpack_and_validate_layout(msg, i, my_pe);
+        if (OSHMEM_SUCCESS != rc) {
+            goto exit_fatal;
+        }
+    }
+
+    /*
+     * Lazy key lookup still uses the validated receiver-local segment
+     * ordinal. Preserve the disabled eager-exchange barrier, but return only
+     * after every peer's canonical layout has passed validation.
+     */
+    if (!mca_memheap_base_key_exchange) {
+        oshmem_shmem_barrier();
+        goto exit_fatal;
+    }
+
+    /*
+     * Pass 2 reselects and revalidates each remote slice to position its
+     * cursor at the existing key records before installing them.
+     */
     OPAL_THREAD_LOCK(&memheap_oob.lck);
     for (i = 0; i < nprocs; i++) {
         if (i == my_pe) {
             continue;
         }
 
-        msg->unpack_ptr = (void *)((intptr_t) msg->base_ptr + rcv_offsets[i]);
-
+        rc = select_peer_payload(msg, buffer_size, rcv_offsets[i],
+                                 rcv_size[i]);
+        if (OSHMEM_SUCCESS != rc) {
+            break;
+        }
+        rc = unpack_and_validate_layout(msg, i, my_pe);
+        if (OSHMEM_SUCCESS != rc) {
+            break;
+        }
         for (j = 0; j < memheap_map->n_segments; j++) {
-            map_segment_t *s;
+            map_segment_t *segment;
 
-            s = &memheap_map->mem_segs[j];
-            if (NULL != s->mkeys_cache[i]) {
+            segment = &memheap_map->mem_segs[j];
+            if (NULL != segment->mkeys_cache[i]) {
                 MEMHEAP_VERBOSE(10, "PE%d: segment%d already exists, mkey will be replaced", i, j);
             } else {
-                s->mkeys_cache[i] = (sshmem_mkey_t *) calloc(rcv_n_transports[i],
-                        sizeof(sshmem_mkey_t));
-                if (NULL == s->mkeys_cache[i]) {
+                segment->mkeys_cache[i] = (sshmem_mkey_t *)
+                    calloc(rcv_n_transports[i], sizeof(sshmem_mkey_t));
+                if (NULL == segment->mkeys_cache[i]) {
                     MEMHEAP_ERROR("PE%d: segment%d: Failed to allocate mkeys cache entry", i, j);
-                    oshmem_shmem_abort(-1);
+                    rc = OSHMEM_ERR_OUT_OF_RESOURCE;
+                    break;
                 }
             }
-            memheap_oob.mkeys = s->mkeys_cache[i];
+            memheap_oob.mkeys = segment->mkeys_cache[i];
             memheap_oob.segno = j;
             unpack_remote_mkeys(oshmem_ctx_default, msg, i);
+        }
+        if (OSHMEM_SUCCESS != rc) {
+            break;
         }
     }
 
     OPAL_TIMING_ENV_NEXT(recv_all, "Unpack data");
 
     OPAL_THREAD_UNLOCK(&memheap_oob.lck);
+    if (OSHMEM_SUCCESS != rc) {
+        goto exit_fatal;
+    }
 
 exit_fatal:
+    if (rcv_buffer) {
+        free(rcv_buffer);
+    }
     if (rcv_size) {
         free(rcv_size);
     }
