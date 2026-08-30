@@ -19,112 +19,407 @@
 #include "oshmem/util/oshmem_util.h"
 #include "opal/util/minmax.h"
 
+#if defined(__linux__)
+#include <link.h>
+#endif
+
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 
-static int _check_perms(const char *perm);
-static int _check_non_static_segment(const map_segment_t *mem_segs,
-                                     int n_segment,
-                                     const void *start, const void *end);
-static int _check_address(void *start, void **end);
-static int _check_pathname(uint64_t inode, const char *pathname);
+#if defined(__linux__)
+typedef struct {
+    uintptr_t start;
+    uintptr_t end;
+} writable_load_range_t;
+
+typedef struct {
+    uintptr_t load_bias;
+    writable_load_range_t *ranges;
+    size_t count;
+    size_t capacity;
+    bool found_main;
+    int status;
+} executable_layout_t;
+
+static executable_layout_t executable_layout;
+
+static int add_uintptr(uintptr_t left, uintptr_t right, uintptr_t *result)
+{
+    if (NULL == result || left > UINTPTR_MAX - right) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    *result = left + right;
+    return OSHMEM_SUCCESS;
+}
+
+static int append_writable_range(executable_layout_t *layout, uintptr_t start,
+                                 uintptr_t end)
+{
+    writable_load_range_t *ranges;
+    size_t new_capacity;
+
+    if (NULL == layout || start >= end) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    if (layout->count == layout->capacity) {
+        if (0 == layout->capacity) {
+            new_capacity = 4;
+        } else {
+            if (layout->capacity > SIZE_MAX / 2) {
+                return OSHMEM_ERR_BAD_PARAM;
+            }
+            new_capacity = layout->capacity * 2;
+        }
+        if (new_capacity > SIZE_MAX / sizeof(*ranges)) {
+            return OSHMEM_ERR_BAD_PARAM;
+        }
+
+        ranges = realloc(layout->ranges, new_capacity * sizeof(*ranges));
+        if (NULL == ranges) {
+            return OSHMEM_ERR_OUT_OF_RESOURCE;
+        }
+        layout->ranges = ranges;
+        layout->capacity = new_capacity;
+    }
+
+    layout->ranges[layout->count].start = start;
+    layout->ranges[layout->count].end = end;
+    ++layout->count;
+    return OSHMEM_SUCCESS;
+}
+
+static int find_main_executable(struct dl_phdr_info *info, size_t size,
+                                void *data)
+{
+    executable_layout_t *layout = data;
+    size_t i;
+
+    (void) size;
+    if (NULL != info->dlpi_name && '\0' != info->dlpi_name[0]) {
+        return 0;
+    }
+
+    layout->found_main = true;
+    layout->load_bias = (uintptr_t) info->dlpi_addr;
+    for (i = 0; i < info->dlpi_phnum; ++i) {
+        const ElfW(Phdr) *phdr = &info->dlpi_phdr[i];
+        uintptr_t start;
+        uintptr_t end;
+        int rc;
+
+        if (PT_LOAD != phdr->p_type || 0 == (phdr->p_flags & PF_W)
+            || 0 == phdr->p_memsz) {
+            continue;
+        }
+        if ((uintmax_t) phdr->p_vaddr > (uintmax_t) UINTPTR_MAX
+            || (uintmax_t) phdr->p_memsz > (uintmax_t) UINTPTR_MAX) {
+            layout->status = OSHMEM_ERR_BAD_PARAM;
+            return 1;
+        }
+
+        rc = add_uintptr(layout->load_bias, (uintptr_t) phdr->p_vaddr,
+                         &start);
+        if (OSHMEM_SUCCESS == rc) {
+            rc = add_uintptr(start, (uintptr_t) phdr->p_memsz, &end);
+        }
+        if (OSHMEM_SUCCESS == rc && start >= end) {
+            rc = OSHMEM_ERR_BAD_PARAM;
+        }
+        if (OSHMEM_SUCCESS == rc) {
+            rc = append_writable_range(layout, start, end);
+        }
+        if (OSHMEM_SUCCESS != rc) {
+            layout->status = rc;
+            return 1;
+        }
+    }
+
+    return 1;
+}
+
+static int compare_writable_ranges(const void *left, const void *right)
+{
+    const writable_load_range_t *left_range = left;
+    const writable_load_range_t *right_range = right;
+
+    if (left_range->start < right_range->start) {
+        return -1;
+    }
+    if (left_range->start > right_range->start) {
+        return 1;
+    }
+    if (left_range->end < right_range->end) {
+        return -1;
+    }
+    if (left_range->end > right_range->end) {
+        return 1;
+    }
+    return 0;
+}
+
+static void coalesce_writable_ranges(executable_layout_t *layout)
+{
+    size_t input;
+    size_t output = 0;
+
+    if (layout->count > 1) {
+        qsort(layout->ranges, layout->count, sizeof(*layout->ranges),
+              compare_writable_ranges);
+    }
+
+    for (input = 0; input < layout->count; ++input) {
+        if (0 == output
+            || layout->ranges[output - 1].end < layout->ranges[input].start) {
+            layout->ranges[output++] = layout->ranges[input];
+            continue;
+        }
+        layout->ranges[output - 1].end =
+            opal_max(layout->ranges[output - 1].end,
+                     layout->ranges[input].end);
+    }
+    layout->count = output;
+}
+
+static int discover_executable_layout(void)
+{
+    int iterate_status;
+
+    free(executable_layout.ranges);
+    memset(&executable_layout, 0, sizeof(executable_layout));
+    executable_layout.status = OSHMEM_SUCCESS;
+
+    iterate_status = dl_iterate_phdr(find_main_executable,
+                                     &executable_layout);
+    if (OSHMEM_SUCCESS != executable_layout.status) {
+        MEMHEAP_ERROR("failed to discover writable executable ELF ranges: %d",
+                      executable_layout.status);
+        return executable_layout.status;
+    }
+    if (!executable_layout.found_main || 0 == iterate_status) {
+        MEMHEAP_ERROR("failed to locate the main executable ELF image");
+        return OSHMEM_ERR_NOT_FOUND;
+    }
+
+    coalesce_writable_ranges(&executable_layout);
+    return OSHMEM_SUCCESS;
+}
+
+static int append_static_segment(mca_memheap_map_t *map, int original_count,
+                                 uintptr_t start, uintptr_t end)
+{
+    map_segment_t *segment;
+    uintptr_t segment_size;
+
+    if (NULL == map || start >= end) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    segment_size = end - start;
+    if ((uintmax_t) segment_size > (uintmax_t) SIZE_MAX) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
+    if (map->n_segments > original_count) {
+        segment = &map->mem_segs[map->n_segments - 1];
+        if (MAP_SEGMENT_STATIC == segment->type
+            && (uintptr_t) segment->super.va_end == start) {
+            MEMHEAP_VERBOSE(5, "Coalescing static segment");
+            segment->super.va_end = (void *) end;
+            segment->seg_size =
+                (uintptr_t) segment->super.va_end
+                - (uintptr_t) segment->super.va_base;
+            return OSHMEM_SUCCESS;
+        }
+    }
+
+    if (map->n_segments < 0 || map->capacity < map->n_segments
+        || (map->n_segments == map->capacity
+            && map->capacity > INT_MAX / 2)) {
+        return OSHMEM_ERR_OUT_OF_RESOURCE;
+    }
+    segment = mca_memheap_base_allocate_segment(map);
+    if (NULL == segment) {
+        return OSHMEM_ERR_OUT_OF_RESOURCE;
+    }
+
+    memset(segment, 0, sizeof(*segment));
+    MAP_SEGMENT_RESET_FLAGS(segment);
+    segment->seg_id = MAP_SEGMENT_SHM_INVALID;
+    segment->super.va_base = (void *) start;
+    segment->super.va_end = (void *) end;
+    segment->seg_size = (size_t) segment_size;
+    segment->type = MAP_SEGMENT_STATIC;
+    ++map->n_segments;
+    MEMHEAP_VERBOSE(5, "add static intersection: %p-%p",
+                    segment->super.va_base, segment->super.va_end);
+    return OSHMEM_SUCCESS;
+}
+
+static int add_static_interval(mca_memheap_map_t *map, int original_count,
+                               uintptr_t start, uintptr_t end)
+{
+    int i;
+
+    if (start >= end) {
+        return OSHMEM_SUCCESS;
+    }
+
+    for (i = 0; i < original_count; ++i) {
+        uintptr_t excluded_start;
+        uintptr_t excluded_end;
+        int rc;
+
+        if (MAP_SEGMENT_STATIC == map->mem_segs[i].type) {
+            continue;
+        }
+        excluded_start = (uintptr_t) map->mem_segs[i].super.va_base;
+        excluded_end = (uintptr_t) map->mem_segs[i].super.va_end;
+        if (excluded_start >= excluded_end) {
+            return OSHMEM_ERR_BAD_PARAM;
+        }
+        if (excluded_end <= start || excluded_start >= end) {
+            continue;
+        }
+
+        if (start < excluded_start) {
+            rc = add_static_interval(map, original_count, start,
+                                     opal_min(end, excluded_start));
+            if (OSHMEM_SUCCESS != rc) {
+                return rc;
+            }
+        }
+        if (excluded_end < end) {
+            return add_static_interval(map, original_count,
+                                       opal_max(start, excluded_end), end);
+        }
+        return OSHMEM_SUCCESS;
+    }
+
+    return append_static_segment(map, original_count, start, end);
+}
+#endif /* defined(__linux__) */
 
 int mca_memheap_base_static_init(mca_memheap_map_t *map)
 {
-    /* read and parse segments from /proc/self/maps */
-    int ret = OSHMEM_SUCCESS;
-    int n_segments = map->n_segments;
+#if defined(__linux__)
+    int rc;
+    int original_count;
+    int i;
     uint64_t total_mem = 0;
-    void* start;
-    void* end;
-    char perms[8];
-    uint64_t offset;
-    char dev[8];
-    uint64_t inode;
-    char pathname[OPAL_PATH_MAX];
-    FILE *fp;
-    char line[1024];
-    map_segment_t *s;
+    FILE *maps = NULL;
+    char line[4096];
 
     assert(map);
     assert(HEAP_SEG_INDEX < map->n_segments);
+    original_count = map->n_segments;
 
-    /* FIXME!!! Linux specific code */
-    fp = fopen("/proc/self/maps", "r");
-    if (NULL == fp) {
-        MEMHEAP_ERROR("Failed to open /proc/self/maps");
-        return OSHMEM_ERROR;
+    rc = discover_executable_layout();
+    if (OSHMEM_SUCCESS != rc) {
+        goto out;
     }
 
-    while (NULL != fgets(line, sizeof(line), fp)) {
-        if (3 > sscanf(line,
-               "%llx-%llx %s %llx %s %llx %s",
-               (unsigned long long *) &start,
-               (unsigned long long *) &end,
-               perms,
-               (unsigned long long *) &offset,
-               dev,
-               (unsigned long long *) &inode,
-               pathname)) {
-            MEMHEAP_ERROR("Failed to sscanf /proc/self/maps output %s", line);
-            ret = OSHMEM_ERROR;
+    maps = fopen("/proc/self/maps", "r");
+    if (NULL == maps) {
+        MEMHEAP_ERROR("Failed to open /proc/self/maps");
+        rc = OSHMEM_ERROR;
+        goto out;
+    }
+
+    while (NULL != fgets(line, sizeof(line), maps)) {
+        unsigned long long parsed_start;
+        unsigned long long parsed_end;
+        uintptr_t map_start;
+        uintptr_t map_end;
+        char perms[5];
+        size_t range_index;
+        int fields;
+
+        if (NULL == strchr(line, '\n') && !feof(maps)) {
+            MEMHEAP_ERROR("truncated /proc/self/maps entry");
+            rc = OSHMEM_ERR_BAD_PARAM;
             goto out;
         }
-
-        if (OSHMEM_ERROR == _check_non_static_segment(
-                                                   map->mem_segs, n_segments,
-                                                   start, end)) {
-            continue;
-        }
-
-        if (OSHMEM_ERROR == _check_address(start, &end))
-            continue;
-
-        if (OSHMEM_ERROR == _check_pathname(inode, pathname))
-            continue;
-
-        if (OSHMEM_ERROR == _check_perms(perms))
-            continue;
-
-        MEMHEAP_VERBOSE(5, "add: %s", line);
-
-        if ((map->n_segments > 0) &&
-            (start == map->mem_segs[map->n_segments - 1].super.va_end)) {
-            s = &map->mem_segs[map->n_segments - 1];
-            MEMHEAP_VERBOSE(5, "Coalescing segment");
-            s->super.va_end = end;
-            s->seg_size = ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
-            continue;
-        }
-
-        s = mca_memheap_base_allocate_segment(map);
-        if (NULL == s) {
-            MEMHEAP_ERROR("failed to allocate segment");
-            ret = OSHMEM_ERR_OUT_OF_RESOURCE;
+        fields = sscanf(line, "%llx-%llx %4s", &parsed_start, &parsed_end,
+                        perms);
+        if (3 != fields || parsed_start >= parsed_end
+            || (uintmax_t) parsed_start > (uintmax_t) UINTPTR_MAX
+            || (uintmax_t) parsed_end > (uintmax_t) UINTPTR_MAX) {
+            MEMHEAP_ERROR("invalid /proc/self/maps entry: %s", line);
+            rc = OSHMEM_ERR_BAD_PARAM;
             goto out;
         }
+        if (4 != strlen(perms) || 'w' != perms[1] || 'p' != perms[3]) {
+            continue;
+        }
 
-        memset(s, 0, sizeof(*s));
-        MAP_SEGMENT_RESET_FLAGS(s);
-        s->seg_id        = MAP_SEGMENT_SHM_INVALID;
-        s->super.va_base = start;
-        s->super.va_end  = end;
-        s->seg_size      = ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
-        s->type          = MAP_SEGMENT_STATIC;
-        map->n_segments++;
+        map_start = (uintptr_t) parsed_start;
+        map_end = (uintptr_t) parsed_end;
+        for (range_index = 0; range_index < executable_layout.count;
+             ++range_index) {
+            uintptr_t intersection_start =
+                opal_max(map_start,
+                         executable_layout.ranges[range_index].start);
+            uintptr_t intersection_end =
+                opal_min(map_end, executable_layout.ranges[range_index].end);
 
-        total_mem += ((uintptr_t)s->super.va_end - (uintptr_t)s->super.va_base);
+            if (intersection_start < intersection_end) {
+                rc = add_static_interval(map, original_count,
+                                         intersection_start,
+                                         intersection_end);
+                if (OSHMEM_SUCCESS != rc) {
+                    MEMHEAP_ERROR("failed to add static executable interval: %d",
+                                  rc);
+                    goto out;
+                }
+            }
+        }
+    }
+    if (ferror(maps)) {
+        MEMHEAP_ERROR("Failed to read /proc/self/maps");
+        rc = OSHMEM_ERROR;
+        goto out;
+    }
+
+    for (i = original_count; i < map->n_segments; ++i) {
+        uint64_t segment_size = (uint64_t) map->mem_segs[i].seg_size;
+
+        if (segment_size > UINT64_MAX - total_mem) {
+            MEMHEAP_ERROR("static executable memory size overflow");
+            rc = OSHMEM_ERR_BAD_PARAM;
+            goto out;
+        }
+        total_mem += segment_size;
     }
 
     MEMHEAP_VERBOSE(1,
                     "Memheap static memory: %llu byte(s), %d segments",
-                    total_mem, map->n_segments);
+                    (unsigned long long) total_mem, map->n_segments);
+    rc = OSHMEM_SUCCESS;
 
 out:
-    fclose(fp);
-    return ret;
+    if (NULL != maps) {
+        fclose(maps);
+    }
+    free(executable_layout.ranges);
+    executable_layout.ranges = NULL;
+    executable_layout.count = 0;
+    executable_layout.capacity = 0;
+    if (OSHMEM_SUCCESS != rc) {
+        executable_layout.found_main = false;
+        map->n_segments = original_count;
+    }
+    return rc;
+#else
+    assert(map);
+    MEMHEAP_ERROR("main-executable writable ELF layout discovery is unsupported on this platform");
+    return OSHMEM_ERR_NOT_SUPPORTED;
+#endif
 }
 
 void mca_memheap_base_static_exit(mca_memheap_map_t *map)
@@ -132,139 +427,31 @@ void mca_memheap_base_static_exit(mca_memheap_map_t *map)
     assert(map);
 }
 
-static int _check_perms(const char *perms)
+int mca_memheap_base_static_segment_offset(const map_segment_t *segment,
+                                           uint64_t *offset)
 {
-    if (!strcmp(perms, "rw-p") || !strcmp(perms, "rwxp"))
-        return OSHMEM_SUCCESS;
+#if defined(__linux__)
+    uintptr_t base;
+    uintmax_t relative;
 
-    return OSHMEM_ERROR;
-}
-
-static int _check_non_static_segment(const map_segment_t *mem_segs,
-                                     int n_segment,
-                                     const void *start, const void *end)
-{
-    int i;
-
-    for (i = 0; i < n_segment; i++) {
-        if ((start <= mem_segs[i].super.va_base) &&
-            (mem_segs[i].super.va_base < end)) {
-            MEMHEAP_VERBOSE(100,
-                            "non static segment: %p-%p already exists as %p-%p",
-                            start, end, mem_segs[i].super.va_base,
-                            mem_segs[i].super.va_end);
-            return OSHMEM_ERROR;
-        }
+    if (NULL == segment || NULL == offset
+        || MAP_SEGMENT_STATIC != segment->type
+        || !executable_layout.found_main) {
+        return OSHMEM_ERR_BAD_PARAM;
     }
-
+    base = (uintptr_t) segment->super.va_base;
+    if (base < executable_layout.load_bias) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    relative = (uintmax_t) (base - executable_layout.load_bias);
+    if (relative > UINT64_MAX) {
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+    *offset = (uint64_t) relative;
     return OSHMEM_SUCCESS;
-}
-
-static int _check_address(void *start, void **end)
-{
-    /* FIXME Linux specific code */
-#ifdef __linux__
-    extern unsigned _end;
-    uintptr_t data_end = (uintptr_t)&_end;
-
-    /**
-     * SGI shmem only supports globals&static in main program.
-     * It does not support them in shared objects or in dlopen()
-     * (Clarified on PGAS 2011 tutorial).
-     *
-     * So ignored any maps that start higher then process _end.
-     */
-    if ((uintptr_t)start > data_end) {
-        MEMHEAP_VERBOSE(100,
-                        "skip segment: data _end < segment start (%p < %p)",
-                        data_end, start);
-        return OSHMEM_ERROR;
-    }
-
-    if ((uintptr_t)*end > data_end) {
-        MEMHEAP_VERBOSE(100,
-                        "adjust segment: data _end < segment end (%p < %p",
-                        data_end, *end);
-         *end = (void*)data_end;
-    }
+#else
+    (void) segment;
+    (void) offset;
+    return OSHMEM_ERR_NOT_SUPPORTED;
 #endif
-    return OSHMEM_SUCCESS;
 }
-
-static int _check_pathname(uint64_t inode, const char *pathname)
-{
-    static const char *proc_self_exe = "/proc/self/exe";
-    static int warned = 0;
-    char exe_path[OPAL_PATH_MAX];
-    char module_path[OPAL_PATH_MAX];
-    char *path;
-
-    if (0 == inode) {
-        /* segment is not mapped to file, allow sharing it */
-        return OSHMEM_SUCCESS;
-    }
-
-    path = realpath(proc_self_exe, exe_path);
-    if (NULL == path) {
-        if (0 == warned) {
-            MEMHEAP_VERBOSE(100, "failed to read link %s: %m", proc_self_exe);
-            MEMHEAP_VERBOSE(100, "all segments will be registered");
-            warned = 1;
-        }
-
-        return OSHMEM_SUCCESS;
-    }
-
-    /* for file-mapped segments allow segments from start process only */
-    path = realpath(pathname, module_path);
-    if (NULL == path) {
-        return OSHMEM_ERROR;
-    }
-
-    if (!strncmp(exe_path, module_path, sizeof(exe_path))) {
-        return OSHMEM_SUCCESS;
-    }
-
-    return OSHMEM_ERROR;
-
-    /* Probably we need more accurate path check
-     * To press check coverity issue following code is disabled
-     */
-#if 0
-    char *p;
-    if ('\0' == seg->pathname[0])
-    return OSHMEM_SUCCESS;
-
-    if (0 == strncmp(seg->pathname, "/lib", 4))
-    return OSHMEM_ERROR;
-
-    if (0 == strncmp(seg->pathname, "/usr/lib", 8))
-    return OSHMEM_ERROR;
-
-    if (0 == strncmp(seg->pathname, "/dev", 4))
-    return OSHMEM_ERROR;
-
-    if (0 == strcmp(seg->pathname, "[stack]"))
-    return OSHMEM_ERROR;
-
-    if (0 == strcmp(seg->pathname, "[vdso]"))
-    return OSHMEM_ERROR;
-
-    if (0 == strcmp(seg->pathname, "[vsyscall]"))
-    return OSHMEM_ERROR;
-
-    p = rindex(seg->pathname, '/');
-    if (p) {
-        if (0 == strncmp(p+1, "libshmem.so", 11))
-        return OSHMEM_ERROR;
-
-        if (0 == strncmp(p+1, "lib" OMPI_LIBMPI_NAME ".so", 9))
-        return OSHMEM_ERROR;
-
-        if (0 == strncmp(p+1, "libmca_common_sm.so", 19))
-        return OSHMEM_ERROR;
-    }
-#endif
-    return OSHMEM_SUCCESS;
-}
-

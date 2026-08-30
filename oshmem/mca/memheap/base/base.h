@@ -67,6 +67,8 @@ int mca_memheap_base_alloc_init(mca_memheap_map_t *, size_t, long, char *);
 void mca_memheap_base_alloc_exit(mca_memheap_map_t *);
 int mca_memheap_base_static_init(mca_memheap_map_t *);
 void mca_memheap_base_static_exit(mca_memheap_map_t *);
+int mca_memheap_base_static_segment_offset(const map_segment_t *segment,
+                                           uint64_t *offset);
 int mca_memheap_base_reg(mca_memheap_map_t *);
 int mca_memheap_base_dereg(mca_memheap_map_t *);
 int memheap_oob_init(mca_memheap_map_t *);
