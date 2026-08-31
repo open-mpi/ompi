@@ -14,6 +14,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # OMPI_CHECK_UBCL(prefix, [action-if-found], [action-if-not-found])

@@ -6,6 +6,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 """Measure architecture-sensitive Open MPI datatype pack and unpack policies."""
 

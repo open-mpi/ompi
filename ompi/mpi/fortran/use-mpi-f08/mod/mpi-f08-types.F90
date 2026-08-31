@@ -11,6 +11,7 @@
 ! Copyright (c) 2019-2021 Triad National Security, LLC. All rights
 !                         reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! This file creates mappings between MPI C types (e.g., MPI_Comm) and
 ! variables (e.g., MPI_COMM_WORLD) and corresponding Fortran names

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #ifndef COMMON_UCX_WPOOL_INT_H
 #define COMMON_UCX_WPOOL_INT_H
 

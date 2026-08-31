@@ -3,6 +3,7 @@
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2015      Intel, Inc. All rights reserved.
 # $COPYRIGHT$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 use strict;
 use Getopt::Long;

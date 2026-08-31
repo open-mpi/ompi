@@ -7,6 +7,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef OSHMEM_REQUEST_DBG_H
 #define OSHMEM_REQUEST_DBG_H

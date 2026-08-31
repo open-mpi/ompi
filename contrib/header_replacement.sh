@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # orte_show_help_replacement.sh Script to detect occurrences of
 # #include "orte/util/show_help.h", where actually either

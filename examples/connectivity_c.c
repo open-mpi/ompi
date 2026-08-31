@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 /*

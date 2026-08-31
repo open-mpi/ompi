@@ -14,6 +14,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Single-process tests of the OMPI datatype engine (ompi/datatype) and
 # the MPI datatype API.  The OPAL-level datatype tests, which link only

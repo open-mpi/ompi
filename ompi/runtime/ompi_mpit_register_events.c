@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Registration of Open MPI's in-tree MPI_T event producers (sources and
  * event types).  The producer raise sites live in their respective

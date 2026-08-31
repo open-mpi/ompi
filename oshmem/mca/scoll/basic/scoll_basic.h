@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef MCA_SCOLL_BASIC_H

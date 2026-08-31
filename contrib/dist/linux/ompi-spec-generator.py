@@ -51,6 +51,7 @@ copyright_template = """#
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # don't stop with an error if we don't pack all files at once

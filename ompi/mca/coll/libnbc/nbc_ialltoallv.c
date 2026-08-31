@@ -13,6 +13,7 @@
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Additional copyrights may follow
  *

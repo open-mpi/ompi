@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * MPI_T vs. the world model, ordering: MPI_T entirely inside MPI.
  *

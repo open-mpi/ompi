@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #if !defined(MCA_BTL_UCT_DISCOVER_H)

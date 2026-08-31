@@ -9,6 +9,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef __INCLUDE_VPROTOCOL_BASE_H_

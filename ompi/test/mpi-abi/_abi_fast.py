@@ -5,6 +5,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 """Fast ``make check`` checks and self-checks that run without an

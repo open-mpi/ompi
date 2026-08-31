@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Shared scaffolding for the MPI_T lifecycle-ordering tests in this
  * directory.  Not installed; test-local only.

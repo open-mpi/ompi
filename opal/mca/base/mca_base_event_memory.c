@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * The OS memory-release producer behind ompi.mca.memory.patcher.released
  * (spec sec. 7.1).

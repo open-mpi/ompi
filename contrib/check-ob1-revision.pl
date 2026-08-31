@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Script to see if ob1 directory has moved ahead.
 #

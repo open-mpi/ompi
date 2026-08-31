@@ -6,6 +6,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 """Unit tests for the pure helpers of the MPI ABI test runner.

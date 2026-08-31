@@ -7,6 +7,7 @@
  *                    rights reserved.
  * Copyright (c) 2015      Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
  *

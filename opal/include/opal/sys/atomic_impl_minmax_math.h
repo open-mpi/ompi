@@ -19,6 +19,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Implementation of the min/max atomic functions in terms of compare
  * and swap.  These are broken out from the basic atomic_impl_math.h

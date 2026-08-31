@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Thread-level reports are pinned per scope (MPI 5.0 secs. 11.6.2 and
  * 15.3.4): MPI_T's level belongs to the tools interface alone and is

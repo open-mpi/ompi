@@ -1,6 +1,7 @@
 !
 ! Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! Sample "example" MPI extension application for Open MPI
 !

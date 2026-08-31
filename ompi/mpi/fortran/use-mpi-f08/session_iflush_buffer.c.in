@@ -18,6 +18,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 PROTOTYPE VOID session_iflush_buffer(SESSION session, REQUEST_OUT request)

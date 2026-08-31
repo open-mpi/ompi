@@ -7,6 +7,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #include "btl_uct_device_context.h"

@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef _PROC_GROUP_CACHE_H
 #define _PROC_GROUP_CACHE_H

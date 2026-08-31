@@ -14,6 +14,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #include "opal/mca/base/mca_base_pvar.h"

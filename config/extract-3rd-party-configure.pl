@@ -8,6 +8,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # A script used to extract the AC_ARG_WITH/AC_ARG_ENABLE strings from 3rd
 # party libraries into a format that can be included in a higher level

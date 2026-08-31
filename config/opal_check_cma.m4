@@ -13,6 +13,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # OPAL_CHECK_CMA(prefix, [action-if-found], [action-if-not-found])

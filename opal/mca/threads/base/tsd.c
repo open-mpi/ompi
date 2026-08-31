@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #include "opal/mca/threads/tsd.h"
 
 static void _tracked_destructor(void *arg)

@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 use strict;

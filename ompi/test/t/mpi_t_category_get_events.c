@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Singleton (no launcher required) regression test for the cat_index
  * validation performed by MPI_T_category_get_events and

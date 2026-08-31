@@ -20,6 +20,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 if MCA_BUILD_opal_patcher_overwrite_DSO

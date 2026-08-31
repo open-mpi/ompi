@@ -6,6 +6,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 """Compute performance regressions between two saved to_self comparison runs.
 

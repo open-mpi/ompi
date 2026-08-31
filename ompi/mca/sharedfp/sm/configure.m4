@@ -19,6 +19,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # MCA_sharedfp_sm_CONFIG(action-if-can-compile,

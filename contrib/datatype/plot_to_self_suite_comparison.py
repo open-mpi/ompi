@@ -6,6 +6,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 """Plot a five-scenario to_self comparison as one figure per datatype."""
 

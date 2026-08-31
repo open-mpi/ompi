@@ -5,6 +5,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Regression test for the asynchronous modex endpoint wire-up race.
  *

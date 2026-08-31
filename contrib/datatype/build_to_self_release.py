@@ -6,6 +6,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 """Build to_self (and its companion sources) with an MPI compiler wrapper."""
 

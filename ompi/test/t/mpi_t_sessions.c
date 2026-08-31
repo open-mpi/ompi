@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * MPI_T vs. the sessions model.  Unlike MPI_Init(), sessions may be
  * created and destroyed repeatedly in one process, so a single executable

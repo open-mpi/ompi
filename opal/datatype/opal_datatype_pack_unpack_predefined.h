@@ -50,6 +50,7 @@
  * privately owned rights.
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef OPAL_DATATYPE_PACK_UNPACK_PREDEFINED_H_HAS_BEEN_INCLUDED

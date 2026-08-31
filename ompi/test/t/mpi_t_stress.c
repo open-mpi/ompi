@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Stress: 10,000 full MPI_T init/finalize cycles with no MPI (world or
  * sessions) anywhere in the process.  Every cycle tears OPAL's util layer

@@ -18,6 +18,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # Check whether or not the Fortran compiler can build mpi_f08 using

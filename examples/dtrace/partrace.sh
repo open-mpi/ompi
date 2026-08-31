@@ -7,6 +7,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 dtrace -s $1 -c $2 -o $2.$OMPI_COMM_WORLD_RANK.trace

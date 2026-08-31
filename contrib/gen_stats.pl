@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 # Currently, we implement only the directory option
 # The following features have been requested for

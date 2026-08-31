@@ -3,6 +3,7 @@
 # Copyright (c) 2015-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2015 Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Simple script to traverse the OMPI source tree that looks for
 # owner.txt files, and generates <project>_mca_owner.md files.

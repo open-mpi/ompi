@@ -9,6 +9,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # MCA_ompi_fbtl_CONFIG(project_name, framework_name)

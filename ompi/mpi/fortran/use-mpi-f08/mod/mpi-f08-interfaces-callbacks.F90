@@ -5,6 +5,7 @@
 ! Copyright (c) 2015-2018 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 

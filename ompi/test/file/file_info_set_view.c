@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Single-process (no launcher required) test for OMPIO MPI_Info hint
  * handling at MPI_File_set_view time.

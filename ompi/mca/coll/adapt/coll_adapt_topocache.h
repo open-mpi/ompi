@@ -9,6 +9,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef MCA_COLL_ADAPT_TOPOCACHE_H

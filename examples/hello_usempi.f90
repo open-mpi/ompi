@@ -6,6 +6,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! Sample MPI "hello world" application using the Fortran mpi module
 ! bindings.

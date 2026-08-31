@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * C back-end for the C<->Fortran attribute interlanguage test.  Adapted
  * from the open-mpi/ompi-tests simple/attr test (attr_c.c) for the

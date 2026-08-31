@@ -7,6 +7,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 """C type definitions."""
 from abc import ABC, abstractmethod
 from ompi_bindings.consts import ConvertFuncs, ConvertOMPIToStandard, IGNORED_STATUS_HANDLES

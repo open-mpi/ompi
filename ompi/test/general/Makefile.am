@@ -5,6 +5,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # General unit tests for the OMPI layer (ompi/* top-level directories).
 # Sibling directories under ompi/test/ are named for the single MPI

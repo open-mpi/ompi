@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #include "opal_config.h"
 
 #include "common_ucx.h"

@@ -14,6 +14,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 /* This file provides shims between the opal atomics interface and the C11 atomics interface. It

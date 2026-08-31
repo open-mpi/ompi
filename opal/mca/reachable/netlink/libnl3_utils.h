@@ -37,6 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * LICENSE_END
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #ifndef LIBNL3_UTILS_H

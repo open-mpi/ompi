@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Singleton test for the in-tree MPI_T event producers: after MPI_Init the
  * built-in event types must be registered, and a real MPI operation must drive

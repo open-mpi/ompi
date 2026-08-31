@@ -3,6 +3,7 @@
 ! Copyright (c) 2019-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #if OMPI_BUILD_MPI_PROFILING
 

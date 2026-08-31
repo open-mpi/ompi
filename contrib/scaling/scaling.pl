@@ -6,6 +6,7 @@
 # Copyright (c) 2017-2018 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 
 use strict;

@@ -10,6 +10,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef MTL_OFI_TYPES_H_HAS_BEEN_INCLUDED

@@ -16,6 +16,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Primitive script to give approximate code counts in the Open MPI tree
 #

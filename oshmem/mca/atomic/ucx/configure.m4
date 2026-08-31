@@ -7,6 +7,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 # MCA_oshmem_atomic_ucx_CONFIG([action-if-can-compile],
