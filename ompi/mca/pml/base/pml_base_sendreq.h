@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2017      Intel, Inc. All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,11 +131,13 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
    }
 
 #define MCA_PML_BASE_SEND_REQUEST_RESET(request)                        \
-    if ((request)->req_bytes_packed > 0) {                              \
-        size_t cnt = 0;                                                 \
-        opal_convertor_set_position(&(sendreq)->req_send.req_base.req_convertor, \
-                                    &cnt);                      \
-    }
+    do {                                                                \
+        if ((request)->req_bytes_packed > 0) {                          \
+            size_t cnt = 0;                                             \
+            opal_convertor_set_position(&(request)->req_base.req_convertor, \
+                                        &cnt);                          \
+        }                                                               \
+    } while (0)
 
 /**
  * Mark the request as started from the PML base point of view.
