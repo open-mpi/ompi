@@ -9,6 +9,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 
 subroutine MPIX_Comm_ishrink_f08(comm, newcomm, request, ierror)

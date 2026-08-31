@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 /*
  * Compile with:
  * cc -I/usr/local/include -o event-test event-test.c -L/usr/local/lib -levent

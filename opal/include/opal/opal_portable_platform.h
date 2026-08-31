@@ -7,6 +7,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Wrapper around GASNet's gasnet_portable_platform.h to avoid
  * compiler warnings.  This wrapper used to be necessary to add some

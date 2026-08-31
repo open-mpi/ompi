@@ -5,6 +5,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 if MCA_BUILD_ompi_fbtl_ime_DSO

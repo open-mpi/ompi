@@ -10,6 +10,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # This file builds the C bindings for MPI extensions.  It must be

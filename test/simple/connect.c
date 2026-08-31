@@ -1,6 +1,7 @@
 /* -*- C -*-
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Test of connect/accept - the accept (server) side
  */

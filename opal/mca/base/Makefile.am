@@ -17,6 +17,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # Need this so that the base knows where to load dynamic components from

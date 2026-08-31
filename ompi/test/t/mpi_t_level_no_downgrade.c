@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * The downgrade direction of the thread-level aliasing bug: a tool
  * calling MPI_T_init_thread(MPI_THREAD_SINGLE) inside a running

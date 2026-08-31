@@ -15,6 +15,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 opal_config_files = @OPAL_DEFAULT_MCA_PARAM_CONF@

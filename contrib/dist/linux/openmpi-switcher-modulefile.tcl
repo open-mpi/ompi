@@ -9,6 +9,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 # This modulefile is a dispatcher for other Open MPI modulefiles.  It
 # looks around the environment of the machine and determines which

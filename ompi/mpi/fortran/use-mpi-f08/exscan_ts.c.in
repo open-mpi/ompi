@@ -19,6 +19,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 PROTOTYPE VOID exscan(BUFFER x1, BUFFER_OUT x2, COUNT count,

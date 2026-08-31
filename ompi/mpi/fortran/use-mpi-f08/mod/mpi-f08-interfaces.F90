@@ -13,6 +13,7 @@
 ! Copyright (c) 2019      Triad National Security, LLC. All rights
 !                         reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! This file provides the interface specifications for the MPI Fortran
 ! API bindings.  It effectively maps between public names ("MPI_Init")

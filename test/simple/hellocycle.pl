@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 use strict;
 use warnings;

@@ -19,6 +19,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * This file includes the C99 stdint.h file if available, and otherwise
  * defines fixed-width types according to the SIZEOF information

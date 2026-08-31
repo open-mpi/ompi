@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Tool-only MPI_T lifecycles: no MPI_Init and no sessions anywhere in this
  * process.  Exercises single, nested (MPI_T is reference counted), and

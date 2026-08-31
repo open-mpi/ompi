@@ -17,6 +17,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 PROTOTYPE VOID abi_get_version(INT_OUT abi_major, INT_OUT abi_minor)

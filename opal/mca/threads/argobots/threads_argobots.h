@@ -21,6 +21,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef OPAL_MCA_THREADS_ARGOBOTS_THREADS_ARGOBOTS_H

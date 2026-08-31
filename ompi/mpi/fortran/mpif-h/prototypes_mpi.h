@@ -25,6 +25,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * This file prototypes all MPI fortran functions in all four fortran
  * symbol conventions as well as all the internal real OMPI wrapper

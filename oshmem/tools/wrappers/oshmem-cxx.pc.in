@@ -2,6 +2,7 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 Name: Open SHMEM
 Description: Open MPI based Open SHMEM implementation

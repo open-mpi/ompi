@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 echo "Running clang-format on code base..."
 

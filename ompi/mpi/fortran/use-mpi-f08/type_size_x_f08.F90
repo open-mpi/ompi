@@ -6,6 +6,7 @@
 ! Copyright (c) 2015-2020 Research Organization for Information Science
 !                         and Technology (RIST).  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "mpi-f08-rename.h"
 

@@ -8,6 +8,7 @@
  *                         All Rights reserved.
  *
  * $COPYRIGHT$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Additional copyrights may follow
  *

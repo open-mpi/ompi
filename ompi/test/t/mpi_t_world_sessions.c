@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * All three lifecycles in one process: MPI_T bracketing the world model,
  * with a session opened and closed while MPI is up, and a second session

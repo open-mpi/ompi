@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * The mca_base_event framework -- registry and registration (Phase 1).
  * Dispatch, handle/callback management, the instance pool, and

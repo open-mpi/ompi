@@ -9,6 +9,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef PML_OB1_CUSTOM_MATCH_VECTORS_H

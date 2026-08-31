@@ -21,6 +21,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * In windows, many of the socket functions return an EWOULDBLOCK
  * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been

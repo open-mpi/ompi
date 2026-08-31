@@ -7,6 +7,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # OPAL_SET_MCA_PREFIX([mca_prefix]

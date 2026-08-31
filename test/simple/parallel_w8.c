@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 /* parallel MPI write to a single file */
 
 #include "mpi.h"

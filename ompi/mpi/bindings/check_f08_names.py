@@ -5,6 +5,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 """Validate the Open MPI mpi_f08 interfaces against the MPI standard.
 
 The mpi_f08 module is the only Fortran binding whose dummy-argument

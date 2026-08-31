@@ -19,6 +19,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # OMPI_FORTRAN_GET_KIND_VALUE(kind, decimal range, variable to set)

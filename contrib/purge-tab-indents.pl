@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 use strict;
 use Cwd;

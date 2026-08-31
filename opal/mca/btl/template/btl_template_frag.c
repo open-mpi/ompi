@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #include "btl_template_frag.h"
 
 static void mca_btl_template_frag_eager_constructor(mca_btl_template_frag_t *frag)

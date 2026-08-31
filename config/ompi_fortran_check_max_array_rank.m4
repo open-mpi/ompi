@@ -16,6 +16,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # Check the max array rank that the Fortran compiler supports.

@@ -16,6 +16,7 @@
 !                         reserved.
 ! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! This file provides the interface specifications for the MPI Fortran
 ! API bindings.  It effectively maps between public names ("MPI_Init")

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 /* Contributed by Marcia Cristina Cera
    <marcia.cristina.cera@gmail.com>,
    https://www.open-mpi.org/community/lists/users/2009/12/11540.php */

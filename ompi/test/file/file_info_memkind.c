@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Single-process (no launcher required) test for the MPI-4.1
  * memory-allocation-kind info keys on MPI_File objects.

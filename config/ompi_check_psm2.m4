@@ -26,6 +26,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # OMPI_CHECK_PSM2(prefix, [action-if-found], [action-if-not-found])

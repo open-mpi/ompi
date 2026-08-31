@@ -16,6 +16,7 @@
  * Copyright (C) 1997-1998 Dolphin Interconnect Solutions Inc.
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef __MPIDBG_INTERFACE_H__

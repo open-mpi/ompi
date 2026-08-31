@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #include <sys/time.h>
 #include <stdlib.h>
 #include <time.h>

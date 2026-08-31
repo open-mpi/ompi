@@ -8,6 +8,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # This script is used to measure PMIx performance.
 #

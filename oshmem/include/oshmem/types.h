@@ -8,6 +8,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef SHMEM_TYPES_H
 #define SHMEM_TYPES_H

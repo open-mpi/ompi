@@ -19,6 +19,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * These symbols are in a file by themselves to provide nice linker
  * semantics. Since linkers generally pull in symbols by object fules,

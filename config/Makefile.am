@@ -21,6 +21,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # This is a weird place for this, but config/ is the first directory that

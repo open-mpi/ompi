@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 PROGS = mpi_no_op mpi_barrier hello hello_nodename abort multi_abort comm_abort initial_errh simple_spawn \
 		concurrent_spawn spawn_multiple mpi_spin delayed_abort loop_spawn loop_child \
 		bad_exit bad_arg pubsub hello_barrier segv accept connect hello_output hello_show_help \

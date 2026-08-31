@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * The mca_base_event dispatch path (Phase 2): the instance pool, the
  * raise/dispatch algorithm, handle/callback/dropped-handler management,

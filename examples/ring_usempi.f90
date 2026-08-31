@@ -4,6 +4,7 @@
 !                         Corporation.  All rights reserved.
 ! Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! Simple ring test program using the Fortran mpi module bindings.
 !

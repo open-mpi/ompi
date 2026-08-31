@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Singleton smoke test for the MPI_T events tool layer (Phase 3): it
  * registers a source + event type directly via the OPAL mca_base_event

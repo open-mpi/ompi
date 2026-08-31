@@ -16,6 +16,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Check headers in the core opal, orte, and ompi trees and ensure that
 # they exist in the installation tree (assuming that the software was

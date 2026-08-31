@@ -7,6 +7,7 @@
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2025      UT-Battelle, LLC.  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "mpi-f08-rename.h"
 

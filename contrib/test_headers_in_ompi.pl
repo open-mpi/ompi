@@ -15,6 +15,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 #this is the perl scripty foo which does the following tasks

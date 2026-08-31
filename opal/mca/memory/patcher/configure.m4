@@ -20,6 +20,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 AC_DEFUN([MCA_opal_memory_patcher_PRIORITY], [41])
 

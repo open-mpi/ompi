@@ -13,6 +13,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 AM_CPPFLAGS = $(topo_treematch_CPPFLAGS)

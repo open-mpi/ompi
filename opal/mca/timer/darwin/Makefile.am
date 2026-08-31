@@ -15,6 +15,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 noinst_LTLIBRARIES = libmca_timer_darwin.la

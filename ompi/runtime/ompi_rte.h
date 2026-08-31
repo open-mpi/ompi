@@ -13,6 +13,7 @@
  *
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Additional copyrights may follow
  */

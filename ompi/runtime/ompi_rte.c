@@ -17,6 +17,7 @@
  * Copyright (c) 2021-2026 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #include "ompi_config.h"
 #include "ompi/constants.h"

@@ -7,6 +7,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 """Generate LLM-friendly documentation artifacts for the Open MPI MPI APIs.

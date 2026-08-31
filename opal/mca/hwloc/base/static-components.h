@@ -1,5 +1,6 @@
 /*
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

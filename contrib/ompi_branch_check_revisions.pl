@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 #
 # Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Script to check which revisions on Trunk have not yet been merged into
 # a branch.

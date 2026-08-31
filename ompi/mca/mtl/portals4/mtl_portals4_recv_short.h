@@ -15,6 +15,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef OMPI_MTL_PORTALS_RECV_SHORT_H

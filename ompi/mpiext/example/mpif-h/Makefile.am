@@ -11,6 +11,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # This file builds the mpif.h-based bindings for MPI extensions.  It

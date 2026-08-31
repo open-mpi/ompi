@@ -20,6 +20,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef MCA_BTL_SMCUDA_FIFO_H
 #define MCA_BTL_SMCUDA_FIFO_H

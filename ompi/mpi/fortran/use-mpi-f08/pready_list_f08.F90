@@ -8,6 +8,7 @@
 ! Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
 ! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "mpi-f08-rename.h"
 #include "ompi/mpi/fortran/configure-fortran-output.h"

@@ -20,6 +20,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # OPAL_C_GET_ALIGNMENT(c_type, c_macro_name)

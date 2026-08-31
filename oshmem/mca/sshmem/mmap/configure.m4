@@ -10,6 +10,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # MCA_mca_sshmem_mmap_CONFIG(action-if-can-compile,
