@@ -100,6 +100,22 @@ OMPI_DECLSPEC bool ompi_modex_all_ready(void);
 OMPI_DECLSPEC bool ompi_modex_proc_ready(struct ompi_proc_t *proc);
 
 /**
+ * Ask for every peer's blob, whatever the mode would have been. Must be
+ * called before the exchange starts, so from parameter registration.
+ *
+ * For a subsystem that cannot wait where it needs a peer, which is all of
+ * FT: the reliable broadcast carries a revoke or a failure notice 2^i hops
+ * around a communicator, an agreement talks to its tree parent and
+ * children, the failure detector moves its heartbeat ring -- each from a
+ * BTL callback, each reaching for whichever rank is still alive. One
+ * collecting fence up front is what makes every one of those reaches
+ * local, and it is the only way to have that: fetching per peer answers
+ * the peer somebody asked about, and none of them can say in advance which
+ * peer that will be.
+ */
+OMPI_DECLSPEC void ompi_modex_require_all(void);
+
+/**
  * Block in progress until the collect fence completes, and report how it
  * went. A fence that failed collected nothing, so its caller has no peer
  * information and no way to get any: that is a failed startup, not a

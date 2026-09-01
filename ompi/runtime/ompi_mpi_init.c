@@ -76,6 +76,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/instance/instance.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/ompi_mpit_events.h"
 #include "ompi/info/info.h"
@@ -538,6 +539,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
      * propagator) */
     if( ompi_ftmpi_enabled ) {
         const char *evmethod;
+        /* None of what follows can be handed a peer whose connection info
+         * is still on its way (see ompi_mpi_register_params), and this is
+         * the last point where waiting for it is allowed. The exchange was
+         * asked to collect everything, so this is the whole job's. */
+        rc = ompi_modex_wait_if_needed();
+        if( OMPI_SUCCESS != rc ) return rc;
         rc = ompi_comm_rbcast_init();
         if( OMPI_SUCCESS != rc ) return rc;
         rc = ompi_comm_revoke_init();

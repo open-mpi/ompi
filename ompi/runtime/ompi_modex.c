@@ -26,6 +26,9 @@ static volatile bool ompi_modex_fence_active = false;
 static volatile bool ompi_modex_all_ready_flag = false;
 static pmix_status_t ompi_modex_fence_status = PMIX_SUCCESS;
 static bool ompi_modex_direct = false;
+/* Not reset by finalize: this is how the job is configured, not something
+ * an instance learned, and the next instance is configured the same way. */
+static bool ompi_modex_require_all_flag = false;
 
 /* Whether everything this peer published is local, so a Get for one of its
  * keys can be issued and answered on its merits. A NULL proc asks about
@@ -193,17 +196,23 @@ static bool ompi_modex_peer_not_ready(const opal_process_name_t *name)
     return !ompi_modex_available_or_fetch(proc);
 }
 
+void ompi_modex_require_all(void)
+{
+    ompi_modex_require_all_flag = true;
+}
+
 int ompi_modex_start_exchange(void)
 {
     pmix_info_t info;
     pmix_status_t rc;
+    bool collect = opal_pmix_collect_all_data || ompi_modex_require_all_flag;
 
     if (opal_process_info.is_singleton) {
         ompi_modex_all_ready_flag = true;
         return OMPI_SUCCESS;
     }
 
-    if (opal_pmix_base_async_modex && !opal_pmix_collect_all_data) {
+    if (opal_pmix_base_async_modex && !collect) {
         ompi_modex_direct = true;
     }
 
@@ -228,7 +237,7 @@ int ompi_modex_start_exchange(void)
      * over these procs. */
     ompi_modex_fence_active = true;
     OPAL_POST_OBJECT(&ompi_modex_fence_active);
-    PMIX_INFO_LOAD(&info, PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
+    PMIX_INFO_LOAD(&info, PMIX_COLLECT_DATA, &collect, PMIX_BOOL);
     rc = PMIx_Fence_nb(NULL, 0, &info, 1, ompi_modex_fence_cb, NULL);
     PMIX_INFO_DESTRUCT(&info);
     if (PMIX_OPERATION_SUCCEEDED == rc) {
