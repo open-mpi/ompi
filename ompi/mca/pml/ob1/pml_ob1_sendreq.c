@@ -127,6 +127,49 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     return OMPI_SUCCESS;
 }
 
+#if OPAL_ENABLE_FT_MPI
+/**
+ * Take a send back off the list of those waiting for their peer's
+ * connection information, if it is still on it. True when it was, which
+ * is also the guarantee that no btl has ever seen this request.
+ */
+static bool mca_pml_ob1_unstage_send(mca_pml_ob1_send_request_t *sendreq)
+{
+    mca_pml_ob1_send_request_t *item;
+    bool found = false;
+
+    /* One load answers the common case -- every peer already known, so
+     * nothing was ever parked -- without the walk below or the lock it
+     * needs. Unlocked is sound here because only the thread that owns a
+     * request parks it, and that thread is this one: the list cannot gain
+     * this request while we look, only lose it. And it reads empty only
+     * once its last item is gone, so if that item was ours the drain has
+     * it and the answer is no in either case. */
+    if( opal_list_is_empty(&mca_pml_ob1.modex_pending) ) {
+        return false;
+    }
+
+    /* Searched rather than simply removed, because the list is where the
+     * answer is: the drain empties it under this same lock before it
+     * starts anything, so a request found here is one no btl can have
+     * been handed, and one not found is the drain's to finish. */
+    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+    OPAL_LIST_FOREACH(item, &mca_pml_ob1.modex_pending, mca_pml_ob1_send_request_t) {
+        if( item == sendreq ) {
+            opal_list_remove_item(&mca_pml_ob1.modex_pending, (opal_list_item_t *) sendreq);
+            found = true;
+            break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+
+    if( found ) {
+        mca_pml_ob1_enable_progress(-1);
+    }
+    return found;
+}
+#endif  /* OPAL_ENABLE_FT_MPI */
+
 static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int complete)
 {
 #if MPI_VERSION >= 4
@@ -154,6 +197,17 @@ static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int c
                                 "Send_request_cancel: cancel granted for request %p because peer %d is dead\n",
                                 (void*)request, pml_req->req_send.req_base.req_peer);
         request->req_status._cancelled = true;
+        /* A send still waiting for this peer's connection information has
+         * never been handed to a btl, so nothing is outstanding to guess
+         * about: complete it for real rather than leaving it MPI-complete
+         * for a completion that cannot come. Waiting is pointless anyway --
+         * the information would arrive about a process already dead -- and
+         * leaving it linked would have the drain start a send to that
+         * process, on a request the application may already have freed. */
+        if( mca_pml_ob1_unstage_send(pml_req) ) {
+            send_request_pml_complete(pml_req);
+            return OMPI_SUCCESS;
+        }
         if( NULL != pml_req->rdma_frag ) {
             MCA_PML_OB1_RDMA_FRAG_RETURN(pml_req->rdma_frag);
             pml_req->rdma_frag = NULL;

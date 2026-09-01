@@ -54,14 +54,37 @@ static inline int mca_pml_ob1_process_pending_accelerator_async_copies(void)
 }
 
 static opal_atomic_int32_t mca_pml_ob1_progress_needed = 0;
-int mca_pml_ob1_enable_progress(int32_t count)
-{
-    int32_t progress_count = OPAL_ATOMIC_ADD_FETCH32(&mca_pml_ob1_progress_needed, count);
-    if( 1 < progress_count )
-        return 0;  /* progress was already on */
 
-    opal_progress_register(mca_pml_ob1_progress);
-    return 1;
+void mca_pml_ob1_enable_progress(int32_t count)
+{
+    int32_t needed = OPAL_ATOMIC_ADD_FETCH32(&mca_pml_ob1_progress_needed, count);
+
+    if( 0 < count ) {
+        if( count == needed ) {  /* it was zero: ours to turn on */
+            opal_progress_register(mca_pml_ob1_progress);
+        }
+    } else if( 0 == needed ) {
+        opal_progress_unregister(mca_pml_ob1_progress);
+        /* The count reaching zero and polling going away are two steps,
+         * and a park landing between them takes the first branch above,
+         * sees a count it did not raise from zero, and leaves polling to
+         * somebody else -- who is this thread, on its way to taking it
+         * away. Nothing would repair that later, since every park after
+         * it draws the same conclusion for the same reason, so parked
+         * work would never be re-driven again. Hence the second look: a
+         * debt that is back is one nothing else will come back for.
+         * Registering twice is free, opal_progress_register() returning
+         * early for a callback already in the array.
+         *
+         * The mirror of it survives -- our register above landing after
+         * another thread's unregister, leaving the callback polling for
+         * a debt of zero -- and is left alone deliberately. It costs one
+         * needless callback, not forward progress, and the next debt
+         * taken and paid puts it right. */
+        if( 0 < mca_pml_ob1_progress_needed ) {
+            opal_progress_register(mca_pml_ob1_progress);
+        }
+    }
 }
 
 int mca_pml_ob1_progress(void)
@@ -142,10 +165,7 @@ int mca_pml_ob1_progress(void)
     }
 
     if( 0 != completed_requests ) {
-        j = OPAL_ATOMIC_ADD_FETCH32(&mca_pml_ob1_progress_needed, -completed_requests);
-        if( 0 == j ) {
-            opal_progress_unregister(mca_pml_ob1_progress);
-        }
+        mca_pml_ob1_enable_progress(-completed_requests);
     }
 
     return completed_requests;
