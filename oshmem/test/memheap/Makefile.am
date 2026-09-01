@@ -12,7 +12,10 @@
 
 EXTRA_DIST = \
         run-static-anonymous-mapping.sh \
-        static_anonymous_mapping.c
+        static_anonymous_mapping.c \
+        check_memheap.sh \
+        layout_small.c \
+        layout_large.c
 
 SHMEMCC = shmemcc
 OSHRUN = oshrun
@@ -32,13 +35,14 @@ check-memheap:
 	 OSHRUN='$(OSHRUN)' \
 	 OSHRUN_NP='$(OSHRUN_NP)' \
 	 OSHRUN_TIMEOUT='$(OSHRUN_TIMEOUT)' \
-	 "$(srcdir)/run-static-anonymous-mapping.sh"; \
+	 "$(srcdir)/check_memheap.sh"; \
 	rc=$$?; \
 	case $$rc in \
-	    0) echo "PASS: static anonymous mapping" ;; \
-	    77) echo "SKIP: static anonymous mapping (runner exit 77)" ;; \
-	    *) echo "FAIL: static anonymous mapping (runner exit $$rc)"; exit $$rc ;; \
+	    0) echo "PASS: memheap" ;; \
+	    77) echo "SKIP: memheap (runner exit 77)" ;; \
+	    *) echo "FAIL: memheap (runner exit $$rc)"; exit $$rc ;; \
 	esac
 
 clean-local:
-	rm -rf static_anonymous_mapping static_anonymous_mapping.dSYM
+	rm -rf static_anonymous_mapping static_anonymous_mapping.dSYM \
+	       layout_small layout_small.dSYM layout_large layout_large.dSYM

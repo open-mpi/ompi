@@ -12,6 +12,9 @@ Open MPI version v6.0.0
   segments of the main executable.  Unrelated mappings, including private
   anonymous mappings, are excluded.
 
+- OpenSHMEM now validates peer memheap layouts before remote-key state is
+  used.  Incompatible peer layouts abort initialization with a diagnostic.
+
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
   bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every
