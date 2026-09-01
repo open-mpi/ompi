@@ -8,6 +8,10 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- OpenSHMEM static symmetric storage is now limited to writable loadable
+  segments of the main executable.  Unrelated mappings, including private
+  anonymous mappings, are excluded.
+
 - Nonblocking file I/O no longer loses data when the operating system's
   asynchronous I/O queue fills, which on macOS it readily does: the
   ``posix`` ``fbtl`` component sized its batch of concurrent ``aio_write``
