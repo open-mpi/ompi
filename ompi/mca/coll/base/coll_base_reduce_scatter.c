@@ -930,10 +930,10 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     rank = ompi_comm_rank(comm);
     ompi_datatype_type_extent(dtype, &dtsize);    
 
-    if (!ompi_coll_is_power_of_two(size)) {
+    if (size & 0x1) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_scatter_intra_bine_block_by_block_any_even WARNING: "
-                     "non-pow-2 size %d, switching to basic recursive halving",
+                     "not-even size %d, switching to basic recursive halving",
                      size));
         return ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(sbuf, rbuf, rcounts, dtype, op, comm, module);
     }

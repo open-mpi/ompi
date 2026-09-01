@@ -776,10 +776,10 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
-    if (!ompi_coll_is_power_of_two(size)) {
+    if (size & 0x1) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:allgather_intra_bine_block_by_block_any_even WARNING: "
-                     "non-eaven size %d, switching to bruck algorithm",
+                     "not-even size %d, switching to bruck algorithm",
                      size));
         int k = 2;
         return ompi_coll_base_allgather_intra_k_bruck(sbuf, scount, sdtype, rbuf, rcount, rdtype,

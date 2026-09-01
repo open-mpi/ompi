@@ -1366,10 +1366,12 @@ int ompi_coll_base_reduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t co
         }
     }
 
-    err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf, sbuf);
-    if (MPI_SUCCESS != err) {
-        line = __LINE__;
-        goto err_hndl;
+    if ((rank != root) || (sbuf != MPI_IN_PLACE)) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf, (char *)sbuf);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
     }
 
     vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
@@ -1487,10 +1489,12 @@ int ompi_coll_base_reduce_intra_bine_bdw(const void *sbuf, void *rbuf, size_t co
         }
     }
 
-    err = ompi_datatype_copy_content_same_ddt(dtype, count, resbuf, sbuf);
-    if (MPI_SUCCESS != err) {
-        line = __LINE__;
-        goto err_hndl;
+    if ((rank != root) || (sbuf != MPI_IN_PLACE)) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, resbuf, sbuf);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
     }
 
     mask = 0x1;
