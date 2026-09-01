@@ -18,6 +18,7 @@
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2021      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2016      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -409,19 +410,6 @@
 
 #    ifndef HAVE_VSNPRINTF
 #        define vsnprintf opal_vsnprintf
-#    endif
-
-/*
- * Some platforms (Solaris) have a broken qsort implementation.  Work
- * around by using our own.
- */
-#    if OPAL_HAVE_BROKEN_QSORT
-#        ifdef qsort
-#            undef qsort
-#        endif
-
-#        include "opal/util/qsort.h"
-#        define qsort opal_qsort
 #    endif
 
 /*
