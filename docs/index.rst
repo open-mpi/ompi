@@ -4,6 +4,8 @@
 Open MPI |ompi_ver|
 ===================
 
+Hello world
+
 `The Open MPI Project <https://www.open-mpi.org/>`_ is an open source
 implementation of the `Message Passing Interface (MPI) specification
 <https://www.mpi-forum.org/docs/>`_ that is developed and maintained
