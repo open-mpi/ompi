@@ -156,3 +156,9 @@ Open MPI version v6.0.0
   The reported ``hwloc://`` resource keys can also be used with
   ``MPI_Comm_split_type()`` for hardware- and resource-guided communicator
   creation. Thanks to Musawer Ahmad Saqif for the contribution.
+
+- Added support for the MPI-5.0 standard ABI (Application Binary Interface)
+  as defined in Chapter 20 of the MPI-5.0 specification. This includes the
+  creation of a new ``libmpi_abi.so`` library and the ``mpicc_abi`` wrapper
+  compiler for building C applications against the MPI-5 ABI. Note that
+  Fortran ABI support is not yet included.
