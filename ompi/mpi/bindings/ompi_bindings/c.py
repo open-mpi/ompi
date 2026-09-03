@@ -1,4 +1,4 @@
-# Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
+# Copyright (c) 2024-2026 Triad National Security, LLC. All rights reserved.
 # Copyright (c) 2023      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
@@ -508,9 +508,9 @@ class ABIConverterBuilder:
 
     def generate_errhandler_args_convert_fn_intern_to_abi(self, header_only=False):
         if header_only == True:
-            self.dump(f'void ompi_convert_errhandler_args_intern_to_abi(void *object, int object_type, int *err_code);')
+            self.dump(f'OMPI_HIDDEN void ompi_convert_errhandler_args_intern_to_abi(void *object, int object_type, int *err_code);')
             return
-        self.dump(f'void ompi_convert_errhandler_args_intern_to_abi(void *object, int object_type, int *err_code)')
+        self.dump(f'OMPI_HIDDEN void ompi_convert_errhandler_args_intern_to_abi(void *object, int object_type, int *err_code)')
         self.dump('{')
         lines = []
         lines.append('ompi_communicator_t **comm;')

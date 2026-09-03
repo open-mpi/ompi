@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2025      Triad National Security, LLC. All rights
+ * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -31,32 +31,32 @@
  * variables used for certain predefined attributes,
  * e.g. MPI_IO, MPI_HOST
  */
-int ompi_abi_mpi_proc_null_val = MPI_PROC_NULL_ABI_INTERNAL;
-int ompi_abi_mpi_any_source_val = MPI_ANY_SOURCE_ABI_INTERNAL;
-int ompi_abi_mpi_lastusedcode = 0;
+OMPI_HIDDEN int ompi_abi_mpi_proc_null_val = MPI_PROC_NULL_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_any_source_val = MPI_ANY_SOURCE_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_lastusedcode = 0;
 
 /*
  * variables used for certain predefined attributes
  * for windows
  */
-int ompi_abi_mpi_win_flavor_create = MPI_WIN_FLAVOR_CREATE_ABI_INTERNAL;
-int ompi_abi_mpi_win_flavor_allocate = MPI_WIN_FLAVOR_ALLOCATE_ABI_INTERNAL;
-int ompi_abi_mpi_win_flavor_shared = MPI_WIN_FLAVOR_SHARED_ABI_INTERNAL;
-int ompi_abi_mpi_win_flavor_dynamic = MPI_WIN_FLAVOR_DYNAMIC_ABI_INTERNAL;
-int ompi_abi_mpi_win_model_unified = MPI_WIN_UNIFIED_ABI_INTERNAL;
-int ompi_abi_mpi_win_model_separate = MPI_WIN_SEPARATE_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_win_flavor_create = MPI_WIN_FLAVOR_CREATE_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_win_flavor_allocate = MPI_WIN_FLAVOR_ALLOCATE_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_win_flavor_shared = MPI_WIN_FLAVOR_SHARED_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_win_flavor_dynamic = MPI_WIN_FLAVOR_DYNAMIC_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_win_model_unified = MPI_WIN_UNIFIED_ABI_INTERNAL;
+OMPI_HIDDEN int ompi_abi_mpi_win_model_separate = MPI_WIN_SEPARATE_ABI_INTERNAL;
 
 /*
  * predefined callbacks for win, comm, type attributes
  */
-int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
+OMPI_HIDDEN int ABI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
                                     void* attribute_val_out,
                                     void* extra_state )
 {
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
+OMPI_HIDDEN int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
                                   void* extra_state,
                                   void* attribute_val_in,
                                   void* attribute_val_out,
@@ -66,7 +66,7 @@ int ABI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_ke
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_TYPE_DUP_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
+OMPI_HIDDEN int ABI_C_MPI_TYPE_DUP_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
                             void* extra_state,
                             void* attribute_val_in, void* attribute_val_out,
                             int* flag )
@@ -76,14 +76,14 @@ int ABI_C_MPI_TYPE_DUP_FN( MPI_Datatype_ABI_INTERNAL datatype, int type_keyval,
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win_ABI_INTERNAL window, int win_keyval,
+OMPI_HIDDEN int ABI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win_ABI_INTERNAL window, int win_keyval,
                                    void* attribute_val_out,
                                    void* extra_state )
 {
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_WIN_NULL_COPY_FN( MPI_Win_ABI_INTERNAL window, int win_keyval,
+OMPI_HIDDEN int ABI_C_MPI_WIN_NULL_COPY_FN( MPI_Win_ABI_INTERNAL window, int win_keyval,
                                  void* extra_state,
                                  void* attribute_val_in,
                                  void* attribute_val_out, int* flag )
@@ -92,7 +92,7 @@ int ABI_C_MPI_WIN_NULL_COPY_FN( MPI_Win_ABI_INTERNAL window, int win_keyval,
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_WIN_DUP_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* extra_state,
+OMPI_HIDDEN int ABI_C_MPI_WIN_DUP_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* extra_state,
                            void* attribute_val_in, void* attribute_val_out,
                            int* flag )
 {
@@ -101,14 +101,14 @@ int ABI_C_MPI_WIN_DUP_FN( MPI_Win_ABI_INTERNAL window, int win_keyval, void* ext
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
+OMPI_HIDDEN int ABI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
                                     void* attribute_val_out,
                                     void* extra_state )
 {
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
+OMPI_HIDDEN int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
                                   void* extra_state,
                                   void* attribute_val_in,
                                   void* attribute_val_out, int* flag )
@@ -117,7 +117,7 @@ int ABI_C_MPI_COMM_NULL_COPY_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval,
     return MPI_SUCCESS;
 }
 
-int ABI_C_MPI_COMM_DUP_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* extra_state,
+OMPI_HIDDEN int ABI_C_MPI_COMM_DUP_FN( MPI_Comm_ABI_INTERNAL comm, int comm_keyval, void* extra_state,
                      void* attribute_val_in, void* attribute_val_out,
                      int* flag )
 {
