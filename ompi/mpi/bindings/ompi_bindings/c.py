@@ -540,6 +540,56 @@ class ABIConverterBuilder:
         self.dump_lines(lines);
         self.dump('}')
 
+    # Predefined-handle families understood by the MPI_T obj_handle
+    # dispatcher, each paired with the converter that translates that family
+    # from the standard ABI to the internal representation.  This is driven
+    # off the same consts.* lists the individual per-type converters use, so
+    # the dispatch cannot drift away from the ABI header: adding a predefined
+    # handle to one of these lists automatically routes it here as well.
+    OBJ_HANDLE_FAMILIES = [
+        ('RESERVED_COMMUNICATORS', ConvertFuncs.COMM),
+        ('PREDEFINED_DATATYPES', ConvertFuncs.DATATYPE),
+        ('PREDEFINED_OPTIONAL_FORTRAN_DATATYPES', ConvertFuncs.DATATYPE),
+        ('RESERVED_ERRHANDLERS', ConvertFuncs.ERRHANDLER),
+        ('RESERVED_FILES', ConvertFuncs.FILE),
+        ('RESERVED_GROUPS', ConvertFuncs.GROUP),
+        ('RESERVED_OPS', ConvertFuncs.OP),
+        ('RESERVED_REQUESTS', ConvertFuncs.REQUEST),
+        ('RESERVED_WINDOWS', ConvertFuncs.WIN),
+        ('RESERVED_MESSAGES', ConvertFuncs.MESSAGE),
+        ('RESERVED_INFOS', ConvertFuncs.INFO),
+        ('RESERVED_SESSIONS', ConvertFuncs.SESSION),
+    ]
+
+    def generate_obj_handle_convert_fn(self, header_only=False):
+        fn = 'void *ompi_convert_abi_obj_handle_intern_obj_handle(void *obj_handle)'
+        if header_only == True:
+            self.dump(f'{fn};')
+            return
+        self.dump(fn)
+        self.dump('{')
+        lines = []
+        # The standard-ABI predefined handles are small integers; user-created
+        # handles are real internal pointers with large addresses.  Match each
+        # predefined value explicitly and hand anything else back untouched.
+        lines.append('uintptr_t obj_value = (uintptr_t) obj_handle;')
+        lines.append('if (NULL == obj_handle) {')
+        lines.append('return obj_handle;')
+        lines.append('}')
+        for list_name, convert_fn in self.OBJ_HANDLE_FAMILIES:
+            value_names = getattr(consts, list_name)
+            conditions = ['(uintptr_t) %s == obj_value' % self.mangle_name(name)
+                          for name in value_names]
+            for i, condition in enumerate(conditions):
+                prefix = 'if (' if 0 == i else ''
+                suffix = ') {' if len(conditions) - 1 == i else ' ||'
+                lines.append(f'{prefix}{condition}{suffix}')
+            lines.append(f'return (void *) {convert_fn}(obj_handle);')
+            lines.append('}')
+        lines.append('return obj_handle;')
+        self.dump_lines(lines)
+        self.dump('}')
+
     def define(self, type_, name, value):
         self.dump(f'#define {name} OMPI_CAST_CONSTANT({type_}, {value})')
 
@@ -603,6 +653,7 @@ extern "C" {
         #        
         self.dump('\n')
         self.generate_errhandler_args_convert_fn_intern_to_abi(header_only=True)
+        self.generate_obj_handle_convert_fn(header_only=True)
         self.dump('\n')
 
         # Now generate the conversion code - there's a reason for the order here
@@ -718,8 +769,10 @@ extern "C" {
         #
         # special case converters:
         #    - errhandler functions convert
+        #    - object_handle (MPI_T)
         #
         self.generate_errhandler_args_convert_fn_intern_to_abi()
+        self.generate_obj_handle_convert_fn()
 
 def print_profiling_header(fn_name, out, weak_mpi_symbol=False):
     """Print the profiling header code.

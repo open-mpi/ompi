@@ -79,6 +79,26 @@ INSTALLED_C_ABI_PROBES = (
         "body_file": "cases/c-abi/converter_edge_cases.cbody.in",
     },
     {
+        "name": "mpit_obj_handle_predefined",
+        "rank_count": 1,
+        # obj_handle is the ADDRESS of a variable holding the bound
+        # object's handle (MPI-5.0 p.751), not the handle value itself.
+        # Binding to a PREDEFINED communicator exercises the standard-ABI
+        # obj_handle converter's sentinel-matching path: the small ABI
+        # integer for MPI_COMM_WORLD/MPI_COMM_SELF must be translated to
+        # the real internal object identity before being compared against
+        # what a producer raises with.  A converter that operates on the
+        # outer address instead of the pointed-to value never matches the
+        # sentinel, so the registration silently binds to a bogus identity
+        # and the event never fires.
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file": "cases/c-abi/mpit_obj_handle_predefined.prologue.in",
+        "body_file": "cases/c-abi/mpit_obj_handle_predefined.cbody.in",
+    },
+    {
         "name": "converter_error_keyvals",
         "rank_count": 1,
         # Exercises MPI_Win_create and the window keyval/attr calls.

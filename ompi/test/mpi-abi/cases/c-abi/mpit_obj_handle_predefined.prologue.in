@@ -1,0 +1,41 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Callbacks used by the mpit_obj_handle_predefined probe (see the
+ *   .cbody.in file for the full test intent).  They must be defined at
+ *   file scope, outside main(), so they live in the prologue.
+ */
+static int mpit_obj_handle_world_fired = 0;
+static int mpit_obj_handle_self_fired = 0;
+
+static void mpit_obj_handle_cb_world(MPI_T_event_instance event_instance,
+                                     MPI_T_event_registration event_registration,
+                                     MPI_T_cb_safety cb_safety,
+                                     void *user_data)
+{
+    (void) event_instance;
+    (void) event_registration;
+    (void) cb_safety;
+    (void) user_data;
+    ++mpit_obj_handle_world_fired;
+}
+
+static void mpit_obj_handle_cb_self(MPI_T_event_instance event_instance,
+                                    MPI_T_event_registration event_registration,
+                                    MPI_T_cb_safety cb_safety,
+                                    void *user_data)
+{
+    (void) event_instance;
+    (void) event_registration;
+    (void) cb_safety;
+    (void) user_data;
+    ++mpit_obj_handle_self_fired;
+}
