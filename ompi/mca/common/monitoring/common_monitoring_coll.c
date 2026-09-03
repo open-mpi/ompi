@@ -79,6 +79,9 @@ static inline void mca_common_monitoring_coll_cache(mca_monitoring_coll_data_t*d
             tmp_procs[0] = '\0';
             /* Build procs list */
             for(i = 0; i < size; ++i) {
+                if (pos >= bufsize) {
+                    break;
+                }
                 if( OPAL_SUCCESS == mca_common_monitoring_get_world_rank(i, data->p_comm->c_remote_group, &world_rank) )
                     pos += snprintf(&tmp_procs[pos], bufsize - pos, "%d,", world_rank);
             }

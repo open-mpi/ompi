@@ -579,6 +579,14 @@ static int han_register(void)
                     /* Han can only be used on the global communicator */
                     continue;
                 }
+                /* snprintf() returns the number of characters that would
+                 * have been written had the buffer been large enough, so
+                 * param_desc_size can exceed the buffer size once the
+                 * description is truncated.  Stop appending in that case to
+                 * avoid passing an underflowed size to snprintf(). */
+                if ((size_t) param_desc_size >= sizeof(param_desc)) {
+                    break;
+                }
                 param_desc_size += snprintf(param_desc+param_desc_size, sizeof(param_desc) - param_desc_size,
                                             "%d = %s; ",
                                             component,
