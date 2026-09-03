@@ -479,7 +479,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
                                  MCA_PML_BASE_SEND_STANDARD, sendargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count - 1));
         if (OMPI_SUCCESS != res) {
-          NBC_Error ("Error in MPI_Isend(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count,
+          NBC_Error ("Error in MPI_Isend(%lu, %zu, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count,
                      sendargs.datatype, sendargs.dest, handle->tag, (unsigned long)handle->comm, res);
           return res;
         }
@@ -513,7 +513,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, recvargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count-1));
         if (OMPI_SUCCESS != res) {
-          NBC_Error("Error in MPI_Irecv(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count,
+          NBC_Error("Error in MPI_Irecv(%lu, %zu, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count,
                     recvargs.datatype, recvargs.source, handle->tag, (unsigned long)handle->comm, res);
           return res;
         }
@@ -587,7 +587,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 
         break;
       default:
-        NBC_Error ("NBC_Start_round: bad type %li at offset %li", (long)type, offset);
+        NBC_Error ("NBC_Start_round: bad type %li at offset %i", (long)type, offset);
         return OMPI_ERROR;
     }
   }
