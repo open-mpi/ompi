@@ -476,6 +476,10 @@ oshmem/shmem/fortran/profile/pshpalloc_f.c
 oshmem/shmem/fortran/profile/pnum_pes_f.c
 oshmem/shmem/fortran/profile/pstart_pes_f.c
 
+oshmem/test/memheap/layout_large
+oshmem/test/memheap/layout_small
+oshmem/test/memheap/static_anonymous_mapping
+
 oshmem/tools/oshmem_info/oshmem_info
 
 oshmem/tools/wrappers/oshmem-c.pc
