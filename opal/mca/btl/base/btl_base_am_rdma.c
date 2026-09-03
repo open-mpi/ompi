@@ -772,11 +772,20 @@ static void am_rdma_retry_operation(am_rdma_operation_t *operation)
                                      &operation->hdr, &operation);
             break;
         case MCA_BTL_BASE_AM_ATOMIC:
-            /* atomic operation was completed */
+        case MCA_BTL_BASE_AM_CAS:
+            /* the atomic operation itself was already applied to the target
+             * when the request was first processed; all that remains is to
+             * deliver the saved result back to the initiator. */
             ret = am_rdma_respond(operation->btl, operation->endpoint,
                                   &operation->descriptor, &operation->atomic_response,
                                   &operation->hdr);
             break;
+        default:
+            /* an unhandled type here would silently drop the response and
+             * hang the initiator, so fail loudly instead. */
+            BTL_ERROR(("unexpected active-message RDMA operation type %d",
+                       operation->hdr.type));
+            abort();
         }
     } else {
         ret = am_rdma_respond(operation->btl, operation->endpoint,

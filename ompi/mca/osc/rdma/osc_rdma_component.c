@@ -548,6 +548,8 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) my_peer;
 
         ex_peer->super.base = (intptr_t) *base;
+        ex_peer->super.local_base = (intptr_t) *base;
+        my_peer->flags |= OMPI_OSC_RDMA_PEER_SHARED_MEM;
 
         if (!module->same_size) {
             ex_peer->size = size;
@@ -609,18 +611,16 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 
     if (module->single_node) {
         use_cpu_atomics = true;
-    } else if (module->use_accelerated_btl) {
-        use_cpu_atomics = !!(module->accelerated_btl->btl_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
     } else {
-        /* using the shared state optimization that is enabled by
-         * being able to use cpu atomics was never enabled for
-         * alternate btls, due to a previous bug in the enablement
-         * logic when alternate btls were first supported.  It is
-         * likely that this optimization could work with sufficient
-         * testing, but for now, always disable to not introduce new
-         * correctness risks.
-         */
-        use_cpu_atomics = false;
+        /* the shared state optimization requires that atomics issued through
+         * the btl be atomic with respect to atomics issued by the cpu, since
+         * a peer on this node will update the state directly while a peer on
+         * another node reaches it through the btl.  module->atomic_flags
+         * reports that guarantee for both the accelerated and the alternate
+         * btl case: for alternate btls the atomics are emulated as active
+         * messages that the target's cpu applies with opal_atomic_*(), so
+         * they are cpu atomics on the same memory by construction. */
+        use_cpu_atomics = !!(module->atomic_flags & MCA_BTL_ATOMIC_SUPPORTS_GLOB);
     }
 
     if (1 == local_size) {
@@ -855,23 +855,30 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
                 ex_peer->size = temp[i].size;
             }
 
-            if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank) {
-                /* base is local and cpu atomics are available */
-                if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-                    ex_peer->super.base = (uintptr_t) module->segment_base + offset;
-                } else {
-                    ex_peer->super.base = (uintptr_t) *base;
-                }
-
-                peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
-                if (use_cpu_atomics) {
-                    peer->flags |= OMPI_OSC_RDMA_PEER_CPU_ATOMICS;
-                } else if (module->use_memory_registration) {
-                    ex_peer->super.base_handle = (mca_btl_base_registration_handle_t *) peer_region->btl_handle_data;
-                }
+            /* the memory of a peer on this node lives in the shared segment, so
+             * we can always compute an address for it that is valid in this
+             * process, whether or not we can use cpu atomics on that peer */
+            if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
+                ex_peer->super.local_base = (osc_rdma_base_t) ((uintptr_t) module->segment_base + offset);
+                peer->flags |= OMPI_OSC_RDMA_PEER_SHARED_MEM;
                 offset += temp[i].size;
                 offset += OPAL_ALIGN_PAD_AMOUNT(offset, memory_alignment);
+            } else if (peer_rank == my_rank) {
+                ex_peer->super.local_base = (osc_rdma_base_t) (uintptr_t) *base;
+                peer->flags |= OMPI_OSC_RDMA_PEER_SHARED_MEM;
+            }
+
+            if (use_cpu_atomics && (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank)) {
+                /* base is local and cpu atomics are available */
+                ex_peer->super.base = ex_peer->super.local_base;
+
+                peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
+                peer->flags |= OMPI_OSC_RDMA_PEER_CPU_ATOMICS;
             } else {
+                /* the peer will be reached through the btl, so base and
+                 * base_handle have to describe the same mapping.  even for a
+                 * peer on this node we must use the address the registration
+                 * was made with rather than our own mapping of the segment. */
                 ex_peer->super.base = peer_region->base;
 
                 if (module->use_memory_registration) {
@@ -1666,8 +1673,8 @@ int ompi_osc_rdma_shared_query(
                 continue;
             }
             ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-            if (ompi_osc_rdma_peer_local_base(peer)) {
-                if (module->same_size && ex_peer->super.base) {
+            if (ompi_osc_rdma_peer_shared_mem(peer)) {
+                if (module->same_size && ex_peer->super.local_base) {
                     break;
                 } else if (ex_peer->size > 0) {
                     break;
@@ -1680,21 +1687,24 @@ int ompi_osc_rdma_shared_query(
         peer = ompi_osc_module_get_peer (module, rank);
     }
 
-    if (NULL == peer || !ompi_osc_rdma_peer_local_base(peer)) {
+    if (NULL == peer || !ompi_osc_rdma_peer_shared_mem(peer)) {
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
+    /* report local_base rather than base: base is the address the peer is
+     * reached at through the btl, which is only also a valid address in this
+     * process when cpu atomics are in use */
     if (module->same_size && module->same_disp_unit) {
         *size = module->size;
         *disp_unit = module->disp_unit;
         ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
-        *((void**) baseptr) = (void *) (intptr_t)ex_peer->base;
+        *((void**) baseptr) = (void *) (intptr_t)ex_peer->local_base;
         rc = OMPI_SUCCESS;
     } else {
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-        if (ex_peer->super.base != 0) {
+        if (ex_peer->super.local_base != 0) {
             /* we know the base of the peer */
-            *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.base;
+            *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.local_base;
             *size = ex_peer->size;
             *disp_unit = ex_peer->disp_unit;
             rc = OMPI_SUCCESS;

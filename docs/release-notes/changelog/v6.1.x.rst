@@ -8,6 +8,26 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Fixed wrong answers from one-sided (RMA) operations on a window
+  allocated with ``MPI_Win_allocate`` when the target is a process on the
+  same node but the operation is carried out by the underlying transport
+  rather than with CPU atomics.  In that case ``osc/rdma`` described the
+  target's memory with an address taken from the calling process's own
+  mapping of the shared segment, while pairing it with the memory
+  registration of a different process, so the transport could read or
+  write the wrong location.  ``MPI_Win_shared_query`` on such a window
+  continues to report an address that is valid in the calling process.
+
+- One-sided (RMA) windows on networks without hardware atomics --
+  ``btl/tcp``, for example -- are dramatically faster when more than one
+  MPI process shares a node.  The ``osc/rdma`` component now applies its
+  shared state optimization whenever the underlying transport guarantees
+  that CPU atomics and transport atomics are atomic with respect to each
+  other, which includes the emulated atomics used on such networks.
+  Previously the optimization was disabled for these transports, so
+  every window-state atomic issued by a process was routed to another
+  process on the same node and executed as a network round trip.
+
 - Nonblocking file I/O no longer loses data when the operating system's
   asynchronous I/O queue fills, which on macOS it readily does: the
   ``posix`` ``fbtl`` component sized its batch of concurrent ``aio_write``
