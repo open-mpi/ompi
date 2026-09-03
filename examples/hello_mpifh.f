@@ -4,6 +4,7 @@ C                         University Research and Technology
 C                         Corporation.  All rights reserved.
 C Copyright (c) 2006-2015 Cisco Systems, Inc.  All rights reserved.
 C $COPYRIGHT$
+C SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 C
 C Sample MPI "hello world" application using the Fortran mpif.h
 C bindings.

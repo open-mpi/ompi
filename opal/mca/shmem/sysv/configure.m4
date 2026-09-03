@@ -20,6 +20,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # MCA_opal_shmem_sysv_CONFIG(action-if-can-compile,

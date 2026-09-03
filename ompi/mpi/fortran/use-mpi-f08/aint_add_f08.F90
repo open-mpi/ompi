@@ -7,6 +7,7 @@
 !                         and Technology (RIST).  All rights reserved.
 ! Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 

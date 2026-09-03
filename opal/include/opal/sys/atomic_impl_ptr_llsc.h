@@ -23,6 +23,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Pointer-sized wrapper for LL/SC calls, wrappers around size-defined
  * calls.  Note that these must be macros, as LL/SC may not work

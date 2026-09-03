@@ -8,6 +8,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 /** Han algorithms, for han algorithm selection. This contains the

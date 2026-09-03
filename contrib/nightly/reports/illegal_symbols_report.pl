@@ -15,6 +15,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Look for public symbols in Open MPI libraries and components that
 # are "bad"

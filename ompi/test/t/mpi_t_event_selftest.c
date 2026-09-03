@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Self-contained MPI_T events test: the test program itself acts as an event
  * *producer*, registering its own event source(s) and event type(s) through the

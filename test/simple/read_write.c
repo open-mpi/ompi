@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 /*
  * A simple MPI test that reads lines from standard input and writes them
  * to both standard output and a file

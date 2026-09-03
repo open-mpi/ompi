@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Single-process (no launcher required) regression test for partitioned
  * communication with MPI_PROC_NULL.

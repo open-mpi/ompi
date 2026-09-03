@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * White-box unit test for the OPAL mca_base_event framework (dispatch
  * core).  Links libopen-pal directly and drives mca_base_event_* with no

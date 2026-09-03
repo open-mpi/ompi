@@ -17,7 +17,7 @@
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
 # Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
-# Copyright (c) 2020-2024 Amazon.com, Inc. or its affiliates.
+# Copyright (c) 2020-2026 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2021      Google, LLC. All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
@@ -27,6 +27,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 include $(top_srcdir)/Makefile.ompi-rules
@@ -76,7 +77,6 @@ headers = \
         path.h \
         printf.h \
         proc.h \
-        qsort.h \
         show_help.h \
         stacktrace.h \
         string_copy.h \
@@ -118,7 +118,6 @@ libopalutil_core_la_SOURCES = \
         path.c \
         printf.c \
         proc.c \
-        qsort.c \
         sha256.c \
         show_help.c \
         show_help_content.c \

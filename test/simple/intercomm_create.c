@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #define _GNU_SOURCE
 #include <stdarg.h>
 #include <stdio.h>

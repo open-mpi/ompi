@@ -8,6 +8,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # There can be multiple blocks of configuration data, chosen by
 # compiler flags (using the compiler_args key to chose which block

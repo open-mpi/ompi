@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Self-contained configure script, that does not rely
 # on cross-compilation, aka no need for a platforms-file.

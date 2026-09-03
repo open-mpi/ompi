@@ -5,6 +5,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 """Convert Open MPI's Markdown CODE_OF_CONDUCT.md to reStructuredText."""

@@ -18,6 +18,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 AC_DEFUN([OMPI_FORTRAN_CHECK_LOGICAL_ARRAY],[

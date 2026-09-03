@@ -20,6 +20,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 PROTOTYPE VOID testany(INT count, REQUEST_ARRAY_INOUT array_of_requests:count, INDEX_OUT indx,

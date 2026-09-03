@@ -13,6 +13,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef OPAL_CONVERTOR_INTERNAL_HAS_BEEN_INCLUDED
 #define OPAL_CONVERTOR_INTERNAL_HAS_BEEN_INCLUDED

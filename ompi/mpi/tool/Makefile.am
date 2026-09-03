@@ -15,6 +15,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # The purpose of the profiling layer is to allow intercept libraries

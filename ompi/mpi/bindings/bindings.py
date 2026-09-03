@@ -7,6 +7,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 """Main binding generation script.
 
 This script is used for generating the bindings for both C and Fortran. See the

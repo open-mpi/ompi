@@ -5,6 +5,7 @@
 # Additional copyrights may follow.
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 AC_DEFUN([MCA_ompi_pml_v_COMPILE_MODE], [

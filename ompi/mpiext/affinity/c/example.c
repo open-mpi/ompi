@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #include <stdio.h>
 #include <mpi.h>
 #include "mpi-ext.h"

@@ -27,6 +27,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #define OPAL_HWLOC_WANT_SHMEM 1

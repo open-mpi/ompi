@@ -6,6 +6,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # This script is run to see the differences between some other PML and
 # the ob1 PML.  By default, it looks at the bfo PML but it can also be

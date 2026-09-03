@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef OMPI_UTIL_COUNT_DISP_ARRAY_H
 #define OMPI_UTIL_COUNT_DISP_ARRAY_H

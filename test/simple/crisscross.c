@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 /*
   cc -o crisscross crisscross.c -lmpi
 */

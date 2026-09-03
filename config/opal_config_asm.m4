@@ -25,6 +25,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 dnl This is a C test to see if 128-bit __atomic_compare_exchange_n()

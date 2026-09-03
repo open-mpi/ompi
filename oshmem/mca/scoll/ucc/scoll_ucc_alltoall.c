@@ -5,6 +5,7 @@
   Additional copyrights may follow
 
   $HEADER$
+  SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #include "scoll_ucc.h"
 #include "scoll_ucc_dtypes.h"

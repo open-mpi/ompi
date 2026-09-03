@@ -17,6 +17,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 PROTOTYPE VOID type_get_value_index(DATATYPE value_type, DATATYPE index_type, DATATYPE_OUT pair_type)

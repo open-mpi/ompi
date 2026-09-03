@@ -4,6 +4,7 @@
 ! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
 !                         All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 
 ! This file implements the mpi_f08_ext bindings.  It has no file name

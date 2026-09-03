@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #ifndef SCOLL_MPI_DTYPES_H
 #define SCOLL_MPI_DTYPES_H
 

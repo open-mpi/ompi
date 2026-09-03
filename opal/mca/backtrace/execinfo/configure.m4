@@ -16,6 +16,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 AC_DEFUN([MCA_opal_backtrace_execinfo_PRIORITY], [30])
 

@@ -23,6 +23,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 AM_CPPFLAGS = -I$(top_srcdir)/test/support
@@ -47,7 +48,6 @@ check_PROGRAMS = \
 	opal_environ \
 	opal_printf \
 	opal_uri \
-	opal_qsort \
 	opal_alfg \
 	opal_fd \
 	opal_arch \
@@ -109,10 +109,6 @@ opal_printf_DEPENDENCIES = $(opal_test_ldadd)
 opal_uri_SOURCES = opal_uri.c
 opal_uri_LDADD = $(opal_test_ldadd)
 opal_uri_DEPENDENCIES = $(opal_test_ldadd)
-
-opal_qsort_SOURCES = opal_qsort.c
-opal_qsort_LDADD = $(opal_test_ldadd)
-opal_qsort_DEPENDENCIES = $(opal_test_ldadd)
 
 opal_alfg_SOURCES = opal_alfg.c
 opal_alfg_LDADD = $(opal_test_ldadd)

@@ -8,6 +8,7 @@
 ! Copyright (c) 2022      Triad National Security, LLC. All rights
 !                         reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "mpi-f08-rename.h"
 

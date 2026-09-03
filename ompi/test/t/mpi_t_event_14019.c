@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Functional reproducer for open-mpi/ompi#14019 ("MPI_T events not
  * implemented"): a minimal tool flow -- initialize MPI_T, confirm at least one

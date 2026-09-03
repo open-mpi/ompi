@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Repeated MPI_T_init_thread / MPI_T_finalize must leave the event registry
  * stable: the same counts and the same name->index mapping (registration is

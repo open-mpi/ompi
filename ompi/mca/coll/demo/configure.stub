@@ -14,6 +14,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Don't really need anything in here -- we just want a configure
 # script so that this can be a standalone component.

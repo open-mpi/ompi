@@ -7,6 +7,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #define MPI_File_call_errhandler PMPI_File_call_errhandler
 #define MPI_File_close PMPI_File_close

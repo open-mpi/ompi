@@ -7,6 +7,7 @@
  * Copyright (c) 2018      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #include "opal_config.h"

@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 # Make a simple data file of a argv[0]-specified size (understand "k",
 # "m", and "g" suffixes) of a repeating pattern.

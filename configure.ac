@@ -23,7 +23,7 @@
 # Copyright (c) 2014-2022 Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2016-2022 IBM Corporation.  All rights reserved.
-# Copyright (c) 2018-2021 Amazon.com, Inc. or its affiliates.
+# Copyright (c) 2018-2026 Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
@@ -35,6 +35,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 
@@ -1045,8 +1046,6 @@ AC_DEFINE_UNQUOTED([OPAL_HAVE__SC_NPROCESSORS_ONLN], [$result],
 # all: endian
 
 AC_C_BIGENDIAN
-
-OPAL_CHECK_BROKEN_QSORT
 
 # all: SYSV semaphores
 # all: SYSV shared memory

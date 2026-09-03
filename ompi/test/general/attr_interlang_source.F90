@@ -7,6 +7,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! Fortran driver template for the C<->Fortran attribute interlanguage
 ! test.  Adapted from the open-mpi/ompi-tests simple/attr test

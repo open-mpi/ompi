@@ -7,6 +7,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # Check whether or not the C compiler supports ISO_Fortran_binding.h

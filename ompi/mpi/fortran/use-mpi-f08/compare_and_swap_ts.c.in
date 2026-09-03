@@ -22,6 +22,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 PROTOTYPE VOID compare_and_swap(BUFFER x1, BUFFER x2, BUFFER_ASYNC x3,

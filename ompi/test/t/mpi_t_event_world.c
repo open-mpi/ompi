@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * World-model coverage for the ompi.initialization / ompi.finalization events.
  * The producers test exercises the SESSION model (it calls MPI_Init first, so

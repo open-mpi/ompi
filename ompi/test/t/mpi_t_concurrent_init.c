@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Concurrent MPI_T and sessions initialization: one thread loops full
  * MPI_T init/finalize cycles while another loops full MPI session

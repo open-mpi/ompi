@@ -6,6 +6,7 @@
 # Copyright (c) 2022      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Script to generate the overloaded MPI_SIZEOF interfaces and
 # subroutine bodies for both the mpi and mpi_f08 modules.

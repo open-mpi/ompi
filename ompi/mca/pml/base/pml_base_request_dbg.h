@@ -7,6 +7,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef MCA_PML_BASE_REQUEST_DBG_H
 #define MCA_PML_BASE_REQUEST_DBG_H

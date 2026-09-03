@@ -14,6 +14,7 @@
 # Copyright (c)           Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
 # Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 #
 # Some grep/sed mojo may be of interest to others...

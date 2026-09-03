@@ -23,6 +23,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # OPAL_WRAPPER_FLAGS_ADD(variable, new_argument)

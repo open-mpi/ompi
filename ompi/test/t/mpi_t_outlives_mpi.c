@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Singleton (no launcher required) regression test for an MPI_T reference
  * that outlives MPI itself.

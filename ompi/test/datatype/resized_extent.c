@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Regression test for the MPI bound-marker (MPI_Type_create_resized) extent
  * model.  MPI_Type_create_resized installs explicit lower/upper bound markers

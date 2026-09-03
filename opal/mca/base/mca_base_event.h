@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * The mca_base_event framework: the OPAL-level back end for the MPI_T
  * events interface (MPI-5.0 sec. 15.3.8).  It mirrors mca_base_pvar: a

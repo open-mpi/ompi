@@ -24,6 +24,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 AC_DEFUN([OMPI_FIND_MPI_AINT_COUNT_OFFSET],[
