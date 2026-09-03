@@ -449,7 +449,7 @@ static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_col
     }
 
     /* consume the optional version identifier */
-    if (0 == fscanf(fptr, "rule-file-version-%d", &version)) {
+    if (1 != fscanf(fptr, "rule-file-version-%d", &version)) {
         version = 1;
     }
 
