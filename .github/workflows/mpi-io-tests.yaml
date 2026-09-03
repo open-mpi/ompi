@@ -1,0 +1,96 @@
+name: mpi-io
+
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  build-ompi:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends cmake wget
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+    - name: Build Open MPI
+      run: |
+        export AUTOMAKE_JOBS=$(nproc)
+        ./autogen.pl
+        ./configure --prefix=/opt/openmpi --with-pmix=internal --with-prrte=internal --with-hwloc=internal --with-libevent=internal --disable-mpi-fortran --disable-oshmem
+        make -j 8 && make install
+    - name: Upload Open MPI installation
+      uses: actions/upload-artifact@v4
+      with:
+        name: openmpi-install
+        path: /opt/openmpi
+        retention-days: 1
+
+  ompio-tests:
+    runs-on: ubuntu-24.04
+    needs: build-ompi
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends cmake
+    - name: Download Open MPI installation
+      uses: actions/download-artifact@v4
+      with:
+        name: openmpi-install
+        path: /opt/openmpi
+    - name: Fix permissions
+      run: chmod -R a+rX /opt/openmpi && chmod -R a+x /opt/openmpi/bin /opt/openmpi/lib
+    - name: Install ompio testsuite
+      run: |
+        git clone --no-checkout --filter=blob:none https://github.com/edgargabriel/ompi-tests-public.git
+        cd ompi-tests-public
+        git sparse-checkout set --cone ompio-filetests
+        git checkout master
+        cd ompio-filetests
+        export PATH=/opt/openmpi/bin:${PATH}
+        export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
+        cmake -S . -B build -DMPI_HOME=/opt/openmpi
+        cmake --build build
+    - name: Run testsuite (ompio)
+      run: |
+        export PATH=/opt/openmpi/bin:${PATH}
+        export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
+        cd ompi-tests-public/ompio-filetests
+        mpirun --map-by core:oversubscribe --mca io ompio -np 6 ./build/filetest
+
+  hdf5-tests:
+    runs-on: ubuntu-24.04
+    needs: build-ompi
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y --no-install-recommends wget
+    - name: Download Open MPI installation
+      uses: actions/download-artifact@v4
+      with:
+        name: openmpi-install
+        path: /opt/openmpi
+    - name: Fix permissions
+      run: chmod -R a+rX /opt/openmpi && chmod -R a+x /opt/openmpi/bin /opt/openmpi/lib
+    - name: Install HDF5
+      run: |
+        wget --progress=dot:giga https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.6/hdf5-1.14.6.tar.gz
+        tar -xzf hdf5-1.14.6.tar.gz
+        mv hdf5-1.14.6 hdf5
+        cd hdf5
+        export PATH=/opt/openmpi/bin:${PATH}
+        export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
+        ./configure --enable-parallel
+        make -j 8
+    - name: Run testsuite (HDF5)
+      run: |
+        export PATH=/opt/openmpi/bin:${PATH}
+        export LD_LIBRARY_PATH=/opt/openmpi/lib:${LD_LIBRARY_PATH}
+        HDF5TestExpress=0 mpirun --map-by core:oversubscribe --mca io ompio -np 4 ./hdf5/testpar/t_shapesame
+        mpirun --map-by core:oversubscribe --mca io ompio -np 4 ./hdf5/testpar/t_filters_parallel
+        mpirun --map-by core:oversubscribe --mca io ompio -np 4 ./hdf5/testpar/testphdf5
