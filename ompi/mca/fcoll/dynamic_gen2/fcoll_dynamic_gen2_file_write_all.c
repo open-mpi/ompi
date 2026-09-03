@@ -273,7 +273,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
     }
     else {
         total_bytes_per_process = (MPI_Aint*)malloc
-            (dynamic_gen2_num_io_procs * fh->f_procs_per_group*sizeof(MPI_Aint));
+            ((size_t)dynamic_gen2_num_io_procs * fh->f_procs_per_group*sizeof(MPI_Aint));
         if (NULL == total_bytes_per_process) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -320,7 +320,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
     }
     
 
-    result_counts = (int *) malloc ( dynamic_gen2_num_io_procs * fh->f_procs_per_group * sizeof(int) );
+    result_counts = (int *) malloc ( (size_t)dynamic_gen2_num_io_procs * fh->f_procs_per_group * sizeof(int) );
     if ( NULL == result_counts ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
@@ -554,8 +554,8 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
 #endif
     }    
 
-    reqs1 = (ompi_request_t **)malloc ((fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs *sizeof(ompi_request_t *));
-    reqs2 = (ompi_request_t **)malloc ((fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs *sizeof(ompi_request_t *));
+    reqs1 = (ompi_request_t **)malloc (((size_t)fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs *sizeof(ompi_request_t *));
+    reqs2 = (ompi_request_t **)malloc (((size_t)fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs *sizeof(ompi_request_t *));
     if ( NULL == reqs1 || NULL == reqs2 ) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -598,7 +598,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         }
 
         /* Finish communication for iteration i-1 */
-        ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs, 
+        ret = ompi_request_wait_all ( ((size_t)fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs, 
                                       prev_reqs, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != ret){
             goto exit;
@@ -628,7 +628,7 @@ int mca_fcoll_dynamic_gen2_file_write_all (struct ompio_file_t *fh,
         SWAP_REQUESTS(curr_reqs,prev_reqs);
         SWAP_AGGR_POINTERS(aggr_data,dynamic_gen2_num_io_procs); 
         
-        ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs, 
+        ret = ompi_request_wait_all ( ((size_t)fh->f_procs_per_group + 1 )*dynamic_gen2_num_io_procs, 
                                       prev_reqs, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != ret){
             goto exit;
