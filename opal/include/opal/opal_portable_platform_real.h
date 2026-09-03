@@ -1,7 +1,7 @@
-/*   $Source: bitbucket.org:berkeleylab/gasnet.git/other/portable_platform.h $
+/*   $Source: github.com:BerkeleyLab/gasnet.git/other/portable_platform.h $
  * Description: Portable platform detection header
  * Copyright 2006, Dan Bonachea 
- * Copyright 2018, The Regents of the University of California
+ * Copyright 2026, The Regents of the University of California
  * Terms of Use: In ADDITION to the license information in license.txt, 
  *  anyone redistributing this header agrees not to change any part of this notice, or
  *  the version handshake in the header versioning section below. 
@@ -12,7 +12,7 @@
  *  who compose multiple projects using the PLATFORM_ namespace.
  *
  * The canonical version of this header is hosted in the GASNet project at:
- *   https://bitbucket.org/berkeleylab/gasnet   
+ *   https://github.com/BerkeleyLab/gasnet
  *
  * Developers who clone this header into their own project are HIGHLY encouraged to  
  * contribute any improvements (especially addition of new platforms) back to the 
@@ -30,9 +30,9 @@
 /* YOU ARE NOT PERMITTED TO CHANGE THIS SECTION WITHOUT DIRECT APPROVAL FROM DAN BONACHEA */
 #if !defined(_PORTABLE_PLATFORM_H) || !defined(PLATFORM_HEADER_VERSION) \
      || _PORTABLE_PLATFORM_H != PLATFORM_HEADER_VERSION \
-     || PLATFORM_HEADER_VERSION < 22
+     || PLATFORM_HEADER_VERSION < 24
 #undef  PLATFORM_HEADER_VERSION 
-#define PLATFORM_HEADER_VERSION 22
+#define PLATFORM_HEADER_VERSION 24
 #undef  _PORTABLE_PLATFORM_H
 #define _PORTABLE_PLATFORM_H PLATFORM_HEADER_VERSION
 /* End Header versioning handshake */
@@ -335,7 +335,7 @@
       /* Include below might fail for ancient versions lacking this header, but testing shows it
          works back to at least 5.1-3 (Nov 2003), and based on docs probably back to 3.2 (Sep 2000) */
         #define PLATFORM_COMPILER_VERSION 0       
-    #elif defined(__x86_64__) /* bug 1753 - 64-bit omp.h upgrade happenned in <6.0-8,6.1-1] */
+    #elif defined(__x86_64__) /* bug 1753 - 64-bit omp.h upgrade happened in <6.0-8,6.1-1] */
       #include "omp.h"
       #if defined(_PGOMP_H)
         /* 6.1.1 or newer */
@@ -346,7 +346,7 @@
         #define PLATFORM_COMPILER_VERSION 0
         #define PLATFORM_COMPILER_VERSION_STR "<=6.0-8"
       #endif
-    #else /* 32-bit omp.h upgrade happenned in <5.2-4,6.0-8] */
+    #else /* 32-bit omp.h upgrade happened in <5.2-4,6.0-8] */
       #include "omp.h"
       #if defined(_PGOMP_H)
         /* 6.0-8 or newer */
@@ -595,7 +595,7 @@
     #define PLATFORM_COMPILER_VERSION_STR __clang_version__
   #endif
 
-/* NOTE: PLATFORM_COMPILER_FAMILYID "20" is allocted to NVHPC, appearing earlier */
+/* NOTE: PLATFORM_COMPILER_FAMILYID "20" is allocated to NVHPC, appearing earlier */
 
 #else /* unknown compiler */
   #define PLATFORM_COMPILER_UNKNOWN  1
