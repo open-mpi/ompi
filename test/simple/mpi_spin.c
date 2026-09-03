@@ -1,6 +1,7 @@
 /* -*- C -*-
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * A program that just spins - provides mechanism for testing user-driven
  * abnormal program termination

@@ -8,6 +8,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 /* $Header: /home/tv/src/mpi/src/mpi_interface.h,v 1.13 2003/03/12 14:03:42 jcownie Exp $ */

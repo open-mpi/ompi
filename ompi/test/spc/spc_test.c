@@ -2,6 +2,7 @@
  * Copyright (c) 2018-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Simple example usage of SPCs through MPI_T.
  */

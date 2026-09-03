@@ -23,6 +23,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef OPAL_SYS_ARCH_ATOMIC_H
 #define OPAL_SYS_ARCH_ATOMIC_H 1

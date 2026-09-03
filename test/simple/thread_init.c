@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #include <mpi.h>
 #include <stdio.h>
 int main(int argc, const char *argv[])

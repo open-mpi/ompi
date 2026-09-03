@@ -12,6 +12,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # OMPI_MPIEXT_rocm_CONFIG([action-if-found], [action-if-not-found])

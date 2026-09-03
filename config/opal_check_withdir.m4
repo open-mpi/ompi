@@ -14,6 +14,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # OPAL_CHECK_WITHDIR(with_option_name, dir_value, file_in_dir)

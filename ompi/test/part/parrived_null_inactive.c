@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Single-process (no launcher required) regression test for Open MPI
  * issue #14003: MPI_Parrived must return flag = true when called with a

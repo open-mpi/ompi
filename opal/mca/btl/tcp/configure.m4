@@ -19,6 +19,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # MCA_btl_tcp_CONFIG([action-if-found], [action-if-not-found])

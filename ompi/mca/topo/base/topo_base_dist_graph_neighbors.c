@@ -10,6 +10,7 @@
  * Copyright (c) 2011-2013 Universite Bordeaux 1
  * Copyright (c) 2014-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #include "ompi_config.h"

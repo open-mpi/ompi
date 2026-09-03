@@ -13,6 +13,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 # This test requires multiple processes to run. Don't run it as part

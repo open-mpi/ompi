@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Coverage for the object-bound ompi.mpi.communicator_name_set event.  Unlike
  * the other producer events (which are NO_OBJECT and reach every registration),

@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Change all occurrences of #if defined(c_plusplus) and variations
 # to BEGIN_C_DECLS and END_C_DECLS using sed.

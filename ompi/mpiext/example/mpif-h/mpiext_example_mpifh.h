@@ -7,6 +7,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 
 ! Since the OMPI mpif.h interface does not prototype subroutines, do not

@@ -17,6 +17,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * In days of old, pmix was packaged as multiple MCA components, and
  * grew an extensive set of base code to support Open MPI's use of

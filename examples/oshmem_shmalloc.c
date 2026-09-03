@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * This sample allocates (shmalloc) symmetric memory (1 long integer),
  * and then frees it. Success of allocation is not checked.

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 #include "orte_config.h"
 
 #include "opal/runtime/opal.h"

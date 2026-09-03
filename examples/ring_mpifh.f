@@ -4,6 +4,7 @@ C                         University Research and Technology
 C                         Corporation.  All rights reserved.
 C Copyright (c) 2006-2022 Cisco Systems, Inc.  All rights reserved
 C $COPYRIGHT$
+C SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 C
 C Simple ring test program using the mpif.h Fortran bindings.
 C

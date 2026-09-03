@@ -13,6 +13,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # OPAL-level datatype tests: these link only against libopen-pal.  The
 # tests of the OMPI datatype engine and the MPI datatype API live in

@@ -6,6 +6,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 
 ! This whole file will be included in the mpi_f08_ext module interface

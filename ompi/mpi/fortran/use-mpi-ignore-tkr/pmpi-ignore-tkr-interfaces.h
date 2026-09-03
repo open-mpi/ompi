@@ -8,6 +8,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #define MPI_Abort PMPI_Abort
 #define MPI_Accumulate PMPI_Accumulate

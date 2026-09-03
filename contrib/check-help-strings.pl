@@ -3,6 +3,7 @@
 # Copyright (c) 2014-2022 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Simple script to check all the opal_show_help (and orte_show_help)
 # strings against what is found in help files.

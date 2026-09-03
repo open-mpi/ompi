@@ -5,6 +5,7 @@
 # Copyright (c) 2015-2020 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Subroutine to generate a bunch of Fortran declarations and symbols
 #

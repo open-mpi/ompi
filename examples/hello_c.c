@@ -3,6 +3,7 @@
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Sample MPI "hello world" application in C
  */

@@ -9,6 +9,7 @@
 !                         reserved.
 ! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 

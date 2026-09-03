@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause-Open-MPI */
 /*file .c : spawned  the file Exe*/
 #include "mpi.h"
 #include <errno.h>

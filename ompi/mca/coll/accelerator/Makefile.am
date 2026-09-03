@@ -9,6 +9,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 sources = coll_accelerator_reduce.c coll_accelerator_allreduce.c \

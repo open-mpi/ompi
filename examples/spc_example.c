@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2023      High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Simple example usage of SPCs through MPI_T.
  */

@@ -4,6 +4,7 @@
 #
 # Copyright (c) 2013-2014 Los Alamos National Security, LLC. All rights
 #                         reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # If completion is not already set up, follow the instructions in section
 # 20.2 of the zsh completion documentation found here:

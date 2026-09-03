@@ -23,6 +23,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)

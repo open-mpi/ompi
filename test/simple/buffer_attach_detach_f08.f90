@@ -6,6 +6,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 ! Regression test for the mpi_f08 buffer attach/detach bindings.
 !

@@ -3,6 +3,7 @@
 # Copyright (c) 2017      IBM Corporation. All rights reserved.
 # Copyright (c) 2020      Intel, Inc.  All rights reserved.
 # $COPYRIGHT$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 import glob, os, re, shutil

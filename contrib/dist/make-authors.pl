@@ -3,6 +3,7 @@
 # Copyright (c) 2008-2016 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2017      Amazon.com, Inc. or its affiliates.
 #                         All Rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 use strict;

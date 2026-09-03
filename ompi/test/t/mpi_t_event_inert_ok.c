@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * With all in-tree producers disabled, the event interface must be inert but
  * correct: zero events/sources, and the standard error contracts hold.

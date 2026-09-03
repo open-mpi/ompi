@@ -8,6 +8,7 @@
 ! Copyright (c) 2020-2022 Triad National Security, LLC. All rights
 !                         reserved.
 ! $COPYRIGHT$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ompi/mpi/fortran/configure-fortran-output.h"
 

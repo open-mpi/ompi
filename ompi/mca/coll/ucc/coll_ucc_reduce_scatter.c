@@ -3,6 +3,7 @@
  * Copyright (c) 2022 NVIDIA Corporation. All rights reserved.
  * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Additional copyrights may follow
  *

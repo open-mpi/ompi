@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * This program is an adaptation of examples found in the man pages
  * of SGI’s SHMEM implementation.

@@ -21,6 +21,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 # Does this compiler support (void*)-like functionality for MPI choice
 # buffers?  If so, which flavor?

@@ -24,6 +24,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 dnl Portions of this file derived from GASNet v1.12 (see "GASNet"
 dnl comments, below)

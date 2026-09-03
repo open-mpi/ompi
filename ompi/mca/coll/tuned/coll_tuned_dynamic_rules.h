@@ -18,6 +18,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 
 #ifndef MCA_COLL_TUNED_DYNAMIC_RULES_H_HAS_BEEN_INCLUDED

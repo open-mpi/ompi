@@ -9,6 +9,7 @@
 ! Additional copyrights may follow
 !
 ! $HEADER$
+! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
 
 subroutine MPIX_Comm_failure_ack_f08(comm, ierror)

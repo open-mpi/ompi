@@ -3,6 +3,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Additional copyrights may follow
 #

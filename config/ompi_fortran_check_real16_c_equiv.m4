@@ -20,6 +20,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # OMPI_FORTRAN_CHECK_REAL16_C_EQUIV

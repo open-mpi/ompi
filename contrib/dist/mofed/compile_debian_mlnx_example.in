@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 MYDIR=$(dirname $0)
 INSTALL_DIR=${INSTALL_DIR:-/usr/mpi/gcc}
 PREFIX=${INSTALL_DIR}/openmpi-@OMPI_MAJOR_VERSION@.@OMPI_MINOR_VERSION@.@OMPI_RELEASE_VERSION@

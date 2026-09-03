@@ -22,6 +22,7 @@ dnl
 dnl Additional copyrights may follow
 dnl
 dnl $HEADER$
+dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
 # OPAL_CHECK_PORTALS4(prefix, [action-if-found], [action-if-not-found])

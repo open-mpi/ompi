@@ -6,6 +6,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * Single-process (no launcher required) regression test for Open MPI
  * issue #13367: MPI_File_get_info on an OMPIO file opened with

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 PROGS = orte_no_op mpi_no_op mpi_memprobe
 
 all: $(PROGS)

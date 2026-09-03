@@ -5,6 +5,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
  * This file is included at the top of opal_config.h, and is
  * therefore a) before all the #define's that were output from

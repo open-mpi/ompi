@@ -9,6 +9,7 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #ifndef _PERUSE_INTERNAL_H_
 #define _PERUSE_INTERNAL_H_

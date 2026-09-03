@@ -5,6 +5,7 @@
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 # Unit tests for the OMPI layer.  These tests live inside the ompi/
 # subtree, alongside the code that they exercise, and are run by "make

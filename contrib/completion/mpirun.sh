@@ -1,4 +1,5 @@
 #!/bin/bash # -*- Mode: shell-script; indent-tabs-mode:nil -*-
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # (c) 2008-2013 Nathan Hjelm <hjelmn@cs.unm.edu>
 # mpirun completion v1.1
 #
