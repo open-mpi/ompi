@@ -18,4 +18,4 @@ libmca_installdirs_config_la_SOURCES = \
 
 # This file is generated; we do not want to include it in the tarball
 nodist_libmca_installdirs_config_la_SOURCES = \
-        install_dirs.h
+        ../install_dirs.h
