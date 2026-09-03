@@ -547,7 +547,7 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     if (MPI_WIN_FLAVOR_DYNAMIC != module->flavor) {
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) my_peer;
 
-        ex_peer->super.base = (intptr_t) *base;
+        ex_peer->super.local_base = ex_peer->super.base = (intptr_t) *base;
 
         if (!module->same_size) {
             ex_peer->size = size;
@@ -858,9 +858,10 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
             if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor || peer_rank == my_rank) {
                 /* base is local and cpu atomics are available */
                 if (MPI_WIN_FLAVOR_ALLOCATE == module->flavor) {
-                    ex_peer->super.base = (uintptr_t) module->segment_base + offset;
+                    ex_peer->super.local_base = (uintptr_t) module->segment_base + offset;
+                    ex_peer->super.base = use_cpu_atomics ? ex_peer->super.local_base : state_region->base + offset;
                 } else {
-                    ex_peer->super.base = (uintptr_t) *base;
+                    ex_peer->super.local_base = ex_peer->super.base = (uintptr_t) *base;
                 }
 
                 peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
@@ -1667,7 +1668,7 @@ int ompi_osc_rdma_shared_query(
             }
             ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
             if (ompi_osc_rdma_peer_local_base(peer)) {
-                if (module->same_size && ex_peer->super.base) {
+                if (module->same_size && ex_peer->super.local_base) {
                     break;
                 } else if (ex_peer->size > 0) {
                     break;
@@ -1688,13 +1689,13 @@ int ompi_osc_rdma_shared_query(
         *size = module->size;
         *disp_unit = module->disp_unit;
         ompi_osc_rdma_peer_basic_t *ex_peer = (ompi_osc_rdma_peer_basic_t *) peer;
-        *((void**) baseptr) = (void *) (intptr_t)ex_peer->base;
+        *((void**) baseptr) = (void *) (intptr_t)ex_peer->local_base;
         rc = OMPI_SUCCESS;
     } else {
         ompi_osc_rdma_peer_extended_t *ex_peer = (ompi_osc_rdma_peer_extended_t *) peer;
-        if (ex_peer->super.base != 0) {
+        if (ex_peer->super.local_base != 0) {
             /* we know the base of the peer */
-            *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.base;
+            *((void**) baseptr) = (void *) (intptr_t)ex_peer->super.local_base;
             *size = ex_peer->size;
             *disp_unit = ex_peer->disp_unit;
             rc = OMPI_SUCCESS;
