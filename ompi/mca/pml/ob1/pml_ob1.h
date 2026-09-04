@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -81,6 +82,8 @@ struct mca_pml_ob1_t {
     opal_list_t send_pending;
     opal_list_t recv_pending;
     opal_list_t rdma_pending;
+    /* send requests waiting for a peer's connection-info blob */
+    opal_list_t modex_pending;
     /* List of pending fragments without a matching communicator */
     opal_list_t non_existing_communicator_pending;
     bool enabled;
@@ -120,6 +123,32 @@ extern int mca_pml_ob1_add_procs(
     struct ompi_proc_t **procs,
     size_t nprocs
 );
+
+struct mca_pml_ob1_send_request_t;
+
+/* Construct the BML endpoint if the peer blob is local, else NULL with
+ * status set (see mca_bml_base_get_endpoint; status is required here
+ * too). */
+extern struct mca_bml_base_endpoint_t *mca_pml_ob1_ensure_endpoint(ompi_proc_t *proc,
+                                                                   int *status);
+
+/* Recv-side constructor for a named source: add_proc so that peer's
+ * send endpoint exists before we wait. ANY_SOURCE does not call this
+ * for every rank; BTL progress is registered at PML enable. */
+extern void mca_pml_ob1_prepare_recv_proc(ompi_proc_t *proc);
+
+/* Stage a send until the dest blob arrives, then start it. */
+extern int mca_pml_ob1_stage_or_start(struct mca_pml_ob1_send_request_t *sendreq,
+                                      int32_t seqn);
+
+/* Rebuild a send convertor that was prepared before its peer's
+ * architecture was known. */
+extern void mca_pml_ob1_reprepare_send_convertor(struct mca_pml_ob1_send_request_t *sendreq);
+
+/* Start whatever staged sends can now reach their peer, and report how
+ * many left the queue. Driven from mca_pml_ob1_progress(), which each park
+ * keeps registered by way of one progress count. */
+extern int mca_pml_ob1_drain_staged_sends(void);
 
 extern int mca_pml_ob1_del_procs(
     struct ompi_proc_t **procs,
@@ -258,9 +287,18 @@ do {                                                            \
 
 /**
  * A thread-safe function that should be called every time we need the OB1
- * progress to be turned (or kept) on.
+ * progress to be turned (or kept) on -- with a positive count -- and every
+ * time such a count is given back, done, with a negative one. It is the
+ * only place either half is decided.
+ *
+ * A count is owed by work that nothing else will come back for: a send
+ * parked on a peer that cannot be reached yet, a fragment from a peer we
+ * cannot convert from, a control packet a btl refused. The registration
+ * follows the count crossing zero, so OB1 is polled exactly while
+ * something needs it -- which makes a count a debt, and an unpaid one a
+ * poll for the life of the job.
  */
-int mca_pml_ob1_enable_progress(int32_t count);
+void mca_pml_ob1_enable_progress(int32_t count);
 
 static inline void mca_pml_ob1_add_to_pending (ompi_proc_t *proc, mca_bml_base_btl_t *bml_btl,
                                                int order, mca_pml_ob1_hdr_t *hdr, size_t hdr_size)

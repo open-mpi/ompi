@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,10 @@
 #include "ompi_config.h"
 
 #include "opal/sys/atomic.h"
+#include "ompi/constants.h"
+#include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/bml/bml.h"
+#include "ompi/proc/proc.h"
 
 
 
@@ -50,4 +54,55 @@ OBJ_CLASS_INSTANCE(
     mca_bml_base_endpoint_construct,
     mca_bml_base_endpoint_destruct
 );
+
+
+mca_bml_base_endpoint_t *mca_bml_base_endpoint_create (ompi_proc_t *proc, int *status)
+{
+    mca_bml_base_endpoint_t *endpoint = mca_bml_base_endpoint_peek (proc);
+    int rc;
+
+    assert (NULL != status);
+
+    /* Another thread may have wired this peer since our caller peeked. */
+    if (NULL != endpoint) {
+        *status = OMPI_SUCCESS;
+        return endpoint;
+    }
+
+    /* add_proc selects BTLs from the peer's locality, which a proc
+     * created on demand does not have yet. In a heterogeneous build
+     * this also seeds the peer's architecture, hence its convertor:
+     * that comes from the same blob the BTL keys live in, so a failure
+     * here would repeat inside add_proc. Report it now rather than hand
+     * out an endpoint we would pack for with the local convertor.
+     *
+     * Seeding before add_proc is also what lets the btls keep reading
+     * proc_arch as a plain value: tcp byte-swaps modex addresses on
+     * OPAL_ARCH_ISBIGENDIAN, and portals4 refuses a peer whose arch is
+     * not ours. Both would read our own architecture, and silently
+     * conclude the peer shares it, if this ran after them. */
+    rc = ompi_proc_complete_init_single (proc);
+    if (OMPI_SUCCESS != rc) {
+        *status = rc;
+        return NULL;
+    }
+
+    /* add_proc serializes on mca_bml_lock itself, and publishes at most
+     * one endpoint per proc however many threads race here. */
+    rc = mca_bml.bml_add_proc (proc);
+    endpoint = mca_bml_base_endpoint_peek (proc);
+    if (NULL != endpoint) {
+        /* add_proc can report a per-BTL failure and still publish a
+         * usable endpoint built from the BTLs that did claim the
+         * peer. */
+        rc = OMPI_SUCCESS;
+    } else if (OMPI_SUCCESS == rc) {
+        /* add_proc claimed success without publishing an endpoint. */
+        rc = OMPI_ERR_UNREACH;
+    }
+
+    *status = rc;
+
+    return endpoint;
+}
 

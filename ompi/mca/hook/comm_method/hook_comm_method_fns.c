@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2016-2022 IBM Corporation. All rights reserved.
  * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/mtl/base/base.h"
+#include "ompi/runtime/ompi_modex.h"
 
 // For converting comm_method strings to comm_method id# and back.
 // This starts as our local set of strings, but gets Allreduced into
@@ -72,7 +74,10 @@ lookup_btl_name_for_send(ompi_communicator_t* comm, int rank) {
         return NULL;
     }
 
-    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(dst_proc);
+    /* Reporting the method the peer would be reached with means wiring
+     * it up: that is what the user asked for by enabling the report. */
+    int eprc;
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(dst_proc, &eprc);
     if (endpoint &&
         endpoint->btl_send.bml_btls &&
         endpoint->btl_send.bml_btls[0].btl)
@@ -502,6 +507,11 @@ ompi_report_comm_methods(int called_from_location)
 // Each host will have a list of comm_method strings, and in
 // order to associate them with numbers we'll need to Allreduce
 // to get a comprehensive list of strings across the ranks
+//
+// The ring above only wires the leaders. Wait for the connection-info
+// exchange so the peers we did not exchange with report the method they
+// will actually use rather than "n/a".
+    (void) ompi_modex_wait_if_needed();
     init_string_to_conversion_struct(&comm_method_string_conversion);
     for (i=0; i<nleaderranks; ++i) {
         char *p = comm_method_string(leader_comm, i, &comm_mode);

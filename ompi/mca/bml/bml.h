@@ -433,7 +433,6 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
  *
  * @param nprocs (IN)         Number of processes
  * @param procs (IN)          Set of processes
- * @param reachable (OUT)     Bitmask indicating set of peer processes that are reachable by this BML.
  * @return                    OMPI_SUCCESS or error status on failure.
  *
  * The mca_bml_base_module_add_procs_fn_t() is called by the PML to
@@ -443,12 +442,10 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
  * mca_base_modex_recv() function. The BML may utilize this information to
  * determine reachability of each peer process.
  *
- * For each process that is reachable by the BML, the bit corresponding to the index
- * into the proc array (nprocs) should be set in the reachable bitmask. The PML
- * provides the BML the option to return a pointer to a data structure defined
- * by the BML that is returned to the BML on subsequent calls to the BML data
- * transfer functions (e.g bml_send). This may be used by the BML to cache any addressing
- * or connection information (e.g. TCP socket, IP queue pair).
+ * Reachability is recorded in the endpoint the BML attaches to each proc,
+ * which the caller reads back with mca_bml_base_get_endpoint(). The
+ * per-BTL reachability bitmap belongs to the BTL interface and stays
+ * inside the BML.
  *
  * \note This function will return OMPI_ERR_UNREACH if one or more
  * processes can not be reached by the currently active BTLs.  This is
@@ -457,8 +454,7 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
  */
 typedef int (*mca_bml_base_module_add_procs_fn_t)(
                                                   size_t nprocs,
-                                                  struct ompi_proc_t** procs,
-                                                  struct opal_bitmap_t* reachable
+                                                  struct ompi_proc_t** procs
                                                   );
 
 /**

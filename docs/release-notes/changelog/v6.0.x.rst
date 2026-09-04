@@ -8,6 +8,35 @@ Open MPI version v6.0.0
 --------------------------
 :Date: ...fill me in...
 
+- ``MPI_Init`` with the default ``ob1`` PML no longer waits for the
+  connection-info modex or calls BTL ``add_procs`` unless a selected
+  transport requires a synchronizing initialization (for example
+  ``usnic``). The first send or receive to a peer constructs that
+  endpoint once the peer's modex is local; an ``MPI_Isend`` posted
+  earlier is staged in the PML until then.
+
+- Added the ``btl_tcp_connect_mode`` MCA parameter (``lazy``,
+  ``sync_init``, ``full``) to select when the TCP BTL constructs
+  peer endpoints relative to ``MPI_Init``.
+
+- ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
+  detect that the two jobs selected different PMLs, and fail with a
+  message naming both instead of failing obscurely later. The two
+  roots find this out through the information they already exchange on
+  the port, which now also names the PML. A connect against an Open
+  MPI version that does not send it is therefore no longer possible;
+  the content of that exchange has never been compatible across
+  versions.
+
+- The BTL interface is now version 3.4.0. The last argument of
+  ``btl_add_procs()`` changed meaning: it is no longer a reachability
+  bit per process, but a two-bit status per process, set with
+  ``MCA_BTL_PROC_STATUS_SET()``, that also distinguishes a process
+  whose connection information has not arrived yet from one this BTL
+  cannot reach. The argument kept its type, so a BTL outside the Open
+  MPI tree that still calls ``opal_bitmap_set_bit()`` on it will
+  compile and misreport; such components must be updated.
+
 - Added support for the MPI-4.0 embiggened APIs (i.e., functions with
   ``MPI_Count`` parameters).
 

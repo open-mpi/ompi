@@ -3,6 +3,7 @@
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2025      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -167,11 +168,18 @@ int ompi_osc_rdma_new_peer (struct ompi_osc_rdma_module_t *module, int peer_id, 
  *
  * @param[in]  module         osc rdma module
  * @param[in]  peer_id        peer's rank in the communicator
+ * @param[out] status         why the lookup failed (ignored when NULL)
  *
  * This function is used by the ompi_osc_rdma_module_peer() inline function to allocate a peer object. It is not
  * intended to be called from anywhere else.
+ *
+ * A NULL return means the peer cannot be reached: no BTL claimed it, or
+ * the window ran out of memory. A peer that has simply not published its
+ * connection info yet is waited for here rather than reported, since an
+ * RMA operation has no way to come back later.
  */
-struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_module_t *module, int peer_id);
+struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_module_t *module, int peer_id,
+                                                        int *status);
 
 /**
  * @brief check if this process holds an exclusive lock on a peer

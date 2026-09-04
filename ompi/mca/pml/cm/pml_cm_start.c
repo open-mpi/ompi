@@ -80,6 +80,20 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
                 /* reset the completion flag */
                 sendreq->req_send.req_base.req_pml_complete = false;
 
+                /* Note that a buffered send has been replaced above, so
+                 * this has to name the request that is being started. */
+                rc = mca_pml_cm_start_peer(&sendreq->req_send.req_base,
+                                           sendreq->req_peer,
+                                           MCA_PML_BASE_SEND_BUFFERED
+                                           == sendreq->req_send.req_send_mode);
+                if (OMPI_ERR_NOT_READY == rc) {
+                    /* parked until the peer's connection info arrives */
+                    break;
+                }
+                if (OMPI_SUCCESS != rc) {
+                    return rc;
+                }
+
                 MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, rc);
                 if(rc != OMPI_SUCCESS)
                     return rc;
@@ -89,6 +103,16 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
             {
                 mca_pml_cm_hvy_recv_request_t* recvreq =
                     (mca_pml_cm_hvy_recv_request_t*)pml_request;
+
+                rc = mca_pml_cm_start_peer(pml_request, recvreq->req_peer, false);
+                if (OMPI_ERR_NOT_READY == rc) {
+                    /* parked until the peer's connection info arrives */
+                    break;
+                }
+                if (OMPI_SUCCESS != rc) {
+                    return rc;
+                }
+
                 MCA_PML_CM_HVY_RECV_REQUEST_START(recvreq, rc);
                 if(rc != OMPI_SUCCESS)
                     return rc;

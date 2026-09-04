@@ -382,6 +382,9 @@ opal/util/show_help_content.c
 opal/util/keyval/keyval_lex.c
 
 ompi/test/mpirun/async_modex_wireup
+ompi/test/mpirun/any_source_oneway
+ompi/test/mpirun/late_first_contact
+ompi/test/mpirun/wireup_stress
 
 test/simple/abort
 test/simple/accept

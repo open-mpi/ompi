@@ -15,6 +15,7 @@
  * Copyright (c) 2010-2018 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 
 #include "opal_config.h"
 
+#include "opal/mca/btl/sm/btl_sm.h"
 #include "opal/mca/btl/sm/btl_sm_fbox.h"
 #include "opal/mca/btl/sm/btl_sm_types.h"
 #include "opal/mca/btl/sm/btl_sm_virtual.h"
@@ -82,7 +84,34 @@ static inline mca_btl_sm_hdr_t *sm_fifo_read(sm_fifo_t *fifo, struct mca_btl_bas
 
     value = fifo->fifo_head;
 
-    *ep = &mca_btl_sm_component.endpoints[value >> MCA_BTL_SM_OFFSET_BITS];
+    uint16_t rank = (uint16_t) (value >> MCA_BTL_SM_OFFSET_BITS);
+    /* rank is the sender's SMP local rank, not an MPI rank. Taking the
+     * item needs the whole node mapped rather than just this sender: it
+     * lives in the sender's segment, and returning it once it has been
+     * handled chains it onto whichever local peer wrote the sender's
+     * fifo last. Map the node if the send path never did (one-way
+     * traffic), and otherwise leave the item where it is -- it comes
+     * back through here on the next tick.
+     *
+     * No read barrier here, deliberately: this is the hottest path in
+     * this btl and it does not need one. endpoints is published, behind
+     * a barrier, only once every local peer's segment is mapped, and
+     * everything read afterwards -- the endpoint, and the segment base
+     * relative2virtual() adds -- is addressed off the value loaded here,
+     * so that dependency orders those reads against the publication even
+     * where loads are otherwise free to move. A barrier would only add
+     * anything on a machine where another thread mapped the node
+     * concurrently -- pay for that once, there, rather than on every
+     * fragment. */
+    if (OPAL_UNLIKELY(NULL == mca_btl_sm_component.endpoints)) {
+        if (OPAL_SUCCESS != mca_btl_sm_attach_local_peers()) {
+            return NULL;
+        }
+    }
+
+    assert(rank <= (uint16_t) MCA_BTL_SM_NUM_LOCAL_PEERS);
+
+    *ep = &mca_btl_sm_component.endpoints[rank];
     hdr = (mca_btl_sm_hdr_t *) relative2virtual(value);
 
     fifo->fifo_head = SM_FIFO_FREE;
@@ -118,6 +147,11 @@ static inline void sm_fifo_init(sm_fifo_t *fifo)
     mca_btl_sm_component.my_fifo = fifo;
 }
 
+/* Callers arrive here holding an endpoint, which is only ever handed out
+ * once every local peer is mapped -- and it has to be, because the item
+ * this one is chained onto below belongs to whichever local peer posted
+ * to this fifo before, and writing its link is a store into that third
+ * process's segment. */
 static inline void sm_fifo_write(sm_fifo_t *fifo, fifo_value_t value)
 {
     fifo_value_t prev;

@@ -42,6 +42,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/runtime/ompi_mpit_events.h"
 
@@ -138,6 +139,21 @@ int ompi_mpi_register_params(void)
     (void) ompi_comm_rbcast_register_params();
     (void) ompi_comm_failure_propagator_register_params();
     (void) ompi_comm_failure_detector_register_params();
+
+    if( ompi_ftmpi_enabled ) {
+        /* Every part of this machinery sends with the BML directly, from
+         * BTL callbacks, to whichever rank the current state of the job
+         * points at: the rbcast walks 2^i hops around the communicator to
+         * carry a revoke or a failure notice, an agreement talks to its
+         * tree parent and children, the detector to its heartbeat ring.
+         * None of them can park a message the way the PML parks a request,
+         * and none can wait where they are, so none can be handed a peer
+         * whose connection info is still being fetched. Ask for all of it
+         * up front -- here, because the exchange starts before any of these
+         * subsystems is initialized -- and ompi_mpi_init() waits for it
+         * before the first of them starts. */
+        ompi_modex_require_all();
+    }
 #endif /* OPAL_ENABLE_FT_MPI */
 
     /* Whether we want MPI API function parameter checking or not. Disable this by default if

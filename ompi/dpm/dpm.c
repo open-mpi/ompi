@@ -25,6 +25,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,12 +62,21 @@
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/base.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
 
 #include "ompi/dpm/dpm.h"
 
 static opal_rng_buff_t rnd;
+
+/* What the two roots exchange on the port key is a colon-delimited list of
+ * the publisher's participating procs, led by this token and the name of
+ * the pml that side selected. A value that does not begin with the token
+ * came from a version that did not send one. */
+#define OMPI_DPM_PML_TOKEN     "pml="
+#define OMPI_DPM_PML_TOKEN_LEN (sizeof(OMPI_DPM_PML_TOKEN) - 1)
 
 typedef struct {
     ompi_communicator_t       *comm;
@@ -137,7 +147,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
      * will append ":accept" to the port name and publish the list of its
      * participants on that key. Each proc will then block waiting for lookup
      * to complete on the other's key. Once that completes, the list of remote
-     * procs is used to complete construction of the intercommunicator. */
+     * procs is used to complete construction of the intercommunicator.
+     * The published list is led by the pml that side selected, which is
+     * how the two sides find out whether they can talk at all. */
 
     /* If there was an error during the COMM_SPAWN stage, the port string will
      * be set (in mpi/c/comm_spawn.c) with a special value that contains the error
@@ -212,7 +224,15 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             (void)opal_asprintf(&key, "%s:accept", port_string);
             (void)opal_asprintf(&pkey, "%s:connect", port_string);
         }
-        nstring = opal_argv_join(members, ':');
+        char *mstring = opal_argv_join(members, ':');
+        /* The pml this side selected leads the list. Two jobs that each
+         * agree with themselves can still disagree with each other, and
+         * this is where they can find that out: neither can name a rank of
+         * the other whose published data it is sure to hold, but this
+         * exchange is ours and the two leaders both read it. */
+        (void) opal_asprintf(&nstring, OMPI_DPM_PML_TOKEN "%s:%s",
+                             mca_pml_base_pml_selected_name(), mstring);
+        free(mstring);
         PMIX_INFO_LOAD(&info, key, nstring, PMIX_STRING);
         PMIX_LOAD_KEY(pdat.key, pkey);
         free(nstring);
@@ -230,6 +250,41 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         rport = strdup(pdat.value.data.string);  // need this later
         rportlen = strlen(rport) + 1;  // retain the NULL terminator
         PMIX_PDATA_DESTRUCT(&pdat);
+
+        /* The two leaders are the only ones that compare. Each side has
+         * already agreed with itself before getting here -- a rank that
+         * differs from its own job is caught by that job's own check -- so
+         * a leader's name stands for its whole side. A refusal reaches the
+         * rest of this side through the length below, the same way a failed
+         * spawn does, and the other side's leader is refusing in step.
+         *
+         * The name stays in the list the ranks are about to receive: it is
+         * cheaper to let it ride along to ranks with no use for it than to
+         * rebuild the list without it. */
+        if (ompi_pml_base_check_pml
+            && 0 == strncmp(rport, OMPI_DPM_PML_TOKEN, OMPI_DPM_PML_TOKEN_LEN)) {
+            char *mine;
+
+            (void) opal_asprintf(&mine, OMPI_DPM_PML_TOKEN "%s:",
+                                 mca_pml_base_pml_selected_name());
+            if (0 != strncmp(rport, mine, strlen(mine))) {
+                const char *theirs = rport + OMPI_DPM_PML_TOKEN_LEN;
+                char name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1];
+                size_t len = strcspn(theirs, ":");
+
+                if (len > sizeof(name) - 1) {
+                    len = sizeof(name) - 1;
+                }
+                memcpy(name, theirs, len);
+                name[len] = '\0';
+                opal_show_help("help-dpm.txt", "pml-mismatch", true,
+                               mca_pml_base_pml_selected_name(), name);
+                free(rport);
+                rport = NULL;
+                rportlen = OMPI_ERR_UNREACH;
+            }
+            free(mine);
+        }
     }
 
 bcast_rportlen:
@@ -292,6 +347,17 @@ bcast_rportlen:
      * into an argv array */
     members = opal_argv_split(rport, ':');
     free(rport);
+
+    /* The other side's pml leads its list, if it sent one -- a version that
+     * predates this exchange sends members alone. The leaders have already
+     * compared, and nobody got this far if they disagreed, so all that is
+     * left is to take the name off the front. */
+    if (NULL != members && NULL != members[0]
+        && 0 == strncmp(members[0], OMPI_DPM_PML_TOKEN, OMPI_DPM_PML_TOKEN_LEN)) {
+        int nmembers = opal_argv_count(members);
+
+        opal_argv_delete(&nmembers, &members, 0, 1);
+    }
 
     /* add the list of remote procs to our list, and
      * keep a list of them for later */
@@ -436,6 +502,13 @@ bcast_rportlen:
                 new_proc_list[i] = proc;
                 opal_list_remove_item(&ilist, (opal_list_item_t*)cd);  // TODO: do we need to release cd ?
                 OBJ_RELEASE(cd);
+                /* PMIx_Connect() above downloaded what these procs
+                 * published, so from here on a read for one of them is
+                 * local -- the same thing a fence says about our own job,
+                 * said for the procs a connect brings in. Said before the
+                 * init below, so that its architecture read is a cache hit
+                 * rather than a fetch nobody waits for. */
+                opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
                 /* ompi_proc_complete_init_single() initializes and optionally retrieves
                  * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
                  * them, we are just fine */
@@ -475,6 +548,18 @@ bcast_rportlen:
 
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
+        if (OMPI_ERR_NOT_READY == rc) {
+            /* A btl has yet to see one of these peers' connection info.
+             * This call is collective and blocking, and it has nowhere
+             * to defer the work to, so wait for the exchange and ask
+             * once more; a peer that still cannot be wired is one no
+             * btl will ever claim. */
+            (void) ompi_modex_wait_if_needed();
+            rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
+            if (OMPI_ERR_NOT_READY == rc) {
+                rc = OMPI_ERR_UNREACH;
+            }
+        }
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {

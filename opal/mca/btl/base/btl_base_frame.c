@@ -17,6 +17,7 @@
  * Copyright (c) 2016-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,6 +61,7 @@ mca_base_var_enum_value_flag_t mca_btl_base_flag_enum_flags[]
        {MCA_BTL_FLAGS_GET_AM, "get_am", MCA_BTL_FLAGS_GET},
        {MCA_BTL_FLAGS_ATOMIC_AM_FOP, "atomic-am", MCA_BTL_FLAGS_ATOMIC_FOPS},
        {MCA_BTL_FLAGS_RDMA_REMOTE_COMPLETION, "rdma-remote-completion", 0},
+       {MCA_BTL_FLAGS_REQUIRE_SYNC_INIT, "require-sync-init", 0},
        {0, NULL, 0}};
 
 mca_base_var_enum_value_flag_t mca_btl_base_atomic_enum_flags[]

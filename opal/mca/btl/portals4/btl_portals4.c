@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014      Bull SAS.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -222,6 +223,10 @@ static int create_endpoint(int interface, opal_proc_t *proc, mca_btl_base_endpoi
                              "btl/portals4: Portals 4 BTL not available on peer: %s",
                              opal_strerror(ret)));
         return ret;
+    } else if (OPAL_ERR_NOT_READY == ret) {
+        OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+                             "btl/portals4: peer not ready: %s", opal_strerror(ret)));
+        return ret;
     } else if (OPAL_SUCCESS != ret) {
         opal_output_verbose(0, opal_btl_base_framework.framework_output,
                             "btl/portals4: opal_modex_recv failed: %s", opal_strerror(ret));
@@ -263,6 +268,10 @@ static int create_peer_and_endpoint(int interface, opal_proc_t *proc, ptl_proces
         OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
                              "btl/portals4: Portals 4 BTL not available on peer: %s",
                              opal_strerror(ret)));
+        return ret;
+    } else if (OPAL_ERR_NOT_READY == ret) {
+        OPAL_OUTPUT_VERBOSE((30, opal_btl_base_framework.framework_output,
+                             "btl/portals4: peer not ready: %s", opal_strerror(ret)));
         return ret;
     } else if (OPAL_SUCCESS != ret) {
         opal_output_verbose(0, opal_btl_base_framework.framework_output,
@@ -362,11 +371,12 @@ static int create_maptable(struct mca_btl_portals4_module_t *portals4_btl, size_
 int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t nprocs,
                                struct opal_proc_t **procs,
                                struct mca_btl_base_endpoint_t **btl_peer_data,
-                               opal_bitmap_t *reachable)
+                               opal_bitmap_t *status)
 {
     struct mca_btl_portals4_module_t *portals4_btl = (struct mca_btl_portals4_module_t *) btl_base;
     int ret;
     size_t i;
+    bool not_ready = false;
 
     opal_output_verbose(50, opal_btl_base_framework.framework_output,
                         "mca_btl_portals4_add_procs: Adding %d procs (%d) for NI %d", (int) nprocs,
@@ -391,15 +401,38 @@ int mca_btl_portals4_add_procs(struct mca_btl_base_module_t *btl_base, size_t np
         }
 
         ret = create_endpoint(portals4_btl->interface_num, curr_proc, &btl_peer_data[i]);
+        if (OPAL_ERR_NOT_READY == ret) {
+            /* The peer's blob has not reached us yet. */
+            btl_peer_data[i] = NULL;
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
+            not_ready = true;
+            continue;
+        }
+        if (OPAL_SUCCESS != ret) {
+            /* Leave the default MCA_BTL_PROC_NOT_ELIGIBLE. */
+            btl_peer_data[i] = NULL;
+            continue;
+        }
 
         OPAL_THREAD_ADD_FETCH32(&portals4_btl->portals_num_procs, 1);
         /* and here we can reach */
-        opal_bitmap_set_bit(reachable, i);
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
 
         OPAL_OUTPUT_VERBOSE((90, opal_btl_base_framework.framework_output,
                              "add_procs: rank=%lx nid=%x pid=%x for NI %d", i,
                              btl_peer_data[i]->ptl_proc.phys.nid,
                              btl_peer_data[i]->ptl_proc.phys.pid, portals4_btl->interface_num));
+    }
+
+    /* Logical mapping needs every peer's blob in one shot: the endpoints
+     * are indices into a map table that cannot be built while one is
+     * missing, so a single peer that has not published turns the whole
+     * batch into a "not yet". */
+    if (not_ready && mca_btl_portals4_component.use_logical) {
+        for (i = 0; i < nprocs; ++i) {
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
+        }
+        return OPAL_SUCCESS;
     }
 
     if (mca_btl_portals4_component.need_init && portals4_btl->portals_num_procs > 0) {

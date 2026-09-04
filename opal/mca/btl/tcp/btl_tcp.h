@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2019-2020 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +55,13 @@
 #include "opal/util/fd.h"
 
 #define MCA_BTL_TCP_STATISTICS 0
+
+enum {
+    MCA_BTL_TCP_CONNECT_LAZY = 0,
+    MCA_BTL_TCP_CONNECT_SYNC_INIT,
+    MCA_BTL_TCP_CONNECT_FULL
+};
+
 BEGIN_C_DECLS
 
 extern opal_event_base_t *mca_btl_tcp_event_base;
@@ -133,6 +141,7 @@ struct mca_btl_tcp_component_t {
      */
     int tcp_recv_timeout;
     int tcp_handshake_timeout;
+    int tcp_connect_mode; /* MCA_BTL_TCP_CONNECT_* */
 
     /* free list of fragment descriptors */
     opal_free_list_t tcp_frag_eager;
@@ -221,14 +230,14 @@ extern int mca_btl_tcp_finalize(struct mca_btl_base_module_t *btl);
  * @param nprocs (IN)     Number of processes
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
- * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
+ * @param status (OUT)    What this BTL has to say about each process.
  * @return     OPAL_SUCCESS or error status on failure.
  *
  */
 
 extern int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                                  struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                                 opal_bitmap_t *reachable);
+                                 opal_bitmap_t *status);
 
 /**
  * PML->BTL notification of change in the process list.

@@ -19,6 +19,7 @@
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -375,6 +376,9 @@ static inline ompi_osc_rdma_peer_t *ompi_osc_module_get_peer (ompi_osc_rdma_modu
  *
  * @param[in] module          osc rdma module
  * @param[in] peer_id         remote peer rank
+ *
+ * Constructed on first use, so this can return NULL for an unreachable
+ * peer. Callers must check.
  */
 static inline ompi_osc_rdma_peer_t *ompi_osc_rdma_module_peer (ompi_osc_rdma_module_t *module, int peer_id)
 {
@@ -385,7 +389,7 @@ static inline ompi_osc_rdma_peer_t *ompi_osc_rdma_module_peer (ompi_osc_rdma_mod
         return peer;
     }
 
-    return ompi_osc_rdma_peer_lookup (module, peer_id);
+    return ompi_osc_rdma_peer_lookup (module, peer_id, NULL);
 }
 
 /**
@@ -530,6 +534,11 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "found lock_all access epoch for target %d", target);
 
         *peer = ompi_osc_rdma_module_peer (module, target);
+        if (OPAL_UNLIKELY(NULL == *peer)) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "target %d is unreachable", target);
+            return NULL;
+        }
+
         if (OPAL_UNLIKELY(OMPI_OSC_RDMA_LOCKING_ON_DEMAND == module->locking_mode &&
                           !ompi_osc_rdma_peer_is_demand_locked (*peer))) {
             ompi_osc_rdma_demand_lock_peer (module, *peer);
@@ -541,6 +550,10 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
         /* fence epoch is now active */
         module->all_sync.epoch_active = true;
         *peer = ompi_osc_rdma_module_peer (module, target);
+        if (OPAL_UNLIKELY(NULL == *peer)) {
+            OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_ERROR, "target %d is unreachable", target);
+            return NULL;
+        }
 
         return &module->all_sync;
     case OMPI_OSC_RDMA_SYNC_TYPE_PSCW:

@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2016 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2011-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014      Intel, Inc. All rights reserved.
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
@@ -994,6 +994,12 @@ int mca_btl_smcuda_component_progress(void)
     int my_smp_rank = mca_btl_smcuda_component.my_smp_rank;
     int peer_smp_rank, j, rc = 0, nevents = 0;
 
+    /* Progress is registered from add_procs. Lazy wire-up can poll
+     * before first_time_init has filled the peer/FIFO tables. */
+    if (0 > my_smp_rank || NULL == mca_btl_smcuda_component.fifo) {
+        return 0;
+    }
+
     /* first, deal with any pending sends */
     /* This check should be fast since we only need to check one variable. */
     if (0 < mca_btl_smcuda_component.num_pending_sends) {
@@ -1006,6 +1012,9 @@ int mca_btl_smcuda_component_progress(void)
             if (peer_smp_rank == my_smp_rank)
                 continue;
             endpoint = mca_btl_smcuda_component.sm_peers[peer_smp_rank];
+            if (NULL == endpoint) {
+                continue;
+            }
             if (0 < opal_list_get_size(&endpoint->pending_sends))
                 btl_smcuda_process_pending_sends(endpoint);
         }
@@ -1051,15 +1060,19 @@ int mca_btl_smcuda_component_progress(void)
             seg.seg_len = hdr->len;
 
             mca_btl_active_message_callback_t *reg = mca_btl_base_active_message_trigger + hdr->tag;
-            mca_btl_base_receive_descriptor_t recv_desc = {.endpoint = mca_btl_smcuda_component
-                                                                           .sm_peers[peer_smp_rank],
+            struct mca_btl_base_endpoint_t *peer_ep =
+                mca_btl_smcuda_component.sm_peers[peer_smp_rank];
+            if (NULL == peer_ep) {
+                break;
+            }
+            mca_btl_base_receive_descriptor_t recv_desc = {.endpoint = peer_ep,
                                                            .des_segments = &seg,
                                                            .des_segment_count = 1,
                                                            .tag = hdr->tag,
                                                            .cbdata = reg->cbdata};
             reg->cbfunc(&mca_btl_smcuda.super, &recv_desc);
             /* return the fragment */
-            MCA_BTL_SMCUDA_FIFO_WRITE(mca_btl_smcuda_component.sm_peers[peer_smp_rank], my_smp_rank,
+            MCA_BTL_SMCUDA_FIFO_WRITE(peer_ep, my_smp_rank,
                                       peer_smp_rank, hdr->frag, false, true, rc);
             (void)rc;
             break;

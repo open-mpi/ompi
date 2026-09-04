@@ -14,7 +14,7 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012-2015 Sandia National Laboratories.  All rights reserved.
- * Copyright (c) 2015      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2015-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2016-2017 IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Cisco Systems, Inc.  All rights reserved
@@ -895,31 +895,58 @@ static int allocate_state_shared (ompi_osc_rdma_module_t *module, void **base, s
 }
 
 /**
- * @brief ensure that all local procs are added to the bml
+ * @brief whether this peer's connection info may still arrive
  *
- * The sm btl requires that all local procs be added to work correctly. If pml/ob1
- * was not selected then we can't rely on this property. Since osc/rdma may use
- * btl/sm we need to ensure that btl/sm is set up correctly. This function will
- * only (potentially) call add_procs on local procs.
+ * Asking is what starts the fetch, so a caller that only ever asks --
+ * again after progress, and again after that -- is what makes the answer
+ * become false. Anything but NOT_READY is an answer, "no BTL can reach
+ * this peer" included: the queries below expect that one, and report it
+ * where they act on it.
  */
-static void ompi_osc_rdma_ensure_local_add_procs (void)
+static bool ompi_osc_rdma_endpoint_pending (ompi_proc_t *proc)
 {
-    size_t nprocs;
-    ompi_proc_t** procs = ompi_proc_get_allocated (&nprocs);
-    if (NULL == procs) {
-        /* weird, this should have caused MPI_Init to fail */
-        return;
+    int rc;
+
+    return (NULL == mca_bml_base_get_endpoint (proc, &rc)) && (OMPI_ERR_NOT_READY == rc);
+}
+
+/**
+ * @brief resolve every peer of the window's communicator
+ *
+ * The accelerated BTL is chosen by intersecting per-peer reachability,
+ * and every rank has to come out of that with the same BTL, because the
+ * choice sizes the window state: two ranks that chose differently
+ * address each other's state at different offsets, and nothing detects
+ * it. Everything the choice reads is symmetric except one thing -- a
+ * peer whose connection info has not landed *here*, which would have us
+ * drop a BTL that peer keeps. So it is waited for, here, where waiting
+ * is allowed: a window constructor is a blocking collective called from
+ * an MPI entry point, over a peer set the communicator names. The
+ * alternative was agreeing afterwards about an input we can simply have.
+ *
+ * Two sweeps over that same set, because asking is what starts a fetch.
+ * The first puts all of them in flight and the second waits, so the wait
+ * is the slowest peer rather than the sum of them. It ends because a
+ * fetch that completes without finding the peer's data says so plainly
+ * rather than as "not yet".
+ *
+ * Local procs outside this communicator, which this used to walk for
+ * btl/sm's sake, need nothing here: sm maps every local peer's segment
+ * itself, on any add_proc naming any one of them.
+ */
+static void ompi_osc_rdma_ensure_endpoints (ompi_communicator_t *comm)
+{
+    int comm_size = ompi_comm_size (comm);
+
+    for (int rank = 0 ; rank < comm_size ; ++rank) {
+        (void) ompi_osc_rdma_endpoint_pending (ompi_comm_peer_lookup (comm, rank));
     }
 
-    for (size_t proc_index = 0 ; proc_index < nprocs ; ++proc_index) {
-        ompi_proc_t *proc = procs[proc_index];
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
-            /* this will cause add_proc to get called if it has not already been called */
-            (void) mca_bml_base_get_endpoint (proc);
+    for (int rank = 0 ; rank < comm_size ; ++rank) {
+        while (ompi_osc_rdma_endpoint_pending (ompi_comm_peer_lookup (comm, rank))) {
+            opal_progress ();
         }
     }
-
-    free(procs);
 }
 
 
@@ -1083,9 +1110,10 @@ static bool ompi_osc_rdma_check_accelerated_btl(struct mca_btl_base_module_t *bt
 static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi_osc_rdma_module_t *module)
 {
     int comm_size = ompi_comm_size (comm);
-    struct mca_btl_base_module_t *selected_btl;
+    struct mca_btl_base_module_t *selected_btl = NULL;
     mca_bml_base_endpoint_t *base_endpoint;
     char **btls_to_use;
+    int rc;
 
     assert(NULL != module);
 
@@ -1122,8 +1150,10 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
         }
     }
 
-    /* if osc/rdma gets selected we need to ensure that all local procs have been added */
-    ompi_osc_rdma_ensure_local_add_procs ();
+    /* Everything from here on reads per-peer reachability, and every rank
+     * has to reach the same conclusion from it, so this is the point where
+     * the peers have to be enumerable rather than merely eventual. */
+    ompi_osc_rdma_ensure_endpoints (comm);
 
     /*
      * A BTL in the list of known can reach all peers that met our
@@ -1143,12 +1173,13 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
      * be used to communicate with rank 0 necessarily is not in the
      * list of all available BTLs for this algorithm.
      */
-    base_endpoint = mca_bml_base_get_endpoint(ompi_comm_peer_lookup(comm, 0));
+    base_endpoint = mca_bml_base_get_endpoint(ompi_comm_peer_lookup(comm, 0), &rc);
     if (NULL == base_endpoint) {
+        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                            "accelerated_query: no endpoint for rank 0 (%d)", rc);
         return OMPI_ERR_UNREACH;
     }
 
-    selected_btl = NULL;
     for (size_t i_btl = 0 ;
          i_btl < mca_bml_base_btl_array_get_size(&base_endpoint->btl_rdma);
          ++i_btl) {
@@ -1172,8 +1203,15 @@ static int ompi_osc_rdma_query_accelerated_btls (ompi_communicator_t *comm, ompi
             ompi_proc_t *proc = ompi_comm_peer_lookup(comm, rank);
             mca_bml_base_endpoint_t *endpoint;
 
-            endpoint = mca_bml_base_get_endpoint(proc);
+            endpoint = mca_bml_base_get_endpoint(proc, &rc);
             if (NULL == endpoint) {
+                /* Final, thanks to the wait above: this peer is reachable
+                 * by no BTL at all, which its peers see as well, so every
+                 * rank drops this one for the same reason. */
+                opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                                    "accelerated_query: no endpoint for rank %d (%d), dropping btl %s",
+                                    rank, rc,
+                                    examine_btl->btl_component->btl_version.mca_component_name);
                 have_connectivity = false;
                 break;
             }
@@ -1602,17 +1640,31 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
                             "failed to share window data with peers");
-        ompi_osc_rdma_free (win);
     } else {
         /* for now the leader is always rank 0 in the communicator */
         module->leader = ompi_osc_rdma_module_peer (module, 0);
-
-        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                            "finished creating osc/rdma window with id %s",
-                            ompi_comm_print_cid(module->comm));
+        if (OPAL_UNLIKELY(NULL == module->leader)) {
+            opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
+                                "could not reach the window leader");
+            ret = OMPI_ERR_UNREACH;
+        }
     }
 
-    return ret;
+    /* Both of those are local failures of a collective operation: rank 0
+     * can never fail the leader lookup, so without this agreement one
+     * rank returns an error out of the window constructor while the rest
+     * hold a live window and deadlock in their next epoch. */
+    ret = synchronize_errorcode (ret, module->comm);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        ompi_osc_rdma_free (win);
+        return ret;
+    }
+
+    opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                        "finished creating osc/rdma window with id %s",
+                        ompi_comm_print_cid(module->comm));
+
+    return OMPI_SUCCESS;
 }
 
 

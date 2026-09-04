@@ -13,6 +13,7 @@
  *                         reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,10 +74,14 @@ static void opal_proc_construct(opal_proc_t *proc)
     proc->proc_convertor = NULL;
     proc->proc_flags = 0;
     proc->proc_name = *OPAL_NAME_INVALID;
+    /* Nothing about the peer is known yet; proc_arch above is our own
+     * architecture standing in for its. */
+    opal_proc_forget_all(proc);
 }
 
 static void opal_proc_destruct(opal_proc_t *proc)
 {
+    opal_proc_forget_all(proc);
     proc->proc_flags = 0;
     proc->proc_name = *OPAL_NAME_INVALID;
     proc->proc_convertor = NULL;

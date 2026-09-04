@@ -13,6 +13,7 @@
  * Copyright (c) 2014-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
+#include <stdlib.h>
 #include <string.h>
 
 #include "btl_uct.h"
@@ -71,22 +73,13 @@ struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t 
 
 static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
                                  opal_proc_t **opal_procs, mca_btl_base_endpoint_t **peers,
-                                 opal_bitmap_t *reachable)
+                                 opal_bitmap_t *status)
 {
     mca_btl_uct_module_t *uct_module = (mca_btl_uct_module_t *) btl;
     int rc;
 
     if (false == uct_module->initialized) {
         mca_btl_uct_tl_t *am_tl = uct_module->am_tl;
-
-        /* NTH: might want to vary this size based off the universe size (if
-         * one exists). the table is only used for connection lookup and
-         * endpoint removal. */
-        rc = opal_hash_table_init(&uct_module->id_to_endpoint, 512);
-        if (OPAL_SUCCESS != rc) {
-            BTL_ERROR(("error initializing the endpoint hash. rc = %d", rc));
-            return rc;
-        }
 
         if (am_tl) {
             rc = opal_free_list_init(&uct_module->short_frags, sizeof(mca_btl_uct_base_frag_t),
@@ -109,13 +102,36 @@ static int mca_btl_uct_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
     }
 
     for (size_t i = 0; i < nprocs; ++i) {
-        /* all endpoints are reachable for uct */
+        mca_btl_uct_modex_t *modex = NULL;
+        size_t msg_size = 0;
+
+        /* Connection is still lazy, but the peer must have published a
+         * UCT blob for us to want it at all. */
+        OPAL_MODEX_RECV(rc, &mca_btl_uct_component.super.btl_version, &opal_procs[i]->proc_name,
+                        (void **) &modex, &msg_size);
+        if (OPAL_ERR_NOT_READY == rc) {
+            /* Nothing to decide with yet. */
+            peers[i] = NULL;
+            MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
+            continue;
+        }
+        if (OPAL_SUCCESS != rc) {
+            /* No blob means this peer has no transport we speak: leave
+             * the default MCA_BTL_PROC_NOT_ELIGIBLE. */
+            peers[i] = NULL;
+            continue;
+        }
+        free(modex);
+
         peers[i] = mca_btl_uct_get_ep(btl, opal_procs[i]);
         if (OPAL_UNLIKELY(NULL == peers[i])) {
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
-        opal_bitmap_set_bit(reachable, i);
+        /* The UCT connection comes up on demand, and until it does the
+         * send path answers with "retry" on its own, so the endpoint is
+         * usable as far as the caller is concerned. */
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
     }
 
     return OPAL_SUCCESS;
@@ -279,6 +295,8 @@ mca_btl_uct_module_t *mca_btl_uct_alloc_module(mca_btl_uct_md_t *md,
     *module = mca_btl_uct_module_template;
 
     OBJ_CONSTRUCT(&module->id_to_endpoint, opal_hash_table_t);
+    /* Incoming connection requests can arrive before add_procs(). */
+    (void) opal_hash_table_init(&module->id_to_endpoint, 512);
     OBJ_CONSTRUCT(&module->endpoint_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&module->short_frags, opal_free_list_t);
     OBJ_CONSTRUCT(&module->eager_frags, opal_free_list_t);

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
@@ -299,12 +299,16 @@ static int mca_pml_ob1_recv_request_ack(
 {
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
     mca_bml_base_endpoint_t* bml_endpoint = NULL;
+    int eprc;
 
-    bml_endpoint = mca_bml_base_get_endpoint (proc);
+    bml_endpoint = mca_bml_base_get_endpoint (proc, &eprc);
 
     /* by default copy everything */
     recvreq->req_send_offset = bytes_received;
-    if(hdr->hdr_msg_length > bytes_received) {
+    /* Without an endpoint back to that peer there is no BTL list to
+     * choose an RDMA protocol from, so stay with copy in/out. The ack
+     * below is queued until the endpoint can be built. */
+    if(NULL != bml_endpoint && hdr->hdr_msg_length > bytes_received) {
         size_t rdma_num = mca_pml_ob1_rdma_pipeline_btls_count (bml_endpoint);
         /*
          * lookup request buffer to determine if memory is already
@@ -735,7 +739,13 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     }
 
     /* lookup bml datastructures */
-    bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc);
+    bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc, &rc);
+    if (OPAL_UNLIKELY(NULL == bml_endpoint)) {
+        /* No endpoint back to that peer yet, so no rdma btl to get with;
+         * ask the sender to fall back on send/recv. */
+        mca_pml_ob1_recv_request_ack(recvreq, btl, &hdr->hdr_rndv, 0);
+        return;
+    }
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
@@ -1301,6 +1311,15 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     req->req_ack_sent = false;
 
     MCA_PML_BASE_RECV_START(&req->req_recv);
+
+    /* Named recvs still construct that one peer so a send-side
+     * endpoint exists before the wait. ANY_SOURCE must not wire every
+     * comm rank: BTL progress is registered at PML enable, and sm
+     * attaches the sender on the first incoming FIFO item. */
+    if (OMPI_ANY_SOURCE != req->req_recv.req_base.req_peer) {
+        mca_pml_ob1_prepare_recv_proc(
+            mca_pml_ob1_peer_lookup(comm, req->req_recv.req_base.req_peer)->ompi_proc);
+    }
 
     OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     /**

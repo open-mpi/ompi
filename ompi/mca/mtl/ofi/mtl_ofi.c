@@ -2,6 +2,7 @@
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -12,6 +13,8 @@
  */
 
 #include "mtl_ofi.h"
+
+#include "opal/sys/atomic.h"
 
 OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
 
@@ -227,7 +230,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     size_t size;
     int count = 0;
     char *ep_name = NULL;
-    fi_addr_t *fi_addrs = NULL;
+    fi_addr_t fi_addr;
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     int num_peers_limit = (1 << ompi_mtl_ofi.num_bits_source_rank) - 1;
 
@@ -239,20 +242,20 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
                        "FI_REMOTE_CQ_DATA feature in the provider. For more info refer fi_cq(3).\n",
                        __FILE__, __LINE__, ompi_mtl_ofi.provider_name);
         fflush(stderr);
-        ret = OMPI_ERROR;
-        goto bail;
+        return OMPI_ERROR;
     }
 
-    /**
-     * Create array of fi_addrs.
-     */
-    fi_addrs = malloc(nprocs * sizeof(fi_addr_t));
-    if (NULL == fi_addrs) {
-        ret = OMPI_ERROR;
-        goto bail;
-    }
-
+    /* Each peer is wired in one step -- read its address, insert it in
+     * the address vector, publish the endpoint -- so that giving up
+     * partway through leaves no address in the vector that no endpoint
+     * points at, and leaves the peers done so far usable. */
     for (i = 0; i < nprocs; ++i) {
+        /* The PML wires peers one at a time on first use, so this can be
+         * called again for a proc that already has an endpoint. */
+        if (NULL != procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL]) {
+            continue;
+        }
+
         /**
          * Retrieve the processes' EP name from modex.
          */
@@ -261,59 +264,63 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
                               procs[i],
                               (void**)&ep_name,
                               &size);
+        if (OPAL_ERR_NOT_READY == ret) {
+            /* The peer published its address but the blob has not
+             * reached us yet. Not a failure: the PML comes back. */
+            return OMPI_ERR_NOT_READY;
+        }
         if (OMPI_SUCCESS != ret) {
             char *errhost = opal_get_proc_hostname(&procs[i]->super);
             opal_show_help("help-mtl-ofi.txt", "modex failed",
                            true, ompi_process_info.nodename,
 			                     errhost, opal_strerror(ret), ret);
             free(errhost);
-            goto bail;
+            return ret;
         }
 
         /**
          * Map the EP name to fi_addr.
          */
-        count = fi_av_insert(ompi_mtl_ofi.av, ep_name, 1, &fi_addrs[i], 0, NULL);
+        count = fi_av_insert(ompi_mtl_ofi.av, ep_name, 1, &fi_addr, 0, NULL);
         if ((count < 0) || (1 != (size_t)count)) {
             opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: fi_av_insert failed for address %s: %d\n",
                                 __FILE__, __LINE__, ep_name, count);
-            ret = OMPI_ERROR;
-            goto bail;
+            free(ep_name);
+            return OMPI_ERROR;
         }
-    }
+        free(ep_name);
+        ep_name = NULL;
 
-    /**
-     * Store the fi_addrs within the endpoint objects.
-     */
-    for (i = 0; i < nprocs; ++i) {
         endpoint = OBJ_NEW(mca_mtl_ofi_endpoint_t);
         if (NULL == endpoint) {
             opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: mtl/ofi: could not allocate endpoint"
                                 " structure\n",
                                 __FILE__, __LINE__);
-            ret = OMPI_ERROR;
-            goto bail;
+            (void) fi_av_remove(ompi_mtl_ofi.av, &fi_addr, 1, 0);
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         endpoint->mtl_ofi_module = &ompi_mtl_ofi;
-        endpoint->peer_fiaddr = fi_addrs[i];
+        endpoint->peer_fiaddr = fi_addr;
 
-        /* FIXME: What happens if this endpoint already exists? */
-        procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
+        /* Two threads can reach an unwired peer at the same time and
+         * both get this far; only one of them may publish. */
+        void *_tmp_ptr = NULL;
+        if (!opal_atomic_compare_exchange_strong_ptr(
+                (opal_atomic_intptr_t *) &procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL],
+                (intptr_t *) &_tmp_ptr, (intptr_t) endpoint)) {
+            OBJ_RELEASE(endpoint);
+            (void) fi_av_remove(ompi_mtl_ofi.av, &fi_addr, 1, 0);
+            continue;
+        }
+
+        /* Number of ranks this rank has to be able to name in a tag */
+        ompi_mtl_ofi.num_peers++;
     }
 
-    /* Update global counter of number of procs added to this rank */
-    ompi_mtl_ofi.num_peers += nprocs;
-
-    ret = OMPI_SUCCESS;
-
-bail:
-    if (fi_addrs)
-        free(fi_addrs);
-
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 int
