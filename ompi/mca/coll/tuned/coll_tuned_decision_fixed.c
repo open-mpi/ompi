@@ -241,29 +241,66 @@ int ompi_coll_tuned_allreduce_intra_bine_dec_fixed(const void *sbuf, void *rbuf,
     ompi_datatype_type_size(dtype, &dsize);
     total_dsize = dsize * (ptrdiff_t) count;
 
-    if (communicator_size <= 16) {
+    /** Bine Implementation:
+     *    {1, "lat"},
+     *    {2, "bdw_remap"},
+     *    {3, "block_by_block_any_even_over"},
+     *    {4, "bdw_remap_segmented"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 8) {
         if (total_dsize <= 2048) {
             bine_imp = 1;
         } else {
             bine_imp = 3;
         }
-    } else if (communicator_size < 32) {
+    } else if (communicator_size <= 16) {
         if (total_dsize <= 2048) {
             bine_imp = 1;
-        } else if(total_dsize <= 1048576) {
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 32) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 4;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 2;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 4;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 128) {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 4;
+        } else if (total_dsize <= 1048576) {
             bine_imp = 2;
         } else {
             bine_imp = 3;
         }
     } else {
-        if (total_dsize <= 2048) {
+        if (total_dsize <= 16384) {
             bine_imp = 1;
-        } else if (total_dsize <= 16384) {
-            bine_imp = 2;
-        } else if(total_dsize <= 131072) {
+        } else if (total_dsize <= 67108864) {
             bine_imp = 4;
-        } else if(total_dsize <= 1048576) {
-            bine_imp = 2;
         } else {
             bine_imp = 3;
         }
@@ -918,20 +955,58 @@ int ompi_coll_tuned_bcast_intra_bine_dec_fixed(void *buff, size_t count,
                          "ompi_coll_tuned_bcast_intra_dec_fixed root %d rank %d com_size %d", root,
                          ompi_comm_rank(comm), communicator_size));
 
-    if (communicator_size <= 16) {
-        if (total_dsize <= 131072) {
+    /** Bine Implementation:
+     *   {1, "lat"},
+     *   {2, "lat_reversed"},
+     *   {3, "lat_new"},
+     *   {4, "lat_i_new"},
+     *   {5, "bdw_remap"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 4;
+        } else {
+            bine_imp = 5;
+        }
+    } else if (communicator_size <= 8) {
+        if (total_dsize <= 256) {
+            bine_imp = 4;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 5;
+        }
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 256) {
+            bine_imp = 2;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
             bine_imp = 1;
         } else {
             bine_imp = 5;
         }
     } else if (communicator_size < 32) {
-        if (total_dsize <= 131072) {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 5;
+        }
+    } else if (communicator_size < 64) {
+        if (total_dsize <= 2048) {
             bine_imp = 1;
         } else {
             bine_imp = 5;
         }
     } else {
-        if (total_dsize <= 131072) {
+        if (total_dsize <= 16384) {
             bine_imp = 1;
         } else {
             bine_imp = 5;
@@ -1201,31 +1276,34 @@ int ompi_coll_tuned_reduce_intra_bine_dec_fixed(const void *sendbuf, void *recvb
     ompi_datatype_type_size(datatype, &dsize);
     total_dsize = dsize * (ptrdiff_t) count; /* needed for decision */
 
-    if (communicator_size <= 16)
-    {
-        if (total_dsize <= 131072)
-        {
+    /** Bine Implementation:
+     *   {1, "lat"},
+     *   {2, "bdw"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 131072) {
             bine_imp = 1;
-        }  else
-        {
-            bine_imp = 5;
+        } else {
+            bine_imp = 2;
         }
-    } else if (communicator_size <= 32)
-    {
-        if (total_dsize <= 131072)
-        {
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 16384) {
             bine_imp = 1;
-        } else
-        {
-            bine_imp = 5;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
         }
     } else {
-        if (total_dsize <= 16384)
-        {
+        if (total_dsize <= 16384) {
             bine_imp = 1;
-        } else
-        {
-            bine_imp = 5;
+        } else {
+            bine_imp = 2;
         }
     }
 
@@ -1407,51 +1485,70 @@ int ompi_coll_tuned_reduce_scatter_intra_bine_dec_fixed(
     }
     total_dsize *= dsize;
 
-    if (communicator_size <= 16)
-    {
-        if (total_dsize <= 2048)
-        {
-            bine_imp = 3;
-        } else  if (total_dsize <= 1048576)
-        {
+    /** Bine Implementation:
+     *   {1, "block_by_block_any_even"},
+     *   {2, "send_remap"},
+     *   {3, "permute_remap"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 256) {
             bine_imp = 1;
-        } else if (total_dsize <= 8388608)
-        {
+        } else if (total_dsize <= 2048) {
             bine_imp = 3;
-        } else
-        {
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 3;
+        } else {
             bine_imp = 1;
         }
-    } else if (communicator_size <= 32)
-    {
-        if (total_dsize <= 256)
-        {
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 2048) {
             bine_imp = 3;
-        } else if (total_dsize <= 2048)
-        {
-            bine_imp = 2;
-        } else if (total_dsize <= 16384)
-        {
-            bine_imp = 3;
-        } else if (total_dsize <= 131072)
-        {
+        } else if (total_dsize <= 131072) {
             bine_imp = 1;
-        } else if (total_dsize <= 8388608)
-        {
+        } else if (total_dsize <= 8388608) {
             bine_imp = 3;
-        } else
-        {
+        } else {
+            bine_imp = 1;
+        }
+    } else if (communicator_size <= 32) {
+        if (total_dsize <= 2048) {
+            bine_imp = 2;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else if (total_dsize <= 8388608) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 16384) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else if (total_dsize <= 67108864) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    } else if (communicator_size <= 128) {
+        if (total_dsize <= 131072) {
+            bine_imp = 2;
+        } else if (total_dsize <= 67108864) {
+            bine_imp = 3;
+        } else {
             bine_imp = 1;
         }
     } else {
-        if (total_dsize <= 131072)
-        {
-            bine_imp = 1;
-        } else  if (total_dsize <= 67108864)
-        {
+        if (total_dsize <= 67108864) {
             bine_imp = 3;
-        } else
-        {
+        } else {
             bine_imp = 1;
         }
     }
@@ -1752,57 +1849,69 @@ int ompi_coll_tuned_allgather_intra_bine_dec_fixed(const void *sbuf, size_t scou
 
     communicator_size = ompi_comm_size(comm);
 
-    if (communicator_size <= 16)
-    {
-        if (total_dsize <= 256)
-        {
-            bine_imp = 2;
-        } else if (total_dsize <= 2048)
-        {
+    /** Bine Implementation:
+     *   {1, "send_remap"},
+     *   {2, "block_by_block"},
+     *   {3, "2_block"},
+     *   {4, "permutation"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 16384) {
             bine_imp = 3;
-        } else if (total_dsize <= 16384)
-        {
+        } else if (total_dsize <= 1048576) {
             bine_imp = 2;
-        } else if (total_dsize <= 131072)
-        {
+        } else if (total_dsize <= 8388608) {
             bine_imp = 3;
-        } else
-        {
+        } else {
             bine_imp = 2;
         }
-    } else if (communicator_size <= 32)
-    {
-        if (total_dsize <= 256)
-        {
-            bine_imp = 1;
-        } else if (total_dsize <= 2048)
-        {
-            bine_imp = 4;
-        } else if (total_dsize <= 16384)
-        {
-            bine_imp = 1;
-        } else if (total_dsize <= 131072)
-        {
+    } else if (communicator_size <= 8) {
+        if (total_dsize <= 256) {
             bine_imp = 3;
-        } else if (total_dsize <= 1048576)
-        {
+        } else if (total_dsize <= 2048) {
+            bine_imp = 4;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 3;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else if (total_dsize <= 8388608) {
             bine_imp = 1;
-        } else
-        {
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 256) {
+            bine_imp = 3;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 4;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 2;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 131072) {
+            bine_imp = 3;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 128) {
+        if (total_dsize <= 1048576) {
+            bine_imp = 1;
+        } else {
             bine_imp = 2;
         }
     } else {
-        if (total_dsize <= 256)
-        {
-            bine_imp = 2;
-        } else if (total_dsize <= 2048)
-        {
+        if (total_dsize <= 131072) {
             bine_imp = 3;
-        } else if (total_dsize <= 1048576)
-        {
+        } else if (total_dsize <= 8388608) {
             bine_imp = 1;
-        } else
-        {
+        } else {
             bine_imp = 2;
         }
     }

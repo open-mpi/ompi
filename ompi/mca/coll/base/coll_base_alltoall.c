@@ -748,8 +748,27 @@ int ompi_coll_base_alltoall_intra_basic_linear(const void *sbuf, size_t scount,
 /*
  * Binomial Negabinary (Bine) alltoall.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * This implementation uses a Bine butterfly pattern where each rank
+ * moves data to rearrange it across ranks, with a final permutation
+ * to restore the correct order.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the pairwise algorithm is used as a fallback.
  */
 int ompi_coll_base_alltoall_intra_bine(const void *sbuf, size_t scount,
                                        struct ompi_datatype_t *sdtype, void *rbuf, size_t rcount,

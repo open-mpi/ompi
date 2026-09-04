@@ -1074,8 +1074,24 @@ cleanup_and_return:
 /*
  * Binomial Negabinary (Bine) broadcast, latency-optimized variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree: each rank receives data from its
+ * parent and forwards it to a child, with the tree rooted at the
+ * broadcast root.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
  * For non power-of-two sizes, the binomial broadcast is used as a fallback.
@@ -1184,8 +1200,23 @@ cleanup_and_return:
 /*
  * Binomial Negabinary (Bine) broadcast, latency-optimized reversed variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-doubling Bine tree, reversing the communication order
+ * of the latency-optimized variant.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
  * For non power-of-two sizes, the binomial broadcast is used as a fallback.
@@ -1298,8 +1329,22 @@ cleanup_and_return:
 /*
  * Binomial Negabinary (Bine) broadcast, latency-optimized variant (new).
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree with an optimized step calculation.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
  * For non power-of-two sizes, the binomial broadcast is used as a fallback.
@@ -1368,8 +1413,22 @@ cleanup_and_return:
 /*
  * Binomial Negabinary (Bine) broadcast, latency-optimized variant (i-new).
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree with iterative rank-to-parent lookup.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
  * For non power-of-two sizes, the binomial broadcast is used as a fallback.
@@ -1475,8 +1534,23 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) broadcast, bandwidth-optimized remap variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Decomposes into a Bine scatter (distance-doubling tree) followed by a
+ * Bine allgather (distance-halving tree) for large vectors.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
  * For non power-of-two sizes, the binomial broadcast is used as a fallback.

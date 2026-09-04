@@ -1347,10 +1347,27 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) allreduce, latency-optimized variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses distance-halving Bine tree partner selection to exchange full
+ * data buffers at each step, applying the reduction operator after
+ * each receive.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the recursive doubling algorithm is used as a fallback.
  */
 int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t count,
                                             struct ompi_datatype_t *dtype, struct ompi_op_t *op,
@@ -1527,10 +1544,26 @@ error_hndl:
 /*
  * Binomial Negabinary (Bine) allreduce, bandwidth-optimized remap variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Decomposes into a Bine reduce-scatter (distance-doubling butterfly)
+ * followed by a Bine allgather, each transferring half the data per step.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the recursive doubling algorithm is used as a fallback.
  */
 int ompi_coll_base_allreduce_intra_bine_bdw_remap(const void *sbuf, void *rbuf, size_t count,
                                                   struct ompi_datatype_t *dtype,
@@ -1683,10 +1716,26 @@ cleanup_and_return:
 /*
  * Binomial Negabinary (Bine) allreduce, block-by-block any-even over variant.
  *
- * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
  *
- * This implementation is restricted to power-of-two communicator sizes.
+ * Uses a Bine reduce-scatter followed by allgather, transmitting each
+ * block independently to overlap reduction with communication.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to even communicator sizes.
+ * For non even sizes, the recursive doubling algorithm is used as a fallback.
  */
 int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
     const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
@@ -1962,10 +2011,27 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) allreduce, bandwidth-optimized remap segmented variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Decomposes into a Bine reduce-scatter (distance-doubling butterfly)
+ * followed by a Bine allgather, processing the vector in
+ * configurable-size segments to improve pipelining.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the recursive doubling algorithm is used as a fallback.
  */
 int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
     const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,

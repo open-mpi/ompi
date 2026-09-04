@@ -910,11 +910,26 @@ cleanup_and_return:
 /*
  * Binomial Negabinary (Bine) reduce_scatter, block-by-block any-even variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-doubling Bine butterfly where each block is reduced
+ * and transmitted independently.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
- * For non power-of-two sizes, the binomial reduce_scatter is used as a fallback.
+ * For non power-of-two sizes, the recursive halving is used as a fallback.
  */
 int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     const void *sbuf, void *rbuf, ompi_count_array_t rcounts, struct ompi_datatype_t *dtype,
@@ -1149,11 +1164,27 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) reduce_scatter, send-remap variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Performs a distance-doubling butterfly reduce-scatter using direct
+ * remapped block selection, then a final send/receive to reorder data
+ * between nodes.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
- * For non power-of-two sizes, the binomial reduce_scatter is used as a fallback.
+ * For non power-of-two sizes, the recursive halving is used as a fallback.
  */
 int ompi_coll_base_reduce_scatter_intra_bine_send_remap(
     const void *sbuf, void *rbuf, ompi_count_array_t rcounts, struct ompi_datatype_t *dtype,
@@ -1276,11 +1307,27 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) reduce_scatter, permute-remap variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Data is permuted locally first so that the scatter phase transmits
+ * contiguous blocks in the correct order, then the butterfly
+ * reduce-scatter proceeds.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
- * For non power-of-two sizes, the binomial reduce_scatter is used as a fallback.
+ * For non power-of-two sizes, the recursive halving is used as a fallback.
  */
 int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
     const void *sbuf, void *rbuf, ompi_count_array_t rcounts, struct ompi_datatype_t *dtype,
