@@ -15,7 +15,7 @@ procedure's dummy arguments agree with the standard on three
 things:
 
   * name      -- the dummy-argument name (case-insensitive)
-  * intent    -- INTENT(IN|OUT|INOUT) (for F08 only)
+  * intent    -- INTENT(IN|OUT|INOUT)
   * type      -- the declared Fortran type
 
 It is intended to be run at build time over the generated Fortran sources
@@ -32,6 +32,10 @@ flagged:
     attach INTENT(IN).
   * any argument whose standard F08 intent is unspecified (None), e.g.
     a TYPE(MPI_Status) argument that must also accept MPI_STATUS_IGNORE.
+    The standard's INTENT is only published for the F08 bindings, so the
+    F90 (mpi module) check reads it from the same procedure's F08
+    expression; an argument the F08 binding does not have is not
+    intent-checked.
   * a large-count (_c) procedure that the standard does not provide an
     F08 binding for.
 """
@@ -79,11 +83,18 @@ def load_standard(pympistd_dir, lang):
     import pympistandard as std
     std.use_api_version(1)
 
+    def f08_intents(express):
+        """Return a map of the argument name to the standard's F08 intent."""
+        binding = getattr(express, 'f08', None)
+        if binding is None: return {}
+        return {p.name.lower(): p.intent for p in binding.parameters}
+
     def params_of(express):
         binding = getattr(express, lang, None) if express is not None else None
         if binding is None:
             return None
-        return [(p.name.lower(), getattr(p, 'intent', None), p.type)
+        intents = f08_intents(express)
+        return [(p.name.lower(), intents.get(p.name.lower()), p.type)
                 for p in binding.parameters]
 
     table = {}
