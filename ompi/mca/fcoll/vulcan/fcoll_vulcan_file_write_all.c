@@ -230,7 +230,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
         }
     }
     
-    result_counts = (int *) malloc ( fh->f_num_aggrs * fh->f_procs_per_group * sizeof(int) );
+    result_counts = (int *) malloc ( (size_t) fh->f_num_aggrs * fh->f_procs_per_group * sizeof(int) );
     if ( NULL == result_counts ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
@@ -453,18 +453,16 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
 #endif
     }
 
-    reqs = (ompi_request_t **)malloc ((fh->f_procs_per_group + 1 )*fh->f_num_aggrs *sizeof(ompi_request_t *));
+    size_t num_reqs = (size_t) (fh->f_procs_per_group + 1 ) * fh->f_num_aggrs;
+    reqs = (ompi_request_t **)malloc (num_reqs * sizeof(ompi_request_t *));
     if ( NULL == reqs ) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
     }
 
-    for (l=0,i=0; i < fh->f_num_aggrs; i++ ) {
-        for ( j=0; j< (fh->f_procs_per_group+1); j++ ) {
-            reqs[l] = MPI_REQUEST_NULL;
-            l++;
-        }
+    for (size_t r = 0; r < num_reqs; r++) {
+        reqs[r] = MPI_REQUEST_NULL;
     }
 
     // In fact it should be: if ((1 == mca_fcoll_vulcan_async_io) && (NULL != fh->f_fbtl->fbtl_ipwritev))
@@ -477,7 +475,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
     if ( cycles > 0 ) {
         for ( i=0; i<fh->f_num_aggrs; i++ ) {
             ret = shuffle_init ( 0, cycles, fh->f_aggr_list[i], fh->f_rank, aggr_data[i],
-                                 &reqs[i*(fh->f_procs_per_group + 1)] );
+                                 &reqs[(size_t) i * (fh->f_procs_per_group + 1)] );
             if ( OMPI_SUCCESS != ret ) {
                 goto exit;
             }
@@ -488,8 +486,10 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
         }
     }
 
-    ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
-                                  reqs, MPI_STATUS_IGNORE);
+    ret = ompi_request_wait_all ( num_reqs, reqs, MPI_STATUS_IGNORE);
+    if (OMPI_SUCCESS != ret){
+        goto exit;
+    }
 
     for (index = 1; index < cycles; index++) {
         SWAP_AGGR_POINTERS(aggr_data, fh->f_num_aggrs);
@@ -511,14 +511,13 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
 
         for ( i=0; i<fh->f_num_aggrs; i++ ) {
             ret = shuffle_init ( index, cycles, fh->f_aggr_list[i], fh->f_rank, aggr_data[i],
-                                 &reqs[i*(fh->f_procs_per_group + 1)] );
+                                 &reqs[(size_t) i * (fh->f_procs_per_group + 1)] );
             if ( OMPI_SUCCESS != ret ) {
                 goto exit;
             }
         }
 
-        ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
-                                      reqs, MPI_STATUS_IGNORE);
+        ret = ompi_request_wait_all ( num_reqs, reqs, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != ret){
             goto exit;
         }

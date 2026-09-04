@@ -631,7 +631,7 @@ int ompi_fetch_opal_pointer_array_item(mqs_process *proc, mqs_taddr_t addr,
                               addr + i_info->opal_pointer_array_t.offset.addr,
                               p_info);
     *item = ompi_fetch_pointer(proc,
-                               base + index * p_info->sizes.pointer_size,
+                               base + (mqs_taddr_t) index * p_info->sizes.pointer_size,
                                p_info);
 
     return mqs_ok;

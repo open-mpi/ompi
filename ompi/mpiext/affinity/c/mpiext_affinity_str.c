@@ -126,7 +126,7 @@ static int build_map(int *num_sockets_arg, int *num_cores_arg, hwloc_cpuset_t cp
     if (NULL == data) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    data[0] = calloc(num_sockets * num_cores, sizeof(int));
+    data[0] = calloc((size_t) num_sockets * num_cores, sizeof(int));
     if (NULL == data[0]) {
         free(data);
         return MPI_ERR_NO_MEM;
