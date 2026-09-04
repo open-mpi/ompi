@@ -8,6 +8,37 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
+  interface whose IP address is not unique across the job -- a container
+  bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every
+  node, is the usual cause.  Such an address was preferred when pairing
+  local and remote interfaces, because being identical it appeared to be
+  the best possible match, and it is in fact unusable: a connection to it
+  never leaves the node, and a connection from it is answered to the
+  peer's own copy of the address.  Both the address and the local
+  interface that holds it are now excluded when the peer is on another
+  node.
+
+- Fixed wrong answers from one-sided (RMA) operations on a window
+  allocated with ``MPI_Win_allocate`` when the target is a process on the
+  same node but the operation is carried out by the underlying transport
+  rather than with CPU atomics.  In that case ``osc/rdma`` described the
+  target's memory with an address taken from the calling process's own
+  mapping of the shared segment, while pairing it with the memory
+  registration of a different process, so the transport could read or
+  write the wrong location.  ``MPI_Win_shared_query`` on such a window
+  continues to report an address that is valid in the calling process.
+
+- One-sided (RMA) windows on networks without hardware atomics --
+  ``btl/tcp``, for example -- are dramatically faster when more than one
+  MPI process shares a node.  The ``osc/rdma`` component now applies its
+  shared state optimization whenever the underlying transport guarantees
+  that CPU atomics and transport atomics are atomic with respect to each
+  other, which includes the emulated atomics used on such networks.
+  Previously the optimization was disabled for these transports, so
+  every window-state atomic issued by a process was routed to another
+  process on the same node and executed as a network round trip.
+
 - Nonblocking file I/O no longer loses data when the operating system's
   asynchronous I/O queue fills, which on macOS it readily does: the
   ``posix`` ``fbtl`` component sized its batch of concurrent ``aio_write``
