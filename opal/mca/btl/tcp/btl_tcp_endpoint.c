@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -398,23 +399,6 @@ int mca_btl_tcp_endpoint_send(mca_btl_base_endpoint_t *btl_endpoint, mca_btl_tcp
 }
 
 /*
- * A blocking send on a non-blocking socket. Used to send the small
- * amount of connection information that identifies the endpoints endpoint.
- */
-static int mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t *btl_endpoint,
-                                              const void *data, size_t size)
-{
-    int ret = mca_btl_tcp_send_blocking(btl_endpoint->endpoint_sd, data, size);
-    if (ret < 0) {
-        /* send-lock not needed because never called when the socket is in the
-         * event set. */
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
-        mca_btl_tcp_endpoint_close(btl_endpoint);
-    }
-    return ret;
-}
-
-/*
  * Send the globally unique identifier for this process to a endpoint on
  * a newly connected socket.
  */
@@ -428,7 +412,7 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t *btl_en
     hs_msg.guid = guid;
 
     if (sizeof(hs_msg)
-        != mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &hs_msg, sizeof(hs_msg))) {
+        != mca_btl_tcp_send_blocking(btl_endpoint->endpoint_sd, &hs_msg, sizeof(hs_msg))) {
         opal_show_help("help-mpi-btl-tcp.txt", "client handshake fail", true,
                        opal_process_info.nodename, sizeof(hs_msg),
                        "connect ACK failed to send magic-id and guid");
@@ -560,7 +544,7 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t *btl_endpoint)
             .count = 0,
             .size = 0,
         };
-        mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &fin_msg, sizeof(fin_msg));
+        mca_btl_tcp_send_blocking(btl_endpoint->endpoint_sd, &fin_msg, sizeof(fin_msg));
     }
 
     CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
