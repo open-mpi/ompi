@@ -632,8 +632,25 @@ int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, size_t scount,
 /*
  * Binomial Negabinary (Bine) allgather, send-remap variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Each rank first remaps its data to the correct Bine-order position
+ * by exchanging with the appropriate partner; the subsequent
+ * distance-doubling butterfly then operates on correctly placed data
+ * without requiring a final reordering step.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
  * For non power-of-two sizes, the bruck algorithm is used as a fallback.
@@ -759,8 +776,26 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) allgather, block-by-block any-even variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-doubling Bine butterfly where each data block is
+ * transmitted independently, enabling computation-communication overlap.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to even communicator sizes.
+ * For non even sizes, the bruck algorithm is used as a fallback.
  */
 int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf, size_t scount,
                                                                 struct ompi_datatype_t *sdtype,
@@ -904,8 +939,24 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) allgather, 2-block variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree, exchanging two contiguous blocks
+ * per step while alternating the extension direction between even and
+ * odd ranks.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
  *
  * This implementation is restricted to power-of-two communicator sizes.
  * For non power-of-two sizes, the bruck algorithm is used as a fallback.
@@ -1049,8 +1100,26 @@ err_hndl:
 /*
  * Binomial Negabinary (Bine) allgather, permutation variant.
  *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Tracks block positions through a permutation array built during the
+ * distance-doubling butterfly, then reorders blocks at the end.
+ *
  * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
- * Communication Locality" (De Sensi et al., 2025).
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the bruck algorithm is used as a fallback.
  */
 int ompi_coll_base_allgather_intra_bine_permutation(const void *sbuf, size_t scount,
                                                     struct ompi_datatype_t *sdtype, void *rbuf,
