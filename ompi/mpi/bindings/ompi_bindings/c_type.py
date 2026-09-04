@@ -3631,5 +3631,50 @@ class TypeClassStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
+@Type.add_type('OBJ_HANDLE', abi_type=['ompi'])
+class TypeObjHandle(Type):
 
+    def type_text(self, enable_count=False):
+        return 'void *'
+
+@Type.add_type('OBJ_HANDLE', abi_type=['standard'])
+class TypeObjHandleStandard(StandardABIType):
+    """The obj_handle parameter of the MPI_T handle-allocation routines.
+
+    Per MPI-5.0 (e.g. p.751), obj_handle is the ADDRESS of a local
+    variable that stores the bound MPI object's handle -- it is a
+    pointer to a handle, not a handle value itself.  A NULL obj_handle
+    means "no object" and must be passed through unconverted (the
+    standard requires it be ignored for an MPI_T_BIND_NO_OBJECT
+    variable/event).
+
+    Under the standard ABI, the *pointed-to* handle is the ABI-encoded
+    value that ConvertFuncs.OBJ_HANDLE
+    (ompi_convert_abi_obj_handle_intern_obj_handle) knows how to
+    translate to an internal pointer.  So: dereference
+    obj_handle once to reach that ABI value, convert only the pointed-to
+    VALUE, and store the resulting internal pointer in a local
+    temporary.  The internal (ompi ABI) entry point expects the same
+    "address of a variable holding the handle" contract (see
+    ompit_obj_invalid(), mca_base_event_handle_alloc(),
+    mca_base_pvar_handle_alloc(), all of which perform exactly one
+    dereference), so the argument passed down is the address of that
+    temporary -- not the temporary's value.
+    """
+
+    @property
+    def init_code(self):
+        return [
+            f'void *{self.tmpname} = NULL;',
+            f'if (NULL != {self.name}) {{',
+            f'{self.tmpname} = {ConvertFuncs.OBJ_HANDLE}(*(void **) {self.name});',
+            '}',
+        ]
+
+    @property
+    def argument(self):
+        return f'(void *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
+
+    def type_text(self, enable_count=False):
+        return 'void *'
 

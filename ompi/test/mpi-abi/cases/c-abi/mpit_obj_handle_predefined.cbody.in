@@ -1,0 +1,121 @@
+/*
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   MPI-5.0 (e.g. p.751) requires obj_handle to be the ADDRESS of a
+ *   local variable that stores the bound MPI object's handle -- a
+ *   pointer to a handle, not a handle value itself.  Bind an
+ *   MPI_T event registration to each of the PREDEFINED communicators
+ *   MPI_COMM_WORLD and MPI_COMM_SELF and confirm that naming one fires
+ *   only its own bound registration.
+ *
+ *   Predefined handles are represented as small sentinel integers under
+ *   the standard ABI, so this specifically exercises the obj_handle
+ *   converter's sentinel-matching path (as opposed to a dynamically
+ *   created communicator, whose handle is already the real internal
+ *   pointer under the Open MPI ABI and would not catch a converter that
+ *   fails to dereference obj_handle before converting).  A converter
+ *   that operates on the outer address instead of the pointed-to value
+ *   never matches the sentinel, so the registration silently binds to a
+ *   bogus identity and the event never fires -- this probe would then
+ *   observe zero callback invocations for both bindings instead of
+ *   exactly one each.
+ *
+ *   A build with no event sources returns 77 so the runner records a
+ *   stable mpit_events_unavailable skip.
+ */
+int ret = MPI_Init(&argc, &argv);
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+int provided = 0;
+ret = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+if (MPI_T_ERR_NOT_SUPPORTED == ret) {
+    (void) MPI_Finalize();
+    return 77;
+}
+if (MPI_SUCCESS != ret) {
+    (void) MPI_Finalize();
+    return 2;
+}
+
+int idx = -1;
+ret = MPI_T_event_get_index("ompi.mpi.communicator_name_set", &idx);
+if (MPI_SUCCESS != ret) {
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 77;
+}
+
+MPI_Comm world = MPI_COMM_WORLD;
+MPI_Comm self_comm = MPI_COMM_SELF;
+MPI_T_event_registration reg_world = (MPI_T_event_registration) 0;
+MPI_T_event_registration reg_self = (MPI_T_event_registration) 0;
+
+ret = MPI_T_event_handle_alloc(idx, &world, MPI_INFO_NULL, &reg_world);
+if (MPI_SUCCESS != ret) {
+    fprintf(stderr, "ABI_FAIL:mpit_obj_handle:alloc_world\n");
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 3;
+}
+ret = MPI_T_event_handle_alloc(idx, &self_comm, MPI_INFO_NULL, &reg_self);
+if (MPI_SUCCESS != ret) {
+    (void) MPI_T_event_handle_free(reg_world, NULL, NULL);
+    fprintf(stderr, "ABI_FAIL:mpit_obj_handle:alloc_self\n");
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 4;
+}
+
+(void) MPI_T_event_register_callback(reg_world, MPI_T_CB_REQUIRE_NONE,
+                                     MPI_INFO_NULL, NULL,
+                                     mpit_obj_handle_cb_world);
+(void) MPI_T_event_register_callback(reg_self, MPI_T_CB_REQUIRE_NONE,
+                                     MPI_INFO_NULL, NULL,
+                                     mpit_obj_handle_cb_self);
+
+ret = MPI_Comm_set_name(MPI_COMM_WORLD, "abi-obj-handle-world");
+if (MPI_SUCCESS != ret) {
+    fprintf(stderr, "ABI_FAIL:mpit_obj_handle:set_name_world\n");
+    return 5;
+}
+if (1 != mpit_obj_handle_world_fired || 0 != mpit_obj_handle_self_fired) {
+    fprintf(stderr, "ABI_FAIL:mpit_obj_handle:world_binding:%d:%d\n",
+            mpit_obj_handle_world_fired, mpit_obj_handle_self_fired);
+    return 6;
+}
+
+mpit_obj_handle_world_fired = 0;
+mpit_obj_handle_self_fired = 0;
+ret = MPI_Comm_set_name(MPI_COMM_SELF, "abi-obj-handle-self");
+if (MPI_SUCCESS != ret) {
+    fprintf(stderr, "ABI_FAIL:mpit_obj_handle:set_name_self\n");
+    return 7;
+}
+if (0 != mpit_obj_handle_world_fired || 1 != mpit_obj_handle_self_fired) {
+    fprintf(stderr, "ABI_FAIL:mpit_obj_handle:self_binding:%d:%d\n",
+            mpit_obj_handle_world_fired, mpit_obj_handle_self_fired);
+    return 8;
+}
+
+(void) MPI_T_event_handle_free(reg_world, NULL, NULL);
+(void) MPI_T_event_handle_free(reg_self, NULL, NULL);
+
+ret = MPI_T_finalize();
+if (MPI_SUCCESS != ret) {
+    return 9;
+}
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret) {
+    return 10;
+}
+
