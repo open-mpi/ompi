@@ -40,6 +40,7 @@
 
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/btl/base/btl_base_error.h"
+#include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/mca/reachable/base/base.h"
 #include "opal/util/arch.h"
@@ -111,6 +112,48 @@ static inline int mca_btl_tcp_proc_is_proc_left(opal_process_name_t a, opal_proc
 #define MCA_BTL_TCP_PROC_LOCAL_VERTEX(index)  (index)
 #define MCA_BTL_TCP_PROC_REMOTE_VERTEX(index) (index + mca_btl_tcp_component.tcp_num_btls)
 
+/*
+ * Is this address configured on the node we are running on?
+ *
+ * An address that exists here cannot be used to reach a process that is
+ * somewhere else: connect() to it succeeds locally and lands on whatever
+ * happens to be listening on this host, so the peer we meant to reach never
+ * sees the connection.  This is reachable whenever an interface carries an
+ * address that is not unique across the job, and a container bridge is the
+ * usual way that happens, docker0 being 172.17.0.1 on every node.
+ *
+ * The comparison has to be on the address itself.  Matching by network is not
+ * enough and would reject every legitimate peer, because on a cluster whose
+ * nodes share a subnet a peer's real addresses are on our network too.
+ */
+static bool mca_btl_tcp_addr_is_ours(const mca_btl_tcp_addr_t *addr)
+{
+    opal_if_t *local_if;
+
+    OPAL_LIST_FOREACH (local_if, &mca_btl_tcp_component.local_ifs, opal_if_t) {
+        if (addr->addr_family != local_if->af_family) {
+            continue;
+        }
+        if (AF_INET == addr->addr_family) {
+            struct sockaddr_in *sin = (struct sockaddr_in *) &local_if->if_addr;
+            if (0 == memcmp(&sin->sin_addr, &addr->addr_union.addr_inet,
+                            sizeof(struct in_addr))) {
+                return true;
+            }
+        }
+#if OPAL_ENABLE_IPV6
+        else if (AF_INET6 == addr->addr_family) {
+            struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) &local_if->if_addr;
+            if (0 == memcmp(&sin6->sin6_addr, &addr->addr_union.addr_inet6,
+                            sizeof(struct in6_addr))) {
+                return true;
+            }
+        }
+#endif
+    }
+    return false;
+}
+
 /* This function builds a graph to match local and remote interfaces
  * together. It also populates the remote proc object.
  *
@@ -120,6 +163,9 @@ static inline int mca_btl_tcp_proc_is_proc_left(opal_process_name_t a, opal_proc
  *                                interfaces to be on the left side of the graph.
  *                                If false, we set remote process interfaces to
  *                                be on the left side of the graph.
+ * @param peer_is_local (IN)      True when the remote proc runs on this node.
+ *                                Read from the caller's opal_proc_t, because
+ *                                btl_proc->proc_opal is not linked yet.
  * @param graph_out (OUT)         Constructed and populated bipartite interface
  *                                graph with vertices as interfaces and negative
  *                                reachability weights as costs for the edges.
@@ -141,7 +187,7 @@ static inline int mca_btl_tcp_proc_is_proc_left(opal_process_name_t a, opal_proc
  */
 static int mca_btl_tcp_proc_create_interface_graph(mca_btl_tcp_proc_t *btl_proc,
                                                    mca_btl_tcp_modex_addr_t *remote_addrs,
-                                                   int local_proc_is_left,
+                                                   int local_proc_is_left, bool peer_is_local,
                                                    opal_bp_graph_t **graph_out)
 {
     opal_bp_graph_t *graph = NULL;
@@ -215,6 +261,29 @@ static int mca_btl_tcp_proc_create_interface_graph(mca_btl_tcp_proc_t *btl_proc,
     if (NULL == results) {
         rc = OPAL_ERROR;
         goto err_graph;
+    }
+
+    /* Never pair a local interface with a remote address that is configured on
+     * this node, unless the peer really is on this node.  Such an address is
+     * identical to one of ours, so it trivially shares a network and carries
+     * about the highest weight available -- exactly the pair the solver
+     * prefers, and the one that cannot work.  Zeroing the weight is how this
+     * file already spells "no connection", so the edge loop below skips it
+     * along with every other unreachable pair.  The answer depends only on the
+     * remote address, so settle it once per address rather than once per
+     * (local, remote) pair. */
+    if (!peer_is_local) {
+        for (y = 0; y < results->num_remote; y++) {
+            if (!mca_btl_tcp_addr_is_ours(&btl_proc->proc_addrs[y])) {
+                continue;
+            }
+            BTL_VERBOSE(("skipping remote address %" PRIu32 ": it is also configured "
+                         "on this node, so it cannot reach a peer that is not here",
+                         (uint32_t) y));
+            for (x = 0; x < results->num_local; x++) {
+                results->weights[x][y] = 0;
+            }
+        }
     }
 
     /* Add vertices for each local node. These will store the btl index */
@@ -328,7 +397,7 @@ out:
 
 static int mca_btl_tcp_proc_handle_modex_addresses(mca_btl_tcp_proc_t *btl_proc,
                                                    mca_btl_tcp_modex_addr_t *remote_addrs,
-                                                   int local_proc_is_left)
+                                                   int local_proc_is_left, bool peer_is_local)
 {
     opal_bp_graph_t *graph = NULL;
     int rc = OPAL_SUCCESS;
@@ -336,7 +405,7 @@ static int mca_btl_tcp_proc_handle_modex_addresses(mca_btl_tcp_proc_t *btl_proc,
     int *matched_edges = NULL;
 
     rc = mca_btl_tcp_proc_create_interface_graph(btl_proc, remote_addrs, local_proc_is_left,
-                                                 &graph);
+                                                 peer_is_local, &graph);
     if (rc) {
         goto cleanup;
     }
@@ -428,7 +497,10 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
      */
     local_proc_is_left = mca_btl_tcp_proc_is_proc_left(proc->proc_name,
                                                        opal_proc_local_get()->proc_name);
-    rc = mca_btl_tcp_proc_handle_modex_addresses(btl_proc, remote_addrs, local_proc_is_left);
+    /* Note: btl_proc->proc_opal is not linked until the cleanup block below, so
+     * the locality of the peer has to be read from the proc we were handed. */
+    rc = mca_btl_tcp_proc_handle_modex_addresses(btl_proc, remote_addrs, local_proc_is_left,
+                                                OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags));
 
     if (OPAL_SUCCESS != rc) {
         goto cleanup;
