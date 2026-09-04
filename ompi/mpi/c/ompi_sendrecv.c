@@ -17,7 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024      Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -37,7 +37,7 @@
 #include "ompi/memchecker.h"
 #include "ompi/runtime/ompi_spc.h"
 
-int ompi_sendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Status *status)
+OMPI_HIDDEN int ompi_sendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Status *status)
 {
     ompi_request_t* req = MPI_REQUEST_NULL;
     int rc = MPI_SUCCESS;

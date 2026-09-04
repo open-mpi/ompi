@@ -13,7 +13,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
- * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
@@ -69,12 +69,12 @@ static void ompi_isendrecv_context_destructor(ompi_isendrecv_replace_context_t *
     OBJ_DESTRUCT(&context->convertor);
 }
 
-OBJ_CLASS_INSTANCE(ompi_isendrecv_replace_context_t, 
+OMPI_HIDDEN OBJ_CLASS_INSTANCE(ompi_isendrecv_replace_context_t,
                    opal_object_t, 
                    ompi_isendrecv_context_constructor,
                    ompi_isendrecv_context_destructor);
 #else
-OBJ_CLASS_DECLARATION(ompi_isendrecv_replace_context_t);
+OMPI_HIDDEN OBJ_CLASS_DECLARATION(ompi_isendrecv_replace_context_t);
 #endif /* OMPI_BUILD_MPI_PROFILING */
 
 static int ompi_isendrecv_replace_complete_func (ompi_comm_request_t *request)

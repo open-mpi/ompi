@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2026      Jeff Squyres.  All rights reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +34,12 @@
 
 int main(int argc, char *argv[])
 {
+    /* Initialize MPI for the ABI functions that require it */
+    MPI_Init(&argc, &argv);
+
+    /* Set error handler to return (not abort) so we can test error cases */
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
     /* 16-byte scratch buffers: large enough for the widest logical
      * (opal_int128_t) any build could store, so a get/set for a valid size
      * never overruns regardless of Fortran support or platform logical
@@ -63,13 +71,13 @@ int main(int argc, char *argv[])
         const int not_pow2[] = { 0, 3, 5, 6, 7, 9, 12, 15, 100 };
         for (i = 0; i < sizeof(not_pow2) / sizeof(not_pow2[0]); i++) {
             int is_set = -1;
-            int rc = ompi_abi_get_fortran_booleans(not_pow2[i], logical_true,
+            int rc = MPI_Abi_get_fortran_booleans(not_pow2[i], logical_true,
                                                     logical_false, &is_set);
             if (MPI_ERR_ARG == rc) {
                 test_success();
             } else {
                 snprintf(msg, sizeof(msg),
-                         "get_fortran_booleans(%d) expected MPI_ERR_ARG, got %d",
+                         "MPI_Abi_get_fortran_booleans(%d) expected MPI_ERR_ARG, got %d",
                          not_pow2[i], rc);
                 test_failure(msg);
             }
@@ -86,13 +94,13 @@ int main(int argc, char *argv[])
         const int pow2_ok[] = { 1, 2, 4, 8, 16 };
         for (i = 0; i < sizeof(pow2_ok) / sizeof(pow2_ok[0]); i++) {
             int is_set = -1;
-            int rc = ompi_abi_get_fortran_booleans(pow2_ok[i], logical_true,
+            int rc = MPI_Abi_get_fortran_booleans(pow2_ok[i], logical_true,
                                                     logical_false, &is_set);
             if (MPI_ERR_ARG != rc) {
                 test_success();
             } else {
                 snprintf(msg, sizeof(msg),
-                         "get_fortran_booleans(%d) unexpectedly returned MPI_ERR_ARG",
+                         "MPI_Abi_get_fortran_booleans(%d) unexpectedly returned MPI_ERR_ARG",
                          pow2_ok[i]);
                 test_failure(msg);
             }
@@ -116,49 +124,50 @@ int main(int argc, char *argv[])
          * rejects every registration attempt (the get path returns the
          * compiler-derived values and never consults a user
          * registration). */
-        int rc = ompi_abi_set_fortran_booleans(4, logical_true, logical_false);
+        int rc = MPI_Abi_set_fortran_booleans(4, logical_true, logical_false);
         if (MPI_ERR_ABI == rc) {
             test_success();
         } else {
             snprintf(msg, sizeof(msg),
-                     "set_fortran_booleans(4) with Fortran support expected "
+                     "MPI_Abi_set_fortran_booleans(4) with Fortran support expected "
                      "MPI_ERR_ABI, got %d", rc);
             test_failure(msg);
         }
 #else
         /* A non-power-of-two size is rejected and must not trip the latch. */
-        int rc = ompi_abi_set_fortran_booleans(3, logical_true, logical_false);
+        int rc = MPI_Abi_set_fortran_booleans(3, logical_true, logical_false);
         if (MPI_ERR_ARG == rc) {
             test_success();
         } else {
             snprintf(msg, sizeof(msg),
-                     "set_fortran_booleans(3) expected MPI_ERR_ARG, got %d", rc);
+                     "MPI_Abi_set_fortran_booleans(3) expected MPI_ERR_ARG, got %d", rc);
             test_failure(msg);
         }
 
         /* The first valid call configures the logicals and succeeds. */
-        rc = ompi_abi_set_fortran_booleans(4, logical_true, logical_false);
+        rc = MPI_Abi_set_fortran_booleans(4, logical_true, logical_false);
         if (MPI_SUCCESS == rc) {
             test_success();
         } else {
             snprintf(msg, sizeof(msg),
-                     "first valid set_fortran_booleans(4) expected MPI_SUCCESS, got %d",
+                     "first valid MPI_Abi_set_fortran_booleans(4) expected MPI_SUCCESS, got %d",
                      rc);
             test_failure(msg);
         }
 
         /* A second call, after a successful one, must return MPI_ERR_ABI. */
-        rc = ompi_abi_set_fortran_booleans(4, logical_true, logical_false);
+        rc = MPI_Abi_set_fortran_booleans(4, logical_true, logical_false);
         if (MPI_ERR_ABI == rc) {
             test_success();
         } else {
             snprintf(msg, sizeof(msg),
-                     "second set_fortran_booleans() expected MPI_ERR_ABI, got %d",
+                     "second MPI_Abi_set_fortran_booleans() expected MPI_ERR_ABI, got %d",
                      rc);
             test_failure(msg);
         }
 #endif
     }
 
+    MPI_Finalize();
     return test_finalize();
 }
