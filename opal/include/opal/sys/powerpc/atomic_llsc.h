@@ -43,10 +43,27 @@
  * is that even with an always_inline attribute the compiler may still emit instructions to store
  * then load the arguments to/from the stack. This sequence may cause the ll reservation to be
  * cancelled. */
-#define opal_atomic_ll_32(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int32_t *_addr = (addr);                                        \
-        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+
+/* The LL macros (lwarx/ldarx) carry no explicit acquire barrier.  The Power ISA
+ * acquire idiom requires a conditional branch whose outcome depends on the loaded
+ * value followed by isync; because OPAL splits LL and SC into separate macros that
+ * are placed inside a caller-written retry loop, that branch occurs in C code outside
+ * the asm block, making isync inside the LL asm architecturally incorrect as an acquire.
+ * Using lwsync unconditionally after lwarx would be correct but imposes ~30-50 cycles
+ * on every iteration -- including failed SC retries -- without benefit, because all
+ * current callers (opal_lifo_pop_atomic, opal_fifo_pop_atomic) already issue an
+ * explicit opal_atomic_rmb() between the LL and their first pointer dereference.
+ * The SC macros (stwcx./stdcx.) likewise carry no lwsync.  The LL/SC pop paths do
+ * no stores between LL and SC that need to be made visible before the SC; a release
+ * fence is therefore unnecessary, and placing lwsync inside the LL-SC reservation
+ * window (between lwarx and stwcx.) would also increase the probability of spurious
+ * reservation loss under contention.
+ * Both macros retain a "memory" clobber so the compiler treats them as full compiler
+ * barriers even without a hardware fence instruction. */
+#define opal_atomic_ll_32(addr, ret)                                                        \
+    do {                                                                                    \
+        opal_atomic_int32_t *_addr = (addr);                                                \
+        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr) : "memory"); \
     } while (0)
 
 #define opal_atomic_sc_32(addr, value, ret)                         \
@@ -63,12 +80,12 @@
                              : "r"(_addr), "r"(_newval)             \
                              : "cc", "memory");                     \
         ret = _ret;                                                 \
-   } while (0)
+    } while (0)
 
-#define opal_atomic_ll_64(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int64_t *_addr = (addr);                                        \
-        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+#define opal_atomic_ll_64(addr, ret)                                                        \
+    do {                                                                                    \
+        opal_atomic_int64_t *_addr = (addr);                                                \
+        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr) : "memory"); \
     } while (0)
 
 #define opal_atomic_sc_64(addr, value, ret)                               \
