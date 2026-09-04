@@ -265,9 +265,8 @@ config_window(void *base, size_t size, ptrdiff_t disp_unit,
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.handle = (uint64_t) (uintptr_t) win;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               window win. */
-            payload.handle = 0;
+            /* MPI Standard ABI: publish the integer MPI_Win handle. */
+            payload.handle = ompi_mpit_abi_handle(win, MPI_T_BIND_MPI_WIN);
         }
         mca_base_event_raise(ompi_event_win_created, NULL, &payload);
     }
@@ -434,9 +433,8 @@ ompi_win_free(ompi_win_t *win)
             if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
                 payload.handle = (uint64_t) (uintptr_t) win;
             } else {
-                /* TODO ABI (#13280): set the MPI Standard ABI handle value for
-                   the window win. */
-                payload.handle = 0;
+                /* MPI Standard ABI: publish the integer MPI_Win handle. */
+                payload.handle = ompi_mpit_abi_handle(win, MPI_T_BIND_MPI_WIN);
             }
             mca_base_event_raise(ompi_event_win_freed, NULL, &payload);
         }

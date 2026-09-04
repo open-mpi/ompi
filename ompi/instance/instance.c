@@ -1147,9 +1147,9 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.instance_id = (uint64_t) (uintptr_t) new_instance;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               session new_instance. */
-            payload.instance_id = 0;
+            /* MPI Standard ABI: publish the integer MPI_Session handle. */
+            payload.instance_id = ompi_mpit_abi_handle(new_instance,
+                                                       MPI_T_BIND_MPI_SESSION);
         }
         mca_base_event_raise(ompi_event_initialization, NULL, &payload);
     }
@@ -1284,9 +1284,9 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.instance_id = (uint64_t) (uintptr_t) *instance;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               session *instance. */
-            payload.instance_id = 0;
+            /* MPI Standard ABI: publish the integer MPI_Session handle. */
+            payload.instance_id = ompi_mpit_abi_handle(*instance,
+                                                       MPI_T_BIND_MPI_SESSION);
         }
         mca_base_event_raise(ompi_event_finalization, NULL, &payload);
     }

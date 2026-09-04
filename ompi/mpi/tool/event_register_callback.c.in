@@ -20,6 +20,10 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 #include "ompi/info/info.h"
 #include "ompi/runtime/ompi_mpit_events.h"
+/* Declares the intern->ABI converters installed below in the Standard-ABI
+   compile (guarded by OMPI_ABI_SRC).  Included unconditionally because
+   OMPI_ABI_SRC is not yet defined this early in the generated file. */
+#include "ompi/mpi/c/mpit_abi_handle_convert.h"
 
 PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registration,
                                                CB_SAFETY cb_safety, INFO info, VOID user_data,
@@ -35,13 +39,32 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* Record which MPI ABI this registering tool is using, so the producers
-       emit object handles (MPI_Comm / MPI_Win / MPI_Errhandler / MPI_Session)
-       in the matching representation.  This entry point is the Open MPI ABI one,
-       so hard-code the Open MPI ABI; when the MPI Standard ABI lands
-       (open-mpi/ompi#13280) its separate entry point will set
-       OMPI_MPIT_ABI_STANDARD here instead. */
+    /* ompi_mpit_callback_abi records which MPI ABI this process uses, so the
+       producers emit object handles (MPI_Comm / MPI_Win / MPI_Errhandler /
+       MPI_Session) in the matching representation.  It is a whole-process
+       property set at init (MPI_Init / MPI_Init_thread / MPI_Session_init),
+       which also covers events -- such as ompi.mpi.initialization -- raised
+       before any tool registers a callback.  Re-assert it here, ABI-conditioned
+       on which copy of this template is compiled (open-mpi/ompi#13280), so a
+       Standard-ABI tool registering after an intervening reinit is still seen
+       correctly; this is idempotent with the init-time set.
+
+       MPI_T is init-independent: a Standard-ABI tool may call
+       MPI_T_init_thread + MPI_T_event_register_callback before MPI_Init, and
+       events (notably ompi.mpi.errhandler_invoked for an error routed to a
+       predefined handler) can be raised in that pre-init window.  The init
+       entry points install the intern->ABI converters, but they have not run
+       yet here, so install them too (this Standard-ABI copy is compiled into
+       libmpi_abi alongside the converter implementations).  This is idempotent
+       with the init-time registration. */
+#if OMPI_ABI_SRC
+    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
+    ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
+    ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
+    ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
+#else
     ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
+#endif
 
     /* MPI_Info is an ompi_info_t whose first member is an opal_info_t. */
     opal_info = (MPI_INFO_NULL == info) ? NULL : &info->super;
