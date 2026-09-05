@@ -14,7 +14,7 @@ etc.)
 OUTPUT PARAMETERS
 -----------------
 
-* ``buf`` : Initial buffer address (choice).
+* ``buffer_addr`` : Initial buffer address (choice).
 * ``size`` : Buffer size, in bytes (integer). Undefined if MPI_BUFFER_AUTOMATIC was used when attaching.
 * ``ierror`` : Fortran only: Error status (integer).
 
@@ -69,8 +69,9 @@ Fortran does not have pointers, it is impossible to provide a way to use
 the output of this routine to exchange buffers. In this case, only the
 size field is set.  Note this does not apply when using the mpi_f08 bindings.
 
-For C: Even though the buf argument is declared as void, it is really
-the address of a void pointer. See Rationale, below, for more details.
+For C: Even though the buffer_addr argument is declared as void, it is
+really the address of a void pointer. See Rationale, below, for more
+details.
 
 Even though the C functions :ref:`MPI_Buffer_attach` and :ref:`MPI_Buffer_detach` both
 have a first argument of type void*, these arguments are used
