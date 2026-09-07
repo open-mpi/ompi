@@ -569,8 +569,9 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
                                        OMPI_MPI_OFFSET_TYPE *disp)
 {
     mca_common_ompio_data_t *data;
-    int i, k, index;
-    long temp_offset;
+    size_t i, k;
+    uint32_t index;
+    OMPI_MPI_OFFSET_TYPE temp_offset;
 
     data = (mca_common_ompio_data_t *) fh->f_io_selected_data;
 
@@ -580,18 +581,18 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return OMPI_SUCCESS;
     }
-    temp_offset = (long) data->ompio_fh.f_fview.f_view_extent *
-        (offset*data->ompio_fh.f_fview.f_etype_size / data->ompio_fh.f_fview.f_view_size);
+    temp_offset = (OMPI_MPI_OFFSET_TYPE) data->ompio_fh.f_fview.f_view_extent *
+        (OMPI_MPI_OFFSET_TYPE)(offset*data->ompio_fh.f_fview.f_etype_size / data->ompio_fh.f_fview.f_view_size);
     if ( 0 > temp_offset ) {
         OPAL_THREAD_UNLOCK(&fh->f_lock);
         return MPI_ERR_ARG;
     }
     
-    i = (offset*data->ompio_fh.f_fview.f_etype_size) % data->ompio_fh.f_fview.f_view_size;
+    i = (size_t)(offset*data->ompio_fh.f_fview.f_etype_size) % data->ompio_fh.f_fview.f_view_size;
     index = 0;
     k = 0;
 
-    while (1) {
+    while (index < data->ompio_fh.f_fview.f_iov_count) {
         k = data->ompio_fh.f_fview.f_decoded_iov[index].iov_len;
         if (i >= k) {
             i -= k;
@@ -606,9 +607,15 @@ int mca_io_ompio_file_get_byte_offset (ompi_file_t *fh,
             break;
         }
     }
+    if (index >= data->ompio_fh.f_fview.f_iov_count) {
+        /* should not happen, since i < f_view_size */
+        OPAL_THREAD_UNLOCK(&fh->f_lock);
+        return MPI_ERR_ARG;
+    }
 
     *disp = data->ompio_fh.f_fview.f_disp + temp_offset +
-        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_fview.f_decoded_iov[index].iov_base + k;
+        (OMPI_MPI_OFFSET_TYPE)(intptr_t)data->ompio_fh.f_fview.f_decoded_iov[index].iov_base +
+        (OMPI_MPI_OFFSET_TYPE)k;
     OPAL_THREAD_UNLOCK(&fh->f_lock);
 
     return OMPI_SUCCESS;
