@@ -81,12 +81,16 @@ static int _setup_proc_session_dir(char **sdir);
 #define OPAL_SCHEMA_INVALID_CHAR        '$'
 #define OPAL_SCHEMA_INVALID_STRING      "$"
 
-#define OPAL_PRINT_NAME_ARGS_MAX_SIZE   50
+/* Must hold the longest string any of the print functions below can
+ * produce, including the terminating NUL: a "<nspace>.<rank>" identity
+ * string, where nspace is a full pmix_nspace_t (PMIX_MAX_NSLEN bytes)
+ * and rank is a pmix_rank_t (uint32_t, up to 10 decimal digits). */
+#define OPAL_PRINT_NAME_ARGS_MAX_SIZE   (PMIX_MAX_NSLEN + 12)
 #define OPAL_PRINT_NAME_ARG_NUM_BUFS    16
 
 static char* opal_print_args_null = "NULL";
 typedef struct {
-    char buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS][OPAL_PRINT_NAME_ARGS_MAX_SIZE + 1];
+    char buffers[OPAL_PRINT_NAME_ARG_NUM_BUFS][OPAL_PRINT_NAME_ARGS_MAX_SIZE];
     int cntr;
 } opal_print_args_buffers_t;
 
