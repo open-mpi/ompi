@@ -23,7 +23,7 @@
  * Copyright (c) 2019      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
- * Copyright (c) 2019-2021 Triad National Security, LLC. All rights
+ * Copyright (c) 2019-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2025      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
@@ -1400,7 +1400,6 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     int world_size = ompi_comm_size (comm);
     int init_limit = 256;
     int ret;
-    char *name;
 
     /* the osc/sm component is the exclusive provider for support for shared
      * memory windows */
@@ -1591,9 +1590,6 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     /* fill in window information */
     *model = MPI_WIN_UNIFIED;
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    opal_asprintf(&name, "rdma window %s", ompi_comm_print_cid(module->comm));
-    ompi_win_set_name(win, name);
-    free(name);
 
     /* sync memory - make sure all initialization completed */
     opal_atomic_mb();
