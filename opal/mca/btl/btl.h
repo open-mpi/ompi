@@ -710,6 +710,21 @@ typedef int (*mca_btl_base_module_add_procs_fn_t)(struct mca_btl_base_module_t *
  * change, to provide the opportunity to cleanup or release any
  * resources associated with the peer.
  *
+ * The set is what the caller wants retired, not necessarily something
+ * this BTL can retire: a BTL whose unit of teardown is larger than one
+ * peer -- sm, whose unit is the node -- must refuse a set smaller than
+ * that unit rather than comply for the peers named and take the rest
+ * down as a side effect. Return OPAL_ERR_NOT_SUPPORTED; the caller then
+ * keeps the endpoints.
+ *
+ * Every call today names one peer: instance finalize retires them one
+ * at a time, and mca_bml_r2_add_proc[s]() undoes a failed wire-up the
+ * same way. Neither of those two checks the return, so a refusal there
+ * already lands as the no-op it should be, by omission rather than by
+ * design. No BTL has yet had to refuse. See endpoint-lifecycle.md for
+ * why nothing is retired earlier and what a caller would have to
+ * establish first.
+ *
  * @param[IN] btl     BTL module
  * @param[IN] nprocs  Number of processes
  * @param[IN] proc    Set of processes
