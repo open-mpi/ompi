@@ -68,6 +68,14 @@
                 "faninout" : {
                     "description" : "Algorithm parameter: Fan in and/or out by this much.  Some algorithms may ignore this option.",
                     "type" : [ "integer"]
+                },
+                "seg_size" : {
+                    "description" : "Algorithm parameter: Segment size for algorithms that use segmentation.",
+                    "type" : [ "integer"]
+                },
+                "bine_imp" : {
+                    "description" : "Algorithm parameter: which Bine variant to use.  Integer matching the classic file format column, or a string naming the variant (see coll_tuned_<collective>_bine_implementation for options).  Only relevant when the algorithm is a Bine algorithm; other algorithms ignore this option.",
+                    "type" : [ "string", "integer"]
                 }
             }
         },
