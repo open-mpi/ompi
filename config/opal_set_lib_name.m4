@@ -51,4 +51,10 @@ AC_DEFUN([OMPI_SET_LIB_NAME],[
 
     AC_MSG_RESULT([$OMPI_LIBMPI_NAME])
     AC_SUBST(OMPI_LIBMPI_NAME)
+#
+#   Set LIBMPI name to use for ompi make check
+#
+    AS_IF([test $ompi_build_ompi_abi -eq 1],
+        AC_SUBST([OMPI_MAKE_CHECK_LIBMPI_NAME], "$OMPI_LIBMPI_NAME"),
+        AC_SUBST([OMPI_MAKE_CHECK_LIBMPI_NAME], "mpi_abi"))
 ])dnl

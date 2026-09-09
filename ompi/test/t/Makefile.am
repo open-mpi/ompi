@@ -50,7 +50,7 @@ check_PROGRAMS = \
 TESTS = $(check_PROGRAMS)
 
 test_ldadd = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 

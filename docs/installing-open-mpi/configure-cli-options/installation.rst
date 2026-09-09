@@ -332,3 +332,9 @@ be used with ``configure``:
   for third-party packagers of Open MPI that might want to rename
   these libraries for their own purposes. This option is *not*
   intended for typical users of Open MPI.
+
+* ``--disable-ompi-abi``:
+  Disable building the Open MPI-specific ABI library (``libmpi.so``).
+  When used with ``--enable-standard-abi``, only the MPI standard ABI
+  library (``libmpi_abi.so``), the standard ``mpi.h`` header, and
+  standard wrapper compilers (``mpicc``, etc.) are installed.
