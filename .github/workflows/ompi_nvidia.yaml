@@ -1,5 +1,5 @@
 name: ompi_NVIDIA CI
-on: [pull_request]
+on: [pull_request_target]
 permissions:
   contents: read
 
@@ -13,16 +13,9 @@ jobs:
     if: github.repository == 'open-mpi/ompi'
     runs-on: [self-hosted, linux, x64, nvidia]
     steps:
-    - name: Checkout
-      uses: actions/checkout@v6
-      with:
-        submodules: recursive
-    - name: Checkout CI scripts
-      uses: actions/checkout@v6
-      with:
-        repository: Mellanox/jenkins_scripts
-        path: ompi_ci
     - name: Deployment infrastructure
+      env:
+        PR_NUMBER: ${{ github.event.pull_request.number }}
       run: /start deploy
   nvidia_build:
     needs: [nvidia_deployment]
