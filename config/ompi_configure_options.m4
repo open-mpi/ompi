@@ -282,4 +282,32 @@ AS_IF([test $ompi_standard_abi -eq 1],
       [gen_abi="yes"],
       [gen_abi="no"])
 OPAL_SUMMARY_ADD([Miscellaneous], [MPI Forum ABI support], [], [$gen_abi])
+
+#
+# Do we want to disable the traditional Open MPI ABI?
+#
+AC_MSG_CHECKING([if want to disable traditional Open MPI ABI])
+AC_ARG_ENABLE([ompi-abi],
+    [AS_HELP_STRING([--disable-ompi-abi],
+                   [Disable building the traditional Open MPI ABI library and headers. 
+                    Requires --enable-standard-abi. When both options are used, 
+                    only the MPI Forum ABI library, headers, compiler wrappers, 
+                    and runtime system are installed. Fortran datatype awareness 
+                    is maintained internally (default: enabled)])])
+if test "$enable_ompi_abi" = "no"; then
+    AC_MSG_RESULT([yes])
+    # Validate that standard-abi is enabled (not explicitly disabled)
+    if test "$enable_standard_abi" = "no"; then
+        AC_MSG_ERROR([--disable-ompi-abi requires --enable-standard-abi])
+    fi
+    ompi_build_ompi_abi=0
+else
+    AC_MSG_RESULT([no])
+    ompi_build_ompi_abi=1
+fi
+AC_DEFINE_UNQUOTED([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi],
+                   [Whether we are building the traditional Open MPI ABI library])
+AC_SUBST([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi])
+AM_CONDITIONAL([OMPI_BUILD_OMPI_ABI], [test $ompi_build_ompi_abi = 1])
+AM_CONDITIONAL([OMPI_ABI_ONLY], [test $ompi_build_ompi_abi = 0 && test $ompi_standard_abi = 1])
 ])dnl

@@ -23,7 +23,7 @@ spc_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 # transitively (e.g. in some uninstalled "make check" / distro linker
 # configurations), so link it explicitly.
 spc_test_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
