@@ -8,6 +8,13 @@ Open MPI version v6.0.0
 --------------------------
 :Date: ...fill me in...
 
+- Fixed wrong answers from one-sided (RMA) accumulate operations on a
+  window with one MPI process per node, when the network does not
+  guarantee that its atomics and CPU atomics are atomic with respect to
+  each other.  A process performed atomics on its own window memory
+  directly while other processes reached the same memory with network
+  atomics, which is the mixing that guarantee exists to prevent.
+
 - Fixed wrong answers from one-sided (RMA) operations on a window
   allocated with ``MPI_Win_allocate`` when the target is a process on the
   same node but the operation is carried out by the underlying transport
