@@ -255,7 +255,10 @@ static int ompi_osc_rdma_peer_setup (ompi_osc_rdma_module_t *module, ompi_osc_rd
     (void)disp_unit;  // silence compiler warning
 
     if (ompi_osc_rdma_peer_local_base (peer)) {
-        /* for now we store the local address in the standard place. do no overwrite it */
+        /* this peer's memory is reachable with plain loads and stores, and base
+         * already holds an address valid in this process, so leave it alone.
+         * Note that base is otherwise the address the peer is reached at through
+         * the btl; the address valid here is local_base. */
         return OMPI_SUCCESS;
     }
 
