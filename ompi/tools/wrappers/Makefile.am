@@ -39,9 +39,12 @@ pkgconfig_DATA += ompi-forum-abi-cxx.pc
 endif
 endif
 
+if OMPI_BUILD_OMPI_ABI
 if OMPI_HAVE_FORTRAN_COMPILER
 pkgconfig_DATA += ompi-fort.pc
 endif
+endif
+
 endif # OPAL_INSTALL_BINARIES
 
 #-----------------
@@ -58,10 +61,12 @@ if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++; $(LN_S) ompi_wrapper_script mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
 endif
+if OMPI_BUILD_OMPI_ABI
 if OMPI_HAVE_FORTRAN_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpifort; $(LN_S) ompi_wrapper_script mpifort)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) ompi_wrapper_script mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) ompi_wrapper_script mpif90)
+endif
 endif
 
 uninstall-local-always:
@@ -90,40 +95,60 @@ nodist_ompidata_DATA = mpicc-wrapper-data.txt
 if OMPI_STANDARD_ABI
 nodist_ompidata_DATA += mpicc_abi-wrapper-data.txt
 endif
-
 if OMPI_HAVE_CXX_COMPILER
 nodist_ompidata_DATA += mpic++-wrapper-data.txt
 endif
-
 if OMPI_HAVE_FORTRAN_COMPILER
 nodist_ompidata_DATA += mpifort-wrapper-data.txt
+endif
+if OMPI_ABI_ONLY
+# In ABI-only mode, also install the ABI-only wrapper data files
+nodist_ompidata_DATA += mpicc_abi_only-wrapper-data.txt mpic++_abi_only-wrapper-data.txt
 endif
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc$(EXEEXT))
-if OMPI_STANDARD_ABI
-	(cd $(DESTDIR)$(bindir); rm -f mpicc_abi$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc_abi$(EXEEXT))
-endif
 if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpic++$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicxx$(EXEEXT))
 endif
+if OMPI_BUILD_OMPI_ABI
 if OMPI_HAVE_FORTRAN_COMPILER
 	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpifort$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpif77$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpif90$(EXEEXT))
+endif
+endif
+
+if OMPI_STANDARD_ABI
+	(cd $(DESTDIR)$(bindir); rm -f mpicc_abi$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc_abi$(EXEEXT))
+endif
+if OMPI_ABI_ONLY
+# In ABI-only mode, make mpicc a symlink to mpicc_abi
+	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) mpicc_abi$(EXEEXT) mpicc$(EXEEXT))
 endif
 
 install-data-hook-always:
 if OMPI_HAVE_CXX_COMPILER
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
 endif
+if OMPI_BUILD_OMPI_ABI
 if OMPI_HAVE_FORTRAN_COMPILER
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif77-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif77-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif90-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif90-wrapper-data.txt)
 	(cd $(DESTDIR)$(pkgconfigdir); rm -f ompi-f77.pc; $(LN_S) ompi-fort.pc ompi-f77.pc)
 	(cd $(DESTDIR)$(pkgconfigdir); rm -f ompi-f90.pc; $(LN_S) ompi-fort.pc ompi-f90.pc)
+endif
+endif
+if OMPI_ABI_ONLY
+# In ABI-only mode, make the mpicc and mpicc_abi wrappers use ABI-only wrapper data
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicc-wrapper-data.txt; $(LN_S) mpicc_abi_only-wrapper-data.txt mpicc-wrapper-data.txt)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicc_abi-wrapper-data.txt; $(LN_S) mpicc_abi_only-wrapper-data.txt mpicc_abi-wrapper-data.txt)
+if OMPI_HAVE_CXX_COMPILER
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++_abi_only-wrapper-data.txt mpicxx-wrapper-data.txt)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpic++-wrapper-data.txt; $(LN_S) mpic++_abi_only-wrapper-data.txt mpic++-wrapper-data.txt)
+endif
 endif
 
 uninstall-local-always:
@@ -142,17 +167,30 @@ uninstall-local-always:
 if OMPI_STANDARD_ABI
 	rm -f $(DESTDIR)$(bindir)/mpicc_abi$(EXEEXT)
 endif
+if OMPI_ABI_ONLY
+	rm -f $(DESTDIR)$(bindir)/mpicc_abi$(EXEEXT) \
+	$(DESTDIR)$(pkgdatadir)/mpic++_abi_only-wrapper-data.txt \
+	$(DESTDIR)$(pkgdatadir)/mpifort_abi_only-wrapper-data.txt \
+	$(DESTDIR)$(pkgdatadir)/mpicc_abi_only-wrapper-data.txt
+endif
 
 if CASE_SENSITIVE_FS_AND_HAVE_CXX_COMPILER
 install-exec-hook: install-exec-hook-always
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpiCC$(EXEEXT))
 
+
 install-data-hook: install-data-hook-always
+if OMPI_ABI_ONLY
+# In ABI-only mode, mpiCC should use the ABI-only wrapper data
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpiCC-wrapper-data.txt; $(LN_S) mpic++_abi_only-wrapper-data.txt mpiCC-wrapper-data.txt)
+else
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpiCC-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpiCC-wrapper-data.txt)
+endif
 
 uninstall-local: uninstall-local-always
 	rm -f $(DESTDIR)$(bindir)/mpiCC$(EXEEXT) \
 	$(DESTDIR)$(pkgdatadir)/mpiCC-wrapper-data.txt
+
 
 else # CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
