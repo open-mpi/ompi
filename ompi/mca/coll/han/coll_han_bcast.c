@@ -133,7 +133,7 @@ mca_coll_han_bcast_intra(void *buf,
     mca_coll_han_bcast_args_t *t = malloc(sizeof(mca_coll_han_bcast_args_t));
     mca_coll_han_set_bcast_args(t, t0, (char *)buf, seg_count, dtype,
                                 root_up_rank, root_low_rank, up_comm, low_comm,
-                                num_segments, 0, w_rank, count - (num_segments - 1) * seg_count,
+                                num_segments, 0, w_rank, count - (size_t) (num_segments - 1) * seg_count,
                                 low_rank != root_low_rank);
     /* Init the first task */
     init_task(t0, mca_coll_han_bcast_t0_task, (void *) t);

@@ -602,9 +602,16 @@ mca_part_persist_parrived(size_t min_part,
                 _flag = _flag && req->flags[i];            
             }
         } else {
-            float convert = ((float)req->real_parts) / ((float)req->req_parts);
+            double convert = ((double)req->real_parts) / ((double)req->req_parts);
+            /* Requested partition p maps onto the real (internal)
+               partitions [convert * p, convert * (p + 1)), so the
+               last real partition overlapping the requested range is
+               ceil(convert * (max_part + 1)) - 1. */
             size_t _min = floor(convert * min_part);
-            size_t _max = ceil(convert * max_part);
+            size_t _max = ceil(convert * (max_part + 1)) - 1;
+            if (_max >= req->real_parts) {
+                _max = req->real_parts - 1;
+            }
             for(i = _min; i <= _max; i++) {
                 _flag = _flag && req->flags[i];
             }
