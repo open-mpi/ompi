@@ -26,6 +26,7 @@
  * Additional copyrights may follow
  */
 #include "nbc_internal.h"
+#include "opal_stdint.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
@@ -445,7 +446,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
   ptr = handle->schedule->data + handle->row_offset;
 
   NBC_GET_BYTES(ptr,num);
-  NBC_DEBUG(10, "start_round round at offset %d : posting %i operations\n", handle->row_offset, num);
+  NBC_DEBUG(10, "start_round round at offset %li : posting %i operations\n", handle->row_offset, num);
 
   for (int i = 0 ; i < num ; ++i) {
     int offset = (intptr_t)(ptr - handle->schedule->data);
@@ -453,9 +454,9 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
     memcpy (&type, ptr, sizeof (type));
     switch(type) {
       case SEND:
-        NBC_DEBUG(5,"  SEND (offset %li) ", offset);
+        NBC_DEBUG(5,"  SEND (offset %i) ", offset);
         NBC_GET_BYTES(ptr,sendargs);
-        NBC_DEBUG(5,"*buf: %p, count: %i, type: %p, dest: %i, tag: %i)\n", sendargs.buf,
+        NBC_DEBUG(5,"*buf: %p, count: %" PRIsize_t ", type: %p, dest: %i, tag: %i)\n", sendargs.buf,
                   sendargs.count, sendargs.datatype, sendargs.dest, handle->tag);
         /* get an additional request */
         handle->req_count++;
@@ -479,7 +480,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
                                  MCA_PML_BASE_SEND_STANDARD, sendargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count - 1));
         if (OMPI_SUCCESS != res) {
-          NBC_Error ("Error in MPI_Isend(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count,
+          NBC_Error ("Error in MPI_Isend(%lu, %" PRIsize_t ", %p, %i, %i, %lu) (%i)", (unsigned long)buf1, sendargs.count,
                      sendargs.datatype, sendargs.dest, handle->tag, (unsigned long)handle->comm, res);
           return res;
         }
@@ -488,9 +489,9 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #endif
         break;
       case RECV:
-        NBC_DEBUG(5, "  RECV (offset %li) ", offset);
+        NBC_DEBUG(5, "  RECV (offset %i) ", offset);
         NBC_GET_BYTES(ptr,recvargs);
-        NBC_DEBUG(5, "*buf: %p, count: %i, type: %p, source: %i, tag: %i)\n", recvargs.buf, recvargs.count,
+        NBC_DEBUG(5, "*buf: %p, count: %" PRIsize_t ", type: %p, source: %i, tag: %i)\n", recvargs.buf, recvargs.count,
                   recvargs.datatype, recvargs.source, handle->tag);
         /* get an additional request - TODO: req_count NOT thread safe */
         handle->req_count++;
@@ -513,7 +514,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         res = MCA_PML_CALL(irecv(buf1, recvargs.count, recvargs.datatype, recvargs.source, handle->tag, recvargs.local?handle->comm->c_local_comm:handle->comm,
                                  handle->req_array+handle->req_count-1));
         if (OMPI_SUCCESS != res) {
-          NBC_Error("Error in MPI_Irecv(%lu, %i, %p, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count,
+          NBC_Error("Error in MPI_Irecv(%lu, %" PRIsize_t ", %p, %i, %i, %lu) (%i)", (unsigned long)buf1, recvargs.count,
                     recvargs.datatype, recvargs.source, handle->tag, (unsigned long)handle->comm, res);
           return res;
         }
@@ -522,9 +523,9 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 #endif
         break;
       case OP:
-        NBC_DEBUG(5, "  OP2  (offset %li) ", offset);
+        NBC_DEBUG(5, "  OP2  (offset %i) ", offset);
         NBC_GET_BYTES(ptr,opargs);
-        NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %p)\n", opargs.buf1, opargs.buf2,
+        NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %" PRIsize_t ", type: %p)\n", opargs.buf1, opargs.buf2,
                   opargs.count, opargs.datatype);
         /* get buffers */
         if(opargs.tmpbuf1) {
@@ -541,9 +542,9 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
         break;
       case COPY:
-        NBC_DEBUG(5, "  COPY   (offset %li) ", offset);
+        NBC_DEBUG(5, "  COPY   (offset %i) ", offset);
         NBC_GET_BYTES(ptr,copyargs);
-        NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %p, *tgt: %lu, tgtcount: %i, tgttype: %p)\n",
+        NBC_DEBUG(5, "*src: %lu, srccount: %" PRIsize_t ", srctype: %p, *tgt: %lu, tgtcount: %" PRIsize_t ", tgttype: %p)\n",
                   (unsigned long) copyargs.src, copyargs.srccount, copyargs.srctype,
                   (unsigned long) copyargs.tgt, copyargs.tgtcount, copyargs.tgttype);
         /* get buffers */
@@ -564,9 +565,9 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
         }
         break;
       case UNPACK:
-        NBC_DEBUG(5, "  UNPACK   (offset %li) ", offset);
+        NBC_DEBUG(5, "  UNPACK   (offset %i) ", offset);
         NBC_GET_BYTES(ptr,unpackargs);
-        NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %p, *tgt: %lu\n", (unsigned long) unpackargs.inbuf,
+        NBC_DEBUG(5, "*src: %lu, srccount: %" PRIsize_t ", srctype: %p, *tgt: %lu\n", (unsigned long) unpackargs.inbuf,
                   unpackargs.count, unpackargs.datatype, (unsigned long) unpackargs.outbuf);
         /* get buffers */
         if(unpackargs.tmpinbuf) {
@@ -587,7 +588,7 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
 
         break;
       default:
-        NBC_Error ("NBC_Start_round: bad type %li at offset %li", (long)type, offset);
+        NBC_Error ("NBC_Start_round: bad type %li at offset %i", (long)type, offset);
         return OMPI_ERROR;
     }
   }
