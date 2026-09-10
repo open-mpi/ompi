@@ -1356,6 +1356,14 @@ int ompi_coll_base_reduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t co
         return MPI_SUCCESS;
     }
 
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:reduce_intra_bine_lat WARNING: "
+                     "non-commutative operation, switching to basic_linear"));
+        return ompi_coll_base_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, root, comm,
+                                                        module);
+    }
+
     if (!ompi_coll_is_power_of_two(size)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_intra_bine_lat WARNING: "
@@ -1484,6 +1492,18 @@ int ompi_coll_base_reduce_intra_bine_bdw(const void *sbuf, void *rbuf, size_t co
     ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
     span = true_extent + extent * (count - 1);
     buf_size = span + gap;
+
+    if (count == 0) {
+        return MPI_SUCCESS;
+    }
+
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:reduce_intra_bine_bdw WARNING: "
+                     "non-commutative operation, switching to basic_linear"));
+        return ompi_coll_base_reduce_intra_basic_linear(sbuf, rbuf, count, dtype, op, root, comm,
+                                                        module);
+    }
 
     if (!ompi_coll_is_power_of_two(size)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
