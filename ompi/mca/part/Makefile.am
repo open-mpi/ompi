@@ -34,6 +34,7 @@ nobase_nodist_ompi_HEADERS = $(nodist_headers)
 endif
 
 include base/Makefile.am
+include onesided/Makefile.am
 
 distclean-local:
 	rm -f base/static-components.h
