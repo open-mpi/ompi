@@ -945,6 +945,14 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     rank = ompi_comm_rank(comm);
     ompi_datatype_type_extent(dtype, &dtsize);    
 
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:reduce_scatter_intra_bine_block_by_block_any_even WARNING: "
+                     "non-commutative operation, switching to nonoverlapping"));
+        return ompi_coll_base_reduce_scatter_intra_nonoverlapping(sbuf, rbuf, rcounts, dtype, op,
+                                                                 comm, module);
+    }
+
     if (size & 0x1) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_scatter_intra_bine_block_by_block_any_even WARNING: "
@@ -987,6 +995,10 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     if (NULL == tmpbuf || NULL == resbuf) {
         err = MPI_ERR_NO_MEM;
         goto err_hndl;
+    }
+
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
     }
 
     err = ompi_datatype_copy_content_same_ddt(dtype, count, resbuf, sbuf);
@@ -1196,7 +1208,15 @@ int ompi_coll_base_reduce_scatter_intra_bine_send_remap(
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
     ompi_datatype_type_extent(dtype, &dtsize);
-    
+
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:reduce_scatter_intra_bine_send_remap WARNING: "
+                     "non-commutative operation, switching to nonoverlapping"));
+        return ompi_coll_base_reduce_scatter_intra_nonoverlapping(sbuf, rbuf, rcounts, dtype, op,
+                                                                  comm, module);
+    }
+
     if (!ompi_coll_is_power_of_two(size)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_scatter_intra_bine_send_remap WARNING: "
@@ -1229,7 +1249,16 @@ int ompi_coll_base_reduce_scatter_intra_bine_send_remap(
         line = __LINE__;
         goto err_hndl;
     }
+
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+    }
+    
     err = ompi_datatype_copy_content_same_ddt(dtype, count, resbuf, sbuf);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
 
     int mask = 0x1;
     int inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
@@ -1339,6 +1368,14 @@ int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
     rank = ompi_comm_rank(comm);
     ompi_datatype_type_extent(dtype, &dtsize);
 
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:reduce_scatter_intra_bine_permute_remap WARNING: "
+                     "non-commutative operation, switching to nonoverlapping"));
+        return ompi_coll_base_reduce_scatter_intra_nonoverlapping(sbuf, rbuf, rcounts, dtype, op,
+                                                                 comm, module);
+    }
+
     if (!ompi_coll_is_power_of_two(size)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:reduce_scatter_intra_bine_permute_remap WARNING: "
@@ -1369,13 +1406,21 @@ int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
         line = __LINE__;
         goto err_hndl;
     }
+   
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+    }
 
     // Permute memcpy
     for (int i = 0; i < size; i++) {
         int remapped_rank = ompi_coll_bine_remap_rank(size, i);
-        ompi_datatype_copy_content_same_ddt(dtype, ompi_count_array_get(rcounts, i),
+        err = ompi_datatype_copy_content_same_ddt(dtype, ompi_count_array_get(rcounts, i),
                                             (char *) resbuf + displs[remapped_rank] * dtsize,
                                             (char *) sbuf + displs[i] * dtsize);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
     }
 
     int mask = 0x1;

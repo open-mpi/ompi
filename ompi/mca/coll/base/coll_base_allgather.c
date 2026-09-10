@@ -714,10 +714,17 @@ int ompi_coll_base_allgather_intra_bine_send_remap(const void *sbuf, size_t scou
     if (vrank != rank) {
         err = ompi_coll_bine_get_sender(size, rank, &sender);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-        err = ompi_coll_base_sendrecv(tmpsend, scount, sdtype,
-                                      (int) sender,
-                                      MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, rcount, rdtype, vrank,
-                                      MCA_COLL_BASE_TAG_ALLGATHER, comm, MPI_STATUS_IGNORE, rank);
+        if (MPI_IN_PLACE == sbuf) {
+            err = ompi_coll_base_sendrecv(tmpsend, rcount, rdtype,
+                                          (int) sender,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, rcount, rdtype, vrank,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, comm, MPI_STATUS_IGNORE, rank);
+        } else {
+            err = ompi_coll_base_sendrecv(tmpsend, scount, sdtype,
+                                          (int) sender,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, rcount, rdtype, vrank,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, comm, MPI_STATUS_IGNORE, rank);
+        }
         if (MPI_SUCCESS != err) {
             line = __LINE__;
             goto err_hndl;

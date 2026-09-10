@@ -799,6 +799,15 @@ int ompi_coll_base_alltoall_intra_bine(const void *sbuf, size_t scount,
         return ompi_coll_base_alltoall_intra_pairwise(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
     }
 
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+        /* With MPI_IN_PLACE the send count and type are ignored by the caller
+         * (they may legally be 0 / MPI_DATATYPE_NULL); operate on the data
+         * using the receive count and type instead. */
+        scount = rcount;
+        sdtype = rdtype;
+    }
+
     num_resident_blocks = size;
     num_resident_blocks_next = 0;
     sbuf_size = scount * rext;
