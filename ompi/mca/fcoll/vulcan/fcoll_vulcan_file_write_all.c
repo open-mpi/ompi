@@ -230,7 +230,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
         }
     }
     
-    result_counts = (int *) malloc ( fh->f_num_aggrs * fh->f_procs_per_group * sizeof(int) );
+    result_counts = (int *) malloc ( (size_t)fh->f_num_aggrs * fh->f_procs_per_group * sizeof(int) );
     if ( NULL == result_counts ) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto exit;
@@ -453,7 +453,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
 #endif
     }
 
-    reqs = (ompi_request_t **)malloc ((fh->f_procs_per_group + 1 )*fh->f_num_aggrs *sizeof(ompi_request_t *));
+    reqs = (ompi_request_t **)malloc (((size_t)fh->f_procs_per_group + 1 )*fh->f_num_aggrs *sizeof(ompi_request_t *));
     if ( NULL == reqs ) {
         opal_output (1, "OUT OF MEMORY\n");
         ret = OMPI_ERR_OUT_OF_RESOURCE;
@@ -488,7 +488,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
         }
     }
 
-    ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
+    ret = ompi_request_wait_all ( ((size_t)fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
                                   reqs, MPI_STATUS_IGNORE);
 
     for (index = 1; index < cycles; index++) {
@@ -517,7 +517,7 @@ int mca_fcoll_vulcan_file_write_all (struct ompio_file_t *fh,
             }
         }
 
-        ret = ompi_request_wait_all ( (fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
+        ret = ompi_request_wait_all ( ((size_t)fh->f_procs_per_group + 1 )*fh->f_num_aggrs,
                                       reqs, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != ret){
             goto exit;

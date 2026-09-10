@@ -602,9 +602,9 @@ mca_part_persist_parrived(size_t min_part,
                 _flag = _flag && req->flags[i];            
             }
         } else {
-            float convert = ((float)req->real_parts) / ((float)req->req_parts);
-            size_t _min = floor(convert * min_part);
-            size_t _max = ceil(convert * max_part);
+            double convert = ((double)req->real_parts) / ((double)req->req_parts);
+            size_t _min = floor(convert * (double)min_part);
+            size_t _max = ceil(convert * (double)max_part);
             for(i = _min; i <= _max; i++) {
                 _flag = _flag && req->flags[i];
             }

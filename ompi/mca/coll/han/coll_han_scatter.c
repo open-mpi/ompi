@@ -491,7 +491,7 @@ mca_coll_han_scatter_intra_simple(const void *sbuf, size_t scount,
         }
 
         up_comm->c_coll->coll_scatter((char *)reorder_buf,
-                    count * low_size, dtype,
+                    (size_t)count * low_size, dtype,
                     tmp_buf,
                     block_size * low_size, MPI_BYTE,
                     root_up_rank, up_comm,

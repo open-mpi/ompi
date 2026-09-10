@@ -839,7 +839,7 @@ static int mca_btl_tcp_component_create_instances(void)
 
     /* allocate memory for btls */
     mca_btl_tcp_component.tcp_btls = (mca_btl_tcp_module_t **) malloc(
-        mca_btl_tcp_component.tcp_num_links * kif_count * sizeof(mca_btl_tcp_module_t *));
+        (size_t)mca_btl_tcp_component.tcp_num_links * kif_count * sizeof(mca_btl_tcp_module_t *));
     if (NULL == mca_btl_tcp_component.tcp_btls) {
         ret = OPAL_ERR_OUT_OF_RESOURCE;
         goto cleanup;

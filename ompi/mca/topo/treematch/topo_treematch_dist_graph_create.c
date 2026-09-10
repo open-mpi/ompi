@@ -396,7 +396,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
 
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  "========== Centralized Reordering ========= \n"));
-            local_pattern = (double *)calloc(size*size,sizeof(double));
+            local_pattern = (double *)calloc((size_t)size*size,sizeof(double));
         } else {
             local_pattern = (double *)calloc(size,sizeof(double));
         }
@@ -743,7 +743,7 @@ int mca_topo_treematch_dist_graph_create(mca_topo_base_module_t* topo_module,
         if (rank == lindex_to_grank[0]) {
             OPAL_OUTPUT_VERBOSE((10, ompi_topo_base_framework.framework_output,
                                  "========== Partially Distributed Reordering ========= \n"));
-            local_pattern = (double *)calloc(num_procs_in_node * num_procs_in_node, sizeof(double));
+            local_pattern = (double *)calloc((size_t)num_procs_in_node * num_procs_in_node, sizeof(double));
         } else {
             local_pattern = (double *)calloc(num_procs_in_node, sizeof(double));
         }
