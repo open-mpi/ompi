@@ -595,6 +595,33 @@ static inline void NBC_SchedCache_dictwipe(hb_tree *dict_in, int *size) {
 
 int NBC_Comm_neighbors_count (ompi_communicator_t *comm, int *indegree, int *outdegree);
 int NBC_Comm_neighbors (ompi_communicator_t *comm, int **sources, int *source_count, int **destinations, int *dest_count);
+/* The neighborhood alltoall-type collectives schedule all of their sends and
+ * receives with a single tag, so the messages exchanged between one pair of
+ * processes are matched in the order in which they are posted.  Whenever the
+ * neighbor lists contain duplicate edges the posting order is therefore part
+ * of the semantics, and the two topology families define it differently:
+ *
+ *   - Cartesian.  A dimension that is periodic and of size 1 or 2 has
+ *     rank_source == rank_dest, so both of its blocks are exchanged with the
+ *     same process.  MPI-4.1 Section 8.6 requires the block sent in the
+ *     negative direction of dimension d to be received into block 2*d+1 of
+ *     the neighbor and the block sent in the positive direction into block
+ *     2*d, i.e. block s of the sender lands in block s^1 of the receiver
+ *     (see the Advice to implementors there, and MPI-4.0 Annex B.1.1 item 1,
+ *     which applies the rule to MPI-3.1 as errata).  With the sends posted in
+ *     list order, that matching is obtained by posting the receives with the
+ *     two blocks of each dimension swapped.  coll/basic implements the same
+ *     rule for the blocking collectives with per-direction tags.
+ *
+ *   - Graph and distributed graph.  The neighbor sequence is user defined and
+ *     may repeat a process any number of times.  The equivalent code in
+ *     MPI-4.1 Section 8.6 posts the receives in sources[] order, so the k-th
+ *     edge to a process matches the k-th edge from it and the receives are
+ *     posted in the natural order.
+ */
+static inline bool NBC_Comm_neighbors_swap_recv_pairs (ompi_communicator_t *comm) {
+  return OMPI_COMM_IS_CART(comm);
+}
 
 #ifdef __cplusplus
 }
