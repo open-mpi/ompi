@@ -77,11 +77,15 @@ static int nbc_neighbor_alltoallw_init(const void *sbuf, ompi_count_array_t scou
       return res;
     }
 
-    /* simply loop over neighbors and post send/recv operations */
+    /* post the receives in the order that pairs duplicate edges as the
+     * standard requires, see NBC_Comm_neighbors_swap_recv_pairs() */
+    const bool swap_pairs = NBC_Comm_neighbors_swap_recv_pairs (comm);
+    assert (!swap_pairs || 0 == indegree % 2);
     for (int i = 0 ; i < indegree ; ++i) {
-      if (srcs[i] != MPI_PROC_NULL) {
-        res = NBC_Sched_recv ((char *) rbuf + ompi_disp_array_get(rdisps, i), false,
-                              ompi_count_array_get(rcounts, i), rtypes[i], srcs[i], schedule, false);
+      const int l = swap_pairs ? (i ^ 1) : i;
+      if (srcs[l] != MPI_PROC_NULL) {
+        res = NBC_Sched_recv ((char *) rbuf + ompi_disp_array_get(rdisps, l), false,
+                              ompi_count_array_get(rcounts, l), rtypes[l], srcs[l], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }

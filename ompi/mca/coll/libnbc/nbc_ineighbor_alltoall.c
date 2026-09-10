@@ -88,9 +88,14 @@ static int nbc_neighbor_alltoall_init(const void *sbuf, size_t scount, MPI_Datat
       return res;
     }
 
+    /* post the receives in the order that pairs duplicate edges as the
+     * standard requires, see NBC_Comm_neighbors_swap_recv_pairs() */
+    const bool swap_pairs = NBC_Comm_neighbors_swap_recv_pairs (comm);
+    assert (!swap_pairs || 0 == indegree % 2);
     for (int i = 0 ; i < indegree ; ++i) {
-      if (MPI_PROC_NULL != srcs[i]) {
-        res = NBC_Sched_recv ((char *) rbuf + (MPI_Aint) rcvext * i * rcount, true, rcount, rtype, srcs[i], schedule, false);
+      const int l = swap_pairs ? (i ^ 1) : i;
+      if (MPI_PROC_NULL != srcs[l]) {
+        res = NBC_Sched_recv ((char *) rbuf + (MPI_Aint) rcvext * l * rcount, true, rcount, rtype, srcs[l], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }
