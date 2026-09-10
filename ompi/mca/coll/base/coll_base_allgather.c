@@ -915,6 +915,11 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
             }
         }
         err = ompi_request_wait_all(req_count, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        
         inverse_mask >>= 1;
         step++;
     }
@@ -1220,6 +1225,8 @@ err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     (void) line; // silence compiler warning
+    if (permutation != NULL)
+        free(permutation);
     return err;
 }
 

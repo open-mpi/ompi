@@ -483,8 +483,13 @@ static inline int ompi_coll_bine_reorder_blocks(void *buffer, size_t block_size,
 
     char *buf = (char *) buffer;
     void *temp = malloc(block_size);
+    if (NULL == temp) {
+        return MPI_ERR_NO_MEM;
+    }
+    
     char *visited = (char *) calloc(num_blocks, 1);
-    if (temp == NULL || visited == NULL) {
+    if (NULL == visited) {
+        free(temp);
         return MPI_ERR_NO_MEM;
     }
 

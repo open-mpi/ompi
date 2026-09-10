@@ -1426,6 +1426,11 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
     ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
     span = true_extent + extent * (count - 1);
     inplacebuf_free = (char *) malloc(span + gap);
+    if (NULL == inplacebuf_free) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto error_hndl;
+    }
 
     char *inplacebuf = inplacebuf_free + gap;
 
@@ -1477,8 +1482,12 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
                 line = __LINE__;
                 goto error_hndl;
             }
-            mca_coll_base_reduce_local((char *) tmprecv, (char *) tmpsend, count, dtype, op,
+            err = mca_coll_base_reduce_local((char *) tmprecv, (char *) tmpsend, count, dtype, op,
                                        module);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
 
             new_rank = rank >> 1;
         }
@@ -1504,7 +1513,11 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
             goto error_hndl;
         }
 
-        mca_coll_base_reduce_local((char *) tmprecv, (char *) tmpsend, count, dtype, op, module);
+        err = mca_coll_base_reduce_local((char *) tmprecv, (char *) tmpsend, count, dtype, op, module);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
     }
 
     // Final results is sent to nodes that are not included in general computation
@@ -1618,12 +1631,12 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap(const void *sbuf, void *rbuf, 
     ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
     buf_size = true_extent + extent * (count >> 1);
     tmp_buf_raw = (char *) malloc(buf_size);
-    tmp_buf = tmp_buf_raw - gap;
     if (NULL == tmp_buf_raw) {
         line = __LINE__;
         err = MPI_ERR_NO_MEM;
         goto cleanup_and_return;
     }
+    tmp_buf = tmp_buf_raw - gap;
 
     // Copy into receive_buffer content of send_buffer to not produce
     // side effects on send_buffer
@@ -1790,10 +1803,15 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
                  "coll:base:allreduce_intra_bine_block_by_block_any_even_over rank %d", rank));
 
     int count_so_far = 0;
-    // TODO: We can avoid the extra array and do it as we do for the other algos
     int count_per_block = count / size;
     int *displs = (int *) malloc(size * sizeof(int));
     int *recvcounts = (int *) malloc(size * sizeof(int));
+    if (NULL == displs || NULL == recvcounts) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+
     for (size_t i = 0; i < (size_t) size; i++) {
         displs[i] = count_so_far;
         if (i < count % size) {
@@ -1805,6 +1823,12 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
     }
 
     tmpbuf = malloc(span + gap);
+    if (NULL == tmpbuf) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+
     if (MPI_IN_PLACE != sbuf) {
         err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
         if (MPI_SUCCESS != err) {
@@ -2084,6 +2108,16 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_bdw_remap_segmented WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+
+    steps = opal_hibit(size, (int) (sizeof(size) * CHAR_BIT) - 1);
+
     if (!ompi_coll_is_power_of_two(size) || steps == -1) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:allreduce_intra_bine_bdw_remap_segmented WARNING: "
@@ -2096,11 +2130,6 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allreduce_intra_bine_bdw_remap_segmented rank %d", rank));
 
-    steps = opal_hibit(size, (int) (sizeof(size) * CHAR_BIT) - 1);
-    if (steps == -1) {
-        line = __LINE__;
-        return MPI_ERR_ARG;
-    }
     int adjsize = 1 << steps; // Largest power of two <= size
 
     // Number of nodes that exceed the largest power of two less than or equal to size
@@ -2201,7 +2230,6 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
                    : (vdest < extra_ranks) ? (vdest << 1) + 1
                                            : vdest + extra_ranks;
 
-            //  TODO: dest or vdest as param?
             vdest = ompi_coll_bine_remap_rank((uint32_t) adjsize, (uint32_t) vdest);
 
             if (vrank < (uint32_t) vdest) {
@@ -2220,12 +2248,6 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
 
             phase_scount = ((size_t) s_count[step] > segcount) ? (int) segcount : s_count[step];
             phase_rcount = ((size_t) r_count[step] > segcount) ? (int) segcount : r_count[step];
-
-            num_phases = (r_count[step] > s_count[step]) ? (int) (r_count[step] / segcount)
-                                                         : (int) (s_count[step] / segcount);
-
-            phase_scount = ((size_t) s_count[step] > segcount) ? segcount : (size_t) s_count[step];
-            phase_rcount = ((size_t) r_count[step] > segcount) ? segcount : (size_t) r_count[step];
 
             inbi = 0;
             err = MCA_PML_CALL(irecv(inbuf[inbi], phase_rcount, dtype, dest,
@@ -2327,8 +2349,10 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
 
             tmp_send = (char *) rbuf + r_index[step] * extent;
             tmp_recv = (char *) rbuf + s_index[step] * extent;
-            err = MPI_Sendrecv(tmp_send, r_count[step], dtype, dest, 0, tmp_recv, s_count[step],
-                               dtype, dest, 0, comm, MPI_STATUS_IGNORE);
+            err = ompi_coll_base_sendrecv(tmp_send, r_count[step], dtype, dest,
+                                          MCA_COLL_BASE_TAG_ALLREDUCE, tmp_recv, s_count[step],
+                                          dtype, dest, MCA_COLL_BASE_TAG_ALLREDUCE, comm,
+                                          MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) {
                 line = __LINE__;
                 goto cleanup_and_return;
