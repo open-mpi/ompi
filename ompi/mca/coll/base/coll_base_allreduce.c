@@ -1378,9 +1378,17 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
     int err, line; // for error handling
     char *tmpsend, *tmprecv, *inplacebuf_free = NULL;
     ptrdiff_t extent, true_extent, lb, gap, span = 0;
-
+    
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
+    
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_lat WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
 
     if (!ompi_coll_is_power_of_two(size)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -1583,6 +1591,14 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap(const void *sbuf, void *rbuf, 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_bdw_remap WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+
     // Does not support non-power-of-two or negative sizes
     steps = opal_cube_dim(size);
     if (!ompi_coll_is_power_of_two(size) || steps == -1) {
@@ -1752,6 +1768,14 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
     ompi_datatype_get_extent(dtype, &lb, &extent);
     ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
     span = true_extent + extent * (count - 1);
+
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_block_by_block_any_even_over WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
 
     if (!ompi_coll_is_power_of_two(size)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -1965,7 +1989,17 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
             }
         }
         err = ompi_request_wait_all(req_count, reqs_s, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+
         err = ompi_request_wait_all(req_count, reqs_r, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        
         mask >>= 1;
         step++;
     }
