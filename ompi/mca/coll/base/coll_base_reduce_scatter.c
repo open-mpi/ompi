@@ -1468,8 +1468,12 @@ int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
     }
 
     // Final memcpy
-    ompi_datatype_copy_content_same_ddt(dtype, ompi_count_array_get(rcounts, rank), rbuf,
+    err = ompi_datatype_copy_content_same_ddt(dtype, ompi_count_array_get(rcounts, rank), rbuf,
                                         (char *) resbuf + displs[remapped_rank] * dtsize);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
 
     free(tmpbuf);
     free(resbuf);
