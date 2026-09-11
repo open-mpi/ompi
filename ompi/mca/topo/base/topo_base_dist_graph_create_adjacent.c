@@ -39,8 +39,7 @@ static int _mca_topo_base_dist_graph_create_adjacent (mca_topo_base_module_t* mo
 
     topo = OBJ_NEW(mca_topo_base_comm_dist_graph_2_2_0_t);
     if (NULL == topo) {
-        ompi_comm_free (newcomm);
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        goto bail_out;
     }
     topo->in = topo->inw = NULL;
     topo->out = topo->outw = NULL;
@@ -93,6 +92,10 @@ static int _mca_topo_base_dist_graph_create_adjacent (mca_topo_base_module_t* mo
         OBJ_RELEASE(topo);
     }
 
+    /* The module was handed to us by mca_topo_base_comm_select() and never
+       made it onto the communicator, so releasing the latter will not
+       account for it. */
+    OBJ_RELEASE(module);
     ompi_comm_free(newcomm);
     return err;
 }
@@ -112,6 +115,7 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
     /* comm_old may carry a topology of its own; it has no bearing on the
        distributed graph we are about to attach, so do not inherit it. */
     if (OMPI_SUCCESS != (err = ompi_comm_dup_with_info (comm_old, info, newcomm, false))) {
+        OBJ_RELEASE(module);
         return err;
     }
 
