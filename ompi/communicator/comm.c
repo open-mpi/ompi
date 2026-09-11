@@ -2018,7 +2018,7 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
                           comm->error_handler,                    /* error handler */
                           group,                                  /* local group */
                           NULL,                                   /* remote group */
-                          OMPI_COMM_SET_FLAG_COPY_TOPOLOGY);      /* flags */
+                          0);                                     /* flags */
     if ( OMPI_SUCCESS != rc) {
         return rc;
     }
