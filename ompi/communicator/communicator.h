@@ -971,12 +971,16 @@ OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key
  * @param comm: input communicator
  * @param color
  * @param key
+ * @param pass_on_topo: ignored. Splitting a communicator does not propagate
+ *                   the topology of the parent, and no caller has ever asked
+ *                   it to; the parameter is kept only to spare the call sites.
  *
  * @
  */
 OMPI_DECLSPEC int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
                                              opal_info_t *info,
-                                             ompi_communicator_t **newcomm, bool pass_on_topo );
+                                             ompi_communicator_t **newcomm,
+                                             bool pass_on_topo __opal_attribute_unused__ );
 
 /**
  * split a communicator based on type and key. Parameters

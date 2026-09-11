@@ -605,7 +605,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 
 int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
                                opal_info_t *info,
-                               ompi_communicator_t **newcomm, bool pass_on_topo )
+                               ompi_communicator_t **newcomm,
+                               bool pass_on_topo __opal_attribute_unused__ )
 {
     int myinfo[2];
     int size, my_size;
@@ -777,7 +778,7 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
                          comm->error_handler,/* error handler */
                          local_group,        /* local group */
                          remote_group,       /* remote group */
-                         pass_on_topo ? OMPI_COMM_SET_FLAG_COPY_TOPOLOGY : 0); /* flags */
+                         0);                 /* flags */
 
     if ( OMPI_SUCCESS != rc  ) {
         goto exit;
