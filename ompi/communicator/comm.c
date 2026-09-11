@@ -1776,7 +1776,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 /**********************************************************************/
 /**********************************************************************/
 int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info,
-                              ompi_communicator_t **newcomm, bool pass_on_topo )
+                              ompi_communicator_t **newcomm, bool inherit_cached_info )
 {
     ompi_communicator_t *newcomp = NULL;
     ompi_group_t *remote_group = NULL;
@@ -1795,11 +1795,11 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info,
                           NULL,                                   /* local_procs*/
                           0,                                      /* remote array size */
                           NULL,                                   /* remote_procs */
-                          comm->c_keyhash,                        /* attrs */
+                          inherit_cached_info ? comm->c_keyhash : NULL, /* attrs */
                           comm->error_handler,                    /* error handler */
                           comm->c_local_group,                    /* local group */
                           remote_group,                           /* remote group */
-                          pass_on_topo ? OMPI_COMM_SET_FLAG_COPY_TOPOLOGY : 0); /* flags */
+                          inherit_cached_info ? OMPI_COMM_SET_FLAG_COPY_TOPOLOGY : 0); /* flags */
     if ( OMPI_SUCCESS != rc) {
         return rc;
     }
@@ -2014,7 +2014,7 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
                           NULL,                                   /* local_procs*/
                           0,                                      /* remote_size */
                           NULL,                                   /* remote_procs */
-                          comm->c_keyhash,                        /* attrs */
+                          NULL,                                   /* attrs */
                           comm->error_handler,                    /* error handler */
                           group,                                  /* local group */
                           NULL,                                   /* remote group */
