@@ -1121,6 +1121,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     int ret, num_providers = 0, accel_id = -1;
     struct fi_info *provider = NULL;
     uint32_t package_rank;
+    uint32_t device_rank = 0;
 
     /* Current process' local rank on the same package(socket) */
     package_rank = process_info->proc_is_bound ? get_package_rank(process_info)
@@ -1128,7 +1129,19 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     num_providers = count_providers(provider_list);
 
 #if OPAL_OFI_PCI_DATA_AVAILABLE
-    if (-1 < opal_common_ofi_accelerator_rank) {
+    /* Look for a device near this process' accelerator whenever there is one.
+     * The accelerator_rank parameter only breaks ties between devices that are
+     * equally close, so leaving it unset is not a reason to ignore the
+     * accelerator: fall back to this process' local rank, which spreads local
+     * ranks sharing a set of equally close devices across that set.
+     *
+     * This matters on nodes with more than one PCIe root complex. Distance from
+     * the process' package alone can hand a rank a device in a different complex
+     * from the accelerator it is reading from and writing to. */
+    device_rank = (0 <= opal_common_ofi_accelerator_rank)
+                      ? (uint32_t) opal_common_ofi_accelerator_rank
+                      : process_info->my_local_rank;
+    if (NULL != opal_accelerator.get_device) {
         ret = opal_accelerator.get_device(&accel_id);
         if (OPAL_SUCCESS != ret) {
             opal_output_verbose(1, opal_common_ofi.output, "%s:%d:Accelerator is not available",
@@ -1153,7 +1166,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
 
     if (0 <= accel_id) {
         ret = find_nearest_provider_from_accelerator(provider_list, num_providers, accel_id,
-                                                     opal_common_ofi_accelerator_rank, &provider);
+                                                     device_rank, &provider);
         if (OPAL_SUCCESS == ret) {
             goto out;
         }
