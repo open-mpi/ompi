@@ -1020,8 +1020,13 @@ OMPI_DECLSPEC int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t
  *
  * @param comm:      input communicator
  * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
+ * @param pass_on_topo: propagate the topology of comm to newcomm. MPI_Comm_dup
+ *                   must do so, but the topology constructors dup a
+ *                   communicator only to attach a topology of their own and
+ *                   have no use for the one they would inherit.
  */
-OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, opal_info_t *info, ompi_communicator_t **newcomm);
+OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, opal_info_t *info,
+                                           ompi_communicator_t **newcomm, bool pass_on_topo);
 
 /**
  * dup a communicator (non-blocking) with info.

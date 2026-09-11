@@ -1769,13 +1769,14 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
 /**********************************************************************/
 int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 {
-    return ompi_comm_dup_with_info (comm, NULL, newcomm);
+    return ompi_comm_dup_with_info (comm, NULL, newcomm, true);
 }
 
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, ompi_communicator_t **newcomm )
+int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info,
+                              ompi_communicator_t **newcomm, bool pass_on_topo )
 {
     ompi_communicator_t *newcomp = NULL;
     ompi_group_t *remote_group = NULL;
@@ -1798,7 +1799,7 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
                           comm->error_handler,                    /* error handler */
                           comm->c_local_group,                    /* local group */
                           remote_group,                           /* remote group */
-                          OMPI_COMM_SET_FLAG_COPY_TOPOLOGY);      /* flags */
+                          pass_on_topo ? OMPI_COMM_SET_FLAG_COPY_TOPOLOGY : 0); /* flags */
     if ( OMPI_SUCCESS != rc) {
         return rc;
     }

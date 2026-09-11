@@ -109,7 +109,9 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
 {
     int err;
 
-    if (OMPI_SUCCESS != (err = ompi_comm_dup_with_info (comm_old, info, newcomm))) {
+    /* comm_old may carry a topology of its own; it has no bearing on the
+       distributed graph we are about to attach, so do not inherit it. */
+    if (OMPI_SUCCESS != (err = ompi_comm_dup_with_info (comm_old, info, newcomm, false))) {
         return err;
     }
 
