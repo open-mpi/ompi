@@ -113,6 +113,19 @@ int mca_topo_base_dist_graph_create_adjacent(mca_topo_base_module_t* module,
         return err;
     }
 
+    /* ompi_comm_dup_with_info() carries the topology of comm_old over, as
+     * MPI_Comm_dup must.  The distributed graph replaces it.  Without this a
+     * graph created from a Cartesian or graph communicator keeps that
+     * topology's flag as well, and MPI_Topo_test, the neighborhood
+     * collectives and the other topology queries, which test the Cartesian
+     * and graph flags first, read the distributed graph as the parent's
+     * topology type. */
+    if (NULL != (*newcomm)->c_topo) {
+        OBJ_RELEASE((*newcomm)->c_topo);
+        (*newcomm)->c_topo = NULL;
+    }
+    (*newcomm)->c_flags &= ~(OMPI_COMM_CART | OMPI_COMM_GRAPH | OMPI_COMM_DIST_GRAPH);
+
     return _mca_topo_base_dist_graph_create_adjacent (module, indegree, sources, sourceweights, outdegree,
                                                       destinations, destweights, reorder, newcomm);
 }
