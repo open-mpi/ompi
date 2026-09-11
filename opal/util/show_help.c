@@ -32,6 +32,7 @@
 
 #include "opal/constants.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/threads/mutex.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
 #include "opal/util/os_path.h"
@@ -49,6 +50,12 @@ static const char *dash_line
 static int output_stream = -1;
 static char **search_dirs = NULL;
 static bool opal_help_want_aggregate = true;
+
+/* The help file is read by a non-reentrant lexer that keeps all of its state
+   in file-scope globals (opal_show_help_yyin, the scanner buffer stack, and
+   opal_show_help_yytext).  Serialize the readers so that concurrent callers
+   cannot tear down the scanner while another one is still using it. */
+static opal_mutex_t load_array_mutex = OPAL_MUTEX_STATIC_INIT;
 
 /*
  * Local functions
@@ -379,7 +386,10 @@ static int load_array(char ***array, const char *filename, const char *topic)
 {
     int ret;
 
+    opal_mutex_lock(&load_array_mutex);
+
     if (OPAL_SUCCESS != (ret = open_file(filename, topic))) {
+        opal_mutex_unlock(&load_array_mutex);
         return ret;
     }
 
@@ -390,6 +400,8 @@ static int load_array(char ***array, const char *filename, const char *topic)
 
     fclose(opal_show_help_yyin);
     opal_show_help_yylex_destroy();
+
+    opal_mutex_unlock(&load_array_mutex);
 
     if (OPAL_SUCCESS != ret) {
         opal_argv_free(*array);
