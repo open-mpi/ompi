@@ -403,8 +403,7 @@ static int mca_btl_tcp_component_register(void)
         "during MPI_Init. full: like sync_init, and require a single add_procs "
         "of the whole job. The ob1 PML ORs these requirements across selected "
         "BTLs; to exercise TCP's setting without the shared-memory BTL, use "
-        "--mca pml ob1 --mca btl self,tcp. Multiple TCP modules with MPI or "
-        "progress threads still force full regardless of this setting.",
+        "--mca pml ob1 --mca btl self,tcp.",
         MCA_BASE_VAR_TYPE_INT, new_enum, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_btl_tcp_component.tcp_connect_mode);
     OBJ_RELEASE(new_enum);
@@ -1479,24 +1478,6 @@ mca_btl_base_module_t **mca_btl_tcp_component_init(int *num_btl_modules,
         for (i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
             mca_btl_tcp_component.tcp_btls[i]->super.btl_flags
                 |= MCA_BTL_FLAGS_BTL_PROGRESS_THREAD_ENABLED;
-        }
-    }
-
-    /* Avoid a race in wire-up when using threads (progress or user)
-       and multiple BTL modules.  The details of the race are in
-       https://github.com/open-mpi/ompi/issues/3035#issuecomment-429500032,
-       but the summary is that the lookup code in
-       component_recv_handler() below assumes that add_procs() is
-       atomic across all active TCP BTL modules, but in multi-threaded
-       code, that isn't guaranteed, because the locking is inside
-       add_procs(), and add_procs() is called once per module.  This
-       isn't a proper fix, but will solve the "dropped connection"
-       problem until we can come up with a more complete fix to how we
-       initialize procs, endpoints, and modules in the TCP BTL. */
-    if (mca_btl_tcp_component.tcp_num_btls > 1
-        && (enable_mpi_threads || 0 < mca_btl_tcp_progress_thread_trigger)) {
-        for (i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
-            mca_btl_tcp_component.tcp_btls[i]->super.btl_flags |= MCA_BTL_FLAGS_SINGLE_ADD_PROCS;
         }
     }
 
