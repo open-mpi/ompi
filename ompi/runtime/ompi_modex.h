@@ -69,6 +69,18 @@ OMPI_DECLSPEC bool ompi_modex_all_ready(void);
 OMPI_DECLSPEC bool ompi_modex_proc_ready(struct ompi_proc_t *proc);
 
 /**
+ * Ask for every peer's blob, whatever the mode would have been. Must be
+ * called before the exchange starts: from parameter registration, or from
+ * instance init as late as PML selection.
+ *
+ * For FT, whose subsystems reach for whichever rank is still alive from a
+ * BTL callback: they can neither wait nor name that peer in advance, so
+ * only a collecting fence up front makes those reaches local. And for a
+ * BTL that takes all procs or none, which cannot be told to come back.
+ */
+OMPI_DECLSPEC void ompi_modex_require_all(void);
+
+/**
  * Block in progress until the collect fence completes, and report how it
  * went. A failed fence collected nothing and leaves no way to get any
  * peer information: a failed startup, not a slower one.

@@ -128,6 +128,42 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     return OMPI_SUCCESS;
 }
 
+#if OPAL_ENABLE_FT_MPI
+/**
+ * Remove a send from the list waiting on its peer's connection info, if
+ * still there. True when it was, which guarantees no btl has seen it.
+ */
+static bool mca_pml_ob1_unstage_send(mca_pml_ob1_send_request_t *sendreq)
+{
+    mca_pml_ob1_send_request_t *item;
+    bool found = false;
+
+    /* Unlocked fast path: only the thread that owns a request parks it,
+     * and that thread is this one, so the list cannot gain this request
+     * while we look. Reading empty means the drain already holds it. */
+    if( opal_list_is_empty(&mca_pml_ob1.modex_pending) ) {
+        return false;
+    }
+
+    /* Searched, not just removed: the drain takes items off this same
+     * list under this same lock. */
+    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+    OPAL_LIST_FOREACH(item, &mca_pml_ob1.modex_pending, mca_pml_ob1_send_request_t) {
+        if( item == sendreq ) {
+            opal_list_remove_item(&mca_pml_ob1.modex_pending, (opal_list_item_t *) sendreq);
+            found = true;
+            break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+
+    if( found ) {
+        mca_pml_ob1_enable_progress(-1);
+    }
+    return found;
+}
+#endif  /* OPAL_ENABLE_FT_MPI */
+
 static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int complete)
 {
 #if MPI_VERSION >= 4
@@ -155,6 +191,14 @@ static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int c
                                 "Send_request_cancel: cancel granted for request %p because peer %d is dead\n",
                                 (void*)request, pml_req->req_send.req_base.req_peer);
         request->req_status._cancelled = true;
+        /* Never reached a btl and never will, so complete it outright
+         * rather than wait for a completion that cannot come. Leaving it
+         * linked would also have the drain send to a dead process, on a
+         * request the application may already have freed. */
+        if( mca_pml_ob1_unstage_send(pml_req) ) {
+            send_request_pml_complete(pml_req);
+            return OMPI_SUCCESS;
+        }
         if( NULL != pml_req->rdma_frag ) {
             MCA_PML_OB1_RDMA_FRAG_RETURN(pml_req->rdma_frag);
             pml_req->rdma_frag = NULL;
