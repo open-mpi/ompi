@@ -193,15 +193,23 @@ int mca_btl_uct_process_connection_request(mca_btl_uct_module_t *module,
                                            mca_btl_uct_conn_req_t *req)
 {
     struct opal_proc_t *remote_proc = opal_proc_for_name(req->proc_name);
-    mca_btl_base_endpoint_t *endpoint = mca_btl_uct_get_ep(&module->super, remote_proc);
-    mca_btl_uct_tl_endpoint_t *tl_endpoint = endpoint->uct_eps[req->context_id] + req->tl_index;
+    mca_btl_base_endpoint_t *endpoint;
+    mca_btl_uct_tl_endpoint_t *tl_endpoint;
     int32_t ep_flags;
     int rc;
 
+    if (NULL == remote_proc) {
+        BTL_ERROR(("connection request names a process we know nothing about"));
+        return UCS_ERR_UNREACHABLE;
+    }
+
+    endpoint = mca_btl_uct_get_ep(&module->super, remote_proc);
     if (NULL == endpoint) {
         BTL_ERROR(("could not create endpoint for connection request"));
         return UCS_ERR_UNREACHABLE;
     }
+
+    tl_endpoint = endpoint->uct_eps[req->context_id] + req->tl_index;
 
     assert(req->type < 2);
 
