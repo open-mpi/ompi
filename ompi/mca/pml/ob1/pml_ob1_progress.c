@@ -54,14 +54,29 @@ static inline int mca_pml_ob1_process_pending_accelerator_async_copies(void)
 }
 
 static opal_atomic_int32_t mca_pml_ob1_progress_needed = 0;
-int mca_pml_ob1_enable_progress(int32_t count)
-{
-    int32_t progress_count = OPAL_ATOMIC_ADD_FETCH32(&mca_pml_ob1_progress_needed, count);
-    if( 1 < progress_count )
-        return 0;  /* progress was already on */
 
-    opal_progress_register(mca_pml_ob1_progress);
-    return 1;
+void mca_pml_ob1_enable_progress(int32_t count)
+{
+    int32_t needed = OPAL_ATOMIC_ADD_FETCH32(&mca_pml_ob1_progress_needed, count);
+
+    if( 0 < count ) {
+        if( count == needed ) {  /* was zero */
+            opal_progress_register(mca_pml_ob1_progress);
+        }
+    } else if( 0 == needed ) {
+        opal_progress_unregister(mca_pml_ob1_progress);
+        /* The count reaching zero and unregistering are two steps. A
+         * park landing between them takes the branch above, sees a count
+         * it did not raise from zero, and leaves registration to this
+         * thread -- which is about to remove it, and no later park would
+         * conclude differently, so parked work would never be re-driven.
+         * Hence the second look; a redundant register is free. The mirror
+         * case -- a register landing after another thread's unregister --
+         * costs one needless callback, not forward progress. */
+        if( 0 < mca_pml_ob1_progress_needed ) {
+            opal_progress_register(mca_pml_ob1_progress);
+        }
+    }
 }
 
 int mca_pml_ob1_progress(void)
@@ -131,10 +146,7 @@ int mca_pml_ob1_progress(void)
     }
 
     if( 0 != completed_requests ) {
-        j = OPAL_ATOMIC_ADD_FETCH32(&mca_pml_ob1_progress_needed, -completed_requests);
-        if( 0 == j ) {
-            opal_progress_unregister(mca_pml_ob1_progress);
-        }
+        mca_pml_ob1_enable_progress(-completed_requests);
     }
 
     return completed_requests;
