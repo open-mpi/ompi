@@ -21,6 +21,7 @@
 
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h"
@@ -263,7 +264,13 @@ int ompi_comm_start_detector(ompi_communicator_t* comm) {
     if( &ompi_mpi_comm_world.comm != comm ) return OMPI_ERR_NOT_IMPLEMENTED;
     comm_detector_t* detector = &comm_world_detector;
 
-    int rank, np;
+    int rank, np, ret;
+
+    /* The ring moves to any rank from the event callback, which cannot
+     * wait: every peer's connection info has to be local already, so
+     * that building its endpoint needs no communication. */
+    ret = ompi_modex_wait_if_needed();
+    if( OMPI_SUCCESS != ret ) return ret;
     startdate = ompi_wtime();
     detector->comm = comm;
     np = ompi_comm_size(comm);
@@ -331,6 +338,7 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
     int ret = OMPI_SUCCESS;
     int np = ompi_comm_size(comm);
     int rank;
+    int passed_over = 0;
     size_t regsize = 0;
 
     for( rank = (np+detector->hb_observing) % np;
@@ -342,6 +350,16 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
 
         /* if everybody else is dead, I don't need to monitor myself. */
         if( rank == comm->c_my_rank ) {
+            if( 0 != passed_over ) {
+                /* Not "everybody else is dead": a live peer was passed
+                 * over for want of a path to it. The verdict below would
+                 * stop this detector for good, so retry on the next tick,
+                 * which walks again because hb_rdma_flag is untouched. */
+                opal_output_verbose(1, ompi_ftmpi_output_handle,
+                                    "%s %s: No rdma path to any of the %d live processes on communicator %s:%d, will try again",
+                                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, passed_over, ompi_comm_print_cid(comm), comm->c_epoch);
+                return OMPI_ERR_UNREACH;
+            }
             OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
                              "%s %s: Every other node is dead on communicator %s:%d",
                              OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, ompi_comm_print_cid(comm), comm->c_epoch));
@@ -367,11 +385,12 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
             int eprc;
             mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc, &eprc);
             if( NULL == endpoint ) {
-                /* Cannot put to that peer (its connection info may not be
-                 * local yet); look for another process to observe. */
+                /* No btl in common with that peer -- its connection info
+                 * was waited for at startup -- so observe somebody else. */
                 OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
                                      "%s %s: No endpoint to observe %d on communicator %s:%d (%d), trying the next rank",
                                      OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, rank, ompi_comm_print_cid(comm), comm->c_epoch, eprc));
+                passed_over++;
                 continue;
             }
             mca_bml_base_btl_t *bml_btl = mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, 0);
@@ -379,6 +398,7 @@ static int fd_heartbeat_request(comm_detector_t* detector) {
                 OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
                                      "%s %s: No rdma btl to observe %d on communicator %s:%d, trying the next rank",
                                      OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, rank, ompi_comm_print_cid(comm), comm->c_epoch));
+                passed_over++;
                 continue;
             }
 
@@ -433,26 +453,33 @@ static int fd_heartbeat_request_cb(ompi_communicator_t* comm, ompi_comm_heartbea
     OPAL_OUTPUT_VERBOSE((2, ompi_ftmpi_output_handle,
                          "%s %s: Recveived heartbeat request from %d on communicator %s:%d",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch));
-    detector->hb_observer = msg->from;
-    detector->hb_sstamp = 0.;
+    mca_bml_base_btl_t *bml_btl = NULL;
 
     if( comm_detector_use_rdma_hb ) {
+        /* Do not accept an observer we cannot put into: this protocol
+         * reads silence as death, so claiming a coverage we do not
+         * provide is how a live rank gets declared dead; declining leaves
+         * the observer to look elsewhere. Nothing to wait for either --
+         * this runs from a btl callback, and the ring is formed only once
+         * every peer's connection info is local. */
         ompi_proc_t* proc = ompi_comm_peer_lookup(detector->comm, msg->from);
         assert( NULL != proc );
         int eprc;
         mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint(proc, &eprc);
-        mca_bml_base_btl_t *bml_btl = (NULL != endpoint)?
+        bml_btl = (NULL != endpoint)?
             mca_bml_base_btl_array_get_index(&endpoint->btl_rdma, 0): NULL;
         if( NULL == bml_btl ) {
-            /* No rdma path back to the observer yet. Leave hb_rdma_raddr
-             * at 0 so the put stays a no-op rather than using a stale
-             * btl; the observer will request again. */
             opal_output_verbose(1, ompi_ftmpi_output_handle,
-                                "%s %s: No rdma endpoint to heartbeat observer %d on communicator %s:%d (%d), ignoring the request",
+                                "%s %s: No rdma endpoint to heartbeat observer %d on communicator %s:%d (%d), declining to be observed by it",
                                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), __func__, msg->from, ompi_comm_print_cid(comm), comm->c_epoch, eprc);
             return false; /* never forward on the rbcast */
         }
+    }
 
+    detector->hb_observer = msg->from;
+    detector->hb_sstamp = 0.;
+
+    if( comm_detector_use_rdma_hb ) {
         OPAL_THREAD_LOCK(&detector->fd_mutex);
         /* registration for the local rank */
         /* remove previous registration, if any */

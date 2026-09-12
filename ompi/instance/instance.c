@@ -615,6 +615,17 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     }
 #endif
 
+    /* A BTL that wants every proc in one add_procs call has nowhere to park
+     * the peers it could not resolve, so that call cannot be allowed to find
+     * any of them missing: collect for the whole job, whatever the mode would
+     * have been. Known here because the PML is already selected, and still
+     * allowed because the exchange has not started. */
+    eager_add_procs = mca_pml_base_requires_sync_init() ||
+                      mca_pml_base_requires_world();
+    if (eager_add_procs) {
+        ompi_modex_require_all();
+    }
+
     /* All of this rank's publishes must be committed before this. */
     ret = ompi_modex_start_exchange();
     if (OMPI_SUCCESS != ret) {
@@ -726,8 +737,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("PML control failed", ret);
     }
 
-    eager_add_procs = mca_pml_base_requires_sync_init() ||
-                      mca_pml_base_requires_world();
     if (eager_add_procs) {
         /* some btls/mtls require we call add_procs with all procs in the job.
          * since the btls/mtls have no visibility here it is up to the pml to
