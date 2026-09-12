@@ -498,8 +498,53 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status)
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
     rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, proc->proc_name,
                                    (void **) &btl_proc);
+    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+    if (OPAL_SUCCESS == rc) {
+        return btl_proc;
+    }
+
+    /* Fetched with no lock held. This is a blocking PMIx_Get with no
+     * timeout of its own: for a peer whose data has not been published
+     * yet it waits for the exchange, and it is reached from the
+     * listener's event callback, where the guid came off the wire. Under
+     * tcp_lock that wait would be the whole component's, including every
+     * other module's wire-up and teardown. Two threads racing here both
+     * fetch, which costs a duplicated read of data that does not change
+     * and is resolved by the recheck below.
+     */
+    OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version, &proc->proc_name,
+                    (uint8_t **) &remote_addrs, &size);
+    if (OPAL_SUCCESS != rc) {
+        if (OPAL_ERR_NOT_FOUND != rc && OPAL_ERR_NOT_READY != rc) {
+            BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
+        }
+        if (NULL != status) {
+            *status = rc;
+        }
+        return NULL;
+    }
+
+    if (0 != (size % sizeof(mca_btl_tcp_modex_addr_t))) {
+        BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n", (unsigned long) size,
+                   (unsigned long) sizeof(mca_btl_tcp_modex_addr_t)));
+        free(remote_addrs);
+        if (NULL != status) {
+            *status = OPAL_ERROR;
+        }
+        return NULL;
+    }
+
+    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
+
+    /* Recheck: the fetch above ran unlocked, so another thread may have
+     * published this proc in the meantime. Theirs is as good as ours and
+     * already visible to everyone, so keep it and drop what we fetched.
+     */
+    rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, proc->proc_name,
+                                   (void **) &btl_proc);
     if (OPAL_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+        free(remote_addrs);
         return btl_proc;
     }
 
@@ -515,23 +560,6 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status)
      * unlock the mutex.
      */
     OBJ_RETAIN(proc);
-
-    /* lookup tcp parameters exported by this proc */
-    OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version, &proc->proc_name,
-                    (uint8_t **) &remote_addrs, &size);
-    if (OPAL_SUCCESS != rc) {
-        if (OPAL_ERR_NOT_FOUND != rc && OPAL_ERR_NOT_READY != rc) {
-            BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
-        }
-        goto cleanup;
-    }
-
-    if (0 != (size % sizeof(mca_btl_tcp_modex_addr_t))) {
-        BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n", (unsigned long) size,
-                   (unsigned long) sizeof(mca_btl_tcp_modex_addr_t)));
-        rc = OPAL_ERROR;
-        goto cleanup;
-    }
 
     btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_modex_addr_t);
     btl_proc->proc_addrs = malloc(btl_proc->proc_addr_count * sizeof(mca_btl_tcp_addr_t));

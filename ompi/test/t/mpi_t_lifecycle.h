@@ -1,6 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,18 +29,23 @@
    tcp btl yields no modules and registers no events.
 
    Clearing btl_tcp_if_exclude lets loopback count as a tcp interface,
-   so the tcp btl yields >= 2 modules even on a single-NIC host.  That
-   matters: at MPI_THREAD_MULTIPLE, a multi-module tcp btl sets
+   so the tcp btl yields a module even on a host whose only other
+   interfaces are excluded.
+
+   connect_mode=full makes the tcp btl claim
    MCA_BTL_FLAGS_SINGLE_ADD_PROCS, which makes ob1 require comm world
    and sends a sessions-only process through ompi_comm_init_mpi3() --
    the path that once tore down world/self marked PML_ADDED without a
-   matching pml add_comm() (SIGSEGV at MPI_Session_finalize()).  Without
-   this, that regression is only reachable on multi-NIC hosts. */
+   matching pml add_comm() (SIGSEGV at MPI_Session_finalize()).  Asked
+   for here rather than inherited from the multi-module-plus-threads
+   case, which no longer claims the flag, so that the coverage does not
+   depend on how many interfaces the host has. */
 static inline void pin_tcp_btl(void)
 {
     setenv("OMPI_MCA_pml", "ob1", 1);
     setenv("OMPI_MCA_btl", "tcp,self", 1);
     setenv("OMPI_MCA_btl_tcp_if_exclude", "", 1);
+    setenv("OMPI_MCA_btl_tcp_connect_mode", "full", 1);
 }
 
 /* Every step announces itself and flushes before running, so that if a
