@@ -17,6 +17,7 @@
  * Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights
  * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/runtime/opal_progress.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -251,6 +253,11 @@ static mca_base_component_t pml_base_component = {
 };
 
 
+/* What went into the modex, which is what a peer compares itself
+ * against. Not mca_pml_base_selected_component's name: vprotocol renames
+ * that copy ("ob1]vpessimist") as the losing components close. */
+static char mca_pml_base_pml_name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1] = {0};
+
 /*
  * If direct modex, then publish PML for all procs. If full modex then
  * publish PML for rank 0 only. This information is used during add_procs
@@ -271,11 +278,22 @@ mca_pml_base_pml_selected(const char *name)
 {
     int rc = 0;
 
+    opal_string_copy(mca_pml_base_pml_name, name, sizeof(mca_pml_base_pml_name));
+
+    /* Send the saved copy, not the argument: a name long enough to have
+     * been truncated into it would otherwise reach a peer by two routes
+     * under two spellings. */
     if (!opal_pmix_collect_all_data || 0 == OMPI_PROC_MY_NAME->vpid) {
-        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name,
-                        strlen(name) + 1);
+        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component,
+                        mca_pml_base_pml_name,
+                        strlen(mca_pml_base_pml_name) + 1);
     }
     return rc;
+}
+
+const char *mca_pml_base_pml_selected_name(void)
+{
+    return mca_pml_base_pml_name;
 }
 
 static int

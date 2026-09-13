@@ -62,12 +62,43 @@
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/pml/base/base.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
 
 #include "ompi/dpm/dpm.h"
 
 static opal_rng_buff_t rnd;
+
+/* The value a root publishes on the port key leads with a header --
+ * this Open MPI's version, then the pml it selected -- followed by the
+ * colon-delimited list of its participating procs.
+ *
+ * Connect/accept between two different Open MPI versions is not
+ * supported, and never has been: the content of this exchange is
+ * internal and has changed before with no way for either side to tell.
+ * The version is here so that the next time it changes both sides say
+ * so by name, instead of one of them taking a header field for a
+ * process name. Against a version predating the header there is
+ * nothing to be done from this side -- it will fault in its own
+ * parser on our value, and that is the configuration this states is
+ * not supported.
+ *
+ * The version is the release series, major.minor, which is the
+ * granularity at which Open MPI keeps anything: two members of one
+ * series are held to agree, and two series are refused whether or not
+ * this particular format changed between them, connecting across
+ * versions being unsupported either way.
+ *
+ * Only the two roots read the header. Each strips it before
+ * broadcasting the rest to its own side, so the format is known in one
+ * place and everything downstream sees what it saw before there was
+ * one. */
+#define OMPI_DPM_HDR_VERSION "ompi="
+#define OMPI_DPM_HDR_PML     "pml="
+#define OMPI_DPM_HDR_FMT     OMPI_DPM_HDR_VERSION "%d.%d:" OMPI_DPM_HDR_PML "%s"
+#define OMPI_DPM_HDR_ARGS                                                      \
+    OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, mca_pml_base_pml_selected_name()
 
 typedef struct {
     ompi_communicator_t       *comm;
@@ -100,6 +131,80 @@ int ompi_dpm_init(void)
         return OMPI_ERROR;
     }
     return OMPI_SUCCESS;
+}
+
+/* The value of field n of a colon-split published value, without its
+ * "key=" prefix, or NULL if that field is missing or names another key. */
+static const char *ompi_dpm_hdr_field(char **fields, int n, const char *key)
+{
+    size_t keylen = strlen(key);
+
+    if (opal_argv_count(fields) <= n || 0 != strncmp(fields[n], key, keylen)) {
+        return NULL;
+    }
+    return fields[n] + keylen;
+}
+
+/* Can this root talk to the side that published "theirs"? Their header
+ * is compared field by field against the one this side publishes, built
+ * here from the same format so that the two cannot drift apart. On
+ * success *nhdr is the number of leading fields the caller must drop.
+ *
+ * Both roots run this and so refuse in step, and one comparison per
+ * side suffices: each side has already agreed with itself by now, so a
+ * root's header stands for its whole side. */
+static int ompi_dpm_check_hdr(char **theirs, int *nhdr)
+{
+    const char *tver, *tpml;
+    char *hdr = NULL, **mine;
+    int rc = OMPI_SUCCESS;
+
+    (void) opal_asprintf(&hdr, OMPI_DPM_HDR_FMT, OMPI_DPM_HDR_ARGS);
+    if (NULL == hdr) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    mine = opal_argv_split(hdr, ':');
+    free(hdr);
+    if (NULL == mine) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    *nhdr = opal_argv_count(mine);
+
+    /* The version first: it explains a pml mismatch, and it is all that
+     * can be said about a value whose header we do not recognize at all
+     * -- in particular one from a version that sent no header, which is
+     * a bare list of procs and has to be read as a version before it is
+     * read as anything else. */
+    tver = ompi_dpm_hdr_field(theirs, 0, OMPI_DPM_HDR_VERSION);
+    if (NULL == tver || 0 != strcmp(theirs[0], mine[0])) {
+        opal_show_help("help-dpm.txt", "version-mismatch", true,
+                       ompi_dpm_hdr_field(mine, 0, OMPI_DPM_HDR_VERSION),
+                       (NULL == tver) ? "not stated" : tver);
+        rc = OMPI_ERR_UNREACH;
+        goto done;
+    }
+
+    /* Our version, so our header, and there has to be something after
+     * it: a side puts at least its own root in the list that follows. */
+    if (opal_argv_count(theirs) <= *nhdr) {
+        OMPI_ERROR_LOG(OMPI_ERR_BAD_PARAM);
+        rc = OMPI_ERR_BAD_PARAM;
+        goto done;
+    }
+
+    /* Then the pml. Two jobs disagreeing is the case no intra-job check
+     * can see, and the one connect/accept/spawn actually needs. */
+    if (ompi_pml_base_check_pml && 0 != strcmp(theirs[1], mine[1])) {
+        tpml = ompi_dpm_hdr_field(theirs, 1, OMPI_DPM_HDR_PML);
+        opal_show_help("help-dpm.txt", "pml-mismatch", true,
+                       mca_pml_base_pml_selected_name(),
+                       (NULL == tpml) ? "not stated" : tpml);
+        rc = OMPI_ERR_UNREACH;
+    }
+
+done:
+    opal_argv_free(mine);
+    return rc;
 }
 
 int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
@@ -138,7 +243,9 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
      * will append ":accept" to the port name and publish the list of its
      * participants on that key. Each proc will then block waiting for lookup
      * to complete on the other's key. Once that completes, the list of remote
-     * procs is used to complete construction of the intercommunicator. */
+     * procs is used to complete construction of the intercommunicator.
+     * The header leading each list is how the two sides find out whether
+     * they can talk at all. */
 
     /* If there was an error during the COMM_SPAWN stage, the port string will
      * be set (in mpi/c/comm_spawn.c) with a special value that contains the error
@@ -213,7 +320,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             (void)opal_asprintf(&key, "%s:accept", port_string);
             (void)opal_asprintf(&pkey, "%s:connect", port_string);
         }
-        nstring = opal_argv_join(members, ':');
+        char *mstring = opal_argv_join(members, ':');
+        /* This exchange is the only data both sides are sure to hold:
+         * neither root can read a value published by the other's ranks.
+         * Two jobs each agreeing internally can still disagree. */
+        (void) opal_asprintf(&nstring, OMPI_DPM_HDR_FMT ":%s",
+                             OMPI_DPM_HDR_ARGS, mstring);
+        free(mstring);
         PMIX_INFO_LOAD(&info, key, nstring, PMIX_STRING);
         PMIX_LOAD_KEY(pdat.key, pkey);
         free(nstring);
@@ -233,10 +346,26 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
             goto bcast_rportlen;
         }
 
-        /* save the result */
-        rport = strdup(pdat.value.data.string);  // need this later
-        rportlen = strlen(rport) + 1;  // retain the NULL terminator
+        /* Check the header the other root sent, then keep only the
+         * members it leads: the rest of this function, and every other
+         * rank of this side, then sees exactly what it saw before this
+         * exchange carried a header. A refusal leaves by the same road a
+         * failed exchange just took, the length below. */
+        char **rfields = opal_argv_split(pdat.value.data.string, ':');
+        int nhdr = 0;
+
         PMIX_PDATA_DESTRUCT(&pdat);
+        rc = (NULL == rfields) ? OMPI_ERR_OUT_OF_RESOURCE
+                               : ompi_dpm_check_hdr(rfields, &nhdr);
+        if (OMPI_SUCCESS == rc) {
+            rport = opal_argv_join(&rfields[nhdr], ':');  // need this later
+        }
+        opal_argv_free(rfields);
+        if (NULL == rport) {
+            rportlen = (OMPI_SUCCESS == rc) ? OMPI_ERR_OUT_OF_RESOURCE : rc;
+        } else {
+            rportlen = strlen(rport) + 1;  // retain the NULL terminator
+        }
     }
 
 bcast_rportlen:
@@ -252,9 +381,9 @@ bcast_rportlen:
         goto exit;
     }
 
-    /* This is the comm_spawn error case, or a port exchange that failed:
-     * either way the root is propagating to the local group that this
-     * operation has to fail. */
+    /* This is the comm_spawn error case, or a root that would not talk to
+     * the other side: either way the root is propagating to the local
+     * group that this operation has to fail. */
     if (0 >= rportlen) {
         rc = rportlen;
         /* no need to free rport here: no path that gets here allocated one,
