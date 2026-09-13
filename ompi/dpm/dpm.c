@@ -468,11 +468,14 @@ bcast_rportlen:
         goto exit;
     }
 
-    /* This is the comm_spawn error case, or a root that would not talk to
-     * the other side: either way the root is propagating to the local
-     * group that this operation has to fail. */
+    /* This is the comm_spawn error case, a root that would not talk to the
+     * other side, or a port exchange that failed: either way the root is
+     * propagating to the local group that this operation has to fail. */
     if (0 >= rportlen) {
         rc = rportlen;
+        /* no need to free rport here: no path that gets here allocated one,
+         * and everyone else has not yet allocated the array */
+        opal_argv_free(members);  // NULL on the paths that jumped here
         goto exit;
     }
 
