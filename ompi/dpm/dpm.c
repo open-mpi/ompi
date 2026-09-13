@@ -25,6 +25,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -223,7 +224,13 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
         PMIX_INFO_DESTRUCT(&info);
         if (OPAL_SUCCESS != rc) {
             PMIX_PDATA_DESTRUCT(&pdat);
-            return rc;
+            /* Do not return: the rest of this side is already committed
+             * to the broadcast below and would wait there for a root
+             * that has left. Report it the way a failed spawn does. An
+             * opal error code is negative, but a length has to be, so
+             * do not take that on trust. */
+            rportlen = (0 < rc) ? -rc : rc;
+            goto bcast_rportlen;
         }
 
         /* save the result */
@@ -245,12 +252,14 @@ bcast_rportlen:
         goto exit;
     }
 
-    /* This is the comm_spawn error case: the root couldn't do the pmix spawn
-     * and is now propagating to the local group that this operation has to
-     * fail. */
+    /* This is the comm_spawn error case, or a port exchange that failed:
+     * either way the root is propagating to the local group that this
+     * operation has to fail. */
     if (0 >= rportlen) {
         rc = rportlen;
-        /* no need to free here, the root has already done it and everyone else has not yet allocated the rport array */
+        /* no need to free rport here: no path that gets here allocated one,
+         * and everyone else has not yet allocated the array */
+        opal_argv_free(members);  // NULL on the paths that jumped here
         goto exit;
     }
 
