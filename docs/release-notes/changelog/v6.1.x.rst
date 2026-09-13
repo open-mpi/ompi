@@ -8,6 +8,16 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
+  hand the procs of the job they connected to the PML as one group,
+  rather than leaving each to be wired individually the first time it
+  is sent to.  The count passed along with them had always been zero,
+  so none of them were handed over at all.  One consequence is
+  user-visible: a dynamic peer that a process has no network to reach
+  now fails the connect on that process, naming the peer, where before
+  the failure waited for a send to it and arrived as a crash in the
+  sending process rather than as an error.
+
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
   bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every

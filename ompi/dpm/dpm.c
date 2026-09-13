@@ -407,11 +407,20 @@ bcast_rportlen:
         int prn, nprn = 0;
         char *val;
         opal_process_name_t wildcard_rank;
+        /* The loop below empties ilist, so its size has to be taken
+         * here: it is both what the array must hold and what add_procs
+         * is told it holds. */
+        size_t nnew = opal_list_get_size(&ilist);
         i = 0;  /* start from the begining */
 
         /* convert the list of new procs to a proc_t array */
-        new_proc_list = (ompi_proc_t**)calloc(opal_list_get_size(&ilist),
-                                              sizeof(ompi_proc_t *));
+        new_proc_list = (ompi_proc_t**)calloc(nnew, sizeof(ompi_proc_t *));
+        if (NULL == new_proc_list) {
+            OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&rlist);
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
+        }
         /* Extract the modex info for the first proc on the ilist, and then
          * remove all processors in the same jobid from the list by getting
          * their connection information and moving them into the proc array.
@@ -483,7 +492,8 @@ bcast_rportlen:
         } while (!opal_list_is_empty(&ilist));
 
         /* call add_procs on the new ones */
-        rc = MCA_PML_CALL(add_procs(new_proc_list, opal_list_get_size(&ilist)));
+        assert(nnew == (size_t) i);
+        rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {
