@@ -303,6 +303,7 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     size_t size;
     int ret = 0;
     char *remote_pml;
+    char *key;
 
     /* if we are proc_name=OMPI_PROC_MY_NAME, then we can also assume success */
     if (0 == opal_compare_proc(ompi_proc_local()->super.proc_name, proc_name)) {
@@ -310,9 +311,14 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
                             "check:select: PML check not necessary on self");
         return OMPI_SUCCESS;
     }
-    OPAL_MODEX_RECV_STRING(ret,
-                           mca_base_component_to_string(&pml_base_component),
-                           &proc_name, (void**) &remote_pml, &size);
+    /* The macro expands its key argument twice, so building the key
+     * inline would allocate twice and leak both. */
+    key = mca_base_component_to_string(&pml_base_component);
+    if (NULL == key) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    OPAL_MODEX_RECV_STRING(ret, key, &proc_name, (void**) &remote_pml, &size);
+    free(key);
     if (PMIX_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for process %s not found",
