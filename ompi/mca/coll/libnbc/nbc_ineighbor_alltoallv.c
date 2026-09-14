@@ -90,10 +90,14 @@ static int nbc_neighbor_alltoallv_init(const void *sbuf, const int *scounts, con
       return res;
     }
 
-    /* simply loop over neighbors and post send/recv operations */
+    /* post the receives in the order that pairs duplicate edges as the
+     * standard requires, see NBC_Comm_neighbors_swap_recv_pairs() */
+    const bool swap_pairs = NBC_Comm_neighbors_swap_recv_pairs (comm);
+    assert (!swap_pairs || 0 == indegree % 2);
     for (int i = 0 ; i < indegree ; ++i) {
-      if (srcs[i] != MPI_PROC_NULL) {
-        res = NBC_Sched_recv ((char *) rbuf + rdispls[i] * rcvext, false, rcounts[i], rtype, srcs[i], schedule, false);
+      const int l = swap_pairs ? (i ^ 1) : i;
+      if (srcs[l] != MPI_PROC_NULL) {
+        res = NBC_Sched_recv ((char *) rbuf + rdispls[l] * rcvext, false, rcounts[l], rtype, srcs[l], schedule, false);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
           break;
         }
