@@ -287,9 +287,10 @@ OBJ_CLASS_INSTANCE(mca_btl_tcp_event_t, opal_list_item_t, mca_btl_tcp_event_cons
  *
  * The two ways an entry waits are counted apart because they end
  * differently. A busy endpoint may never free up, so attempts against one
- * are bounded and running out means giving up on the socket. The peer's
- * addresses, once asked for, always arrive or fail, so only a fetch that
- * does neither needs a bound.
+ * are bounded and running out means giving up on the socket. Something
+ * already in flight -- the peer's addresses being fetched, or a
+ * connection of our own being made -- always arrives or fails, so only
+ * one that does neither needs a bound.
  */
 struct mca_btl_tcp_pending_accept_t {
     opal_free_list_item_t super;
@@ -439,10 +440,11 @@ static int mca_btl_tcp_component_register(void)
                                    &mca_btl_tcp_component.tcp_arbitration_retries);
     mca_btl_tcp_param_register_int("settle_timeout",
                                    "Microseconds to hold an inbound connection while something "
-                                   "it waits on is still in flight, such as the peer's addresses "
-                                   "being fetched.  This is not contention and is not bounded by "
-                                   "the retries above -- the wait ends by itself when what it "
-                                   "waits on arrives or fails, so this only catches one that "
+                                   "it waits on is still in flight: the peer's addresses being "
+                                   "fetched, or a connection of our own to the same peer being "
+                                   "made.  Neither is contention and neither is bounded by the "
+                                   "retries above -- these waits end by themselves when what "
+                                   "they wait on arrives or fails, so this only catches one that "
                                    "does neither.  The default is generous because giving up "
                                    "early costs the peer its connection.  Zero holds nothing, "
                                    "dropping the connection and warning about it the moment it "
@@ -1703,12 +1705,14 @@ static bool mca_btl_tcp_pending_accept_hold(mca_btl_tcp_pending_accept_t *pendin
  * let go and a dial of our own takes its place, which is what the peer is
  * relying on.
  *
- * Waiting for the peer's addresses is a different wait and is budgeted
- * apart. Without them there is no telling which module's endpoint the
- * socket is for, and a count of offers is the wrong bound for it:
- * contention may never clear and so has to be given up on, while a fetch
- * always arrives or fails, so the only bound needed is against one that
- * does neither.
+ * Waiting for something already in flight is a different wait and is
+ * budgeted apart. Two things are waited on that way: the peer's addresses,
+ * without which there is no telling which endpoint the socket is for, and
+ * a connection of our own to the same peer, whose outcome decides whether
+ * this one is wanted. Neither is a count of offers the right bound for.
+ * Contention may never clear and so has to be given up on; something in
+ * flight always arrives or fails, so the only bound needed is against one
+ * that does neither.
  */
 static void mca_btl_tcp_component_arbitrate(int fd, short flags, void *context)
 {
@@ -1752,6 +1756,41 @@ static void mca_btl_tcp_component_arbitrate(int fd, short flags, void *context)
     }
 
     rc = mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr *) &pending->addr, pending->sd);
+    if (OPAL_ERR_IN_PROCESS == rc) {
+        /* Held, not refused: a connection of our own to this peer is still
+         * being made, and its outcome decides whether this one is wanted.
+         * Both answers come on their own -- it completes, or it dies and
+         * leaves the endpoint CLOSED.
+         *
+         * Holding costs one entry, and in the adopt phase one descriptor.
+         * Charging it to the contention budget instead would cap it at a
+         * few milliseconds, which is to act on the outcome before knowing
+         * it -- the guess the holding exists to avoid.
+         */
+        if (0 == pending->holds) {
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                "btl:tcp: holding the %s for %s until a connection of our own "
+                                "to it settles",
+                                dialling ? "dial owed" : "inbound connection",
+                                OPAL_NAME_PRINT(pending->name));
+        }
+        if (!mca_btl_tcp_pending_accept_hold(pending)) {
+            /* This long without landing or failing is no longer a
+             * connection being made. Tearing it down from here to force
+             * the question would reach into an endpoint's in-flight
+             * connection on a hunch, so report and let go instead. */
+            opal_show_help("help-mpi-btl-tcp.txt", "dropped pending connection", true,
+                           opal_process_info.nodename, getpid(), OPAL_NAME_PRINT(pending->name),
+                           dialling ? "a connection of our own to it neither completed nor "
+                                      "failed, so the one owed in place of the dropped socket "
+                                      "was never made"
+                                    : "a connection of our own to the same peer neither "
+                                      "completed nor failed, so which of the two to keep "
+                                      "never became clear");
+            mca_btl_tcp_pending_accept_return(pending);
+        }
+        return;
+    }
     if (OPAL_ERR_RESOURCE_BUSY == rc) {
         /* Not now: the endpoint is busy in its own send or recv path. Come
          * back rather than block here. Every entry carries its own timer,

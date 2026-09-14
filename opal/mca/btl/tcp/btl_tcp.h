@@ -156,8 +156,8 @@ struct mca_btl_tcp_component_t {
     /* Arbitration of inbound connections: how long and how often to come
      * back to an endpoint busy in its own send or recv path, and how many
      * peers' worth of entries to have ready before any arrive.
-     * tcp_settle_timeout bounds a different wait -- for the peer's
-     * addresses to reach us -- which is not contention and is budgeted
+     * tcp_settle_timeout bounds a different wait -- for something already
+     * in flight to arrive -- which is not contention and is budgeted
      * apart.
      */
     int tcp_pending_accept_peers;

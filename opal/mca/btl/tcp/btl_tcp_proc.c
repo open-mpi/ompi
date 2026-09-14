@@ -854,10 +854,13 @@ static int mca_btl_tcp_proc_place(mca_btl_base_endpoint_t *btl_endpoint, int sd)
  * our modules talks to, and the connection's source is what to compare
  * against it.
  *
- * The caller keeps the socket unless this returns OPAL_SUCCESS. A return
- * of OPAL_ERR_RESOURCE_BUSY means no more than "not now": the endpoint
- * this socket belongs to is busy in its own send or recv path, and the
- * caller should come back rather than give up on the connection.
+ * The caller keeps the socket unless this returns OPAL_SUCCESS. Two
+ * returns mean no more than "not now" and should be come back for rather
+ * than given up on: OPAL_ERR_RESOURCE_BUSY, the endpoint is busy in its
+ * own send or recv path, and OPAL_ERR_IN_PROCESS, a connection of our own
+ * to this peer is already being made and its outcome decides what is
+ * wanted here. Only the first may eventually be given up on -- contention
+ * may never clear, while a connection being made always resolves.
  *
  * A socket of -1 says the connection was let go of and what is being
  * placed is the dial owed in its stead: the same endpoint, chosen by the
@@ -907,10 +910,9 @@ int mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr,
      * than the peers dialled.
      *
      * One at a time is all that is required, not in order: an adoption
-     * that returns OPAL_ERR_RESOURCE_BUSY leaves the endpoint CLOSED and
-     * its socket to be offered again later, and the deferred one re-runs
-     * this whole scan when it comes back, landing on whatever is free
-     * then.
+     * that defers leaves its socket to be offered again later, and the
+     * deferred one re-runs this whole scan when it comes back, landing on
+     * whatever is free then rather than the slot it was refused by.
      */
     for (uint32_t i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
         mca_btl_tcp_module_t *tcp_btl = mca_btl_tcp_component.tcp_btls[i];
