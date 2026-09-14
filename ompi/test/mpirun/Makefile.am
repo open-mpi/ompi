@@ -89,6 +89,21 @@ tcp_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) \
         -n $(MPIRUN_NP) --map-by ppr:$(MPIRUN_NP):node \
         --mca pml ob1 --mca btl self,tcp
 
+# The same four oversubscribed ranks, but over TCP only and with several
+# links per interface.  Neither half is decoration.  A socket is offered
+# to an endpoint that may be busy in its own send or recv path, and the
+# accept path has to defer rather than block when it is -- so reaching
+# that requires traffic already in flight for the peer whose connection
+# is arriving.  More ranks than cores is what gets a rank descheduled
+# mid-send, and more than one link is what makes a second connection for
+# an already-busy peer arrive at all.  Every other run here either uses
+# shared memory, which has no accept path, or two ranks over TCP, which
+# wire up once at the start and are quiet from then on.
+TCP_LINKS = 4
+tcp_oversub_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) --oversubscribe \
+        -n $(OVERSUB_NP) --map-by ppr:$(OVERSUB_NP):node \
+        --mca pml ob1 --mca btl self,tcp --mca btl_tcp_links $(TCP_LINKS)
+
 # The modex settings have to be in the *MPI processes'* environment;
 # "mpirun --mca pmix_base_async_modex 1" does not reach them.
 #
@@ -213,6 +228,16 @@ check-mpirun:
 	    echo "=== wireup stress rma, direct modex, shared memory only ==="; \
 	    run env $(DIRECT_MODEX) \
 	        $(oversub_runner) --mca btl self,sm ./wireup_stress rma; \
+	    echo "=== wireup stress alltoall, tcp only, several links ==="; \
+	    run $(tcp_oversub_runner) ./wireup_stress alltoall p2p; \
+	    echo "=== wireup stress rma, tcp only, several links ==="; \
+	    run $(tcp_oversub_runner) ./wireup_stress rma; \
+	    echo "=== wireup stress alltoall, tcp only, several links, direct modex ==="; \
+	    run env $(DIRECT_MODEX) \
+	        $(tcp_oversub_runner) ./wireup_stress alltoall p2p; \
+	    echo "=== wireup stress alltoall, tcp only, several links, progress thread ==="; \
+	    run $(tcp_oversub_runner) --mca btl_tcp_progress_thread 1 \
+	        ./wireup_stress alltoall p2p; \
 	    $(MPICC) -g "$(srcdir)/session_first_touch.c" -o session_first_touch -lpthread; \
 	    echo "=== session first touch, direct modex, shared memory only ==="; \
 	    run env $(DIRECT_MODEX) \

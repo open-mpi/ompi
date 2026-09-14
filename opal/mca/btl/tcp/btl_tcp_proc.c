@@ -755,11 +755,19 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_peek(const opal_process_name_t *name)
 
 /*
  * Look for an existing TCP process instance based on the globally unique
- * process identifier.
+ * process identifier, building it from the peer's published addresses if
+ * this is the first we have heard of it.
+ *
+ * NULL is not one answer but two, and status is what tells them apart.
+ * OPAL_ERR_NOT_READY says the peer's addresses have not reached this
+ * process yet and asking has started the fetch, so a caller with
+ * somewhere to wait should look again rather than give up; every other
+ * code says no later look will do better.
  */
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name, int *status)
 {
     mca_btl_tcp_proc_t *proc = mca_btl_tcp_proc_peek(name);
+    int rc = OPAL_SUCCESS;
 
     if (OPAL_UNLIKELY(NULL == proc)) {
         opal_proc_t *opal_proc;
@@ -768,17 +776,20 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
 
         opal_proc = opal_proc_for_name(*name);
         if (NULL == opal_proc) {
-            return NULL;
+            rc = OPAL_ERR_NOT_FOUND;
+        } else {
+            /* The proc alone is what the caller needs. It carries the
+             * interface match table, which is what mca_btl_tcp_proc_accept()
+             * resolves the connection through, and that builds the one
+             * endpoint the connection is for rather than one per module.
+             */
+            proc = mca_btl_tcp_proc_create(opal_proc, &rc);
         }
-
-        /* The proc alone is what the caller needs. It carries the
-         * interface match table, which is what mca_btl_tcp_proc_accept()
-         * resolves the connection through, and that builds the one
-         * endpoint the connection is for rather than one per module.
-         */
-        proc = mca_btl_tcp_proc_create(opal_proc, NULL);
     }
 
+    if (NULL != status) {
+        *status = rc;
+    }
     return proc;
 }
 
@@ -823,11 +834,37 @@ static const char *mca_btl_tcp_proc_addr_str(const mca_btl_tcp_addr_t *proc_addr
 }
 
 /*
- * Give an inbound connection to the endpoint of the module that owns the
- * address the peer dialled, creating that endpoint if the peer needed it
- * before we did.
+ * Give the endpoint that was chosen the socket, or the dial standing in
+ * for one. Both reach the module's error callback on their failure paths,
+ * so both are called with proc_lock dropped and the endpoint retained.
  */
-void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr, int sd)
+static int mca_btl_tcp_proc_place(mca_btl_base_endpoint_t *btl_endpoint, int sd)
+{
+    if (0 > sd) {
+        return mca_btl_tcp_endpoint_dial(btl_endpoint);
+    }
+    return mca_btl_tcp_endpoint_adopt(btl_endpoint, sd);
+}
+
+/*
+ * Give an inbound connection to the endpoint of the module that owns the
+ * address the peer dialled from, creating that endpoint if the peer
+ * needed it before we did.  It is the peer's address, not ours, that
+ * names the module: the match table below holds the peer address each of
+ * our modules talks to, and the connection's source is what to compare
+ * against it.
+ *
+ * The caller keeps the socket unless this returns OPAL_SUCCESS. A return
+ * of OPAL_ERR_RESOURCE_BUSY means no more than "not now": the endpoint
+ * this socket belongs to is busy in its own send or recv path, and the
+ * caller should come back rather than give up on the connection.
+ *
+ * A socket of -1 says the connection was let go of and what is being
+ * placed is the dial owed in its stead: the same endpoint, chosen by the
+ * same address the peer would dial from again, dialled rather than given
+ * anything.
+ */
+int mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr, int sd)
 {
     mca_btl_base_endpoint_t *live_match = NULL;
     mca_btl_tcp_module_t *free_slot = NULL;
@@ -850,6 +887,30 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr
      * comes first, so that a side already wired behaves exactly as it did
      * before; then a module with no endpoint yet; and only when every
      * matching slot is live does it come down to the arbitration below.
+     *
+     * Picking the endpoint is this lock's business; giving it the socket
+     * is not. Adopting reaches the module's error callback on its failure
+     * paths, and that callback may come back down into del_procs, which
+     * wants this same lock -- so the endpoint is retained, proc_lock is
+     * dropped, and only then is the socket offered.
+     *
+     * That leaves the choice above unserialized by this lock, since the
+     * state does not leave CLOSED until the adoption after the unlock.
+     * What keeps it safe is the single caller: the arbitration timer on
+     * mca_btl_tcp_event_base places one socket before the next is looked
+     * at. That is a real dependency, not an incidental one. A second
+     * caller, or arbitration spread over more than one base, would let two
+     * sockets pick the same slot of a btl_tcp_links pool -- the second
+     * declined against the first and closed, the module whose slot it
+     * should have taken left waiting for a connection that no longer
+     * exists, and nothing to report it but a job running with fewer links
+     * than the peers dialled.
+     *
+     * One at a time is all that is required, not in order: an adoption
+     * that returns OPAL_ERR_RESOURCE_BUSY leaves the endpoint CLOSED and
+     * its socket to be offered again later, and the deferred one re-runs
+     * this whole scan when it comes back, landing on whatever is free
+     * then.
      */
     for (uint32_t i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
         mca_btl_tcp_module_t *tcp_btl = mca_btl_tcp_component.tcp_btls[i];
@@ -886,12 +947,11 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr
             continue;
         }
 
-        /* Set state to CONNECTING to ensure that subsequent connections do not attempt to re-use
-         * endpoint in the num_links > 1 case*/
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
-        mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);
+        OBJ_RETAIN(btl_endpoint);
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-        return;
+        rc = mca_btl_tcp_proc_place(btl_endpoint, sd);
+        OBJ_RELEASE(btl_endpoint);
+        return rc;
     }
 
     /* An endpoint the peer asked for before we had any use for it. The
@@ -900,25 +960,34 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr
     if (NULL != free_slot) {
         mca_btl_base_endpoint_t *btl_endpoint = mca_btl_tcp_proc_endpoint(btl_proc, free_slot, &rc);
         if (NULL != btl_endpoint) {
-            btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
-            mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);
+            OBJ_RETAIN(btl_endpoint);
             OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-            return;
+            rc = mca_btl_tcp_proc_place(btl_endpoint, sd);
+            OBJ_RELEASE(btl_endpoint);
+            return rc;
         }
     }
 
     /* In this case the connection was inbound to an address exported, but was not in a CLOSED
-     * state. mca_btl_tcp_endpoint_accept() has logic to deal with the race condition that has
+     * state. mca_btl_tcp_endpoint_adopt() has logic to deal with the race condition that has
      * likely caused this scenario, so call it here.*/
     if (NULL != live_match) {
-        mca_btl_tcp_endpoint_accept(live_match, addr, sd);
+        OBJ_RETAIN(live_match);
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-        return;
+        rc = mca_btl_tcp_proc_place(live_match, sd);
+        OBJ_RELEASE(live_match);
+        return rc;
     }
 
-    /* No further use of this socket. Close it */
-    CLOSE_THE_SOCKET(sd);
-    {
+    /* No module reaches this peer at the address it dialled, so there is
+     * no endpoint this socket could belong to. The caller closes it.
+     *
+     * Only said while there is a socket: in the dial phase this message
+     * would describe an accepted connection being dropped and name the
+     * address it came from, neither of which exists by then. The caller
+     * knows what a dial it cannot place costs and says so itself.
+     */
+    if (0 <= sd) {
         char *addr_str = NULL, *tmp;
         int listed = 0;
 
@@ -952,6 +1021,7 @@ void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr
         }
     }
     OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+    return OPAL_ERR_NOT_AVAILABLE;
 }
 
 /*

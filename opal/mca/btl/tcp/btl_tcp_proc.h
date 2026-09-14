@@ -67,7 +67,7 @@ typedef struct mca_btl_tcp_proc_t mca_btl_tcp_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_proc_t);
 
 mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status);
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name);
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name, int *status);
 mca_btl_tcp_proc_t *mca_btl_tcp_proc_peek(const opal_process_name_t *name);
 mca_btl_base_endpoint_t *mca_btl_tcp_proc_find_endpoint(mca_btl_tcp_proc_t *,
                                                         mca_btl_tcp_module_t *);
@@ -75,7 +75,7 @@ mca_btl_base_endpoint_t *mca_btl_tcp_proc_endpoint(mca_btl_tcp_proc_t *, mca_btl
                                                    int *status);
 int mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);
 int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);
-void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *, struct sockaddr *, int);
+int mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *, struct sockaddr *, int);
 bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t *, struct sockaddr_storage *);
 
 END_C_DECLS
