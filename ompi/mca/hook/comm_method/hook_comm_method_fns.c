@@ -624,7 +624,12 @@ ompi_report_comm_methods(int called_from_location)
                         method[i * nleaderranks + k] = setting;
                     }
                 }
-                if (fscanf(fp, "\n") != 0) {
+                // CodeQL scanning is a little simplistic and gets upset about
+                // just checking against != 0, so break out the two case and
+                // keep the code scanners happy.  Finding either an EOF or a
+                // newline match is an indicator that we're done.
+                ret = fscanf(fp, "\n");
+                if (ret > 0 || ret == EOF) {
                     break;
                 }
             }
