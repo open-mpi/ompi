@@ -490,6 +490,13 @@ static bool mca_btl_tcp_endpoint_abandoned(int sd)
  * Runs on the event base and must never block: an endpoint busy in its
  * own send or recv path is OPAL_ERR_RESOURCE_BUSY, to be come back for
  * rather than stalled behind.
+ *
+ * OPAL_ERR_IN_PROCESS is the other premature return, kept distinct from
+ * busy because it ends differently: a dial of our own is in flight and
+ * may yet win or die. The caller keeps the socket for both, but only busy
+ * may eventually be given up on -- contention might never clear, while a
+ * dial always resolves, so a caller that treats the two alike closes the
+ * socket while the outcome is still unknown.
  */
 int mca_btl_tcp_endpoint_adopt(mca_btl_base_endpoint_t *btl_endpoint, int sd)
 {
@@ -571,6 +578,22 @@ int mca_btl_tcp_endpoint_adopt(mca_btl_base_endpoint_t *btl_endpoint, int sd)
 
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "adopted");
         rc = OPAL_SUCCESS;
+    } else if (MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state) {
+        /* A "not yet", not a "no": a dial of our own has not landed.
+         * Declining would close this socket on the strength of a
+         * connection that is still hypothetical, and if ours turns out to
+         * be dead the peer is left waiting on a socket we threw away, with
+         * nothing to make it dial again.
+         *
+         * So keep it and be asked again. Either our dial lands, the peer
+         * closes this one as the duplicate it then is, and the next offer
+         * retires it through the abandoned() path above; or our dial dies,
+         * the endpoint falls back to CLOSED, and the next offer takes this
+         * socket. Both are reached without guessing, at the cost of
+         * holding one descriptor for a tick or two.
+         */
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "held, our dial is out [adopt]");
+        rc = OPAL_ERR_IN_PROCESS;
     }
 
 unlock_and_return:
@@ -588,9 +611,12 @@ unlock_and_return:
  * attempt and waits for ours, keeping whatever it had queued. That
  * reading is what makes the drop safe, and this is what makes it true.
  *
- * Only a CLOSED endpoint is dialled. Any other state already has a
- * connection up or on its way, which is all the peer was waiting for, so
- * there is nothing owed and nothing to do.
+ * A CLOSED endpoint is dialled and a CONNECTED one is already everything
+ * the peer was waiting for, so either settles the debt. In between does
+ * not: a connection on its way may still die, and settling against it is
+ * the same guess mca_btl_tcp_endpoint_adopt() refuses to make about its
+ * own dial. OPAL_ERR_IN_PROCESS says to look again, which costs an entry
+ * and no descriptor.
  *
  * Takes only the send lock, and only to try: the caller is on the event
  * base. OPAL_ERR_RESOURCE_BUSY again means come back.
@@ -612,6 +638,9 @@ int mca_btl_tcp_endpoint_dial(mca_btl_base_endpoint_t *btl_endpoint)
     if (MCA_BTL_TCP_CLOSED == btl_endpoint->endpoint_state) {
         MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "dialling back [dial]");
         rc = mca_btl_tcp_endpoint_start_connect(btl_endpoint);
+    } else if (MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state) {
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "dial owed, one is out [dial]");
+        rc = OPAL_ERR_IN_PROCESS;
     }
     OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
     return rc;
