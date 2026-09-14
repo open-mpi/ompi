@@ -116,6 +116,16 @@ struct mca_btl_tcp_component_t {
     opal_mutex_t tcp_lock;       /**< lock for accessing module state */
     opal_list_t tcp_events;
 
+    /* Inbound connections that have named themselves and are waiting for
+     * an endpoint to take them. They queue here because adopting one needs
+     * the endpoint's locks, which the listener must not take. The list is
+     * what component close drains; the free list is where entries come
+     * from.
+     */
+    opal_list_t tcp_pending_accepts;
+    opal_mutex_t tcp_pending_accepts_lock;
+    opal_free_list_t tcp_pending_accepts_fl;
+
     opal_event_t tcp_recv_event;    /**< recv event for IPv4 listen socket */
     int tcp_listen_sd;              /**< IPv4 listen socket for incoming connection requests */
     unsigned short tcp_listen_port; /**< IPv4 listen port */
@@ -142,6 +152,18 @@ struct mca_btl_tcp_component_t {
     int tcp_recv_timeout;
     int tcp_handshake_timeout;
     int tcp_connect_mode; /* MCA_BTL_TCP_CONNECT_* */
+
+    /* Arbitration of inbound connections: how long and how often to come
+     * back to an endpoint busy in its own send or recv path, and how many
+     * peers' worth of entries to have ready before any arrive.
+     * tcp_settle_timeout bounds a different wait -- for the peer's
+     * addresses to reach us -- which is not contention and is budgeted
+     * apart.
+     */
+    int tcp_pending_accept_peers;
+    int tcp_arbitration_retry;
+    int tcp_arbitration_retries;
+    int tcp_settle_timeout;
 
     /* free list of fragment descriptors */
     opal_free_list_t tcp_frag_eager;
