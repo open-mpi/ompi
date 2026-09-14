@@ -148,22 +148,32 @@ AC_DEFUN([OMPI_FORTRAN_F08_GET_HANDLE_ALIGNMENT],[
     AC_CACHE_CHECK([alignment of Fortran $1], type_var,
         [AC_LANG_PUSH([Fortran])
          AC_LINK_IFELSE([AC_LANG_SOURCE([[module alignment_mod
+use iso_c_binding, only: C_LOC, C_INTPTR_T
 type, BIND(C) :: test_mpi_handle
   integer :: MPI_VAL
 end type test_mpi_handle
-type(test_mpi_handle) :: t1
-type(test_mpi_handle) :: t2
+type(test_mpi_handle), TARGET :: t1
+type(test_mpi_handle), TARGET :: t2
 end module
 
 program falignment
    use alignment_mod
+   use iso_c_binding, only: C_LOC, C_INTPTR_T
    OPEN(UNIT=10, FILE="conftestval")
-   if (LOC(t1) > LOC(t2)) then
-      write (10,'(I5)') LOC(t1)-LOC(t2)
+   if (CLOC(t1) > CLOC(t2)) then
+      write (10,'(I5)') CLOC(t1)-CLOC(t2)
    else
-      write (10,'(I5)') LOC(t2)-LOC(t1)
+      write (10,'(I5)') CLOC(t2)-CLOC(t1)
    endif
    CLOSE(10)
+
+contains
+
+   function CLOC(X) result(res)
+      type(test_mpi_handle), INTENT(IN), TARGET :: X
+      INTEGER(C_INTPTR_T) :: res
+      res = transfer(C_LOC(X), res)
+   end function CLOC
 
 end program]])],
                           [AS_IF([test "$cross_compiling" = "yes"],
@@ -189,16 +199,26 @@ AC_DEFUN([OMPI_FORTRAN_GET_COMMON_ALIGNMENT],[
           [AC_CACHE_CHECK([alignment of Fortran common], ompi_cv_fortran_common_alignment,
               [AC_LANG_PUSH([Fortran])
                AC_LINK_IFELSE([AC_LANG_SOURCE([[ program falignment
-   CHARACTER A,B
+   use iso_c_binding, only: C_LOC, C_INTPTR_T
+   implicit none
+   CHARACTER, TARGET :: A, B
    COMMON /AA/A
    COMMON /BB/B
    OPEN(UNIT=10, FILE="conftestval")
-   if (LOC(A) > LOC(B)) then
-      write (10,'(I5)') LOC(A)-LOC(B)
+   if (CLOC(A) > CLOC(B)) then
+      write (10,'(I5)') CLOC(A)-CLOC(B)
    else
-      write (10,'(I5)') LOC(B)-LOC(A)
+      write (10,'(I5)') CLOC(B)-CLOC(A)
    endif
    CLOSE(10)
+
+   contains
+
+      function CLOC(X) result(res)
+         CHARACTER, INTENT(IN), TARGET :: X
+         INTEGER(C_INTPTR_T) :: res
+         res = transfer(C_LOC(X), res)
+      end function CLOC
 
 end program]])],
                           [AS_IF([test "$cross_compiling" = "yes"],
