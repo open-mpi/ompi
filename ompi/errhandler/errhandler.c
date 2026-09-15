@@ -19,6 +19,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2026 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -548,6 +549,19 @@ void ompi_errhandler_callback(size_t refid, pmix_status_t status,
 {
     int rc;
     size_t i;
+
+    /* The report crosses from the PMIx thread to the MPI progress engine,
+     * and by the time it arrives that engine may be gone: this handler is
+     * deregistered during instance finalize, but a notification already in
+     * the local event chain still lands here, and the sync event base is
+     * freed later still.  opal_event_set() would then assign no base and
+     * opal_event_active() would drop the event with nothing but a libevent
+     * warning, leaking it.  Decline it instead, so the default action
+     * stands and the report is not lost in silence. */
+    if (NULL == opal_sync_event_base) {
+        goto error;
+    }
+
     /* an error has been found, report to the MPI layer and let it take
      * further action. */
     /* transition this from the RTE thread to the MPI progress engine */

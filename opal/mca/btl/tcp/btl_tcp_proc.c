@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -467,18 +468,67 @@ cleanup:
  * datastructure.
  */
 
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status)
 {
     mca_btl_tcp_proc_t *btl_proc;
     int rc, local_proc_is_left;
     mca_btl_tcp_modex_addr_t *remote_addrs = NULL;
     size_t size;
 
+    if (NULL != status) {
+        *status = OPAL_SUCCESS;
+    }
+
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
+    rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, proc->proc_name,
+                                   (void **) &btl_proc);
+    OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+    if (OPAL_SUCCESS == rc) {
+        return btl_proc;
+    }
+
+    /* Fetched with no lock held. This is a blocking PMIx_Get with no
+     * timeout of its own: for a peer whose data has not been published
+     * yet it waits for the exchange, and it is reached from the
+     * listener's event callback, where the guid came off the wire. Under
+     * tcp_lock that wait would be the whole component's, including every
+     * other module's wire-up and teardown. Two threads racing here both
+     * fetch, which costs a duplicated read of data that does not change
+     * and is resolved by the recheck below.
+     */
+    OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version, &proc->proc_name,
+                    (uint8_t **) &remote_addrs, &size);
+    if (OPAL_SUCCESS != rc) {
+        if (OPAL_ERR_NOT_FOUND != rc && OPAL_ERR_NOT_READY != rc) {
+            BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
+        }
+        if (NULL != status) {
+            *status = rc;
+        }
+        return NULL;
+    }
+
+    if (0 != (size % sizeof(mca_btl_tcp_modex_addr_t))) {
+        BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n", (unsigned long) size,
+                   (unsigned long) sizeof(mca_btl_tcp_modex_addr_t)));
+        free(remote_addrs);
+        if (NULL != status) {
+            *status = OPAL_ERROR;
+        }
+        return NULL;
+    }
+
+    OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
+
+    /* Recheck: the fetch above ran unlocked, so another thread may have
+     * published this proc in the meantime. Theirs is as good as ours and
+     * already visible to everyone, so keep it and drop what we fetched.
+     */
     rc = opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, proc->proc_name,
                                    (void **) &btl_proc);
     if (OPAL_SUCCESS == rc) {
         OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+        free(remote_addrs);
         return btl_proc;
     }
 
@@ -494,23 +544,6 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc)
      * unlock the mutex.
      */
     OBJ_RETAIN(proc);
-
-    /* lookup tcp parameters exported by this proc */
-    OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version, &proc->proc_name,
-                    (uint8_t **) &remote_addrs, &size);
-    if (OPAL_SUCCESS != rc) {
-        if (OPAL_ERR_NOT_FOUND != rc) {
-            BTL_ERROR(("opal_modex_recv: failed with return value=%d", rc));
-        }
-        goto cleanup;
-    }
-
-    if (0 != (size % sizeof(mca_btl_tcp_modex_addr_t))) {
-        BTL_ERROR(("opal_modex_recv: invalid size %lu: btl-size: %lu\n", (unsigned long) size,
-                   (unsigned long) sizeof(mca_btl_tcp_modex_addr_t)));
-        rc = OPAL_ERROR;
-        goto cleanup;
-    }
 
     btl_proc->proc_addr_count = size / sizeof(mca_btl_tcp_modex_addr_t);
     btl_proc->proc_addrs = malloc(btl_proc->proc_addr_count * sizeof(mca_btl_tcp_addr_t));
@@ -566,6 +599,9 @@ cleanup:
 
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
 
+    if (NULL != status) {
+        *status = rc;
+    }
     return btl_proc;
 }
 
@@ -613,6 +649,66 @@ out:
 }
 
 /*
+ * This module's endpoint for a proc, or NULL if it has none yet. Must be
+ * called with the lock on the process already held.
+ */
+mca_btl_base_endpoint_t *mca_btl_tcp_proc_find_endpoint(mca_btl_tcp_proc_t *btl_proc,
+                                                        mca_btl_tcp_module_t *tcp_btl)
+{
+    for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
+        if (btl_proc->proc_endpoints[i]->endpoint_btl == tcp_btl) {
+            return btl_proc->proc_endpoints[i];
+        }
+    }
+    return NULL;
+}
+
+/*
+ * This module's endpoint for a proc, created if this is the first need
+ * for it. Note that this routine must be called with the lock on the
+ * process already held, and held across the whole call: an endpoint is
+ * now created by either of two triggers -- a local send, or a connection
+ * the peer initiated -- and a find followed by a separate create would
+ * let the two give one (proc, module) pair two endpoints.
+ *
+ * Reachability is the match table's answer, not the endpoint list's: a
+ * module with no matched address cannot reach this peer, which is final,
+ * and mca_btl_tcp_proc_insert() reports it.
+ */
+mca_btl_base_endpoint_t *mca_btl_tcp_proc_endpoint(mca_btl_tcp_proc_t *btl_proc,
+                                                   mca_btl_tcp_module_t *tcp_btl, int *status)
+{
+    mca_btl_base_endpoint_t *btl_endpoint = mca_btl_tcp_proc_find_endpoint(btl_proc, tcp_btl);
+    int rc;
+
+    if (NULL != btl_endpoint) {
+        *status = OPAL_SUCCESS;
+        return btl_endpoint;
+    }
+
+    btl_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
+    if (NULL == btl_endpoint) {
+        *status = OPAL_ERR_OUT_OF_RESOURCE;
+        return NULL;
+    }
+    btl_endpoint->endpoint_btl = tcp_btl;
+
+    rc = mca_btl_tcp_proc_insert(btl_proc, btl_endpoint);
+    if (OPAL_SUCCESS != rc) {
+        OBJ_RELEASE(btl_endpoint);
+        *status = rc;
+        return NULL;
+    }
+
+    OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
+    opal_list_append(&tcp_btl->tcp_endpoints, (opal_list_item_t *) btl_endpoint);
+    OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
+
+    *status = OPAL_SUCCESS;
+    return btl_endpoint;
+}
+
+/*
  * Remove an endpoint from the proc array and indicate the address is
  * no longer in use.
  */
@@ -641,162 +737,293 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t *btl_proc, mca_btl_base_endpoint_
 }
 
 /*
- * Look for an existing TCP process instance based on the globally unique
- * process identifier.
+ * The TCP process instance for a peer if we already have one, without
+ * building it. Unlike mca_btl_tcp_proc_lookup(), this asks no question
+ * of the modex, so it is the right call for a caller that only wants to
+ * act on a peer it has already talked to.
  */
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_peek(const opal_process_name_t *name)
 {
     mca_btl_tcp_proc_t *proc = NULL;
 
     OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
-    opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, *name, (void **) &proc);
+    (void) opal_proc_table_get_value(&mca_btl_tcp_component.tcp_procs, *name, (void **) &proc);
     OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+
+    return proc;
+}
+
+/*
+ * Look for an existing TCP process instance based on the globally unique
+ * process identifier, building it from the peer's published addresses if
+ * this is the first we have heard of it.
+ *
+ * NULL is not one answer but two, and status is what tells them apart.
+ * OPAL_ERR_NOT_READY says the peer's addresses have not reached this
+ * process yet and asking has started the fetch, so a caller with
+ * somewhere to wait should look again rather than give up; every other
+ * code says no later look will do better.
+ */
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name, int *status)
+{
+    mca_btl_tcp_proc_t *proc = mca_btl_tcp_proc_peek(name);
+    int rc = OPAL_SUCCESS;
+
     if (OPAL_UNLIKELY(NULL == proc)) {
-        mca_btl_base_endpoint_t *endpoint;
         opal_proc_t *opal_proc;
 
         BTL_VERBOSE(("adding tcp proc for peer {%s}", OPAL_NAME_PRINT(*name)));
 
         opal_proc = opal_proc_for_name(*name);
         if (NULL == opal_proc) {
-            return NULL;
-        }
-
-        /* try adding this proc to each btl until */
-        for (uint32_t i = 0; i < mca_btl_tcp_component.tcp_num_btls; ++i) {
-            endpoint = NULL;
-            (void) mca_btl_tcp_add_procs(&mca_btl_tcp_component.tcp_btls[i]->super, 1, &opal_proc,
-                                         &endpoint, NULL);
-            if (NULL != endpoint && NULL == proc) {
-                /* construct all the endpoints and get the proc */
-                proc = endpoint->endpoint_proc;
-            }
+            rc = OPAL_ERR_NOT_FOUND;
+        } else {
+            /* The proc alone is what the caller needs. It carries the
+             * interface match table, which is what mca_btl_tcp_proc_accept()
+             * resolves the connection through, and that builds the one
+             * endpoint the connection is for rather than one per module.
+             */
+            proc = mca_btl_tcp_proc_create(opal_proc, &rc);
         }
     }
 
+    if (NULL != status) {
+        *status = rc;
+    }
     return proc;
 }
 
 /*
- * loop through all available BTLs for one matching the source address
- * of the request.
+ * Does an address this peer published name the source of an inbound
+ * connection?
  */
-void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr, int sd)
+static bool mca_btl_tcp_proc_addr_is_source(const mca_btl_tcp_addr_t *proc_addr,
+                                            const struct sockaddr *addr)
 {
-    OPAL_THREAD_LOCK(&btl_proc->proc_lock);
-    int found_match = 0;
-    mca_btl_base_endpoint_t *match_btl_endpoint;
+    if (proc_addr->addr_family != addr->sa_family) {
+        return false;
+    }
+    switch (addr->sa_family) {
+    case AF_INET:
+        return 0 == memcmp(&proc_addr->addr_union.addr_inet,
+                           &((const struct sockaddr_in *) addr)->sin_addr,
+                           sizeof(struct in_addr));
+#if OPAL_ENABLE_IPV6
+    case AF_INET6:
+        return 0 == memcmp(&proc_addr->addr_union.addr_inet6,
+                           &((const struct sockaddr_in6 *) addr)->sin6_addr,
+                           sizeof(struct in6_addr));
+#endif
+    default:
+        return false;
+    }
+}
 
-    for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
-        mca_btl_base_endpoint_t *btl_endpoint = btl_proc->proc_endpoints[i];
-        /* We are not here to make a decision about what is good socket
-         * and what is not. We simply check that this socket fit the endpoint
-         * end we prepare for the real decision function mca_btl_tcp_endpoint_accept. */
-        if (btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
+/*
+ * Printable form of a peer address, into a buffer the caller owns so
+ * that more than one can appear in a single message.
+ */
+static const char *mca_btl_tcp_proc_addr_str(const mca_btl_tcp_addr_t *proc_addr, char *buf,
+                                             size_t buflen)
+{
+    if (NULL
+        == inet_ntop(proc_addr->addr_family, (const void *) &proc_addr->addr_union, buf, buflen)) {
+        return "UNKNOWN";
+    }
+    return buf;
+}
+
+/*
+ * Give the endpoint that was chosen the socket, or the dial standing in
+ * for one. Both reach the module's error callback on their failure paths,
+ * so both are called with proc_lock dropped and the endpoint retained.
+ */
+static int mca_btl_tcp_proc_place(mca_btl_base_endpoint_t *btl_endpoint, int sd)
+{
+    if (0 > sd) {
+        return mca_btl_tcp_endpoint_dial(btl_endpoint);
+    }
+    return mca_btl_tcp_endpoint_adopt(btl_endpoint, sd);
+}
+
+/*
+ * Give an inbound connection to the endpoint of the module that owns the
+ * address the peer dialled from, creating that endpoint if the peer
+ * needed it before we did.  It is the peer's address, not ours, that
+ * names the module: the match table below holds the peer address each of
+ * our modules talks to, and the connection's source is what to compare
+ * against it.
+ *
+ * The caller keeps the socket unless this returns OPAL_SUCCESS. Two
+ * returns mean no more than "not now" and should be come back for rather
+ * than given up on: OPAL_ERR_RESOURCE_BUSY, the endpoint is busy in its
+ * own send or recv path, and OPAL_ERR_IN_PROCESS, a connection of our own
+ * to this peer is already being made and its outcome decides what is
+ * wanted here. Only the first may eventually be given up on -- contention
+ * may never clear, while a connection being made always resolves.
+ *
+ * A socket of -1 says the connection was let go of and what is being
+ * placed is the dial owed in its stead: the same endpoint, chosen by the
+ * same address the peer would dial from again, dialled rather than given
+ * anything.
+ */
+int mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *btl_proc, struct sockaddr *addr, int sd)
+{
+    mca_btl_base_endpoint_t *live_match = NULL;
+    mca_btl_tcp_module_t *free_slot = NULL;
+    char ip[128];
+    int rc;
+
+    OPAL_THREAD_LOCK(&btl_proc->proc_lock);
+
+    /* The interface match table, not the endpoint list, is what says
+     * which module an inbound socket belongs to. The table is filled
+     * before the proc is published and never changes afterwards, so it is
+     * complete here; the endpoint list fills in one module at a time, and
+     * with a lazy wire-up may never fill at all. A peer dialling a module
+     * whose endpoint did not exist yet is what made this path drop a
+     * perfectly good connection -- see #3035.
+     *
+     * btl_tcp_links > 1 puts several modules on one interface, so several
+     * of them match the same peer address and form a pool that the socket
+     * may take any free slot of. An endpoint that exists but is closed
+     * comes first, so that a side already wired behaves exactly as it did
+     * before; then a module with no endpoint yet; and only when every
+     * matching slot is live does it come down to the arbitration below.
+     *
+     * Picking the endpoint is this lock's business; giving it the socket
+     * is not. Adopting reaches the module's error callback on its failure
+     * paths, and that callback may come back down into del_procs, which
+     * wants this same lock -- so the endpoint is retained, proc_lock is
+     * dropped, and only then is the socket offered.
+     *
+     * That leaves the choice above unserialized by this lock, since the
+     * state does not leave CLOSED until the adoption after the unlock.
+     * What keeps it safe is the single caller: the arbitration timer on
+     * mca_btl_tcp_event_base places one socket before the next is looked
+     * at. That is a real dependency, not an incidental one. A second
+     * caller, or arbitration spread over more than one base, would let two
+     * sockets pick the same slot of a btl_tcp_links pool -- the second
+     * declined against the first and closed, the module whose slot it
+     * should have taken left waiting for a connection that no longer
+     * exists, and nothing to report it but a job running with fewer links
+     * than the peers dialled.
+     *
+     * One at a time is all that is required, not in order: an adoption
+     * that defers leaves its socket to be offered again later, and the
+     * deferred one re-runs this whole scan when it comes back, landing on
+     * whatever is free then rather than the slot it was refused by.
+     */
+    for (uint32_t i = 0; i < mca_btl_tcp_component.tcp_num_btls; i++) {
+        mca_btl_tcp_module_t *tcp_btl = mca_btl_tcp_component.tcp_btls[i];
+        mca_btl_base_endpoint_t *btl_endpoint;
+        mca_btl_tcp_addr_t *proc_addr;
+
+        rc = opal_hash_table_get_value_uint32(&btl_proc->btl_index_to_endpoint, tcp_btl->btl_index,
+                                              (void **) &proc_addr);
+        if (OPAL_SUCCESS != rc) {
+            continue; /* this module does not reach the peer at all */
+        }
+        if (!mca_btl_tcp_proc_addr_is_source(proc_addr, addr)) {
+            opal_output_verbose(20, opal_btl_base_framework.framework_output,
+                                "btl: tcp: Match incoming connection from %s %s with locally "
+                                "known IP %s failed (btl %d/%d)!\n",
+                                OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
+                                opal_net_get_hostname(addr),
+                                mca_btl_tcp_proc_addr_str(proc_addr, ip, sizeof(ip)), (int) i,
+                                (int) mca_btl_tcp_component.tcp_num_btls);
             continue;
         }
-        switch (addr->sa_family) {
-        case AF_INET:
-            if (memcmp(&btl_endpoint->endpoint_addr->addr_union.addr_inet,
-                       &(((struct sockaddr_in *) addr)->sin_addr), sizeof(struct in_addr))) {
-                char tmp[2][16];
-                opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                                    "btl: tcp: Match incoming connection from %s %s with locally "
-                                    "known IP %s failed (iface %d/%d)!\n",
-                                    OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
-                                    inet_ntop(AF_INET,
-                                              (void *) &((struct sockaddr_in *) addr)->sin_addr,
-                                              tmp[0], 16),
-                                    inet_ntop(AF_INET,
-                                              (void *) (struct in_addr *) &btl_endpoint
-                                                  ->endpoint_addr->addr_union.addr_inet,
-                                              tmp[1], 16),
-                                    (int) i, (int) btl_proc->proc_endpoint_count);
-                continue;
-            } else if (btl_endpoint->endpoint_state != MCA_BTL_TCP_CLOSED) {
-                found_match = 1;
-                match_btl_endpoint = btl_endpoint;
-                continue;
+
+        btl_endpoint = mca_btl_tcp_proc_find_endpoint(btl_proc, tcp_btl);
+        if (NULL == btl_endpoint) {
+            if (NULL == free_slot) {
+                free_slot = tcp_btl;
             }
-            break;
-#if OPAL_ENABLE_IPV6
-        case AF_INET6:
-            if (memcmp(&btl_endpoint->endpoint_addr->addr_union.addr_inet,
-                       &(((struct sockaddr_in6 *) addr)->sin6_addr), sizeof(struct in6_addr))) {
-                char tmp[2][INET6_ADDRSTRLEN];
-                opal_output_verbose(20, opal_btl_base_framework.framework_output,
-                                    "btl: tcp: Match incoming connection from %s %s with locally "
-                                    "known IP %s failed (iface %d/%d)!\n",
-                                    OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
-                                    inet_ntop(AF_INET6,
-                                              (void *) &((struct sockaddr_in6 *) addr)->sin6_addr,
-                                              tmp[0], INET6_ADDRSTRLEN),
-                                    inet_ntop(AF_INET6,
-                                              (void *) (struct in6_addr *) &btl_endpoint
-                                                  ->endpoint_addr->addr_union.addr_inet,
-                                              tmp[1], INET6_ADDRSTRLEN),
-                                    (int) i, (int) btl_proc->proc_endpoint_count);
-                continue;
-            } else if (btl_endpoint->endpoint_state != MCA_BTL_TCP_CLOSED) {
-                found_match = 1;
-                match_btl_endpoint = btl_endpoint;
-                continue;
+            continue;
+        }
+        if (MCA_BTL_TCP_CLOSED != btl_endpoint->endpoint_state) {
+            if (NULL == live_match) {
+                live_match = btl_endpoint;
             }
-            break;
-#endif
-        default:;
+            continue;
         }
 
-        /* Set state to CONNECTING to ensure that subsequent connections do not attempt to re-use
-         * endpoint in the num_links > 1 case*/
-        btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
-        (void) mca_btl_tcp_endpoint_accept(btl_endpoint, addr, sd);
+        OBJ_RETAIN(btl_endpoint);
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-        return;
+        rc = mca_btl_tcp_proc_place(btl_endpoint, sd);
+        OBJ_RELEASE(btl_endpoint);
+        return rc;
     }
-    /* In this case the connection was inbound to an address exported, but was not in a CLOSED
-     * state. mca_btl_tcp_endpoint_accept() has logic to deal with the race condition that has
-     * likely caused this scenario, so call it here.*/
-    if (found_match) {
-        (void) mca_btl_tcp_endpoint_accept(match_btl_endpoint, addr, sd);
-        OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-        return;
-    }
-    /* No further use of this socket. Close it */
-    CLOSE_THE_SOCKET(sd);
-    {
-        char *addr_str = NULL, *tmp;
-        char ip[128];
-        ip[sizeof(ip) - 1] = '\0';
 
-        for (size_t i = 0; i < btl_proc->proc_endpoint_count; i++) {
-            mca_btl_base_endpoint_t *btl_endpoint = btl_proc->proc_endpoints[i];
-            if (btl_endpoint->endpoint_addr->addr_family != addr->sa_family) {
+    /* An endpoint the peer asked for before we had any use for it. The
+     * local side is unchanged: it still builds only what it sends on.
+     */
+    if (NULL != free_slot) {
+        mca_btl_base_endpoint_t *btl_endpoint = mca_btl_tcp_proc_endpoint(btl_proc, free_slot, &rc);
+        if (NULL != btl_endpoint) {
+            OBJ_RETAIN(btl_endpoint);
+            OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+            rc = mca_btl_tcp_proc_place(btl_endpoint, sd);
+            OBJ_RELEASE(btl_endpoint);
+            return rc;
+        }
+    }
+
+    /* In this case the connection was inbound to an address exported, but was not in a CLOSED
+     * state. mca_btl_tcp_endpoint_adopt() has logic to deal with the race condition that has
+     * likely caused this scenario, so call it here.*/
+    if (NULL != live_match) {
+        OBJ_RETAIN(live_match);
+        OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+        rc = mca_btl_tcp_proc_place(live_match, sd);
+        OBJ_RELEASE(live_match);
+        return rc;
+    }
+
+    /* No module reaches this peer at the address it dialled, so there is
+     * no endpoint this socket could belong to. The caller closes it.
+     *
+     * Only said while there is a socket: in the dial phase this message
+     * would describe an accepted connection being dropped and name the
+     * address it came from, neither of which exists by then. The caller
+     * knows what a dial it cannot place costs and says so itself.
+     */
+    if (0 <= sd) {
+        char *addr_str = NULL, *tmp;
+        int listed = 0;
+
+        /* Report what the peer published, which is what it could have
+         * dialled from, rather than the endpoints that happen to exist.
+         */
+        for (size_t i = 0; i < btl_proc->proc_addr_count; i++) {
+            mca_btl_tcp_addr_t *proc_addr = &btl_proc->proc_addrs[i];
+            if (proc_addr->addr_family != addr->sa_family) {
                 continue;
             }
-            inet_ntop(btl_endpoint->endpoint_addr->addr_family,
-                      (void *) &(btl_endpoint->endpoint_addr->addr_union.addr_inet), ip,
-                      sizeof(ip) - 1);
             if (NULL == addr_str) {
-                opal_asprintf(&tmp, "\n\t%s", ip);
+                opal_asprintf(&tmp, "\n\t%s", mca_btl_tcp_proc_addr_str(proc_addr, ip, sizeof(ip)));
             } else {
-                opal_asprintf(&tmp, "%s\n\t%s", addr_str, ip);
+                opal_asprintf(&tmp, "%s\n\t%s", addr_str,
+                              mca_btl_tcp_proc_addr_str(proc_addr, ip, sizeof(ip)));
                 free(addr_str);
             }
             addr_str = tmp;
+            ++listed;
         }
         tmp = opal_get_proc_hostname(btl_proc->proc_opal);
         opal_show_help("help-mpi-btl-tcp.txt", "dropped inbound connection", true,
                        opal_process_info.nodename, getpid(), tmp,
                        OPAL_NAME_PRINT(btl_proc->proc_opal->proc_name),
-                       opal_net_get_hostname((struct sockaddr *) addr),
-                       btl_proc->proc_endpoint_count, (NULL == addr_str) ? "NONE" : addr_str);
+                       opal_net_get_hostname(addr), listed,
+                       (NULL == addr_str) ? "NONE" : addr_str);
         free(tmp);
         if (NULL != addr_str) {
             free(addr_str);
         }
     }
     OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
+    return OPAL_ERR_NOT_AVAILABLE;
 }
 
 /*

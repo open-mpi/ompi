@@ -393,10 +393,12 @@ do {                                                                    \
  } while(0);
 
 
-#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                              \
+/* The mtl half alone: a request parked for an unwired peer has had the
+ * setup above done to it already, and repeating it would store
+ * REQUEST_PENDING over a req_complete a waiter has hung its sync on. */
+#define MCA_PML_CM_HVY_SEND_REQUEST_POST(sendreq, ret)                               \
 do {                                                                                 \
     ret = OMPI_SUCCESS;                                                              \
-    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);                       \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {             \
         MCA_PML_CM_HVY_SEND_REQUEST_BSEND_ALLOC(sendreq, ret);                       \
     }                                                                                \
@@ -418,6 +420,12 @@ do {                                                                            
             }                                                                        \
         }                                                                            \
     }                                                                                \
+ } while (0)
+
+#define MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret)                              \
+do {                                                                                 \
+    MCA_PML_CM_SEND_REQUEST_START_SETUP(&(sendreq)->req_send);                       \
+    MCA_PML_CM_HVY_SEND_REQUEST_POST(sendreq, ret);                                  \
  } while (0)
 
 /*
