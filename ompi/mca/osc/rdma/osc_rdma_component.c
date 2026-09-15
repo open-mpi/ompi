@@ -532,7 +532,9 @@ static int allocate_state_single (ompi_osc_rdma_module_t *module, void **base, s
     module->my_peer = my_peer;
     module->free_after = module->rank_array;
     my_peer->flags |= OMPI_OSC_RDMA_PEER_LOCAL_BASE;
-    my_peer->flags |= OMPI_OSC_RDMA_PEER_CPU_ATOMICS;
+    if (use_cpu_atomics) {
+        my_peer->flags |= OMPI_OSC_RDMA_PEER_CPU_ATOMICS;
+    }
     my_peer->state = (uint64_t) (uintptr_t) module->state;
 
     if (use_cpu_atomics) {
