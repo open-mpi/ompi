@@ -194,14 +194,16 @@ There are two mechanism for using libfabric and Open MPI with ROCm support.
   inter-node communication will be performed by the libfabric library. In
   order to ensure that the application will make use of the shared
   memory provider for intra-node communication and the network
-  interconnect specific provider for inter-node communication, the
-  user might have to request using the ``linkX`` provider, e.g.:
+  interconnect-specific provider for inter-node communication, the
+  user might have to request using the Libfabric LINKx (``lnx``) provider,
+  e.g.:
 
 .. code-block:: sh
 
    # Force using the ofi mtl component
+  export FI_LNX_PROV_LINKS="shm+cxi"
    mpirun --mca pml cm --mca mtl ofi                             \
-          --mca opal_common_ofi_provider_include "shm+cxi:lnx"   \
+       --mca mtl_ofi_provider_include lnx                    \
           -n 64 ./<my_executable>
 
 * Alternatively, the user can use the ``btl/ofi`` component, in which
