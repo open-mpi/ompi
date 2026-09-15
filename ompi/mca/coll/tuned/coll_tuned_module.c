@@ -154,6 +154,11 @@ ompi_coll_tuned_forced_getvalues( enum COLLTYPE type,
         if (tmp) forced_values->chain_fanout = tmp[0];
         mca_base_var_get_value(mca_params->max_requests_param_index, &tmp, NULL, NULL);
         if (tmp) forced_values->max_requests = tmp[0];
+        if (mca_params->bine_implementation_index > 0) {
+            mca_base_var_get_value(mca_params->bine_implementation_index, &tmp, NULL, NULL);
+            if (tmp)
+                forced_values->bine_implementation = tmp[0];
+        }
     }
     return (MPI_SUCCESS);
 }
