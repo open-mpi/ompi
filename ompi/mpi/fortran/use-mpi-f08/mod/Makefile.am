@@ -113,8 +113,9 @@ endif
 # drift.  Both headers are generated in the build directory (built by
 # "all", on which "check" depends).
 check-local:
-	@$(PYTHON) $(top_srcdir)/ompi/mpi/bindings/check_f08_names.py \
+	@$(PYTHON) $(top_srcdir)/ompi/mpi/bindings/check_fortran_param_names.py \
 	    --label "mpi_f08 interface specifications" \
+	    --lang f08 \
 	    --pympistd-dir $(abs_top_srcdir)/3rd-party/pympistandard \
 	    mpi-f08-interfaces-generated.h mpi-f08-interfaces.h
 
