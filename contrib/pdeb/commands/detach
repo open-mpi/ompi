@@ -1,0 +1,71 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  detach [all]\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+detach
+detach all
+  By default, send detach and quit to selected debuggers, stop their command
+  feeders, wait for them to exit, and remove them from the attached set.
+  Use detach all to detach every attached debugger.  When the last debugger
+  is detached, the attach prompt is removed; otherwise the prompt's PID list
+  updates to the PIDs that remain selected.
+EOF
+}
+
+run()
+{
+    if [ 0 -lt $# ] && [ "help" = "$1" ] ; then
+        detailed_help
+        return 0
+    fi
+
+    if [ 0 -eq "$attached" ] && [ -z "$pids" ] ; then
+        echo "No debuggers are attached."
+        return 0
+    fi
+
+    if [ 0 -eq $# ] ; then
+        detach_pids=$selected_pids
+        detach_label=selected
+    elif [ 1 -eq $# ] && { [ "all" = "$1" ] || [ "*" = "$1" ] ; } ; then
+        detach_pids=$pids
+        detach_label=all
+    else
+        echo "detach accepts no argument or 'all'." >&2
+        return 1
+    fi
+
+    if [ -z "$detach_pids" ] ; then
+        echo "No selected debuggers to detach."
+        return 0
+    fi
+
+    if ! detach_pid_list $detach_pids ; then
+        echo "One or more debugger subprocesses did not exit cleanly." >&2
+    fi
+
+    remove_detached_pids $detach_pids
+
+    if [ -z "$pids" ] ; then
+        prompt_pop
+    fi
+
+    if [ "all" = "$detach_label" ] ; then
+        echo "Detached all debuggers."
+    else
+        printf "Detached selected debuggers:%s\n" "$(printf " %s" $detach_pids)"
+    fi
+}
