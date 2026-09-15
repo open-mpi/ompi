@@ -1431,8 +1431,12 @@ INSTALLED_C_CALLBACK_PROBES = (
         "family": "callback_mpit",
         "rank_count": 1,
         "api_names": (
+            "MPI_Comm_call_errhandler",
+            "MPI_Comm_create_errhandler",
             "MPI_Comm_dup",
             "MPI_Comm_free",
+            "MPI_Comm_set_errhandler",
+            "MPI_Errhandler_free",
             "MPI_T_event_handle_alloc",
             "MPI_T_event_handle_free",
             "MPI_T_event_read",
