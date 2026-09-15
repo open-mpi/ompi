@@ -110,8 +110,11 @@ PROTOTYPE ERROR_CLASS get_library_version(STRING_OUT version, INT_OUT resultlen)
         len_left = @MPI_MAX_LIBRARY_VERSION_STRING@ - strlen(tmp);
     }
 
+    /* Per MPI-4.1 §8.3.4, resultlen is the number of characters
+       actually written into version, *not* counting the trailing
+       NUL that C additionally stores at version[resultlen]. */
     memcpy(version, tmp, strlen(tmp) + 1);
-    *resultlen = strlen(tmp) + 1;
+    *resultlen = (int) strlen(tmp);
 
     return MPI_SUCCESS;
 }
