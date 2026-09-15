@@ -262,15 +262,17 @@ static int accelerator_cuda_check_mpool(CUdeviceptr dbuf, CUmemorytype *mem_type
     }
 
     /* check if device has access */
-    for (int i = 0; i < device_count; i++) {
-        location.type = CU_MEM_LOCATION_TYPE_DEVICE;
-        location.id   = i;
-        result = cuMemPoolGetAccess(&flags, mpool, &location);
-        if ((CUDA_SUCCESS == result) &&
-            (CU_MEM_ACCESS_FLAGS_PROT_READWRITE == flags)) {
-            *mem_type = CU_MEMORYTYPE_DEVICE;
-            *dev_id  = i;
-            return 1;
+    if (mpool) {
+        for (int i = 0; i < device_count; i++) {
+            location.type = CU_MEM_LOCATION_TYPE_DEVICE;
+            location.id   = i;
+            result = cuMemPoolGetAccess(&flags, mpool, &location);
+            if ((CUDA_SUCCESS == result) &&
+                (CU_MEM_ACCESS_FLAGS_PROT_READWRITE == flags)) {
+                *mem_type = CU_MEMORYTYPE_DEVICE;
+                *dev_id  = i;
+                return 1;
+            }
         }
     }
 
@@ -354,10 +356,23 @@ static int accelerator_cuda_check_addr(const void *addr, int *dev_id, uint64_t *
 
     if (CU_MEMORYTYPE_DEVICE == mem_type && NULL != mem_ctx) {
         result = cuCtxGetCurrent(&ctx);
-        if (OPAL_UNLIKELY(NULL == ctx)) {
-            cuCtxSetCurrent(mem_ctx);
+        if (CUDA_SUCCESS != result) {
+            opal_output(0,
+                        "CUDA: error calling cuCtxGetCurrent: "
+                        "result=%d, ptr=%p",
+                        result, addr);
+            return OPAL_ERROR;
         }
-        return 1;
+        if (OPAL_UNLIKELY(NULL == ctx)) {
+            result = cuCtxSetCurrent(mem_ctx);
+            if (CUDA_SUCCESS != result) {
+                opal_output(0,
+                            "CUDA: error calling cuCtxSetCurrent: "
+                            "result=%d, ptr=%p",
+                            result, addr);
+                return OPAL_ERROR;
+            }
+        }
     }
 
     /* cuPointerGetAttributes succeeds with mem_type left at 0 for a pointer
