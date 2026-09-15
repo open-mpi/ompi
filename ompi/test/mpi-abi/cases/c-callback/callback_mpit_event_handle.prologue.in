@@ -10,19 +10,22 @@
 
 /*
  * Test intent:
- *   Verify that Open MPI's MPI_T communicator-created event publishes the
- *   MPI *Standard ABI* integer handle in its payload when the process runs
- *   under the Standard ABI (open-mpi/ompi#13280), not an internal object
- *   pointer or the old zero stub.  A Standard-ABI process links libmpi_abi,
- *   whose MPI_Init installs the intern->ABI handle converter downward into
- *   libopen_mpi; the producer raise site then converts the communicator to
- *   the Standard-ABI handle.
+ *   Verify that Open MPI's MPI_T events publish MPI *Standard ABI* integer
+ *   handles in their payloads when the process runs under the Standard ABI
+ *   (open-mpi/ompi#13280), not internal object pointers or the old zero stub.
+ *   A Standard-ABI process links libmpi_abi, whose MPI_Init installs the
+ *   intern->ABI handle converter downward into libopen_mpi; producer raise
+ *   sites then convert handles to Standard-ABI.
  *
- *   For a freshly created (non-predefined) communicator, the Standard-ABI
- *   handle the application holds is exactly the value the converter yields,
- *   so the payload element must compare equal to the user's MPI_Comm handle.
+ *   Tests two scenarios:
+ *   1. communicator_created event with a newly duplicated communicator: the
+ *      Standard-ABI handle equals the user's MPI_Comm handle.
+ *   2. errhandler_invoked event with a predefined communicator (MPI_COMM_SELF):
+ *      the Standard-ABI handle differs from the internal pointer, ensuring we
+ *      truly detect ABI conversion rather than pointer passthrough.
+ *
  *   Open MPI may expose the event APIs with no source able to allocate a
- *   registration, or no communicator-created event; the body treats either
+ *   registration, or the events may not be registered; the body treats either
  *   as a stable skip.
  */
 struct mpit_created_state {
@@ -53,4 +56,42 @@ static void mpit_created_callback(MPI_T_event_instance event_instance,
            handle (element 0 is the int32 size). */
         (void) MPI_T_event_read(event_instance, 1, &state->handle);
     }
+}
+
+struct mpit_errhandler_state {
+    MPI_T_event_registration registration;
+    int calls;
+    int failure_code;
+    uint64_t object_handle;
+};
+
+static struct mpit_errhandler_state mpit_errhandler_state;
+
+static void mpit_errhandler_callback(MPI_T_event_instance event_instance,
+                                     MPI_T_event_registration event_registration,
+                                     MPI_T_cb_safety cb_safety,
+                                     void *user_data)
+{
+    struct mpit_errhandler_state *state =
+        (struct mpit_errhandler_state *) user_data;
+    if (&mpit_errhandler_state != state) {
+        mpit_errhandler_state.failure_code = 301;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 302;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 303;
+    } else {
+        ++state->calls;
+        /* Element 3 of the errhandler_invoked payload is the object handle
+           (element 0 is err_code, element 1 is object_type, element 2 is
+           errhandler_handle). */
+        (void) MPI_T_event_read(event_instance, 3, &state->object_handle);
+    }
+}
+
+static void dummy_errhandler_callback(MPI_Comm *comm, int *err_code, ...)
+{
+    /* Empty errhandler just to trigger the MPI_T errhandler_invoked event. */
+    (void) comm;
+    (void) err_code;
 }

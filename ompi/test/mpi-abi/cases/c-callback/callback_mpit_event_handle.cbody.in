@@ -32,7 +32,7 @@ if (MPI_SUCCESS != ret) {
     return 1;
 }
 
-/* Locate the communicator-created event by name. */
+/* Locate the communicator-created and errhandler-invoked events by name. */
 int num_events = 0;
 ret = MPI_T_event_get_num(&num_events);
 if (MPI_SUCCESS != ret || num_events < 1) {
@@ -42,6 +42,7 @@ if (MPI_SUCCESS != ret || num_events < 1) {
 }
 
 int created_index = -1;
+int errhandler_index = -1;
 for (int event_index = 0; event_index < num_events; ++event_index) {
     char name[MPI_MAX_OBJECT_NAME];
     int name_len = (int) sizeof(name);
@@ -66,11 +67,16 @@ for (int event_index = 0; event_index < num_events; ++event_index) {
     }
     if (NULL != strstr(name, "communicator_created")) {
         created_index = event_index;
+    }
+    if (NULL != strstr(name, "errhandler_invoked")) {
+        errhandler_index = event_index;
+    }
+    if (created_index >= 0 && errhandler_index >= 0) {
         break;
     }
 }
 
-if (created_index < 0) {
+if (created_index < 0 || errhandler_index < 0) {
     (void) MPI_T_finalize();
     (void) MPI_Finalize();
     return 77;
@@ -95,6 +101,37 @@ ret = MPI_T_event_register_callback(mpit_created_state.registration,
                                     &mpit_created_state,
                                     mpit_created_callback);
 if (MPI_SUCCESS != ret) {
+    (void) MPI_T_event_handle_free(mpit_created_state.registration, NULL,
+                                   NULL);
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 2;
+}
+
+/* Set up the errhandler_invoked event registration. */
+mpit_errhandler_state.registration = (MPI_T_event_registration) 0;
+mpit_errhandler_state.calls = 0;
+mpit_errhandler_state.failure_code = 0;
+mpit_errhandler_state.object_handle = 0;
+
+ret = MPI_T_event_handle_alloc(errhandler_index, NULL, MPI_INFO_NULL,
+                               &mpit_errhandler_state.registration);
+if (MPI_SUCCESS != ret ||
+    (MPI_T_event_registration) 0 == mpit_errhandler_state.registration) {
+    (void) MPI_T_event_handle_free(mpit_created_state.registration, NULL,
+                                   NULL);
+    (void) MPI_T_finalize();
+    (void) MPI_Finalize();
+    return 77;
+}
+
+ret = MPI_T_event_register_callback(mpit_errhandler_state.registration,
+                                    MPI_T_CB_REQUIRE_NONE, MPI_INFO_NULL,
+                                    &mpit_errhandler_state,
+                                    mpit_errhandler_callback);
+if (MPI_SUCCESS != ret) {
+    (void) MPI_T_event_handle_free(mpit_errhandler_state.registration, NULL,
+                                   NULL);
     (void) MPI_T_event_handle_free(mpit_created_state.registration, NULL,
                                    NULL);
     (void) MPI_T_finalize();
@@ -135,19 +172,69 @@ if (MPI_SUCCESS != ret && 0 == local_failure) {
     local_failure = 7;
 }
 
-ret = MPI_T_event_handle_free(mpit_created_state.registration, NULL, NULL);
+/* Test 2: Invoke an errhandler on the predefined MPI_COMM_SELF to verify
+   the errhandler_invoked event carries MPI_COMM_SELF's Standard-ABI handle,
+   which differs from its internal pointer.  This catches regressions that
+   always publish the native pointer (which would pass test 1 but fail here). */
+if (0 == local_failure) {
+    MPI_Errhandler test_errhandler = MPI_ERRHANDLER_NULL;
+    ret = MPI_Comm_create_errhandler(dummy_errhandler_callback, &test_errhandler);
+    if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == test_errhandler) {
+        local_failure = 11;
+    } else {
+        ret = MPI_Comm_set_errhandler(MPI_COMM_SELF, test_errhandler);
+        if (MPI_SUCCESS != ret) {
+            local_failure = 12;
+        } else {
+            ret = MPI_Comm_call_errhandler(MPI_COMM_SELF, MPI_ERR_OTHER);
+            if (MPI_SUCCESS != ret) {
+                local_failure = 13;
+            } else if (0 != mpit_errhandler_state.failure_code) {
+                local_failure = 14;
+            } else if (mpit_errhandler_state.calls < 1) {
+                local_failure = 15;
+            } else if (mpit_errhandler_state.object_handle !=
+                       (uint64_t) (uintptr_t) MPI_COMM_SELF) {
+                /* The payload must carry the Standard-ABI integer handle for
+                   MPI_COMM_SELF, not 0 or an internal pointer.  For a predefined
+                   communicator, this differs from the pointer value, ensuring we
+                   truly detect ABI conversion. */
+                fprintf(stderr, "ABI_FAIL:mpit:errhandler_object_handle:%llu:%llu\n",
+                        (unsigned long long) mpit_errhandler_state.object_handle,
+                        (unsigned long long) (uintptr_t) MPI_COMM_SELF);
+                local_failure = 16;
+            }
+            /* Restore the default errhandler. */
+            ret = MPI_Comm_set_errhandler(MPI_COMM_SELF, MPI_ERRORS_RETURN);
+            if (MPI_SUCCESS != ret && 0 == local_failure) {
+                local_failure = 17;
+            }
+        }
+        ret = MPI_Errhandler_free(&test_errhandler);
+        if (MPI_SUCCESS != ret && 0 == local_failure) {
+            local_failure = 18;
+        }
+    }
+}
+
+ret = MPI_T_event_handle_free(mpit_errhandler_state.registration, NULL, NULL);
 if (MPI_SUCCESS != ret && 0 == local_failure) {
     local_failure = 8;
 }
 
-ret = MPI_T_finalize();
+ret = MPI_T_event_handle_free(mpit_created_state.registration, NULL, NULL);
 if (MPI_SUCCESS != ret && 0 == local_failure) {
     local_failure = 9;
 }
 
+ret = MPI_T_finalize();
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 19;
+}
+
 ret = MPI_Finalize();
 if (MPI_SUCCESS != ret && 0 == local_failure) {
-    local_failure = 10;
+    local_failure = 20;
 }
 
 if (0 != local_failure) {
