@@ -10,11 +10,11 @@
 
 /*
  * Test intent:
- *   Drive the ompi.mpi.communicator_created event under the MPI Standard
- *   ABI and confirm its payload carries the Standard-ABI integer MPI_Comm
- *   handle (open-mpi/ompi#13280).  Skips stably (77) when the event APIs
- *   are unavailable, the event is not registered, or no registration can
- *   be allocated.
+ *   Drive MPI_T communicator and errhandler events under the MPI Standard
+ *   ABI and confirm payloads carry Standard-ABI integer handles
+ *   (open-mpi/ompi#13280).  Skips stably (77) when the event APIs are
+ *   unavailable, events are not registered, or no registration can be
+ *   allocated.
  */
 int ret = MPI_Init(&argc, &argv);
 if (MPI_SUCCESS != ret) {
@@ -82,6 +82,7 @@ if (created_index < 0 || errhandler_index < 0) {
     return 77;
 }
 
+/* Set up the communicator_created event registration. */
 mpit_created_state.registration = (MPI_T_event_registration) 0;
 mpit_created_state.calls = 0;
 mpit_created_state.failure_code = 0;
@@ -144,6 +145,8 @@ if (MPI_SUCCESS != ret) {
 MPI_Comm dup = MPI_COMM_NULL;
 ret = MPI_Comm_dup(MPI_COMM_SELF, &dup);
 if (MPI_SUCCESS != ret || MPI_COMM_NULL == dup) {
+    (void) MPI_T_event_handle_free(mpit_errhandler_state.registration, NULL,
+                                   NULL);
     (void) MPI_T_event_handle_free(mpit_created_state.registration, NULL,
                                    NULL);
     (void) MPI_T_finalize();
@@ -229,12 +232,12 @@ if (MPI_SUCCESS != ret && 0 == local_failure) {
 
 ret = MPI_T_finalize();
 if (MPI_SUCCESS != ret && 0 == local_failure) {
-    local_failure = 19;
+    local_failure = 10;
 }
 
 ret = MPI_Finalize();
 if (MPI_SUCCESS != ret && 0 == local_failure) {
-    local_failure = 20;
+    local_failure = 11;
 }
 
 if (0 != local_failure) {
