@@ -17,6 +17,7 @@
  * Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights
  * Copyright (c) 2018-2020 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,6 +33,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/string_copy.h"
 #include "opal/runtime/opal_progress.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -251,6 +253,11 @@ static mca_base_component_t pml_base_component = {
 };
 
 
+/* What went into the modex, which is what a peer compares itself
+ * against. Not mca_pml_base_selected_component's name: vprotocol renames
+ * that copy ("ob1]vpessimist") as the losing components close. */
+static char mca_pml_base_pml_name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1] = {0};
+
 /*
  * If direct modex, then publish PML for all procs. If full modex then
  * publish PML for rank 0 only. This information is used during add_procs
@@ -271,11 +278,22 @@ mca_pml_base_pml_selected(const char *name)
 {
     int rc = 0;
 
+    opal_string_copy(mca_pml_base_pml_name, name, sizeof(mca_pml_base_pml_name));
+
+    /* Send the saved copy, not the argument: a name long enough to have
+     * been truncated into it would otherwise reach a peer by two routes
+     * under two spellings. */
     if (!opal_pmix_collect_all_data || 0 == OMPI_PROC_MY_NAME->vpid) {
-        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component, name,
-                        strlen(name) + 1);
+        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component,
+                        mca_pml_base_pml_name,
+                        strlen(mca_pml_base_pml_name) + 1);
     }
     return rc;
+}
+
+const char *mca_pml_base_pml_selected_name(void)
+{
+    return mca_pml_base_pml_name;
 }
 
 static int
@@ -285,6 +303,7 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     size_t size;
     int ret = 0;
     char *remote_pml;
+    char *key;
 
     /* if we are proc_name=OMPI_PROC_MY_NAME, then we can also assume success */
     if (0 == opal_compare_proc(ompi_proc_local()->super.proc_name, proc_name)) {
@@ -292,9 +311,14 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
                             "check:select: PML check not necessary on self");
         return OMPI_SUCCESS;
     }
-    OPAL_MODEX_RECV_STRING(ret,
-                           mca_base_component_to_string(&pml_base_component),
-                           &proc_name, (void**) &remote_pml, &size);
+    /* The macro expands its key argument twice, so building the key
+     * inline would allocate twice and leak both. */
+    key = mca_base_component_to_string(&pml_base_component);
+    if (NULL == key) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    OPAL_MODEX_RECV_STRING(ret, key, &proc_name, (void**) &remote_pml, &size);
+    free(key);
     if (PMIX_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for process %s not found",
