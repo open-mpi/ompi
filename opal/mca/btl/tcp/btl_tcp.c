@@ -571,6 +571,10 @@ int mca_btl_tcp_recv_blocking(int sd, void *data, size_t size)
  * A blocking send on a non-blocking socket. Used to send the small
  * amount of connection information used during the initial handshake
  * (magic string plus process guid)
+ *
+ * An error return leaves the endpoint untouched: whoever decides it failed
+ * owns the state change and the close. Otherwise every byte is written
+ * before returning, so the count is never short.
  */
 
 int mca_btl_tcp_send_blocking(int sd, const void *data, size_t size)
