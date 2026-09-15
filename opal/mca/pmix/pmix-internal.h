@@ -112,6 +112,7 @@ typedef struct {
         opal_cond_init(&(l)->cond);               \
         (l)->active = true;                       \
         (l)->status = 0;                          \
+        (l)->errhandler_ref = SIZE_MAX;           \
         (l)->msg = NULL;                          \
         OPAL_POST_OBJECT((l));                    \
     } while (0)
