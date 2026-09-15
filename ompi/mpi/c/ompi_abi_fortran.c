@@ -17,7 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2023, 2026 Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+ * Copyright (c) 2024-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -71,7 +71,7 @@ static int ompi_abi_fortran_finalize(void)
     return OMPI_SUCCESS;
 }
         
-int ompi_abi_get_fortran_info(ompi_info_t **info)
+OMPI_HIDDEN int ompi_abi_get_fortran_info(ompi_info_t **info)
 {
     ompi_info_t *newinfo = NULL;
     int ret = MPI_SUCCESS;
@@ -186,7 +186,7 @@ err_cleanup:
     return ret;
 }
 
-int ompi_abi_set_fortran_info(ompi_info_t *info)
+OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info)
 {
     int ret = MPI_SUCCESS;
     static bool already_called = false;   
@@ -226,7 +226,7 @@ int ompi_abi_set_fortran_info(ompi_info_t *info)
 
 }
 
-int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set)
+OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *logical_false, int *is_set)
 {
     int ret = MPI_SUCCESS;
 
@@ -452,7 +452,7 @@ int ompi_abi_get_fortran_booleans(int logical_size, void *logical_true, void *lo
     return ret;
 }
 
-int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false)
+OMPI_HIDDEN int ompi_abi_set_fortran_booleans(int logical_size, void *logical_true, void *logical_false)
 {
     int ret=MPI_SUCCESS;
     static bool already_called = false;
