@@ -2050,6 +2050,23 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
     return MPI_SUCCESS;
 }
 
+/*
+ * Cache on comm the predefined attributes that the sessions model expects to
+ * find there. The world model attaches them to MPI_COMM_WORLD, which does not
+ * exist here, and of the three only MPI_TAG_UB is available to the sessions
+ * model. See MPI-5.0 10.1.2.1.
+ */
+static int ompi_comm_set_predefined_attributes (ompi_communicator_t *comm)
+{
+    int rc = ompi_attr_hash_init (&comm->c_keyhash);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    return ompi_attr_set_int (COMM_ATTR, comm, &comm->c_keyhash,
+                              MPI_TAG_UB, mca_pml.pml_max_tag, true);
+}
+
 int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info_t *info,
                                  ompi_errhandler_t *errhandler, ompi_communicator_t **newcomm)
 {
@@ -2094,16 +2111,11 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
 
     newcomp->instance = group->grp_instance;
 
-    /*
-     * setup predefined keyvals - see MPI Standard for predefined keyvals cached on 
-     * communicators created via MPI_Comm_create_from_group or MPI_Intercomm_create_from_groups
-     */
-    ompi_attr_hash_init(&newcomp->c_keyhash);
-    ompi_attr_set_int(COMM_ATTR,
-                      newcomp,
-                      &newcomp->c_keyhash,
-                      MPI_TAG_UB, mca_pml.pml_max_tag,
-                      true);
+    rc = ompi_comm_set_predefined_attributes (newcomp);
+    if (OMPI_SUCCESS != rc) {
+        ompi_comm_free (&newcomp);
+        return rc;
+    }
 
     *newcomm = newcomp;
     return MPI_SUCCESS;
@@ -2403,6 +2415,12 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        ompi_comm_free (&newcomp);
+        return rc;
+    }
+
+    rc = ompi_comm_set_predefined_attributes (newcomp);
+    if (OMPI_SUCCESS != rc) {
         ompi_comm_free (&newcomp);
         return rc;
     }
