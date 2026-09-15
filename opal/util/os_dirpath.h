@@ -35,7 +35,10 @@
  * not currently provided, the function will attempt to change the
  * access permissions of the directory to add the specified
  * permissions. The function will return OPAL_ERROR if this cannot
- * be done.
+ * be done.  The final directory must be readable by the user for its
+ * permissions to be adjusted: an existing directory that cannot be
+ * opened for reading is reported as an error (OPAL_ERR_PERM), not
+ * repaired.
  **/
 
 #ifndef OPAL_OS_DIRPATH_CREATE_H
