@@ -18,6 +18,12 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/instance/instance.h"
 #include "ompi/mpiext/mpiext.h"
+#include "ompi/runtime/ompi_mpit_events.h"
+/* Declares ompi_mpit_abi_handle_convert_impl(); only *referenced* in the
+   Standard-ABI compile (guarded by OMPI_ABI_SRC in the body below), but
+   included unconditionally because OMPI_ABI_SRC is not yet defined this early
+   in the generated file. */
+#include "ompi/mpi/c/mpit_abi_handle_convert.h"
 
 PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OUT session)
 {
@@ -25,6 +31,32 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
     int ts_level = MPI_THREAD_SINGLE;  /* for now we default to thread single for OMPI sessions */
     opal_cstring_t *info_value;
     const char ts_level_multi[] = "MPI_THREAD_MULTIPLE";
+
+#if !OMPI_ABI_SRC
+    /* Register the mpiext initialization function with libopen_mpi.
+     * This breaks the circular dependency: libopen_mpi calls ompi_mpiext_init indirectly
+     * through the registered function pointer, avoiding a direct symbol dependency on libmpi.
+     * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI. */
+    ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init);
+#else
+    /* This is the MPI Standard ABI entry point, so a tool observing MPI_T
+     * events from this process must see Standard-ABI integer handles and
+     * Standard-ABI integer values in event payloads.  Record the process ABI
+     * and install the intern->ABI converters downward into libopen_mpi (the
+     * converters live here in libmpi_abi; see mpit_abi_handle_convert.c),
+     * mirroring the mpiext_init registration above.
+     *
+     * This is done up front, before the parameter-validation branches below
+     * that jump to fn_exit: a failing check routes through OMPI_ERRHANDLER_RETURN
+     * on MPI_SESSION_NULL, which can invoke an error handler and raise the
+     * ompi.mpi.errhandler_invoked event.  Installing the converters first
+     * ensures that event publishes correct Standard-ABI values (e.g. for the
+     * predefined error handler) instead of the 0 / internal fallbacks. */
+    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
+    ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
+    ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
+    ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
+#endif
 
     if ( MPI_PARAM_CHECK ) {
         if (NULL == errhandler) {
@@ -52,14 +84,6 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
             OBJ_RELEASE(info_value);
         }
     }
-
-#if !OMPI_ABI_SRC
-    /* Register the mpiext initialization function with libopen_mpi.
-     * This breaks the circular dependency: libopen_mpi calls ompi_mpiext_init indirectly
-     * through the registered function pointer, avoiding a direct symbol dependency on libmpi.
-     * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI. */
-    ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init);
-#endif
 
     rc = ompi_mpi_instance_init (ts_level, &info->super, errhandler, session, 0, NULL);
     /* if an error occurred raise it on the null session */
