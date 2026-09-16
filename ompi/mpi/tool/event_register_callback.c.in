@@ -17,6 +17,8 @@
 
 #include "ompi_config.h"
 
+#include <stdatomic.h>
+
 #include "ompi/mpi/tool/mpit-internal.h"
 #include "ompi/info/info.h"
 #include "ompi/runtime/ompi_mpit_events.h"
@@ -56,15 +58,20 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
        entry points install the intern->ABI converters, but they have not run
        yet here, so install them too (this Standard-ABI copy is compiled into
        libmpi_abi alongside the converter implementations).  This is idempotent
-       with the init-time registration. */
+       with the init-time registration.
+
+       Install the converter set atomically BEFORE setting the ABI mode to avoid
+       data races under MPI_THREAD_MULTIPLE where concurrent events could see
+       STANDARD mode but NULL converters. */
 #if OMPI_ABI_SRC
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
-    ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
-    ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
-    ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
-    ompi_mpit_register_abi_thread_level_convert(ompi_mpit_abi_thread_level_convert_impl);
+    ompi_mpit_register_abi_converters(&ompi_mpit_abi_standard_converters);
+    /* Release-store of the ABI mode makes the converter set visible to
+     * concurrent event producers under MPI_THREAD_MULTIPLE. */
+    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD,
+                          memory_order_release);
 #else
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
+    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_OMPI,
+                          memory_order_release);
 #endif
 
     /* MPI_Info is an ompi_info_t whose first member is an opal_info_t. */
