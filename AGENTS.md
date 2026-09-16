@@ -119,6 +119,15 @@ and [`docs/contributing.rst`](docs/contributing.rst):
   single DSO. See the "Symbol Visibility" section of
   [`docs/developers/source-code.rst`](docs/developers/source-code.rst)
   and [`ompi/mpi/README_ABI.md`](ompi/mpi/README_ABI.md).
+
+  > **When hiding internal implementation functions with public ABI wrappers:**
+  > If an internal function (e.g., `ompi_abi_*`) has a corresponding public ABI
+  > function (e.g., `MPI_Abi_*`) and is only called through that wrapper, the
+  > internal function can be marked `OMPI_HIDDEN`. Update any direct callers
+  > (e.g., tests) to use the public wrapper. Note: Public wrappers may have
+  > additional requirements (e.g., MPI initialization or error handling) not
+  > present in the internal implementation.
+
 - **New files need the standard copyright/license header.** Copy the
   multi-institution BSD header block — including the `$COPYRIGHT$` and
   `$HEADER$` tokens — from a neighboring file. If you substantially

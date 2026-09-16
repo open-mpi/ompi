@@ -16,7 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
- * Copyright (c) 2021-2024 Triad National Security, LLC. All rights
+ * Copyright (c) 2021-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -46,7 +46,7 @@ struct ompi_isendrecv_context_t {
 };
 
 typedef struct ompi_isendrecv_context_t ompi_isendrecv_context_t;
-OBJ_CLASS_INSTANCE(ompi_isendrecv_context_t, opal_object_t, NULL, NULL);
+OMPI_HIDDEN OBJ_CLASS_INSTANCE(ompi_isendrecv_context_t, opal_object_t, NULL, NULL);
 
 static int ompi_isendrecv_complete_func (ompi_comm_request_t *request)
 {
@@ -78,7 +78,7 @@ static int ompi_isendrecv_complete_func (ompi_comm_request_t *request)
     return OMPI_SUCCESS;
 }
 
-int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Request * request)
+OMPI_HIDDEN int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datatype sendtype, int dest, int sendtag, void * recvbuf, size_t recvcount, MPI_Datatype recvtype, int source, int recvtag, MPI_Comm comm, MPI_Request * request)
 {
     ompi_isendrecv_context_t *context = NULL;
     ompi_comm_request_t *crequest;
