@@ -1461,6 +1461,34 @@ INSTALLED_C_CALLBACK_PROBES = (
             "cases/c-callback/callback_mpit_event_handle.cbody.in",
     },
     {
+        "name": "callback_mpit_event_handle_init",
+        "family": "callback_mpit",
+        "rank_count": 1,
+        "api_names": (
+            "MPI_Init",
+            "MPI_T_event_handle_alloc",
+            "MPI_T_event_handle_free",
+            "MPI_T_event_read",
+            "MPI_T_event_register_callback",
+        ),
+        "support_api_names": (
+            "MPI_Finalize",
+            "MPI_Info_free",
+            "MPI_T_event_get_info",
+            "MPI_T_event_get_num",
+            "MPI_T_finalize",
+            "MPI_T_init_thread",
+        ),
+        "requires_feature": "mpit_events",
+        "skip_exit_codes": {
+            77: SKIP_MPIT_EVENTS_UNAVAILABLE,
+        },
+        "prologue_file":
+            "cases/c-callback/callback_mpit_event_handle_init.prologue.in",
+        "body_file":
+            "cases/c-callback/callback_mpit_event_handle_init.cbody.in",
+    },
+    {
         "name": "callback_mpit_event_handle_init_thread",
         "family": "callback_mpit",
         "rank_count": 1,
