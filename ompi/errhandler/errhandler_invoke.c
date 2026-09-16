@@ -30,6 +30,8 @@
 
 #include "ompi_config.h"
 
+#include <stdatomic.h>
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
 #include "ompi/file/file.h"
@@ -75,8 +77,11 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         /* The MPI_Errhandler handle and the invoking object's handle must match
            the registering MPI_T tool's ABI (ompi_mpit_callback_abi).  So must
            the err_code and object_type integer values, whose encodings differ
-           between the two ABIs. */
-        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+           between the two ABIs.  Use acquire-load to synchronize with the
+           release-store in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
+                                                    memory_order_acquire);
+        if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.errhandler_handle = (uint64_t) (uintptr_t) errhandler;
             payload.object_handle = (uint64_t) (uintptr_t) mpi_object;
         } else {

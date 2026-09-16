@@ -42,8 +42,12 @@ typedef enum {
 /* Defaults to the Open MPI ABI.  The MPI Standard ABI variants of MPI_Init,
    MPI_Init_thread, and MPI_Session_init set this to OMPI_MPIT_ABI_STANDARD
    (see open-mpi/ompi#13280), which makes the producer raise sites publish
-   Standard-ABI integer handle values instead of internal object pointers. */
-OMPI_DECLSPEC extern ompi_mpit_abi_t ompi_mpit_callback_abi;
+   Standard-ABI integer handle values instead of internal object pointers.
+
+   THREAD SAFETY: This variable is set once during initialization and read
+   concurrently by event raise sites under MPI_THREAD_MULTIPLE. Access must
+   use atomic operations with proper memory ordering. */
+OMPI_DECLSPEC extern _Atomic ompi_mpit_abi_t ompi_mpit_callback_abi;
 
 /* Convert an internal MPI object handle to the value an MPI Standard ABI
    MPI_T tool expects to see in an event payload.  `object` is the internal
@@ -56,17 +60,12 @@ OMPI_DECLSPEC extern ompi_mpit_abi_t ompi_mpit_callback_abi;
    The intern->ABI converters live in libmpi_abi (the upper layer); the raise
    sites live in libopen_mpi (the lower layer), which must not depend upward.
    So the Standard-ABI init path installs this converter downward via
-   ompi_mpit_register_abi_handle_convert(), mirroring
+   ompi_mpit_register_abi_converters(), mirroring
    ompi_mpi_instance_register_mpiext_init().  The raise sites call
    ompi_mpit_abi_handle(), which forwards to the registered converter (or
    returns 0 if none was registered -- the same fallback as the old stub). */
 typedef uint64_t (*ompi_mpit_abi_handle_convert_fn_t)(void *object,
                                                       int handle_kind);
-
-OMPI_DECLSPEC void ompi_mpit_register_abi_handle_convert(
-    ompi_mpit_abi_handle_convert_fn_t fn);
-
-OMPI_DECLSPEC uint64_t ompi_mpit_abi_handle(void *object, int handle_kind);
 
 /* Some event payloads also carry integer values whose numeric encoding differs
    between the Open MPI ABI and the MPI Standard ABI -- notably MPI error codes
@@ -81,13 +80,26 @@ OMPI_DECLSPEC uint64_t ompi_mpit_abi_handle(void *object, int handle_kind);
    internal encoding is what the tool expects). */
 typedef int32_t (*ompi_mpit_abi_value_convert_fn_t)(int32_t value);
 
-OMPI_DECLSPEC void ompi_mpit_register_abi_error_convert(
-    ompi_mpit_abi_value_convert_fn_t fn);
-OMPI_DECLSPEC void ompi_mpit_register_abi_bind_convert(
-    ompi_mpit_abi_value_convert_fn_t fn);
-OMPI_DECLSPEC void ompi_mpit_register_abi_thread_level_convert(
-    ompi_mpit_abi_value_convert_fn_t fn);
+/* Immutable converter set for Standard-ABI event payload transformation.
+   Populated once during initialization and published atomically to avoid
+   data races under MPI_THREAD_MULTIPLE. */
+struct ompi_mpit_abi_converters {
+    ompi_mpit_abi_handle_convert_fn_t handle_convert;
+    ompi_mpit_abi_value_convert_fn_t error_convert;
+    ompi_mpit_abi_value_convert_fn_t bind_convert;
+    ompi_mpit_abi_value_convert_fn_t thread_level_convert;
+};
 
+/* Install all Standard-ABI converters atomically.  This must be called
+   BEFORE setting ompi_mpit_callback_abi to OMPI_MPIT_ABI_STANDARD to
+   avoid data races where concurrent event producers see STANDARD mode
+   but NULL converter pointers.  Pass a fully-populated converter set;
+   the caller must keep the pointed-to struct alive (typically static
+   storage in the ABI layer). */
+OMPI_DECLSPEC void ompi_mpit_register_abi_converters(
+    const struct ompi_mpit_abi_converters *converters);
+
+OMPI_DECLSPEC uint64_t ompi_mpit_abi_handle(void *object, int handle_kind);
 OMPI_DECLSPEC int32_t ompi_mpit_abi_error(int32_t err_code);
 OMPI_DECLSPEC int32_t ompi_mpit_abi_bind(int32_t object_bind);
 OMPI_DECLSPEC int32_t ompi_mpit_abi_thread_level(int32_t thread_level);

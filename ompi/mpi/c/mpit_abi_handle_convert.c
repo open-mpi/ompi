@@ -93,3 +93,13 @@ int32_t ompi_mpit_abi_thread_level_convert_impl(int32_t thread_level)
     /* Map an internal MPI_THREAD_* value to its MPI Standard ABI value. */
     return (int32_t) ompi_convert_ts_level_ompi_to_standard((int) thread_level);
 }
+
+/* Immutable converter set for Standard-ABI event payloads.  Installed
+   atomically into libopen_mpi by the Standard-ABI init entry points to avoid
+   data races under MPI_THREAD_MULTIPLE. */
+const struct ompi_mpit_abi_converters ompi_mpit_abi_standard_converters = {
+    .handle_convert = ompi_mpit_abi_handle_convert_impl,
+    .error_convert = ompi_mpit_abi_error_convert_impl,
+    .bind_convert = ompi_mpit_abi_bind_convert_impl,
+    .thread_level_convert = ompi_mpit_abi_thread_level_convert_impl,
+};

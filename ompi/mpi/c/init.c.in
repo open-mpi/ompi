@@ -26,6 +26,7 @@
 
 #include "ompi_config.h"
 
+#include <stdatomic.h>
 #include <stdlib.h>
 
 #include "opal/util/show_help.h"
@@ -65,15 +66,15 @@ PROTOTYPE INT init(INT_OUT argc, ARGV argv)
 #else
     /* This is the MPI Standard ABI entry point, so a tool observing MPI_T
      * events from this process must see Standard-ABI integer handles in event
-     * payloads.  Record the process ABI and install the intern->ABI handle
-     * converter downward into libopen_mpi (the converter lives here in
-     * libmpi_abi; see mpit_abi_handle_convert.c), mirroring the mpiext_init
-     * registration above. */
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
-    ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
-    ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
-    ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
-    ompi_mpit_register_abi_thread_level_convert(ompi_mpit_abi_thread_level_convert_impl);
+     * payloads.  Install the converter set atomically BEFORE setting the ABI
+     * mode to avoid data races under MPI_THREAD_MULTIPLE where concurrent
+     * events could see STANDARD mode but NULL converters.  The converter set
+     * lives in libmpi_abi; see mpit_abi_handle_convert.c. */
+    ompi_mpit_register_abi_converters(&ompi_mpit_abi_standard_converters);
+    /* Release-store of the ABI mode makes the converter set visible to
+     * concurrent event producers under MPI_THREAD_MULTIPLE. */
+    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD,
+                          memory_order_release);
 #endif
 
     /* Call the back-end initialization function (we need to put as

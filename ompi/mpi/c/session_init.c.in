@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #include "ompi_config.h"
+#include <stdatomic.h>
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
@@ -51,12 +52,16 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
      * on MPI_SESSION_NULL, which can invoke an error handler and raise the
      * ompi.mpi.errhandler_invoked event.  Installing the converters first
      * ensures that event publishes correct Standard-ABI values (e.g. for the
-     * predefined error handler) instead of the 0 / internal fallbacks. */
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
-    ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
-    ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
-    ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
-    ompi_mpit_register_abi_thread_level_convert(ompi_mpit_abi_thread_level_convert_impl);
+     * predefined error handler) instead of the 0 / internal fallbacks.
+     *
+     * Install the converter set atomically BEFORE setting the ABI mode to avoid
+     * data races under MPI_THREAD_MULTIPLE where concurrent events could see
+     * STANDARD mode but NULL converters. */
+    ompi_mpit_register_abi_converters(&ompi_mpit_abi_standard_converters);
+    /* Release-store of the ABI mode makes the converter set visible to
+     * concurrent event producers under MPI_THREAD_MULTIPLE. */
+    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD,
+                          memory_order_release);
 #endif
 
     if ( MPI_PARAM_CHECK ) {
