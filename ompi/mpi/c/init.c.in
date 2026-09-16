@@ -73,6 +73,7 @@ PROTOTYPE INT init(INT_OUT argc, ARGV argv)
     ompi_mpit_register_abi_handle_convert(ompi_mpit_abi_handle_convert_impl);
     ompi_mpit_register_abi_error_convert(ompi_mpit_abi_error_convert_impl);
     ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_bind_convert_impl);
+    ompi_mpit_register_abi_thread_level_convert(ompi_mpit_abi_thread_level_convert_impl);
 #endif
 
     /* Call the back-end initialization function (we need to put as

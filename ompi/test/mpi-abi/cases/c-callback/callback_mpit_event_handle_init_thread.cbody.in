@@ -16,9 +16,12 @@
  *   MPI_Init_thread actually runs (open-mpi/ompi#13280).
  */
 
-/* Initialize MPI_T first so we can register callbacks before MPI_Init_thread. */
+/* Initialize MPI_T first so we can register callbacks before MPI_Init_thread.
+   Use MPI_THREAD_MULTIPLE to match the subsequent MPI_Init_thread request;
+   if MPI_T_init_thread is called with a lower level, MPI_Init_thread will be
+   constrained to that level. */
 int provided = 0;
-int ret = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+int ret = MPI_T_init_thread(MPI_THREAD_MULTIPLE, &provided);
 if (MPI_T_ERR_NOT_SUPPORTED == ret) {
     return 77;
 }

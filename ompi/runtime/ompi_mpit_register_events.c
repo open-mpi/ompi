@@ -52,12 +52,13 @@ uint64_t ompi_mpit_abi_handle(void *object, int handle_kind)
 }
 
 /* Downward-installed value converters for the payload elements whose numeric
-   encoding differs between the two ABIs (MPI error codes and MPI_T_BIND_*
-   binding kinds).  NULL under the Open MPI ABI, where the internal encoding is
-   already what the tool expects; installed by the Standard-ABI init path.  See
-   the header. */
+   encoding differs between the two ABIs (MPI error codes, MPI_T_BIND_*
+   binding kinds, and MPI_THREAD_* thread support levels).  NULL under the
+   Open MPI ABI, where the internal encoding is already what the tool expects;
+   installed by the Standard-ABI init path.  See the header. */
 static ompi_mpit_abi_value_convert_fn_t ompi_mpit_abi_error_convert_fn = NULL;
 static ompi_mpit_abi_value_convert_fn_t ompi_mpit_abi_bind_convert_fn = NULL;
+static ompi_mpit_abi_value_convert_fn_t ompi_mpit_abi_thread_level_convert_fn = NULL;
 
 void ompi_mpit_register_abi_error_convert(ompi_mpit_abi_value_convert_fn_t fn)
 {
@@ -67,6 +68,11 @@ void ompi_mpit_register_abi_error_convert(ompi_mpit_abi_value_convert_fn_t fn)
 void ompi_mpit_register_abi_bind_convert(ompi_mpit_abi_value_convert_fn_t fn)
 {
     ompi_mpit_abi_bind_convert_fn = fn;
+}
+
+void ompi_mpit_register_abi_thread_level_convert(ompi_mpit_abi_value_convert_fn_t fn)
+{
+    ompi_mpit_abi_thread_level_convert_fn = fn;
 }
 
 int32_t ompi_mpit_abi_error(int32_t err_code)
@@ -87,6 +93,16 @@ int32_t ompi_mpit_abi_bind(int32_t object_bind)
     /* No converter registered (Open MPI ABI): the internal encoding is what the
        tool expects. */
     return object_bind;
+}
+
+int32_t ompi_mpit_abi_thread_level(int32_t thread_level)
+{
+    if (NULL != ompi_mpit_abi_thread_level_convert_fn) {
+        return ompi_mpit_abi_thread_level_convert_fn(thread_level);
+    }
+    /* No converter registered (Open MPI ABI): the internal encoding is what the
+       tool expects. */
+    return thread_level;
 }
 
 mca_base_event_t *ompi_event_comm_created = NULL;

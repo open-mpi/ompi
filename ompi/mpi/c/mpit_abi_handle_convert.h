@@ -42,6 +42,11 @@ OMPI_DECLSPEC int32_t ompi_mpit_abi_error_convert_impl(int32_t err_code);
    ompi_mpit_register_abi_bind_convert(). */
 OMPI_DECLSPEC int32_t ompi_mpit_abi_bind_convert_impl(int32_t object_bind);
 
+/* Convert an internal MPI_THREAD_* thread support level to its MPI Standard
+   ABI value.  This is the ompi_mpit_abi_value_convert_fn_t installed via
+   ompi_mpit_register_abi_thread_level_convert(). */
+OMPI_DECLSPEC int32_t ompi_mpit_abi_thread_level_convert_impl(int32_t thread_level);
+
 END_C_DECLS
 
 #endif /* OMPI_MPI_C_MPIT_ABI_HANDLE_CONVERT_H */

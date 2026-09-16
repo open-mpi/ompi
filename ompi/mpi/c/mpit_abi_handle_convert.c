@@ -87,3 +87,9 @@ int32_t ompi_mpit_abi_bind_convert_impl(int32_t object_bind)
     /* Map an internal MPI_T_BIND_* value to its MPI Standard ABI value. */
     return (int32_t) ompi_convert_t_bind_ompi_to_standard((int) object_bind);
 }
+
+int32_t ompi_mpit_abi_thread_level_convert_impl(int32_t thread_level)
+{
+    /* Map an internal MPI_THREAD_* value to its MPI Standard ABI value. */
+    return (int32_t) ompi_convert_ts_level_ompi_to_standard((int) thread_level);
+}
