@@ -113,6 +113,8 @@ if (MPI_SUCCESS != ret) {
 mpit_errhandler_state.registration = (MPI_T_event_registration) 0;
 mpit_errhandler_state.calls = 0;
 mpit_errhandler_state.failure_code = 0;
+mpit_errhandler_state.err_code = 0;
+mpit_errhandler_state.object_type = 0;
 mpit_errhandler_state.object_handle = 0;
 
 ret = MPI_T_event_handle_alloc(errhandler_index, NULL, MPI_INFO_NULL,
@@ -206,6 +208,22 @@ if (0 == local_failure) {
                         (unsigned long long) mpit_errhandler_state.object_handle,
                         (unsigned long long) (uintptr_t) MPI_COMM_SELF);
                 local_failure = 16;
+            } else if (mpit_errhandler_state.err_code !=
+                       (int32_t) (uintptr_t) MPI_ERR_OTHER) {
+                /* The err_code must be the Standard-ABI error code for MPI_ERR_OTHER,
+                   not the internal error code. */
+                fprintf(stderr, "ABI_FAIL:mpit:errhandler_err_code:%d:%d\n",
+                        (int) mpit_errhandler_state.err_code,
+                        (int) (uintptr_t) MPI_ERR_OTHER);
+                local_failure = 19;
+            } else if (mpit_errhandler_state.object_type !=
+                       (int32_t) (uintptr_t) MPI_T_BIND_MPI_COMM) {
+                /* The object_type must be the Standard-ABI MPI_T_BIND_MPI_COMM value,
+                   not the internal value. */
+                fprintf(stderr, "ABI_FAIL:mpit:errhandler_object_type:%d:%d\n",
+                        (int) mpit_errhandler_state.object_type,
+                        (int) (uintptr_t) MPI_T_BIND_MPI_COMM);
+                local_failure = 20;
             }
             /* Restore the default errhandler. */
             ret = MPI_Comm_set_errhandler(MPI_COMM_SELF, MPI_ERRORS_RETURN);
