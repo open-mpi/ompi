@@ -16,6 +16,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2016 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -283,8 +284,26 @@ advance_iov_position:
         }
         switch (frag->hdr.type) {
         case MCA_BTL_TCP_HDR_TYPE_FIN:
-            frag->endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
-            mca_btl_tcp_endpoint_close(frag->endpoint);
+            /* The peer let go of this socket: it is being destructed, or it
+             * dropped a duplicate dial we had already adopted. Our queue
+             * survives the close either way, with nothing to re-drive it
+             * before the next send to this peer. While CONNECTED its head
+             * is endpoint_send_frag, so that alone says whether one is
+             * outstanding.
+             *
+             * Hold the send lock across that read, the state change and the
+             * close, as the eof and error paths above do. A close entered as
+             * MCA_BTL_TCP_FAILED walks the send queue and completes it, and
+             * only the lock keeps another thread from putting us there
+             * between the two statements below. */
+            OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
+            if (NULL != btl_endpoint->endpoint_send_frag) {
+                BTL_VERBOSE(("peer %s said goodbye with sends of ours still queued for it",
+                             OPAL_NAME_PRINT(btl_endpoint->endpoint_proc->proc_opal->proc_name)));
+            }
+            btl_endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
+            mca_btl_tcp_endpoint_close(btl_endpoint);
+            OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
             break;
         case MCA_BTL_TCP_HDR_TYPE_SEND:
             if (frag->iov_idx == 1 && frag->hdr.size) {
