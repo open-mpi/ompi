@@ -134,7 +134,7 @@ int mca_coll_ucc_reduce_scatter_block_init(const void *sbuf, void *rbuf, size_t 
     mca_coll_ucc_req_t *coll_req = NULL;
 
     COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
-    UCC_VERBOSE(3, "reduce_scatter_block_init init %p", coll_req);
+    UCC_VERBOSE(3, "reduce_scatter_block_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_init_common(sbuf, rbuf, rcount,
                                                                  dtype, op, true, ucc_module,
                                                                  &req, coll_req));

@@ -121,7 +121,7 @@ int mca_coll_ucc_reduce_init(const void *sbuf, void *rbuf, size_t count,
     mca_coll_ucc_req_t *coll_req = NULL;
 
     COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
-    UCC_VERBOSE(3, "reduce_init init %p", coll_req);
+    UCC_VERBOSE(3, "reduce_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_reduce_init_common(sbuf, rbuf, count, dtype, op, root,
                                                    true, ucc_module, &req, coll_req));
     *request = &coll_req->super;
