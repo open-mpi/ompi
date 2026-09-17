@@ -1082,7 +1082,7 @@ AC_PROG_LEX([noyywrap])
 AS_IF([test -z "$LEX" || \
    test -n "`echo $LEX | $GREP missing`" || \
    test "`basename $LEX`" != "flex"],
-    [AS_IF([test ! -f "$srcdir/opal/util/show_help_lex.c"],
+    [AS_IF([test ! -f "$srcdir/opal/util/keyval/keyval_lex.c"],
        [AC_MSG_WARN([*** Could not find Flex on your system.])
         AC_MSG_WARN([*** Flex is required for developer builds of Open MPI.])
         AC_MSG_WARN([*** Other versions of Lex are not supported.])
