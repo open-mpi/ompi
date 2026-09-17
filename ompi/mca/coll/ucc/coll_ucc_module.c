@@ -664,7 +664,7 @@ int mca_coll_ucc_req_free(struct ompi_request_t **ompi_req)
     {
         mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t *) ompi_req[0];
         if (true == coll_req->super.req_persistent) {
-            UCC_VERBOSE(5, "%s free %p", "<coll>_init", coll_req);
+            UCC_VERBOSE(5, "%s free %p", "<coll>_init", (void *)coll_req);
             if (NULL != coll_req->ucc_req) {
                 ucc_status_t rc_ucc;
                 rc_ucc = ucc_collective_finalize(coll_req->ucc_req);
@@ -687,7 +687,7 @@ void mca_coll_ucc_completion(void *data, ucc_status_t status)
     if (false == coll_req->super.req_persistent) {
         ucc_collective_finalize(coll_req->ucc_req);
     } else {
-        UCC_VERBOSE(5, "%s done %p", "<coll>_init", coll_req);
+        UCC_VERBOSE(5, "%s done %p", "<coll>_init", (void *)coll_req);
         assert(!REQUEST_COMPLETE(&coll_req->super));
     }
     ompi_request_complete(&coll_req->super, true);
@@ -713,7 +713,7 @@ int mca_coll_ucc_req_start(size_t count, struct ompi_request_t **requests)
             }
             continue;
         }
-        UCC_VERBOSE(5, "%s post %p", "<coll>_init", coll_req);
+        UCC_VERBOSE(5, "%s post %p", "<coll>_init", (void *)coll_req);
         assert(REQUEST_COMPLETE(&coll_req->super));
         assert(OMPI_REQUEST_INACTIVE == coll_req->super.req_state);
 

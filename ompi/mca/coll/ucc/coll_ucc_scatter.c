@@ -148,7 +148,7 @@ int mca_coll_ucc_scatter_init(const void *sbuf, size_t scount, struct ompi_datat
     mca_coll_ucc_req_t *coll_req = NULL;
 
     COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
-    UCC_VERBOSE(3, "scatter_init init %p", coll_req);
+    UCC_VERBOSE(3, "scatter_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_scatter_init_common(sbuf, scount, sdtype, rbuf, rcount,
                                                     rdtype, root, true, ucc_module, &req,
                                                     coll_req));
