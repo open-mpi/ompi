@@ -201,9 +201,9 @@ There are two mechanism for using libfabric and Open MPI with ROCm support.
 .. code-block:: sh
 
    # Force using the ofi mtl component
-  export FI_LNX_PROV_LINKS="shm+cxi"
+   export FI_LNX_PROV_LINKS="shm+cxi"
    mpirun --mca pml cm --mca mtl ofi                             \
-       --mca mtl_ofi_provider_include lnx                    \
+          --mca mtl_ofi_provider_include lnx                     \
           -n 64 ./<my_executable>
 
 * Alternatively, the user can use the ``btl/ofi`` component, in which
