@@ -118,6 +118,7 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
 
     if (MCA_PML_BASE_SEND_BUFFERED == req->mode) {
         pml_ubcl_bufferize(req);
+        req->to_free = 1;
     }
     get_ubcl_send_mode(req->mode, &send_mode);
 
@@ -234,11 +235,9 @@ int mca_pml_ubcl_send(const void *buf, size_t count, ompi_datatype_t *datatype, 
 
     request = container_of(ompi_request, mca_pml_ubcl_request_t, ompi_req);
 
-    if (MCA_PML_BASE_SEND_BUFFERED == mode) {
+    if (MCA_PML_BASE_SEND_BUFFERED != mode) {
         /* MPI specification: Bsend is local, no information about the remote.
          * PML/BXI always buffers Bsend data. No need to wait request completion */
-        request->to_free = 1;
-    } else {
         ompi_request_wait_completion(ompi_request);
         mca_pml_ubcl_request_finalize(request);
     }
