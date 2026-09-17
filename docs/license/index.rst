@@ -9,6 +9,20 @@ The `Open MPI license <https://spdx.org/licenses/BSD-3-Clause-Open-MPI.html>`_  
 .. literalinclude:: ompi.txt
    :language: text
 
+Documentation license
+---------------------
+
+Except where otherwise noted, the Open MPI documentation is made available by
+the Open MPI Project under the
+`Creative Commons Attribution 4.0 International License
+<https://creativecommons.org/licenses/by/4.0/>`_.
+
+This license applies to documentation prose and original documentation
+artwork.  It does not apply to Open MPI software source code, source-code
+listings or examples that reproduce software code, or third-party material
+that is identified as being subject to other terms.  Those materials remain
+subject to their stated licenses.
+
 Additional licenses
 -------------------
 
