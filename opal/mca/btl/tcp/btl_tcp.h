@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2019-2020 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,6 +55,13 @@
 #include "opal/util/fd.h"
 
 #define MCA_BTL_TCP_STATISTICS 0
+
+enum {
+    MCA_BTL_TCP_CONNECT_LAZY = 0,
+    MCA_BTL_TCP_CONNECT_SYNC_INIT,
+    MCA_BTL_TCP_CONNECT_FULL
+};
+
 BEGIN_C_DECLS
 
 extern opal_event_base_t *mca_btl_tcp_event_base;
@@ -108,6 +116,16 @@ struct mca_btl_tcp_component_t {
     opal_mutex_t tcp_lock;       /**< lock for accessing module state */
     opal_list_t tcp_events;
 
+    /* Inbound connections that have named themselves and are waiting for
+     * an endpoint to take them. They queue here because adopting one needs
+     * the endpoint's locks, which the listener must not take. The list is
+     * what component close drains; the free list is where entries come
+     * from.
+     */
+    opal_list_t tcp_pending_accepts;
+    opal_mutex_t tcp_pending_accepts_lock;
+    opal_free_list_t tcp_pending_accepts_fl;
+
     opal_event_t tcp_recv_event;    /**< recv event for IPv4 listen socket */
     int tcp_listen_sd;              /**< IPv4 listen socket for incoming connection requests */
     unsigned short tcp_listen_port; /**< IPv4 listen port */
@@ -133,6 +151,19 @@ struct mca_btl_tcp_component_t {
      */
     int tcp_recv_timeout;
     int tcp_handshake_timeout;
+    int tcp_connect_mode; /* MCA_BTL_TCP_CONNECT_* */
+
+    /* Arbitration of inbound connections: how long and how often to come
+     * back to an endpoint busy in its own send or recv path, and how many
+     * peers' worth of entries to have ready before any arrive.
+     * tcp_settle_timeout bounds a different wait -- for something already
+     * in flight to arrive -- which is not contention and is budgeted
+     * apart.
+     */
+    int tcp_pending_accept_peers;
+    int tcp_arbitration_retry;
+    int tcp_arbitration_retries;
+    int tcp_settle_timeout;
 
     /* free list of fragment descriptors */
     opal_free_list_t tcp_frag_eager;
@@ -227,14 +258,14 @@ extern int mca_btl_tcp_finalize(struct mca_btl_base_module_t *btl);
  * @param nprocs (IN)     Number of processes
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
- * @param peers (IN/OUT)  Set of processes that are reachable via this BTL.
+ * @param status (OUT)    Per-peer MCA_BTL_PROC_* status.
  * @return     OPAL_SUCCESS or error status on failure.
  *
  */
 
 extern int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                                  struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                                 opal_bitmap_t *reachable);
+                                 opal_bitmap_t *status);
 
 /**
  * PML->BTL notification of change in the process list.

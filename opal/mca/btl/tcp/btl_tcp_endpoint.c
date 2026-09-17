@@ -85,7 +85,6 @@ static void mca_btl_tcp_endpoint_construct(mca_btl_tcp_endpoint_t *endpoint)
     endpoint->endpoint_proc = NULL;
     endpoint->endpoint_addr = NULL;
     endpoint->endpoint_sd = -1;
-    endpoint->endpoint_sd_next = -1;
     endpoint->endpoint_send_frag = 0;
     endpoint->endpoint_recv_frag = 0;
     endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
@@ -474,47 +473,65 @@ static bool mca_btl_tcp_endpoint_abandoned(int sd)
     return (EWOULDBLOCK != opal_socket_errno) && (EAGAIN != opal_socket_errno);
 }
 
-static void *mca_btl_tcp_endpoint_complete_accept(int fd, int flags, void *context)
+/*
+ * Take an inbound connection, or decline it, and say which:
+ * (1) if a connection has not been attempted, take it;
+ * (2) if a connection has not been established, and the peer's process
+ *     identifier is lower than ours, take it and drop our own dial;
+ * otherwise keep the connection we have and decline this one.
+ *
+ * The return says who must close the socket, which is not quite the same
+ * question as whether the connection came up. OPAL_SUCCESS means it is no
+ * longer the caller's to close or to offer again; every other return
+ * leaves it with the caller. On all but one path success also means the
+ * endpoint is connected on it -- the exception is a handshake that fails
+ * after the socket has been taken, marked where it happens below.
+ *
+ * Runs on the event base and must never block: an endpoint busy in its
+ * own send or recv path is OPAL_ERR_RESOURCE_BUSY, to be come back for
+ * rather than stalled behind.
+ *
+ * OPAL_ERR_IN_PROCESS is the other premature return, kept distinct from
+ * busy because it ends differently: a dial of our own is in flight and
+ * may yet win or die. The caller keeps the socket for both, but only busy
+ * may eventually be given up on -- contention might never clear, while a
+ * dial always resolves, so a caller that treats the two alike closes the
+ * socket while the outcome is still unknown.
+ */
+int mca_btl_tcp_endpoint_adopt(mca_btl_base_endpoint_t *btl_endpoint, int sd)
 {
-    mca_btl_base_endpoint_t *btl_endpoint = (mca_btl_base_endpoint_t *) context;
-    struct timeval now = {0, 0};
-    int cmpval;
+    int cmpval, rc = OPAL_ERR_NOT_AVAILABLE;
 
-    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_recv_lock)) {
-        opal_event_add(&btl_endpoint->endpoint_accept_event, &now);
-        return NULL;
-    }
-    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock)) {
-        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-        opal_event_add(&btl_endpoint->endpoint_accept_event, &now);
-        return NULL;
-    }
-
+    /* Before the locks, which this question does not need: endpoint_addr
+     * is written once, where mca_btl_tcp_proc_insert() records the
+     * endpoint on its proc, and is never cleared. Nothing to race with,
+     * which is what lets mca_btl_tcp_endpoint_dial() ask it the same way.
+     */
     if (NULL == btl_endpoint->endpoint_addr) {
-        CLOSE_THE_SOCKET(
-            btl_endpoint->endpoint_sd_next); /* No further use of this socket. Close it */
-        btl_endpoint->endpoint_sd_next = -1;
-        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
-        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
         if (NULL != btl_endpoint->endpoint_btl->tcp_error_cb) {
             btl_endpoint->endpoint_btl
                 ->tcp_error_cb(&btl_endpoint->endpoint_btl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
                                btl_endpoint->endpoint_proc->proc_opal,
                                "The endpoint addr is set to NULL (unsettling)");
         }
-        return NULL;
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_recv_lock)) {
+        return OPAL_ERR_RESOURCE_BUSY;
+    }
+    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock)) {
+        OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
+        return OPAL_ERR_RESOURCE_BUSY;
     }
 
     cmpval = opal_compare_proc(btl_endpoint->endpoint_proc->proc_opal->proc_name,
                                opal_proc_local_get()->proc_name);
     if ((btl_endpoint->endpoint_sd < 0)
         || (btl_endpoint->endpoint_state != MCA_BTL_TCP_CONNECTED && cmpval < 0)) {
-        if (mca_btl_tcp_endpoint_abandoned(btl_endpoint->endpoint_sd_next)) {
-            MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true,
-                                      "discarded, peer let go [endpoint_accept]");
-            CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd_next);
-            btl_endpoint->endpoint_sd_next = -1;
-            /* Discarded rather than adopted, so we may now have nothing at
+        if (mca_btl_tcp_endpoint_abandoned(sd)) {
+            MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "discarded, peer let go [adopt]");
+            /* Declined rather than taken, so we may now have nothing at
              * all. The peer is not coming back for one -- it just let go --
              * so go back to CLOSED, and dial if we have something waiting,
              * which is the work adopting would have restarted. */
@@ -534,54 +551,99 @@ static void *mca_btl_tcp_endpoint_complete_accept(int fd, int flags, void *conte
             mca_btl_tcp_endpoint_send_fin(btl_endpoint);
         }
         mca_btl_tcp_endpoint_close(btl_endpoint);
-        btl_endpoint->endpoint_sd = btl_endpoint->endpoint_sd_next;
-        btl_endpoint->endpoint_sd_next = -1;
+        btl_endpoint->endpoint_sd = sd;
         if (mca_btl_tcp_endpoint_send_connect_ack(btl_endpoint) != OPAL_SUCCESS) {
-            MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, " [endpoint_accept]");
+            MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, " [adopt]");
             btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
             mca_btl_tcp_endpoint_close(btl_endpoint);
+            /* The one place success does not mean connected. This
+             * connection is dead, but the socket became ours above and
+             * close() has already retired it, so the caller must neither
+             * close it again nor come back with it -- and OPAL_SUCCESS is
+             * the only return that says both. The outcome is carried by
+             * the endpoint state and by the error callback close() has
+             * raised. A caller that has to tell this from a real adoption
+             * needs a return code of its own, not this one. */
+            rc = OPAL_SUCCESS;
             goto unlock_and_return;
         }
         mca_btl_tcp_endpoint_event_init(btl_endpoint);
-        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(recv) [endpoint_accept]");
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "event_add(recv) [adopt]");
         opal_event_add(&btl_endpoint->endpoint_recv_event, 0);
         if (mca_btl_tcp_event_base == opal_sync_event_base) {
-            /* If no progress thread then raise the awarness of the default progress engine */
+            /* If no progress thread then raise the awareness of the default progress engine */
             opal_progress_event_users_increment();
         }
         mca_btl_tcp_endpoint_connected(btl_endpoint);
 
-        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "accepted");
-        goto unlock_and_return;
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "adopted");
+        rc = OPAL_SUCCESS;
+    } else if (MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state) {
+        /* A "not yet", not a "no": a dial of our own has not landed.
+         * Declining would close this socket on the strength of a
+         * connection that is still hypothetical, and if ours turns out to
+         * be dead the peer is left waiting on a socket we threw away, with
+         * nothing to make it dial again.
+         *
+         * So keep it and be asked again. Either our dial lands, the peer
+         * closes this one as the duplicate it then is, and the next offer
+         * retires it through the abandoned() path above; or our dial dies,
+         * the endpoint falls back to CLOSED, and the next offer takes this
+         * socket. Both are reached without guessing, at the cost of
+         * holding one descriptor for a tick or two.
+         */
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "held, our dial is out [adopt]");
+        rc = OPAL_ERR_IN_PROCESS;
     }
-    CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd_next); /* No further use of this socket. Close it */
-    btl_endpoint->endpoint_sd_next = -1;
+
 unlock_and_return:
     OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
     OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
-    return NULL;
+    return rc;
 }
 
 /*
- * Check the state of this endpoint. If the incoming connection request matches
- * our endpoints address, check the state of our connection:
- * (1) if a connection has not been attempted, accept the connection
- * (2) if a connection has not been established, and the endpoints process identifier
- *     is less than the local process, accept the connection
- * otherwise, reject the connection and continue with the current connection
+ * Make good on a connection this peer made to us that we let go of.
+ *
+ * Closing an inbound socket mid-handshake already means something
+ * specific to the peer: mca_btl_tcp_endpoint_recv_connect_ack() reads the
+ * eof as us having dialled in the other direction, so it drops its own
+ * attempt and waits for ours, keeping whatever it had queued. That
+ * reading is what makes the drop safe, and this is what makes it true.
+ *
+ * A CLOSED endpoint is dialled and a CONNECTED one is already everything
+ * the peer was waiting for, so either settles the debt. In between does
+ * not: a connection on its way may still die, and settling against it is
+ * the same guess mca_btl_tcp_endpoint_adopt() refuses to make about its
+ * own dial. OPAL_ERR_IN_PROCESS says to look again, which costs an entry
+ * and no descriptor.
+ *
+ * Takes only the send lock, and only to try: the caller is on the event
+ * base. OPAL_ERR_RESOURCE_BUSY again means come back.
+ *
+ * OPAL_ERR_NOT_AVAILABLE means there is no address to dial, which no
+ * later turn will find either, so the caller reports the debt as unpayable
+ * rather than retrying.
  */
-
-void mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t *btl_endpoint, struct sockaddr *addr,
-                                 int sd)
+int mca_btl_tcp_endpoint_dial(mca_btl_base_endpoint_t *btl_endpoint)
 {
-    struct timeval now = {0, 0};
+    int rc = OPAL_SUCCESS;
 
-    assert(btl_endpoint->endpoint_sd_next == -1);
-    btl_endpoint->endpoint_sd_next = sd;
-
-    opal_event_evtimer_set(mca_btl_tcp_event_base, &btl_endpoint->endpoint_accept_event,
-                           mca_btl_tcp_endpoint_complete_accept, btl_endpoint);
-    opal_event_add(&btl_endpoint->endpoint_accept_event, &now);
+    if (NULL == btl_endpoint->endpoint_addr) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    if (OPAL_THREAD_TRYLOCK(&btl_endpoint->endpoint_send_lock)) {
+        return OPAL_ERR_RESOURCE_BUSY;
+    }
+    if (MCA_BTL_TCP_CLOSED == btl_endpoint->endpoint_state) {
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "dialling back [dial]");
+        rc = mca_btl_tcp_endpoint_start_connect(btl_endpoint);
+    } else if (MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state) {
+        MCA_BTL_TCP_ENDPOINT_DUMP(10, btl_endpoint, true, "dial owed, one is out [dial]");
+        rc = OPAL_ERR_IN_PROCESS;
+    }
+    OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
+    return rc;
 }
 
 /*
@@ -599,7 +661,7 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t *btl_endpoint)
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "event_del(recv) [close]");
     opal_event_del(&btl_endpoint->endpoint_recv_event);
     if (mca_btl_tcp_event_base == opal_sync_event_base) {
-        /* If no progress thread then lower the awarness of the default progress engine */
+        /* If no progress thread then lower the awareness of the default progress engine */
         opal_progress_event_users_decrement();
     }
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, false, "event_del(send) [close]");
