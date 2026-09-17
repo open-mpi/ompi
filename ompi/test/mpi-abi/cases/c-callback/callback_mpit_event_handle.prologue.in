@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Verify that Open MPI's MPI_T events publish MPI *Standard ABI* integer
+ *   handles in their payloads when the process runs under the Standard ABI
+ *   (open-mpi/ompi#13280), not internal object pointers or the old zero stub.
+ *   A Standard-ABI process links libmpi_abi, whose MPI_Init installs the
+ *   intern->ABI handle converter downward into libopen_mpi; producer raise
+ *   sites then convert handles to Standard-ABI.
+ *
+ *   Tests two scenarios:
+ *   1. communicator_created event with a newly duplicated communicator: the
+ *      Standard-ABI handle equals the user's MPI_Comm handle.
+ *   2. errhandler_invoked event with a predefined communicator (MPI_COMM_SELF):
+ *      the Standard-ABI handle differs from the internal pointer, ensuring we
+ *      truly detect ABI conversion rather than pointer passthrough.
+ *
+ *   Open MPI may expose the event APIs with no source able to allocate a
+ *   registration, or the events may not be registered; the body treats either
+ *   as a stable skip.
+ */
+struct mpit_created_state {
+    MPI_T_event_registration registration;
+    int calls;
+    int failure_code;
+    uint64_t handle;
+};
+
+static struct mpit_created_state mpit_created_state;
+
+static void mpit_created_callback(MPI_T_event_instance event_instance,
+                                  MPI_T_event_registration event_registration,
+                                  MPI_T_cb_safety cb_safety,
+                                  void *user_data)
+{
+    struct mpit_created_state *state =
+        (struct mpit_created_state *) user_data;
+    if (&mpit_created_state != state) {
+        mpit_created_state.failure_code = 201;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 202;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 203;
+    } else {
+        ++state->calls;
+        /* Element 1 of the communicator_created payload is the MPI_Comm
+           handle (element 0 is the int32 size). */
+        (void) MPI_T_event_read(event_instance, 1, &state->handle);
+    }
+}
+
+struct mpit_errhandler_state {
+    MPI_T_event_registration registration;
+    int calls;
+    int failure_code;
+    int32_t err_code;
+    int32_t object_type;
+    uint64_t object_handle;
+};
+
+static struct mpit_errhandler_state mpit_errhandler_state;
+
+static void mpit_errhandler_callback(MPI_T_event_instance event_instance,
+                                     MPI_T_event_registration event_registration,
+                                     MPI_T_cb_safety cb_safety,
+                                     void *user_data)
+{
+    struct mpit_errhandler_state *state =
+        (struct mpit_errhandler_state *) user_data;
+    if (&mpit_errhandler_state != state) {
+        mpit_errhandler_state.failure_code = 301;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 302;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 303;
+    } else {
+        ++state->calls;
+        /* The errhandler_invoked payload carries four fields:
+           element 0 is err_code (Standard-ABI int32_t MPI error code),
+           element 1 is object_type (Standard-ABI int32_t MPI_T_BIND value),
+           element 2 is errhandler_handle (Standard-ABI uint64_t MPI_Errhandler),
+           element 3 is object_handle (Standard-ABI uint64_t MPI object handle). */
+        (void) MPI_T_event_read(event_instance, 0, &state->err_code);
+        (void) MPI_T_event_read(event_instance, 1, &state->object_type);
+        (void) MPI_T_event_read(event_instance, 3, &state->object_handle);
+    }
+}
+
+static void dummy_errhandler_callback(MPI_Comm *comm, int *err_code, ...)
+{
+    /* Empty errhandler just to trigger the MPI_T errhandler_invoked event. */
+    (void) comm;
+    (void) err_code;
+}

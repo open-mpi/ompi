@@ -755,7 +755,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
             int32_t  world_rank;
             int32_t  world_size;
             uint64_t instance_id;
-        } payload = {OMPI_T_MODEL_WORLD, (int32_t) *provided,
+        } payload = {OMPI_T_MODEL_WORLD,
+                     ompi_mpit_abi_thread_level((int32_t) *provided),
                      ompi_comm_rank(MPI_COMM_WORLD), ompi_comm_size(MPI_COMM_WORLD),
                      (uint64_t) (uintptr_t) ompi_mpi_instance_default};
         mca_base_event_raise(ompi_event_initialization, NULL, &payload);

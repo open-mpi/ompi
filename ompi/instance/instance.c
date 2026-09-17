@@ -22,6 +22,8 @@
 #include "ompi_config.h"
 #include "instance.h"
 
+#include <stdatomic.h>
+
 #include "opal/util/arch.h"
 
 #include "opal/util/show_help.h"
@@ -1143,13 +1145,16 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
         payload.world_size = -1;
         /* For the session model the instance is the MPI_Session, so instance_id
            is its handle.  XXX ABI: it must match the registering MPI_T tool's
-           ABI (ompi_mpit_callback_abi). */
-        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+           ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize with
+           the release-store in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
+                                                    memory_order_acquire);
+        if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.instance_id = (uint64_t) (uintptr_t) new_instance;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               session new_instance. */
-            payload.instance_id = 0;
+            /* MPI Standard ABI: publish the integer MPI_Session handle. */
+            payload.instance_id = ompi_mpit_abi_handle(new_instance,
+                                                       MPI_T_BIND_MPI_SESSION);
         }
         mca_base_event_raise(ompi_event_initialization, NULL, &payload);
     }
@@ -1280,13 +1285,17 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
         payload.model = OMPI_T_MODEL_SESSION;
         payload.world_rank = -1;
         /* instance_id is the MPI_Session handle.  XXX ABI: it must match the
-           registering MPI_T tool's ABI (ompi_mpit_callback_abi). */
-        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+           registering MPI_T tool's ABI (ompi_mpit_callback_abi).  Use acquire-load
+           to synchronize with the release-store in the init path under
+           MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
+                                                    memory_order_acquire);
+        if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.instance_id = (uint64_t) (uintptr_t) *instance;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               session *instance. */
-            payload.instance_id = 0;
+            /* MPI Standard ABI: publish the integer MPI_Session handle. */
+            payload.instance_id = ompi_mpit_abi_handle(*instance,
+                                                       MPI_T_BIND_MPI_SESSION);
         }
         mca_base_event_raise(ompi_event_finalization, NULL, &payload);
     }

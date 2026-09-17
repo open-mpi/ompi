@@ -41,6 +41,7 @@
 
 #include "ompi_config.h"
 #include <limits.h>
+#include <stdatomic.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -2526,12 +2527,15 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
             uint64_t handle;
         } payload;
         /* XXX ABI (#13280): the MPI_Comm handle must match the registering
-           tool's ABI (ompi_mpit_callback_abi). */
-        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+           tool's ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize
+           with the release-store in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
+                                                    memory_order_acquire);
+        if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) comm;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value. */
-            payload.handle = 0;
+            /* MPI Standard ABI: publish the integer MPI_Comm handle. */
+            payload.handle = ompi_mpit_abi_handle(comm, MPI_T_BIND_MPI_COMM);
         }
         mca_base_event_raise_bound(ompi_event_comm_name_set, NULL, comm, &payload);
     }
@@ -2692,13 +2696,15 @@ int ompi_comm_free( ompi_communicator_t **comm )
             uint64_t handle;
         } payload;
         /* XXX ABI: the MPI_Comm handle value must match the registering MPI_T
-           tool's ABI (ompi_mpit_callback_abi). */
-        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+           tool's ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize
+           with the release-store in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
+                                                    memory_order_acquire);
+        if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) *comm;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               communicator *comm. */
-            payload.handle = 0;
+            /* MPI Standard ABI: publish the integer MPI_Comm handle. */
+            payload.handle = ompi_mpit_abi_handle(*comm, MPI_T_BIND_MPI_COMM);
         }
         mca_base_event_raise(ompi_event_comm_freed, NULL, &payload);
     }
