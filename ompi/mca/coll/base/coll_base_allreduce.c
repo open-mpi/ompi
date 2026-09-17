@@ -1343,3 +1343,1069 @@ err_hndl:
 
 }
 /* copied function (with appropriate renaming) ends here */
+
+/*
+ * Binomial Negabinary (Bine) allreduce, latency-optimized variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses distance-halving Bine tree partner selection to exchange full
+ * data buffers at each step, applying the reduction operator after
+ * each receive.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the recursive doubling algorithm is used as a fallback.
+ */
+int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t count,
+                                            struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                            struct ompi_communicator_t *comm,
+                                            mca_coll_base_module_t *module)
+{
+    int rank, size;
+    int err, line; // for error handling
+    char *tmpsend, *tmprecv, *inplacebuf_free = NULL;
+    ptrdiff_t extent, true_extent, lb, gap, span = 0;
+    
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_lat WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+
+    if (!ompi_coll_is_power_of_two(size)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_lat WARNING: "
+                     "non-pow-2 size %d, switching to recursive doubling",
+                     size));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                 module);
+    }
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allreduce_intra_bine_lat rank %d", rank));
+
+    // Special case for size == 1
+    if (1 == size) {
+        if (MPI_IN_PLACE != sbuf) {
+            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
+            if (err < 0) {
+                line = __LINE__;
+                goto error_hndl;
+            }
+        }
+        return MPI_SUCCESS;
+    }
+
+    // Determine the number of communication steps, the largest power of two
+    // less than or equal to size; return an error if size is 0
+    int steps = opal_hibit(size, (int) (sizeof(size) * CHAR_BIT) - 1);
+    if (steps == -1) {
+        return MPI_ERR_ARG;
+    }
+
+    // Allocate and initialize temporary send buffer
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
+    span = true_extent + extent * (count - 1);
+    inplacebuf_free = (char *) malloc(span + gap);
+    if (NULL == inplacebuf_free) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto error_hndl;
+    }
+
+    char *inplacebuf = inplacebuf_free + gap;
+
+    // Copy content from sbuffer to inplacebuf
+    if (MPI_IN_PLACE == sbuf) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, inplacebuf, (char *) rbuf);
+        if (err < 0) {
+            line = __LINE__;
+            goto error_hndl;
+        }
+    } else {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, inplacebuf, (char *) sbuf);
+        if (err < 0) {
+            line = __LINE__;
+            goto error_hndl;
+        }
+    }
+
+    tmpsend = inplacebuf;
+    tmprecv = (char *) rbuf;
+
+    int adjsize = 1 << steps; // Largest power of two <= size
+
+    // Number of nodes that exceed the largest power of two less than or equal to size
+    int extra_ranks = size - adjsize;
+    int is_power_of_two = (size & (size - 1)) == 0;
+
+    // First part of computation to get a 2^n number of nodes.
+    // What happens is that first #extra_rank even nodes sends their
+    // data to the successive node and do not partecipate in the general
+    // collective call operation.
+    // All the nodes that do not stop their computation will receive an alias
+    // called new_node, used to calculate their correct destination wrt this
+    // new "cut" topology.
+    int new_rank = rank, loop_flag = 0;
+    if (rank < (2 * extra_ranks)) {
+        if (0 == (rank % 2)) {
+            err = MCA_PML_CALL(send(tmpsend, count, dtype, (rank + 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
+            loop_flag = 1;
+        } else {
+            err = MCA_PML_CALL(recv(tmprecv, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
+            err = mca_coll_base_reduce_local((char *) tmprecv, (char *) tmpsend, count, dtype, op,
+                                       module);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
+
+            new_rank = rank >> 1;
+        }
+    } else
+        new_rank = rank - extra_ranks;
+
+    // Actual allreduce computation for general cases
+    int s, vdest, dest;
+    for (s = 0; s < steps; s++) {
+        if (loop_flag)
+            break;
+        vdest = ompi_coll_bine_pi(new_rank, s, adjsize);
+
+        dest = is_power_of_two         ? vdest
+               : (vdest < extra_ranks) ? (vdest << 1) + 1
+                                       : vdest + extra_ranks;
+
+        err = ompi_coll_base_sendrecv(tmpsend, count, dtype, dest, MCA_COLL_BASE_TAG_ALLREDUCE,
+                                      tmprecv, count, dtype, dest, MCA_COLL_BASE_TAG_ALLREDUCE,
+                                      comm, MPI_STATUS_IGNORE, rank);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
+
+        err = mca_coll_base_reduce_local((char *) tmprecv, (char *) tmpsend, count, dtype, op, module);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto error_hndl;
+        }
+    }
+
+    // Final results is sent to nodes that are not included in general computation
+    // (general computation loop requires 2^n nodes).
+    if (rank < (2 * extra_ranks)) {
+        if (!loop_flag) {
+            err = MCA_PML_CALL(send(tmpsend, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
+        } else {
+            err = MCA_PML_CALL(recv(tmprecv, count, dtype, (rank + 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
+            tmpsend = (char *) rbuf;
+        }
+    }
+
+    if (tmpsend != rbuf) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf, tmpsend);
+        if (err < 0) {
+            line = __LINE__;
+            goto error_hndl;
+        }
+    }
+
+    free(inplacebuf_free);
+    return MPI_SUCCESS;
+
+error_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, ompi_comm_rank(comm)));
+    (void) line; // silence compiler warning
+    if (NULL != inplacebuf_free) {
+        free(inplacebuf_free);
+    }
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) allreduce, bandwidth-optimized remap variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Decomposes into a Bine reduce-scatter (distance-doubling butterfly)
+ * followed by a Bine allgather, each transferring half the data per step.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the recursive doubling algorithm is used as a fallback.
+ */
+int ompi_coll_base_allreduce_intra_bine_bdw_remap(const void *sbuf, void *rbuf, size_t count,
+                                                  struct ompi_datatype_t *dtype,
+                                                  struct ompi_op_t *op,
+                                                  struct ompi_communicator_t *comm,
+                                                  mca_coll_base_module_t *module)
+{
+    int size, rank, dest, steps, step, line, err = MPI_SUCCESS;
+    int *r_count = NULL, *s_count = NULL, *r_index = NULL, *s_index = NULL;
+    size_t w_size;
+    uint32_t vrank, vdest;
+
+    char *tmp_send = NULL, *tmp_recv = NULL;
+    char *tmp_buf_raw = NULL, *tmp_buf;
+    ptrdiff_t lb, extent, true_extent, gap = 0, buf_size;
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_bdw_remap WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+
+    // Does not support non-power-of-two or negative sizes
+    steps = opal_cube_dim(size);
+    if (!ompi_coll_is_power_of_two(size) || steps == -1) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_bdw_remap WARNING: "
+                     "non-pow-2 size %d, switching to recursive doubling",
+                     size));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+    
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allreduce_intra_bine_bdw_remap rank %d", rank));
+
+    // Allocate temporary buffer for send/recv and reduce operations
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
+    buf_size = true_extent + extent * (count >> 1);
+    tmp_buf_raw = (char *) malloc(buf_size);
+    if (NULL == tmp_buf_raw) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto cleanup_and_return;
+    }
+    tmp_buf = tmp_buf_raw - gap;
+
+    // Copy into receive_buffer content of send_buffer to not produce
+    // side effects on send_buffer
+    if (sbuf != MPI_IN_PLACE) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
+    }
+
+    r_index = malloc(sizeof(*r_index) * steps);
+    s_index = malloc(sizeof(*s_index) * steps);
+    r_count = malloc(sizeof(*r_count) * steps);
+    s_count = malloc(sizeof(*s_count) * steps);
+    if (NULL == r_index || NULL == s_index || NULL == r_count || NULL == s_count) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto cleanup_and_return;
+    }
+
+    w_size = count;
+    s_index[0] = r_index[0] = 0;
+    vrank = ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) rank);
+
+    // Reduce-Scatter phase
+    for (step = 0; step < steps; step++) {
+        dest = ompi_coll_bine_pi(rank, step, size);
+        vdest = ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) dest);
+
+        if (vrank < vdest) {
+            r_count[step] = w_size / 2;
+            s_count[step] = w_size - r_count[step];
+            s_index[step] = r_index[step] + r_count[step];
+        } else {
+            s_count[step] = w_size / 2;
+            r_count[step] = w_size - s_count[step];
+            r_index[step] = s_index[step] + s_count[step];
+        }
+        tmp_send = (char *) rbuf + s_index[step] * extent;
+        err = ompi_coll_base_sendrecv(tmp_send, s_count[step], dtype, dest,
+                                      MCA_COLL_BASE_TAG_ALLREDUCE, tmp_buf, r_count[step], dtype,
+                                      dest, MCA_COLL_BASE_TAG_ALLREDUCE, comm, MPI_STATUS_IGNORE,
+                                      rank);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
+
+        tmp_recv = (char *) rbuf + r_index[step] * extent;
+        err = mca_coll_base_reduce_local(tmp_buf, tmp_recv, r_count[step], dtype, op, module);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
+
+        if (step + 1 < steps) {
+            r_index[step + 1] = r_index[step];
+            s_index[step + 1] = r_index[step];
+            w_size = r_count[step];
+        }
+    }
+
+    // Allgather phase
+    for (step = steps - 1; step >= 0; step--) {
+        dest = ompi_coll_bine_pi(rank, step, size);
+
+        tmp_send = (char *) rbuf + r_index[step] * extent;
+        tmp_recv = (char *) rbuf + s_index[step] * extent;
+        err = ompi_coll_base_sendrecv(tmp_send, r_count[step], dtype, dest,
+                                      MCA_COLL_BASE_TAG_ALLREDUCE, tmp_recv, s_count[step], dtype,
+                                      dest, MCA_COLL_BASE_TAG_ALLREDUCE, comm, MPI_STATUS_IGNORE,
+                                      rank);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
+    }
+
+    free(tmp_buf_raw);
+    free(r_index);
+    free(s_index);
+    free(r_count);
+    free(s_count);
+    return MPI_SUCCESS;
+
+cleanup_and_return:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
+                 __FILE__, line, rank, err));
+    (void) line; // silence compiler warning
+
+    if (NULL != tmp_buf_raw) {
+        free(tmp_buf_raw);
+    }
+    if (NULL != r_index)
+        free(r_index);
+    if (NULL != s_index)
+        free(s_index);
+    if (NULL != r_count)
+        free(r_count);
+    if (NULL != s_count)
+        free(s_count);
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) allreduce, block-by-block any-even over variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a Bine reduce-scatter followed by allgather, transmitting each
+ * block independently to overlap reduction with communication.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to even communicator sizes.
+ * For non even sizes, the recursive doubling algorithm is used as a fallback.
+ */
+int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
+    const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+    struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
+{
+    int size, rank, line, err = MPI_SUCCESS;
+    int *blocks_to_recv = NULL;
+    MPI_Request *reqs_s = NULL, *reqs_r = NULL, *requests = NULL;
+    ptrdiff_t lb, extent, true_extent, gap;
+    size_t span;
+    void *tmpbuf = NULL;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
+    span = true_extent + extent * (count - 1);
+
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_block_by_block_any_even_over WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+
+    if (!ompi_coll_is_power_of_two(size)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_block_by_block_any_even_over WARNING: "
+                     "non-pow-2 size %d, switching to recursive doubling",
+                     size));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allreduce_intra_bine_block_by_block_any_even_over rank %d", rank));
+
+    int count_so_far = 0;
+    int count_per_block = count / size;
+    int *displs = (int *) malloc(size * sizeof(int));
+    int *recvcounts = (int *) malloc(size * sizeof(int));
+    if (NULL == displs || NULL == recvcounts) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+
+    for (size_t i = 0; i < (size_t) size; i++) {
+        displs[i] = count_so_far;
+        if (i < count % size) {
+            recvcounts[i] = count_per_block + 1; // Big block
+        } else {
+            recvcounts[i] = count_per_block; // Small block
+        }
+        count_so_far += recvcounts[i];
+    }
+
+    tmpbuf = malloc(span + gap);
+    if (NULL == tmpbuf) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+
+    if (MPI_IN_PLACE != sbuf) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+    }
+
+    /**** Reduce-scatter phase ****/
+    int mask = 0x1;
+    //reqs_s = (MPI_Request *) malloc(size * sizeof(MPI_Request));
+    //reqs_r = (MPI_Request *) malloc(size * sizeof(MPI_Request));
+    requests = ompi_coll_base_comm_get_reqs(module->base_data, size * 2);
+    if (NULL == requests) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        line = __LINE__;
+        goto err_hndl;
+    }
+    reqs_s = requests;
+    reqs_r = &requests[size];
+    if (NULL == reqs_s || NULL == reqs_r)
+    {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+    
+
+    blocks_to_recv = (int *) malloc(size * sizeof(int));
+    if (NULL == blocks_to_recv)
+    {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+
+    int next_req_s = 0, next_req_r = 0;
+    int reverse_step = opal_cube_dim(size) - 1;
+    while (mask < size) {
+        int partner;
+        if (rank % 2 == 0) {
+            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        } else {
+            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        }
+
+        next_req_r = 0;
+        next_req_s = 0;
+
+        // We start from 1 because 0 never sends block 0
+        for (size_t block = 1; block < (size_t) size; block++) {
+            // Get the position of the highest set bit using clz
+            // That gives us the first at which block departs from 0
+            int k = 31 - __builtin_clz(ompi_coll_bine_get_nu(block, size));
+            // Check if this must be sent
+            if (k == reverse_step) {
+                // 0 would send this block
+                size_t block_to_send, block_to_recv;
+                if (rank % 2 == 0) {
+                    // I am even, thus I need to shift by rank position to the right
+                    block_to_send = ompi_coll_mod(block + rank, size);
+                    // What to receive? What my partner is sending
+                    // Since I am even, my partner is odd, thus I need to mirror it and then shift
+                    block_to_recv = ompi_coll_mod(partner - block, size);
+                } else {
+                    // I am odd, thus I need to mirror it
+                    block_to_send = ompi_coll_mod(rank - block, size);
+                    // What to receive? What my partner is sending
+                    // Since I am odd, my partner is even, thus I need to mirror it and then shift
+                    block_to_recv = ompi_coll_mod(block + partner, size);
+                }
+
+                if (block_to_send != (size_t) rank) {
+                    err = MCA_PML_CALL(isend((char *) rbuf + displs[block_to_send] * extent,
+                                             recvcounts[block_to_send], dtype, partner,
+                                             MCA_COLL_BASE_TAG_ALLREDUCE,
+                                             MCA_PML_BASE_SEND_STANDARD, comm,
+                                             &reqs_s[next_req_s]));
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    ++next_req_s;
+                }
+
+                if (block_to_recv != (size_t) partner) {
+                    blocks_to_recv[next_req_r] = block_to_recv;
+                    err = MCA_PML_CALL(irecv((char *) tmpbuf + displs[block_to_recv] * extent,
+                                             recvcounts[block_to_recv], dtype, partner,
+                                             MCA_COLL_BASE_TAG_ALLREDUCE, comm,
+                                             &reqs_r[next_req_r]));
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    ++next_req_r;
+                }
+            }
+        }
+
+        for (size_t block = 0; block < (size_t) next_req_r; block++) {
+            err = ompi_request_wait(&reqs_r[block], MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            err = mca_coll_base_reduce_local((char *) tmpbuf
+                                                 + displs[blocks_to_recv[block]] * extent,
+                                             (char *) rbuf + displs[blocks_to_recv[block]] * extent,
+                                             recvcounts[blocks_to_recv[block]], dtype, op, module);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+        err = ompi_request_wait_all(next_req_s, reqs_s, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+
+        mask <<= 1;
+        reverse_step--;
+    }
+
+    /**** Allgather phase ****/
+    int step = 0;
+    mask >>= 1; // We need to start from the last step
+    while (mask > 0) {
+        int partner, req_count = 0;
+        if (rank % 2 == 0) {
+            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        } else {
+            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        }
+        // We start from 1 because 0 never sends block 0
+        for (size_t block = 1; block < (size_t) size; block++) {
+            // Get the position of the highest set bit using clz
+            // That gives us the first at which block departs from 0
+            int k = 31 - __builtin_clz(ompi_coll_bine_get_nu(block, size));
+            // int k = __builtin_ctz(get_nu(block, size));
+            //  Check if this must be sent (recvd in allgather)
+            if (k == step || block == 0) {
+                // 0 would send this block
+                size_t block_to_send, block_to_recv;
+                // I invert what to send and what to receive wrt reduce-scatter
+                if (rank % 2 == 0) {
+                    // I am even, thus I need to shift by rank position to the right
+                    block_to_recv = ompi_coll_mod(block + rank, size);
+                    // What to receive? What my partner is sending
+                    // Since I am even, my partner is odd, thus I need to mirror it and then shift
+                    block_to_send = ompi_coll_mod(partner - block, size);
+                } else {
+                    // I am odd, thus I need to mirror it
+                    block_to_recv = ompi_coll_mod(rank - block, size);
+                    // What to receive? What my partner is sending
+                    // Since I am odd, my partner is even, thus I need to mirror it and then shift
+                    block_to_send = ompi_coll_mod(block + partner, size);
+                }
+
+                int partner_send = (block_to_send != (size_t) partner) ? partner : MPI_PROC_NULL;
+                int partner_recv = (block_to_recv != (size_t) rank) ? partner : MPI_PROC_NULL;
+
+                err = MCA_PML_CALL(isend((char *) rbuf + displs[block_to_send] * extent,
+                                         recvcounts[block_to_send], dtype, partner_send,
+                                         MCA_COLL_BASE_TAG_ALLREDUCE, MCA_PML_BASE_SEND_STANDARD,
+                                         comm, &reqs_s[req_count]));
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+
+                err = MCA_PML_CALL(irecv((char *) rbuf + displs[block_to_recv] * extent,
+                                         recvcounts[block_to_recv], dtype, partner_recv,
+                                         MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs_r[req_count]));
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+
+                ++req_count;
+            }
+        }
+        err = ompi_request_wait_all(req_count, reqs_s, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+
+        err = ompi_request_wait_all(req_count, reqs_r, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        
+        mask >>= 1;
+        step++;
+    }
+    free(blocks_to_recv);
+    free(displs);
+    free(tmpbuf);
+    free(recvcounts);
+    return MPI_SUCCESS;
+
+err_hndl:
+    if (NULL != requests) {
+        if (MPI_ERR_IN_STATUS == err) {
+            for (int i = 0; i < 2 * size; i++) {
+                if (MPI_REQUEST_NULL == requests[i])
+                    continue;
+                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR)
+                    continue;
+                if (MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+                    err = requests[i]->req_status.MPI_ERROR;
+                    break;
+                }
+            }
+        }
+        ompi_coll_base_free_reqs(requests, 2 * size);
+    }
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
+                 __FILE__, line, rank, err));
+    (void) line; // silence compiler warning
+
+    if (NULL != blocks_to_recv)
+        free(blocks_to_recv);
+    if (NULL != displs)
+        free(displs);
+    if (NULL != tmpbuf) {
+        free(tmpbuf);
+    }
+    if (NULL != recvcounts)
+        free(recvcounts);
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) allreduce, bandwidth-optimized remap segmented variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Decomposes into a Bine reduce-scatter (distance-doubling butterfly)
+ * followed by a Bine allgather, processing the vector in
+ * configurable-size segments to improve pipelining.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the recursive doubling algorithm is used as a fallback.
+ */
+int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
+    const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+    struct ompi_communicator_t *comm, mca_coll_base_module_t *module, uint32_t segsize)
+{
+    int size, rank, dest, steps, step, line, err = MPI_SUCCESS;
+    int *r_count = NULL, *s_count = NULL, *r_index = NULL, *s_index = NULL;
+    int phase_scount, phase_rcount, num_phases, inbi, vdest;
+    size_t w_size, segcount;
+    uint32_t vrank;
+    char *tmp_send = NULL, *tmp_recv = NULL;
+    char *inbuf[2] = {NULL, NULL}, *inbuf_free[2] = {NULL, NULL};
+    ptrdiff_t lb, extent, true_extent, gap = 0, inbuf_size;
+    MPI_Request reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    if (OPAL_UNLIKELY(!ompi_op_is_commute(op))) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_bdw_remap_segmented WARNING: "
+                     "non-commutative operation, switching to recursivedoubling"));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                module);
+    }
+
+    steps = opal_hibit(size, (int) (sizeof(size) * CHAR_BIT) - 1);
+
+    if (!ompi_coll_is_power_of_two(size) || steps == -1) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allreduce_intra_bine_bdw_remap_segmented WARNING: "
+                     "non-pow-2 size %d, switching to recursive doubling",
+                     size));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
+                                                                 module);
+    }
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allreduce_intra_bine_bdw_remap_segmented rank %d", rank));
+
+    int adjsize = 1 << steps; // Largest power of two <= size
+
+    // Number of nodes that exceed the largest power of two less than or equal to size
+    int extra_ranks = size - adjsize;
+    int is_power_of_two = (size & (size - 1)) == 0;
+
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+    ompi_datatype_get_true_extent(dtype, &gap, &true_extent);
+
+    segcount = segsize / extent; // Number of elements in a segment
+    if (segsize == 0) {
+        segcount = count;
+        segsize = segcount * extent;
+    } else if (segcount == 0) {
+        /*
+         * A non-zero byte segment smaller than one datatype extent still has to
+         * make progress.  Treat it as a one-element segment.
+         */
+        segcount = 1;
+        segsize = extent;
+    }
+
+    // Allocate temporary buffer for send/recv and reduce operations
+    inbuf_size = (segcount < (count >> 1)) ? true_extent + extent * segcount
+                                           : true_extent + extent * (count >> 1);
+    inbuf_free[0] = (char *) malloc(inbuf_size);
+    inbuf_free[1] = (char *) malloc(inbuf_size);
+    if (NULL == inbuf_free[0] || NULL == inbuf_free[1]) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto cleanup_and_return;
+    }
+    inbuf[0] = inbuf_free[0] - gap;
+    inbuf[1] = inbuf_free[1] - gap;
+
+    // First part of computation to get a 2^n number of nodes.
+    // What happens is that first #extra_rank even nodes sends their
+    // data to the successive node and do not partecipate in the general
+    // collective call operation.
+    // All the nodes that do not stop their computation will receive an alias
+    // called new_node, used to calculate their correct destination wrt this
+    // new "cut" topology.
+    int new_rank = rank, loop_flag = 0;
+    if (rank < (2 * extra_ranks)) {
+        if (0 == (rank % 2)) {
+            err = MCA_PML_CALL(send(sbuf, count, dtype, (rank + 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+            loop_flag = 1;
+        } else {
+            // TODO: Pay attention to commuitativity of the operation
+            err = MCA_PML_CALL(recv(rbuf, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+            mca_coll_base_reduce_local(sbuf, rbuf, count, dtype, op, module);
+            new_rank = rank >> 1;
+        }
+    } else {
+        new_rank = rank - extra_ranks;
+        // Copy into receive_buffer content of send_buffer to not produce
+        // side effects on send_buffer
+        if (sbuf != MPI_IN_PLACE) {
+            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+        }
+    }
+
+    // Here the actual allreduce starts
+    r_index = (int *) malloc(sizeof(*r_index) * steps);
+    s_index = (int *) malloc(sizeof(*s_index) * steps);
+    r_count = (int *) malloc(sizeof(*r_count) * steps);
+    s_count = (int *) malloc(sizeof(*s_count) * steps);
+    if (NULL == r_index || NULL == s_index || NULL == r_count || NULL == s_count) {
+        err = MPI_ERR_NO_MEM;
+        goto cleanup_and_return;
+    }
+
+    // Only the remaining ranks will do the following part
+    if (!loop_flag) {
+        // Reduce-Scatter phase
+        w_size = count;
+        s_index[0] = r_index[0] = 0;
+        vrank = ompi_coll_bine_remap_rank((uint32_t) adjsize, (uint32_t) new_rank);
+
+        for (step = 0; step < steps; step++) {
+            vdest = ompi_coll_bine_pi(new_rank, step, adjsize);
+
+            dest = is_power_of_two         ? vdest
+                   : (vdest < extra_ranks) ? (vdest << 1) + 1
+                                           : vdest + extra_ranks;
+
+            vdest = ompi_coll_bine_remap_rank((uint32_t) adjsize, (uint32_t) vdest);
+
+            if (vrank < (uint32_t) vdest) {
+                r_count[step] = w_size / 2;
+                s_count[step] = w_size - r_count[step];
+                s_index[step] = r_index[step] + r_count[step];
+            } else {
+                s_count[step] = w_size / 2;
+                r_count[step] = w_size - s_count[step];
+                r_index[step] = s_index[step] + s_count[step];
+            }
+
+            size_t max_phase_count = (r_count[step] > s_count[step]) ? (size_t) r_count[step]
+                                                                     : (size_t) s_count[step];
+            num_phases = (int) (max_phase_count / segcount + (max_phase_count % segcount != 0));
+
+            phase_scount = ((size_t) s_count[step] > segcount) ? (int) segcount : s_count[step];
+            phase_rcount = ((size_t) r_count[step] > segcount) ? (int) segcount : r_count[step];
+
+            inbi = 0;
+            err = MCA_PML_CALL(irecv(inbuf[inbi], phase_rcount, dtype, dest,
+                                     MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+
+            tmp_send = (char *) rbuf + s_index[step] * extent;
+            err = MCA_PML_CALL(send(tmp_send, phase_scount, dtype, dest,
+                                    MCA_COLL_BASE_TAG_ALLREDUCE, MCA_PML_BASE_SEND_STANDARD, comm));
+
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+
+            tmp_recv = (char *) rbuf + r_index[step] * extent;
+
+            for (int phase = 0; phase < num_phases - 1; phase++) {
+                size_t phase_offset = (size_t) phase * segcount;
+                size_t next_phase_offset = (size_t) (phase + 1) * segcount;
+                int next_phase_rcount = (next_phase_offset < (size_t) r_count[step])
+                                            ? (int) MIN(segcount,
+                                                        (size_t) r_count[step] - next_phase_offset)
+                                            : 0;
+                int next_phase_scount = (next_phase_offset < (size_t) s_count[step])
+                                            ? (int) MIN(segcount,
+                                                        (size_t) s_count[step] - next_phase_offset)
+                                            : 0;
+                char *tmp_recv_phase = tmp_recv + (ptrdiff_t) (phase_offset * (size_t) extent);
+                char *tmp_send_phase = tmp_send + (ptrdiff_t) (next_phase_offset * (size_t) extent);
+                inbi = inbi ^ 0x1;
+
+                err = MCA_PML_CALL(irecv(inbuf[inbi], next_phase_rcount, dtype, dest,
+                                         MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto cleanup_and_return;
+                }
+
+                err = ompi_request_wait(&reqs[inbi ^ 0x1], MPI_STATUS_IGNORE);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto cleanup_and_return;
+                }
+
+                err = mca_coll_base_reduce_local(inbuf[inbi ^ 0x1], tmp_recv_phase, phase_rcount,
+                                                 dtype, op, module);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto cleanup_and_return;
+                }
+
+                err = MCA_PML_CALL(send(tmp_send_phase, next_phase_rcount, dtype, dest,
+                                        MCA_COLL_BASE_TAG_ALLREDUCE, MCA_PML_BASE_SEND_STANDARD,
+                                        comm));
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto cleanup_and_return;
+                }
+
+                phase_rcount = next_phase_rcount;
+                phase_scount = next_phase_scount;
+            }
+
+            err = ompi_request_wait(&reqs[inbi], MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+
+            if (num_phases != 0) {
+                tmp_recv += (ptrdiff_t) ((size_t) (num_phases - 1) * segcount * (size_t) extent);
+            }
+
+            err = mca_coll_base_reduce_local(inbuf[inbi], tmp_recv, phase_rcount, dtype, op,
+                                             module);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+
+            if (step + 1 < steps) {
+                r_index[step + 1] = r_index[step];
+                s_index[step + 1] = r_index[step];
+                w_size = r_count[step];
+            }
+        }
+
+        // Allgather phase
+        for (step = steps - 1; step >= 0; step--) {
+            vdest = ompi_coll_bine_pi(new_rank, step, adjsize);
+
+            dest = is_power_of_two         ? vdest
+                   : (vdest < extra_ranks) ? (vdest << 1) + 1
+                                           : vdest + extra_ranks;
+
+            tmp_send = (char *) rbuf + r_index[step] * extent;
+            tmp_recv = (char *) rbuf + s_index[step] * extent;
+            err = ompi_coll_base_sendrecv(tmp_send, r_count[step], dtype, dest,
+                                          MCA_COLL_BASE_TAG_ALLREDUCE, tmp_recv, s_count[step],
+                                          dtype, dest, MCA_COLL_BASE_TAG_ALLREDUCE, comm,
+                                          MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+        }
+    }
+
+    // Final results is sent to nodes that are not included in general computation
+    // (general computation loop requires 2^n nodes).
+    if (rank < (2 * extra_ranks)) {
+        if (!loop_flag) {
+            err = MCA_PML_CALL(send(rbuf, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+        } else {
+            err = MCA_PML_CALL(recv(rbuf, count, dtype, (rank + 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+        }
+    }
+
+    free(inbuf_free[0]);
+    free(inbuf_free[1]);
+    free(r_index);
+    free(s_index);
+    free(r_count);
+    free(s_count);
+    return MPI_SUCCESS;
+
+cleanup_and_return:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tRank %d Error occurred %d\n",
+                 __FILE__, line, rank, err));
+    (void) line; // silence compiler warning
+
+    if (NULL != inbuf_free[0]) {
+        free(inbuf_free[0]);
+    }
+    if (NULL != inbuf_free[1]) {
+        free(inbuf_free[1]);
+    }
+    if (NULL != r_index)
+        free(r_index);
+    if (NULL != s_index)
+        free(s_index);
+    if (NULL != r_count)
+        free(r_count);
+    if (NULL != s_count)
+        free(s_count);
+    return err;
+}

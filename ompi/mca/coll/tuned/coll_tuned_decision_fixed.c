@@ -215,10 +215,100 @@ ompi_coll_tuned_allreduce_intra_dec_fixed(const void *sbuf, void *rbuf, size_t c
         }
     }
 
-    return ompi_coll_tuned_allreduce_intra_do_this (sbuf, rbuf, count, dtype, op,
-                                                    comm, module, alg, 0, 0);
+    return ompi_coll_tuned_allreduce_intra_do_this(sbuf, rbuf, count, dtype, op, comm, module, alg,
+                                                   0, 0, 0);
 }
 
+/*
+ *  allreduce_intra_bine_dec_fixed
+ *
+ *  Function:   - bine allreduce using other MPI collectives
+ *  Accepts:    - same as MPI_Allreduce()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int ompi_coll_tuned_allreduce_intra_bine_dec_fixed(const void *sbuf, void *rbuf, size_t count,
+                                                   struct ompi_datatype_t *dtype,
+                                                   struct ompi_op_t *op,
+                                                   struct ompi_communicator_t *comm,
+                                                   mca_coll_base_module_t *module)
+{
+    size_t dsize, total_dsize;
+    int communicator_size, bine_imp;
+    communicator_size = ompi_comm_size(comm);
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                         "ompi_coll_tuned_allreduce_intra_bine_dec_fixed"));
+
+    ompi_datatype_type_size(dtype, &dsize);
+    total_dsize = dsize * (ptrdiff_t) count;
+
+    /** Bine Implementation:
+     *    {1, "lat"},
+     *    {2, "bdw_remap"},
+     *    {3, "block_by_block_any_even_over"},
+     *    {4, "bdw_remap_segmented"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 8) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 32) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 4;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 2;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 4;
+        } else {
+            bine_imp = 3;
+        }
+    } else if (communicator_size <= 128) {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 4;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else {
+            bine_imp = 3;
+        }
+    } else {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else if (total_dsize <= 67108864) {
+            bine_imp = 4;
+        } else {
+            bine_imp = 3;
+        }
+    }
+
+    return ompi_coll_tuned_allreduce_intra_do_this(sbuf, rbuf, count, dtype, op, comm, module, 8, 0,
+                                                   0, bine_imp);
+}
 
 /*
  *  allreduce_intra_disjoint
@@ -402,8 +492,8 @@ ompi_coll_tuned_allreduce_intra_disjoint_dec_fixed(const void *sbuf, void *rbuf,
         }
     }
 
-    return ompi_coll_tuned_allreduce_intra_do_this (sbuf, rbuf, count, dtype, op,
-                                                    comm, module, alg, 0, 0);
+    return ompi_coll_tuned_allreduce_intra_do_this(sbuf, rbuf, count, dtype, op, comm, module, alg,
+                                                   0, 0, 0);
 }
 
                            
@@ -838,14 +928,97 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, size_t count,
         }
     }
 
-    return ompi_coll_tuned_bcast_intra_do_this (buff, count, datatype, root,
-                                                comm, module,
-                                                alg, 0, 0);
+    return ompi_coll_tuned_bcast_intra_do_this(buff, count, datatype, root, comm, module, alg, 0, 0,
+                                               0);
 }
 
+/*
+ *  bcast_intra_bine_dec_fixed
+ *
+ *  Function:   - bine broadcast using other MPI collectives
+ *  Accepts:    - same as MPI_Bcast()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int ompi_coll_tuned_bcast_intra_bine_dec_fixed(void *buff, size_t count,
+                                               struct ompi_datatype_t *datatype, int root,
+                                               struct ompi_communicator_t *comm,
+                                               mca_coll_base_module_t *module)
+{
+    size_t total_dsize, dsize;
+    int communicator_size, bine_imp;
+    communicator_size = ompi_comm_size(comm);
+
+    ompi_datatype_type_size(datatype, &dsize);
+    total_dsize = dsize * (unsigned long) count;
+
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                         "ompi_coll_tuned_bcast_intra_dec_fixed root %d rank %d com_size %d", root,
+                         ompi_comm_rank(comm), communicator_size));
+
+    /** Bine Implementation:
+     *   {1, "lat"},
+     *   {2, "lat_reversed"},
+     *   {3, "lat_new"},
+     *   {4, "lat_i_new"},
+     *   {5, "bdw_remap"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 4;
+        } else {
+            bine_imp = 5;
+        }
+    } else if (communicator_size <= 8) {
+        if (total_dsize <= 256) {
+            bine_imp = 4;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 5;
+        }
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 256) {
+            bine_imp = 2;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 5;
+        }
+    } else if (communicator_size < 32) {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 5;
+        }
+    } else if (communicator_size < 64) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 5;
+        }
+    } else {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 5;
+        }
+    }
+
+    return ompi_coll_tuned_bcast_intra_do_this(buff, count, datatype, root, comm, module, 10, 0, 0,
+                                               bine_imp);
+}
 
 /*
- *	bcast_intra_dec for inter node communicators
+ *  bcast_intra_dec for inter node communicators
  *
  *	Function:	- selects broadcast algorithm to use
  *	Accepts:	- same arguments as MPI_Bcast()
@@ -910,9 +1083,8 @@ int ompi_coll_tuned_bcast_intra_disjoint_dec_fixed(void *buff, size_t count,
         }
     }
 
-    return ompi_coll_tuned_bcast_intra_do_this (buff, count, datatype, root,
-                                                comm, module,
-                                                alg, 0, 0);
+    return ompi_coll_tuned_bcast_intra_do_this(buff, count, datatype, root, comm, module, alg, 0, 0,
+                                               0);
 }
 
 
@@ -1075,9 +1247,69 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( const void *sendbuf, void *recvbuf,
     }
 
     int faninout = 2;
-    return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, count, datatype,
-                                                  op, root, comm, module,
-                                                  alg, faninout, 0, 0);
+    return ompi_coll_tuned_reduce_intra_do_this(sendbuf, recvbuf, count, datatype, op, root, comm,
+                                                module, alg, faninout, 0, 0, 0);
+}
+
+/*
+ *  reduce_intra_bine_dec_fixed
+ *
+ *  Function:   - bine reduce using other MPI collectives
+ *  Accepts:    - same as MPI_Reduce()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int ompi_coll_tuned_reduce_intra_bine_dec_fixed(const void *sendbuf, void *recvbuf, size_t count,
+                                                struct ompi_datatype_t *datatype,
+                                                struct ompi_op_t *op, int root,
+                                                struct ompi_communicator_t *comm,
+                                                mca_coll_base_module_t *module)
+{
+    int communicator_size, bine_imp;
+    size_t total_dsize, dsize;
+
+    communicator_size = ompi_comm_size(comm);
+
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                         "ompi_coll_tuned_reduce_intra_dec_fixed root %d rank %d com_size %d", root,
+                         ompi_comm_rank(comm), communicator_size));
+
+    ompi_datatype_type_size(datatype, &dsize);
+    total_dsize = dsize * (ptrdiff_t) count; /* needed for decision */
+
+    /** Bine Implementation:
+     *   {1, "lat"},
+     *   {2, "bdw"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 2048) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    } else {
+        if (total_dsize <= 16384) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    }
+
+    int faninout = 2;
+    return ompi_coll_tuned_reduce_intra_do_this(sendbuf, recvbuf, count, datatype, op, root, comm,
+                                                module, 9, faninout, 0, 0, bine_imp);
 }
 
 /*
@@ -1224,13 +1456,109 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
         }
     }
 
-    return  ompi_coll_tuned_reduce_scatter_intra_do_this (sbuf, rbuf, rcounts, dtype,
-                                                          op, comm, module,
-                                                          alg, 0, 0);
+    return ompi_coll_tuned_reduce_scatter_intra_do_this(sbuf, rbuf, rcounts, dtype, op, comm,
+                                                        module, alg, 0, 0, 0);
 }
 
 /*
- *	reduce_scatter_block_intra_dec
+ *  reduce_scatter_intra_bine_dec_fixed
+ *
+ *  Function:   - bine reduce_scatter using other MPI collectives
+ *  Accepts:    - same as MPI_Reduce_scatter()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int ompi_coll_tuned_reduce_scatter_intra_bine_dec_fixed(
+    const void *sbuf, void *rbuf, ompi_count_array_t rcounts, struct ompi_datatype_t *dtype,
+    struct ompi_op_t *op, struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
+{
+    int communicator_size, i, bine_imp;
+    size_t total_dsize, dsize;
+
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                         "ompi_coll_tuned_reduce_scatter_intra_dec_fixed"));
+
+    communicator_size = ompi_comm_size(comm);
+    ompi_datatype_type_size(dtype, &dsize);
+    total_dsize = 0;
+    for (i = 0; i < communicator_size; i++) {
+        total_dsize += ompi_count_array_get(rcounts, i);
+    }
+    total_dsize *= dsize;
+
+    /** Bine Implementation:
+     *   {1, "block_by_block_any_even"},
+     *   {2, "send_remap"},
+     *   {3, "permute_remap"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 256) {
+            bine_imp = 1;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 2048) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else if (total_dsize <= 8388608) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    } else if (communicator_size <= 32) {
+        if (total_dsize <= 2048) {
+            bine_imp = 2;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else if (total_dsize <= 8388608) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 16384) {
+            bine_imp = 3;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 1;
+        } else if (total_dsize <= 67108864) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    } else if (communicator_size <= 128) {
+        if (total_dsize <= 131072) {
+            bine_imp = 2;
+        } else if (total_dsize <= 67108864) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    } else {
+        if (total_dsize <= 67108864) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 1;
+        }
+    }
+
+    return ompi_coll_tuned_reduce_scatter_intra_do_this(sbuf, rbuf, rcounts, dtype, op, comm,
+                                                        module, 5, 0, 0, bine_imp);
+}
+
+/*
+ *  reduce_scatter_block_intra_dec
  *
  *	Function:	- selects reduce_scatter_block algorithm to use
  *	Accepts:	- same arguments as MPI_Reduce_scatter_block()
@@ -1493,9 +1821,108 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(const void *sbuf, size_t scount,
         ompi_comm_rank(comm), communicator_size));
 
     int faninout = 2;
-    return ompi_coll_tuned_allgather_intra_do_this(sbuf, scount, sdtype,
-                                                   rbuf, rcount, rdtype,
-                                                   comm, module, alg, faninout, 0);
+    return ompi_coll_tuned_allgather_intra_do_this(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm,
+                                                   module, alg, faninout, 0, 0);
+}
+
+/*
+ *  allgather_intra_bine_dec_fixed
+ *
+ *  Function:   - bine allgather using other MPI collectives
+ *  Accepts:    - same as MPI_Allgather()
+ *  Returns:    - MPI_SUCCESS or error code
+ */
+int ompi_coll_tuned_allgather_intra_bine_dec_fixed(const void *sbuf, size_t scount,
+                                                   struct ompi_datatype_t *sdtype, void *rbuf,
+                                                   size_t rcount, struct ompi_datatype_t *rdtype,
+                                                   struct ompi_communicator_t *comm,
+                                                   mca_coll_base_module_t *module)
+{
+    int communicator_size, bine_imp;
+    size_t dsize, total_dsize;
+    if (MPI_IN_PLACE != sbuf) {
+        ompi_datatype_type_size(sdtype, &dsize);
+    } else {
+        ompi_datatype_type_size(rdtype, &dsize);
+    }
+    total_dsize = dsize * (ptrdiff_t) scount;
+
+    communicator_size = ompi_comm_size(comm);
+
+    /** Bine Implementation:
+     *   {1, "send_remap"},
+     *   {2, "block_by_block"},
+     *   {3, "2_block"},
+     *   {4, "permutation"},
+     */
+
+    if (communicator_size <= 4) {
+        if (total_dsize <= 16384) {
+            bine_imp = 3;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else if (total_dsize <= 8388608) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 8) {
+        if (total_dsize <= 256) {
+            bine_imp = 3;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 4;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 3;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 2;
+        } else if (total_dsize <= 8388608) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 16) {
+        if (total_dsize <= 256) {
+            bine_imp = 3;
+        } else if (total_dsize <= 2048) {
+            bine_imp = 4;
+        } else if (total_dsize <= 16384) {
+            bine_imp = 2;
+        } else if (total_dsize <= 131072) {
+            bine_imp = 3;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 64) {
+        if (total_dsize <= 131072) {
+            bine_imp = 3;
+        } else if (total_dsize <= 1048576) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    } else if (communicator_size <= 128) {
+        if (total_dsize <= 1048576) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    } else {
+        if (total_dsize <= 131072) {
+            bine_imp = 3;
+        } else if (total_dsize <= 8388608) {
+            bine_imp = 1;
+        } else {
+            bine_imp = 2;
+        }
+    }
+
+    OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                         "ompi_coll_tuned_allgather_intra_bine_dec_fixed rank %d com_size %d",
+                         ompi_comm_rank(comm), communicator_size));
+
+    int faninout = 2;
+    return ompi_coll_tuned_allgather_intra_do_this(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm,
+                                                   module, 9, faninout, 0, bine_imp);
 }
 
 /*

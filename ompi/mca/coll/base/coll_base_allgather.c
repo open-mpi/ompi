@@ -629,6 +629,606 @@ int ompi_coll_base_allgather_intra_two_procs(const void *sbuf, size_t scount,
     return err;
 }
 
+/*
+ * Binomial Negabinary (Bine) allgather, send-remap variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Each rank first remaps its data to the correct Bine-order position
+ * by exchanging with the appropriate partner; the subsequent
+ * distance-doubling butterfly then operates on correctly placed data
+ * without requiring a final reordering step.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the bruck algorithm is used as a fallback.
+ */
+int ompi_coll_base_allgather_intra_bine_send_remap(const void *sbuf, size_t scount,
+                                                   struct ompi_datatype_t *sdtype, void *rbuf,
+                                                   size_t rcount, struct ompi_datatype_t *rdtype,
+                                                   struct ompi_communicator_t *comm,
+                                                   mca_coll_base_module_t *module)
+{
+    int line = -1, rank, size, steps, pow2size, err = MPI_SUCCESS;
+    int vrank, remote, vremote, send_block_location, distance;
+    uint32_t sender;
+    ptrdiff_t rlb, rext;
+    char *tmpsend = NULL, *tmprecv = NULL;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    pow2size = opal_next_poweroftwo(size);
+    pow2size >>= 1;
+
+    /* Current implementation only handles power-of-two number of processes.
+       If the function was called on non-power-of-two number of processes,
+       print warning and call bruck allgather algorithm with same parameters.
+    */
+    if (pow2size != size) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allgather_intra_bine_send_remap WARNING: non-pow-2 size %d, "
+                     "switching to bruck algorithm",
+                     size));
+
+        // fall back to the bruck method with radix 2
+        int k = 2;
+        return ompi_coll_base_allgather_intra_k_bruck(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                                      comm, module, k);
+    }
+    steps = opal_cube_dim(size);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allgather_intra_bine_send_remap rank %d, size %d", rank, size));
+
+    err = ompi_datatype_get_extent(rdtype, &rlb, &rext);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    /* Initialization step:
+     * - if I gather the result for another rank, I send my buffer to that rank
+     *   and I receive the data from the rank at the inverse permutation
+     * - if I gather the result for myself, I copy the data from the send buffer
+     */
+    vrank = (int) ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) rank);
+    if (MPI_IN_PLACE == sbuf) {
+        tmpsend = (char *) rbuf + (ptrdiff_t) rank * (ptrdiff_t) rcount * rext;
+    } else {
+        tmpsend = (char *) sbuf;
+    }
+    tmprecv = (char *) rbuf + (ptrdiff_t) vrank * (ptrdiff_t) rcount * rext;
+    if (vrank != rank) {
+        err = ompi_coll_bine_get_sender(size, rank, &sender);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        if (MPI_IN_PLACE == sbuf) {
+            err = ompi_coll_base_sendrecv(tmpsend, rcount, rdtype,
+                                          (int) sender,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, rcount, rdtype, vrank,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, comm, MPI_STATUS_IGNORE, rank);
+        } else {
+            err = ompi_coll_base_sendrecv(tmpsend, scount, sdtype,
+                                          (int) sender,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, rcount, rdtype, vrank,
+                                          MCA_COLL_BASE_TAG_ALLGATHER, comm, MPI_STATUS_IGNORE, rank);
+        }
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+    } else if (MPI_IN_PLACE != sbuf) {
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, tmprecv, rcount, rdtype);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+    }
+
+    /*  Communication step:
+        At every step i, rank r:
+        - exchanges message with rank remote = (r ^ 2^i).
+    */
+    distance = 0x1;
+    send_block_location = vrank;
+    for (int step = steps - 1; step >= 0; step--) {
+        size_t step_scount = rcount * distance;
+        remote = ompi_coll_bine_pi(rank, step, size);
+        vremote = (int) ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) remote);
+
+        if (vrank < vremote) {
+            tmpsend = (char *) rbuf + (ptrdiff_t) send_block_location * (ptrdiff_t) rcount * rext;
+            tmprecv = (char *) rbuf
+                      + (ptrdiff_t) (send_block_location + distance) * (ptrdiff_t) rcount * rext;
+        } else {
+            tmpsend = (char *) rbuf + (ptrdiff_t) send_block_location * (ptrdiff_t) rcount * rext;
+            tmprecv = (char *) rbuf
+                      + (ptrdiff_t) (send_block_location - distance) * (ptrdiff_t) rcount * rext;
+            send_block_location -= distance;
+        }
+
+        /* Sendreceive */
+        err = ompi_coll_base_sendrecv(tmpsend, step_scount, rdtype, remote,
+                                      MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, step_scount, rdtype,
+                                      remote, MCA_COLL_BASE_TAG_ALLGATHER, comm, MPI_STATUS_IGNORE,
+                                      rank);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        distance <<= 1;
+    }
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warning
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) allgather, block-by-block any-even variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-doubling Bine butterfly where each data block is
+ * transmitted independently, enabling computation-communication overlap.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to even communicator sizes.
+ * For non even sizes, the bruck algorithm is used as a fallback.
+ */
+int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf, size_t scount,
+                                                                struct ompi_datatype_t *sdtype,
+                                                                void *rbuf, size_t rcount,
+                                                                struct ompi_datatype_t *rdtype,
+                                                                struct ompi_communicator_t *comm,
+                                                                mca_coll_base_module_t *module)
+{
+    int line = -1, rank, size, err = MPI_SUCCESS;
+    ptrdiff_t rlb, rext;
+    ompi_request_t **requests = NULL;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    if (size & 0x1) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allgather_intra_bine_block_by_block_any_even WARNING: "
+                     "not-even size %d, switching to bruck algorithm",
+                     size));
+        int k = 2;
+        return ompi_coll_base_allgather_intra_k_bruck(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                                       comm, module, k);
+    }
+
+    err = ompi_datatype_get_extent(rdtype, &rlb, &rext);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    if (MPI_IN_PLACE != sbuf) {
+        err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
+                                   (char *) rbuf
+                                   + (ptrdiff_t) rank * (ptrdiff_t) rcount * rext,
+                                   rcount, rdtype);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+    }
+
+    int inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
+    int step = 0;
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                 "coll:base:allgather_intra_bine_block_by_block_any_even rank %d", rank));
+
+    //requests = (MPI_Request *) malloc(2 * size * sizeof(MPI_Request));
+    requests = ompi_coll_base_comm_get_reqs(module->base_data, 2 * size);
+    if (NULL == requests) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        line = __LINE__;
+        goto err_hndl;
+    }
+    while (inverse_mask > 0) {
+        int partner, req_count = 0;
+        if (rank % 2 == 0) {
+            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((inverse_mask << 1) - 1),
+                                    size);
+        } else {
+            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((inverse_mask << 1) - 1),
+                                    size);
+        }
+        // We start from 1 because 0 never sends block 0
+        for (size_t block = 1; block < (size_t) size; block++) {
+            // Get the position of the highest set bit using clz
+            // That gives us the first at which block departs from 0
+            int k = 31 - __builtin_clz(ompi_coll_bine_get_nu(block, size));
+            // int k = __builtin_ctz(get_nu(block, size));
+            //  Check if this must be sent (recvd in allgather)
+            if (k == step || block == 0) {
+                // 0 would send this block
+                size_t block_to_send, block_to_recv;
+                // I invert what to send and what to receive wrt reduce-scatter
+                if (rank % 2 == 0) {
+                    // I am even, thus I need to shift by rank position to the right
+                    block_to_recv = ompi_coll_mod(block + rank, size);
+                    // What to receive? What my partner is sending
+                    // Since I am even, my partner is odd, thus I need to mirror it and then shift
+                    block_to_send = ompi_coll_mod(partner - block, size);
+                } else {
+                    // I am odd, thus I need to mirror it
+                    block_to_recv = ompi_coll_mod(rank - block, size);
+                    // What to receive? What my partner is sending
+                    // Since I am odd, my partner is even, thus I need to mirror it and then shift
+                    block_to_send = ompi_coll_mod(block + partner, size);
+                }
+
+                int partner_send = (block_to_send != (size_t) partner) ? partner : MPI_PROC_NULL;
+                int partner_recv = (block_to_recv != (size_t) rank) ? partner : MPI_PROC_NULL;
+
+                err = MCA_PML_CALL(
+                    isend((char *) rbuf + (ptrdiff_t) block_to_send * (ptrdiff_t) rcount * rext,
+                          rcount, rdtype, partner_send, MCA_COLL_BASE_TAG_ALLGATHER,
+                          MCA_PML_BASE_SEND_STANDARD, comm, &requests[req_count++]));
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+
+                err = MCA_PML_CALL(
+                    irecv((char *) rbuf + (ptrdiff_t) block_to_recv * (ptrdiff_t) rcount * rext,
+                          rcount, rdtype, partner_recv, MCA_COLL_BASE_TAG_ALLGATHER, comm,
+                          &requests[req_count++]));
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+            }
+        }
+        err = ompi_request_wait_all(req_count, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        
+        inverse_mask >>= 1;
+        step++;
+    }
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    if (NULL != requests) {
+        if (MPI_ERR_IN_STATUS == err) {
+            for (int i = 0; i < 2 * size; i++) {
+                if (MPI_REQUEST_NULL == requests[i])
+                    continue;
+                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR)
+                    continue;
+                if (MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+                    err = requests[i]->req_status.MPI_ERROR;
+                    break;
+                }
+            }
+        }
+        ompi_coll_base_free_reqs(requests, 2 * size);
+    }
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warning
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) allgather, 2-block variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree, exchanging two contiguous blocks
+ * per step while alternating the extension direction between even and
+ * odd ranks.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the bruck algorithm is used as a fallback.
+ */
+int ompi_coll_base_allgather_intra_bine_2_block(const void *sbuf, size_t scount,
+                                                struct ompi_datatype_t *sdtype, void *rbuf,
+                                                size_t rcount, struct ompi_datatype_t *rdtype,
+                                                struct ompi_communicator_t *comm,
+                                                mca_coll_base_module_t *module)
+{
+    int line = -1, rank, size, steps, err = MPI_SUCCESS, remote;
+    int mask, my_first, recv_index, send_index;
+    int send_count, recv_count, extra_send, extra_recv;
+    ptrdiff_t rlb, rext;
+    char *tmpsend = NULL, *tmprecv = NULL;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    /*
+     * Current implementation only handles power-of-two number of processes.
+     */
+    steps = opal_cube_dim(size);
+    if (!ompi_coll_is_power_of_two(size) || steps < 1) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allgather_intra_bine_2_block WARNING: non-pow-2 size %d, switching "
+                     "to bruck algorithm",
+                     size));
+
+        // fall back to the bruck method with radix 2
+        int k = 2;
+        return ompi_coll_base_allgather_intra_k_bruck(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                                      comm, module, k);
+    }
+
+    err = ompi_datatype_get_extent(rdtype, &rlb, &rext);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    /* Initialization step:
+        - if send buffer is not MPI_IN_PLACE, copy send buffer to block  of
+        receive buffer
+    */
+    if (MPI_IN_PLACE != sbuf) {
+        tmpsend = (char *) sbuf;
+        tmprecv = (char *) rbuf + (ptrdiff_t) rank * (ptrdiff_t) rcount * rext;
+
+        err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, tmprecv, rcount, rdtype);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+    }
+
+    /* Communication step.
+     *  At every step i, rank r:
+     *  - communication peer is calculated by pi(rank, step, size)
+     *  - if the step is even, even ranks send the next `mask` blocks and
+     *  odd ranks send the previous `mask` blocks.
+     *  - if the step is odd, even ranks send the previous `mask` blocks and
+     *  odd ranks send the next `mask` blocks.
+     */
+    mask = 0x1;
+    my_first = rank;
+    for (int step = 0; step < steps; step++) {
+        MPI_Request req = MPI_REQUEST_NULL;
+        remote = ompi_coll_bine_pi(rank, step, size);
+        send_index = my_first;
+
+        // Calculate the send and receive indexes by alternating send/recv direction.
+        if ((step & 1) == (rank & 1)) {
+            recv_index = (send_index + mask + size) % size;
+        } else {
+            recv_index = (send_index - mask + size) % size;
+            my_first = recv_index;
+        }
+
+        // Control if the previously calculated indexes imply out of bound
+        // send/recv. If so, split the communication with an extra send/recv.
+        extra_recv = (recv_index + mask > size) ? ((recv_index + mask) - size) : 0;
+        recv_count = mask - extra_recv;
+
+        extra_send = (send_index + mask > size) ? ((send_index + mask) - size) : 0;
+        send_count = mask - extra_send;
+
+        // warparound communication
+        if (extra_recv != 0) {
+            tmprecv = (char *) rbuf;
+            err = MCA_PML_CALL(irecv(tmprecv, extra_recv * rcount, rdtype, remote,
+                                     MCA_COLL_BASE_TAG_ALLGATHER, comm, &req));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+        if (extra_send != 0) {
+            tmpsend = (char *) rbuf;
+            err = MCA_PML_CALL(send(tmpsend, extra_send * rcount, rdtype, remote,
+                                    MCA_COLL_BASE_TAG_ALLGATHER,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        // Simple case: no wrap-around
+        tmpsend = (char *) rbuf + (ptrdiff_t) send_index * (ptrdiff_t) rcount * rext;
+        tmprecv = (char *) rbuf + (ptrdiff_t) recv_index * (ptrdiff_t) rcount * rext;
+
+        err = ompi_coll_base_sendrecv(tmpsend, send_count * rcount, rdtype, remote,
+                                      MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, recv_count * rcount,
+                                      rdtype, remote, MCA_COLL_BASE_TAG_ALLGATHER, comm,
+                                      MPI_STATUS_IGNORE, rank);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+
+        if (extra_recv != 0) {
+            err = ompi_request_wait(&req, MPI_STATUS_IGNORE);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        mask <<= 1;
+    }
+
+    return MPI_SUCCESS;
+err_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warning
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) allgather, permutation variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Tracks block positions through a permutation array built during the
+ * distance-doubling butterfly, then reorders blocks at the end.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the bruck algorithm is used as a fallback.
+ */
+int ompi_coll_base_allgather_intra_bine_permutation(const void *sbuf, size_t scount,
+                                                    struct ompi_datatype_t *sdtype, void *rbuf,
+                                                    size_t rcount, struct ompi_datatype_t *rdtype,
+                                                    struct ompi_communicator_t *comm,
+                                                    mca_coll_base_module_t *module)
+{
+    int line = -1, rank, size, steps, err = MPI_SUCCESS, remote, data_exchange;
+    int *permutation = NULL;
+    ptrdiff_t rlb, rext;
+    char *tmpsend = NULL, *tmprecv = NULL;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
+
+    steps = opal_cube_dim(size);
+    if (!ompi_coll_is_power_of_two(size) || steps < 1) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:allgather_intra_bine_permutation WARNING: non-pow-2 size %d, "
+                     "switching to bruck algorithm",
+                     size));
+
+        // fall back to the bruck method with radix 2
+        int k = 2;
+        return ompi_coll_base_allgather_intra_k_bruck(sbuf, scount, sdtype, rbuf, rcount, rdtype,
+                                                      comm, module, k);
+    }
+
+    err = ompi_datatype_get_extent(rdtype, &rlb, &rext);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    if (MPI_IN_PLACE != sbuf) {
+        err = ompi_datatype_sndrcv(sbuf, scount, sdtype, rbuf, rcount, rdtype);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+    } else if (0 != rank) {
+        tmpsend = (char *) rbuf + (ptrdiff_t) rank * (ptrdiff_t) rcount * rext;
+        err = ompi_datatype_copy_content_same_ddt(rdtype, rcount, rbuf, tmpsend);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+    }
+
+    permutation = (int *) malloc(size * sizeof(int));
+    if (permutation == NULL) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+
+    memset(permutation, -1, size * sizeof(int));
+    *(permutation + rank) = 0;
+
+    data_exchange = 1;
+    for (int step = steps - 1; step >= 0; step--) {
+        remote = ompi_coll_bine_pi(rank, step, size);
+
+        ompi_coll_bine_get_permutation(rank, step, steps, size, permutation, data_exchange);
+
+        tmprecv = (char *) rbuf + (ptrdiff_t) data_exchange * (ptrdiff_t) rcount * rext;
+
+        err = ompi_coll_base_sendrecv(rbuf, data_exchange * rcount, rdtype, remote,
+                                      MCA_COLL_BASE_TAG_ALLGATHER, tmprecv, data_exchange * rcount,
+                                      rdtype, remote, MCA_COLL_BASE_TAG_ALLGATHER, comm,
+                                      MPI_STATUS_IGNORE, rank);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        data_exchange <<= 1;
+    }
+
+    err = ompi_coll_bine_reorder_blocks(rbuf, rcount * rext, permutation, size);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    if (permutation != NULL)
+        free(permutation);
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warning
+    if (permutation != NULL)
+        free(permutation);
+    return err;
+}
 
 /*
  * Linear functions are copied from the BASIC coll module

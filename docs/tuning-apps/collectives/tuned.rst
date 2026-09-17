@@ -146,6 +146,16 @@ integer mapping to the classic file format, or a string.  In both cases, the
 value is checked against the appropriate coll_tuned_<collectived>_algorithm MCA
 parameter, and un-recognized values will cause the rule to be ignored.
 
+The optional `bine_imp` field selects the variant of a Bine algorithm.  It is
+only used when `alg` identifies one of the Bine algorithms; any other algorithm
+ignores it.  As with `alg`, the value may be an integer or a string naming the
+variant (see the appropriate coll_tuned_<collective>_bine_implementation MCA
+parameter for the accepted names).  Un-recognized bine variants are ignored.
+For example, to select the "block by block" variant of the Bine allgather
+algorithm::
+
+    { "msg_size_min" : 0, "alg" : "bine", "bine_imp" : "block_by_block" }
+
 
 Classic file format:
 
@@ -175,6 +185,23 @@ Classic file format:
    786432000    4 0 0 1
    1572864000   4 0 0 1
    2621440000   0 0 0 0
+
+An example of a version 3 file is shown here.  Note that the `bine_imp`
+column precedes the optional `reqs` column:
+
+.. code-block:: sh
+
+   rule-file-version-3
+   1   # num of collectives
+   0   # collective ID (allgather)
+   1   # number of comm sizes
+   #=====================
+   64   # comm size
+   2   # number of rules
+   # Bytes      alg topo segs bine_imp reqs
+   #---------------------------------------
+   0            9   0    0    2        64
+   512000       9   2    65536 4        16
 
 The rules file effectively defines, for one or more collectives, a function of
 two variables, which given communicator and message size, returns an algorithm
@@ -206,6 +233,19 @@ Version 2 or greater is required to use the `max requests` parameter. Open MPI
 releases older than v5.0.7 do not support the file format version
 identifier. When using older releases of Open MPI do not include a version
 specifier and do not use the `max requests` parameter in message size rules.
+
+Version 3 of the file format adds a `bine implementation` column after
+`segment size` (and before `max requests`, when present).  It selects the
+variant of a Bine collective algorithm, and is only used when the rule's
+algorithm ID identifies one of the Bine algorithms (for example, allgather
+id 9, allreduce id 8, alltoall id 6, bcast id 10, reduce id 9,
+reduce_scatter id 5, or scatter id 4); for any other algorithm the value is
+ignored.  A version 3 rule therefore has the layout
+`MSGSIZE ALG FANINOUT SEGSIZE BINE_IMP [MAXREQ]`, where `bine implementation`
+is required but `max requests` remains optional, mirroring the version 2
+behavior.  To avoid ambiguity, always include `max requests` in every rule of a
+version 3 file; omitting it is only safe where the parser cannot mistake it for
+a following value (for example, at the end of the file).
 
 .. _CollectivesAndAlgorithms:
 
@@ -254,6 +294,17 @@ Allgather (Id=0)
    6, "two_proc", "..."
    7, "sparbit", "..."
    8, "direct-messaging", "..."
+   9, "bine", "..."
+
+.. csv-table:: Allgather Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Use fixed rules"
+   1, "send_remap", "..."
+   2, "block_by_block", "..."
+   3, "2_block", "..."
+   4, "permutation", "..."
 
 .. _Allgatherv:
 
@@ -289,6 +340,17 @@ Allreduce (Id=2)
    5, "segmented_ring", "..."
    6, "rabenseifner", "..."
    7, "allgather_reduce", "..."
+   8, "bine", "..."
+
+.. csv-table:: Allreduce Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Use fixed rules"
+   1, "lat", "..."
+   2, "bdw_remap", "..."
+   3, "block_by_block_any_even_over", "..."
+   4, "bdw_remap_segmented", "..."
 
 .. _Alltoall:
 
@@ -305,6 +367,11 @@ Alltoall (Id=3)
    3, "modified_bruck", "An algorithm exploiting network packet quantization to achieve O(log) time complexity. Typically best for very small message sizes."
    4, "linear_sync", "Keep N non-blocking MPI_Isend/Irecv pairs in flight at all times. N is set by the coll_tuned_alltoall_max_requests MCA variable."
    5, "two_proc", "An implementation tailored for alltoall between 2 ranks, otherwise it is not used."
+   6, "bine", "..."
+
+The Bine alltoall has a single implementation: it does not have a
+corresponding Bine implementation table, and the ``bine_imp`` column/field is
+ignored for this collective.
 
 .. _Alltoallv:
 
@@ -355,6 +422,18 @@ Bcast (Id=7)
    7, "knomial", "..."
    8, "scatter_allgather", "..."
    9, "scatter_allgather_ring", "..."
+   10, "bine", "..."
+
+.. csv-table:: Bcast Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Use fixed rules"
+   1, "lat", "..."
+   2, "lat_reversed", "..."
+   3, "lat_new", "..."
+   4, "lat_i_new", "..."
+   5, "bdw_remap", "..."
 
 .. _Exscan:
 
@@ -401,6 +480,15 @@ Reduce (Id=11)
    6, "in-order_binary", "..."
    7, "rabenseifner", "..."
    8, "knomial", "..."
+   9, "bine", "..."
+
+.. csv-table:: Reduce Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Use fixed rules"
+   1, "lat", "..."
+   2, "bdw", "..."
 
 .. _Reduce_scatter:
 
@@ -416,6 +504,16 @@ Reduce_scatter (Id=12)
    2, "recursive_halving", "..."
    3, "ring", "..."
    4, "butterfly", "..."
+   5, "bine", "..."
+
+.. csv-table:: Reduce_scatter Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Use fixed rules"
+   1, "block_by_block_any_even", "..."
+   2, "send_remap", "..."
+   3, "permute_remap", "..."
 
 .. _Reduce_scatter_block:
 
@@ -458,4 +556,9 @@ Scatter (Id=15)
    1, "basic_linear", "..."
    2, "binomial", "..."
    3, "linear_nb", "..."
+   4, "bine", "..."
+
+The Bine scatter has a single implementation: it does not have a
+corresponding Bine implementation table, and the ``bine_imp`` column/field is
+ignored for this collective.
 

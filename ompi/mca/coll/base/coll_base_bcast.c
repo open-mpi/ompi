@@ -1070,3 +1070,664 @@ int ompi_coll_base_bcast_intra_scatter_allgather_ring(
 cleanup_and_return:
     return err;
 }
+
+/*
+ * Binomial Negabinary (Bine) broadcast, latency-optimized variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree: each rank receives data from its
+ * parent and forwards it to a child, with the tree rooted at the
+ * broadcast root.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial broadcast is used as a fallback.
+ */
+int ompi_coll_base_bcast_intra_bine_lat(void *buf, size_t count, struct ompi_datatype_t *datatype,
+                                         int root, struct ompi_communicator_t *comm,
+                                         mca_coll_base_module_t *module)
+{
+    int size, rank, steps, recv_step = -1, line, err = MPI_SUCCESS;
+    char *received = NULL;
+    MPI_Request requests[BINE_MAX_STEPS];
+    int request_count = 0;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    // Check if the number of processes is a power of 2
+    steps = opal_cube_dim(size);
+    if (size != (1 << steps)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:bcast_intra_bine_lat WARNING: "
+                     "non-pow-2 size %d, switching to binomial broadcast",
+                     size));
+        return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
+    }
+
+    received = calloc(size, sizeof(char));
+    if (received == NULL) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto cleanup_and_return;
+    }
+    received[root] = 1;
+
+    for (int step = 0; step < steps && !received[rank]; step++) {
+        for (int proc = 0; proc < size; proc++) {
+            if (!received[proc])
+                continue;
+
+            int dest = ompi_coll_bine_pi(proc, step, size);
+            received[dest] = 1;
+            if (dest == rank) {
+                recv_step = step;
+                break;
+            }
+        }
+    }
+
+    /* Main loop.
+     *
+     * At each step s:
+     * - if rank r has the data it sends it to dest = pi(r, s)
+     * - if rank r does not have the data:
+     *   - if recv_step ==s, it receives the data from the parent
+     *   - otherwise it does nothing in this iteration
+     */
+    for (int s = 0; s < steps; s++) {
+        int dest;
+        // If I don't have the data and I am scheduled to receive it, wait for it.
+        if (rank != root && recv_step == s) {
+            dest = ompi_coll_bine_pi(rank, s, size);
+            err = MCA_PML_CALL(
+                recv(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+            continue;
+        }
+
+        // If I already have the message, send the data.
+        if (recv_step < s) {
+            dest = ompi_coll_bine_pi(rank, s, size);
+            err = MCA_PML_CALL(isend(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, &requests[request_count]));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+            request_count++;
+            continue;
+        }
+    }
+
+    if (request_count > 0) {
+        err = ompi_request_wait_all(request_count, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
+    }
+
+    free(received);
+
+    return MPI_SUCCESS;
+
+cleanup_and_return:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warnings
+    if (NULL != received)
+        free(received);
+
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) broadcast, latency-optimized reversed variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-doubling Bine tree, reversing the communication order
+ * of the latency-optimized variant.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial broadcast is used as a fallback.
+ */
+int ompi_coll_base_bcast_intra_bine_lat_reversed(void *buf, size_t count,
+                                                  struct ompi_datatype_t *datatype, int root,
+                                                  struct ompi_communicator_t *comm,
+                                                  mca_coll_base_module_t *module)
+{
+    int size, rank, steps, recv_step = -1, line, err = MPI_SUCCESS;
+    char *received = NULL;
+    MPI_Request requests[BINE_MAX_STEPS];
+    int request_count = 0;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    // Check if the number of processes is a power of 2
+    steps = opal_cube_dim(size);
+    if (size != (1 << steps)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:bcast_intra_bine_lat_reversed WARNING: "
+                     "non-pow-2 size %d, switching to binomial broadcast",
+                     size));
+        return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
+    }
+
+    // Use an auxiliary array to record visited node in order
+    // to calculate at which step node is gonna receive the message.
+    received = calloc(size, sizeof(char));
+    if (received == NULL) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto cleanup_and_return;
+    }
+    received[root] = 1;
+
+    for (int step = 0; step < steps && !received[rank]; step++) {
+        for (int proc = 0; proc < size; proc++) {
+            if (!received[proc])
+                continue;
+
+            int dest = ompi_coll_bine_pi(proc, steps - step - 1, size);
+            received[dest] = 1;
+            if (dest == rank) {
+                recv_step = step;
+                break;
+            }
+        }
+    }
+
+    /* Main loop.
+     *
+     * At each step s:
+     * - if rank r has the data it sends it to dest = pi(r, s)
+     * - if rank r does not have the data:
+     *   - if recv_step ==s, it receives the data from the parent
+     *   - otherwise it does nothing in this iteration
+     */
+    for (int s = 0; s < steps; s++) {
+        int dest;
+        // If I don't have the data and I am scheduled to receive it, wait for it.
+        if (rank != root && recv_step == s) {
+            dest = ompi_coll_bine_pi(rank, steps - s - 1, size);
+            err = MCA_PML_CALL(
+                recv(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+            continue;
+        }
+
+        // If I already have the message, send the data.
+        if (recv_step < s) {
+            dest = ompi_coll_bine_pi(rank, steps - s - 1, size);
+            err = MCA_PML_CALL(isend(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, &requests[request_count]));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+            request_count++;
+            continue;
+        }
+    }
+
+    if (request_count > 0) {
+        err = ompi_request_wait_all(request_count, requests, MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
+    }
+
+    free(received);
+
+    return MPI_SUCCESS;
+
+cleanup_and_return:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warnings
+    if (NULL != received)
+        free(received);
+
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) broadcast, latency-optimized variant (new).
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree with an optimized step calculation.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial broadcast is used as a fallback.
+ */
+int ompi_coll_base_bcast_intra_bine_lat_new(void *buf, size_t count,
+                                            struct ompi_datatype_t *datatype, int root,
+                                            struct ompi_communicator_t *comm,
+                                            mca_coll_base_module_t *module)
+{
+    int size, rank, err = MPI_SUCCESS, btnb_vrank, line;
+    int vrank, mask, recvd;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    if (!ompi_coll_is_power_of_two(size)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:bcast_intra_bine_lat_new WARNING: "
+                     "non-pow-2 size %d, switching to binomial broadcast",
+                     size));
+        return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
+    }
+
+    vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
+    mask = size >> 1;
+    recvd = (root == rank);
+    {
+        uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
+        if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto cleanup_and_return; }
+        btnb_vrank = (int) btnb_vrank_u32;
+    }
+    while (mask > 0) {
+        int partner = btnb_vrank ^ ((mask << 1) - 1);
+        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+        int mask_lsbs = (mask << 1) - 1;   // Mask with num_steps - step + 1 LSBs set to 1
+        int lsbs = btnb_vrank & mask_lsbs; // Extract k LSBs
+        int equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
+
+        if (recvd) {
+            err = MCA_PML_CALL(send(buf, count, datatype, partner, MCA_COLL_BASE_TAG_BCAST,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+        } else if (equal_lsbs) {
+            err = MCA_PML_CALL(recv(buf, count, datatype, partner, MCA_COLL_BASE_TAG_BCAST, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
+            recvd = 1;
+        }
+        mask >>= 1;
+    }
+
+    return MPI_SUCCESS;
+cleanup_and_return:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warnings
+
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) broadcast, latency-optimized variant (i-new).
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree with iterative rank-to-parent lookup.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial broadcast is used as a fallback.
+ */
+int ompi_coll_base_bcast_intra_bine_lat_i_new(void *buf, size_t count,
+                                              struct ompi_datatype_t *datatype, int root,
+                                              struct ompi_communicator_t *comm,
+                                              mca_coll_base_module_t *module)
+{
+    int size, rank, line, err = MPI_SUCCESS, btnb_vrank;
+    int vrank, mask, recvd, req_count = 0, steps;
+    MPI_Request *requests;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    if (size == 1) {
+        return MPI_SUCCESS;
+    }
+
+    if (!ompi_coll_is_power_of_two(size)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:bcast_intra_bine_lat_i_new WARNING: "
+                     "non-pow-2 size %d, switching to binomial broadcast",
+                     size));
+        return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
+    }
+
+    vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
+    steps = opal_cube_dim(size);
+    mask = 0x1 << (int) (steps - 1);
+    recvd = (root == rank);
+    {
+        uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
+        if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+        btnb_vrank = (int) btnb_vrank_u32;
+    }
+    //requests = (MPI_Request *) malloc(steps * sizeof(MPI_Request));
+    requests = ompi_coll_base_comm_get_reqs(module->base_data, steps);
+    if (NULL == requests) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    while (mask > 0) {
+        int partner = btnb_vrank ^ ((mask << 1) - 1);
+        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+        int mask_lsbs = (mask << 1) - 1;   // Mask with num_steps - step + 1 LSBs set to 1
+        int lsbs = btnb_vrank & mask_lsbs; // Extract k LSBs
+        int equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
+
+        if (recvd) {
+            err = MCA_PML_CALL(isend(buf, count, datatype, partner, MCA_COLL_BASE_TAG_BCAST,
+                                     MCA_PML_BASE_SEND_STANDARD, comm, &requests[req_count++]));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        } else if (equal_lsbs) {
+            err = MCA_PML_CALL(recv(buf, count, datatype, partner, MCA_COLL_BASE_TAG_BCAST, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            recvd = 1;
+        }
+        mask >>= 1;
+    }
+
+    err = ompi_request_wait_all(req_count, requests, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    if (NULL != requests) {
+        if (MPI_ERR_IN_STATUS == err) {
+            for (int i = 0; i < steps; i++) {
+                if (MPI_REQUEST_NULL == requests[i])
+                    continue;
+                if (MPI_ERR_PENDING == requests[i]->req_status.MPI_ERROR)
+                    continue;
+                if (MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+                    err = requests[i]->req_status.MPI_ERROR;
+                    break;
+                }
+            }
+        }
+        ompi_coll_base_free_reqs(requests, steps);
+    }
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warnings
+    return err;
+}
+
+/*
+ * Binomial Negabinary (Bine) broadcast, bandwidth-optimized remap variant.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Decomposes into a Bine scatter (distance-doubling tree) followed by a
+ * Bine allgather (distance-halving tree) for large vectors.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial broadcast is used as a fallback.
+ */
+int ompi_coll_base_bcast_intra_bine_bdw_remap(void *buf, size_t count,
+                                              struct ompi_datatype_t *datatype, int root,
+                                              struct ompi_communicator_t *comm,
+                                              mca_coll_base_module_t *module)
+{
+    int size, rank, line, err = MPI_SUCCESS;
+    ptrdiff_t lb, extent;
+    int *displs = NULL, *recvcounts = NULL;
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+    ompi_datatype_get_extent(datatype, &lb, &extent);
+
+    if (!ompi_coll_is_power_of_two(size)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                     "coll:base:bcast_intra_bine_bdw_remap WARNING: "
+                     "non-pow-2 size %d, switching to binomial broadcast",
+                     size));
+        return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
+    }
+
+    if (size <= 1) {
+        return MPI_SUCCESS;
+    }
+
+    int vrank = ompi_coll_mod(rank - root, size);
+
+    displs = (int *) malloc(size * sizeof(int));
+    recvcounts = (int *) malloc(size * sizeof(int));
+    if (displs == NULL || recvcounts == NULL) {
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+    int count_per_rank = count / size;
+    int rem = count % size;
+    for (int i = 0; i < size; i++) {
+        displs[i] = count_per_rank * i + (i < rem ? i : rem);
+        recvcounts[i] = count_per_rank + (i < rem ? 1 : 0);
+    }
+
+    int mask = 0x1;
+    int inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
+    int block_first_mask = ~(inverse_mask - 1);
+    int remapped_rank = ompi_coll_bine_remap_rank(size, vrank);
+    int receiving_mask = inverse_mask << 1; // Root never receives. By having a large mask
+                                            // inverse_mask will always be < receiving_mask
+    // I receive in the step corresponding to the position (starting from right)
+    // of the first 1 in my remapped rank -- this indicates the step when the data reaches me
+    if (rank != root) {
+        receiving_mask = 0x1 << (ffs(remapped_rank) - 1); // ffs starts counting from 1, thus -1
+    }
+
+    /***** Scatter *****/
+    int recvd = (root == rank);
+    while (mask < size) {
+        int vpartner;
+        if (vrank % 2 == 0) {
+            vpartner = ompi_coll_mod(vrank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        } else {
+            vpartner = ompi_coll_mod(vrank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        }
+        int partner = ompi_coll_mod(vpartner + root, size);
+
+        // For sure I need to send my (remapped) partner's data
+        // the actual start block however must be aligned to
+        // the power of two
+        int send_block_first = ompi_coll_bine_remap_rank(size, vpartner) & block_first_mask;
+        int send_block_last = send_block_first + inverse_mask - 1;
+        int send_count = displs[send_block_last] - displs[send_block_first]
+                         + recvcounts[send_block_last];
+        // Something similar for the block to recv.
+        // I receive my block, but aligned to the power of two
+        int recv_block_first = remapped_rank & block_first_mask;
+        int recv_block_last = recv_block_first + inverse_mask - 1;
+        int recv_count = displs[recv_block_last] - displs[recv_block_first]
+                         + recvcounts[recv_block_last];
+
+        if (recvd) {
+            err = MCA_PML_CALL(send((char *) buf + displs[send_block_first] * extent, send_count,
+                                    datatype, partner, MCA_COLL_BASE_TAG_BCAST,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        } else if (inverse_mask == receiving_mask || partner == root) {
+            err = MCA_PML_CALL(recv((char *) buf + displs[recv_block_first] * extent, recv_count,
+                                    datatype, partner, MCA_COLL_BASE_TAG_BCAST, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            recvd = 1;
+        }
+
+        mask <<= 1;
+        inverse_mask >>= 1;
+        block_first_mask >>= 1;
+    }
+
+    /***** Allgather *****/
+    mask >>= 1;
+    inverse_mask = 0x1;
+    block_first_mask = ~0x0;
+    while (mask > 0) {
+        int spartner, rpartner;
+        int send_block_first = 0, send_block_last = 0, send_count = 0, recv_block_first = 0,
+            recv_block_last = 0, recv_count = 0;
+        int vpartner;
+        if (vrank % 2 == 0) {
+            vpartner = ompi_coll_mod(vrank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        } else {
+            vpartner = ompi_coll_mod(vrank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+        }
+        int partner = ompi_coll_mod(vpartner + root, size);
+
+        rpartner = (inverse_mask < receiving_mask) ? MPI_PROC_NULL : partner;
+        spartner = (inverse_mask == receiving_mask) ? MPI_PROC_NULL : partner;
+
+        if (spartner != MPI_PROC_NULL) {
+            send_block_first = remapped_rank & block_first_mask;
+            send_block_last = send_block_first + inverse_mask - 1;
+            send_count = displs[send_block_last] - displs[send_block_first]
+                         + recvcounts[send_block_last];
+        }
+        if (rpartner != MPI_PROC_NULL) {
+            recv_block_first = ompi_coll_bine_remap_rank(size, vpartner) & block_first_mask;
+            recv_block_last = recv_block_first + inverse_mask - 1;
+            recv_count = displs[recv_block_last] - displs[recv_block_first]
+                         + recvcounts[recv_block_last];
+        }
+
+        if (rpartner >= 0 && spartner >= 0 && spartner < size && rpartner < size) {
+            err = ompi_coll_base_sendrecv((char *) buf + displs[send_block_first] * extent,
+                                          send_count, datatype, spartner, MCA_COLL_BASE_TAG_BCAST,
+                                          (char *) buf + displs[recv_block_first] * extent,
+                                          recv_count, datatype, rpartner, MCA_COLL_BASE_TAG_BCAST, comm,
+                                          MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        } else if (rpartner >= 0 && rpartner < size) {
+            err = MCA_PML_CALL(recv((char *) buf + displs[recv_block_first] * extent, recv_count,
+                                    datatype, rpartner, MCA_COLL_BASE_TAG_BCAST, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        } else if (spartner >= 0 && spartner < size) {
+            err = MCA_PML_CALL(send((char *) buf + displs[send_block_first] * extent, send_count,
+                                    datatype, spartner, MCA_COLL_BASE_TAG_BCAST,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+        }
+
+        mask >>= 1;
+        inverse_mask <<= 1;
+        block_first_mask <<= 1;
+    }
+
+    free(displs);
+    free(recvcounts);
+    return MPI_SUCCESS;
+
+err_hndl:
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
+                 __FILE__, line, err, rank));
+    (void) line; // silence compiler warnings
+    if (NULL != displs)
+        free(displs);
+    if (NULL != recvcounts)
+        free(recvcounts);
+    return err;
+}

@@ -32,18 +32,25 @@
 /* reduce_scatter algorithm variables */
 static int coll_tuned_reduce_scatter_forced_algorithm = 0;
 static int coll_tuned_reduce_scatter_segment_size = 0;
+static int coll_tuned_reduce_scatter_bine_imp = 0;
 static int coll_tuned_reduce_scatter_tree_fanout;
 static int coll_tuned_reduce_scatter_chain_fanout;
 
 /* valid values for coll_tuned_reduce_scatter_forced_algorithm */
-static const mca_base_var_enum_value_t reduce_scatter_algorithms[] = {
-    {0, "ignore"},
-    {1, "non-overlapping"},
-    {2, "recursive_halving"},
-    {3, "ring"},
-    {4, "butterfly"},
-    {0, NULL}
-};
+static const mca_base_var_enum_value_t reduce_scatter_algorithms[] = {{0, "ignore"},
+                                                                      {1, "non-overlapping"},
+                                                                      {2, "recursive_halving"},
+                                                                      {3, "ring"},
+                                                                      {4, "butterfly"},
+                                                                      {5, "bine"},
+                                                                      {0, NULL}};
+
+static const mca_base_var_enum_value_t
+    reduce_scatter_bine_algorithms[] = {{0, "ignore"},
+                                        {1, "block_by_block_any_even"},
+                                        {2, "send_remap"},
+                                        {3, "permute_remap"},
+                                        {0, NULL}};
 
 /**
  * The following are used by dynamic and forced rules
@@ -122,20 +129,35 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
                                       MCA_BASE_VAR_SCOPE_ALL,
                                       &coll_tuned_reduce_scatter_chain_fanout);
 
+    coll_tuned_reduce_scatter_bine_imp = 0;
+    (void) mca_base_var_enum_create("coll_tuned_reduce_scatter_bine_implementation",
+                                    reduce_scatter_bine_algorithms, &new_enum);
+    mca_param_indices->bine_implementation_index = mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "reduce_scatter_bine_implementation",
+        "Bine implementation to use for reduce_scatter. "
+        "Bine. Can be locked down to choice of: 0 ignore, 1 block_by_block_any_even, 2 send_remap, "
+        "3 permute_remap "
+        "Only relevant if coll_tuned_use_dynamic_rules is true and algorithm is bine 5.",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &coll_tuned_reduce_scatter_bine_imp);
+    coll_tuned_alg_bine_register_options(REDUCESCATTER, new_enum);
+    OBJ_RELEASE(new_enum);
+    if (mca_param_indices->bine_implementation_index < 0) {
+        return mca_param_indices->bine_implementation_index;
+    }
+
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_reduce_scatter_intra_do_this(const void *sbuf, void* rbuf,
-                                                 ompi_count_array_t rcounts,
-                                                 struct ompi_datatype_t *dtype,
-                                                 struct ompi_op_t *op,
-                                                 struct ompi_communicator_t *comm,
-                                                 mca_coll_base_module_t *module,
-                                                 int algorithm, int faninout, int segsize)
+int ompi_coll_tuned_reduce_scatter_intra_do_this(
+    const void *sbuf, void *rbuf, ompi_count_array_t rcounts, struct ompi_datatype_t *dtype,
+    struct ompi_op_t *op, struct ompi_communicator_t *comm, mca_coll_base_module_t *module,
+    int algorithm, int faninout, int segsize, int bine_imp)
 {
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
-        "coll:tuned:reduce_scatter_intra_do_this selected algorithm %d topo faninout %d segsize %d",
-        algorithm, faninout, segsize));
+                         "coll:tuned:reduce_scatter_intra_do_this selected algorithm %d topo "
+                         "faninout %d segsize %d bine imp %d",
+                         algorithm, faninout, segsize, bine_imp));
 
     switch (algorithm) {
     case (0): return ompi_coll_tuned_reduce_scatter_intra_dec_fixed(sbuf, rbuf, rcounts,
@@ -148,6 +170,23 @@ int ompi_coll_tuned_reduce_scatter_intra_do_this(const void *sbuf, void* rbuf,
                                                               dtype, op, comm, module);
     case (4): return ompi_coll_base_reduce_scatter_intra_butterfly(sbuf, rbuf, rcounts,
                                                                    dtype, op, comm, module);
+    case (5):
+        switch (bine_imp) {
+        case 0:
+            return ompi_coll_tuned_reduce_scatter_intra_bine_dec_fixed(sbuf, rbuf, rcounts, dtype,
+                                                                       op, comm, module);
+        case 1:
+            return ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(sbuf, rbuf,
+                                                                                    rcounts, dtype,
+                                                                                    op, comm,
+                                                                                    module);
+        case 2:
+            return ompi_coll_base_reduce_scatter_intra_bine_send_remap(sbuf, rbuf, rcounts, dtype,
+                                                                       op, comm, module);
+        case 3:
+            return ompi_coll_base_reduce_scatter_intra_bine_permute_remap(sbuf, rbuf, rcounts,
+                                                                         dtype, op, comm, module);
+        }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
         "coll:tuned:reduce_scatter_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
