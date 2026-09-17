@@ -90,6 +90,13 @@ int ompi_comm_failure_propagate(ompi_communicator_t* comm, ompi_proc_t* proc, in
  */
 static int ompi_comm_failure_propagator_local(ompi_communicator_t* comm, ompi_comm_failure_propagator_message_t* msg) {
     ompi_proc_t* proc = (ompi_proc_t*)ompi_proc_for_name(msg->proc_name);
+    if( NULL == proc ) {
+        /* A job we were never introduced to, so nothing of ours involves
+         * this proc and there is nothing to propagate.  Cannot happen for
+         * a message that arrived on a communicator we are a member of;
+         * checked because ompi_proc_is_active() would dereference it. */
+        return false;
+    }
     if( !ompi_proc_is_active(proc) ) {
         OPAL_OUTPUT_VERBOSE((9, ompi_ftmpi_output_handle,
                 "%s %s: failure of %s has already been propagated on comm %s:%d",

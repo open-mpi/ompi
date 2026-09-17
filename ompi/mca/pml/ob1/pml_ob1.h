@@ -258,9 +258,13 @@ do {                                                            \
 
 /**
  * A thread-safe function that should be called every time we need the OB1
- * progress to be turned (or kept) on.
+ * progress to be turned (or kept) on -- with a positive count -- and once
+ * with a negative count when that work is done. A count is owed by work
+ * nothing else will come back for: a send parked on an unreachable peer,
+ * a fragment from a peer we cannot convert from, a control packet a btl
+ * refused. An unreleased count polls for the life of the job.
  */
-int mca_pml_ob1_enable_progress(int32_t count);
+void mca_pml_ob1_enable_progress(int32_t count);
 
 static inline void mca_pml_ob1_add_to_pending (ompi_proc_t *proc, mca_bml_base_btl_t *bml_btl,
                                                int order, mca_pml_ob1_hdr_t *hdr, size_t hdr_size)

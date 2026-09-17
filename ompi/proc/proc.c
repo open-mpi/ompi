@@ -54,9 +54,58 @@ static opal_hash_table_t ompi_proc_hash;
 
 ompi_proc_t* ompi_proc_local_proc = NULL;
 
+/* The jobs we have been introduced to, and so the only jobs a name we
+ * are handed can legitimately belong to: our own, plus every job the
+ * runtime has told us about through ompi_proc_find_and_add(). Entries
+ * are never removed -- a job that has departed is still a job whose
+ * names were once valid, and keeping it only means we get one step
+ * further before failing to reach it, which is today's behaviour
+ * anyway. One entry per job, so linear search is the right shape.
+ * Guarded by ompi_proc_lock. */
+static ompi_jobid_t *ompi_proc_jobids = NULL;
+static size_t ompi_proc_num_jobids = 0;
+static size_t ompi_proc_max_jobids = 0;
+
 static void ompi_proc_construct(ompi_proc_t* proc);
 static void ompi_proc_destruct(ompi_proc_t* proc);
 static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_name);
+
+/* Both require ompi_proc_lock, except during init and finalize where
+ * there is by definition nobody to race. */
+static bool ompi_proc_jobid_known_nolock (ompi_jobid_t jobid)
+{
+    for (size_t i = 0 ; i < ompi_proc_num_jobids ; ++i) {
+        if (jobid == ompi_proc_jobids[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static void ompi_proc_jobid_learn_nolock (ompi_jobid_t jobid)
+{
+    if (ompi_proc_jobid_known_nolock (jobid)) {
+        return;
+    }
+
+    if (ompi_proc_num_jobids == ompi_proc_max_jobids) {
+        size_t grown = (0 == ompi_proc_max_jobids) ? 4 : 2 * ompi_proc_max_jobids;
+        ompi_jobid_t *jobids = (ompi_jobid_t *) realloc (ompi_proc_jobids,
+                                                         grown * sizeof (*jobids));
+        if (NULL == jobids) {
+            /* Nothing useful to do about it here, and failing closed would
+             * refuse a peer we are legitimately talking to. Leave the set
+             * as it is; the worst case is the unbounded lookup we used to
+             * do unconditionally. */
+            return;
+        }
+        ompi_proc_jobids = jobids;
+        ompi_proc_max_jobids = grown;
+    }
+
+    ompi_proc_jobids[ompi_proc_num_jobids++] = jobid;
+}
 
 OBJ_CLASS_INSTANCE(
     ompi_proc_t,
@@ -231,6 +280,23 @@ opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
     }
 
     opal_mutex_lock (&ompi_proc_lock);
+
+    /* Some callers reach here with a name they were handed by a peer
+     * rather than by the runtime -- the tcp and uct btls resolve the
+     * guid out of a connection handshake, and an unreachable machine
+     * can put any name it likes in one. Building a proc for a job
+     * nobody has introduced us to is how such a name ends up costing a
+     * modex lookup for a process that cannot exist, so refuse it here
+     * instead, before anything is allocated. This bounds a mistake or
+     * a stale connection; it is not authentication, since our own
+     * jobid is not a secret. Note that sentinels resolve through
+     * ompi_proc_for_name_nolock() directly and are unaffected: they
+     * can only ever encode our own jobid. */
+    if (!ompi_proc_jobid_known_nolock (proc_name.jobid)) {
+        opal_mutex_unlock (&ompi_proc_lock);
+        return NULL;
+    }
+
     proc = ompi_proc_for_name_nolock (proc_name);
     opal_mutex_unlock (&ompi_proc_lock);
 
@@ -252,6 +318,9 @@ int ompi_proc_init(void)
     if (OPAL_SUCCESS != ret) {
         return ret;
     }
+
+    /* our own job is the one job we never have to be told about */
+    ompi_proc_jobid_learn_nolock (OMPI_PROC_MY_NAME->jobid);
 
     /* create a proc for the local process */
     ret = ompi_proc_allocate (OMPI_PROC_MY_NAME->jobid, OMPI_PROC_MY_NAME->vpid, &proc);
@@ -409,6 +478,11 @@ int ompi_proc_finalize (void)
     OBJ_DESTRUCT(&ompi_proc_list);
     OBJ_DESTRUCT(&ompi_proc_lock);
     OBJ_DESTRUCT(&ompi_proc_hash);
+
+    free (ompi_proc_jobids);
+    ompi_proc_jobids = NULL;
+    ompi_proc_num_jobids = 0;
+    ompi_proc_max_jobids = 0;
 
     return OMPI_SUCCESS;
 }
@@ -688,6 +762,15 @@ ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew)
     /* return the proc-struct which matches this jobid+process id */
     mask = OMPI_RTE_CMP_JOBID | OMPI_RTE_CMP_VPID;
     opal_mutex_lock (&ompi_proc_lock);
+
+    /* This is the runtime introducing a proc to us -- through
+     * connect/accept, through spawn, or as part of our own instance --
+     * so it is also the moment that job becomes one whose names we will
+     * honour. Recorded before the proc is built, and dpm calls this
+     * before PMIx_Connect(), let alone add_procs(), so no peer of that
+     * job can arrive ahead of its own introduction. */
+    ompi_proc_jobid_learn_nolock (name->jobid);
+
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         if (OPAL_EQUAL == ompi_rte_compare_name_fields(mask, &proc->super.proc_name, name)) {
             rproc = proc;
