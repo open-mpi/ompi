@@ -62,6 +62,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/ompi_rte.h"
+#include "ompi/runtime/params.h"
 #include "ompi/info/info.h"
 
 #include "ompi/dpm/dpm.h"
@@ -101,27 +102,367 @@ int ompi_dpm_init(void)
     return OMPI_SUCCESS;
 }
 
+/* keys under which each root posts, in the rendezvous group's
+ * PMIX_GROUP_INFO, its side's member list and whether its side can build
+ * the intercommunicator with a single group over both sides */
+#define OMPI_DPM_MEMBERS_KEY "ompi.dpm.members"
+#define OMPI_DPM_UNION_KEY   "ompi.dpm.union"
+
+/* how long a root waits for the other side to arrive - the same bound
+ * the publish/lookup exchange has always used */
+#define OMPI_DPM_RENDEZVOUS_TIMEOUT 600
+
+/*
+ * The publish/lookup exchange between the two roots: each publishes its
+ * member list on a key derived from the port and looks up the other's.
+ * Kept for hosts that do not support PMIx groups.
+ */
+static int dpm_exchange_publish(const char *port_string, bool send_first,
+                                const char *mystring, char **rport)
+{
+    pmix_info_t info;
+    pmix_pdata_t pdat;
+    char *key, *pkey;
+    int rc;
+
+    if (send_first) {
+        (void)opal_asprintf(&key, "%s:connect", port_string);
+        (void)opal_asprintf(&pkey, "%s:accept", port_string);
+    } else {
+        (void)opal_asprintf(&key, "%s:accept", port_string);
+        (void)opal_asprintf(&pkey, "%s:connect", port_string);
+    }
+    PMIX_INFO_LOAD(&info, key, mystring, PMIX_STRING);
+    PMIX_PDATA_CONSTRUCT(&pdat);
+    PMIX_LOAD_KEY(pdat.key, pkey);
+    free(key);
+    free(pkey);
+
+    rc = opal_pmix_base_exchange(&info, &pdat, OMPI_DPM_RENDEZVOUS_TIMEOUT);
+    PMIX_INFO_DESTRUCT(&info);
+    if (OPAL_SUCCESS == rc) {
+        *rport = strdup(pdat.value.data.string);
+    }
+    PMIX_PDATA_DESTRUCT(&pdat);
+    return rc;
+}
+
+/*
+ * The two roots meet in a PMIx group that only they construct.
+ *
+ * Each root joins as one of two bootstrap leaders, naming only itself,
+ * so neither needs to know who the other is beforehand - the group ID,
+ * derived from the port, is the only thing they share. Each carries its
+ * side's member list in PMIX_GROUP_INFO. Since the group has exactly two
+ * members, the one in the returned membership that is not us is the
+ * other root, and its list is one PMIx_Get away, qualified by the
+ * group's context ID.
+ *
+ * The context ID is returned too: it is unique across the DVM, so it
+ * names the group the two sides construct next without reusing the port.
+ * That group is only built if both sides can take part in it, so each
+ * root also posts whether its side can, and *both_union says whether
+ * both did - leaving it to one side alone could have one side construct
+ * a group the other never joins.
+ *
+ * Returns OMPI_ERR_NOT_SUPPORTED if the host cannot construct groups,
+ * in which case the caller falls back to publish/lookup.
+ */
+static int dpm_exchange_group(const char *port_string, const char *mystring,
+                              bool my_union, char **rport, size_t *ctxid,
+                              bool *both_union)
+{
+    pmix_info_t *results = NULL, *pinfo;
+    size_t nresults = 0, ninfo, n, bootstrap = 2, npeers = 0;
+    pmix_proc_t *members = NULL, *peer = NULL;
+    void *grpinfo = NULL, *list = NULL;
+    pmix_data_array_t darray = {0}, rdarray = {0};
+    pmix_value_t *val = NULL;
+    pmix_info_t tinfo[2];
+    uint32_t tmo = OMPI_DPM_RENDEZVOUS_TIMEOUT;
+    bool have_ctxid = false;
+    char *grpid = NULL;
+    pmix_status_t pret;
+    int rc = OMPI_SUCCESS;
+
+    (void)opal_asprintf(&grpid, "ompi-dpm-rv:%s", port_string);
+    if (NULL == grpid) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    list = PMIx_Info_list_start();
+    grpinfo = PMIx_Info_list_start();
+    if (NULL == list || NULL == grpinfo) {
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto done;
+    }
+    pret = PMIx_Info_list_add(list, OMPI_DPM_MEMBERS_KEY, mystring, PMIX_STRING);
+    if (PMIX_SUCCESS == pret) {
+        pret = PMIx_Info_list_add(list, OMPI_DPM_UNION_KEY, &my_union, PMIX_BOOL);
+    }
+    if (PMIX_SUCCESS == pret) {
+        pret = PMIx_Info_list_convert(list, &rdarray);
+    }
+    if (PMIX_SUCCESS == pret) {
+        pret = PMIx_Info_list_add(grpinfo, PMIX_GROUP_INFO, &rdarray, PMIX_DATA_ARRAY);
+    }
+    if (PMIX_SUCCESS == pret) {
+        pret = PMIx_Info_list_add(grpinfo, PMIX_GROUP_BOOTSTRAP, &bootstrap, PMIX_SIZE);
+    }
+    if (PMIX_SUCCESS == pret) {
+        pret = PMIx_Info_list_add(grpinfo, PMIX_GROUP_ASSIGN_CONTEXT_ID, NULL, PMIX_BOOL);
+    }
+    if (PMIX_SUCCESS == pret) {
+        pret = PMIx_Info_list_add(grpinfo, PMIX_TIMEOUT, &tmo, PMIX_UINT32);
+    }
+    if (PMIX_SUCCESS == pret) {
+        pret = PMIx_Info_list_convert(grpinfo, &darray);
+    }
+    if (PMIX_SUCCESS != pret) {
+        rc = opal_pmix_convert_status(pret);
+        goto done;
+    }
+    pinfo = (pmix_info_t*)darray.array;
+    ninfo = darray.size;
+
+    pret = PMIx_Group_construct(grpid, &ompi_process_info.myprocid, 1,
+                                pinfo, ninfo, &results, &nresults);
+    if (PMIX_ERR_NOT_SUPPORTED == pret) {
+        rc = OMPI_ERR_NOT_SUPPORTED;
+        goto done;
+    }
+    if (PMIX_SUCCESS != pret) {
+        rc = opal_pmix_convert_status(pret);
+        OMPI_ERROR_LOG(rc);
+        goto done;
+    }
+
+    for (n = 0; n < nresults; n++) {
+        if (PMIX_CHECK_KEY(&results[n], PMIX_GROUP_CONTEXT_ID)) {
+            PMIX_VALUE_GET_NUMBER(pret, &results[n].value, *ctxid, size_t);
+            have_ctxid = (PMIX_SUCCESS == pret);
+        } else if (PMIX_CHECK_KEY(&results[n], PMIX_GROUP_MEMBERSHIP) &&
+                   PMIX_DATA_ARRAY == results[n].value.type &&
+                   NULL != results[n].value.data.darray &&
+                   PMIX_PROC == results[n].value.data.darray->type) {
+            members = (pmix_proc_t*)results[n].value.data.darray->array;
+            npeers = results[n].value.data.darray->size;
+        }
+    }
+    if (!have_ctxid) {
+        opal_show_help("help-comm.txt", "cid-base-not-set", true);
+        rc = OMPI_ERROR;
+        goto destruct;
+    }
+    /* exactly two members, and one of them is us */
+    for (n = 0; n < npeers; n++) {
+        if (!PMIX_CHECK_PROCID(&members[n], &ompi_process_info.myprocid)) {
+            if (NULL != peer) {
+                peer = NULL;  /* more than one other member */
+                break;
+            }
+            peer = &members[n];
+        }
+    }
+    if (2 != npeers || NULL == peer) {
+        rc = OMPI_ERR_BAD_PARAM;
+        OMPI_ERROR_LOG(rc);
+        goto destruct;
+    }
+
+    PMIX_INFO_CONSTRUCT(&tinfo[0]);
+    PMIX_INFO_LOAD(&tinfo[0], PMIX_GROUP_CONTEXT_ID, ctxid, PMIX_SIZE);
+    PMIX_INFO_SET_QUALIFIER(&tinfo[0]);
+    PMIX_INFO_CONSTRUCT(&tinfo[1]);
+    PMIX_INFO_LOAD(&tinfo[1], PMIX_TIMEOUT, &tmo, PMIX_UINT32);
+    pret = PMIx_Get(peer, OMPI_DPM_MEMBERS_KEY, tinfo, 2, &val);
+    if (PMIX_SUCCESS != pret || NULL == val ||
+        PMIX_STRING != val->type || NULL == val->data.string) {
+        rc = (PMIX_SUCCESS == pret) ? OMPI_ERR_TYPE_MISMATCH
+                                    : opal_pmix_convert_status(pret);
+        OMPI_ERROR_LOG(rc);
+        PMIX_INFO_DESTRUCT(&tinfo[0]);
+        PMIX_INFO_DESTRUCT(&tinfo[1]);
+        goto destruct;
+    }
+    *rport = strdup(val->data.string);
+    if (NULL == *rport) {
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    PMIX_VALUE_RELEASE(val);
+    val = NULL;
+
+    /* a peer that did not say it can is taken to mean it cannot */
+    *both_union = false;
+    if (my_union &&
+        PMIX_SUCCESS == PMIx_Get(peer, OMPI_DPM_UNION_KEY, tinfo, 2, &val) &&
+        NULL != val && PMIX_BOOL == val->type) {
+        *both_union = val->data.flag;
+    }
+    PMIX_INFO_DESTRUCT(&tinfo[0]);
+    PMIX_INFO_DESTRUCT(&tinfo[1]);
+
+destruct:
+    /* the group has done its job - both lists are in hand */
+    PMIX_INFO_CONSTRUCT(&tinfo[0]);
+    PMIX_INFO_LOAD(&tinfo[0], PMIX_TIMEOUT, &tmo, PMIX_UINT32);
+    pret = PMIx_Group_destruct(grpid, &tinfo[0], 1);
+    PMIX_INFO_DESTRUCT(&tinfo[0]);
+    if (PMIX_SUCCESS != pret && OMPI_SUCCESS == rc) {
+        rc = opal_pmix_convert_status(pret);
+        OMPI_ERROR_LOG(rc);
+    }
+
+done:
+    if (NULL != val) {
+        PMIX_VALUE_RELEASE(val);
+    }
+    if (NULL != results) {
+        PMIX_INFO_FREE(results, nresults);
+    }
+    PMIX_DATA_ARRAY_DESTRUCT(&darray);
+    PMIX_DATA_ARRAY_DESTRUCT(&rdarray);
+    if (NULL != grpinfo) {
+        PMIx_Info_list_release(grpinfo);
+    }
+    if (NULL != list) {
+        PMIx_Info_list_release(list);
+    }
+    free(grpid);
+    if (OMPI_SUCCESS != rc && NULL != *rport) {
+        free(*rport);
+        *rport = NULL;
+    }
+    return rc;
+}
+
+/*
+ * Mark the procs on ilist as known: fill in their locality from what the
+ * host told us about their job, and hand them to the PML. Their job-level
+ * data must already be here - by PMIx_Connect, or by the group construct
+ * that assigned the new communicator its context ID. Drains ilist.
+ */
+static int dpm_add_new_procs(opal_list_t *ilist)
+{
+    int prn, nprn = 0, rc;
+    char *val;
+    opal_process_name_t wildcard_rank;
+    ompi_dpm_proct_caddy_t *cd;
+    ompi_proc_t *proc, **new_proc_list;
+    pmix_proc_t pxproc;
+    pmix_value_t pval;
+    /* the loop below drains ilist, so capture its size now */
+    size_t nnew = opal_list_get_size(ilist);
+    int32_t i = 0;
+
+    if (0 == nnew) {
+        return OMPI_SUCCESS;
+    }
+
+    /* convert the list of new procs to a proc_t array */
+    new_proc_list = (ompi_proc_t**)calloc(nnew, sizeof(ompi_proc_t *));
+    if (NULL == new_proc_list) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    /* Extract the modex info for the first proc on the ilist, and then
+     * remove all processors in the same jobid from the list by getting
+     * their connection information and moving them into the proc array.
+     */
+    do {
+        uint32_t *local_ranks_in_jobid = NULL;
+        ompi_dpm_proct_caddy_t* next = NULL;
+        cd = (ompi_dpm_proct_caddy_t*)opal_list_get_first(ilist);
+        proc = cd->p;
+        wildcard_rank.jobid = proc->super.proc_name.jobid;
+        wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
+        /* retrieve the local peers for the specified jobid */
+        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCAL_PEERS,
+                                       &wildcard_rank, &val, PMIX_STRING);
+        if (OPAL_SUCCESS == rc && NULL != val) {
+            char **peers = opal_argv_split(val, ',');
+            free(val);
+            nprn = opal_argv_count(peers);
+            local_ranks_in_jobid = (uint32_t*)calloc(nprn, sizeof(uint32_t));
+            for (prn = 0; NULL != peers[prn]; prn++) {
+                local_ranks_in_jobid[prn] = strtoul(peers[prn], NULL, 10);
+            }
+            opal_argv_free(peers);
+        }
+
+        OPAL_LIST_FOREACH_SAFE(cd, next, ilist, ompi_dpm_proct_caddy_t) {
+            proc = cd->p;
+            if( proc->super.proc_name.jobid != wildcard_rank.jobid )
+                continue;  /* not a proc from this jobid */
+
+            new_proc_list[i] = proc;
+            opal_list_remove_item(ilist, (opal_list_item_t*)cd);
+            OBJ_RELEASE(cd);
+            /* ompi_proc_complete_init_single() initializes and optionally retrieves
+             * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
+             * them, we are just fine */
+            ompi_proc_complete_init_single(proc);
+            /* if this proc is local, then get its locality */
+            if (NULL != local_ranks_in_jobid) {
+                uint16_t u16;
+                for (prn=0; prn < nprn; prn++) {
+                    if (local_ranks_in_jobid[prn] == proc->super.proc_name.vpid) {
+                        /* get their locality string */
+                        val = NULL;
+                        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING,
+                                                       &proc->super.proc_name, &val, PMIX_STRING);
+                        if (OPAL_SUCCESS == rc && NULL != ompi_process_info.locality) {
+                            u16 = opal_hwloc_compute_relative_locality(ompi_process_info.locality, val);
+                            free(val);
+                        } else {
+                            /* all we can say is that it shares our node */
+                            u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                        }
+                        proc->super.proc_flags = u16;
+                        /* save the locality for later */
+                        OPAL_PMIX_CONVERT_NAME(&pxproc, &proc->super.proc_name);
+                        pval.type = PMIX_UINT16;
+                        pval.data.uint16 = proc->super.proc_flags;
+                        PMIx_Store_internal(&pxproc, PMIX_LOCALITY, &pval);
+                        break;
+                    }
+                }
+            }
+            ++i;
+        }
+        if (NULL != local_ranks_in_jobid) {
+            free(local_ranks_in_jobid);
+        }
+    } while (!opal_list_is_empty(ilist));
+
+    /* call add_procs on the new ones */
+    rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+    free(new_proc_list);
+    if (OMPI_SUCCESS != rc) {
+        OMPI_ERROR_LOG(rc);
+    }
+    return rc;
+}
+
 int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
                             const char *port_string, bool send_first,
                             ompi_communicator_t **newcomm)
 {
     int k, size, rsize, rank, rc, rportlen=0;
-    char **members = NULL, *nstring, *rport=NULL, *key, *pkey;
-    bool dense, isnew;
+    char **members = NULL, *nstring, *rport=NULL, *grpid = NULL;
+    bool dense, isnew, use_group;
     opal_process_name_t pname;
     opal_list_t ilist, mlist, rlist;
-    pmix_info_t info, tinfo;
-    pmix_value_t pval;
-    pmix_pdata_t pdat;
+    pmix_info_t tinfo;
     pmix_proc_t *procs, pxproc;
-    size_t nprocs, n;
+    size_t nprocs, n, ctxid = 0;
+    int64_t hdr[2];
     pmix_status_t pret;
     opal_proclist_t *plt;
 
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t *proc;
     ompi_group_t *group=comm->c_local_group;
-    ompi_proc_t **proc_list=NULL, **new_proc_list = NULL;
+    ompi_proc_t **proc_list=NULL;
     int32_t i;
     ompi_group_t *new_group_pointer;
     ompi_dpm_proct_caddy_t *cd;
@@ -132,12 +473,19 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
 
-    /* the "send_first" end will append ":connect" to the port name and publish
-     * the list of its participating procs on that key. The receiving root proc
-     * will append ":accept" to the port name and publish the list of its
-     * participants on that key. Each proc will then block waiting for lookup
-     * to complete on the other's key. Once that completes, the list of remote
-     * procs is used to complete construction of the intercommunicator. */
+    /* The two roots exchange their sides' member lists, and each bcasts
+     * the other side's list to its own members. The exchange is a PMIx
+     * group that only the two roots construct (see dpm_exchange_group),
+     * or - where the host has no groups - a publish/lookup on keys
+     * derived from the port.
+     *
+     * When the rendezvous group was used and the PML supports extended
+     * CIDs, everyone then constructs one group over the union of both
+     * sides: that single collective exchanges the job-level data that
+     * PMIx_Connect used to, assigns the new communicator's context ID,
+     * and posts each member's local CID. Otherwise we PMIx_Connect and
+     * agree on a CID with the iterative algorithm, whose inter-side
+     * steps are further publish/lookup exchanges between the roots. */
 
     /* If there was an error during the COMM_SPAWN stage, the port string will
      * be set (in mpi/c/comm_spawn.c) with a special value that contains the error
@@ -205,45 +553,48 @@ int ompi_dpm_connect_accept(ompi_communicator_t *comm, int root,
 
     if (rank == root) {
         /* the roots for each side exchange their list of participants */
-        if (send_first) {
-            (void)opal_asprintf(&key, "%s:connect", port_string);
-            (void)opal_asprintf(&pkey, "%s:accept", port_string);
-        } else {
-            (void)opal_asprintf(&key, "%s:accept", port_string);
-            (void)opal_asprintf(&pkey, "%s:connect", port_string);
-        }
+        bool my_union = ompi_mpi_dpm_group_connect &&
+                        mca_pml_base_supports_extended_cid();
+        bool both_union = false;
+
         nstring = opal_argv_join(members, ':');
-        PMIX_INFO_LOAD(&info, key, nstring, PMIX_STRING);
-        PMIX_LOAD_KEY(pdat.key, pkey);
-        free(nstring);
-        free(key);
-        free(pkey);
-
-        rc = opal_pmix_base_exchange(&info, &pdat, 600);  // give them 10 minutes
-        PMIX_INFO_DESTRUCT(&info);
-        if (OPAL_SUCCESS != rc) {
-            PMIX_PDATA_DESTRUCT(&pdat);
-            return rc;
+        rc = dpm_exchange_group(port_string, nstring, my_union,
+                                &rport, &ctxid, &both_union);
+        if (OMPI_ERR_NOT_SUPPORTED == rc) {
+            rc = dpm_exchange_publish(port_string, send_first, nstring, &rport);
         }
-
-        /* save the result */
-        rport = strdup(pdat.value.data.string);  // need this later
-        rportlen = strlen(rport) + 1;  // retain the NULL terminator
-        PMIX_PDATA_DESTRUCT(&pdat);
+        if (!both_union) {
+            /* a zero context ID tells our side to connect the old way */
+            ctxid = 0;
+        }
+        free(nstring);
+        if (OMPI_SUCCESS == rc) {
+            rportlen = strlen(rport) + 1;  // retain the NULL terminator
+        } else {
+            /* the rest of our side is waiting in the bcast below - tell
+             * them rather than leave them there */
+            rportlen = (0 > rc) ? rc : OMPI_ERROR;
+        }
     }
 
 bcast_rportlen:
     /* if we aren't in a comm_spawn, the non-root members won't have
      * the port_string - so let's make sure everyone knows the other
-     * side's participants */
+     * side's participants, and the rendezvous group's context ID if
+     * there was one */
 
     /* bcast the list-length to all processes in the local comm */
-    rc = comm->c_coll->coll_bcast(&rportlen, 1, MPI_INT, root, comm,
+    hdr[0] = rportlen;
+    hdr[1] = (int64_t)ctxid;
+    rc = comm->c_coll->coll_bcast(hdr, 2, MPI_INT64_T, root, comm,
                                  comm->c_coll->coll_bcast_module);
     if (OMPI_SUCCESS != rc) {
         free(rport);
+        opal_argv_free(members);
         goto exit;
     }
+    rportlen = (int)hdr[0];
+    ctxid = (size_t)hdr[1];
 
     /* This is the comm_spawn error case: the root couldn't do the pmix spawn
      * and is now propagating to the local group that this operation has to
@@ -368,129 +719,53 @@ bcast_rportlen:
     }
     opal_argv_free(members);
 
-    /* convert the list of members to a pmix_proc_t array */
-    nprocs = opal_list_get_size(&mlist);
-    PMIX_PROC_CREATE(procs, nprocs);
-    n = 0;
-    OPAL_LIST_FOREACH(plt, &mlist, opal_proclist_t) {
-        memcpy(&procs[n], &plt->procid, sizeof(pmix_proc_t));
-        ++n;
-    }
-    OPAL_LIST_DESTRUCT(&mlist);
+    /* the roots agreed on the single-group path if they sent us the
+     * rendezvous group's context ID to name that group with */
+    use_group = (0 != ctxid);
 
-    /* tell the host RTE to connect us - this will download
-     * all known data for the nspace's of participating procs
-     * so that add_procs will not result in a slew of lookups */
-    PMIX_INFO_CONSTRUCT(&tinfo);
-    PMIX_INFO_LOAD(&tinfo, PMIX_TIMEOUT, &ompi_pmix_connect_timeout, PMIX_UINT32);
+    if (!use_group) {
+        /* convert the list of members to a pmix_proc_t array */
+        nprocs = opal_list_get_size(&mlist);
+        PMIX_PROC_CREATE(procs, nprocs);
+        n = 0;
+        OPAL_LIST_FOREACH(plt, &mlist, opal_proclist_t) {
+            memcpy(&procs[n], &plt->procid, sizeof(pmix_proc_t));
+            ++n;
+        }
 
-    pret = PMIx_Connect(procs, nprocs, &tinfo, 1);
-    PMIX_INFO_DESTRUCT(&tinfo);
-    PMIX_PROC_FREE(procs, nprocs);
-    rc = opal_pmix_convert_status(pret);
-    if (OPAL_SUCCESS != rc) {
-        OMPI_ERROR_LOG(rc);
-        OPAL_LIST_DESTRUCT(&ilist);
-        OPAL_LIST_DESTRUCT(&rlist);
-        goto exit;
-    }
-    if (!opal_list_is_empty(&ilist)) {
-        int prn, nprn = 0;
-        char *val;
-        opal_process_name_t wildcard_rank;
-        /* the loop below drains ilist, so capture its size now */
-        size_t nnew = opal_list_get_size(&ilist);
-        i = 0;  /* start from the begining */
+        /* tell the host RTE to connect us - this will download
+         * all known data for the nspace's of participating procs
+         * so that add_procs will not result in a slew of lookups */
+        PMIX_INFO_CONSTRUCT(&tinfo);
+        PMIX_INFO_LOAD(&tinfo, PMIX_TIMEOUT, &ompi_pmix_connect_timeout, PMIX_UINT32);
 
-        /* convert the list of new procs to a proc_t array */
-        new_proc_list = (ompi_proc_t**)calloc(nnew, sizeof(ompi_proc_t *));
-        /* Extract the modex info for the first proc on the ilist, and then
-         * remove all processors in the same jobid from the list by getting
-         * their connection information and moving them into the proc array.
-         */
-        do {
-            uint32_t *local_ranks_in_jobid = NULL;
-            ompi_dpm_proct_caddy_t* next = NULL;
-            cd = (ompi_dpm_proct_caddy_t*)opal_list_get_first(&ilist);
-            proc = cd->p;
-            wildcard_rank.jobid = proc->super.proc_name.jobid;
-            wildcard_rank.vpid = OMPI_NAME_WILDCARD->vpid;
-            /* retrieve the local peers for the specified jobid */
-            OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCAL_PEERS,
-                                           &wildcard_rank, &val, PMIX_STRING);
-            if (OPAL_SUCCESS == rc && NULL != val) {
-                char **peers = opal_argv_split(val, ',');
-                free(val);
-                nprn = opal_argv_count(peers);
-                local_ranks_in_jobid = (uint32_t*)calloc(nprn, sizeof(uint32_t));
-                for (prn = 0; NULL != peers[prn]; prn++) {
-                    local_ranks_in_jobid[prn] = strtoul(peers[prn], NULL, 10);
-                }
-                opal_argv_free(peers);
-            }
-
-            OPAL_LIST_FOREACH_SAFE(cd, next, &ilist, ompi_dpm_proct_caddy_t) {
-                proc = cd->p;
-                if( proc->super.proc_name.jobid != wildcard_rank.jobid )
-                    continue;  /* not a proc from this jobid */
-
-                new_proc_list[i] = proc;
-                opal_list_remove_item(&ilist, (opal_list_item_t*)cd);  // TODO: do we need to release cd ?
-                OBJ_RELEASE(cd);
-                /* ompi_proc_complete_init_single() initializes and optionally retrieves
-                 * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
-                 * them, we are just fine */
-                ompi_proc_complete_init_single(proc);
-                /* if this proc is local, then get its locality */
-                if (NULL != local_ranks_in_jobid) {
-                    uint16_t u16;
-                    for (prn=0; prn < nprn; prn++) {
-                        if (local_ranks_in_jobid[prn] == proc->super.proc_name.vpid) {
-                            /* get their locality string */
-                            val = NULL;
-                            OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING,
-                                                           &proc->super.proc_name, &val, PMIX_STRING);
-                            if (OPAL_SUCCESS == rc && NULL != ompi_process_info.locality) {
-                                u16 = opal_hwloc_compute_relative_locality(ompi_process_info.locality, val);
-                                free(val);
-                            } else {
-                                /* all we can say is that it shares our node */
-                                u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-                            }
-                            proc->super.proc_flags = u16;
-                            /* save the locality for later */
-                            OPAL_PMIX_CONVERT_NAME(&pxproc, &proc->super.proc_name);
-                            pval.type = PMIX_UINT16;
-                            pval.data.uint16 = proc->super.proc_flags;
-                            PMIx_Store_internal(&pxproc, PMIX_LOCALITY, &pval);
-                            break;
-                        }
-                    }
-                }
-                ++i;
-            }
-            if (NULL != local_ranks_in_jobid) {
-                free(local_ranks_in_jobid);
-            }
-        } while (!opal_list_is_empty(&ilist));
-
-        /* call add_procs on the new ones */
-        rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
-        free(new_proc_list);
-        new_proc_list = NULL;
-        if (OMPI_SUCCESS != rc) {
+        pret = PMIx_Connect(procs, nprocs, &tinfo, 1);
+        PMIX_INFO_DESTRUCT(&tinfo);
+        PMIX_PROC_FREE(procs, nprocs);
+        rc = opal_pmix_convert_status(pret);
+        if (OPAL_SUCCESS != rc) {
             OMPI_ERROR_LOG(rc);
+            OPAL_LIST_DESTRUCT(&mlist);
             OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&rlist);
+            goto exit;
+        }
+        rc = dpm_add_new_procs(&ilist);
+        if (OMPI_SUCCESS != rc) {
+            OPAL_LIST_DESTRUCT(&mlist);
+            OPAL_LIST_DESTRUCT(&ilist);
+            OPAL_LIST_DESTRUCT(&rlist);
             goto exit;
         }
     }
-    OPAL_LIST_DESTRUCT(&ilist);
+    OPAL_LIST_DESTRUCT(&mlist);
 
     /* now deal with the remote group */
     rsize = opal_list_get_size(&rlist);
     new_group_pointer=ompi_group_allocate(NULL, rsize);
     if (NULL == new_group_pointer) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
+        OPAL_LIST_DESTRUCT(&ilist);
         OPAL_LIST_DESTRUCT(&rlist);
         goto exit;
     }
@@ -516,22 +791,54 @@ bcast_rportlen:
                          new_group_pointer,        /* remote group */
                          0);                       /* flags */
     if (OMPI_SUCCESS != rc) {
+        OPAL_LIST_DESTRUCT(&ilist);
         goto exit;
     }
 
     OBJ_RELEASE(new_group_pointer);
     new_group_pointer = MPI_GROUP_NULL;
 
-    /* allocate comm_cid */
-    rc = ompi_comm_nextcid ( newcomp,                   /* new communicator */
-                             comm,                      /* old communicator */
-                             NULL,                      /* bridge comm */
-                             &root,                     /* local leader */
-                             (void*)port_string,        /* rendezvous point */
-                             send_first,                /* send or recv first */
-                             OMPI_COMM_CID_INTRA_PMIX); /* mode */
-    if (OMPI_SUCCESS != rc) {
-        goto exit;
+    if (use_group) {
+        /* One group over both sides: it brings in the job-level data of
+         * the other side, assigns the context ID, and posts our local CID
+         * for the other members. The rendezvous group's context ID is
+         * unique, so it names this group without reusing the port. */
+        (void)opal_asprintf(&grpid, "ompi-dpm-%" PRIsize_t, ctxid);
+        if (NULL == grpid) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            OPAL_LIST_DESTRUCT(&ilist);
+            goto exit;
+        }
+        rc = ompi_comm_nextcid ( newcomp,                  /* new communicator */
+                                 NULL,                     /* no parent: new CID block */
+                                 NULL,                     /* bridge comm */
+                                 grpid,                    /* group ID */
+                                 NULL,                     /* no existing block */
+                                 false,                    /* send first (unused) */
+                                 OMPI_COMM_CID_GROUP_NEW); /* mode */
+        free(grpid);
+        if (OMPI_SUCCESS != rc) {
+            OPAL_LIST_DESTRUCT(&ilist);
+            goto exit;
+        }
+        rc = dpm_add_new_procs(&ilist);
+        OPAL_LIST_DESTRUCT(&ilist);
+        if (OMPI_SUCCESS != rc) {
+            goto exit;
+        }
+    } else {
+        OPAL_LIST_DESTRUCT(&ilist);
+        /* allocate comm_cid */
+        rc = ompi_comm_nextcid ( newcomp,                   /* new communicator */
+                                 comm,                      /* old communicator */
+                                 NULL,                      /* bridge comm */
+                                 &root,                     /* local leader */
+                                 (void*)port_string,        /* rendezvous point */
+                                 send_first,                /* send or recv first */
+                                 OMPI_COMM_CID_INTRA_PMIX); /* mode */
+        if (OMPI_SUCCESS != rc) {
+            goto exit;
+        }
     }
 
     /* activate comm and init coll-component */
@@ -550,7 +857,6 @@ bcast_rportlen:
        to enable the usage of fast communication devices
        between the two worlds ?
     */
-
  exit:
     if (OMPI_SUCCESS != rc) {
         if (MPI_COMM_NULL != newcomp && NULL != newcomp) {

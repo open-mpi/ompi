@@ -8,6 +8,19 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` no
+  longer exchange data through the runtime's publish/lookup service.
+  Each call previously made about a dozen publish and lookup requests to
+  the runtime's data server: two to swap the two sides' member lists,
+  and more for every round of agreeing on the new communicator's context
+  ID.  The two root processes now meet in a PMIx group of their own to
+  swap member lists, and all processes then build one PMIx group over
+  both sides that connects them and assigns the context ID in a single
+  operation.  The previous method remains in use where the runtime does
+  not support PMIx groups or the PML does not support extended context
+  IDs, and can be selected with the new ``mpi_dpm_group_connect`` MCA
+  parameter.
+
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
   bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every

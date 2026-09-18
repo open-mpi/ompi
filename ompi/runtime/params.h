@@ -183,6 +183,12 @@ OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
  */
 OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
 
+/**
+ * Whether connect/accept may build the intercommunicator with a single
+ * PMIx group over both sides (default true)
+ */
+OMPI_DECLSPEC extern bool ompi_mpi_dpm_group_connect;
+
  /**
  * A boolean value that determines whether or not to enable runtime timing of
  * init and finalize.
