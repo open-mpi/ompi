@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2019-2024 Bull SAS.  All rights reserved.
+ * Copyright (c) 2019-2026 Bull SAS.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -113,6 +113,7 @@ int mca_pml_ubcl_add_comm(struct ompi_communicator_t *comm)
 
     comm->c_pml_comm = new_ubcl_comm;
 
+    mca_common_ubcl_set_state(UBCL_PML_COMM_CREATED);
     OPAL_OUTPUT_VERBOSE(
         (50, mca_pml_ubcl_component.output, "UBCL_MODULE_ADD_COMM %s\n", ompi_comm_print_cid(comm)));
 
