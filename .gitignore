@@ -392,6 +392,7 @@ test/simple/binding
 test/simple/comm_abort
 test/simple/concurrent_spawn
 test/simple/connect
+test/simple/connect_accept_order
 test/simple/crisscross
 test/simple/delayed_abort
 test/simple/hello_barrier
