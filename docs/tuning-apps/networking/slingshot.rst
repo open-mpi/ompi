@@ -1,12 +1,10 @@
 Using Open MPI with HPE Slingshot
 =================================
 
-Open MPI supports HPE Slingshot 11 through the ``cxi`` provider in the
-`Libfabric <https://libfabric.org/>`_ library. HPE is Hewlett Packard
-Enterprise, and Libfabric is also known as OpenFabrics Interfaces (OFI). A
-provider is the Libfabric component that supports a particular network. The
-``cxi`` provider maps Open MPI communication operations to the Slingshot
-Cassini network interface card and Rosetta fabric.
+Open MPI supports Slingshot through the ``cxi`` provider in the `Libfabric
+<https://libfabric.org/>`_ library. The ``cxi`` provider maps Open MPI
+communication operations to the Slingshot Cassini network interface card and
+Rosetta switch.
 
 
 Requirements
@@ -27,10 +25,9 @@ A job launcher normally supplies the authorization environment required by the
 ``cxi`` provider for an allocated job. The site launcher configuration
 determines whether users need
 to set ``SLINGSHOT_VNIS``, ``SLINGSHOT_SVC_IDS``, or
-``SLINGSHOT_DEVICES``. These settings select the CXI service and virtual
-network identifier used by the job. A virtual network identifier isolates one
-job's network traffic from another job's traffic. Incorrect values can prevent
-processes from communicating.
+``SLINGSHOT_DEVICES``. These settings select the CXI service and Job IDs.
+A Job ID isolates one job's network traffic from another job's traffic.
+Incorrect values can prevent processes from communicating.
 
 Verify the installation
 -----------------------
