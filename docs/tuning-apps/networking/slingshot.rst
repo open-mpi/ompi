@@ -83,8 +83,11 @@ Selecting the ``cxi`` provider
 Open MPI normally selects its OpenFabrics Interfaces components automatically.
 To request the tagged-message path explicitly, select the ``cm``
 Point-to-Point Management Layer (PML) and ``ofi`` Message Transport Layer
-(MTL), and include the ``cxi`` provider. Tagged messages carry a numeric label
-that Open MPI uses to match a send operation to the correct receive operation:
+(MTL), and include the ``cxi`` provider. When the selected provider supports
+hardware tag matching, message matching can be offloaded from the host
+processor to the network interface card. The CXI provider supports this
+capability. Tagged messages carry a numeric label that Open MPI uses to match
+a send operation to the correct receive operation:
 
 .. code-block:: sh
 
