@@ -918,11 +918,17 @@ sub patch_autotools_output {
     foreach my $tag (("", "_FC")) {
 
         # We have to change the search pattern and substitution on each
-        # iteration to take into account the tag changing
+        # iteration to take into account the tag changing.
+        #
+        # Capture the "icc*..." case line and put it back verbatim rather
+        # than re-emitting a hard-coded copy of it.  Libtool extends that
+        # list over time (2.6.2 added icx* and ifx* for the Intel oneAPI
+        # compilers), and writing out our own copy silently reverted those
+        # additions.
         my $search_string = '# icc used to be incompatible with GCC.\n\s+' .
-                            '# ICC 10 doesn\047t accept -KPIC any more.\n.*\n\s+' .
+                            '# ICC 10 doesn\047t accept -KPIC any more.\n(.*)\n\s+' .
 	                    "lt_prog_compiler_wl${tag}=";
-        my $replace_string = "# Flang compiler
+        my $replace_prefix = "# Flang compiler
       *flang*)
 	lt_prog_compiler_wl${tag}='-Wl,'
 	lt_prog_compiler_pic${tag}='-fPIC -DPIC'
@@ -930,11 +936,12 @@ sub patch_autotools_output {
         ;;
       # icc used to be incompatible with GCC.
       # ICC 10 doesn't accept -KPIC any more.
-      icc* | ifort*)
+";
+        my $replace_suffix = "
 	lt_prog_compiler_wl${tag}=";
 
         push(@verbose_out, $indent_str . "Patching configure for flang Fortran ($tag)\n");
-        $c =~ s/$search_string/$replace_string/;
+        $c =~ s/$search_string/$replace_prefix . $1 . $replace_suffix/e;
     }
 
     foreach my $tag (("", "_FC")) {
