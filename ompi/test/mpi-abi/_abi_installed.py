@@ -2039,11 +2039,23 @@ def _abi_pkgconfig_files_check(tools):
     configure placeholder, which pkg-config would pass verbatim to the
     compiler) breaks consumers even though every wrapper-based check
     passes.
+
+    ompi-forum-abi-cxx.pc is only installed when Open MPI was
+    configured with a C++ compiler, so it is only required when this
+    installation has one.
     """
     check_name = "installed_abi_pkgconfig_files"
     prefix = Path(tools["open_mpi"]["prefix"])
     pkgconfig_dir = prefix / "lib" / "pkgconfig"
-    expected = ("ompi-forum-abi.pc", "ompi-forum-abi-c.pc")
+    expected = ["ompi-forum-abi.pc", "ompi-forum-abi-c.pc"]
+    # ompi-forum-abi-cxx.pc is installed under the same automake
+    # conditional (OMPI_HAVE_CXX_COMPILER) as the non-ABI ompi-cxx.pc,
+    # so the presence of the latter tells us whether to require it.
+    skipped = []
+    if (pkgconfig_dir / "ompi-cxx.pc").is_file():
+        expected.append("ompi-forum-abi-cxx.pc")
+    else:
+        skipped.append("ompi-forum-abi-cxx.pc")
     problems = []
     found = []
     for name in expected:
@@ -2070,7 +2082,8 @@ def _abi_pkgconfig_files_check(tools):
     return _pass(
         check_name,
         pkgconfig_dir=str(pkgconfig_dir),
-        files=found)
+        files=found,
+        skipped=skipped)
 
 
 def _c_probe_source(srcdir, case, body):
