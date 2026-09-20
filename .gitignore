@@ -339,6 +339,7 @@ ompi/tools/wrappers/ompi_wrapper_script
 ompi/tools/wrappers/ompi.pc
 ompi/tools/wrappers/ompi-c.pc
 ompi/tools/wrappers/ompi-cxx.pc
+ompi/tools/wrappers/ompi-fort.pc
 ompi/tools/wrappers/ompi-abi-c.pc
 ompi/tools/wrappers/ompi-abi-cxx.pc
 ompi/tools/wrappers/ompi-abi.pc
