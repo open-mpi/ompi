@@ -8,6 +8,18 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Open MPI no longer forces a specific Libevent back-end; Libevent now
+  picks the best mechanism available on the platform (for example,
+  ``kqueue`` on macOS and ``epoll`` on Linux).  Open MPI previously
+  forced ``select`` on macOS and ``poll`` on most other platforms, to
+  work around 2008-era problems using the scalable mechanisms with
+  pseudo-terminals.  Those problems no longer apply: the pseudo-terminals
+  in question belong to PRRTE's I/O forwarding, which does not consult
+  this setting.  The ``opal_event_include`` MCA parameter still allows a
+  specific mechanism to be selected.  Its default is now empty, which
+  means that Libevent chooses (``all`` is also still accepted with the
+  same meaning).
+
 - Fixed every MPI process crashing in ``MPI_Init()`` on macOS when Open
   MPI was built against a macOS SDK newer than the OS it runs on -- for
   example, the Command Line Tools installing the macOS 27 SDK on a macOS
