@@ -900,17 +900,6 @@ sub patch_autotools_output {
     close(IN);
     my $c_orig = $c;
 
-    # Fix the case statements that handle the Sun Fortran version strings.
-    #
-    # Note: we have to use octal escapes to match '*Sun\ F*) and the
-    # four succeeding lines in the bourne shell switch statement.
-    #   \ = 134
-    #   ) = 051
-    #   * = 052
-    #
-    # Below is essentially an upstream patch for Libtool which we want
-    # made available to Open MPI users running older versions of Libtool
-
     foreach my $tag (("", "_FC")) {
 
         # We have to change the search pattern and substitution on each
@@ -938,30 +927,6 @@ sub patch_autotools_output {
 
         $record_patch->("configure for flang Fortran ($tag)",
                         ($c =~ s/$search_string/$replace_prefix . $1 . $replace_suffix/e));
-    }
-
-    foreach my $tag (("", "_FC")) {
-
-        # We have to change the search pattern and substitution on each
-        # iteration to take into account the tag changing
-        my $search_string = '\052Sun\134 F\052.*\n.*\n\s+' .
-            "lt_prog_compiler_pic${tag}" . '.*\n.*\n.*\n.*\n';
-        my $replace_string = "
-        *Sun\\ Ceres\\ Fortran* | *Sun*Fortran*\\ [[1-7]].* | *Sun*Fortran*\\ 8.[[0-3]]*)
-          # Sun Fortran 8.3 passes all unrecognized flags to the linker
-          lt_prog_compiler_pic${tag}='-KPIC'
-          lt_prog_compiler_static${tag}='-Bstatic'
-          lt_prog_compiler_wl${tag}=''
-          ;;
-        *Sun\\ F* | *Sun*Fortran*)
-          lt_prog_compiler_pic${tag}='-KPIC'
-          lt_prog_compiler_static${tag}='-Bstatic'
-          lt_prog_compiler_wl${tag}='-Qoption ld '
-          ;;
-";
-
-        $record_patch->("configure for Sun Studio Fortran version strings ($tag)",
-                        ($c =~ s/$search_string/$replace_string/));
     }
 
     foreach my $tag (("", "_FC")) {
@@ -1117,7 +1082,12 @@ sub patch_autotools_output {
     # it.  Note that a few patches below are expected to appear here with
     # a new enough Autotools; they are retained for the older versions
     # that VERSION still permits.
-    if (@patch_misses) {
+    #
+    # Only report for our own configure ($topdir eq "."): these patches are
+    # written against what Open MPI's configure contains, and a miss in an
+    # embedded package's configure (PMIx and PRRTE have no Fortran, for
+    # example) is expected rather than interesting.
+    if (@patch_misses && $topdir eq ".") {
         verbose "$indent_str"."Patches that matched nothing with this Autotools:\n";
         foreach my $miss (@patch_misses) {
             verbose "$indent_str"."    $miss\n";
