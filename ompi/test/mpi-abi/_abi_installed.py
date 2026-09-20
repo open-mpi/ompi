@@ -2034,15 +2034,16 @@ def _installed_wrapper_checks(tools, dirs, progress=None):
 def _abi_pkgconfig_files_check(tools):
     """Validate the installed MPI Forum ABI pkg-config files.
 
-    The ompi-abi*.pc files are an alternative to the mpicc_abi wrapper,
-    so a broken file (most notably an unsubstituted @...@ configure
-    placeholder, which pkg-config would pass verbatim to the compiler)
-    breaks consumers even though every wrapper-based check passes.
+    The ompi-forum-abi*.pc files are an alternative to the mpicc_abi
+    wrapper, so a broken file (most notably an unsubstituted @...@
+    configure placeholder, which pkg-config would pass verbatim to the
+    compiler) breaks consumers even though every wrapper-based check
+    passes.
     """
     check_name = "installed_abi_pkgconfig_files"
     prefix = Path(tools["open_mpi"]["prefix"])
     pkgconfig_dir = prefix / "lib" / "pkgconfig"
-    expected = ("ompi-abi.pc", "ompi-abi-c.pc")
+    expected = ("ompi-forum-abi.pc", "ompi-forum-abi-c.pc")
     problems = []
     found = []
     for name in expected:

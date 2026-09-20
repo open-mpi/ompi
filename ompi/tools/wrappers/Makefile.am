@@ -29,13 +29,13 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ompi.pc ompi-c.pc
 
 if OMPI_STANDARD_ABI
-pkgconfig_DATA += ompi-abi.pc ompi-abi-c.pc
+pkgconfig_DATA += ompi-forum-abi.pc ompi-forum-abi-c.pc
 endif
 
 if OMPI_HAVE_CXX_COMPILER
 pkgconfig_DATA += ompi-cxx.pc
 if OMPI_STANDARD_ABI
-pkgconfig_DATA += ompi-abi-cxx.pc
+pkgconfig_DATA += ompi-forum-abi-cxx.pc
 endif
 endif
 
