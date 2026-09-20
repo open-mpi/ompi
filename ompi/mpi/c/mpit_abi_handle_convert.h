@@ -8,11 +8,12 @@
  *
  * $HEADER$
  *
- * Declaration of the MPI Standard ABI handle converter for MPI_T event
- * payloads.  The implementation lives in mpit_abi_handle_convert.c and is
- * compiled only into libmpi_abi.  The Standard-ABI init entry points install
- * it downward via ompi_mpit_register_abi_handle_convert() so the libopen_mpi
- * producer raise sites can reach it without an upward link dependency.
+ * Declaration of the MPI Standard ABI converters for MPI_T event payloads.
+ * The implementations live in mpit_abi_handle_convert.c and are compiled only
+ * into libmpi_abi.  The Standard-ABI init entry points install all converters
+ * downward atomically via ompi_mpit_register_abi_converters() so the
+ * libopen_mpi producer raise sites can reach them without an upward link
+ * dependency.
  */
 
 #ifndef OMPI_MPI_C_MPIT_ABI_HANDLE_CONVERT_H
