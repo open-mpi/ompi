@@ -516,10 +516,12 @@ the tool that registered the callback:
   `abi_converters.h`) live in `libmpi_abi`, a *higher* layer than the
   raise sites in `libopen_mpi`; a direct upward call would violate the
   OPAL->OMPI linker boundary. The Standard-ABI init path therefore
-  installs a converter downward via
-  `ompi_mpit_register_abi_handle_convert()` (a function pointer stored in
-  `libopen_mpi`, mirroring `ompi_mpi_instance_register_mpiext_init()`),
-  and the raise sites call it through `ompi_mpit_abi_handle()`. The
+  installs all converters downward atomically via
+  `ompi_mpit_register_abi_converters()` (storing converter function
+  pointers in `libopen_mpi`, mirroring
+  `ompi_mpi_instance_register_mpiext_init()`), and the raise sites call
+  them through `ompi_mpit_abi_handle()` / `ompi_mpit_abi_error()` /
+  `ompi_mpit_abi_bind()` / `ompi_mpit_abi_thread_level()`. The handle
   converter itself is `ompi_mpit_abi_handle_convert_impl()` in
   `ompi/mpi/c/mpit_abi_handle_convert.c` (compiled only into
   `libmpi_abi`), which dispatches on the object's `MPI_T_BIND_*` kind.
@@ -532,9 +534,9 @@ the tool that registered the callback:
   Standard-ABI values are the internal values + 1). The
   `ompi.mpi.errhandler_invoked` payload carries both (`err_code`,
   `object_type`). These are handled the same way as handles: the
-  Standard-ABI init path installs value converters downward via
-  `ompi_mpit_register_abi_error_convert()` /
-  `ompi_mpit_register_abi_bind_convert()`, and the raise site calls them
+  Standard-ABI init path installs all value converters (along with the
+  handle converter) downward atomically via
+  `ompi_mpit_register_abi_converters()`, and the raise sites call them
   through `ompi_mpit_abi_error()` / `ompi_mpit_abi_bind()`. The converter
   implementations (`ompi_mpit_abi_error_convert_impl()` /
   `ompi_mpit_abi_bind_convert_impl()`, wrapping the generated
