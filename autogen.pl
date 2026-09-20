@@ -848,18 +848,13 @@ sub patch_autotools_output {
         $indent_str = "=== ";
     }
 
-    # Patch ltmain.sh error for PGI version numbers.  Redirect stderr to
-    # /dev/null because this patch is only necessary for some versions of
-    # Libtool (e.g., 2.2.6b); it'll [rightfully] fail if you have a new
-    # enough Libtool that doesn't need this patch.  But don't alarm the
-    # user and make them think that autogen failed if this patch fails --
-    # make the errors be silent.
-    # Also patch ltmain.sh for NAG compiler
+    # Patch ltmain.sh for the NAG and flang compilers.  Redirect stderr to
+    # /dev/null because these patches are only necessary for some versions
+    # of Libtool; they'll [rightfully] fail if you have a new enough
+    # Libtool that doesn't need them.  But don't alarm the user and make
+    # them think that autogen failed if a patch fails -- make the errors be
+    # silent.
     if (-f "config/ltmain.sh") {
-        verbose "$indent_str"."Patching PGI compiler version numbers in ltmain.sh\n";
-        system("$patch_prog -N -p0 < $topdir/config/ltmain_pgi_tp.diff >/dev/null 2>&1");
-        unlink("config/ltmain.sh.rej");
-
         verbose "$indent_str"."Patching \"-pthread\" option for NAG compiler in ltmain.sh\n";
         system("$patch_prog -N -p0 < $topdir/config/ltmain_nag_pthread.diff >/dev/null 2>&1");
         unlink("config/ltmain.sh.rej");
@@ -883,28 +878,7 @@ sub patch_autotools_output {
     close(IN);
     my $c_orig = $c;
 
-    # LT <=2.2.6b need to be patched for the PGI 10.0 fortran compiler
-    # name (pgfortran).  The following comes from the upstream LT patches:
-    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00012.html
-    # http://lists.gnu.org/archive/html/bug-libtool/2009-11/msg00045.html
-    # Note that that patch is part of Libtool (which is not in this OMPI
-    # source tree); we can't fix it.  So all we can do is patch the
-    # resulting configure script.  :-(
-    push(@verbose_out, $indent_str . "Patching configure for Libtool PGI 10 fortran compiler name\n");
-    $c =~ s/gfortran g95 xlf95 f95 fort ifort ifc efc pgf95 lf95 ftn/gfortran g95 xlf95 f95 fort ifort ifc efc pgfortran nvfortran pgf95 lf95 ftn/g;
-    $c =~ s/pgcc\* \| pgf77\* \| pgf90\* \| pgf95\*\)/pgcc* | pgf77* | pgf90* | pgf95* | pgfortran* | nvfortran*)/g;
-    $c =~ s/pgf77\* \| pgf90\* \| pgf95\*\)/pgf77* | pgf90* | pgf95* | pgfortran* | nvfortran*)/g;
-
-    # Similar issue as above -- the PGI 10 version number broke <=LT
-    # 2.2.6b's version number checking regexps.  Again, we can't fix the
-    # Libtool install; all we can do is patch the resulting configure
-    # script.  :-( The following comes from the upstream patch:
-    # http://lists.gnu.org/archive/html/libtool-patches/2009-11/msg00016.html
-    push(@verbose_out, $indent_str . "Patching configure for Libtool PGI version number regexps\n");
-    $c =~ s/\*pgCC\\ \[1-5\]\* \| \*pgcpp\\ \[1-5\]\*/*pgCC\\ [1-5]\.* | *pgcpp\\ [1-5]\.*/g;
-
-    # Similar issue as above -- fix the case statements that handle the Sun
-    # Fortran version strings.
+    # Fix the case statements that handle the Sun Fortran version strings.
     #
     # Note: we have to use octal escapes to match '*Sun\ F*) and the
     # four succeeding lines in the bourne shell switch statement.
@@ -970,24 +944,12 @@ sub patch_autotools_output {
 
     foreach my $tag (("", "_FC")) {
 
+        # Libtool has had the nagfor "--shared" case since well before the
+        # oldest Libtool we support, so we only need to add the support for
+        # convenience libraries on top of it.
+        #
         # We have to change the search pattern and substitution on each
         # iteration to take into account the tag changing
-        my $search_string = 'lf95\052.*# Lahey Fortran 8.1\n\s+' .
-            "whole_archive_flag_spec${tag}=" . '\n\s+' .
-            "tmp_sharedflag='--shared' ;;" . '\n\s+' .
-            'xl';
-        my $replace_string = "lf95*)				# Lahey Fortran 8.1
-	  whole_archive_flag_spec${tag}=
-	  tmp_sharedflag='--shared' ;;
-	nagfor*)			# NAGFOR 5.3
-	  tmp_sharedflag='-Wl,-shared' ;;
-	xl";
-
-        push(@verbose_out, $indent_str . "Patching configure for NAG compiler #1 ($tag)\n");
-        $c =~ s/$search_string/$replace_string/;
-
-        # Newer versions of Libtool have the previous patch already. Therefore,
-        # we add the support for convenience libraries separately
         my $search_string = "whole_archive_flag_spec${tag}=" . '\n\s+' .
             "tmp_sharedflag='--shared' ;;" . '\n\s+' .
             'nagfor\052.*# NAGFOR 5.3\n\s+' .
@@ -1010,25 +972,6 @@ sub patch_autotools_output {
     push(@verbose_out, $indent_str . "Patching configure for Oracle Studio Fortran version strings\n");
     $c =~ s/\*Sun\*Fortran\*\)/*Sun*Fortran* | *Studio*Fortran*)/g;
     $c =~ s/\*Sun\\ F\*\)(.*\n\s+tmp_sharedflag=)/*Sun\\ F* | *Studio*Fortran*)$1/g;
-
-    # See http://git.savannah.gnu.org/cgit/libtool.git/commit/?id=v2.2.6-201-g519bf91 for details
-    # Note that this issue was fixed in LT 2.2.8, however most distros are still using 2.2.6b
-
-    push(@verbose_out, $indent_str . "Patching configure for IBM xlf libtool bug\n");
-    $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
-
-    #Check if we are using a recent enough libtool that supports PowerPC little endian
-    if(index($c, 'powerpc64le-*linux*)') == -1) {
-        push(@verbose_out, $indent_str . "Patching configure for PowerPC little endian support\n");
-        my $replace_string = "x86_64-*kfreebsd*-gnu|x86_64-*linux*|powerpc*-*linux*|";
-        $c =~ s/x86_64-\*kfreebsd\*-gnu\|x86_64-\*linux\*\|ppc\*-\*linux\*\|powerpc\*-\*linux\*\|/$replace_string/g;
-        $replace_string =
-        "powerpc64le-*linux*)\n\t    LD=\"\${LD-ld} -m elf32lppclinux\"\n\t    ;;\n\t  powerpc64-*linux*)";
-        $c =~ s/ppc64-\*linux\*\|powerpc64-\*linux\*\)/$replace_string/g;
-        $replace_string =
-        "powerpcle-*linux*)\n\t    LD=\"\${LD-ld} -m elf64lppc\"\n\t    ;;\n\t  powerpc-*linux*)";
-        $c =~ s/ppc\*-\*linux\*\|powerpc\*-\*linux\*\)/$replace_string/g;
-    }
 
     # Fix consequence of broken libtool.m4
     # see http://lists.gnu.org/archive/html/bug-libtool/2015-07/msg00002.html and
@@ -1098,7 +1041,6 @@ sub patch_autotools_output {
         ;;";
     $c =~ s/$search_string/$replace_string/g;
 
-    $c =~ s/for ac_prog in gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90 nagfor/for ac_prog in gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90 nagfor nvfortran/g;
     foreach my $tag (("", "_FC")) {
         $search_string = 'tcc\*\)
 	# Fabrice Bellard et al\'s Tiny C Compiler
