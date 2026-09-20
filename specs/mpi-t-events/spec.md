@@ -549,18 +549,10 @@ the tool that registered the callback:
   that pointer, so a single deref suffices. Under the Standard ABI the
   tool's `obj_handle` is the address of a Standard-ABI *integer* handle,
   which must be converted to the internal pointer before it can be matched
-  against the object a raise site binds to.
-  **Deferred work (open-mpi/ompi#13280):** this binding-side conversion is
-  not yet implemented. `ompi/mpi/tool/event_handle_alloc.c.in` passes the
-  tool's `obj_handle` straight to `mca_base_event_handle_alloc()` with no
-  Standard-ABI->internal conversion. As a result, under the Standard ABI,
-  binding a registration to an object-bound event (currently only
-  `ompi.mpi.communicator_named`) works for user-created communicators only
-  by accident -- their Standard-ABI handle happens to equal the internal
-  pointer -- and silently never matches predefined handles such as
-  `MPI_COMM_WORLD`, whose Standard-ABI handle is a small reserved integer.
-  Closing this gap requires converting `obj_handle` in the Standard-ABI
-  copy of `event_handle_alloc.c.in` (marked `XXX ABI`).
+  against the object a raise site binds to. The generated Standard-ABI
+  binding in `event_handle_alloc_abi_generated.c` performs this conversion
+  using `ompi_convert_abi_obj_handle_intern_obj_handle()`, which handles
+  both predefined and user-created objects.
 
 Because the engine's `mca_base_event_read` is a raw `memcpy` with no ABI
 translation, a tool always reads back the representation the producer
