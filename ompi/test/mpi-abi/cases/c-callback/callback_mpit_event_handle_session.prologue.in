@@ -27,6 +27,7 @@ struct mpit_initialization_state {
     int failure_code;
     uint64_t instance_id;
     int32_t model;
+    int32_t thread_level;
 };
 
 static struct mpit_initialization_state mpit_initialization_state;
@@ -47,8 +48,9 @@ static void mpit_initialization_callback(MPI_T_event_instance event_instance,
     } else {
         ++state->calls;
         /* Element 0 of the initialization payload is the model (0 = world,
-           1 = session), element 4 is instance_id. */
+           1 = session), element 1 is thread_level, element 4 is instance_id. */
         (void) MPI_T_event_read(event_instance, 0, &state->model);
+        (void) MPI_T_event_read(event_instance, 1, &state->thread_level);
         (void) MPI_T_event_read(event_instance, 4, &state->instance_id);
     }
 }

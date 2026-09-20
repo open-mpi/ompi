@@ -1140,7 +1140,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
             uint64_t instance_id;
         } payload;
         payload.model = OMPI_T_MODEL_SESSION;
-        payload.thread_level = (int32_t) ts_level;
+        payload.thread_level = ompi_mpit_abi_thread_level((int32_t) ts_level);
         payload.world_rank = -1;
         payload.world_size = -1;
         /* For the session model the instance is the MPI_Session, so instance_id

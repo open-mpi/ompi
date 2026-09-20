@@ -74,6 +74,7 @@ mpit_initialization_state.calls = 0;
 mpit_initialization_state.failure_code = 0;
 mpit_initialization_state.instance_id = 0;
 mpit_initialization_state.model = -1;
+mpit_initialization_state.thread_level = -1;
 
 ret = MPI_T_event_handle_alloc(initialization_index, NULL, MPI_INFO_NULL,
                                &mpit_initialization_state.registration);
@@ -120,21 +121,27 @@ if (0 != mpit_initialization_state.failure_code) {
     fprintf(stderr, "ABI_FAIL:mpit:session_model:%d:expected_1\n",
             mpit_initialization_state.model);
     local_failure = 6;
+} else if (mpit_initialization_state.thread_level != MPI_THREAD_SINGLE) {
+    /* The thread_level should be MPI_THREAD_SINGLE, requested from MPI_Session_init.
+       If this fails, the value was not converted via ompi_mpit_abi_thread_level(). */
+    fprintf(stderr, "ABI_FAIL:mpit:session_thread_level:%d:expected_%d\n",
+            mpit_initialization_state.thread_level, MPI_THREAD_SINGLE);
+    local_failure = 7;
 }
 
 ret = MPI_Session_finalize(&session);
 if (MPI_SUCCESS != ret && 0 == local_failure) {
-    local_failure = 7;
+    local_failure = 8;
 }
 
 ret = MPI_T_event_handle_free(mpit_initialization_state.registration, NULL, NULL);
 if (MPI_SUCCESS != ret && 0 == local_failure) {
-    local_failure = 8;
+    local_failure = 9;
 }
 
 ret = MPI_T_finalize();
 if (MPI_SUCCESS != ret && 0 == local_failure) {
-    local_failure = 9;
+    local_failure = 10;
 }
 
 if (0 != local_failure) {
