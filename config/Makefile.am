@@ -41,7 +41,6 @@ EXTRA_DIST = \
         distscript.sh \
         opal_get_version.m4sh \
         ltmain_nag_pthread.diff \
-        ltmain_pgi_tp.diff \
         ltmain_flang_darwin.diff \
         ompi_check_layering.sh \
         find_common_syms \
