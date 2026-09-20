@@ -13,6 +13,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2026      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -25,7 +26,7 @@
 # VPATH builds won't work correctly.
 
 Name: @PACKAGE_NAME@
-Description: Open MPI ABI C++ interface
+Description: MPI Forum ABI C interface
 Version: @PACKAGE_VERSION@
 URL: https://www.open-mpi.org/
 #
@@ -37,8 +38,8 @@ libdir=@libdir@
 # Note that -lopen-pal is NOT included in the libraries list because
 # it's an internal/private library
 #
-Libs: @OMPI_ABI_PC_LIBS@
-Libs.private: @OMPI_ABI_PC_LIBS_PRIVATE@
+Libs: @OMPI_FORUM_ABI_PC_LIBS@
+Libs.private: @OMPI_FORUM_ABI_PC_LIBS_PRIVATE@
 #
-Cflags: -I${includedir} @OMPI_ABI_PC_CXXFLAGS@
+Cflags: -I${includedir} @OMPI_FORUM_ABI_PC_CFLAGS@
 

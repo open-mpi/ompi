@@ -443,8 +443,8 @@ Open MPI installs pkg-config files in `$libdir/pkgconfig` as an alternative
 to wrapper compilers:
 
 * Standard MPI: `ompi.pc`, `ompi-c.pc`, `ompi-cxx.pc`, `ompi-fort.pc`
-* ABI (when `--enable-standard-abi`): `ompi-abi.pc`, `ompi-abi-c.pc`,
-  `ompi-abi-cxx.pc`
+* MPI Forum ABI (when `--enable-standard-abi`): `ompi-forum-abi.pc`,
+  `ompi-forum-abi-c.pc`, `ompi-forum-abi-cxx.pc`
 
 ## When in doubt
 
