@@ -111,8 +111,8 @@ if (0 != mpit_initialization_state.failure_code) {
 } else if (mpit_initialization_state.calls < 1) {
     local_failure = 4;
 } else if (0 == mpit_initialization_state.instance_id) {
-    /* The instance_id should be non-zero; 0 would indicate the old stub
-       behavior or a missing converter. */
+    /* The instance_id should be non-zero (it is an ABI-independent correlation
+       token, not converted). */
     fprintf(stderr, "ABI_FAIL:mpit:init_instance_id:0\n");
     local_failure = 5;
 } else if (mpit_initialization_state.thread_level != MPI_THREAD_SINGLE) {
