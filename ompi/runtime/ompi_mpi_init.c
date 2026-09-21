@@ -748,7 +748,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         /* The world model exposes no user-facing instance handle (MPI_Init
            returns none), so instance_id is purely an internal correlation token
            (init<->finalize) and is ABI-independent -- unlike the session model,
-           where instance_id is the MPI_Session handle and is ABI-gated. */
+           where instance_id is the MPI_Session handle and is ABI-gated.
+           ompi_mpit_abi_thread_level() is called unconditionally (no ABI gate)
+           because it returns the value unchanged when no converter is registered
+           (Open MPI ABI), so it is safe for both ABIs. */
         struct {
             int32_t  model;
             int32_t  thread_level;

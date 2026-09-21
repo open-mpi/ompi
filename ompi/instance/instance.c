@@ -1140,6 +1140,9 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
             uint64_t instance_id;
         } payload;
         payload.model = OMPI_T_MODEL_SESSION;
+        /* ompi_mpit_abi_thread_level() is called unconditionally (no ABI gate)
+           because it returns the value unchanged when no converter is registered
+           (Open MPI ABI), so it is safe for both ABIs. */
         payload.thread_level = ompi_mpit_abi_thread_level((int32_t) ts_level);
         payload.world_rank = -1;
         payload.world_size = -1;
