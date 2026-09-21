@@ -10,15 +10,14 @@
 
 /*
  * Test intent:
- *   Verify that MPI_Init_thread properly registers the MPI_T ABI handle
- *   converters when MPI_T callbacks are registered pre-init.  This validates
- *   the converter registration code in the MPI_Init_thread path
- *   (open-mpi/ompi#13280).  The initialization event must fire with the
- *   Standard-ABI instance handle, not zero or an internal pointer.
+ *   Validate end-to-end MPI_T event payload encoding for MPI_Init_thread.
+ *   The initialization event callback is registered via MPI_T_event_register_callback
+ *   before MPI_Init_thread, and the test verifies that the initialization event
+ *   payload carries correct Standard-ABI instance handle and thread_level values,
+ *   not zero or an internal pointer.
  *
  *   MPI_T_init_thread is called before MPI_Init_thread, and the initialization
- *   event callback is registered before MPI_Init_thread is called.  This
- *   ensures the converter registration in MPI_Init_thread actually runs.
+ *   event callback is registered before MPI_Init_thread is called.
  */
 struct mpit_initialization_state {
     MPI_T_event_registration registration;

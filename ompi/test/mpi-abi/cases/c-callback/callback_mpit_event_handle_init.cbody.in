@@ -10,10 +10,10 @@
 
 /*
  * Test intent:
- *   Validate that MPI_Init properly registers MPI_T ABI converters when
- *   callbacks are registered pre-init.  The initialization event callback is
- *   registered before MPI_Init, ensuring the converter registration in
- *   MPI_Init actually runs (open-mpi/ompi#13280).
+ *   Validate end-to-end MPI_T event payload encoding for MPI_Init.
+ *   The initialization event callback is registered via MPI_T_event_register_callback
+ *   before MPI_Init, and the test verifies that the initialization event
+ *   payload carries correct Standard-ABI handle and thread_level values.
  */
 
 /* Initialize MPI_T first so we can register callbacks before MPI_Init.
