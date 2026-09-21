@@ -35,6 +35,7 @@
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "coll_base_topo.h"
 #include "coll_base_util.h"
+#include "opal/util/bit_ops.h"
 
 /* Todo: gather_intra_generic, gather_intra_binary, gather_intra_chain,
  * gather_intra_pipeline, segmentation? */
@@ -422,3 +423,182 @@ ompi_coll_base_gather_intra_basic_linear(const void *sbuf, size_t scount,
 
 
 /* copied function (with appropriate renaming) ends here */
+
+/*
+ * Binomial Negabinary (Bine) gather.
+ *
+ * Bine trees map ranks to a negabinary (base -2) representation,
+ * arranging communicating partners at ~2/3 the modular distance of
+ * standard binomial trees. At each tree-building step, subtrees are
+ * mirrored and placed to minimize the modular distance between roots,
+ * keeping communication within the same network group whenever possible.
+ * Overlapping n such trees — one per rank, each rooted at a different
+ * rank — yields a "Bine butterfly" that preserves these locality
+ * advantages across all steps, keeping communicating partners at
+ * reduced modular distance throughout.
+ *
+ * Uses a distance-halving Bine tree where each rank collects data from
+ * a partner at each step, extending its buffer in alternating directions.
+ *
+ * Based on "Bine Trees: Enhancing Collective Operations by Optimizing
+ * Communication Locality" (De Sensi et al., International Conference for
+ * High Performance Computing, Networking, Storage and Analysis, 2025).
+ * See https://arxiv.org/abs/2508.17311
+ *
+ * This implementation is restricted to power-of-two communicator sizes.
+ * For non power-of-two sizes, the binomial gather is used as a fallback.
+ */
+int
+ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
+                                 struct ompi_datatype_t *sdtype,
+                                 void *rbuf, size_t rcount,
+                                 struct ompi_datatype_t *rdtype, int root,
+                                 struct ompi_communicator_t *comm,
+                                 mca_coll_base_module_t *module)
+{
+    int line = -1, size, rank, vrank, err = MPI_SUCCESS;
+    size_t min_block_resident, max_block_resident;
+    int extension_direction;
+    char *tmpbuf = NULL, *base = NULL, *dst;
+    struct ompi_datatype_t *block_dtype;
+    size_t block_count;
+    MPI_Aint span, rextent, extent, gap = 0;
+
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                "ompi_coll_base_gather_intra_bine rank %d", rank));
+
+
+    if (size != opal_next_poweroftwo_inclusive(size)) {
+        /* Fallback to binomial gather for non power-of-two sizes. */
+        return ompi_coll_base_gather_intra_binomial(sbuf, scount, sdtype,
+                                                    rbuf, rcount, rdtype,
+                                                    root, comm, module);
+    }
+
+    ompi_datatype_type_extent(rdtype, &rextent);
+    block_dtype = rdtype;
+    block_count = rcount;
+    extent = rextent;
+
+    if (rank != root) {
+        span = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &gap);
+        tmpbuf = (char *) malloc(span);
+        if (tmpbuf == NULL) {
+            err = OMPI_ERR_OUT_OF_RESOURCE;
+            line = __LINE__;
+            goto err_hndl;
+        }
+        base = tmpbuf - gap;
+    } else {
+        base = (char *) rbuf;
+    }
+
+    dst = base + (ptrdiff_t)rank * (ptrdiff_t)block_count * (ptrdiff_t)extent;
+
+    if (MPI_IN_PLACE != sbuf) {
+        err = ompi_datatype_sndrcv((void *)sbuf, scount, sdtype,
+                                   (void *)dst, rcount, rdtype);
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+    }
+
+    min_block_resident = rank, max_block_resident = rank;
+    vrank = ompi_coll_mod(rank - root, size);
+
+    extension_direction = 1;
+    if (vrank % 2) {
+        extension_direction = -1;
+    }
+
+    int mask = 0x1, partner, mask_lsbs, lsbs, equal_lsbs;
+    uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
+    if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+    int btnb_vrank = (int) btnb_vrank_u32;
+    while (mask < size) {
+        partner = btnb_vrank ^ ((mask << 1) - 1);
+        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+
+        mask_lsbs = (mask << 2) - 1; // Mask for the step: (k+2) LSBs set to 1
+        lsbs = btnb_vrank & mask_lsbs;  // Extract k LSBs from the negabinary rank
+        equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
+
+        if (!equal_lsbs || ((mask << 1) >= size && (rank != root))) {
+            if (max_block_resident >= min_block_resident) {
+                /* Single send. */
+                err = MCA_PML_CALL(send(base + (ptrdiff_t) min_block_resident * block_count * extent,
+                                        block_count * (max_block_resident - min_block_resident + 1),
+                                        block_dtype, partner, MCA_COLL_BASE_TAG_GATHER,
+                                        MCA_PML_BASE_SEND_STANDARD, comm));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+            } else {
+                /* Wrapped send. */
+                err = MCA_PML_CALL(send(base + (ptrdiff_t) min_block_resident * block_count * extent,
+                                        block_count * (size - min_block_resident),
+                                        block_dtype, partner, MCA_COLL_BASE_TAG_GATHER,
+                                        MCA_PML_BASE_SEND_STANDARD, comm));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+                err = MCA_PML_CALL(send(base, block_count * (max_block_resident + 1),
+                                        block_dtype, partner, MCA_COLL_BASE_TAG_GATHER,
+                                        MCA_PML_BASE_SEND_STANDARD, comm));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+            }
+            break;
+        } else {
+            size_t recv_start, recv_end;
+            /* Extend the current range up or down.
+             * Receive [recv_start, recv_end].
+             **/
+            if (extension_direction == 1) {
+                recv_start = ompi_coll_mod(max_block_resident + 1, size);
+                recv_end = ompi_coll_mod(max_block_resident + mask, size);
+                max_block_resident = recv_end;
+            } else {
+                recv_end = ompi_coll_mod(min_block_resident - 1, size);
+                recv_start = ompi_coll_mod(min_block_resident - mask, size);
+                min_block_resident = recv_start;
+            }
+            if (recv_end >= recv_start) {
+                /* Single recv. */
+                err = MCA_PML_CALL(recv(base + (ptrdiff_t)recv_start * block_count * extent,
+                                        block_count * (recv_end - recv_start + 1),
+                                        block_dtype, partner, MCA_COLL_BASE_TAG_GATHER,
+                                        comm, MPI_STATUS_IGNORE));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+            } else {
+                /* Wrapped recv. */
+                err = MCA_PML_CALL(recv(base + (ptrdiff_t)recv_start * block_count * extent,
+                                        block_count * (size - recv_start),
+                                        block_dtype, partner, MCA_COLL_BASE_TAG_GATHER,
+                                        comm, MPI_STATUS_IGNORE));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+
+                err = MCA_PML_CALL(recv(base, block_count * (recv_end + 1),
+                                        block_dtype, partner, MCA_COLL_BASE_TAG_GATHER,
+                                        comm, MPI_STATUS_IGNORE));
+                if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+            }
+            extension_direction *= -1;
+        }
+        mask <<= 1;
+    }
+
+    if (rank != root) {
+        free(tmpbuf);
+    }
+
+    return MPI_SUCCESS;
+
+err_hndl:
+    if(rank != root) {
+        if (tmpbuf != NULL) free(tmpbuf);
+    }
+
+    OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
+                "%s:%4d\tError occurred %d, rank %2d",
+                __FILE__, line, err, rank));
+    (void)line; // silence compiler warning
+    return err;
+}
+

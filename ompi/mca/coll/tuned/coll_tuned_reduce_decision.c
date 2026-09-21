@@ -30,24 +30,22 @@
 
 /* reduce algorithm variables */
 static int coll_tuned_reduce_forced_algorithm = 0;
+static int coll_tuned_reduce_forced_bine_imp = 0;
 static int coll_tuned_reduce_segment_size = 0;
 static int coll_tuned_reduce_max_requests;
 static int coll_tuned_reduce_tree_fanout;
 static int coll_tuned_reduce_chain_fanout;
 
 /* valid values for coll_tuned_reduce_forced_algorithm */
-static const mca_base_var_enum_value_t reduce_algorithms[] = {
-    {0, "ignore"},
-    {1, "linear"},
-    {2, "chain"},
-    {3, "pipeline"},
-    {4, "binary"},
-    {5, "binomial"},
-    {6, "in-order_binary"},
-    {7, "rabenseifner"},
-    {8, "knomial"},
-    {0, NULL}
-};
+static const mca_base_var_enum_value_t reduce_algorithms[]
+    = {{0, "ignore"},   {1, "linear"},          {2, "chain"},        {3, "pipeline"}, {4, "binary"},
+       {5, "binomial"}, {6, "in-order_binary"}, {7, "rabenseifner"}, {8, "knomial"},  {9, "bine"},
+       {0, NULL}};
+
+static const mca_base_var_enum_value_t reduce_bine_imp[] = {{0, "ignore"},
+                                                            {1, "lat"},
+                                                            {2, "bdw"},
+                                                            {0, NULL}};
 
 /**
  * The following are used by dynamic and forced rules
@@ -139,6 +137,21 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
         return mca_param_indices->max_requests_param_index;
     }
 
+    coll_tuned_reduce_forced_bine_imp = 0;
+    (void) mca_base_var_enum_create("coll_tuned_reduce_bine_imp", reduce_bine_imp, &new_enum);
+    mca_param_indices->bine_implementation_index = mca_base_component_var_register(
+        &mca_coll_tuned_component.super.collm_version, "reduce_bine_implementation",
+        "Bine implementation to use for reduce. "
+        "Can be locked down to choice of: 0 ignore, 1 lat, 2 bdw "
+        "Only relevant if coll_tuned_use_dynamic_rules is true and algorithm is bine 9.",
+        MCA_BASE_VAR_TYPE_INT, new_enum, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_5,
+        MCA_BASE_VAR_SCOPE_ALL, &coll_tuned_reduce_forced_bine_imp);
+    coll_tuned_alg_bine_register_options(REDUCE, new_enum);
+    OBJ_RELEASE(new_enum);
+    if (mca_param_indices->bine_implementation_index < 0) {
+        return mca_param_indices->bine_implementation_index;
+    }
+
     if (coll_tuned_reduce_max_requests < 0) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
             opal_output( 0, "Maximum outstanding requests must be positive number or 0.  Initializing to 0 (no limit).\n" );
@@ -149,17 +162,15 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
     return (MPI_SUCCESS);
 }
 
-int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, size_t count,
-                                         struct ompi_datatype_t *dtype,
-                                         struct ompi_op_t *op, int root,
-                                         struct ompi_communicator_t *comm,
-                                         mca_coll_base_module_t *module,
-                                         int algorithm, int faninout,
-                                         int segsize, int max_requests )
+int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void *rbuf, size_t count,
+                                         struct ompi_datatype_t *dtype, struct ompi_op_t *op,
+                                         int root, struct ompi_communicator_t *comm,
+                                         mca_coll_base_module_t *module, int algorithm,
+                                         int faninout, int segsize, int max_requests, int bine_imp)
 {
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
-        "coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d",
-        algorithm, faninout, segsize));
+        "coll:tuned:reduce_intra_do_this selected algorithm %d topo faninout %d segsize %d bine imp %d",
+        algorithm, faninout, segsize, bine_imp));
 
     switch (algorithm) {
     case (0):  return ompi_coll_tuned_reduce_intra_dec_fixed(sbuf, rbuf, count, dtype,
@@ -187,6 +198,18 @@ int ompi_coll_tuned_reduce_intra_do_this(const void *sbuf, void* rbuf, size_t co
                                                           op, root, comm, module,
                                                           segsize, max_requests,
                                                           faninout);
+    case (9):
+        switch (bine_imp) {
+        case (0):
+            return ompi_coll_tuned_reduce_intra_bine_dec_fixed(sbuf, rbuf, count, dtype, op, root,
+                                                               comm, module);
+        case (1):
+            return ompi_coll_base_reduce_intra_bine_lat(sbuf, rbuf, count, dtype, op, root, comm,
+                                                        module);
+        case (2):
+            return ompi_coll_base_reduce_intra_bine_bdw(sbuf, rbuf, count, dtype, op, root, comm,
+                                                        module);
+        }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
         "coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
