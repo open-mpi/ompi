@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     strategy:
-      # Run both the OMPI-native and the MPI Standard ABI legs to
+      # Run both the OMPI-native and the MPI Forum ABI legs to
       # completion even if one fails.
       fail-fast: false
       matrix:

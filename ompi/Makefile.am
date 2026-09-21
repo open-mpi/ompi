@@ -138,7 +138,7 @@ endif
 #
 # ABI Refactor
 #
-# As required by the standard ABI, ompi must now provide libmpi_abi.la for
+# As required by the MPI Forum ABI, ompi must now provide libmpi_abi.la for
 # ABI-specific code. Since we also want to avoid breaking the existing ompi
 # ABI, the libraries in this directory are now organized as follows:
 #
@@ -153,7 +153,7 @@ endif
 # was just linked directly into libmpi.la (lib@OMPI_LIBMPI_NAME@.la).
 #
 # libmpi_abi.la and libmpi.la both now link in libopen_mpi.la, the only
-# difference between them being that one includes the standard ABI functions
+# difference between them being that one includes the MPI Forum ABI functions
 # and the other the ompi-specific versions of those.
 #
 
@@ -231,7 +231,7 @@ if OMPI_REEXPORT_MACOS
 lib@OMPI_LIBMPI_NAME@_la_LDFLAGS += -L$(abs_builddir)/.libs -Wl,-reexport-lopen_mpi
 endif
 
-# The MPI Standard ABI library
+# The MPI Forum ABI library
 libmpi_abi_la_SOURCES =
 libmpi_abi_la_LIBADD = \
         libopen_mpi.la \

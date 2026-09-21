@@ -94,13 +94,13 @@ date="Unreleased developer copy"
 
 # libmpi_abi is SPECIAL: unlike every other library in this file, its
 # SONAME is deliberately NOT 0:0:0 and is NOT set by the Open MPI release
-# managers.  The MPI Standard ABI (MPI-5.0 chapter 20) intentionally does
+# managers.  The MPI Forum ABI (MPI-5.0 chapter 20) intentionally does
 # NOT mandate an SONAME.  Instead, Open MPI, MPICH, and the MPI Forum ABI
 # stubs reference implementation set it by convention: for an application
 # to switch between MPI implementations -- or between Open MPI versions --
 # without recompiling, every implementation of a given ABI version must
 # expose the same SONAME.  By that shared convention the value is 1, so
-# standard ABI version 1 is always libmpi_abi.so.1 everywhere.  It
+# MPI Forum ABI version 1 is always libmpi_abi.so.1 everywhere.  It
 # therefore carries its real value on every branch; DO NOT reset to 0:0:0.
 
 # Version numbers are described in the Libtool current:revision:age

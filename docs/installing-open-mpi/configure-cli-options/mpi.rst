@@ -53,12 +53,12 @@ MPI API behaviors that can be used with ``configure``:
   Fortran modulefiles into ``$libdir``.
 
 * ``--enable-forum-abi``:
-  Enable building the MPI standard ABI support library.  This option is
+  Enable building the MPI Forum ABI support library.  This option is
   enabled by default.
 
   When enabled, Open MPI builds and installs ``libmpi_abi`` and the
-  standard ABI C compiler wrapper ``mpicc_abi``.  The wrapper uses the
-  standard ABI ``mpi.h`` installed under
+  MPI Forum ABI C compiler wrapper ``mpicc_abi``.  The wrapper uses the
+  MPI Forum ABI ``mpi.h`` installed under
   ``$prefix/include/forum_abi`` and links applications against
   ``libmpi_abi``.
 

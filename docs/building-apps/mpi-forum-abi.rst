@@ -515,7 +515,7 @@ errors, or appear to work until an MPI object crosses the ABI boundary.
 
 Use *one* MPI ABI consistently for every object file that calls MPI:
 
-* For a C MPI application using the MPI-5.0 MPI Forum ABI, compile and
+* For a C MPI application using the MPI Forum ABI, compile and
   link all MPI-using C objects with ``mpicc_abi``.
 * For other MPI applications, including mixed C and Fortran
   applications, compile C objects with ``mpicc`` and Fortran objects
@@ -537,8 +537,7 @@ ultimately run by the same Open MPI installation.
 
 .. danger:: Do not launch an MPI job that mixes processes built against
             the Open MPI ABI with processes built against the MPI Forum
-            MPI Forum ABI.  Every process in the job must use the same
-            MPI ABI.
+            ABI.  Every process in the job must use the same MPI ABI.
 
 This restriction applies to every way that processes can end up in the
 same MPI job, including:

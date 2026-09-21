@@ -31,7 +31,7 @@ applications.
 - Standardized header: `mpi.h` (e.g., from
   <https://github.com/mpi-forum/mpi-abi-stubs>)
 
-**Versioning:** Open MPI aims to follow the same standard-ABI library
+**Versioning:** Open MPI aims to follow the same MPI Forum ABI library
 naming / versioning convention used by other ABI implementations;
 consult the top-level `VERSION` file for Open MPI's current SONAME
 settings.
@@ -259,20 +259,20 @@ Even when changing runtime ABI code, this mode remains useful because it
 catches metadata / manifest drift independently of installation and
 launcher setup.
 
-#### 2. `make check-abi` — Installed standard ABI checks
+#### 2. `make check-abi` — Installed MPI Forum ABI checks
 
 Validates an **installed** Open MPI against the standard MPI ABI.
 
 - **Prerequisites:**
   - Open MPI must be installed (`make install`)
-  - `mpicc_abi`, `mpirun`, and the standard ABI header must be
+  - `mpicc_abi`, `mpirun`, and the MPI Forum ABI header must be
     discoverable by the test runner
   - Tool and path discovery can be overridden with `OMPI_ABI_TEST_*`
     environment variables; see `ompi/test/mpi-abi/Makefile.am` and the
     runner sources for the authoritative list
 - **What it checks:**
   - Compiles and runs test probes using the installed `mpicc_abi` and
-    standard ABI header
+    MPI Forum ABI header
   - Validates handle translation, API call paths, and callback
     conversion
   - Exercises the ABI layer end-to-end
@@ -284,7 +284,7 @@ layer.
 #### 3. `make check-abi-mpich` — Cross-implementation compatibility
 
 Tests **interoperability** between Open MPI's `libmpi_abi.so` and
-MPICH's standard ABI artifacts.
+MPICH's MPI Forum ABI artifacts.
 
 - **Prerequisites:**
   - Open MPI must be installed (`make install`)
@@ -302,8 +302,8 @@ MPICH's standard ABI artifacts.
 - **Output:** `$(builddir)/ompi/test/mpi-abi/check-abi-mpich-results/`
 
 **When to run:** When validating cross-implementation compatibility (the
-defining feature of the standard ABI). This mode is intended to confirm
-the standard ABI promise: compile with another implementation's
+defining feature of the MPI Forum ABI). This mode is intended to confirm
+the MPI Forum ABI promise: compile with another implementation's
 ABI-facing wrapper and header, then run against Open MPI's ABI library
 and launcher environment.
 

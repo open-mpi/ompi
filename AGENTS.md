@@ -424,7 +424,7 @@ Open MPI builds and installs multiple shared libraries with different purposes:
   as of v6.0, this is an installed library (previously internal-only)
 * **`libmpi`** — Standard Open MPI library providing the Open MPI ABI; links
   applications compiled with `mpicc`, `mpic++`, `mpifort` wrappers
-* **`libmpi_abi`** — MPI standard ABI library (MPI-5.0 ABI version 1.0);
+* **`libmpi_abi`** — MPI Forum ABI library (MPI-5.0 ABI version 1.0);
   links applications compiled with `mpicc_abi` wrapper; only installed when
   configured with `--enable-forum-abi` (the default)
 

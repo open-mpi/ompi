@@ -52,7 +52,7 @@ endif
 
 #
 # the following must be processed by binding framework
-# to generated both ompi and standard abi variants
+# to generated both ompi and MPI Forum ABI variants
 #
 prototype_sources = \
 	category_changed.c.in \

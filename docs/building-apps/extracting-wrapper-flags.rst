@@ -69,14 +69,14 @@ each different wrapper compiler (language):
 
 When Open MPI is configured with ``--enable-forum-abi`` (the
 default), additional ``pkg-config`` files are provided for building
-applications against the MPI standard ABI:
+applications against the MPI Forum ABI:
 
 * ``ompi-forum-abi``: Synonym for ``ompi-forum-abi-c``; C applications
-  using the MPI standard ABI
-* ``ompi-forum-abi-c``: C applications using the MPI standard ABI
-* ``ompi-forum-abi-cxx``: C++ applications using the MPI standard ABI
+  using the MPI Forum ABI
+* ``ompi-forum-abi-c``: C applications using the MPI Forum ABI
+* ``ompi-forum-abi-cxx``: C++ applications using the MPI Forum ABI
 
-For more information about the MPI standard ABI, see
+For more information about the MPI Forum ABI, see
 :ref:`Building MPI applications using the MPI Forum ABI
 <label-building-with-mpi-abi>`.
 
