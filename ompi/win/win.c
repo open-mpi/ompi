@@ -30,7 +30,7 @@
 
 #include "ompi_config.h"
 
-#include <stdatomic.h>
+#include "opal/include/opal/sys/atomic.h"
 
 #include "opal/util/info_subscriber.h"
 #include "opal/util/string_copy.h"
@@ -263,10 +263,10 @@ config_window(void *base, size_t size, ptrdiff_t disp_unit,
         payload.disp_unit = (int32_t) disp_unit;
         payload.flavor = (int32_t) flavor;
         /* XXX ABI: the MPI_Win handle value must match the registering MPI_T
-           tool's ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize
-           with the release-store in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
-                                                    memory_order_acquire);
+           tool's ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize
+           with the write barrier in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) win;
         } else {
@@ -434,10 +434,10 @@ ompi_win_free(ompi_win_t *win)
             payload.flavor = (int32_t) win->w_flavor;
             payload.pad = 0;
             /* XXX ABI: the MPI_Win handle value must match the registering MPI_T
-               tool's ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize
-               with the release-store in the init path under MPI_THREAD_MULTIPLE. */
-            ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
-                                                        memory_order_acquire);
+               tool's ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize
+               with the write barrier in the init path under MPI_THREAD_MULTIPLE. */
+            ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+            opal_atomic_rmb();
             if (OMPI_MPIT_ABI_OMPI == abi) {
                 payload.handle = (uint64_t) (uintptr_t) win;
             } else {

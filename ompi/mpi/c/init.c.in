@@ -26,9 +26,9 @@
 
 #include "ompi_config.h"
 
-#include <stdatomic.h>
 #include <stdlib.h>
 
+#include "opal/include/opal/sys/atomic.h"
 #include "opal/util/show_help.h"
 #include "ompi/runtime/ompi_spc.h"
 #include "ompi/mpi/c/bindings.h"
@@ -71,10 +71,10 @@ PROTOTYPE INT init(INT_OUT argc, ARGV argv)
      * events could see STANDARD mode but NULL converters.  The converter set
      * lives in libmpi_abi; see mpit_abi_handle_convert.c. */
     ompi_mpit_register_abi_converters(&ompi_mpit_abi_standard_converters);
-    /* Release-store of the ABI mode makes the converter set visible to
+    /* Write barrier before storing the ABI mode makes the converter set visible to
      * concurrent event producers under MPI_THREAD_MULTIPLE. */
-    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD,
-                          memory_order_release);
+    opal_atomic_wmb();
+    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
 #endif
 
     /* Call the back-end initialization function (we need to put as

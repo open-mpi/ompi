@@ -22,7 +22,7 @@
 #include "ompi_config.h"
 #include "instance.h"
 
-#include <stdatomic.h>
+#include "opal/include/opal/sys/atomic.h"
 
 #include "opal/util/arch.h"
 
@@ -1148,10 +1148,10 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
         payload.world_size = -1;
         /* For the session model the instance is the MPI_Session, so instance_id
            is its handle.  XXX ABI: it must match the registering MPI_T tool's
-           ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize with
-           the release-store in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
-                                                    memory_order_acquire);
+           ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize with
+           the write barrier in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.instance_id = (uint64_t) (uintptr_t) new_instance;
         } else {
@@ -1288,11 +1288,11 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
         payload.model = OMPI_T_MODEL_SESSION;
         payload.world_rank = -1;
         /* instance_id is the MPI_Session handle.  XXX ABI: it must match the
-           registering MPI_T tool's ABI (ompi_mpit_callback_abi).  Use acquire-load
-           to synchronize with the release-store in the init path under
+           registering MPI_T tool's ABI (ompi_mpit_callback_abi).  Load with read barrier
+           to synchronize with the write barrier in the init path under
            MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
-                                                    memory_order_acquire);
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.instance_id = (uint64_t) (uintptr_t) *instance;
         } else {

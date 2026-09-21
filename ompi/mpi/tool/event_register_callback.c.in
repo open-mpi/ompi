@@ -17,8 +17,7 @@
 
 #include "ompi_config.h"
 
-#include <stdatomic.h>
-
+#include "opal/include/opal/sys/atomic.h"
 #include "ompi/mpi/tool/mpit-internal.h"
 #include "ompi/info/info.h"
 #include "ompi/runtime/ompi_mpit_events.h"
@@ -65,13 +64,13 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
        STANDARD mode but NULL converters. */
 #if OMPI_ABI_SRC
     ompi_mpit_register_abi_converters(&ompi_mpit_abi_standard_converters);
-    /* Release-store of the ABI mode makes the converter set visible to
+    /* Write barrier before storing the ABI mode makes the converter set visible to
      * concurrent event producers under MPI_THREAD_MULTIPLE. */
-    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD,
-                          memory_order_release);
+    opal_atomic_wmb();
+    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
 #else
-    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_OMPI,
-                          memory_order_release);
+    opal_atomic_wmb();
+    ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
 #endif
 
     /* MPI_Info is an ompi_info_t whose first member is an opal_info_t. */

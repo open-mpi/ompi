@@ -18,6 +18,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/include/opal_stdatomic.h"
 #include "opal/mca/base/mca_base_event.h"
 
 BEGIN_C_DECLS
@@ -46,8 +47,9 @@ typedef enum {
 
    THREAD SAFETY: This variable is set once during initialization and read
    concurrently by event raise sites under MPI_THREAD_MULTIPLE. Access must
-   use atomic operations with proper memory ordering. */
-OMPI_DECLSPEC extern _Atomic ompi_mpit_abi_t ompi_mpit_callback_abi;
+   use OPAL atomic operations with proper memory ordering (write barrier before
+   store, read barrier after load). */
+OMPI_DECLSPEC extern opal_atomic_int32_t ompi_mpit_callback_abi;
 
 /* Convert an internal MPI object handle to the value an MPI Standard ABI
    MPI_T tool expects to see in an event payload.  `object` is the internal

@@ -41,10 +41,10 @@
 
 #include "ompi_config.h"
 #include <limits.h>
-#include <stdatomic.h>
 #include <string.h>
 #include <stdio.h>
 
+#include "opal/include/opal/sys/atomic.h"
 #include "ompi/constants.h"
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/base/mca_base_var.h"
@@ -2527,10 +2527,10 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
             uint64_t handle;
         } payload;
         /* XXX ABI (#13280): the MPI_Comm handle must match the registering
-           tool's ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize
-           with the release-store in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
-                                                    memory_order_acquire);
+           tool's ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize
+           with the write barrier in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) comm;
         } else {
@@ -2696,10 +2696,10 @@ int ompi_comm_free( ompi_communicator_t **comm )
             uint64_t handle;
         } payload;
         /* XXX ABI: the MPI_Comm handle value must match the registering MPI_T
-           tool's ABI (ompi_mpit_callback_abi).  Use acquire-load to synchronize
-           with the release-store in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
-                                                    memory_order_acquire);
+           tool's ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize
+           with the write barrier in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) *comm;
         } else {

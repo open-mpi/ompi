@@ -10,9 +10,9 @@
  * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  */
 #include "ompi_config.h"
-#include <stdatomic.h>
 #include <stdio.h>
 
+#include "opal/include/opal/sys/atomic.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/info/info.h"
@@ -58,10 +58,10 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
      * data races under MPI_THREAD_MULTIPLE where concurrent events could see
      * STANDARD mode but NULL converters. */
     ompi_mpit_register_abi_converters(&ompi_mpit_abi_standard_converters);
-    /* Release-store of the ABI mode makes the converter set visible to
+    /* Write barrier before storing the ABI mode makes the converter set visible to
      * concurrent event producers under MPI_THREAD_MULTIPLE. */
-    atomic_store_explicit(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD,
-                          memory_order_release);
+    opal_atomic_wmb();
+    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
 #endif
 
     if ( MPI_PARAM_CHECK ) {

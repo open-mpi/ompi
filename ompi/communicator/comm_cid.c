@@ -39,8 +39,7 @@
 
 #include "ompi_config.h"
 
-#include <stdatomic.h>
-
+#include "opal/include/opal/sys/atomic.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/printf.h"
@@ -947,11 +946,11 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
         payload.size = (int32_t) ompi_comm_size(*newcomm);
         payload.pad = 0;
         /* XXX ABI: the MPI_Comm handle value carried here must match the ABI of
-           the registering MPI_T tool (ompi_mpit_callback_abi).  Use acquire-load
-           to synchronize with the release-store in the init path under
+           the registering MPI_T tool (ompi_mpit_callback_abi).  Load with read barrier
+           to synchronize with the write barrier in the init path under
            MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = atomic_load_explicit(&ompi_mpit_callback_abi,
-                                                    memory_order_acquire);
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) *newcomm;
         } else {
