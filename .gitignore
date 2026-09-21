@@ -340,9 +340,9 @@ ompi/tools/wrappers/ompi.pc
 ompi/tools/wrappers/ompi-c.pc
 ompi/tools/wrappers/ompi-cxx.pc
 ompi/tools/wrappers/ompi-fort.pc
-ompi/tools/wrappers/ompi-abi-c.pc
-ompi/tools/wrappers/ompi-abi-cxx.pc
-ompi/tools/wrappers/ompi-abi.pc
+ompi/tools/wrappers/ompi-forum-abi-c.pc
+ompi/tools/wrappers/ompi-forum-abi-cxx.pc
+ompi/tools/wrappers/ompi-forum-abi.pc
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
