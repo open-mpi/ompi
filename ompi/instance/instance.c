@@ -448,32 +448,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_mpi_init: opal_arch_set_fortran_logical_size failed", ret);
     }
 
-    /* _After_ opal_init_util() but _before_ orte_init(), we need to
-       set an MCA param that tells libevent that it's ok to use any
-       mechanism in libevent that is available on this platform (e.g.,
-       epoll and friends).  Per opal/event/event.s, we default to
-       select/poll -- but we know that MPI processes won't be using
-       pty's with the event engine, so it's ok to relax this
-       constraint and let any fd-monitoring mechanism be used. */
-
-    ret = mca_base_var_find("opal", "event", "*", "event_include");
-    if (ret >= 0) {
-        char *allvalue = "all";
-        /* We have to explicitly "set" the MCA param value here
-           because libevent initialization will re-register the MCA
-           param and therefore override the default. Setting the value
-           here puts the desired value ("all") in different storage
-           that is not overwritten if/when the MCA param is
-           re-registered. This is unless the user has specified a different
-           value for this MCA parameter. Make sure we check to see if the
-           default is specified before forcing "all" in case that is not what
-           the user desires. Note that we do *NOT* set this value as an
-           environment variable, just so that it won't be inherited by
-           any spawned processes and potentially cause unintended
-           side-effects with launching RTE tools... */
-        mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
-    }
-
     OMPI_TIMING_NEXT("initialization");
 
     /* Setup RTE */
