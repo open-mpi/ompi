@@ -426,7 +426,7 @@ Open MPI builds and installs multiple shared libraries with different purposes:
   applications compiled with `mpicc`, `mpic++`, `mpifort` wrappers
 * **`libmpi_abi`** — MPI standard ABI library (MPI-5.0 ABI version 1.0);
   links applications compiled with `mpicc_abi` wrapper; only installed when
-  configured with `--enable-standard-abi` (the default)
+  configured with `--enable-forum-abi` (the default)
 
 **Linking behavior:**
 
@@ -443,7 +443,7 @@ Open MPI installs pkg-config files in `$libdir/pkgconfig` as an alternative
 to wrapper compilers:
 
 * Standard MPI: `ompi.pc`, `ompi-c.pc`, `ompi-cxx.pc`, `ompi-fort.pc`
-* MPI Forum ABI (when `--enable-standard-abi`): `ompi-forum-abi.pc`,
+* MPI Forum ABI (when `--enable-forum-abi`): `ompi-forum-abi.pc`,
   `ompi-forum-abi-c.pc`, `ompi-forum-abi-cxx.pc`
 
 ## When in doubt

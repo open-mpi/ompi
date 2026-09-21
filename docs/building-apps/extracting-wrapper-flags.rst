@@ -67,7 +67,7 @@ each different wrapper compiler (language):
 * ``ompi-cxx``: Open MPI applications using the C MPI bindings
 * ``ompi-fort``: Open MPI applications using the Fortran MPI bindings
 
-When Open MPI is configured with ``--enable-standard-abi`` (the
+When Open MPI is configured with ``--enable-forum-abi`` (the
 default), additional ``pkg-config`` files are provided for building
 applications against the MPI standard ABI:
 

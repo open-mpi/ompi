@@ -208,7 +208,7 @@ if OPAL_DEVEL_BUILD
 CLEANFILES += *_generated.c 
 endif
 
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 include Makefile_abi.include
 endif
 

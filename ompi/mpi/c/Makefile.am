@@ -541,8 +541,8 @@ libmpi_c_la_LIBADD = libmpi_c_profile.la
 
 # Only install (and build) the MPI Forum ABI header when the ABI
 # library it targets is actually built.
-if OMPI_STANDARD_ABI
-nobase_include_HEADERS = standard_abi/mpi.h
+if OMPI_FORUM_ABI
+nobase_include_HEADERS = forum_abi/mpi.h
 endif
 
 #
@@ -1135,8 +1135,8 @@ type_get_envelope_c_ompi_generated.c: type_get_envelope_c.c.in_obc
 	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope_c.c.in_obc
 
 # Non-mangled version of mpi.h
-standard_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/docs/mpi-standard-abi.json $(top_srcdir)/ompi/mpi/bindings/c_header.py $(top_srcdir)/ompi/mpi/c/abi.h.in
-	mkdir -p standard_abi
+forum_abi/mpi.h: $(top_srcdir)/docs/mpi-standard-apis.json $(top_srcdir)/docs/mpi-standard-abi.json $(top_srcdir)/ompi/mpi/bindings/c_header.py $(top_srcdir)/ompi/mpi/c/abi.h.in
+	mkdir -p forum_abi
 	$(OMPI_V_GEN) $(PYTHON) $(top_srcdir)/ompi/mpi/bindings/c_header.py \
 	--input $(top_srcdir)/ompi/mpi/c/abi.h.in \
 	--abi-json $(top_srcdir)/docs/mpi-standard-abi.json \
@@ -1233,6 +1233,6 @@ MAINTAINERCLEANFILES = *_generated.c abi_get_info.c abi_converters.h abi_convert
 if OPAL_DEVEL_BUILD
 CLEANFILES += *_generated.c abi_get_info.c abi_converters.h abi_converters.c $(nobase_include_HEADERS)
 endif
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 include Makefile_abi.include
 endif

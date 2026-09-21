@@ -74,11 +74,11 @@ linked against `libmpi.so.0` (the OMPI ABI), **not** the MPI ABI.
   `<prefix>/lib` (no conflicts — different filenames).
 - **Headers:**
   - OMPI ABI: `<prefix>/include/` (traditional location)
-  - MPI ABI: `<prefix>/include/standard_abi/`
+  - MPI ABI: `<prefix>/include/forum_abi/`
 - **Wrappers:**
   - `mpicc` → links against `libmpi.so` (OMPI ABI)
   - `mpicc_abi` → links against `libmpi_abi.so` (MPI ABI), points to
-    `standard_abi/mpi.h`
+    `forum_abi/mpi.h`
 
 ---
 
@@ -218,7 +218,7 @@ When working on ABI-related code, remember:
 
 **Test both ABIs:**
 - OMPI ABI: `mpicc` + `mpirun`
-- MPI ABI: `mpicc_abi` + `mpirun` (verify in `<prefix>/include/standard_abi/`)
+- MPI ABI: `mpicc_abi` + `mpirun` (verify in `<prefix>/include/forum_abi/`)
 
 ---
 
