@@ -30,7 +30,7 @@ inventing a new one.
 | [`monitoring/`](monitoring/), [`spc/`](spc/) | Need multiple processes. | **NOT** run by `make check` — `noinst_PROGRAMS`, built only; run by hand / CI script |
 | [`reexport/`](reexport/) | Symbol resolution between `libmpi` and `libopen_mpi`. | `make check` |
 | [`bindings-generator/`](bindings-generator/) | Pure-Python unit tests for the MPI binding **generator** (`ompi/mpi/bindings/`) — no compiler, no MPI, no build required. | `make check` |
-| [`mpi-abi/`](mpi-abi/) | The MPI Standard ABI layer: header, wrapper, converters, and runtime behavior reached through it. Its own Python-driven framework — see below. | `make check` runs only its **fast** metadata checks; `make check-abi` / `make check-abi-mpich` run the full **installed** suite (needs `make install` first) |
+| [`mpi-abi/`](mpi-abi/) | The MPI Forum ABI layer: header, wrapper, converters, and runtime behavior reached through it. Its own Python-driven framework — see below. | `make check` runs only its **fast** metadata checks; `make check-abi` / `make check-abi-mpich` run the full **installed** suite (needs `make install` first) |
 | [`mpirun/`](mpirun/) | Behavior that only exists between ranks of a real launched job (e.g. wire-up). | `make check-mpirun`, **after** `make install`, with the install's `bin/` on `PATH` |
 
 Notes that generalize across the simple (Automake `TESTS`) directories:
@@ -146,7 +146,7 @@ and `mpirun` resolve:
 
 ```sh
 make install
-make -C ompi/test/mpi-abi check-abi        # exercises the standard ABI
+make -C ompi/test/mpi-abi check-abi        # exercises the MPI Forum ABI
 make -C ompi/test/mpi-abi check-abi-mpich  # cross-checks against MPICH, if available
 ```
 
@@ -162,8 +162,8 @@ fixtures that get overwritten by each run, not something to hand-edit.
   `TESTS` in `Makefile.am`, following the `_SOURCES`/`_LDFLAGS`/`_LDADD`
   pattern already used by its neighbors. Plain `make` picks up a
   `Makefile.am` edit.
-- **Needs the MPI Standard ABI specifically** (an ABI converter, a
-  standard-ABI-only code path, an installed `mpicc_abi`/`mpirun`
+- **Needs the MPI Forum ABI specifically** (an ABI converter, an
+  MPI Forum ABI-only code path, an installed `mpicc_abi`/`mpirun`
   runtime probe) → add a case under `mpi-abi/` per the section above,
   not a standalone `.c` file elsewhere.
 - **Needs `np>1` but can run without a real launcher** (rare; most

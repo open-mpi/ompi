@@ -103,8 +103,8 @@ def _manifest_sanity_checks(manifest):
     return checks
 
 
-def _standard_abi_header_path(srcdir, builddir):
-    """Return the generated source-tree/build-tree standard ABI mpi.h."""
+def _forum_abi_header_path(srcdir, builddir):
+    """Return the generated source-tree/build-tree MPI Forum ABI mpi.h."""
     candidates = (
         builddir / "ompi" / "mpi" / "c" / "forum_abi" / "mpi.h",
         srcdir / "ompi" / "mpi" / "c" / "forum_abi" / "mpi.h",
@@ -116,7 +116,7 @@ def _standard_abi_header_path(srcdir, builddir):
 
 
 def _header_constant_parser_unit_checks():
-    """Validate the standard ABI header constant parser.
+    """Validate the MPI Forum ABI header constant parser.
 
     The semantic header check depends on parser behavior that is easy to
     erode accidentally: aliases must resolve after all numeric values are
@@ -395,7 +395,7 @@ def _completion_gate_report(manifest, report):
     The normal report contains the evidence; this helper only decides
     whether that evidence is strong enough to declare the suite complete.
     A legitimate mode-level SKIP remains a PASS for the gate because the
-    spec explicitly allows, for example, standard-ABI-disabled builds to
+    spec explicitly allows, for example, MPI Forum ABI-disabled builds to
     skip rather than fail.  Any requested mode that actually ran and
     exposed missing implemented coverage is a hard completion failure.
     """
@@ -808,15 +808,15 @@ def _completion_gate_unit_checks():
 
 
 def _header_constant_checks(manifest, srcdir, builddir):
-    """Compare generated standard ABI header constants to ABI metadata.
+    """Compare generated MPI Forum ABI header constants to ABI metadata.
 
     This is the fast, in-tree constant check.  It validates the generated
     header against docs/ metadata without requiring an installed Open MPI
     or mpirun, so it can run before the installed runtime probes.
     """
-    path = _standard_abi_header_path(srcdir, builddir)
+    path = _forum_abi_header_path(srcdir, builddir)
     if path is None:
-        return [_skip("standard_abi_header_constants",
+        return [_skip("forum_abi_header_constants",
                       SKIP_HEADER_UNAVAILABLE)]
 
     header_constants, unparsed_header_constants = _parse_header_constants(path)
@@ -830,8 +830,8 @@ def _header_constant_checks(manifest, srcdir, builddir):
 
     if checked == 0:
         return [_fail(
-            "standard_abi_header_constants",
-            "no standard ABI header constants were validated",
+            "forum_abi_header_constants",
+            "no MPI Forum ABI header constants were validated",
             header=str(path),
             checked=checked,
             skipped_count=len(skipped),
@@ -840,8 +840,8 @@ def _header_constant_checks(manifest, srcdir, builddir):
 
     if missing or mismatches or unparsed:
         return [_fail(
-            "standard_abi_header_constants",
-            "standard ABI header constants differ from metadata",
+            "forum_abi_header_constants",
+            "MPI Forum ABI header constants differ from metadata",
             header=str(path),
             checked=checked,
             skipped_count=len(skipped),
@@ -852,7 +852,7 @@ def _header_constant_checks(manifest, srcdir, builddir):
             mismatches=mismatches[:20],
             mismatch_count=len(mismatches))]
 
-    return [_pass("standard_abi_header_constants",
+    return [_pass("forum_abi_header_constants",
                   header=str(path),
                   checked=checked,
                   skipped_count=len(skipped))]
@@ -954,11 +954,11 @@ def _abi_converter_checks(srcdir, builddir):
         ("errhandler argument converter",
          "ompi_convert_errhandler_args_intern_to_abi"),
         ("communicator callback conversion",
-         "ompi_convert_comm_ompi_to_standard"),
-        ("window callback conversion", "ompi_convert_win_ompi_to_standard"),
-        ("file callback conversion", "ompi_convert_file_ompi_to_standard"),
+         "ompi_convert_comm_ompi_to_forum"),
+        ("window callback conversion", "ompi_convert_win_ompi_to_forum"),
+        ("file callback conversion", "ompi_convert_file_ompi_to_forum"),
         ("session callback conversion",
-         "ompi_convert_session_ompi_to_standard"),
+         "ompi_convert_session_ompi_to_forum"),
     ]
     for label in _require_substrings(source_text, source_requirements):
         missing_patterns.append({
@@ -1068,7 +1068,7 @@ def _fortran_mpifh_helper_checks(srcdir, builddir, manifest):
     """Check mpif.h ABI helper source contracts.
 
     The helper entry points support legacy Fortran binding layers even
-    though the standard ABI is centered on mpi_f08.  This check verifies
+    though the MPI Forum ABI is centered on mpi_f08.  This check verifies
     the generated symbol names and PMPI forwarding contracts without
     requiring a Fortran compiler or installed runtime.
     """
@@ -1461,7 +1461,7 @@ def _fortran_coverage_audit_unit_check():
         "use mpi_f08": {
             "covered_implemented_count": 1,
             "pending_coverage_count": 1,
-            "coverage_kind": "standard_abi",
+            "coverage_kind": "forum_abi",
         },
     }
     mismatches = {}
@@ -1474,18 +1474,18 @@ def _fortran_coverage_audit_unit_check():
                     "actual": actual[key],
                 }
 
-    non_f08_standard = [
+    non_f08_forum = [
         language for language, actual in languages.items()
         if language != "use mpi_f08" and
-        actual["coverage_kind"] == "standard_abi"
+        actual["coverage_kind"] == "forum_abi"
     ]
-    if mismatches or non_f08_standard:
+    if mismatches or non_f08_forum:
         return _fail(
             "fast_fortran_probe_table_unit_checks",
             "Fortran coverage audit synthetic accounting failed",
             check="fortran_coverage_audit",
             mismatches=mismatches,
-            non_f08_standard_abi_languages=non_f08_standard,
+            non_f08_forum_abi_languages=non_f08_forum,
             audit=audit)
     return _pass(
         "fast_fortran_probe_table_unit_checks",
@@ -1647,7 +1647,7 @@ def _discovery_helper_unit_checks():
             "evidence": {
                 "explicit_override": False,
                 "is_open_mpi": False,
-                "has_standard_abi_header": False,
+                "has_forum_abi_header": False,
                 "links_mpi_abi": True,
                 "has_mpich_header": False,
             },
@@ -1660,7 +1660,7 @@ def _discovery_helper_unit_checks():
             "evidence": {
                 "explicit_override": False,
                 "is_open_mpi": False,
-                "has_standard_abi_header": False,
+                "has_forum_abi_header": False,
                 "links_mpi_abi": True,
                 "has_mpich_header": True,
             },
@@ -2141,7 +2141,7 @@ def run_fast_checks(manifest, srcdir, builddir, progress=None):
     _extend_checks(checks, _manifest_sanity_checks(manifest), progress)
 
     if progress is not None:
-        progress.start("fast standard ABI header constants")
+        progress.start("fast MPI Forum ABI header constants")
     _extend_checks(
         checks, _header_constant_checks(manifest, srcdir, builddir), progress)
 

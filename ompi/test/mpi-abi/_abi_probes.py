@@ -30,7 +30,7 @@ from _abi_tables import (
     DEFERRED_CALLBACK_API_NAMES)
 
 
-# A standard ABI mpi.h is large (the suite requires >= 1000 prototypes) and
+# An MPI Forum ABI mpi.h is large (the suite requires >= 1000 prototypes) and
 # is parsed several times per cross direction.  Its contents are stable for
 # the lifetime of one runner process, so memoize the parse results by header
 # path to avoid repeated full-file reads and regex passes.
@@ -152,7 +152,7 @@ def _metadata_integer_value(value):
 
 
 def _parse_header_constants(path):
-    """Parse numeric MPI constants from a standard ABI mpi.h.
+    """Parse numeric MPI constants from an MPI Forum ABI mpi.h.
 
     This parser is for semantic value comparison, so it only records
     constants whose expressions can be reduced to integers.  Constants
@@ -303,7 +303,7 @@ def _constant_sort_key(entry):
 
 
 def _metadata_constant_entries(manifest):
-    """Return implemented standard ABI constants from the manifest."""
+    """Return implemented MPI Forum ABI constants from the manifest."""
     return [
         entry for entry in manifest["constants"]
         if entry["classification"] == CLASS_IMPLEMENTED
@@ -383,7 +383,7 @@ def _declared_fortran_datatype_entries(manifest, declared_names):
 
     Optional Fortran datatype availability is compiler/configuration
     dependent.  Unlike C handle constants, the current Phase 8 probe
-    covers the subset the installed standard ABI header actually
+    covers the subset the installed MPI Forum ABI header actually
     declares; unavailable optional datatype behavior is tracked by a
     later task.
     """
@@ -652,7 +652,7 @@ def _runtime_api_coverage_audit(manifest, header, cases):
     The check result is PASS during phased development.  The completion
     gate is the place that eventually turns any remaining
     test_not_written_yet coverage into a hard failure.  Keeping this as
-    an installed check means it audits against the same standard ABI
+    an installed check means it audits against the same MPI Forum ABI
     header that runtime probes compile against.
     """
     prototypes = _parse_c_header_prototypes(header)
@@ -746,7 +746,7 @@ def _runtime_api_probe_generation_check(
     coverage explicitly.  This preflight keeps that contract honest by
     checking that every named API exists in docs/ metadata, is classified
     as implemented in this tree, and is declared by the installed
-    standard ABI header that mpicc_abi will use for the generated source.
+    MPI Forum ABI header that mpicc_abi will use for the generated source.
     It also checks the declared coverage against the source body so a
     stale api_names entry cannot claim coverage for a call that was
     removed.
@@ -841,7 +841,7 @@ def _callback_api_coverage_audit(
     The ordinary runtime audit treats callback APIs as deferred because
     callback failures can leave MPI objects or requests in undefined
     states.  This audit is the Phase 10 counterpart: every implemented
-    callback-owned C API declared by the installed standard ABI header
+    callback-owned C API declared by the installed MPI Forum ABI header
     must be covered by a callback probe.  Unsupported optional callback
     families are still represented by probes, but those probes skip at
     run time with stable reasons when the installed implementation lacks

@@ -36,12 +36,12 @@ BEGIN_C_DECLS
    MPI_T_event_register_callback() and read by the producer raise sites. */
 typedef enum {
     OMPI_MPIT_ABI_OMPI = 0,     /* Open MPI ABI: handle == internal object pointer */
-    OMPI_MPIT_ABI_STANDARD = 1  /* MPI Forum ABI: handle == integer handle */
+    OMPI_MPIT_ABI_FORUM = 1  /* MPI Forum ABI: handle == integer handle */
 } ompi_mpit_abi_t;
 
 /* Hard-coded to the Open MPI ABI for now.  When the MPI Forum ABI lands
    (open-mpi/ompi#13280), its MPI_T_event_register_callback entry point will set
-   this to OMPI_MPIT_ABI_STANDARD, and the producers' "else" branches (marked
+   this to OMPI_MPIT_ABI_FORUM, and the producers' "else" branches (marked
    "TODO ABI") will fill in the MPI Forum ABI handle values. */
 OMPI_DECLSPEC extern ompi_mpit_abi_t ompi_mpit_callback_abi;
 

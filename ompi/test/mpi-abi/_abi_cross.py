@@ -140,7 +140,7 @@ def _cross_direction_selection(raw=None):
     """Return requested cross-test directions and invalid input details.
 
     12A records direction selection before 12B starts executing probes.
-    The default is both standard ABI directions.  The environment knob is
+    The default is both MPI Forum ABI directions.  The environment knob is
     intentionally simple, but typos must be hard failures because a CI
     mistake should not produce a passing run with zero tested directions.
     """
@@ -309,7 +309,7 @@ def _cross_environment_report(tools, dirs):
     return report
 
 
-# Per-direction compile/run roles for the two standard ABI cross paths.
+# Per-direction compile/run roles for the two MPI Forum ABI cross paths.
 # Each entry is (compile_implementation, run_implementation); the compile
 # wrapper and the run-side paths/launcher are then looked up by role so the
 # two directions share one dict-building path instead of duplicated branches.
@@ -386,7 +386,7 @@ def _cross_native_sanity_source():
 #include "mpi.h"
 
 #ifndef MPI_H_ABI
-#error "standard ABI mpi.h was not used"
+#error "MPI Forum ABI mpi.h was not used"
 #endif
 
 int main(int argc, char **argv)

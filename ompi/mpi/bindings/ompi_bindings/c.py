@@ -20,7 +20,7 @@ TEMPLATE SOURCE FILE ASSUMPTIONS:
 * Nothing (other than blank lines) after closing '}'
 * Function prototype is preceded by PROTOTYPE
 * All types in the function prototype are converted to one-word capital types
-  as defined here (to be later converted to ompi or standard ABI types)
+  as defined here (to be later converted to ompi or MPI Forum ABI types)
 * Functions requiring a bigcount implementation should have type COUNT in
   place of MPI_Count or int for each count parameter. Bigcount functions will
   be generated automatically for any function that includes a COUNT type.
@@ -30,7 +30,7 @@ import re
 import sys
 import os
 from ompi_bindings import consts, util
-from ompi_bindings.consts import ConvertFuncs, ConvertOMPIToStandard
+from ompi_bindings.consts import ConvertFuncs, ConvertOMPIToForum
 from ompi_bindings.c_type import Type
 from ompi_bindings.parser import SourceTemplate
 
@@ -70,7 +70,7 @@ class ABIConverterBuilder:
         self.dump('}')
 
     def generate_error_convert_fn_intern_to_abi(self):
-        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToStandard.ERROR_CLASS}(int error_class)')
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToForum.ERROR_CLASS}(int error_class)')
         self.dump('{')
         lines = []
         lines.append('switch (error_class) {')
@@ -105,14 +105,14 @@ class ABIConverterBuilder:
             # (value_name, e.g. MPI_COMPLEX4) resolves to the "unavailable"
             # sentinel datatype object when the kind is absent, the sentinel
             # object itself is always compiled in, and the ABI constant
-            # (intern_name) is part of the fixed standard-ABI header.
+            # (intern_name) is part of the fixed MPI Forum ABI header.
             #
             # Do NOT re-add either guard here:
             #   * OMPI_HAVE_FORTRAN_<kind> compiled out unavailable kinds, so
             #     e.g. MPI_Type_size(MPI_COMPLEX4) fell through to the cast
             #     below and crashed -- the original mpi4py segfault.
             #   * OMPI_BUILD_FORTRAN_BINDINGS has the same effect for a
-            #     --disable-mpi-fortran standard-ABI build: the ABI header still
+            #     --disable-mpi-fortran MPI Forum ABI build: the ABI header still
             #     exposes MPI_COMPLEX4 (a small integer), so guarding this block
             #     re-introduces the identical fall-through crash there
             #     (empirically confirmed: MPI_Type_size(MPI_COMPLEX4) SIGSEGVs).
@@ -127,7 +127,7 @@ class ABIConverterBuilder:
 
     def generate_new_datatype_convert_fn_intern_to_abi(self):
         return_type = self.mangle_name('MPI_Datatype')
-        self.dump(f'{consts.INLINE_ATTRS} {return_type} {ConvertOMPIToStandard.DATATYPE}(MPI_Datatype datatype)')
+        self.dump(f'{consts.INLINE_ATTRS} {return_type} {ConvertOMPIToForum.DATATYPE}(MPI_Datatype datatype)')
         self.dump('{')
         lines = []
         for i, value_name in enumerate(consts.PREDEFINED_DATATYPES):
@@ -219,31 +219,31 @@ class ABIConverterBuilder:
         self.generic_convert(ConvertFuncs.COMM, 'comm', 'MPI_Comm', consts.RESERVED_COMMUNICATORS)
 
     def generate_comm_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.COMM, 'comm', 'MPI_Comm', consts.RESERVED_COMMUNICATORS)
+        self.generic_convert_reverse(ConvertOMPIToForum.COMM, 'comm', 'MPI_Comm', consts.RESERVED_COMMUNICATORS)
 
     def generate_info_convert_fn(self):
         self.generic_convert(ConvertFuncs.INFO, 'info', 'MPI_Info', consts.RESERVED_INFOS)
 
     def generate_info_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.INFO, 'info', 'MPI_Info', consts.RESERVED_INFOS)
+        self.generic_convert_reverse(ConvertOMPIToForum.INFO, 'info', 'MPI_Info', consts.RESERVED_INFOS)
 
     def generate_file_convert_fn(self):
         self.generic_convert(ConvertFuncs.FILE, 'file', 'MPI_File', consts.RESERVED_FILES)
 
     def generate_file_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.FILE, 'file', 'MPI_File', consts.RESERVED_FILES)
+        self.generic_convert_reverse(ConvertOMPIToForum.FILE, 'file', 'MPI_File', consts.RESERVED_FILES)
 
     def generate_datatype_convert_fn(self):
         self.generic_convert(ConvertFuncs.DATATYPE, 'datatype', 'MPI_Datatype', consts.PREDEFINED_DATATYPES)
 
     def generate_datatype_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.DATATYPE, 'datatype', 'MPI_Datatype', consts.PREDEFINED_DATATYPES)
+        self.generic_convert_reverse(ConvertOMPIToForum.DATATYPE, 'datatype', 'MPI_Datatype', consts.PREDEFINED_DATATYPES)
 
     def generate_errhandler_convert_fn(self):
         self.generic_convert(ConvertFuncs.ERRHANDLER, 'errorhandler', 'MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
 
     def generate_errhandler_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.ERRHANDLER, 'errorhandler', 'MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
+        self.generic_convert_reverse(ConvertOMPIToForum.ERRHANDLER, 'errorhandler', 'MPI_Errhandler', consts.RESERVED_ERRHANDLERS)
 
     def generate_comm_copy_attr_convert_fn(self):
         self.generic_convert(ConvertFuncs.COMM_COPY_ATTR_FUNCTION, 'comm_copy_attr_fn', 'MPI_Comm_copy_attr_function *', consts.RESERVED_COMM_COPY_ATTR_FNS)
@@ -267,58 +267,58 @@ class ABIConverterBuilder:
         self.generic_convert(ConvertFuncs.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
 
     def generate_group_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
+        self.generic_convert_reverse(ConvertOMPIToForum.GROUP, 'group', 'MPI_Group', consts.RESERVED_GROUPS)
 
     def generate_message_convert_fn(self):
         self.generic_convert(ConvertFuncs.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
 
     def generate_message_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
+        self.generic_convert_reverse(ConvertOMPIToForum.MESSAGE, 'message', 'MPI_Message', consts.RESERVED_MESSAGES)
 
     def generate_op_convert_fn(self):
         self.generic_convert(ConvertFuncs.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
 
     def generate_op_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
+        self.generic_convert_reverse(ConvertOMPIToForum.OP, 'op', 'MPI_Op', consts.RESERVED_OPS)
 
     def generate_session_convert_fn(self):
         self.generic_convert(ConvertFuncs.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
 
     def generate_session_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
+        self.generic_convert_reverse(ConvertOMPIToForum.SESSION, 'session', 'MPI_Session', consts.RESERVED_SESSIONS)
 
     def generate_win_convert_fn(self):
         self.generic_convert(ConvertFuncs.WIN, 'win', 'MPI_Win', consts.RESERVED_WINDOWS)
 
     def generate_win_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.WIN, 'win', 'MPI_Win', consts.RESERVED_WINDOWS)
+        self.generic_convert_reverse(ConvertOMPIToForum.WIN, 'win', 'MPI_Win', consts.RESERVED_WINDOWS)
 
     def generate_attr_key_convert_fn(self):
         self.generic_convert(ConvertFuncs.ATTR_KEY, 'key', 'int', consts.RESERVED_ATTR_KEYS, 'OMPI_ABI_HANDLE_BASE_OFFSET')
 
     def generate_attr_key_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.ATTR_KEY, 'key', 'int', consts.RESERVED_ATTR_KEYS, 'OMPI_ABI_HANDLE_BASE_OFFSET')
+        self.generic_convert_reverse(ConvertOMPIToForum.ATTR_KEY, 'key', 'int', consts.RESERVED_ATTR_KEYS, 'OMPI_ABI_HANDLE_BASE_OFFSET')
 
     def generate_comm_cmp_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.COMM_CMP, 'result', 'int', consts.COMM_GROUP_COMPARE_VALS)
+        self.generic_convert_reverse(ConvertOMPIToForum.COMM_CMP, 'result', 'int', consts.COMM_GROUP_COMPARE_VALS)
 
     def generate_ts_level_convert_fn(self):
         self.generic_convert(ConvertFuncs.TS_LEVEL, 'level', 'int', consts.TS_LEVEL_VALUES)
 
     def generate_ts_level_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.TS_LEVEL, 'level', 'int', consts.TS_LEVEL_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.TS_LEVEL, 'level', 'int', consts.TS_LEVEL_VALUES)
 
     def generate_tag_convert_fn(self):
         self.generic_convert(ConvertFuncs.TAG, 'tag', 'int', consts.RESERVED_TAGS)
 
     def generate_tag_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.TAG, 'tag', 'int', consts.RESERVED_TAGS)
+        self.generic_convert_reverse(ConvertOMPIToForum.TAG, 'tag', 'int', consts.RESERVED_TAGS)
 
     def generate_source_convert_fn(self):
         self.generic_convert(ConvertFuncs.SOURCE, 'source', 'int', consts.RESERVED_SOURCE)
 
     def generate_source_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.SOURCE, 'source', 'int', consts.RESERVED_SOURCE)
+        self.generic_convert_reverse(ConvertOMPIToForum.SOURCE, 'source', 'int', consts.RESERVED_SOURCE)
 
     def generate_root_convert_fn(self):
         self.generic_convert(ConvertFuncs.ROOT, 'root', 'int', consts.RESERVED_ROOT)
@@ -327,55 +327,55 @@ class ABIConverterBuilder:
         self.generic_convert(ConvertFuncs.PVAR_SESSION, 'pe_session', 'MPI_T_pvar_session', consts.RESERVED_PVAR_SESSIONS)
 
     def generate_pvar_session_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.PVAR_SESSION, 'pe_session', 'MPI_T_pvar_session', consts.RESERVED_PVAR_SESSIONS)
+        self.generic_convert_reverse(ConvertOMPIToForum.PVAR_SESSION, 'pe_session', 'MPI_T_pvar_session', consts.RESERVED_PVAR_SESSIONS)
 
     def generate_cvar_handle_convert_fn(self):
         self.generic_convert(ConvertFuncs.CVAR_HANDLE, 'cvar_handle', 'MPI_T_cvar_handle', consts.RESERVED_CVAR_HANDLES)
 
     def generate_cvar_handle_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.CVAR_HANDLE, 'cvar_handle', 'MPI_T_cvar_handle', consts.RESERVED_CVAR_HANDLES)
+        self.generic_convert_reverse(ConvertOMPIToForum.CVAR_HANDLE, 'cvar_handle', 'MPI_T_cvar_handle', consts.RESERVED_CVAR_HANDLES)
 
     def generate_pvar_handle_convert_fn(self):
         self.generic_convert(ConvertFuncs.PVAR_HANDLE, 'pvar_handle', 'MPI_T_pvar_handle', consts.RESERVED_PVAR_HANDLES)
 
     def generate_pvar_handle_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.PVAR_HANDLE, 'pvar_handle', 'MPI_T_pvar_handle', consts.RESERVED_PVAR_HANDLES)
+        self.generic_convert_reverse(ConvertOMPIToForum.PVAR_HANDLE, 'pvar_handle', 'MPI_T_pvar_handle', consts.RESERVED_PVAR_HANDLES)
 
     def generate_t_enum_convert_fn(self):
         self.generic_convert(ConvertFuncs.T_ENUM, 't_enum', 'MPI_T_enum', consts.RESERVED_T_ENUMS)
 
     def generate_t_enum_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.T_ENUM, 't_enum', 'MPI_T_enum', consts.RESERVED_T_ENUMS)
+        self.generic_convert_reverse(ConvertOMPIToForum.T_ENUM, 't_enum', 'MPI_T_enum', consts.RESERVED_T_ENUMS)
 
     def generate_t_bind_convert_fn(self):
         self.generic_convert(ConvertFuncs.T_BIND, 'bind', 'int', consts.T_BIND_VALUES)
 
     def generate_t_bind_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.T_BIND, 'bind', 'int', consts.T_BIND_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.T_BIND, 'bind', 'int', consts.T_BIND_VALUES)
 
     def generate_t_verbosity_convert_fn(self):
         self.generic_convert(ConvertFuncs.T_VERBOSITY, 'verbosity', 'int', consts.T_VERBOSITY_VALUES)
 
     def generate_t_verbosity_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.T_VERBOSITY, 'verbosity', 'int', consts.T_VERBOSITY_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.T_VERBOSITY, 'verbosity', 'int', consts.T_VERBOSITY_VALUES)
 
     def generate_t_scope_convert_fn(self):
         self.generic_convert(ConvertFuncs.T_SCOPE, 'scope', 'int', consts.T_SCOPE_VALUES)
 
     def generate_t_scope_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.T_SCOPE, 'scope', 'int', consts.T_SCOPE_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.T_SCOPE, 'scope', 'int', consts.T_SCOPE_VALUES)
 
     def generate_t_source_order_convert_fn(self):
         self.generic_convert(ConvertFuncs.T_SOURCE_ORDER, 'order', 'MPI_T_source_order', consts.T_SOURCE_ORDER_VALUES)
 
     def generate_t_source_order_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.T_SOURCE_ORDER, 'order', 'MPI_T_source_order', consts.T_SOURCE_ORDER_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.T_SOURCE_ORDER, 'order', 'MPI_T_source_order', consts.T_SOURCE_ORDER_VALUES)
 
     def generate_pvar_class_convert_fn(self):
         self.generic_convert(ConvertFuncs.PVAR_CLASS, 'pvar_class', 'int', consts.T_PVAR_CLASS_VALUES)
 
     def generate_pvar_class_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.PVAR_CLASS, 'pvar_class', 'int', consts.T_PVAR_CLASS_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.PVAR_CLASS, 'pvar_class', 'int', consts.T_PVAR_CLASS_VALUES)
 
     def generate_t_cb_safety_convert_fn(self):
         self.generic_convert(ConvertFuncs.T_CB_SAFETY, 'safety', 'MPI_T_cb_safety', consts.T_CB_SAFETY_VALUES)
@@ -399,7 +399,7 @@ class ABIConverterBuilder:
         self.generic_convert(ConvertFuncs.WHENCE, 'whence', 'int', consts.WHENCE_VALUES)
 
     def generate_combiner_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.COMBINER, 'combiner', 'int', consts.COMBINER_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.COMBINER, 'combiner', 'int', consts.COMBINER_VALUES)
 
     def generate_typeclass_convert_fn(self):
         self.generic_convert(ConvertFuncs.TYPECLASS, 'typeclass', 'int', consts.TYPECLASS_VALUES)
@@ -408,13 +408,13 @@ class ABIConverterBuilder:
         self.generic_convert(ConvertFuncs.WIN_LOCK, 'lock_assert', 'int', consts.WIN_LOCK_VALUES)
 
     def generate_topo_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.TOPO, 'status', 'int', consts.TOPO_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.TOPO, 'status', 'int', consts.TOPO_VALUES)
 
     def generate_buffer_convert_fn(self):
         self.generic_convert(ConvertFuncs.BUFFER, 'buffer', 'void *', consts.BUFFER_VALUES)
 
     def generate_buffer_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.BUFFER, 'buffer', 'void *', consts.BUFFER_VALUES)
+        self.generic_convert_reverse(ConvertOMPIToForum.BUFFER, 'buffer', 'void *', consts.BUFFER_VALUES)
 
     def generate_mode_bits_convert_fn(self):
         self.dump(f'{consts.INLINE_ATTRS} int {ConvertFuncs.MODE_BITS}(int mode_bits)')
@@ -431,7 +431,7 @@ class ABIConverterBuilder:
         self.dump('}')
 
     def generate_mode_bits_convert_fn_intern_to_abi(self):
-        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToStandard.MODE_BITS}(int mode_bits)')
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToForum.MODE_BITS}(int mode_bits)')
         self.dump('{')
         lines = []
         lines.append('int ret_value = 0;')
@@ -459,7 +459,7 @@ class ABIConverterBuilder:
         self.dump('}')
 
     def generate_rma_mode_bits_convert_fn_intern_to_abi(self):
-        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToStandard.RMA_MODE_BITS}(int mode_bits)')
+        self.dump(f'{consts.INLINE_ATTRS} int {ConvertOMPIToForum.RMA_MODE_BITS}(int mode_bits)')
         self.dump('{')
         lines = []
         lines.append('int ret_value = 0;')
@@ -477,7 +477,7 @@ class ABIConverterBuilder:
         self.generic_convert(ConvertFuncs.REQUEST, 'request', 'MPI_Request', consts.RESERVED_REQUESTS)
 
     def generate_request_convert_fn_intern_to_abi(self):
-        self.generic_convert_reverse(ConvertOMPIToStandard.REQUEST, 'request', 'MPI_Request', consts.RESERVED_REQUESTS)
+        self.generic_convert_reverse(ConvertOMPIToForum.REQUEST, 'request', 'MPI_Request', consts.RESERVED_REQUESTS)
 
     def generate_status_convert_fn(self):
         type_ = 'MPI_Status'
@@ -496,14 +496,14 @@ class ABIConverterBuilder:
     def generate_status_convert_fn_intern_to_abi(self):
         type_ = 'MPI_Status'
         abi_type = self.mangle_name(type_)
-        self.dump(f'{consts.INLINE_ATTRS} void {ConvertOMPIToStandard.STATUS}({abi_type} *out, {type_} *inp)')
+        self.dump(f'{consts.INLINE_ATTRS} void {ConvertOMPIToForum.STATUS}({abi_type} *out, {type_} *inp)')
         self.dump('{')
         self.dump('    void *ptr = &out->MPI_internal[1];')
-        self.dump(f'    out->MPI_SOURCE = {ConvertOMPIToStandard.SOURCE}(inp->MPI_SOURCE);')
-        self.dump(f'    out->MPI_TAG = {ConvertOMPIToStandard.TAG}(inp->MPI_TAG);')
+        self.dump(f'    out->MPI_SOURCE = {ConvertOMPIToForum.SOURCE}(inp->MPI_SOURCE);')
+        self.dump(f'    out->MPI_TAG = {ConvertOMPIToForum.TAG}(inp->MPI_TAG);')
         self.dump('    out->MPI_internal[0] = inp->_cancelled;')
         self.dump('    memcpy(ptr, &inp->_ucount, sizeof(inp->_ucount));')
-        self.dump(f'    out->MPI_ERROR = {ConvertOMPIToStandard.ERROR_CLASS}(inp->MPI_ERROR);')
+        self.dump(f'    out->MPI_ERROR = {ConvertOMPIToForum.ERROR_CLASS}(inp->MPI_ERROR);')
         # Ignoring the private fields for now
         self.dump('}')
 
@@ -518,23 +518,23 @@ class ABIConverterBuilder:
         lines.append('ompi_file_t **file;')
         lines.append('ompi_instance_t **instance;')
         lines.append('ompi_win_t **win;')
-        lines.append(f'*err_code = {ConvertOMPIToStandard.ERROR_CLASS}(*err_code);')
+        lines.append(f'*err_code = {ConvertOMPIToForum.ERROR_CLASS}(*err_code);')
         lines.append('switch(object_type) {')
         lines.append('case OMPI_ERRHANDLER_TYPE_COMM:')
         lines.append('comm = (ompi_communicator_t **)object;')
-        lines.append(f'*comm = (ompi_communicator_t *){ConvertOMPIToStandard.COMM}(*comm);')
+        lines.append(f'*comm = (ompi_communicator_t *){ConvertOMPIToForum.COMM}(*comm);')
         lines.append('break;')
         lines.append('case OMPI_ERRHANDLER_TYPE_WIN:')
         lines.append('win = (ompi_win_t **)object;')
-        lines.append(f'*win = (ompi_win_t *){ConvertOMPIToStandard.WIN}(*win);')
+        lines.append(f'*win = (ompi_win_t *){ConvertOMPIToForum.WIN}(*win);')
         lines.append('break;')
         lines.append('case OMPI_ERRHANDLER_TYPE_FILE:')
         lines.append('file = (ompi_file_t **)object;')
-        lines.append(f'*file = (ompi_file_t *){ConvertOMPIToStandard.FILE}(*file);')
+        lines.append(f'*file = (ompi_file_t *){ConvertOMPIToForum.FILE}(*file);')
         lines.append('break;')
         lines.append('case OMPI_ERRHANDLER_TYPE_INSTANCE:')
         lines.append('instance = (ompi_instance_t **)object;')
-        lines.append(f'*instance = (ompi_instance_t *){ConvertOMPIToStandard.SESSION}(*instance);')
+        lines.append(f'*instance = (ompi_instance_t *){ConvertOMPIToForum.SESSION}(*instance);')
         lines.append('break;')
         lines.append('};')
         self.dump_lines(lines);
@@ -542,7 +542,7 @@ class ABIConverterBuilder:
 
     # Predefined-handle families understood by the MPI_T obj_handle
     # dispatcher, each paired with the converter that translates that family
-    # from the standard ABI to the internal representation.  This is driven
+    # from the MPI Forum ABI to the internal representation.  This is driven
     # off the same consts.* lists the individual per-type converters use, so
     # the dispatch cannot drift away from the ABI header: adding a predefined
     # handle to one of these lists automatically routes it here as well.
@@ -569,7 +569,7 @@ class ABIConverterBuilder:
         self.dump(fn)
         self.dump('{')
         lines = []
-        # The standard-ABI predefined handles are small integers; user-created
+        # The MPI Forum ABI predefined handles are small integers; user-created
         # handles are real internal pointers with large addresses.  Match each
         # predefined value explicitly and hand anything else back untouched.
         lines.append('uintptr_t obj_value = (uintptr_t) obj_handle;')
@@ -891,17 +891,17 @@ ABI_INTERNAL_HEADER = 'ompi/mpi/c/abi.h'
 ABI_INTERNAL_CONVERTOR = 'ompi/mpi/c/abi_converters.h'
 
 
-def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
-    """Generate the standard ABI functions."""
+def forum_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
+    """Generate the MPI Forum ABI functions."""
     template.print_header(out)
     out.dump(f'#include "{ABI_INTERNAL_HEADER}"')
     out.dump(f'#include "{ABI_INTERNAL_CONVERTOR}"')
-    print_cdefs_for_abi(out,abi_type='standard')
+    print_cdefs_for_abi(out,abi_type='forum')
 
     # If any parameters are pointers to user callback functions, generate code
     # for callback wrappers
     if util.prototype_needs_callback_wrappers(template.prototype):
-        params = [param.construct(abi_type='standard') for param in template.prototype.params]
+        params = [param.construct(abi_type='forum') for param in template.prototype.params]
         for param in params:
             if param.callback_wrapper_code:
                 lines = []
@@ -913,7 +913,7 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
     if suppress_nbc == False:
         internal_name = f'ompi_abi_{template.prototype.name}'
         print_cdefs_for_bigcount(out)
-        print_cdefs_for_abi(out, abi_type='standard')
+        print_cdefs_for_abi(out, abi_type='forum')
         internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                     enable_count=False)
         out.dump(consts.INLINE_ATTRS, internal_sig)
@@ -921,7 +921,7 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
     if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
         internal_name = f'ompi_abi_{template.prototype.name}_c'
         print_cdefs_for_bigcount(out, enable_count=True)
-        print_cdefs_for_abi(out, abi_type='standard')
+        print_cdefs_for_abi(out, abi_type='forum')
         internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                     enable_count=True)
         out.dump(consts.INLINE_ATTRS, internal_sig)
@@ -934,7 +934,7 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         template.print_body(func_name=base_name_c, out=out, replacements=generate_replacements(mangle_names=True))
 
     def generate_function(prototype, fn_name, internal_fn, out, enable_count=False):
-        """Generate a function for the standard ABI."""
+        """Generate a function for the MPI Forum ABI."""
         # The MPI Forum ABI requires the public MPI_* symbols to be weak
         # definitions, so that an application built against another
         # implementation's libmpi_abi (which exports them weak) can bind to
@@ -942,11 +942,11 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         print_profiling_header(fn_name, out, weak_mpi_symbol=True)
 
         # Handle type conversions and arguments
-        params = [param.construct(abi_type='standard') for param in prototype.params]
-        out.dump(prototype.signature(fn_name, abi_type='standard', enable_count=enable_count))
+        params = [param.construct(abi_type='forum') for param in prototype.params]
+        out.dump(prototype.signature(fn_name, abi_type='forum', enable_count=enable_count))
         out.dump('{')
         lines = []
-        return_type = prototype.return_type.construct(abi_type='standard')
+        return_type = prototype.return_type.construct(abi_type='forum')
         lines.append(f'{return_type.tmp_type_text()} ret_value;')
         for param in params:
             if param.init_code:
@@ -963,7 +963,7 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
         for line in lines:
             out.dump(line)
         out.dump('}')
-        print_weak_mpi_wrapper(prototype, fn_name, out, abi_type='standard',
+        print_weak_mpi_wrapper(prototype, fn_name, out, abi_type='forum',
                                enable_count=enable_count)
 
     if suppress_nbc == False:
@@ -998,4 +998,4 @@ def generate_source(args, out):
     if args.type == 'ompi':
         ompi_abi(base_name, template, out, args.suppress_bc, args.suppress_nbc)
     else:
-        standard_abi(base_name, template, out, args.suppress_bc, args.suppress_nbc)
+        forum_abi(base_name, template, out, args.suppress_bc, args.suppress_nbc)

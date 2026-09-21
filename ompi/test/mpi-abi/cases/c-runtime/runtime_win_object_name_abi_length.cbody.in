@@ -13,7 +13,7 @@
  *   Like runtime_object_name_abi_length, but for a window's name (also a fixed
  *   in-handle buffer).  Verify that a name longer than the historical 64-byte
  *   Open MPI limit but shorter than the MPI Forum ABI MPI_MAX_OBJECT_NAME
- *   round-trips through the standard-ABI MPI_Win_set_name / MPI_Win_get_name
+ *   round-trips through the MPI Forum ABI MPI_Win_set_name / MPI_Win_get_name
  *   entry points.
  */
 int i;

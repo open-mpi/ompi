@@ -11,7 +11,7 @@
 /*
  * Test intent:
  *   Define a communicator error-handler callback that validates the
- *   standard ABI communicator and error-code values passed back from
+ *   MPI Forum ABI communicator and error-code values passed back from
  *   Open MPI.  The body creates, installs, invokes, restores, and frees
  *   the errhandler so callback conversion and errhandler lifetime are
  *   both covered.

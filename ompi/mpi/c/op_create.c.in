@@ -62,7 +62,7 @@ PROTOTYPE ERROR_CLASS op_create(USER_FUNCTION function, INT commute, OP_OUT op)
     }
 #if OMPI_ABI_SRC
     else {
-        (*op)->o_datatype_converter = (ompi_op_type_convert_to_abi_fn_t)ompi_convert_datatype_ompi_to_standard;
+        (*op)->o_datatype_converter = (ompi_op_type_convert_to_abi_fn_t)ompi_convert_datatype_ompi_to_forum;
     }
 #endif
 

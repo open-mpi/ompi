@@ -13,7 +13,7 @@
  *   Define communicator attribute callbacks that validate the ABI values
  *   passed back from Open MPI.  The body creates the keyval and drives
  *   the object lifecycle; these callbacks record whether MPI supplied
- *   the expected standard ABI communicator, keyval, extra_state, and
+ *   the expected MPI Forum ABI communicator, keyval, extra_state, and
  *   attribute values.
  */
 struct comm_attr_state {

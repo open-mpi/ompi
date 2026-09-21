@@ -11,7 +11,7 @@
 /*
  * Test intent:
  *   Round-trip every metadata-declared predefined C handle that the
- *   installed standard ABI header exposes through *_toint/fromint.
+ *   installed MPI Forum ABI header exposes through *_toint/fromint.
  *   Generated placeholders keep the expected handle set tied to docs/.
  */
 #define ABI_CHECK_PREDEFINED_HANDLE(kind, value) do {                       \

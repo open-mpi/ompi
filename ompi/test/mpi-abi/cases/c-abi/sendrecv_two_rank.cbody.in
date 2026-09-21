@@ -11,7 +11,7 @@
 /*
  * Test intent:
  *   Verify basic two-rank point-to-point data movement through the
- *   standard ABI using MPI_Sendrecv and a checked received value.
+ *   MPI Forum ABI using MPI_Sendrecv and a checked received value.
  */
 int size = 0;
 int rank = -1;

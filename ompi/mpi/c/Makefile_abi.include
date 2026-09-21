@@ -73,7 +73,7 @@ extra_abi_fns = \
 
 $(abi_interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
 
-libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_BUILD_STANDARD_ABI
+libmpi_c_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_BUILD_FORUM_ABI
 libmpi_c_abi_la_LIBADD = libmpi_c_abi_profile.la
 
 abi_interface_profile_sources = \
