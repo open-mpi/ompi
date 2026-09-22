@@ -167,9 +167,9 @@ GPU memory and Libfabric providers
 When an MPI buffer resides in graphics processing unit memory, Open MPI can
 request Libfabric support for heterogeneous memory through the ``FI_HMEM``
 capability.  The ``ofi`` matching transport layer and byte transfer layer
-   request this capability by default when it is available in the build.  The
-   matching transport layer and byte transfer layer can disable the request
-   with ``mtl_ofi_disable_hmem`` and ``btl_ofi_disable_hmem``, respectively.
+request this capability by default when it is available in the build.  The
+matching transport layer and byte transfer layer can disable the request
+with ``mtl_ofi_disable_hmem`` and ``btl_ofi_disable_hmem``, respectively.
 
 Requesting heterogeneous-memory support does not guarantee direct network
 access to every type of GPU memory.  The selected provider must advertise the
