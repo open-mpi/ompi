@@ -336,6 +336,14 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
     newcomm->c_my_rank = newcomm->c_local_group->grp_my_rank;
     newcomm->c_assertions = 0;
 
+    /* Subscribe the assertions that are driven by info keys here, so that
+       every constructor honours them and so that a later MPI_Comm_set_info
+       reaches their callbacks.  Subscribing creates s_info and applies the
+       default of each key, hence it must follow the reset of c_assertions
+       just above. */
+    ompi_comm_assert_subscribe (newcomm, OMPI_COMM_ASSERT_LAZY_BARRIER);
+    ompi_comm_assert_subscribe (newcomm, OMPI_COMM_ASSERT_ACTIVE_POLL);
+
     /* Set remote group and duplicate the local comm, if applicable */
     if ((NULL == remote_group) && (NULL != remote_ranks)) {
         /* determine how the list of local_rank can be stored most
@@ -543,9 +551,8 @@ int ompi_comm_create_w_info (ompi_communicator_t *comm, ompi_group_t *group, opa
     }
 
     /* Copy info if there is one. */
-    newcomp->super.s_info = OBJ_NEW(opal_info_t);
     if (info) {
-        opal_info_dup(info, &(newcomp->super.s_info));
+        opal_infosubscribe_change_info (&newcomp->super, info);
     }
     ompi_info_memkind_assert_type type;
     ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
@@ -598,7 +605,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 
 int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
                                opal_info_t *info,
-                               ompi_communicator_t **newcomm, bool pass_on_topo )
+                               ompi_communicator_t **newcomm,
+                               bool pass_on_topo __opal_attribute_unused__ )
 {
     int myinfo[2];
     int size, my_size;
@@ -770,7 +778,7 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
                          comm->error_handler,/* error handler */
                          local_group,        /* local group */
                          remote_group,       /* remote group */
-                         pass_on_topo ? OMPI_COMM_SET_FLAG_COPY_TOPOLOGY : 0); /* flags */
+                         0);                 /* flags */
 
     if ( OMPI_SUCCESS != rc  ) {
         goto exit;
@@ -804,9 +812,8 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
 	     ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
 
     /* Copy info if there is one */
-    newcomp->super.s_info = OBJ_NEW(opal_info_t);
     if (info) {
-        opal_info_dup(info, &(newcomp->super.s_info));
+        opal_infosubscribe_change_info (&newcomp->super, info);
     }
     ompi_info_memkind_assert_type type;
     ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
@@ -1367,10 +1374,8 @@ static int ompi_comm_split_type_core(ompi_communicator_t *comm,
         goto exit;
     }
 
-    ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_LAZY_BARRIER);
-    ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_ACTIVE_POLL);
     if (info) {
-        opal_infosubscribe_change_info(&newcomp->super, info);
+        opal_infosubscribe_change_info (&newcomp->super, info);
     }
     ompi_info_memkind_assert_type type;
     ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
@@ -1772,13 +1777,14 @@ int ompi_comm_split_type (ompi_communicator_t *comm, int split_type, int key,
 /**********************************************************************/
 int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 {
-    return ompi_comm_dup_with_info (comm, NULL, newcomm);
+    return ompi_comm_dup_with_info (comm, NULL, newcomm, true);
 }
 
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, ompi_communicator_t **newcomm )
+int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info,
+                              ompi_communicator_t **newcomm, bool inherit_cached_info )
 {
     ompi_communicator_t *newcomp = NULL;
     ompi_group_t *remote_group = NULL;
@@ -1797,11 +1803,11 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
                           NULL,                                   /* local_procs*/
                           0,                                      /* remote array size */
                           NULL,                                   /* remote_procs */
-                          comm->c_keyhash,                        /* attrs */
+                          inherit_cached_info ? comm->c_keyhash : NULL, /* attrs */
                           comm->error_handler,                    /* error handler */
                           comm->c_local_group,                    /* local group */
                           remote_group,                           /* remote group */
-                          OMPI_COMM_SET_FLAG_COPY_TOPOLOGY);      /* flags */
+                          inherit_cached_info ? OMPI_COMM_SET_FLAG_COPY_TOPOLOGY : 0); /* flags */
     if ( OMPI_SUCCESS != rc) {
         return rc;
     }
@@ -1818,10 +1824,8 @@ int ompi_comm_dup_with_info ( ompi_communicator_t * comm, opal_info_t *info, omp
 	     ompi_comm_print_cid (newcomp), ompi_comm_print_cid (comm));
 
     // Copy info if there is one.
-    ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_LAZY_BARRIER);
-    ompi_comm_assert_subscribe (newcomp, OMPI_COMM_ASSERT_ACTIVE_POLL);
     if (info) {
-        opal_infosubscribe_change_info(&newcomp->super, info);
+        opal_infosubscribe_change_info (&newcomp->super, info);
     }
     ompi_info_memkind_assert_type type;
     ompi_info_memkind_copy_or_set (&comm->instance->super, &newcomp->super, info, &type);
@@ -1914,9 +1918,8 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     // Copy info if there is one.
     {
         ompi_communicator_t *newcomp = context->newcomp;
-        newcomp->super.s_info = OBJ_NEW(opal_info_t);
         if (info) {
-            opal_info_dup(info, &(newcomp->super.s_info));
+            opal_infosubscribe_change_info (&newcomp->super, info);
         }
 
         ompi_info_memkind_assert_type type;
@@ -2016,11 +2019,11 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
                           NULL,                                   /* local_procs*/
                           0,                                      /* remote_size */
                           NULL,                                   /* remote_procs */
-                          comm->c_keyhash,                        /* attrs */
+                          NULL,                                   /* attrs */
                           comm->error_handler,                    /* error handler */
                           group,                                  /* local group */
                           NULL,                                   /* remote group */
-                          OMPI_COMM_SET_FLAG_COPY_TOPOLOGY);      /* flags */
+                          0);                                     /* flags */
     if ( OMPI_SUCCESS != rc) {
         return rc;
     }
@@ -2047,6 +2050,23 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
     return MPI_SUCCESS;
 }
 
+/*
+ * Cache on comm the predefined attributes that the sessions model expects to
+ * find there. The world model attaches them to MPI_COMM_WORLD, which does not
+ * exist here, and of the three only MPI_TAG_UB is available to the sessions
+ * model. See MPI-5.0 10.1.2.1.
+ */
+static int ompi_comm_set_predefined_attributes (ompi_communicator_t *comm)
+{
+    int rc = ompi_attr_hash_init (&comm->c_keyhash);
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    return ompi_attr_set_int (COMM_ATTR, comm, &comm->c_keyhash,
+                              MPI_TAG_UB, mca_pml.pml_max_tag, true);
+}
+
 int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info_t *info,
                                  ompi_errhandler_t *errhandler, ompi_communicator_t **newcomm)
 {
@@ -2071,9 +2091,8 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s FROM GROUP",
 	     ompi_comm_print_cid (newcomp));
 
-    newcomp->super.s_info = OBJ_NEW(opal_info_t);
-    if (NULL == newcomp->super.s_info) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if (info) {
+        opal_infosubscribe_change_info (&newcomp->super, info);
     }
     ompi_info_memkind_assert_type type;
     ompi_info_memkind_copy_or_set (&group->grp_instance->super, &newcomp->super, info, &type);
@@ -2092,16 +2111,11 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
 
     newcomp->instance = group->grp_instance;
 
-    /*
-     * setup predefined keyvals - see MPI Standard for predefined keyvals cached on 
-     * communicators created via MPI_Comm_create_from_group or MPI_Intercomm_create_from_groups
-     */
-    ompi_attr_hash_init(&newcomp->c_keyhash);
-    ompi_attr_set_int(COMM_ATTR,
-                      newcomp,
-                      &newcomp->c_keyhash,
-                      MPI_TAG_UB, mca_pml.pml_max_tag,
-                      true);
+    rc = ompi_comm_set_predefined_attributes (newcomp);
+    if (OMPI_SUCCESS != rc) {
+        ompi_comm_free (&newcomp);
+        return rc;
+    }
 
     *newcomm = newcomp;
     return MPI_SUCCESS;
@@ -2219,8 +2233,6 @@ int ompi_intercomm_create (ompi_communicator_t *local_comm, int local_leader, om
         return rc;
     }
 
-    // Copy info if there is one.
-    newcomp->super.s_info = OBJ_NEW(opal_info_t);
     ompi_info_memkind_assert_type type;
     ompi_info_memkind_copy_or_set (&local_comm->instance->super, &newcomp->super,
                                    &ompi_mpi_info_null.info.super, &type);
@@ -2386,9 +2398,8 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
     snprintf(newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI INTERCOMM %s FROM GROUP", ompi_comm_print_cid (newcomp));
 
     // Copy info if there is one.
-    newcomp->super.s_info = OBJ_NEW(opal_info_t);
     if (info) {
-        opal_info_dup(info, &(newcomp->super.s_info));
+        opal_infosubscribe_change_info (&newcomp->super, info);
     }
     ompi_info_memkind_assert_type type;
     ompi_info_memkind_copy_or_set (&local_group->grp_instance->super, &newcomp->super, info, &type);
@@ -2404,6 +2415,12 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
     }
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        ompi_comm_free (&newcomp);
+        return rc;
+    }
+
+    rc = ompi_comm_set_predefined_attributes (newcomp);
+    if (OMPI_SUCCESS != rc) {
         ompi_comm_free (&newcomp);
         return rc;
     }
