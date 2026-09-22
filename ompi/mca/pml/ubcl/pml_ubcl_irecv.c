@@ -35,12 +35,10 @@
 /**
  * Prepare a request for reception.
  */
-void mca_pml_ubcl_irecv_prepare(void *buf, size_t count,
-                                ompi_datatype_t *datatype, int src, int tag,
-                                struct ompi_communicator_t *comm,
-                                struct ompi_request_t **request,
-                                bool persistent, bool probe,
-                                struct ompi_message_t *message)
+void mca_pml_ubcl_irecv_prepare(void *buf, size_t count, ompi_datatype_t *datatype, int src,
+                                int tag, struct ompi_communicator_t *comm,
+                                struct ompi_request_t **request, mca_pml_ubcl_comm_form form,
+                                bool probe, struct ompi_message_t *message)
 {
     ompi_proc_t *proc;
     mca_pml_ubcl_request_t *req;
@@ -72,8 +70,8 @@ void mca_pml_ubcl_irecv_prepare(void *buf, size_t count,
                            "Not enough memory to allocate a recv request");
     }
 
-    MCA_PML_UBCL_RECV_REQUEST_INIT(req, buf, count, datatype, src, tag, comm,
-                                   proc, persistent, probe, message);
+    MCA_PML_UBCL_RECV_REQUEST_INIT(req, buf, count, datatype, src, tag, comm, proc, form, probe,
+                                   message);
 
     /* Set user request */
     *request = &req->ompi_req;
@@ -178,7 +176,7 @@ int mca_pml_ubcl_irecv_init(void *buf, size_t count, ompi_datatype_t *datatype,
 
     /* Create request */
     mca_pml_ubcl_irecv_prepare(buf, count, datatype, src, tag, comm, request,
-                               true, false, NULL);
+                               MCA_PML_UBCL_PERSISTENT_COMM, false, NULL);
 
     return OMPI_SUCCESS;
 }
@@ -196,7 +194,7 @@ int mca_pml_ubcl_irecv(void *buf, size_t count, ompi_datatype_t *datatype,
 
     /* Create request and start communication */
     mca_pml_ubcl_irecv_prepare(buf, count, datatype, src, tag, comm, request,
-                               false, false, NULL);
+                               MCA_PML_UBCL_NONBLOCKING_COMM, false, NULL);
     mca_pml_ubcl_irecv_start(request);
 
     return OMPI_SUCCESS;
@@ -217,7 +215,7 @@ int mca_pml_ubcl_recv(void *buf, size_t count, ompi_datatype_t *datatype,
     struct ompi_request_t *request = NULL;
     int rc = 0; /** TODO: fix return code */
     mca_pml_ubcl_irecv_prepare(buf, count, datatype, src, tag, comm, &request,
-                               false, false, NULL);
+                               MCA_PML_UBCL_BLOCKING_COMM, false, NULL);
     mca_pml_ubcl_irecv_start(&request);
 
     /* Wait for data to be received */
