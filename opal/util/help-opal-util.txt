@@ -114,3 +114,16 @@ A call to mkdir was unable to create the desired directory:
 
 Please check to ensure you have adequate permissions to perform
 the desired operation.
+#
+[dir-owner]
+A directory that Open MPI needs to use already exists, but is owned
+by a different user.  For safety, Open MPI will not use it:
+
+  Directory:  %s
+  Owner UID:  %lu
+  Our UID:    %lu
+
+This can happen when a stale directory with the same name is left
+over from another user's job, or when the directory was deliberately
+pre-created.  Please remove the directory, or use a different
+location (e.g., by setting the TMPDIR environment variable).

@@ -85,18 +85,25 @@ int opal_event_register_params(void)
         return OPAL_SUCCESS;
     }
 
-#if defined(PLATFORM_OS_DARWIN)
-    opal_event_module_include = "select";
-#elif defined(PLATFORM_OS_LINUX)
-    opal_event_module_include = "epoll";
-#else
-    opal_event_module_include = "poll";
-#endif
+    /* Default to an empty list, which lets Libevent pick the best
+     * mechanism it has on this platform (kqueue on macOS, epoll on
+     * Linux, ...).  An empty string is used for parity with the other
+     * "include"-style MCA params (e.g., btl_tcp_if_include), where
+     * empty means "all possible values".  We used to force select/poll
+     * here to avoid 2008-era problems driving pty's, which no longer
+     * apply; see https://github.com/open-mpi/ompi/issues/14462 for the
+     * analysis.
+     *
+     * This is only the default: opal_event_include still pins a
+     * specific mechanism.
+     */
+    opal_event_module_include = "";
 
     avail = opal_argv_join((char **) opal_event_all_available_eventops, ',');
     opal_asprintf(&help_msg,
                   "Comma-delimited list of libevent subsystems "
-                  "to use (%s -- available on your platform)",
+                  "to use (%s -- available on your platform).  If empty, "
+                  "Libevent chooses the best available subsystem",
                   avail);
 
     ret = mca_base_var_register("opal", "opal", "event", "include", help_msg,
@@ -160,32 +167,35 @@ int opal_event_init(void)
         }
     }
 
-    if (NULL == opal_event_module_include) {
-        /* Shouldn't happen, but... */
-        opal_event_module_include = strdup("select");
-    }
-    includes = opal_argv_split(opal_event_module_include, ',');
-
     /* get a configuration object */
     opal_event_config = event_config_new();
-    /* cycle thru the available subsystems */
-    for (i = 0; NULL != opal_event_all_available_eventops[i]; ++i) {
-        /* if this module isn't included in the given ones,
-         * then exclude it
-         */
-        dumpit = true;
-        for (j = 0; NULL != includes[j]; j++) {
-            if (0 == strcmp("all", includes[j])
-                || 0 == strcmp(opal_event_all_available_eventops[i], includes[j])) {
-                dumpit = false;
-                break;
+
+    /* An empty include list (which the MCA var system stores as NULL)
+       means no restriction: avoid nothing, and let Libevent choose. */
+    includes = opal_argv_split(opal_event_module_include, ',');
+    if (NULL != includes) {
+        /* cycle thru the available subsystems */
+        for (i = 0; NULL != opal_event_all_available_eventops[i]; ++i) {
+            /* if this module isn't included in the given ones,
+             * then exclude it
+             */
+            dumpit = true;
+            for (j = 0; NULL != includes[j]; j++) {
+                /* "all" is equivalent to an empty list.  It predates
+                   the empty default and is kept so that existing
+                   settings continue to work. */
+                if (0 == strcmp("all", includes[j])
+                    || 0 == strcmp(opal_event_all_available_eventops[i], includes[j])) {
+                    dumpit = false;
+                    break;
+                }
+            }
+            if (dumpit) {
+                event_config_avoid_method(opal_event_config, opal_event_all_available_eventops[i]);
             }
         }
-        if (dumpit) {
-            event_config_avoid_method(opal_event_config, opal_event_all_available_eventops[i]);
-        }
+        opal_argv_free(includes);
     }
-    opal_argv_free(includes);
 
     /* Declare our intent to use threads (latched; see the definition). */
     opal_event_use_threads();

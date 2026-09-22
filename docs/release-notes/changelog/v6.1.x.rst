@@ -49,6 +49,28 @@ Open MPI version v6.1.0
   cannot reach. The argument kept its type, so a BTL outside the Open
   MPI tree that still calls ``opal_bitmap_set_bit()`` on it will
   compile and misreport; such components must be updated.
+  
+- Open MPI no longer forces a specific Libevent back-end; Libevent now
+  picks the best mechanism available on the platform (for example,
+  ``kqueue`` on macOS and ``epoll`` on Linux).  Open MPI previously
+  forced ``select`` on macOS and ``poll`` on most other platforms, to
+  work around 2008-era problems using the scalable mechanisms with
+  pseudo-terminals.  Those problems no longer apply: the pseudo-terminals
+  in question belong to PRRTE's I/O forwarding, which does not consult
+  this setting.  The ``opal_event_include`` MCA parameter still allows a
+  specific mechanism to be selected.  Its default is now empty, which
+  means that Libevent chooses (``all`` is also still accepted with the
+  same meaning).
+
+- Fixed every MPI process crashing in ``MPI_Init()`` on macOS when Open
+  MPI was built against a macOS SDK newer than the OS it runs on -- for
+  example, the Command Line Tools installing the macOS 27 SDK on a macOS
+  26 machine.  ``pipe2()`` is declared by the newer SDK but is absent
+  from the older OS, and the bundled Libevent's ``configure`` concluded
+  it was usable, so Libevent called a symbol that resolves to NULL at
+  run time.  The bundled Libevent is now always built to use its
+  portable ``pipe()`` fallback on macOS.  See
+  https://github.com/open-mpi/ompi/issues/14462 for the full analysis.
 
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
@@ -109,6 +131,16 @@ Open MPI version v6.1.0
   error handler through the request, and a nonblocking file request did
   not record which file it came from, so invoking the error handler
   dereferenced a null pointer.
+
+- Fixed the ``INTENT`` for the ``info_used`` parameter of ``MPI_Win_get_info``,
+  the ``errhandler`` parameter of ``MPI_Session_set_errhandler`` and the
+  ``flag`` parameter of ``MPI_Parrived`` in the ``use mpi`` Fortran
+  bindings.
+
+- Adjusted many Fortran ``use mpi`` API bindings to use the argument
+  names as defined by the standard. Calling these functions using
+  argument keywords will now require the standard-conformant naming
+  scheme.
 
 - ``MPI_Info_set`` now accepts a zero-length (empty) value string.  It
   previously raised ``MPI_ERR_INFO_VALUE`` for an empty value, but

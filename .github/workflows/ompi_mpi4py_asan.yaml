@@ -3,17 +3,6 @@ name: mpi4py (ASAN)
 on:
   pull_request:
   workflow_dispatch:
-    inputs:
-      repository:
-        description: 'mpi4py repository'
-        default: 'mpi4py/mpi4py'
-        required: false
-        type: string
-      ref:
-        description: 'mpi4py branch/tag/SHA'
-        default: 'master'
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -117,8 +106,8 @@ jobs:
     - name: Checkout mpi4py
       uses: actions/checkout@v6
       with:
-        repository: ${{ inputs.repository || 'mpi4py/mpi4py' }}
-        ref: ${{ inputs.ref }}
+        repository: mpi4py/mpi4py
+        ref: master
 
     - name: Setting up ASAN environment
       # LD_PRELOAD is needed to make sure ASAN is the first thing loaded
