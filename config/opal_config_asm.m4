@@ -20,6 +20,7 @@ dnl Copyright (c) 2020      Google, LLC. All rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+dnl Copyright (c) 2026      Stony Brook University.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -507,6 +508,104 @@ AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
 
 dnl #################################################################
 dnl
+dnl OPAL_CHECK_RISCV_LLSC_LIFO
+dnl
+dnl Check whether a RISC-V LR/SC sequence that includes a plain load
+dnl between the LR and SC (as used in opal_lifo/opal_fifo pop) makes
+dnl forward progress on this target.  Such a sequence lies outside the
+dnl RISC-V ISA "constrained LR/SC loop" definition (A-extension §8.3),
+dnl so architectural forward-progress guarantees do not apply.  All
+dnl known implementations handle it correctly.  When cross-compiling
+dnl we default to disabled; use --enable-riscv-llsc-lifo to override.
+dnl
+dnl Defines OPAL_HAVE_RISCV_LLSC_LIFO to 0 or 1.
+dnl
+dnl #################################################################
+AC_DEFUN([OPAL_CHECK_RISCV_LLSC_LIFO],[
+    OPAL_VAR_SCOPE_PUSH([riscv_llsc_result opal_check_riscv64])
+    riscv_llsc_result=0
+
+    AC_ARG_ENABLE([riscv-llsc-lifo],
+        [AS_HELP_STRING([--enable-riscv-llsc-lifo],
+             [Enable RISC-V LR/SC-based LIFO/FIFO pop.  The pop loop
+              loads the next-pointer between the LR and SC instructions,
+              which is outside the RISC-V ISA constrained LR/SC loop
+              definition (A-extension §8.3) and not architecturally
+              guaranteed to make forward progress.  All known
+              implementations handle it correctly.  Defaults to enabled
+              on native builds where a run-test succeeds; defaults to
+              disabled when cross-compiling.  (default: auto)])])
+
+    dnl Use the same oracle as opal/include/opal/sys/atomic.h
+    dnl (PLATFORM_ARCH_RISCV && PLATFORM_ARCH_64, both derived from
+    dnl compiler-predefined macros), not the configure ${host} triplet,
+    dnl so this check and the header agree even with a custom or
+    dnl mismatched --host triplet.
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([[
+#if !(defined(__riscv) && __riscv_xlen == 64)
+#error "not a 64-bit RISC-V target"
+#endif
+         ]], [[]])],
+        [opal_check_riscv64=yes],
+        [opal_check_riscv64=no])
+
+    AS_IF([test "$opal_check_riscv64" = "yes"],
+        [AS_IF([test "$enable_riscv_llsc_lifo" = "no"],
+              [riscv_llsc_result=0],
+              [test "$enable_riscv_llsc_lifo" = "yes"],
+              [riscv_llsc_result=1],
+              [dnl auto: run a smoke test
+               AC_MSG_CHECKING([if RISC-V LR/SC with intermediate load makes forward progress])
+               AC_RUN_IFELSE(
+                   [AC_LANG_SOURCE([[
+                       struct opal_riscv_llsc_test_node {
+                           volatile long next;
+                       };
+
+                       int main(void) {
+                           struct opal_riscv_llsc_test_node n0 = { .next = 0 };
+                           volatile long head = (long) &n0;
+                           long val, next;
+                           int i, r;
+
+                           for (i = 0; i < 1000; i++) {
+                               /* Mirrors opal_lifo_pop_atomic() /
+                                * opal_fifo_pop_atomic(): LR the head
+                                * pointer, then dereference it (a load
+                                * through the address the LR just
+                                * returned) between the LR and SC. */
+                               __asm__ __volatile__("lr.d.aq %0, (%1)"
+                                   : "=&r"(val) : "r"(&head) : "memory");
+                               next = ((struct opal_riscv_llsc_test_node *) val)->next;
+                               __asm__ __volatile__("sc.d %0, %2, (%1)"
+                                   : "=&r"(r) : "r"(&head), "r"(next) : "memory");
+                               if (r == 0) {
+                                   return 0;
+                               }
+                           }
+                           return 1;
+                       }
+                   ]])],
+                   [riscv_llsc_result=1
+                    AC_MSG_RESULT([yes])],
+                   [riscv_llsc_result=0
+                    AC_MSG_RESULT([no])],
+                   [riscv_llsc_result=0
+                    AC_MSG_RESULT([unknown (cross-compiling) -- defaulting to disabled; use --enable-riscv-llsc-lifo to override])])
+              ])
+        ])
+
+    AC_DEFINE_UNQUOTED([OPAL_HAVE_RISCV_LLSC_LIFO],
+        [$riscv_llsc_result],
+        [Whether the RISC-V LR/SC pop path is enabled for LIFO/FIFO])
+
+    OPAL_VAR_SCOPE_POP
+])dnl
+
+
+dnl #################################################################
+dnl
 dnl OPAL_CHECK_INLINE_GCC([action-if-found], [action-if-not-found])
 dnl
 dnl Check if the compiler is capable of doing GCC-style inline
@@ -712,6 +811,10 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_DEFINE_UNQUOTED([OPAL_USE_ASM_ATOMICS],
         [$want_asm_atomics],
         [Whether to use assembly-coded atomics for atomics implementation])
+
+    # Check for RISC-V LR/SC support for LIFO/FIFO operations (independent
+    # of the main atomics backend; applies even when using GCC/C11 builtins)
+    OPAL_CHECK_RISCV_LLSC_LIFO
 
     OPAL_SUMMARY_ADD([Miscellaneous], [Atomics], [], [$atomics_found])
 
