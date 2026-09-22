@@ -43,10 +43,10 @@
  * is that even with an always_inline attribute the compiler may still emit instructions to store
  * then load the arguments to/from the stack. This sequence may cause the ll reservation to be
  * cancelled. */
-#define opal_atomic_ll_32(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int32_t *_addr = (addr);                                        \
-        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+#define opal_atomic_ll_32(addr, ret)                                                        \
+    do {                                                                                    \
+        opal_atomic_int32_t *_addr = (addr);                                                \
+        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr) : "memory"); \
     } while (0)
 
 #define opal_atomic_sc_32(addr, value, ret)                         \
@@ -65,10 +65,10 @@
         ret = _ret;                                                 \
    } while (0)
 
-#define opal_atomic_ll_64(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int64_t *_addr = (addr);                                        \
-        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+#define opal_atomic_ll_64(addr, ret)                                                        \
+    do {                                                                                    \
+        opal_atomic_int64_t *_addr = (addr);                                                \
+        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr) : "memory"); \
     } while (0)
 
 #define opal_atomic_sc_64(addr, value, ret)                               \

@@ -39,11 +39,11 @@
 #        define OPAL_HAVE_ATOMIC_LLSC_32 1
 #        define OPAL_HAVE_ATOMIC_LLSC_64 1
 
-#        define opal_atomic_ll_32(addr, ret)                                                       \
-            do {                                                                                   \
-                opal_atomic_int32_t *_addr = (addr);                                               \
-                                                                                                   \
-                __asm__ __volatile__("ldaxr    %w0, [%1]          \n" : "=&r"(ret) : "r"(_addr));  \
+#        define opal_atomic_ll_32(addr, ret)                                                      \
+            do {                                                                                  \
+                opal_atomic_int32_t *_addr = (addr);                                              \
+                __asm__ __volatile__("ldaxr     %w0, [%1]          \n"                            \
+                                     : "=&r"(ret) : "r"(_addr) : "memory");                       \
             } while (0)
 
 #        define opal_atomic_sc_32(addr, newval, ret)                  \
@@ -64,7 +64,8 @@
             do {                                                                                  \
                 opal_atomic_int64_t *_addr = (addr);                                              \
                                                                                                   \
-                __asm__ __volatile__("ldaxr    %0, [%1]          \n" : "=&r"(ret) : "r"(_addr)); \
+                __asm__ __volatile__("ldaxr     %0, [%1]           \n"                             \
+                                     : "=&r"(ret) : "r"(_addr) : "memory");                       \
             } while (0)
 
 #        define opal_atomic_sc_64(addr, newval, ret)                 \
