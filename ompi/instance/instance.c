@@ -203,8 +203,11 @@ opal_pointer_array_t ompi_instance_f_to_c_table = {{0}};
  * PMIx event handlers
  */
 
-static size_t ompi_default_pmix_err_handler = 0;
-static size_t ompi_ulfm_pmix_err_handler = 0;
+/* PMIx hands out event handler reference ids starting at zero, so zero
+ * cannot double as "no handler registered" -- use SIZE_MAX instead, as
+ * ompi/errhandler/errhandler.c already does. */
+static size_t ompi_default_pmix_err_handler = SIZE_MAX;
+static size_t ompi_ulfm_pmix_err_handler = SIZE_MAX;
 
 /*
  * MPI extensions initialization function pointer
@@ -491,7 +494,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     OPAL_PMIX_DESTRUCT_LOCK(&mylock);
     PMIX_INFO_DESTRUCT(&info[0]);
     if (PMIX_SUCCESS != rc) {
-        ompi_default_pmix_err_handler = 0;
+        ompi_default_pmix_err_handler = SIZE_MAX;
         ret = opal_pmix_convert_status(rc);
         return ret;
     }
@@ -515,7 +518,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     PMIX_INFO_DESTRUCT(&info[0]);
     PMIX_INFO_DESTRUCT(&info[1]);
     if (PMIX_SUCCESS != rc) {
-        ompi_ulfm_pmix_err_handler = 0;
+        ompi_ulfm_pmix_err_handler = SIZE_MAX;
         ret = opal_pmix_convert_status(rc);
         return ret;
     }
@@ -1171,20 +1174,20 @@ static int ompi_mpi_instance_finalize_common (void)
         ompi_mpi_main_thread = NULL;
     }
 
-    if (0 != ompi_default_pmix_err_handler) {
+    if (SIZE_MAX != ompi_default_pmix_err_handler) {
         OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
         PMIx_Deregister_event_handler(ompi_default_pmix_err_handler, evhandler_dereg_callbk, &mylock);
         OPAL_PMIX_WAIT_THREAD(&mylock);
         OPAL_PMIX_DESTRUCT_LOCK(&mylock);
-        ompi_default_pmix_err_handler = 0;
+        ompi_default_pmix_err_handler = SIZE_MAX;
     }
 
-    if (0 != ompi_ulfm_pmix_err_handler) {
+    if (SIZE_MAX != ompi_ulfm_pmix_err_handler) {
         OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
         PMIx_Deregister_event_handler(ompi_ulfm_pmix_err_handler, evhandler_dereg_callbk, &mylock);
         OPAL_PMIX_WAIT_THREAD(&mylock);
         OPAL_PMIX_DESTRUCT_LOCK(&mylock);
-        ompi_ulfm_pmix_err_handler = 0;
+        ompi_ulfm_pmix_err_handler = SIZE_MAX;
     }
 
     /* Close our frameworks before leaving the RTE.  ompi_rte_finalize() calls

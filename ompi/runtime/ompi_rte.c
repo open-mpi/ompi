@@ -1052,8 +1052,17 @@ void ompi_rte_abort_peers(opal_process_name_t *procs,
     return;
 }
 
-static size_t handler = SIZE_MAX;
 static volatile bool debugger_event_active = true;
+
+static void _reg_fn(pmix_status_t status, size_t evhandler_ref, void *cbdata)
+{
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t *) cbdata;
+
+    lock->status = status;
+    lock->errhandler_ref = evhandler_ref;
+
+    OPAL_PMIX_WAKEUP_THREAD(lock);
+}
 
 static void _release_fn(size_t refid, pmix_status_t status,
                         const pmix_proc_t *source,
@@ -1076,6 +1085,8 @@ void ompi_rte_breakpoint(char *name)
     int rc, code = PMIX_DEBUGGER_RELEASE;
     pmix_info_t info[2];
     opal_process_name_t pname;
+    opal_pmix_lock_t lock;
+    size_t handler = SIZE_MAX;
 
     if (NULL != name
         && NULL != (evar = getenv("OMPI_BREAKPOINT"))
@@ -1094,9 +1105,17 @@ void ompi_rte_breakpoint(char *name)
         return;
     }
 
-    /* register an event handler for the PMIX_ERR_DEBUGGER_RELEASE event */
+    /* register an event handler for the PMIX_ERR_DEBUGGER_RELEASE event.
+     * We must capture the reference id PMIx assigns us, or we cannot
+     * deregister the handler again below. */
     PMIX_INFO_LOAD(&directive, PMIX_EVENT_HDLR_NAME, "MPI-DEBUGGER-ATTACH", PMIX_STRING);
-    PMIx_Register_event_handler(&code, 1, &directive, 1, _release_fn, NULL, NULL);
+    OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+    PMIx_Register_event_handler(&code, 1, &directive, 1, _release_fn, _reg_fn, (void *) &lock);
+    OPAL_PMIX_WAIT_THREAD(&lock);
+    if (PMIX_SUCCESS == lock.status) {
+        handler = lock.errhandler_ref;
+    }
+    OPAL_PMIX_DESTRUCT_LOCK(&lock);
     PMIX_INFO_DESTRUCT(&directive);
 
     /* notify the host that we are waiting in MPI_Init */
@@ -1112,7 +1131,9 @@ void ompi_rte_breakpoint(char *name)
     OMPI_WAIT_FOR_COMPLETION(debugger_event_active);
 
     /* deregister the event handler */
-    PMIx_Deregister_event_handler(handler, NULL, NULL);
+    if (SIZE_MAX != handler) {
+        PMIx_Deregister_event_handler(handler, NULL, NULL);
+    }
 }
 
 /*
