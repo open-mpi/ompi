@@ -23,7 +23,7 @@ names (indeed, the ``_fn`` names are typedefs to the ``_function`` names).
 INPUT PARAMETER
 ---------------
 
-* ``function``: User-defined error handling procedure (function).
+* ``file_errhandler_fn``: User-defined error handling procedure (function).
 
 OUTPUT PARAMETERS
 -----------------
