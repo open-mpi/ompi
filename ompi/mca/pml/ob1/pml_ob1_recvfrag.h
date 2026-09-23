@@ -17,6 +17,7 @@
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +66,16 @@ do {                                                            \
 } while(0)
 
 
+/*
+ * A fragment's data is gathered into its inline storage (frag->addr) when it
+ * fits within the unexpected limit, or else into a buffer taken from the
+ * allocator. buffers[0].addr records which: it is the allocator buffer, or
+ * NULL when the data is inline. That record, and not the segment, is what
+ * decides whether the return gives a buffer back: the segment's address and
+ * length are moved on once the fragment is initialized - past an extended
+ * CID header, for one held until its communicator is added - and so no
+ * longer describe what was allocated.
+ */
 #define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segs, cnt, btl )          \
 do {                                                                    \
     size_t i, _size;                                                    \
@@ -81,6 +92,7 @@ do {                                                                    \
     }                                                                   \
     /* copy over data */                                                \
     if(_size <= mca_pml_ob1.unexpected_limit ) {                        \
+        buffers[0].addr = NULL;                                         \
         macro_segments[0].seg_addr.pval = frag->addr;                   \
     } else {                                                            \
         buffers[0].len = _size;                                         \
@@ -101,7 +113,7 @@ do {                                                                    \
 
 #define MCA_PML_OB1_RECV_FRAG_RETURN(frag)                              \
 do {                                                                    \
-    if( frag->segments[0].seg_len > mca_pml_ob1.unexpected_limit ) {    \
+    if( NULL != frag->buffers[0].addr ) {                               \
         /* return buffers */                                            \
         mca_pml_ob1.allocator->alc_free( mca_pml_ob1.allocator,         \
                                          frag->buffers[0].addr );       \
