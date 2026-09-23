@@ -17,6 +17,7 @@
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -168,6 +169,8 @@ enum {
     OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX,
     /* long double complex */
     OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX,
+    /* quad precision complex (the C type behind Fortran COMPLEX*32) */
+    OMPI_OP_BASE_TYPE_C_FLOAT128_COMPLEX,
 
     /** Byte */
     OMPI_OP_BASE_TYPE_BYTE,

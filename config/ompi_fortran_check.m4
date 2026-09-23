@@ -140,6 +140,8 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
             opal_short_float_complex_t) ofc_type_kind=C_SHORT_FLOAT_COMPLEX ;;
             _Float128)            ofc_type_kind=C_FLOAT128            ;;
             __float128)           ofc_type_kind=C_FLOAT128            ;;
+            _Float128*_Complex)   ofc_type_kind=C_FLOAT128_COMPLEX    ;;
+            __float128*_Complex)  ofc_type_kind=C_FLOAT128_COMPLEX    ;;
             *)
                 # Skip types like "DOUBLE PRECISION"
                 ;;

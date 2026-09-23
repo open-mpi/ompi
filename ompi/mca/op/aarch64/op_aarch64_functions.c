@@ -3,7 +3,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2019      Arm Ltd.  All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2024      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
  *
@@ -20,6 +20,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#include <limits.h>
+
 #include "opal/util/output.h"
 
 #include "ompi/op/op.h"
@@ -39,11 +41,13 @@
 #define OMPI_OP_TYPE_PREPEND sv
 #define OMPI_OP_OP_PREPEND sv
 #define APPEND   _sve
+#define OMPI_OP_AARCH64_ATTR OMPI_SVE_ATTR
 #elif GENERATE_NEON_CODE
 #    include <arm_neon.h>
 #define OMPI_OP_TYPE_PREPEND
 #define OMPI_OP_OP_PREPEND v
 #define APPEND   _neon
+#define OMPI_OP_AARCH64_ATTR
 #else
 #error "Neither NEON nor SVE code generated. This should never happen"
 #endif /* OMPI_MCA_OP_HAVE_SVE */
@@ -220,6 +224,37 @@ _Generic((*(out)), \
     OP_AARCH64_FUNC(sum, f, 32,  4, float, add)
     OP_AARCH64_FUNC(sum, f, 64,  2, float, add)
 
+/*
+ * A complex value has the same representation and alignment as an array
+ * of two values of the corresponding real type (C11 6.2.5p13), and a
+ * complex sum is componentwise, so summing count complex values is the
+ * same computation as summing 2 * count reals.  Reuse the real kernels
+ * above instead of vectorizing this a second time.  The doubled count
+ * does not necessarily fit in an int, hence the chunking.
+ */
+#define OP_AARCH64_COMPLEX_SUM_FUNC(type_name, base_type)                                 \
+    OMPI_OP_AARCH64_ATTR                                                                  \
+    static void OP_CONCAT(ompi_op_aarch64_2buff_sum_##type_name, APPEND)                  \
+                            (const void *_in, void *_out, int *count,                     \
+                             struct ompi_datatype_t **dtype,                              \
+                             struct ompi_op_base_module_1_0_0_t *module)                  \
+    {                                                                                     \
+        base_type *in = (base_type *) _in, *out = (base_type *) _out;                     \
+        int left_over = *count;                                                           \
+        while (left_over > 0) {                                                           \
+            int how_much = (left_over > (INT_MAX / 2)) ? (INT_MAX / 2) : left_over;       \
+            int reals = 2 * how_much;                                                     \
+            OP_CONCAT(ompi_op_aarch64_2buff_sum_##base_type, APPEND)                      \
+                (in, out, &reals, dtype, module);                                         \
+            in += reals;                                                                  \
+            out += reals;                                                                 \
+            left_over -= how_much;                                                        \
+        }                                                                                 \
+    }
+
+    OP_AARCH64_COMPLEX_SUM_FUNC(c_float_complex, float32_t)
+    OP_AARCH64_COMPLEX_SUM_FUNC(c_double_complex, float64_t)
+
 /*************************************************************************
  * Product
  *************************************************************************/
@@ -389,6 +424,32 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     OP_AARCH64_FUNC_3BUFF(sum, f, 32,  4, float, add)
     OP_AARCH64_FUNC_3BUFF(sum, f, 64,  2, float, add)
 
+/* See the comment on OP_AARCH64_COMPLEX_SUM_FUNC above. */
+#define OP_AARCH64_COMPLEX_SUM_FUNC_3BUFF(type_name, base_type)                           \
+    OMPI_OP_AARCH64_ATTR                                                                  \
+    static void OP_CONCAT(ompi_op_aarch64_3buff_sum_##type_name, APPEND)                  \
+                            (const void *_in1, const void *_in2, void *_out, int *count,  \
+                             struct ompi_datatype_t **dtype,                              \
+                             struct ompi_op_base_module_1_0_0_t *module)                  \
+    {                                                                                     \
+        base_type *in1 = (base_type *) _in1, *in2 = (base_type *) _in2,                   \
+                  *out = (base_type *) _out;                                              \
+        int left_over = *count;                                                           \
+        while (left_over > 0) {                                                           \
+            int how_much = (left_over > (INT_MAX / 2)) ? (INT_MAX / 2) : left_over;       \
+            int reals = 2 * how_much;                                                     \
+            OP_CONCAT(ompi_op_aarch64_3buff_sum_##base_type, APPEND)                      \
+                (in1, in2, out, &reals, dtype, module);                                   \
+            in1 += reals;                                                                 \
+            in2 += reals;                                                                 \
+            out += reals;                                                                 \
+            left_over -= how_much;                                                        \
+        }                                                                                 \
+    }
+
+    OP_AARCH64_COMPLEX_SUM_FUNC_3BUFF(c_float_complex, float32_t)
+    OP_AARCH64_COMPLEX_SUM_FUNC_3BUFF(c_double_complex, float64_t)
+
 /*************************************************************************
  * Product
  *************************************************************************/
@@ -470,6 +531,14 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
     [OMPI_OP_BASE_TYPE_FLOAT] = FLOAT(name, ftype),                    \
     [OMPI_OP_BASE_TYPE_DOUBLE] = DOUBLE(name, ftype)
 
+#define FLOAT_COMPLEX(name, ftype)  OP_CONCAT(ompi_op_aarch64_##ftype##_##name##_c_float_complex, APPEND)
+#define DOUBLE_COMPLEX(name, ftype) OP_CONCAT(ompi_op_aarch64_##ftype##_##name##_c_double_complex, APPEND)
+
+/* Only MPI_SUM: a complex product is not a componentwise operation. */
+#define COMPLEX_SUM(name, ftype)                                       \
+    [OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX] = FLOAT_COMPLEX(name, ftype),  \
+    [OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX] = DOUBLE_COMPLEX(name, ftype)
+
 /*
  * MPI_OP_NULL
  * All types
@@ -508,6 +577,7 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
         C_INTEGER_BASE(sum, 2buff),
         C_INTEGER_EX(sum, 2buff),
         FLOATING_POINT(sum, 2buff),
+        COMPLEX_SUM(sum, 2buff),
     },
     /* Corresponds to MPI_PROD */
     [OMPI_OP_BASE_FORTRAN_PROD] = {
@@ -584,6 +654,7 @@ static void OP_CONCAT(ompi_op_aarch64_3buff_##name##_##type##type_size##_t, APPE
         C_INTEGER_BASE(sum, 3buff),
         C_INTEGER_EX(sum, 3buff),
         FLOATING_POINT(sum, 3buff),
+        COMPLEX_SUM(sum, 3buff),
     },
     /* Corresponds to MPI_PROD */
     [OMPI_OP_BASE_FORTRAN_PROD] = {
