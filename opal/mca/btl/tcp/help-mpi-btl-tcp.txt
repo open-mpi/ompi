@@ -6,6 +6,7 @@
 #                         reserved.
 # Copyright (c) 2016      Research Organization for Information Science
 #                         and Technology (RIST). All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -146,3 +147,25 @@ This attempted connection will be closed and ignored.
   PID:        %d
   Peer:       %s
   Identifier: %s (%s)
+#
+[dropped pending connection]
+WARNING: Open MPI accepted a TCP connection from a peer in this MPI
+job, could not give it to the endpoint it belongs to, and could not
+put a connection of its own in its place either.  The reason below
+says which of those went wrong.
+
+A peer whose connection is dropped does not try again on its own: it
+reads the closed socket as this process having won a
+simultaneous-connect race, and waits for the connection it believes we
+are making.  Dropping one is therefore only safe when this process
+really does connect, and that is what did not happen here.  Any
+message the peer has queued for this process will never be sent, and
+the job is likely to hang.
+
+A peer that is itself shutting down is harmless, and this message can
+then be ignored.
+
+  Local host:  %s
+  Local PID:   %d
+  Peer:        %s
+  Reason:      %s

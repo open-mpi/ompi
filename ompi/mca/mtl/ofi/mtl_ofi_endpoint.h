@@ -2,6 +2,7 @@
  * Copyright (c) 2013-2016 Intel, Inc. All rights reserved
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -39,17 +40,22 @@ struct mca_mtl_ofi_endpoint_t {
 
 typedef struct mca_mtl_ofi_endpoint_t  mca_mtl_ofi_endpoint_t;
 
+/**
+ * Look up a peer's endpoint, wiring it as a last resort.
+ *
+ * The PML wires a peer before handing an operation down, so this is
+ * normally a plain lookup. Acknowledging a synchronous send is the one
+ * path that names a peer the PML never saw; wiring can fail there,
+ * usually because the connection info has not arrived, so every caller
+ * must be ready for a NULL.
+ */
 static inline mca_mtl_ofi_endpoint_t *
 ompi_mtl_ofi_get_endpoint(struct mca_mtl_base_module_t* mtl,
                           ompi_proc_t *ompi_proc)
 {
     if (OPAL_UNLIKELY(NULL == ompi_proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL])) {
         if (OPAL_UNLIKELY(OMPI_SUCCESS != MCA_PML_CALL(add_procs(&ompi_proc, 1)))) {
-            /* Fatal error. exit() out */
-            opal_output(0, "%s:%d: *** The Open MPI OFI MTL is aborting the MPI job (via exit(3)).\n",
-                           __FILE__, __LINE__);
-            fflush(stderr);
-            exit(1);
+            return NULL;
         }
     }
 
