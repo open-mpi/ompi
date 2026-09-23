@@ -116,7 +116,9 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
 
     if (MCA_PML_BASE_SEND_BUFFERED == req->mode) {
         pml_ubcl_bufferize(req);
-        req->to_free = 1;
+        if (MCA_PML_UBCL_BLOCKING_COMM == req->form) {
+            req->to_free = 1;
+        }
     }
     get_ubcl_send_mode(req->mode, &send_mode);
 
