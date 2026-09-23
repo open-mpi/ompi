@@ -20,7 +20,6 @@ build support for that library).
    :maxdepth: 1
 
    ofi
-   slingshot
    tcp
    shared-memory
    ib-and-roce
