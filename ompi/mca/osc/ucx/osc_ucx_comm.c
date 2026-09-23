@@ -3,6 +3,7 @@
  * Copyright (c) 2019-2022 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2021      IBM Corporation. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +42,27 @@ typedef struct ucx_iovec {
 } ucx_iovec_t;
 
 size_t ompi_osc_ucx_outstanding_ops_flush_threshold = 64;
+
+/*
+ * Return the address of the first byte of origin data described by
+ * origin_dt.  For a type with a non-zero true_lb the data starts at
+ * origin_addr + true_lb rather than at origin_addr itself; the classic
+ * case is an absolute-displacement type used with MPI_BOTTOM, where
+ * origin_addr is NULL and true_lb carries the real buffer address.
+ *
+ * The offset is computed in uintptr_t rather than as pointer arithmetic
+ * because adding an integer to a null pointer is undefined behavior.
+ * Constness is preserved: the result feeds ompi_op_reduce(), whose
+ * source argument is a const void *.
+ */
+static inline const void *osc_ucx_origin_true_lb_ptr(const void *origin_addr,
+                                                     ompi_datatype_t *origin_dt)
+{
+    ptrdiff_t true_lb, true_extent;
+
+    ompi_datatype_get_true_extent(origin_dt, &true_lb, &true_extent);
+    return (const void *)((uintptr_t)origin_addr + (uintptr_t)true_lb);
+}
 
 static inline int check_sync_state(ompi_osc_ucx_module_t *module, int target,
                                    bool is_req_ops) {
@@ -759,7 +781,8 @@ int accumulate_req(const void *origin_addr, int origin_count,
         }
 
         if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
-            ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
+            ompi_op_reduce(op, osc_ucx_origin_true_lb_ptr(origin_addr, origin_dt),
+                           temp_addr, (int)temp_count, temp_dt);
         } else {
             ucx_iovec_t *origin_ucx_iov = NULL;
             uint32_t origin_ucx_iov_count = 0;
@@ -1392,7 +1415,8 @@ int get_accumulate_req(const void *origin_addr, int origin_count,
             }
 
             if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
-                ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
+                ompi_op_reduce(op, osc_ucx_origin_true_lb_ptr(origin_addr, origin_dt),
+                               temp_addr, (int)temp_count, temp_dt);
             } else {
                 ucx_iovec_t *origin_ucx_iov = NULL;
                 uint32_t origin_ucx_iov_count = 0;
@@ -1799,7 +1823,8 @@ void ompi_osc_ucx_req_completion(void *request) {
                     ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
             
                 if (ompi_datatype_is_predefined(origin_dt) || is_origin_contig) {
-                    ompi_op_reduce(op, (void *)origin_addr, temp_addr, (int)temp_count, temp_dt);
+                    ompi_op_reduce(op, osc_ucx_origin_true_lb_ptr(origin_addr, origin_dt),
+                                   temp_addr, (int)temp_count, temp_dt);
                 } else {
                     ucx_iovec_t *origin_ucx_iov = NULL;
                     uint32_t origin_ucx_iov_count = 0;
