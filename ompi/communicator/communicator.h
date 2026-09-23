@@ -818,6 +818,10 @@ typedef struct ompi_comm_rbcast_message_t {
     uint8_t  type;
 } ompi_comm_rbcast_message_t;
 
+/* The return value is not a status: it says whether the message is news
+ * to us and therefore has to be forwarded to complete the broadcast.
+ * Zero stops it here -- a duplicate, or nothing this process has to act
+ * on -- and non-zero passes it on. */
 typedef int (*ompi_comm_rbcast_cb_t)(ompi_communicator_t* comm, ompi_comm_rbcast_message_t* msg);
 
 OMPI_DECLSPEC int ompi_comm_rbcast_register_cb_type(ompi_comm_rbcast_cb_t callback);

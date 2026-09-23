@@ -347,6 +347,15 @@ static inline void mca_btl_sm_try_fbox_setup(mca_btl_base_endpoint_t *ep, mca_bt
             opal_atomic_wmb();
         }
 
+        if (NULL == ep->fbox_out.buffer) {
+            /* The test above is an equality, so this peer has just spent
+             * its one chance at a fast box on a moment when none could be
+             * had.  Wind the count back rather than leave a busy peer on
+             * the fifo forever; the next threshold sends ask again, and
+             * the send path pays nothing extra in the meantime. */
+            ep->send_count = 0;
+        }
+
         OPAL_THREAD_UNLOCK(&mca_btl_sm_component.lock);
     }
 }

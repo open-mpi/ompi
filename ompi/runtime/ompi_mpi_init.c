@@ -31,6 +31,7 @@
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -585,6 +586,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
     OMPI_TIMING_NEXT("modex");
 
+    /* These are the only add_comm calls for the predefined communicators:
+     * instance init neither builds nor adds them, so the pair built by
+     * ompi_comm_init_mpi3() above is handed to the PML exactly once.  The
+     * BTLs have been able to deliver since instance init ran add_procs,
+     * so a fragment for MPI_COMM_WORLD may already have arrived; the PML
+     * holds anything it could not place for a communicator it had never
+     * seen, and add_comm() drains that queue here. */
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
 
