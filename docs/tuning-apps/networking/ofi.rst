@@ -144,21 +144,21 @@ containing shared memory and two Slingshot domains:
    shell$ mpirun --mca pml cm --mca mtl ofi \
           --mca mtl_ofi_provider_include lnx ./mpi_hello
 
-The provider manual describes additional forms, including multiple groups and
-provider-specific domain lists.  All nodes in the MPI job must use compatible
-LINKx configurations and the same ordering of linked providers and domains.
-If shared memory is included, LINKx uses it for intra-node communication;
-other linked providers are used for off-node communication.  LINKx can also
-distribute messages across multiple linked domains, according to its
-multi-rail selection policy.
+The provider manual(man fi_lnx) describes additional forms, including multiple
+groups and provider-specific domain lists.  All nodes in the MPI job must use
+compatible LINKx configurations and the same ordering of linked providers and
+domains.  If shared memory is included, LINKx uses it for intra-node
+communication; other linked providers are used for off-node communication.
+LINKx can also distribute messages across multiple linked domains, according
+to its multi-rail selection policy.
 
 There are important tradeoffs.  The LINKx provider described by the current
 Libfabric manual supports tagged operations, but does not provide hardware
 offload such as hardware tag matching.  Because memory registration does not
 identify the eventual operation or destination, LINKx registers memory with
-all linked providers.  This can increase registration cost and may affect
-memory behavior.  Measure an application with and without LINKx before making
-it a site-wide default.
+all linked providers.  This can increase memory registration cost and may
+affect memory behavior.  Measure an application with and without LINKx before
+making it a site-wide default.
 
 HPE Slingshot
 -------------
