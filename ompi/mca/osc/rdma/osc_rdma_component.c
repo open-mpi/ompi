@@ -1601,20 +1601,27 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
     opal_atomic_mb();
 
     ret = ompi_osc_rdma_share_data (module);
-    if (OMPI_SUCCESS != ret) {
+
+    /* share_data() can fail on one rank alone, and nothing after it is
+     * collective, so without agreement that rank returns an error from the
+     * constructor while every other rank holds a live window and blocks in
+     * its next epoch. */
+    ret = synchronize_errorcode (ret, module->comm);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         opal_output_verbose(MCA_BASE_VERBOSE_ERROR, ompi_osc_base_framework.framework_output,
                             "failed to share window data with peers");
         ompi_osc_rdma_free (win);
-    } else {
-        /* for now the leader is always rank 0 in the communicator */
-        module->leader = ompi_osc_rdma_module_peer (module, 0);
-
-        opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
-                            "finished creating osc/rdma window with id %s",
-                            ompi_comm_print_cid(module->comm));
+        return ret;
     }
 
-    return ret;
+    /* for now the leader is always rank 0 in the communicator */
+    module->leader = ompi_osc_rdma_module_peer (module, 0);
+
+    opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
+                        "finished creating osc/rdma window with id %s",
+                        ompi_comm_print_cid(module->comm));
+
+    return OMPI_SUCCESS;
 }
 
 

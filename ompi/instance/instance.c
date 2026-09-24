@@ -7,7 +7,9 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Nanook Consulting  All rights reserved.
+ * Copyright (c) 2026      BULL S.A.S.  All rights reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
@@ -417,7 +419,7 @@ static void evhandler_dereg_callbk(pmix_status_t status,
 static int ompi_mpi_instance_init_common (int argc, char **argv)
 {
     int ret;
-    bool need_world_comms;
+    bool requires_world;
     ompi_proc_t **procs;
     size_t nprocs;
     volatile bool active;
@@ -706,14 +708,23 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
     }
 
-    need_world_comms = mca_pml_base_requires_world() || mca_osc_base_requires_world();
-    if (need_world_comms) {
-        /* need to set up comm world for this instance -- XXX -- FIXME -- probably won't always
-         * be the case. */
-        if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
-            return ompi_instance_print_error ("ompi_comm_init_mpi3 () failed", ret);
-        }
-    }
+    /* The predefined MPI-3 communicators are not built here.  They belong
+     * to the World Model, which builds them once after this function has
+     * returned, and cannot do it any earlier: MPI_COMM_WORLD records the
+     * instance it lives in, and this instance is not published until
+     * ompi_mpi_instance_init() is done with it.  Building them here as
+     * well can cost a message, because the second construction runs over
+     * the first -- it hands the PML a new and empty communicator and
+     * orphans everything the PML had already matched against the old one,
+     * with the sender none the wiser.  Waiting loses nothing: the PML
+     * parks a fragment it cannot place on its non-existing communicator
+     * queue, and add_comm() drains that queue.
+     *
+     * The world requirement itself still matters, but it is about procs
+     * rather than communicators: it comes from a BTL that wants every
+     * proc in the job in a single add_procs() call, so below it only
+     * chooses how the procs are collected. */
+    requires_world = mca_pml_base_requires_world() || mca_osc_base_requires_world();
 
     /* initialize file handles */
     if (OMPI_SUCCESS != (ret = ompi_file_init ())) {
@@ -766,7 +777,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     /* some btls/mtls require we call add_procs with all procs in the job.
      * since the btls/mtls have no visibility here it is up to the pml to
      * convey this requirement */
-    if (need_world_comms) {
+    if (requires_world) {
         if (NULL == (procs = ompi_proc_world (&nprocs))) {
             return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
         }
@@ -789,29 +800,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ret;
     } else if (OMPI_SUCCESS != ret) {
         return ompi_instance_print_error ("PML add procs failed", ret);
-    }
-
-    /* ompi_comm_init_mpi3() (above) marks the predefined world/self
-       communicators OMPI_COMM_PML_ADDED, but the matching
-       MCA_PML_CALL(add_comm()) calls live only in the World Model path
-       (ompi_mpi_init()).  When the communicator subsystem was set up
-       here -- a sessions-only process whose pml/osc requires the world,
-       e.g. ob1 over a multi-interface tcp btl at MPI_THREAD_MULTIPLE --
-       the flag was a lie: teardown then calls pml del_comm() on
-       communicators the PML has never seen, and ob1 dereferences the
-       NULL c_pml_comm.  Add them for real, now that add_procs() has
-       run.  The c_pml_comm guard keeps the World Model path (which
-       re-runs ompi_comm_init_mpi3() and performs its own add_comm()
-       calls after this function returns) from double-adding. */
-    if (need_world_comms && NULL == ompi_mpi_comm_world.comm.c_pml_comm) {
-        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
-        if (OMPI_SUCCESS != ret) {
-            return ompi_instance_print_error ("PML add comm (world) failed", ret);
-        }
-        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
-        if (OMPI_SUCCESS != ret) {
-            return ompi_instance_print_error ("PML add comm (self) failed", ret);
-        }
     }
 
     /* Determine the overall threadlevel support of all processes
