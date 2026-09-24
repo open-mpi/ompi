@@ -3,6 +3,7 @@
 # Copyright (c) 2010-2014 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2016-2017 Intel, Inc. All rights reserved.
 # Copyright (c) 2017      IBM Corporation. All rights reserved.
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
@@ -255,7 +256,10 @@ foreach my $f (@files) {
         ++$would_replace;
     }
     else {
-        # Now replace the old one
+        # Now replace the old one, keeping its permissions (e.g., the
+        # execute bits on scripts)
+        my $mode = (stat($f))[2] & 07777;
+        chmod($mode, $newf);
         unlink($f);
         rename($newf, $f);
     }
