@@ -732,33 +732,33 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        AC_MSG_RESULT([${OMPI_PC_LIBS_PRIVATE}])
 
        dnl Equivalents for the MPI Forum ABI pkg-config files
-       dnl (ompi-abi*.pc).  The Cflags intentionally omit
-       dnl OMPI_WRAPPER_CPPFLAGS: the ABI pc files set includedir to the
-       dnl standard_abi subdirectory themselves, mirroring what the
-       dnl mpicc_abi wrapper passes.
-       AC_MSG_CHECKING([for OMPI ABI pkg-config Cflags])
-       OMPI_ABI_PC_CFLAGS="${OMPI_WRAPPER_CFLAGS} ${OMPI_WRAPPER_CFLAGS_PREFIX}"
-       OMPI_ABI_PC_CFLAGS=`echo ${OMPI_ABI_PC_CFLAGS} | sed -e 's/@{/\${/g'`
-       AC_SUBST([OMPI_ABI_PC_CFLAGS])
-       AC_MSG_RESULT([${OMPI_ABI_PC_CFLAGS}])
+       dnl (ompi-forum-abi*.pc).  The Cflags intentionally omit
+       dnl OMPI_WRAPPER_CPPFLAGS: the MPI Forum ABI pc files set
+       dnl includedir to the standard_abi subdirectory themselves,
+       dnl mirroring what the mpicc_abi wrapper passes.
+       AC_MSG_CHECKING([for MPI Forum ABI pkg-config Cflags])
+       OMPI_FORUM_ABI_PC_CFLAGS="${OMPI_WRAPPER_CFLAGS} ${OMPI_WRAPPER_CFLAGS_PREFIX}"
+       OMPI_FORUM_ABI_PC_CFLAGS=`echo ${OMPI_FORUM_ABI_PC_CFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_FORUM_ABI_PC_CFLAGS])
+       AC_MSG_RESULT([${OMPI_FORUM_ABI_PC_CFLAGS}])
 
-       AC_MSG_CHECKING([for OMPI ABI pkg-config CXXflags])
-       OMPI_ABI_PC_CXXFLAGS="${OMPI_WRAPPER_CXXFLAGS} ${OMPI_WRAPPER_CXXFLAGS_PREFIX}"
-       OMPI_ABI_PC_CXXFLAGS=`echo ${OMPI_ABI_PC_CXXFLAGS} | sed -e 's/@{/\${/g'`
-       AC_SUBST([OMPI_ABI_PC_CXXFLAGS])
-       AC_MSG_RESULT([${OMPI_ABI_PC_CXXFLAGS}])
+       AC_MSG_CHECKING([for MPI Forum ABI pkg-config CXXflags])
+       OMPI_FORUM_ABI_PC_CXXFLAGS="${OMPI_WRAPPER_CXXFLAGS} ${OMPI_WRAPPER_CXXFLAGS_PREFIX}"
+       OMPI_FORUM_ABI_PC_CXXFLAGS=`echo ${OMPI_FORUM_ABI_PC_CXXFLAGS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_FORUM_ABI_PC_CXXFLAGS])
+       AC_MSG_RESULT([${OMPI_FORUM_ABI_PC_CXXFLAGS}])
 
-       AC_MSG_CHECKING([for OMPI ABI pkg-config Libs])
-       OMPI_ABI_PC_LIBS="${OMPI_WRAPPER_LDFLAGS} ${OMPI_WRAPPER_ABI_LIBS}"
-       OMPI_ABI_PC_LIBS=`echo ${OMPI_ABI_PC_LIBS} | sed -e 's/@{/\${/g'`
-       AC_SUBST([OMPI_ABI_PC_LIBS])
-       AC_MSG_RESULT([${OMPI_ABI_PC_LIBS}])
+       AC_MSG_CHECKING([for MPI Forum ABI pkg-config Libs])
+       OMPI_FORUM_ABI_PC_LIBS="${OMPI_WRAPPER_LDFLAGS} ${OMPI_WRAPPER_ABI_LIBS}"
+       OMPI_FORUM_ABI_PC_LIBS=`echo ${OMPI_FORUM_ABI_PC_LIBS} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_FORUM_ABI_PC_LIBS])
+       AC_MSG_RESULT([${OMPI_FORUM_ABI_PC_LIBS}])
 
-       AC_MSG_CHECKING([for OMPI ABI pkg-config Libs.private])
-       OMPI_ABI_PC_LIBS_PRIVATE="${OMPI_WRAPPER_LDFLAGS_STATIC} ${OMPI_WRAPPER_ABI_LIBS_STATIC}"
-       OMPI_ABI_PC_LIBS_PRIVATE=`echo ${OMPI_ABI_PC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
-       AC_SUBST([OMPI_ABI_PC_LIBS_PRIVATE])
-       AC_MSG_RESULT([${OMPI_ABI_PC_LIBS_PRIVATE}])
+       AC_MSG_CHECKING([for MPI Forum ABI pkg-config Libs.private])
+       OMPI_FORUM_ABI_PC_LIBS_PRIVATE="${OMPI_WRAPPER_LDFLAGS_STATIC} ${OMPI_WRAPPER_ABI_LIBS_STATIC}"
+       OMPI_FORUM_ABI_PC_LIBS_PRIVATE=`echo ${OMPI_FORUM_ABI_PC_LIBS_PRIVATE} | sed -e 's/@{/\${/g'`
+       AC_SUBST([OMPI_FORUM_ABI_PC_LIBS_PRIVATE])
+       AC_MSG_RESULT([${OMPI_FORUM_ABI_PC_LIBS_PRIVATE}])
 
        AC_MSG_CHECKING([for OMPI pkg-config Fortran Cflags])
        OMPI_PC_FC_CFLAGS="${OMPI_WRAPPER_FCFLAGS} ${OMPI_WRAPPER_FCFLAGS_PREFIX}"
