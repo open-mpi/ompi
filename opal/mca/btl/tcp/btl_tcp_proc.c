@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -321,6 +322,15 @@ static int mca_btl_tcp_proc_store_matched_interfaces(mca_btl_tcp_proc_t *btl_pro
         }
         opal_hash_table_set_value_uint32(&btl_proc->btl_index_to_endpoint, *local_index,
                                          (void *) remote_addr);
+        /* Both peers must arrive at the same pairing, and a disagreement
+         * stays invisible until the job hangs, so make the outcome
+         * observable.  BTL_VERBOSE is compiled out unless --enable-debug;
+         * this has to survive an optimized build to be of any use in the
+         * field. */
+        opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                            "btl: tcp: pairing local btl %u <-> remote kindex %d port %d",
+                            *local_index, (int) remote_addr->addr_ifkindex,
+                            (int) remote_addr->addr_port);
     }
 out:
     return rc;
@@ -345,6 +355,13 @@ static int mca_btl_tcp_proc_handle_modex_addresses(mca_btl_tcp_proc_t *btl_proc,
     if (rc) {
         goto cleanup;
     }
+
+    /* The two inputs that are supposed to make both peers compute the same
+     * matching: peer_is_local selects which addressing rules apply at all,
+     * and local_proc_is_left must come out opposite on the two sides. */
+    opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                        "btl: tcp: matching peer_is_local=%d local_proc_is_left=%d num_matched=%d",
+                        (int) peer_is_local, local_proc_is_left, num_matched);
 
     rc = mca_btl_tcp_proc_store_matched_interfaces(btl_proc, local_proc_is_left, graph, num_matched,
                                                    matched_edges);
