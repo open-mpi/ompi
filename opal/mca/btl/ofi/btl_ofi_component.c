@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
- * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2026 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -349,11 +349,21 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     domain_attr.control_progress = progress_mode;
     domain_attr.data_progress = progress_mode;
 
-    if (enable_mpi_threads) {
+    if (enable_mpi_threads || enable_progress_threads) {
         domain_attr.threading = FI_THREAD_SAFE;
     } else {
         domain_attr.threading = FI_THREAD_DOMAIN;
     }
+
+#if OPAL_OFI_HAVE_FI_PROGRESS_CONTROL_UNIFIED
+    if (domain_attr.threading == FI_THREAD_DOMAIN && progress_mode == FI_PROGRESS_UNSPEC) {
+#if FI_MAJOR_VERSION >= 2
+        domain_attr.progress = FI_PROGRESS_CONTROL_UNIFIED;
+#elif FI_MAJOR_VERSION == 1 && FI_MINOR_VERSION >= 21
+        domain_attr.control_progress = FI_PROGRESS_CONTROL_UNIFIED;
+#endif
+    }
+#endif
 
     /* select endpoint type */
     ep_attr.type = FI_EP_RDM;
