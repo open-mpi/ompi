@@ -66,7 +66,7 @@ int ompi_request_default_wait(
     if( req->req_persistent ) {
         if( req->req_state == OMPI_REQUEST_INACTIVE ) {
             if (MPI_STATUS_IGNORE != status) {
-                OMPI_COPY_STATUS(status, ompi_status_empty, false);
+                OMPI_COPY_STATUS(status, ompi_status_empty, true);
             }
             return OMPI_SUCCESS;
         }
@@ -140,7 +140,7 @@ recheck:
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         /* No signal-in-flight can be in this case */
         WAIT_SYNC_RELEASE_NOWAIT(&sync);
