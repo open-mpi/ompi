@@ -194,11 +194,11 @@ to at least the versions listed below.
      - 2.6.4
      - 4.2.0
    * - Git main
-     - 1.4.19
-     - 2.71
-     - 1.16.5
-     - 2.4.6
-     - 2.6.4
+     - |m4_dist_version|
+     - |autoconf_dist_version|
+     - |automake_dist_version|
+     - |libtool_dist_version|
+     - |flex_dist_version|
      - 4.2.0
 
 Checking your versions
