@@ -338,19 +338,39 @@ sub find_modified_files {
     # yet been pushed / are not in the base branch.  This covers the common
     # case of running the script after committing.
     #
-    # Strategy: find a base ref whose merge-base with HEAD is not HEAD
-    # itself (i.e. there are actual commits on this branch).  Try, in order:
-    #   1. The upstream tracking branch — but only if it is not the current
-    #      branch pushed to a remote (which would give merge-base == HEAD).
-    #   2. origin/HEAD (the remote's default branch).
-    #   3. Well-known names: origin/main, origin/master, main, master.
-    my $head_sha = `git rev-parse HEAD 2>/dev/null`;
-    chomp($head_sha);
+    # Strategy: of the candidate base refs below, use the nearest one --
+    # the one with the fewest commits between its merge-base with HEAD
+    # and HEAD.  Those commits are this branch's own.  Candidates:
+    #   1. The upstream tracking branch -- but not if it is the current
+    #      branch pushed to a remote.
+    #   2. Well-known names: origin/main, origin/master, main, master.
+    # Taking the nearest one matters: a stale local "main" that is behind
+    # origin/main would otherwise make everything merged upstream since
+    # then look like this branch's changes.  If the nearest base has no
+    # commits between it and HEAD (e.g., a new branch created from
+    # origin/main), this branch has no commits of its own.
     my $current_branch = `git rev-parse --abbrev-ref HEAD 2>/dev/null`;
     chomp($current_branch);
 
     my $base_ref = "";
+    my $base_count;
     my @candidates;
+
+    # Returns the number of commits on HEAD that are not on the given
+    # ref, or undef if the ref does not exist or shares no history with
+    # HEAD.
+    my $commits_beyond = sub {
+        my ($ref) = @_;
+        my $sha = `git rev-parse --verify $ref 2>/dev/null`;
+        chomp($sha);
+        return undef unless $sha;
+        my $mb = `git merge-base HEAD $ref 2>/dev/null`;
+        chomp($mb);
+        return undef unless $mb;
+        my $count = `git rev-list --count $mb..HEAD 2>/dev/null`;
+        chomp($count);
+        return $count;
+    };
 
     # Upstream tracking branch (skip if it tracks the same branch on the remote)
     my $upstream = `git rev-parse --abbrev-ref \@{upstream} 2>/dev/null`;
@@ -359,7 +379,12 @@ sub find_modified_files {
         # e.g. "origin/bigcount-datatypes" tracks the same branch — skip it
         my $upstream_branch = $upstream;
         $upstream_branch =~ s!^[^/]+/!!;   # strip "origin/" prefix
-        push @candidates, $upstream unless ($upstream_branch eq $current_branch);
+        # Also skip it if it already contains HEAD: then it is this
+        # branch as pushed (perhaps under a different name), and tells us
+        # nothing about where the branch started.
+        my $count = $commits_beyond->($upstream);
+        push @candidates, $upstream
+            if ($upstream_branch ne $current_branch && $count);
     }
 
     # Remote default branch and common well-known names (avoid origin/HEAD —
@@ -367,18 +392,17 @@ sub find_modified_files {
     push @candidates, "origin/main", "origin/master", "main", "master";
 
     for my $candidate (@candidates) {
-        my $sha = `git rev-parse --verify $candidate 2>/dev/null`;
-        chomp($sha);
-        next unless $sha;
-        my $mb = `git merge-base HEAD $candidate 2>/dev/null`;
-        chomp($mb);
-        # Only useful if the merge-base is not HEAD itself
-        next unless ($mb && $mb ne $head_sha);
-        $base_ref = $candidate;
-        last;
+        my $count = $commits_beyond->($candidate);
+        next unless defined($count);
+        if (!defined($base_count) || $count < $base_count) {
+            $base_ref = $candidate;
+            $base_count = $count;
+        }
     }
 
-    if ($base_ref) {
+    if ($base_ref && 0 == $base_count) {
+        quiet_print "==> Using base ref '$base_ref': no commits on this branch\n";
+    } elsif ($base_ref) {
         my $merge_base = `git merge-base HEAD $base_ref 2>/dev/null`;
         chomp($merge_base);
         quiet_print "==> Using base ref '$base_ref' (merge-base: $merge_base)\n";
