@@ -1,6 +1,7 @@
 /**
- * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2021      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
@@ -76,8 +77,10 @@ int mca_coll_ucc_reduce(const void *sbuf, void* rbuf, size_t count,
     COLL_UCC_CHECK(mca_coll_ucc_reduce_init_common(sbuf, rbuf, count, dtype, op,
                                                    root, false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
-    COLL_UCC_CHECK(coll_ucc_req_wait(req));
+    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req));
     return OMPI_SUCCESS;
+failed:
+    return OMPI_ERROR;
 fallback:
     UCC_VERBOSE(3, "running fallback reduce");
     return ucc_module->previous_reduce(sbuf, rbuf, count, dtype, op, root,
@@ -102,6 +105,10 @@ int mca_coll_ucc_ireduce(const void *sbuf, void* rbuf, size_t count,
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
+failed:
+    mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
+    *request = MPI_REQUEST_NULL;
+    return OMPI_ERROR;
 fallback:
     UCC_VERBOSE(3, "running fallback ireduce");
     if (coll_req) {
