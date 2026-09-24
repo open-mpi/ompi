@@ -66,6 +66,127 @@ Each component also has its own component-specific parameters; use
 
    shell$ ompi_info --param mtl ofi --level 9
 
+Provider and domain selection
+-----------------------------
+
+Open MPI asks Libfabric for a list of ``fi_info`` structures that satisfy the
+capabilities required by the selected component.  An ``fi_info`` structure
+describes a provider, its fabric, and a domain.  In this context, a Libfabric
+domain is the provider's view of a usable network resource; on many systems it
+corresponds to one network interface card or one provider-specific network
+endpoint.  The domain name is reported in the ``fi_info`` structure and is not
+necessarily the same as the operating system device name.
+
+The ``ofi`` MTL and the ``ofi`` BTL use the common Open MPI selection code.
+The selection process is:
+
+#. Open MPI applies the provider include or exclude setting to the structures
+   returned by Libfabric.  These settings select provider names, not arbitrary
+   hardware device names.
+#. Open MPI selects one compatible provider structure.  When several structures
+   describe domains of the same provider with the same requested capabilities,
+   those structures are candidates for local-resource selection.
+#. If the process is not bound to a set of processing units, Open MPI selects
+   among the candidate domains using the process's local rank.  This is a
+   round-robin choice intended to balance ranks across domains.
+#. If the process is bound and the structures contain usable PCI information,
+   Open MPI calculates device locality and selects a domain closest to the
+   process.  If several domains are equally close, the process's rank within
+   its processor package selects among the tied domains.
+#. If accelerator locality is enabled and the accelerator and provider expose
+   usable PCI information, Open MPI first attempts to select the domain closest
+   to the accelerator.  Ties are distributed using the local rank on that
+   accelerator.
+#. If locality information is unavailable, Open MPI falls back to the rank-based
+   round-robin choice.  A process that is not bound cannot receive a locality
+   guarantee from the operating system.
+
+This selection is performed independently by each MPI process.  It does not
+mean that every process opens every domain, and it does not guarantee that a
+particular operating system interface is selected.  The provider's ``fi_info``
+structures, process binding, PCI topology information, and the selected Open MPI
+component all affect the result.  Open MPI then opens the selected Libfabric
+fabric and domain and creates its endpoints and completion resources.
+
+The common selection parameter is exposed through component-specific aliases.
+For example, these commands show the provider and selection diagnostics for
+the matching transport layer and the byte transfer layer:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca mtl_ofi_verbose 1 \
+          --mca mtl_ofi_provider_include cxi ./mpi_hello
+   shell$ mpirun --mca btl_ofi_verbose 1 \
+          --mca btl_ofi_provider_include cxi ./mpi_hello
+
+The exact diagnostics and available component parameters depend on the Open
+MPI and Libfabric versions in use.  ``ompi_info`` is the authoritative way to
+list the parameters in a particular installation.
+
+LINKx provider
+--------------
+
+Libfabric also provides a provider named ``lnx`` (LINKx).  LINKx can combine
+multiple Libfabric providers or domains behind one tagged-message endpoint. It
+is an optional Libfabric feature, not an Open MPI-specific network component.
+Whether it is appropriate depends on the provider versions, the system
+topology, and the performance goals of the deployment.  HPE or the site
+administrator should confirm that it is recommended for a particular
+Slingshot installation before it is enabled.
+
+The provider must be configured through the Libfabric environment variable
+``FI_LNX_PROV_LINKS``.  For example, the following requests one LINKx group
+containing shared memory and two Slingshot domains:
+
+.. code-block:: sh
+
+   shell$ export FI_LNX_PROV_LINKS="shm+cxi:cxi0,cxi1"
+   shell$ mpirun --mca pml cm --mca mtl ofi \
+          --mca mtl_ofi_provider_include lnx ./mpi_hello
+
+The provider manual(man fi_lnx) describes additional forms, including multiple
+groups and provider-specific domain lists.  All nodes in the MPI job must use
+compatible LINKx configurations and the same ordering of linked providers and
+domains.  If shared memory is included, LINKx uses it for intra-node
+communication; other linked providers are used for off-node communication.
+LINKx can also distribute messages across multiple linked domains, according
+to its multi-rail selection policy.
+
+There are important tradeoffs.  The LINKx provider described by the current
+Libfabric manual supports tagged operations, but does not provide hardware
+offload such as hardware tag matching.  Because memory registration does not
+identify the eventual operation or destination, LINKx registers memory with
+all linked providers.  This can increase memory registration cost and may
+affect memory behavior.  Measure an application with and without LINKx before
+making it a site-wide default.
+
+HPE Slingshot
+-------------
+
+Open MPI supports HPE Slingshot through the Libfabric ``cxi`` provider.  The
+``cxi`` provider maps Open MPI communication operations to the Slingshot
+Cassini network interface card and Rosetta switch.
+
+Open MPI normally selects its OpenFabrics Interfaces components automatically.
+To request the tagged-message path explicitly, select the ``cm`` PML and
+``ofi`` MTL, and include the ``cxi`` provider.  When the selected provider
+supports hardware tag matching, message matching can be offloaded from the
+host processor to the network interface card.  The ``cxi`` provider supports
+this capability.  Tagged messages carry a numeric label that Open MPI uses to
+match a send operation to the correct receive operation:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca pml cm --mca mtl ofi \
+          --mca mtl_ofi_provider_include cxi ./mpi_hello
+
+Use the Libfabric ``fi_info`` utility to confirm that the installed Libfabric
+can find the ``cxi`` provider:
+
+.. code-block:: sh
+
+   shell$ fi_info -p cxi
+
 .. important:: When using the HPE CXI provider with ``mpirun`` as the
                job launcher, it is recommended to set the PRRTE
                ``ras_base_launch_orted_on_hn`` MCA parameter to 1 by
@@ -121,3 +242,29 @@ variable:
 More details can be found in the PSM2 Programmer's Guide and the
 Omni-Path Fabric Performance Tuning Guide; see the `Cornelis Networks
 Customer Center <https://customercenter.cornelisnetworks.com/>`_.
+
+GPU memory and Libfabric providers
+----------------------------------
+
+When an MPI buffer resides in graphics processing unit memory, Open MPI can
+request Libfabric support for heterogeneous memory through the ``FI_HMEM``
+capability.  The ``ofi`` matching transport layer and byte transfer layer
+request this capability by default when it is available in the build.  The
+matching transport layer and byte transfer layer can disable the request
+with ``mtl_ofi_disable_hmem`` and ``btl_ofi_disable_hmem``, respectively.
+
+Requesting heterogeneous-memory support does not guarantee direct network
+access to every type of GPU memory.  The selected provider must advertise the
+required capability, and the Libfabric build must include support for the GPU
+runtime in use.  If no suitable provider is found with heterogeneous-memory
+requirements, Open MPI may retry provider discovery without that requirement;
+this can result in host-memory staging or a provider that does not support
+direct GPU buffers.
+
+LINKx deserves additional care for GPU buffers.  LINKx forwards memory
+registration to all providers in a link, and the linked providers may have
+different GPU-memory capabilities.  A LINKx configuration should therefore
+contain only providers that support the intended buffer type and memory
+registration mode.  Validate the configuration with a representative
+application and consult the installed provider manuals before using GPU
+buffers in production.
