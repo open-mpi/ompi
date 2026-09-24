@@ -132,6 +132,10 @@ quiet_print "==> This year: $year\n";
 my $start = cwd();
 my $top = `git rev-parse --show-toplevel`;
 chomp($top);
+# The current directory relative to $top (e.g., "contrib/"), or the
+# empty string at the top-level directory
+my $prefix = `git rev-parse --show-prefix`;
+chomp($prefix);
 
 quiet_print "==> Top-level repository dir: $top\n";
 quiet_print "==> Current directory: $start\n";
@@ -149,10 +153,13 @@ foreach my $f (@files) {
     # ignore embedded copies of external codes as we shouldn't
     # be overwriting their copyrights - if someone actually
     # modified any of those files, they can manually update
-    # the copyright
+    # the copyright.  $f is relative to the current directory, but the
+    # @protected patterns are relative to the top-level directory, so
+    # match against the latter.
+    my $top_relative = "$prefix$f";
     my $ignore = 0;
     foreach my $p (@protected) {
-        if (eval("\$f =~ /$p/")) {
+        if (eval("\$top_relative =~ /$p/")) {
             quiet_print "Ignoring protected file $f\n";
             $ignore = 1;
             last;
