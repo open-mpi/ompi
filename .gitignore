@@ -307,6 +307,8 @@ ompi/test/monitoring/check_monitoring
 ompi/test/monitoring/example_reduce_count
 ompi/test/monitoring/test_overhead
 ompi/test/monitoring/test_pvar_access
+ompi/test/monitoring/profile2mat.pl
+ompi/test/monitoring/aggregate_profile.pl
 
 ompi/test/spc/spc_test
 
