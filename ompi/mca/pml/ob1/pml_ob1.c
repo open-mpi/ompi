@@ -498,8 +498,13 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * can happen here; if it fails the fragment waits with the
          * out-of-sequence ones. */
         if (OMPI_SUCCESS != ompi_proc_ensure_arch(pml_proc->ompi_proc)) {
-            ompi_pml_ob1_append_frag_to_ordered_list(&pml_proc->frags_cant_match, frag,
-                                                     pml_proc->expected_sequence);
+            if (mca_pml_ob1_frag_is_sequenced (comm, hdr)) {
+                ompi_pml_ob1_append_frag_to_ordered_list(&pml_proc->frags_cant_match, frag,
+                                                         pml_proc->expected_sequence);
+            } else {
+                frag->range = NULL;
+                opal_list_append (&pml_proc->unsequenced_frags, (opal_list_item_t *) frag);
+            }
             mca_pml_ob1_note_unseeded_frags(pml_proc);
             continue;
         }
@@ -906,6 +911,14 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
         if( NULL != proc->frags_cant_match ) {
             opal_output(0, "out of sequence\n");
             mca_pml_ob1_dump_cant_match(proc->frags_cant_match);
+        }
+        if( opal_list_get_size(&proc->unsequenced_frags) ) {
+            mca_pml_ob1_recv_frag_t* ufrag;
+
+            opal_output(0, "parked, unsequenced\n");
+            OPAL_LIST_FOREACH(ufrag, &proc->unsequenced_frags, mca_pml_ob1_recv_frag_t) {
+                mca_pml_ob1_dump_hdr( &ufrag->hdr );
+            }
         }
 #if !MCA_PML_OB1_CUSTOM_MATCH
         if( opal_list_get_size(&proc->unexpected_frags) ) {

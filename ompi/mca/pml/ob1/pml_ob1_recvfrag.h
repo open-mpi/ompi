@@ -199,6 +199,22 @@ void ompi_pml_ob1_append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
                                                   mca_pml_ob1_recv_frag_t* frag,
                                                   uint16_t seq);
 
+/**
+ * Does this fragment's hdr_seq mean anything?
+ *
+ * An overtaking communicator skips the send-side counter for a
+ * non-negative tag (mca_pml_ob1_isend), so every one of those arrives as
+ * sequence 0: they cannot be ordered against each other, they cannot be
+ * waited for, and expected_sequence must not count them. Negative tags
+ * stay sequenced even there, which is why this is not simply the
+ * assertion itself.
+ */
+static inline bool mca_pml_ob1_frag_is_sequenced (ompi_communicator_t *comm,
+                                                  const mca_pml_ob1_match_hdr_t *hdr)
+{
+    return (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > hdr->hdr_tag);
+}
+
 void mca_pml_ob1_handle_cid (ompi_communicator_t *comm, int src, mca_pml_ob1_cid_hdr_t *hdr_cid);
 
 extern void mca_pml_ob1_dump_cant_match(mca_pml_ob1_recv_frag_t* queue);
