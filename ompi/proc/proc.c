@@ -19,7 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
  *
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -172,6 +172,69 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
     *procp = proc;
 
     return OMPI_SUCCESS;
+}
+
+void ompi_proc_set_locality(ompi_proc_t *proc, const char *hosthint,
+                            const char *lochint)
+{
+    uint16_t u16, *u16ptr = &u16;
+    char *host = NULL, *locstr = NULL;
+    pmix_proc_t pxproc;
+    pmix_value_t pval;
+    int rc;
+
+    OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY, &proc->super.proc_name,
+                                   &u16ptr, PMIX_UINT16);
+    if (OPAL_SUCCESS == rc) {
+        proc->super.proc_flags = u16;
+        return;
+    }
+
+    /* Nothing recorded - usually a proc from a job we were never
+     * connected to, reached through a bridge, and then the runtime may
+     * hold nothing at all about it. Taking it to be off-node would be
+     * wrong when it shares ours: transports that trust proc_flags then
+     * refuse the peer, or pick one that cannot reach it. */
+    proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
+    if (NULL != hosthint) {
+        host = strdup(hosthint);
+    } else {
+        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_HOSTNAME, &proc->super.proc_name,
+                                        &host, PMIX_STRING);
+        if (OPAL_SUCCESS != rc) {
+            host = NULL;
+        }
+    }
+    if (NULL == host || NULL == opal_process_info.nodename ||
+        0 != strcmp(host, opal_process_info.nodename)) {
+        free(host);
+        return;
+    }
+    free(host);
+
+    if (NULL != lochint) {
+        locstr = strdup(lochint);
+    } else {
+        OPAL_MODEX_RECV_VALUE_IMMEDIATE(rc, PMIX_LOCALITY_STRING, &proc->super.proc_name,
+                                        &locstr, PMIX_STRING);
+        if (OPAL_SUCCESS != rc) {
+            locstr = NULL;
+        }
+    }
+    if (NULL != locstr && NULL != opal_process_info.locality) {
+        u16 = opal_hwloc_compute_relative_locality(opal_process_info.locality, locstr);
+    } else {
+        /* all we can say is that it shares our node */
+        u16 = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+    }
+    free(locstr);
+    proc->super.proc_flags = u16;
+
+    /* save it so the next lookup finds it */
+    OPAL_PMIX_CONVERT_NAME(&pxproc, &proc->super.proc_name);
+    pval.type = PMIX_UINT16;
+    pval.data.uint16 = u16;
+    PMIx_Store_internal(&pxproc, PMIX_LOCALITY, &pval);
 }
 
 /**
@@ -695,6 +758,47 @@ int ompi_proc_refresh(void)
     return ret;
 }
 
+/* pack the hostname and locality string of a proc, each NULL if we do
+ * not know it - see ompi_proc_set_locality() for how they are used */
+static int pack_whereabouts(ompi_proc_t *proc, pmix_data_buffer_t *buf)
+{
+    char *host = NULL, *locstr = NULL;
+    pmix_status_t prc;
+    int rc;
+
+    if (OPAL_EQUAL == ompi_rte_compare_name_fields(OMPI_RTE_CMP_ALL, &proc->super.proc_name,
+                                                   OMPI_PROC_MY_NAME)) {
+        if (NULL != opal_process_info.nodename) {
+            host = strdup(opal_process_info.nodename);
+        }
+        if (NULL != opal_process_info.locality) {
+            locstr = strdup(opal_process_info.locality);
+        }
+    } else {
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_HOSTNAME, &proc->super.proc_name,
+                                       &host, PMIX_STRING);
+        if (OPAL_SUCCESS != rc) {
+            host = NULL;
+        }
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY_STRING, &proc->super.proc_name,
+                                       &locstr, PMIX_STRING);
+        if (OPAL_SUCCESS != rc) {
+            locstr = NULL;
+        }
+    }
+    prc = PMIx_Data_pack(NULL, buf, &host, 1, PMIX_STRING);
+    if (PMIX_SUCCESS == prc) {
+        prc = PMIx_Data_pack(NULL, buf, &locstr, 1, PMIX_STRING);
+    }
+    free(host);
+    free(locstr);
+    if (PMIX_SUCCESS != prc) {
+        PMIX_ERROR_LOG(prc);
+        return opal_pmix_convert_status(prc);
+    }
+    return OMPI_SUCCESS;
+}
+
 int
 ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
                pmix_data_buffer_t* buf)
@@ -747,6 +851,15 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
             PMIX_ERROR_LOG(rc);
             opal_mutex_unlock (&ompi_proc_lock);
             return opal_pmix_convert_status(rc);
+        }
+        /* pack the node the proc is on and its locality string, as far as
+         * we know them. The receiver may be in a job the runtime never
+         * connected to this proc's, and then this is the only way it can
+         * learn that the proc shares its node. Either may be NULL. */
+        rc = pack_whereabouts(proc, buf);
+        if (OMPI_SUCCESS != rc) {
+            opal_mutex_unlock (&ompi_proc_lock);
+            return rc;
         }
     }
     opal_mutex_unlock (&ompi_proc_lock);
@@ -824,8 +937,7 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
         uint32_t new_arch;
         bool isnew = false;
         int rc;
-        char *nspace;
-        uint16_t u16, *u16ptr;
+        char *nspace, *host = NULL, *locstr = NULL;
 
         rc = PMIx_Data_unpack(NULL, buf, &prc, &count, PMIX_PROC);
         if (PMIX_SUCCESS != rc) {
@@ -846,6 +958,18 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
         rc = PMIx_Data_unpack(NULL, buf, &new_arch, &count, PMIX_UINT32);
         if (PMIX_SUCCESS != rc) {
             PMIX_ERROR_LOG(rc);
+            free(plist);
+            free(newprocs);
+            return opal_pmix_convert_status(rc);
+        }
+        /* where the proc is, as far as the packing side knew */
+        rc = PMIx_Data_unpack(NULL, buf, &host, &count, PMIX_STRING);
+        if (PMIX_SUCCESS == rc) {
+            rc = PMIx_Data_unpack(NULL, buf, &locstr, &count, PMIX_STRING);
+        }
+        if (PMIX_SUCCESS != rc) {
+            PMIX_ERROR_LOG(rc);
+            free(host);
             free(plist);
             free(newprocs);
             return opal_pmix_convert_status(rc);
@@ -875,18 +999,15 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
                 free(plist);
                 free(newprocs);
                 free(errhost);
+                free(host);
+                free(locstr);
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
             }
-
-            /* get the locality information - all RTEs are required
-             * to provide this information at startup */
-            u16ptr = &u16;
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY, &plist[i]->super.proc_name, &u16ptr, PMIX_UINT16);
-            if (OPAL_SUCCESS == rc) {
-                plist[i]->super.proc_flags = u16;
-            }
         }
+        ompi_proc_set_locality(plist[i], host, locstr);
+        free(host);
+        free(locstr);
     }
 
     if (NULL != newproclistsize) *newproclistsize = newprocs_len;
