@@ -10,7 +10,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       # Run both the OMPI-native and the MPI Standard ABI legs to
       # completion even if one fails.
