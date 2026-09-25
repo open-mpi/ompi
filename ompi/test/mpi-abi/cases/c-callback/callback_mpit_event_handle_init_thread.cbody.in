@@ -1,0 +1,145 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Validate end-to-end MPI_T event payload encoding for MPI_Init_thread.
+ *   The initialization event callback is registered via MPI_T_event_register_callback
+ *   before MPI_Init_thread, and the test verifies that the initialization event
+ *   payload carries correct Standard-ABI handle and thread_level values.
+ */
+
+/* Initialize MPI_T first so we can register callbacks before MPI_Init_thread.
+   Use MPI_THREAD_MULTIPLE to match the subsequent MPI_Init_thread request;
+   if MPI_T_init_thread is called with a lower level, MPI_Init_thread will be
+   constrained to that level. */
+int provided = 0;
+int ret = MPI_T_init_thread(MPI_THREAD_MULTIPLE, &provided);
+if (MPI_T_ERR_NOT_SUPPORTED == ret) {
+    return 77;
+}
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+/* Locate the initialization event by name. */
+int num_events = 0;
+ret = MPI_T_event_get_num(&num_events);
+if (MPI_SUCCESS != ret || num_events < 1) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+int initialization_index = -1;
+for (int event_index = 0; event_index < num_events; ++event_index) {
+    char name[MPI_MAX_OBJECT_NAME];
+    int name_len = (int) sizeof(name);
+    int verbosity = 0;
+    MPI_Datatype datatypes[5];
+    MPI_Aint displacements[5];
+    int num_elements = 5;
+    MPI_T_enum enumtype = MPI_T_ENUM_NULL;
+    MPI_Info info = MPI_INFO_NULL;
+    char desc[MPI_MAX_INFO_VAL];
+    int desc_len = (int) sizeof(desc);
+    int bind = MPI_T_BIND_NO_OBJECT;
+
+    ret = MPI_T_event_get_info(event_index, name, &name_len, &verbosity,
+                               datatypes, displacements, &num_elements,
+                               &enumtype, &info, desc, &desc_len, &bind);
+    if (MPI_SUCCESS != ret) {
+        continue;
+    }
+    if (MPI_INFO_NULL != info) {
+        (void) MPI_Info_free(&info);
+    }
+    if (NULL != strstr(name, "initialization")) {
+        initialization_index = event_index;
+        break;
+    }
+}
+
+if (initialization_index < 0) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+/* Register the initialization event callback before MPI_Init_thread. */
+mpit_initialization_state.registration = (MPI_T_event_registration) 0;
+mpit_initialization_state.calls = 0;
+mpit_initialization_state.failure_code = 0;
+mpit_initialization_state.instance_id = 0;
+mpit_initialization_state.thread_level = -1;
+
+ret = MPI_T_event_handle_alloc(initialization_index, NULL, MPI_INFO_NULL,
+                               &mpit_initialization_state.registration);
+if (MPI_SUCCESS != ret ||
+    (MPI_T_event_registration) 0 == mpit_initialization_state.registration) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+ret = MPI_T_event_register_callback(mpit_initialization_state.registration,
+                                    MPI_T_CB_REQUIRE_NONE, MPI_INFO_NULL,
+                                    &mpit_initialization_state,
+                                    mpit_initialization_callback);
+if (MPI_SUCCESS != ret) {
+    (void) MPI_T_event_handle_free(mpit_initialization_state.registration,
+                                   NULL, NULL);
+    (void) MPI_T_finalize();
+    return 2;
+}
+
+/* Now call MPI_Init_thread, which should trigger the initialization event. */
+int requested = MPI_THREAD_MULTIPLE;
+ret = MPI_Init_thread(&argc, &argv, requested, &provided);
+if (MPI_SUCCESS != ret) {
+    (void) MPI_T_event_handle_free(mpit_initialization_state.registration,
+                                   NULL, NULL);
+    (void) MPI_T_finalize();
+    return 1;
+}
+
+/* Verify the initialization event fired with the correct data. */
+int local_failure = 0;
+if (0 != mpit_initialization_state.failure_code) {
+    local_failure = 3;
+} else if (mpit_initialization_state.calls < 1) {
+    local_failure = 4;
+} else if (0 == mpit_initialization_state.instance_id) {
+    /* The instance_id should be non-zero (it is an ABI-independent correlation
+       token, not converted). */
+    fprintf(stderr, "ABI_FAIL:mpit:init_thread_instance_id:0\n");
+    local_failure = 5;
+} else if (mpit_initialization_state.thread_level != provided) {
+    /* The thread_level in the event should match the provided value. */
+    fprintf(stderr, "ABI_FAIL:mpit:init_thread_level:%d:%d\n",
+            mpit_initialization_state.thread_level, provided);
+    local_failure = 6;
+}
+
+ret = MPI_T_event_handle_free(mpit_initialization_state.registration, NULL, NULL);
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 7;
+}
+
+ret = MPI_T_finalize();
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 8;
+}
+
+ret = MPI_Finalize();
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 9;
+}
+
+if (0 != local_failure) {
+    return local_failure;
+}

@@ -1,0 +1,57 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Verify that the ompi.mpi.errhandler_invoked MPI_T event properly converts
+ *   MPI_File handles and MPI_T_BIND_MPI_FILE values to Standard-ABI when an
+ *   error handler is invoked on a file (open-mpi/ompi#13280). This exercises
+ *   the MPI_T_BIND_MPI_FILE arm of ompi_mpit_abi_handle_convert_impl() and the
+ *   object_type converter.
+ */
+struct mpit_file_errhandler_state {
+    MPI_T_event_registration registration;
+    int calls;
+    int failure_code;
+    int32_t err_code;
+    int32_t object_type;
+    uint64_t object_handle;
+};
+
+static struct mpit_file_errhandler_state mpit_file_errhandler_state;
+
+static void mpit_file_errhandler_callback(MPI_T_event_instance event_instance,
+                                          MPI_T_event_registration event_registration,
+                                          MPI_T_cb_safety cb_safety,
+                                          void *user_data)
+{
+    struct mpit_file_errhandler_state *state =
+        (struct mpit_file_errhandler_state *) user_data;
+    if (&mpit_file_errhandler_state != state) {
+        mpit_file_errhandler_state.failure_code = 501;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 502;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 503;
+    } else {
+        ++state->calls;
+        /* The errhandler_invoked payload: err_code, object_type, errhandler_handle, object_handle. */
+        (void) MPI_T_event_read(event_instance, 0, &state->err_code);
+        (void) MPI_T_event_read(event_instance, 1, &state->object_type);
+        (void) MPI_T_event_read(event_instance, 3, &state->object_handle);
+    }
+}
+
+static void dummy_file_errhandler_callback(MPI_File *file, int *err_code, ...)
+{
+    /* Empty errhandler just to trigger the MPI_T errhandler_invoked event. */
+    (void) file;
+    (void) err_code;
+}
