@@ -28,6 +28,7 @@
 #include "pml_ob1_accelerator.h"
 #include "ompi/mca/bml/base/base.h"
 #include "pml_ob1_recvreq.h"
+#include "pml_ob1_recvfrag.h"
 #include "opal/runtime/opal_params.h"
 
 /**
@@ -86,6 +87,13 @@ int mca_pml_ob1_progress(void)
     bool send_succeeded;
 
     completed_requests += mca_pml_ob1_process_pending_accelerator_async_copies();
+
+    /* Work parked on an unreachable peer: sends that never started, and
+     * fragments from a peer we cannot convert from. No completion is
+     * outstanding, so each park takes a progress count and releases it by
+     * being counted as done below. Asking also fetches the peer's data. */
+    completed_requests += mca_pml_ob1_drain_staged_sends();
+    completed_requests += mca_pml_ob1_drain_unseeded_frags();
 
     /* Drain the FIN/ACK control-packet retry queue. It is otherwise drained
      * only as a side effect of BTL completion callbacks (see

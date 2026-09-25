@@ -21,6 +21,7 @@
  *                         reserved.
  * Copyright (c) 2020-2022 Google, LLC. All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,7 +37,9 @@
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
 #include "opal/mca/smsc/smsc.h"
+#include "opal/util/argv.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static int sm_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
@@ -55,7 +58,11 @@ static struct mca_btl_base_descriptor_t *sm_prepare_src(struct mca_btl_base_modu
 
 static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                        struct opal_bitmap_t *reachability);
+                        struct opal_bitmap_t *status);
+
+static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc);
+
+static int sm_map_local_procs(void);
 
 mca_btl_sm_t mca_btl_sm = {
     {&mca_btl_sm_component.super, .btl_add_procs = sm_add_procs, .btl_del_procs = sm_del_procs,
@@ -68,18 +75,27 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
     int rc;
 
-    /* generate the endpoints */
-    component->endpoints = (struct mca_btl_base_endpoint_t *)
+    /* generate the endpoints. They stay unpublished until every local
+     * peer has been mapped -- see mca_btl_sm_attach_local_peers(). */
+    component->endpoints_storage = (struct mca_btl_base_endpoint_t *)
         calloc(n + 1, sizeof(struct mca_btl_base_endpoint_t));
-    if (NULL == component->endpoints) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+    if (NULL == component->endpoints_storage) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
     }
-    component->endpoints[n].peer_smp_rank = -1;
+    component->endpoints_storage[n].peer_smp_rank = -1;
+
+    component->local_procs = (opal_proc_t **) calloc(n + 1, sizeof(opal_proc_t *));
+    if (NULL == component->local_procs) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
 
     component->fbox_in_endpoints = calloc(n + 1, sizeof(void *));
+    component->num_fbox_in_endpoints = 0;
     if (NULL == component->fbox_in_endpoints) {
-        free(component->endpoints);
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
     }
 
     component->mpool = mca_mpool_basic_create((void *) (component->my_segment
@@ -88,8 +104,8 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
                                                                - MCA_BTL_SM_FIFO_SIZE),
                                               64);
     if (NULL == component->mpool) {
-        free(component->endpoints);
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
     }
 
     /* Fast box buffers are prepended with a metadata section. */
@@ -99,7 +115,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
                              opal_cache_line_size, 0, mca_btl_sm_component.fbox_max, 4,
                              component->mpool, 0, NULL, NULL, NULL);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto cleanup;
     }
 
     /* initialize fragment descriptor free lists */
@@ -112,7 +128,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
                              component->mpool, 0, NULL, mca_btl_sm_frag_init,
                              &component->sm_frags_user);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto cleanup;
     }
 
     /* initialize free list for buffered send fragments */
@@ -124,7 +140,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
                              component->mpool, 0, NULL, mca_btl_sm_frag_init,
                              &component->sm_frags_eager);
     if (OPAL_SUCCESS != rc) {
-        return rc;
+        goto cleanup;
     }
 
     if (!mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP)) {
@@ -137,45 +153,166 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
                                  component->mpool, 0, NULL, mca_btl_sm_frag_init,
                                  &component->sm_frags_max_send);
         if (OPAL_SUCCESS != rc) {
-            return rc;
+            goto cleanup;
         }
     }
 
-    /* set flag indicating btl has been inited */
-    sm_btl->btl_inited = true;
+    /* set flag indicating btl has been inited. A thread that only tests
+     * the flag must see everything allocated above. */
+    opal_atomic_wmb();
+    sm_btl->btl_inited = 1;
 
     return OPAL_SUCCESS;
+
+cleanup:
+    /* sm_finalize() skips a btl that never inited, so everything taken
+     * above has to go back here. Re-construct the free lists rather than
+     * release them: they belong to the component and are destructed at
+     * component close, and re-constructing clears fl_mpool so that
+     * destruct does not reach into the mpool finalized below. */
+    OBJ_DESTRUCT(&component->sm_frags_max_send);
+    OBJ_CONSTRUCT(&component->sm_frags_max_send, opal_free_list_t);
+    OBJ_DESTRUCT(&component->sm_frags_eager);
+    OBJ_CONSTRUCT(&component->sm_frags_eager, opal_free_list_t);
+    OBJ_DESTRUCT(&component->sm_frags_user);
+    OBJ_CONSTRUCT(&component->sm_frags_user, opal_free_list_t);
+    OBJ_DESTRUCT(&component->sm_fboxes);
+    OBJ_CONSTRUCT(&component->sm_fboxes, opal_free_list_t);
+
+    if (NULL != component->mpool) {
+        component->mpool->mpool_finalize(component->mpool);
+        component->mpool = NULL;
+    }
+
+    free(component->fbox_in_endpoints);
+    component->fbox_in_endpoints = NULL;
+    component->num_fbox_in_endpoints = 0;
+    free(component->local_procs);
+    component->local_procs = NULL;
+    component->local_procs_mapped = false;
+    free(component->endpoints_storage);
+    component->endpoints_storage = NULL;
+    component->endpoints = NULL;
+
+    return rc;
+}
+
+/* Tell a transient Get miss from a final one; the peer's own state says
+ * which. NOT_READY while the peer's data can still arrive -- the key may
+ * simply not have reached the node server yet. Once
+ * OPAL_PROC_FLAG_AVAILABLE promises everything that peer published is
+ * local, a missing key is missing for good: the peer does not use this
+ * btl. NOT_READY there would be an unbounded retry -- the peer is never
+ * declared unreachable, so a send to it is re-driven from every progress
+ * tick for the life of the job.
+ *
+ * Statuses here are OPAL, converted where they enter: PMIx numbers its
+ * errors from the same small negatives and means different things by
+ * them -- PMIx "not found" is -46, which is OPAL_ERR_TAKE_NEXT_OPTION. */
+static int sm_modex_not_ready(const struct opal_proc_t *proc, int rc)
+{
+    if (OPAL_ERR_NOT_READY == rc) {
+        return OPAL_ERR_NOT_READY;
+    }
+    if (OPAL_ERR_NOT_FOUND != rc) {
+        return rc;
+    }
+    if (!opal_proc_known(proc, OPAL_PROC_FLAG_AVAILABLE)) {
+        return OPAL_ERR_NOT_READY;
+    }
+
+    /* Final either way; the flag only decides what is reported.
+     * FETCH_FAILED is never set on its own, so the check above suffices. */
+    if (opal_proc_known(proc, OPAL_PROC_FLAG_FETCH_FAILED)) {
+        BTL_VERBOSE(("no shared memory for peer %s: nothing this peer published was ever "
+                     "fetched, so this btl is unavailable for the whole node",
+                     OPAL_NAME_PRINT(proc->proc_name)));
+    } else {
+        BTL_VERBOSE(("peer %s published no shared memory of its own, so it does not use "
+                     "this btl and neither can the rest of the node",
+                     OPAL_NAME_PRINT(proc->proc_name)));
+    }
+
+    return OPAL_ERR_NOT_FOUND;
+}
+
+/*
+ * Which SMP local rank is this peer? Answered from the map
+ * sm_ensure_inited() built; only a peer missing from it needs the
+ * runtime.
+ */
+static int sm_local_rank_of(struct opal_proc_t *proc, uint16_t *local_rank)
+{
+    mca_btl_sm_component_t *component = &mca_btl_sm_component;
+    uint16_t *ptr = local_rank;
+    int rc;
+
+    if (NULL != component->local_procs) {
+        for (uint16_t lr = 0; lr <= (uint16_t) MCA_BTL_SM_NUM_LOCAL_PEERS; ++lr) {
+            if (proc == component->local_procs[lr]) {
+                *local_rank = lr;
+                return OPAL_SUCCESS;
+            }
+        }
+    }
+
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &proc->proc_name, &ptr, PMIX_UINT16);
+
+    /* OPAL_MODEX_RECV_VALUE reports PMIx status, unlike its
+     * OPAL_MODEX_RECV_LOCAL neighbour. See sm_modex_not_ready(). */
+    return opal_pmix_convert_status(rc);
 }
 
 static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal_proc_t *proc)
 {
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
-    mca_btl_sm_modex_t *modex;
+    mca_btl_sm_modex_t *modex = NULL;
+    char *segment_base;
     size_t msg_size;
     int rc;
 
     uint16_t peer_local_rank;
-    uint16_t *ptr = &peer_local_rank;
-    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &proc->proc_name, &ptr, PMIX_UINT16);
+    rc = sm_local_rank_of(proc, &peer_local_rank);
     if (OPAL_SUCCESS != rc) {
         BTL_VERBOSE(("could not read the local rank for peer. rc=%d", rc));
-        return rc;
+        return sm_modex_not_ready(proc, rc);
     }
 
-    mca_btl_base_endpoint_t *ep = component->endpoints + peer_local_rank;
+    mca_btl_base_endpoint_t *ep = component->endpoints_storage + peer_local_rank;
     *ep_out = ep;
+    /* segment_base is this endpoint's publication point: a setup path
+     * that finds it set may use the rest of the endpoint without the
+     * lock. The barrier is paid here, once per endpoint. */
+    if (NULL != ep->segment_base) {
+        opal_atomic_rmb();
+        return OPAL_SUCCESS;
+    }
+
+    if (peer_local_rank != MCA_BTL_SM_LOCAL_RANK) {
+        OPAL_MODEX_RECV_LOCAL(rc, &component->super.btl_version, &proc->proc_name,
+                              (void **) &modex, &msg_size);
+        if (OPAL_SUCCESS != rc) {
+            *ep_out = NULL;
+            return sm_modex_not_ready(proc, rc);
+        }
+    }
+
+    OPAL_THREAD_LOCK(&component->lock);
+    if (NULL != ep->segment_base) {
+        opal_atomic_rmb();
+        OPAL_THREAD_UNLOCK(&component->lock);
+        if (NULL != modex) {
+            free(modex);
+        }
+        *ep_out = ep;
+        return OPAL_SUCCESS;
+    }
 
     OBJ_CONSTRUCT(ep, mca_btl_sm_endpoint_t);
 
     ep->peer_smp_rank = peer_local_rank;
 
     if (!mca_btl_is_self_endpoint(ep)) {
-        OPAL_MODEX_RECV_IMMEDIATE(rc, &component->super.btl_version, &proc->proc_name,
-                                  (void **) &modex, &msg_size);
-        if (OPAL_SUCCESS != rc) {
-            return rc;
-        }
-
         /* attach to the remote segment */
         ep->smsc_endpoint = NULL;  /* assume no one sided support */
         if( NULL != mca_smsc ) {
@@ -196,6 +333,9 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
                 || msg_size < modex_hdr_size
                 || (size_t) modex->seg_ds_size > msg_size - modex_hdr_size) {
                 free(modex);
+                OBJ_DESTRUCT(ep);
+                *ep_out = NULL;
+                OPAL_THREAD_UNLOCK(&component->lock);
                 return OPAL_ERR_BAD_PARAM;
             }
 
@@ -205,6 +345,9 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
             ep->seg_ds = calloc(1, sizeof(opal_shmem_ds_t));
             if (NULL == ep->seg_ds) {
                 free(modex);
+                OBJ_DESTRUCT(ep);
+                *ep_out = NULL;
+                OPAL_THREAD_UNLOCK(&component->lock);
                 return OPAL_ERR_OUT_OF_RESOURCE;
             }
 
@@ -214,8 +357,12 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
              * cannot run past the buffer. */
             ep->seg_ds->seg_name[OPAL_PATH_MAX - 1] = '\0';
 
-            ep->segment_base = opal_shmem_segment_attach(ep->seg_ds);
-            if (NULL == ep->segment_base) {
+            segment_base = opal_shmem_segment_attach(ep->seg_ds);
+            if (NULL == segment_base) {
+                free(modex);
+                OBJ_DESTRUCT(ep);
+                *ep_out = NULL;
+                OPAL_THREAD_UNLOCK(&component->lock);
                 return OPAL_ERROR;
             }
 
@@ -224,10 +371,194 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
         free(modex);
     } else {
         /* set up the segment base so we can calculate a virtual to real for local pointers */
-        ep->segment_base = component->my_segment;
+        segment_base = component->my_segment;
     }
 
-    ep->fifo = (struct sm_fifo_t *) ep->segment_base;
+    /* Publish segment_base last: a reader outside the lock decides the
+     * endpoint is usable on that one store, so the fifo and the smsc
+     * endpoint have to be in place before it lands. */
+    ep->fifo = (struct sm_fifo_t *) segment_base;
+    opal_atomic_wmb();
+    ep->segment_base = segment_base;
+    OPAL_THREAD_UNLOCK(&component->lock);
+
+    return OPAL_SUCCESS;
+}
+
+static int sm_ensure_inited(void)
+{
+    mca_btl_sm_component_t *component = &mca_btl_sm_component;
+    bool raise = false;
+    int rc = OPAL_SUCCESS;
+
+    /* A failed init is permanent -- the mpool the free lists come out of
+     * never gives anything back -- so btl_inited keeps the status and
+     * this btl is out for every peer, not just the one being set up. */
+    if (OPAL_UNLIKELY(0 > mca_btl_sm.btl_inited)) {
+        return mca_btl_sm.btl_inited;
+    }
+
+    if (0 == mca_btl_sm.btl_inited) {
+        OPAL_THREAD_LOCK(&component->lock);
+        if (0 == mca_btl_sm.btl_inited) {
+            rc = sm_btl_first_time_init(&mca_btl_sm, 1 + MCA_BTL_SM_NUM_LOCAL_PEERS);
+            if (OPAL_SUCCESS != rc) {
+                mca_btl_sm.btl_inited = rc;
+                raise = true;
+                BTL_ERROR(("could not initialize the shared memory btl (%d). A "
+                           "btl_sm_segment_size too small to hold btl_sm_free_list_num "
+                           "fragments and btl_sm_fbox_max fast boxes is the usual cause.",
+                           rc));
+            }
+        } else if (0 > mca_btl_sm.btl_inited) {
+            /* Another thread failed it while we waited for the lock. */
+            rc = mca_btl_sm.btl_inited;
+        }
+        OPAL_THREAD_UNLOCK(&component->lock);
+
+        /* No fallback is possible: component_init already published this
+         * process's segment, so local peers whose own init succeeded keep
+         * writing into a fifo this process can no longer drain. Abort
+         * rather than hang on it. */
+        if (raise && NULL != mca_btl_sm.error_cb) {
+            mca_btl_sm.error_cb(&mca_btl_sm.super, MCA_BTL_ERROR_FLAGS_FATAL, NULL,
+                                "the shared memory btl could not allocate its fragment "
+                                "pools, and it has already advertised its segment: local "
+                                "peers can reach this process, which can no longer "
+                                "receive from them");
+        }
+        if (OPAL_SUCCESS != rc) {
+            return rc;
+        }
+    } else {
+        /* Pairs with the write barrier in sm_btl_first_time_init(): the
+         * flag was read without the lock, its allocations are read below. */
+        opal_atomic_rmb();
+    }
+
+    /* A fragment names its sender by local rank alone, so this map has to
+     * be in place before one is read. An incomplete map is neither fatal
+     * nor final: the fragment stays in the fifo and comes back here. */
+    if (!component->local_procs_mapped) {
+        (void) sm_map_local_procs();
+    }
+
+    return rc;
+}
+
+/*
+ * Fill in local_procs, the SMP-local-rank to proc map an incoming
+ * fragment is resolved through. It must cover every local peer, not only
+ * the procs an add_procs passed in: a fragment names its sender by local
+ * rank alone, and that sender may be a peer this process never sent to.
+ *
+ * Kept off the receive path: sm_fifo_read() runs from opal_progress(),
+ * where a PMIx round trip per fragment does not belong. Note that
+ * opal_proc_for_name() instantiates every node-local peer.
+ */
+static int sm_map_local_procs(void)
+{
+    mca_btl_sm_component_t *component = &mca_btl_sm_component;
+    opal_process_name_t wildcard, name;
+    char *peers_str = NULL;
+    char **peers;
+    int rc;
+
+    wildcard = OPAL_PROC_MY_NAME;
+    wildcard.vpid = OPAL_VPID_WILDCARD;
+    OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_PEERS, &wildcard, &peers_str, PMIX_STRING);
+    if (PMIX_SUCCESS != rc || NULL == peers_str) {
+        /* Converted because it leaves this file; see sm_modex_not_ready(). */
+        return (PMIX_SUCCESS == rc) ? OPAL_ERR_NOT_FOUND : opal_pmix_convert_status(rc);
+    }
+
+    peers = opal_argv_split(peers_str, ',');
+    free(peers_str);
+    if (NULL == peers) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    name.jobid = OPAL_PROC_MY_NAME.jobid;
+    for (int i = 0; NULL != peers[i]; ++i) {
+        uint16_t lr, *ptr = &lr;
+        name.vpid = (opal_vpid_t) strtoul(peers[i], NULL, 10);
+        OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &name, &ptr, PMIX_UINT16);
+        if (PMIX_SUCCESS != rc || lr > MCA_BTL_SM_NUM_LOCAL_PEERS) {
+            continue;
+        }
+        if (NULL == component->local_procs[lr]) {
+            component->local_procs[lr] = opal_proc_for_name(name);
+        }
+    }
+    opal_argv_free(peers);
+
+    /* Only a complete map retires this call: a hole leaves whoever sits
+     * at that local rank permanently unresolvable. */
+    for (uint16_t lr = 0; lr <= (uint16_t) MCA_BTL_SM_NUM_LOCAL_PEERS; ++lr) {
+        if (NULL == component->local_procs[lr]) {
+            return OPAL_ERR_NOT_FOUND;
+        }
+    }
+    component->local_procs_mapped = true;
+
+    return OPAL_SUCCESS;
+}
+
+int mca_btl_sm_attach_local_peers(void)
+{
+    mca_btl_sm_component_t *component = &mca_btl_sm_component;
+    int rc, missing = OPAL_SUCCESS;
+
+    if (NULL != component->endpoints) {
+        return OPAL_SUCCESS;
+    }
+
+    rc = sm_ensure_inited();
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    /* Nothing can be mapped before the map naming the peers is whole. */
+    if (!component->local_procs_mapped) {
+        return OPAL_ERR_NOT_READY;
+    }
+
+    /* Every peer in one pass rather than a stop at the first miss: a miss
+     * is what starts the fetch of that peer's blob, so one retry can
+     * finish the node instead of one peer per retry. */
+    for (uint16_t lr = 0; lr <= (uint16_t) MCA_BTL_SM_NUM_LOCAL_PEERS; ++lr) {
+        mca_btl_base_endpoint_t *ep = NULL;
+
+        if (NULL != component->endpoints_storage[lr].segment_base) {
+            continue;
+        }
+
+        rc = init_sm_endpoint(&ep, component->local_procs[lr]);
+        if (OPAL_SUCCESS == rc) {
+            continue;
+        }
+        if (OPAL_ERR_NOT_READY == rc) {
+            /* Still to arrive; the node stays unpublished until it does,
+             * but keep asking about the rest. */
+            missing = rc;
+            continue;
+        }
+        /* Final, and the array must not be published with a hole: the
+         * receive path would dereference it. This btl is therefore out in
+         * this process; sm_add_procs() answers about nobody, so another
+         * btl decides these peers instead of retrying them forever. */
+        return rc;
+    }
+
+    if (OPAL_SUCCESS != missing) {
+        return missing;
+    }
+
+    /* Publish last, behind a barrier: a fragment path takes this one
+     * pointer as proof the node is mapped, and addresses everything it
+     * then reads off the value it loaded, so it needs no barrier. */
+    opal_atomic_wmb();
+    component->endpoints = component->endpoints_storage;
 
     return OPAL_SUCCESS;
 }
@@ -235,7 +566,11 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
 static int fini_sm_endpoint(struct mca_btl_base_endpoint_t *ep)
 {
     /* check if the endpoint is initialized. avoids a double-destruct */
-    if (ep->fifo) {
+    if (ep->segment_base) {
+        /* The published array claims every local peer is mapped, and the
+         * fragment paths act on it without looking further. Withdraw the
+         * claim before breaking it; the next fragment re-establishes it. */
+        mca_btl_sm_component.endpoints = NULL;
         OBJ_DESTRUCT(ep);
     }
 
@@ -256,13 +591,13 @@ static int fini_sm_endpoint(struct mca_btl_base_endpoint_t *ep)
  *
  */
 
-static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
+static int sm_add_procs(struct mca_btl_base_module_t *btl __opal_attribute_unused__, size_t nprocs,
                         struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                        opal_bitmap_t *reachability)
+                        opal_bitmap_t *status)
 {
-    mca_btl_sm_t *sm_btl = (mca_btl_sm_t *) btl;
     const opal_proc_t *my_proc;
     int rc = OPAL_SUCCESS;
+    bool node_mapped;
 
     /* initializion */
 
@@ -271,39 +606,68 @@ static int sm_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
 
-    /* jump out if there's not someone we can talk to */
+    /* jump out if there's not someone we can talk to. Every proc keeps
+     * the default MCA_BTL_PROC_NOT_ELIGIBLE. */
     if (1 > MCA_BTL_SM_NUM_LOCAL_PEERS) {
         return OPAL_SUCCESS;
     }
 
-    if (!sm_btl->btl_inited) {
-        rc = sm_btl_first_time_init(sm_btl, 1 + MCA_BTL_SM_NUM_LOCAL_PEERS);
-        if (rc != OPAL_SUCCESS) {
-            return rc;
-        }
+    /* All of them or none -- see mca_btl_sm_attach_local_peers(). */
+    rc = mca_btl_sm_attach_local_peers();
+    if (OPAL_SUCCESS != rc && OPAL_ERR_NOT_READY != rc) {
+        return rc;
     }
+    node_mapped = (OPAL_SUCCESS == rc);
+    rc = OPAL_SUCCESS;
 
     for (int32_t proc = 0; proc < (int32_t) nprocs; ++proc) {
         /* check to see if this proc can be reached via shmem (i.e.,
-           if they're on my local host and in my job) */
+           if they're on my local host and in my job). Neither test needs
+           anything the peer published, so a no is final: leave the
+           default MCA_BTL_PROC_NOT_ELIGIBLE. */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid
             || !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
             continue;
         }
 
-        if (my_proc != procs[proc] && NULL != reachability) {
-            /* add this proc to shared memory accessibility list */
-            rc = opal_bitmap_set_bit(reachability, proc);
-            if (OPAL_SUCCESS != rc) {
-                return rc;
-            }
+        /* Without every local segment this btl can send to none. They
+         * are local peers of this job, so they will arrive: NO_INFO
+         * rather than let a lower-exclusivity btl carry these procs. */
+        if (!node_mapped) {
+            peers[proc] = NULL;
+            MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_NO_INFO);
+            continue;
         }
 
         /* setup endpoint */
         rc = init_sm_endpoint(peers + proc, procs[proc]);
+        if (OPAL_ERR_NOT_READY == rc) {
+            /* The node is mapped, so this is the peer's own local rank
+             * that could not be read -- equally transient. */
+            peers[proc] = NULL;
+            MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_NO_INFO);
+            rc = OPAL_SUCCESS;
+            continue;
+        }
+        if (OPAL_ERR_NOT_FOUND == rc) {
+            /* Final, and only for this peer: its data is local and names
+             * no shared memory, so it does not use this btl. Leave the
+             * default MCA_BTL_PROC_NOT_ELIGIBLE. */
+            peers[proc] = NULL;
+            rc = OPAL_SUCCESS;
+            continue;
+        }
         if (OPAL_SUCCESS != rc) {
+            peers[proc] = NULL;
             break;
+        }
+
+        /* Self gets an endpoint -- it translates the fragments returning
+         * through our own fifo -- but no claim, so that self, not this
+         * btl, is picked for messaging ourselves. */
+        if (my_proc != procs[proc]) {
+            MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_CONNECTED);
         }
     }
 
@@ -351,21 +715,31 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
     mca_btl_sm_t *sm_btl = (mca_btl_sm_t *) btl;
 
-    if (!sm_btl->btl_inited) {
+    /* Nothing to unwind unless the init ran to completion: a failed one
+     * released what it had taken, and left the arrays below NULL. */
+    if (1 != sm_btl->btl_inited) {
         return OPAL_SUCCESS;
     }
 
     for (int i = 0; i < (int) (1 + MCA_BTL_SM_NUM_LOCAL_PEERS); ++i) {
-        fini_sm_endpoint(component->endpoints + i);
+        fini_sm_endpoint(component->endpoints_storage + i);
     }
 
-    free(component->endpoints);
+    free(component->endpoints_storage);
+    component->endpoints_storage = NULL;
     component->endpoints = NULL;
 
-    sm_btl->btl_inited = false;
+    free(component->local_procs);
+    component->local_procs = NULL;
+    component->local_procs_mapped = false;
+
+    sm_btl->btl_inited = 0;
 
     free(component->fbox_in_endpoints);
     component->fbox_in_endpoints = NULL;
+    /* The count names entries in the array that is going away. A later
+     * init reallocates it, and the poll loop trusts the count. */
+    component->num_fbox_in_endpoints = 0;
 
     return OPAL_SUCCESS;
 }
@@ -524,6 +898,7 @@ static void mca_btl_sm_endpoint_constructor(mca_btl_sm_endpoint_t *ep)
 {
     OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
     OBJ_CONSTRUCT(&ep->pending_frags_lock, opal_mutex_t);
+    ep->segment_base = NULL;
     ep->fifo = NULL;
     /* An endpoint is reached through storage this component allocated
      * zeroed, but it can also be constructed a second time over a peer
@@ -533,6 +908,8 @@ static void mca_btl_sm_endpoint_constructor(mca_btl_sm_endpoint_t *ep)
     ep->fbox_in.buffer = NULL;
     ep->fbox_out.buffer = NULL;
     ep->fbox_out.fbox = NULL;
+    ep->seg_ds = NULL;
+    ep->smsc_endpoint = NULL;
 }
 
 static void mca_btl_sm_endpoint_destructor(mca_btl_sm_endpoint_t *ep)
@@ -555,6 +932,14 @@ static void mca_btl_sm_endpoint_destructor(mca_btl_sm_endpoint_t *ep)
     if (ep->smsc_endpoint) {
         MCA_SMSC_CALL(return_endpoint, ep->smsc_endpoint);
         ep->smsc_endpoint = NULL;
+    }
+
+    if (ep->fbox_in.buffer) {
+        /* The component polls this endpoint by name, and nothing else
+         * ever takes an entry out of that list: leaving it there means
+         * the progress loop keeps reading a fast box through the NULL
+         * buffer set just below. */
+        mca_btl_sm_fbox_in_unregister(ep);
     }
 
     ep->fbox_in.buffer = ep->fbox_out.buffer = NULL;

@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2018      Sandia National Laboratories
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -48,6 +49,26 @@ struct mca_pml_ob1_comm_proc_t {
     int16_t comm_index;           /**< index of this communicator on the receiver size (-1 - not set) */
     opal_atomic_int32_t send_sequence; /**< send side sequence number */
     struct mca_pml_ob1_recv_frag_t* frags_cant_match;  /**< out-of-order fragment queues */
+    /* Parked on this peer's architecture, and carrying no sequence to be
+     * released by: an overtaking communicator leaves hdr_seq at 0 for
+     * every non-negative tag, and frags_cant_match orders on hdr_seq and
+     * may not hold two of a kind. Arrival order is all the order these
+     * have.
+     *
+     * The architecture gate is the only thing that fills this. A
+     * fragment the sender never numbered is never parked for its turn
+     * either: the sequence test in mca_pml_ob1_recv_frag_match_proc is
+     * itself taken only for traffic that carries a sequence, so past
+     * that gate one of these always matches on arrival. The two queues
+     * therefore fill in different periods, not at once. */
+    opal_list_t unsequenced_frags;
+    /* True when some fragment on either queue above waits on this peer's
+     * architecture rather than on its turn. Not a property of either
+     * queue: frags_cant_match holds both kinds and cannot tell them
+     * apart, and a peer can wait on its architecture with no unsequenced
+     * fragment at all. Set and cleared under the matching lock, and
+     * gates the one progress count a park owes. */
+    bool waiting_on_arch;
 #if !MCA_PML_OB1_CUSTOM_MATCH
     opal_list_t specific_receives; /**< queues of unmatched specific receives */
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */

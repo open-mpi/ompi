@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2018      Sandia National Laboratories
  * 			   All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights
@@ -38,6 +39,8 @@ static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
     proc->expected_sequence = 1;
     proc->send_sequence = 0;
     proc->frags_cant_match = NULL;
+    OBJ_CONSTRUCT(&proc->unsequenced_frags, opal_list_t);
+    proc->waiting_on_arch = false;
     /* don't know the index of this communicator yet */
     proc->comm_index = -1;
 #if !MCA_PML_OB1_CUSTOM_MATCH
@@ -50,6 +53,9 @@ static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
 static void mca_pml_ob1_comm_proc_destruct(mca_pml_ob1_comm_proc_t* proc)
 {
     assert(NULL == proc->frags_cant_match);
+    assert(0 == opal_list_get_size(&proc->unsequenced_frags));
+    assert(!proc->waiting_on_arch);
+    OBJ_DESTRUCT(&proc->unsequenced_frags);
 #if !MCA_PML_OB1_CUSTOM_MATCH
     OBJ_DESTRUCT(&proc->specific_receives);
     OBJ_DESTRUCT(&proc->unexpected_frags);

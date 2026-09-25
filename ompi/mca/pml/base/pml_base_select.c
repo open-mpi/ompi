@@ -45,6 +45,8 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/proc/proc.h"
+#include "ompi/runtime/ompi_modex.h"
+#include "ompi/runtime/ompi_rte.h"
 
 typedef struct opened_component_t {
   opal_list_item_t super;
@@ -243,8 +245,9 @@ int mca_pml_base_select(bool enable_progress_threads,
 }
 
 /* need a "commonly" named PML structure so everything ends up in the
-   same modex field */
-static mca_base_component_t pml_base_component = {
+   same modex field. Not static: ompi_modex.c probes the same key to
+   learn whether a peer has committed. */
+mca_base_component_t mca_pml_base_modex_component = {
     OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 0, 0),
     .mca_component_name = "base",
     .mca_component_major_version = 2,
@@ -260,13 +263,11 @@ static char mca_pml_base_pml_name[MCA_BASE_MAX_COMPONENT_NAME_LEN + 1] = {0};
 
 /*
  * If direct modex, then publish PML for all procs. If full modex then
- * publish PML for rank 0 only. This information is used during add_procs
- * to perform PML check.
- * During PML check, for direct modex, compare our PML with the peer's
- * PML for all procs in the add_procs call. This does not change the
- * connection complexity of modex transfers, since adding the proc is
- * going to get the peer information in the MTL/PML/BTL anyway.
- * For full modex, compare our PML with rank 0.
+ * publish PML for rank 0 only, to keep the collected payload small.
+ * Which mode it is decides how the check can be made: a name per rank is
+ * checkable per peer, rank 0's alone only against rank 0 -- enough,
+ * since every rank makes that comparison.
+ *
  * Direct Modex is performed when collect_all_data is false, as we do
  * not perform a fence operation during MPI_Init if async_modex is true.
  * If async_modex is false and collect_all_data is false then we do a
@@ -284,7 +285,7 @@ mca_pml_base_pml_selected(const char *name)
      * been truncated into it would otherwise reach a peer by two routes
      * under two spellings. */
     if (!opal_pmix_collect_all_data || 0 == OMPI_PROC_MY_NAME->vpid) {
-        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &pml_base_component,
+        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_pml_base_modex_component,
                         mca_pml_base_pml_name,
                         strlen(mca_pml_base_pml_name) + 1);
     }
@@ -296,9 +297,17 @@ const char *mca_pml_base_pml_selected_name(void)
     return mca_pml_base_pml_name;
 }
 
-static int
-mca_pml_base_pml_check_selected_impl(const char *my_pml,
-                                     opal_process_name_t proc_name)
+/*
+ * Compare this process's PML against what one peer published. cache_only
+ * asks only for what is already local, for a caller that can afford
+ * neither a round trip nor a blocking Get; it retries later.
+ *
+ * @retval OMPI_SUCCESS       the same PML, or the peer is us.
+ * @retval OMPI_ERR_NOT_READY the peer's blob has not reached us yet.
+ * @retval OMPI_ERR_NOT_FOUND the peer published nothing under this key.
+ * @retval OMPI_ERR_UNREACH   another PML.
+ */
+static int pml_check_one(opal_process_name_t proc_name, bool cache_only)
 {
     size_t size;
     int ret = 0;
@@ -311,15 +320,35 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
                             "check:select: PML check not necessary on self");
         return OMPI_SUCCESS;
     }
+    if ('\0' == mca_pml_base_pml_name[0]) {
+        return OMPI_SUCCESS;
+    }
+
     /* The macro expands its key argument twice, so building the key
      * inline would allocate twice and leak both. */
-    key = mca_base_component_to_string(&pml_base_component);
+    key = mca_base_component_to_string(&mca_pml_base_modex_component);
     if (NULL == key) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    OPAL_MODEX_RECV_STRING(ret, key, &proc_name, (void**) &remote_pml, &size);
+    if (cache_only) {
+        OPAL_MODEX_RECV_STRING_OPTIONAL(ret, key, &proc_name,
+                                        (void**) &remote_pml, &size);
+    } else {
+        OPAL_MODEX_RECV_STRING(ret, key, &proc_name,
+                               (void**) &remote_pml, &size);
+    }
     free(key);
-    if (PMIX_ERR_NOT_FOUND == ret) {
+    if (OPAL_ERR_NOT_READY == ret) {
+        /* Distinct from NOT_FOUND: the peer did publish, so the caller
+         * must come back later rather than declare it unreachable. */
+        opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
+                            "check:select: PML modex for process %s not local yet",
+                            OMPI_NAME_PRINT(&proc_name));
+        return OMPI_ERR_NOT_READY;
+    }
+    /* Both spellings: the fetching macro folds "no such key" onto the
+     * OPAL status, the cache-only one returns the PMIx status untouched. */
+    if (OPAL_ERR_NOT_FOUND == ret || PMIX_ERR_NOT_FOUND == ret) {
         opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                             "check:select: PML modex for process %s not found",
                             OMPI_NAME_PRINT(&proc_name));
@@ -339,18 +368,18 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
 
     opal_output_verbose( 10, ompi_pml_base_framework.framework_output,
                         "check:select: checking my pml %s against process %s"
-                        " pml %s", my_pml, OMPI_NAME_PRINT(&proc_name),
-                        remote_pml);
+                        " pml %s", mca_pml_base_pml_name,
+                        OMPI_NAME_PRINT(&proc_name), remote_pml);
 
     /* if that module doesn't match my own, return an error */
-    if ((size != strlen(my_pml) + 1) ||
-        (0 != strcmp(my_pml, remote_pml))) {
+    if ((size != strlen(mca_pml_base_pml_name) + 1) ||
+        (0 != strcmp(mca_pml_base_pml_name, remote_pml))) {
         char *errhost = NULL;
         OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &proc_name,
                                        &(errhost), PMIX_STRING);
         opal_output(0, "%s selected pml %s, but peer %s on %s selected pml %s",
                     OMPI_NAME_PRINT(&ompi_proc_local()->super.proc_name),
-                    my_pml, OMPI_NAME_PRINT(&proc_name),
+                    mca_pml_base_pml_name, OMPI_NAME_PRINT(&proc_name),
                     (NULL == errhost) ? "unknown" : errhost,
                     remote_pml);
         free(remote_pml);
@@ -363,41 +392,109 @@ mca_pml_base_pml_check_selected_impl(const char *my_pml,
     return OMPI_SUCCESS;
 }
 
-int
-mca_pml_base_pml_check_selected(const char *my_pml,
-                                ompi_proc_t **procs,
-                                size_t nprocs)
+/* Compare against this job's rank 0: the one rank every other can name
+ * without holding a proc for it. */
+static int pml_check_own_job(void)
 {
-    int ret = 0;
-    size_t i;
+    opal_process_name_t rank0 = {.jobid = OMPI_PROC_MY_NAME->jobid, .vpid = 0};
+
+    return pml_check_one(rank0, false);
+}
+
+/* One comparison answers for a whole job exchanged under a fence. Racing
+ * into making it twice is harmless: a local read, and the same verdict. */
+static bool pml_check_job_done = false;
+
+/* Make that comparison as soon as the exchange it reads has landed, from
+ * whichever path gets there first. Nothing to hand a failure to, and
+ * pml_check_one() has named both PMLs already. */
+static void pml_check_own_job_once(void)
+{
+    if (pml_check_job_done || !ompi_modex_all_ready()) {
+        return;
+    }
+    pml_check_job_done = true;
+    if (OMPI_ERR_UNREACH == pml_check_own_job()) {
+        ompi_rte_abort(1, NULL);
+    }
+}
+
+int mca_pml_base_pml_check_start(void)
+{
+    if (!ompi_pml_base_check_pml || !opal_pmix_collect_all_data) {
+        return OMPI_SUCCESS;
+    }
+
+    /* Compare here if rank 0's data is already local, so a misconfigured
+     * job dies in MPI_Init; usually it is not, and a wire-up does it. */
+    pml_check_own_job_once();
+    return OMPI_SUCCESS;
+}
+
+int mca_pml_base_pml_check_peer(ompi_proc_t *proc)
+{
+    bool in_flight;
+    int ret;
 
     if (!ompi_pml_base_check_pml) {
         return OMPI_SUCCESS;
     }
 
-    if (!opal_pmix_collect_all_data) {
-        /*
-         * If direct modex, then compare our PML with the peer's PML
-         * for all procs
-         */
-        for (i = 0; i < nprocs; i++) {
-            ret = mca_pml_base_pml_check_selected_impl(
-                                                 my_pml,
-                                                 procs[i]->super.proc_name);
-            if (ret) {
-                return ret;
-            }
-        }
-    } else {
-        /* else if full modex compare our PML with rank 0 */
-        opal_process_name_t proc_name = {
-                           .jobid = ompi_proc_local()->super.proc_name.jobid,
-                           .vpid = 0
-        };
-        ret = mca_pml_base_pml_check_selected_impl(
-                                                 my_pml,
-                                                 proc_name);
+    if (opal_pmix_collect_all_data) {
+        pml_check_own_job_once();
+        return OMPI_SUCCESS;
+    }
+
+    /* While the blob can still arrive, ask only for what is local: this
+     * runs from a first send or an arriving fragment, where a blocking
+     * round trip does not belong. Asking is what starts the fetch. */
+    in_flight = !ompi_modex_proc_ready(proc);
+
+    ret = pml_check_one(proc->super.proc_name, in_flight);
+    if (OMPI_ERR_UNREACH == ret) {
+        ompi_rte_abort(1, NULL);
+    }
+    if (OMPI_ERR_NOT_FOUND == ret) {
+        /* Every rank publishes this key here, so a miss while the
+         * exchange is in flight means the peer has not committed yet. A
+         * final miss proceeds: better than refusing the peer. */
+        return in_flight ? OMPI_ERR_NOT_READY : OMPI_SUCCESS;
     }
 
     return ret;
+}
+
+int
+mca_pml_base_pml_check_selected(ompi_proc_t **procs,
+                                size_t nprocs)
+{
+    opal_jobid_t my_jobid = OMPI_PROC_MY_NAME->jobid;
+    int ret;
+
+    if (!ompi_pml_base_check_pml) {
+        return OMPI_SUCCESS;
+    }
+
+    /* This job's own procs only, and only in the per-peer mode; under a
+     * fence the rank-0 comparison covers the job. Another job's procs go
+     * through ompi_dpm_connect_accept(): accept can hand back a subgroup,
+     * so even its rank 0 may be a name nothing local has heard. */
+    if (opal_pmix_collect_all_data) {
+        pml_check_own_job_once();
+    } else {
+        for (size_t i = 0; i < nprocs; ++i) {
+            if (procs[i]->super.proc_name.jobid != my_jobid) {
+                continue;
+            }
+            ret = pml_check_one(procs[i]->super.proc_name, false);
+            if (OMPI_ERR_NOT_FOUND == ret) {
+                ret = OMPI_ERR_NOT_READY;
+            }
+            if (OMPI_SUCCESS != ret) {
+                return ret;
+            }
+        }
+    }
+
+    return OMPI_SUCCESS;
 }

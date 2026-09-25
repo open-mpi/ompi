@@ -17,6 +17,7 @@
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,7 @@
  * Process identification structure interface
  *
  * Process identification structure interface.  The ompi_proc_t
- * structure contatins basic information about the remote (and local)
+ * structure contains basic information about the remote (and local)
  * processes.
  */
 
@@ -38,6 +39,7 @@
 #define OMPI_PROC_PROC_H
 
 #include "ompi_config.h"
+#include "ompi/constants.h"
 #include "ompi/types.h"
 
 #include "opal/util/proc.h"
@@ -76,6 +78,11 @@ struct ompi_proc_t {
 
     /** Is the process active? Used for OPAL_ENABLE_FT_MPI */
     bool                            proc_active;
+
+    /* What is known about this peer lives in super.proc_state; see
+     * OPAL_PROC_FLAG_*. This layer sets INITIALIZED once the peer's
+     * architecture is read and its convertor built, and WIRED around
+     * the PML's add_procs / del_procs. */
 
     /* endpoint data */
     void *proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MAX];
@@ -137,15 +144,40 @@ OMPI_DECLSPEC int ompi_proc_complete_init(void);
 
 /**
  * Complete filling up the proc information (arch, name and locality) for
- * a given proc. This function is to be called only after the modex exchange
- * has been completed.
+ * a given proc. May be called before the peer has published its modex
+ * data: locality keeps its default and the architecture stays unknown.
  *
  * @param[in] proc the proc whose information will be filled up
  *
- * @retval OMPI_SUCCESS All information correctly set.
- * @retval OMPI_ERROR   Some info could not be initialized.
+ * @retval OMPI_SUCCESS      All information correctly set.
+ * @retval OMPI_ERR_NOT_READY The peer's architecture is not local yet,
+ *                            so nothing may be converted for it; call
+ *                            again once its modex data has landed.
+ * @retval OMPI_ERROR        Some info could not be initialized.
  */
 OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
+
+/**
+ * Make sure this proc's architecture, and therefore its convertor, is
+ * the peer's and not our own default; a peer is seeded on first use.
+ *
+ * No read barrier on purpose: the convertor this flag announces is a
+ * second location, so a thread seeing the flip is not formally
+ * guaranteed to see it. Ordering that costs a barrier per message, for
+ * a window needing MPI_THREAD_MULTIPLE and mismatched architectures.
+ *
+ * Returns OMPI_SUCCESS once proc_convertor matches the peer, or
+ * OMPI_ERR_NOT_READY if it has not published its architecture yet.
+ */
+static inline int ompi_proc_ensure_arch(ompi_proc_t *proc)
+{
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+    if (OPAL_UNLIKELY(!opal_proc_known(&proc->super, OPAL_PROC_FLAG_INITIALIZED))) {
+        return ompi_proc_complete_init_single(proc);
+    }
+#endif
+    return OMPI_SUCCESS;
+}
 
 /**
  * Finalize the OMPI Process subsystem
