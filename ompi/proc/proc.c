@@ -208,8 +208,16 @@ static int ompi_proc_seed_arch (ompi_proc_t *proc)
         if (OPAL_SUCCESS == ret) {
             /* if arch is different than mine, create a new convertor for this proc */
             if (proc->super.proc_arch != opal_local_arch) {
+                opal_convertor_t *convertor = opal_convertor_create(proc->super.proc_arch, 0);
+
+                /* Built before the local one is let go, so that failing
+                 * here leaves the proc with the convertor it had and
+                 * unannounced, rather than with none and announced. */
+                if (NULL == convertor) {
+                    return OMPI_ERR_OUT_OF_RESOURCE;
+                }
                 OBJ_RELEASE(proc->super.proc_convertor);
-                proc->super.proc_convertor = opal_convertor_create(proc->super.proc_arch, 0);
+                proc->super.proc_convertor = convertor;
             }
         } else if (OMPI_ERR_NOT_IMPLEMENTED == ret || ompi_modex_proc_ready(proc)) {
             /* Either the runtime lacks that key, or the peer's local
@@ -922,8 +930,17 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->super.proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+                opal_convertor_t *convertor = opal_convertor_create(plist[i]->super.proc_arch, 0);
+
+                /* As above: the local convertor is kept until there is
+                 * one to put in its place. */
+                if (NULL == convertor) {
+                    free(plist);
+                    free(newprocs);
+                    return OMPI_ERR_OUT_OF_RESOURCE;
+                }
                 OBJ_RELEASE(plist[i]->super.proc_convertor);
-                plist[i]->super.proc_convertor = opal_convertor_create(plist[i]->super.proc_arch, 0);
+                plist[i]->super.proc_convertor = convertor;
 #else
                 char *errhost = opal_get_proc_hostname(&plist[i]->super);
                 opal_show_help("help-mpi-runtime.txt",
