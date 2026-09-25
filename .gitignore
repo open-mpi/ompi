@@ -599,7 +599,6 @@ opal/mca/threads/qthreads/threads_qthreads.h
 docs/_build
 docs/_static
 docs/_static/css/custom.css
-docs/_templates
 docs/man-openmpi/man3/bindings
 docs/llms-build
 docs/llms-build.stamp
