@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
+ * Copyright (c) 2021-2026 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * Copyright (c) 2024      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
@@ -19,6 +19,7 @@
 
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/smsc/smsc.h"
 
 #include "opal/util/arch.h"
@@ -84,21 +85,47 @@ static inline void GET_COLL_API(ompi_communicator_t *comm, XHC_COLLTYPE_T collty
         + xhc_colltype_to_c_coll_module_offset_map[colltype]);
 }
 
+static int topo_cpu_count(hwloc_topology_t topo, hwloc_obj_type_t type) {
+    hwloc_obj_t obj = hwloc_get_obj_by_type(topo, type, 0);
+    return (obj ? hwloc_bitmap_weight(obj->cpuset) : 0);
+}
+
+static size_t topo_cache_size(hwloc_topology_t topo, hwloc_obj_type_t type) {
+    hwloc_obj_t obj = hwloc_get_obj_by_type(topo, type, 0);
+    return (obj ? obj->attr->cache.size : 0);
+}
+
 // -----------------------------
 
 static void xhc_module_clear(xhc_module_t *module) {
-    module->comm_size = 0;
     module->rank = -1;
+    module->n_ranks = 0;
+    module->comm = NULL;
+
+    memset(&module->prev_colls, 0, sizeof(module->prev_colls));
+
+    module->barrier_root = 0;
+    module->allreduce_root = 0;
 
     module->zcopy_support = false;
     module->zcopy_map_support = false;
 
-    module->rbuf = NULL;
-    module->rbuf_size = 0;
+    module->smsc_reg_size = 0;
+
+    module->n_cores_l3 = 0;
+    module->n_cores_numa = 0;
+    module->n_cores_socket = 0;
+    module->l3_cache_size = 0;
+
+    module->prefetchw_strong = 0;
+
+    module->n_virt_localities = 0;
 
     module->peer_info = NULL;
 
-    memset(&module->prev_colls, 0, sizeof(module->prev_colls));
+    module->rbuf = NULL;
+    module->rbuf_size = 0;
+
     memset(&module->op_config, 0, sizeof(module->op_config));
     memset(&module->op_data, 0, sizeof(module->op_data));
 
@@ -113,16 +140,15 @@ static void mca_coll_xhc_module_construct(mca_coll_xhc_module_t *module) {
 static void mca_coll_xhc_module_destruct(mca_coll_xhc_module_t *module) {
     /* Anything that's allocated during the module's creation/enable, is
      * deallocated here. The stuff that's allocated lazily inside/under
-     * xhc_lazy_init and xhc_init_op, is deallocated inside xhc_fini. */
+     * xhc_lazy_init and xhc_init_data is deallocated inside xhc_fini. */
 
     if(module->init) {
         xhc_fini(module);
     }
 
+    // Allocated in xhc_read_op_config
     for(int t = 0; t < XHC_COLLCOUNT; t++) {
         free(module->op_config[t].hierarchy_string);
-        free(module->op_config[t].chunk_string);
-        free(module->op_config[t].chunks);
     }
 
     xhc_module_clear(module);
@@ -130,9 +156,9 @@ static void mca_coll_xhc_module_destruct(mca_coll_xhc_module_t *module) {
 
 // -----------------------------
 
-mca_coll_base_module_t *mca_coll_xhc_module_comm_query(ompi_communicator_t *comm,
-        int *priority) {
-
+mca_coll_base_module_t *mca_coll_xhc_module_comm_query(
+    ompi_communicator_t *comm, int *priority)
+{
     if((*priority = mca_coll_xhc_component.priority) < 0) {
         return NULL;
     }
@@ -170,19 +196,27 @@ mca_coll_base_module_t *mca_coll_xhc_module_comm_query(ompi_communicator_t *comm
         return NULL;
     }
 
+    module->rank = ompi_comm_rank(comm);
+    module->n_ranks = ompi_comm_size(comm);
+    module->comm = comm;
+
     module->zcopy_support = (NULL != mca_smsc);
     module->zcopy_map_support = mca_smsc_base_has_feature(MCA_SMSC_FEATURE_CAN_MAP);
 
     if(!module->zcopy_support) {
-        opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT,
+        opal_output_verbose(MCA_BASE_VERBOSE_WARN,
             ompi_coll_base_framework.framework_output,
             "coll:xhc: Warning: No opal/smsc support found; "
-            "xhc will only work in CICO mode");
+            "xhc will only work in in CICO mode");
     } else if(!module->zcopy_map_support) {
-        opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT,
+        opal_output_verbose(MCA_BASE_VERBOSE_WARN,
             ompi_coll_base_framework.framework_output,
             "coll:xhc: Warning: opal/smsc module isn't CAN_MAP "
-            "capable; reduced performance is to be expected");
+            "capable; expect reduced bcast performance");
+    }
+
+    if(mca_smsc_base_has_feature(MCA_SMSC_FEATURE_REQUIRE_REGISTRATION)) {
+        module->smsc_reg_size = mca_smsc_base_registration_data_size();
     }
 
     module->super.coll_module_enable = mca_coll_xhc_module_enable;
@@ -203,15 +237,46 @@ int mca_coll_xhc_module_enable(mca_coll_base_module_t *ompi_module,
 
     // ---
 
+    bool h_auto = false;
+
     /* Assimilate the various MCA parameters. We do this inside module_enable
      * rather than lazy_init, so we may use the values as early as possible
      * (e.g. checking cico and single-copy support at the beginning of ops). */
     for(int t = 0; t < XHC_COLLCOUNT; t++) {
-        int err = xhc_read_op_config(module, comm, t);
+        int err = xhc_read_op_config(module, t);
+
         if(OMPI_SUCCESS != err) {
+            opal_output_verbose(MCA_BASE_VERBOSE_ERROR,
+                ompi_coll_base_framework.framework_output,
+                "coll:xhc:module_enable (%s/%s): Failure while picking up MCA "
+                "params; disabling myself", ompi_comm_print_cid(comm), comm->c_name);
+
             return err;
         }
+
+        h_auto |= module->op_config[t].hierarchy_autotune;
     }
+
+    // ---
+
+    if(h_auto && OPAL_SUCCESS == opal_hwloc_base_get_topology()) {
+        int n_cpus_per_core = opal_max(topo_cpu_count(
+            opal_hwloc_topology, HWLOC_OBJ_CORE), 1);
+
+        module->n_cores_l3 = topo_cpu_count(opal_hwloc_topology,
+            HWLOC_OBJ_L3CACHE) / n_cpus_per_core;
+
+        module->n_cores_numa = topo_cpu_count(opal_hwloc_topology,
+            HWLOC_OBJ_NUMANODE) / n_cpus_per_core;
+
+        module->n_cores_socket = topo_cpu_count(opal_hwloc_topology,
+            HWLOC_OBJ_PACKAGE) / n_cpus_per_core;
+
+        module->l3_cache_size = topo_cache_size(opal_hwloc_topology,
+            HWLOC_OBJ_L3CACHE);
+    }
+
+    module->prefetchw_strong = xhc_has_prefetchw_strong();
 
     // ---
 
@@ -226,7 +291,7 @@ int mca_coll_xhc_module_enable(mca_coll_base_module_t *ompi_module,
         GET_COLL_API(comm, t, &fallback_fn, &fallback_module);
 
         if(NULL == fallback_fn || NULL == fallback_module) {
-            opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT,
+            opal_output_verbose(MCA_BASE_VERBOSE_ERROR,
                 ompi_coll_base_framework.framework_output,
                 "coll:xhc:module_enable (%s/%s): No previous fallback component "
                 "found; disabling myself", ompi_comm_print_cid(comm), comm->c_name);
