@@ -98,16 +98,18 @@ static inline int mca_coll_acoll_reduce_smsc_h(const void *sbuf, void *rbuf, siz
     void *rbuf_vaddr[1] = {tmp_rbuf};
     int err = MPI_SUCCESS;
 
-    err = comm->c_coll->coll_allgather(sbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_sbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(sbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_sbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != err) {
         return err;
     }
 
-    err = comm->c_coll->coll_allgather(rbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_rbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(rbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_rbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != err) {
         return err;
     }
@@ -122,9 +124,9 @@ static inline int mca_coll_acoll_reduce_smsc_h(const void *sbuf, void *rbuf, siz
     size_t my_count_size = (l1_local_rank == (l1_gp_size - 1)) ? chunk + count % l1_gp_size : chunk;
 
     if (rank == l1_gp[0]) {
-        if (MPI_IN_PLACE != sbuf)
-            memcpy(tmp_rbuf, sbuf, my_count_size * dsize);
-
+        if (tmp_rbuf != tmp_sbuf) {
+            memcpy(tmp_rbuf, tmp_sbuf, my_count_size * dsize);
+        }
         for (int i = 1; i < l1_gp_size; i++) {
             ompi_op_reduce(op, (char *) data->smsc_saddr[l1_gp[i]] + chunk * l1_local_rank * dsize,
                            (char *) tmp_rbuf + chunk * l1_local_rank * dsize, my_count_size, dtype);
@@ -229,15 +231,17 @@ static inline int mca_coll_acoll_allreduce_smsc_f(const void *sbuf, void *rbuf, 
     int err = MPI_SUCCESS;
     int rank = ompi_comm_rank(comm);
 
-    err = comm->c_coll->coll_allgather(sbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_sbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(sbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_sbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != err) {
         return err;
     }
-    err = comm->c_coll->coll_allgather(rbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_rbuf,
+    err = ompi_coll_base_allgather_intra_recursivedoubling(rbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_rbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
 
     if (MPI_SUCCESS != err) {
         return err;
@@ -251,8 +255,9 @@ static inline int mca_coll_acoll_allreduce_smsc_f(const void *sbuf, void *rbuf, 
     size_t chunk = count / size;
     size_t my_count_size = (rank == (size - 1)) ? (count / size) + count % size : count / size;
     if (0 == rank) {
-        if (MPI_IN_PLACE != sbuf)
-            memcpy(tmp_rbuf, sbuf, my_count_size * dsize);
+        if (tmp_rbuf != tmp_sbuf) {
+            memcpy(tmp_rbuf, tmp_sbuf, my_count_size * dsize);
+        }
     } else {
         ompi_3buff_op_reduce(op, (char *) data->smsc_saddr[0] + chunk * rank * dsize,
                              (char *) tmp_sbuf + chunk * rank * dsize,
@@ -539,6 +544,7 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
             char *inplacebuf_free = NULL, *inplacebuf = NULL;
             void *tmp_rbuf = rbuf;
             void *tmp_sbuf = (void *)sbuf;
+            void *tmp_sbuf0 = (MPI_IN_PLACE == sbuf) ? (void *) rbuf : (void *) sbuf;
             /* Socket/Node level reduce */
             if (ompi_comm_size(soc_comm) > 1) {
                 ptrdiff_t span, gap = 0;
@@ -554,11 +560,11 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
                 if((total_dsize > 8192) &&
                     ((0 != subc->smsc_use_sr_buf) || (subc->smsc_buf_size > 2 * total_dsize)) &&
                     (1 != subc->without_smsc) && is_opt) {
-                    err = mca_coll_acoll_reduce_smsc_h(sbuf, tmp_rbuf, count, dtype, op,
+                    err = mca_coll_acoll_reduce_smsc_h(tmp_sbuf0, tmp_rbuf, count, dtype, op,
                                                        soc_comm, module, soc_subc);
                 } else {
                     acoll_module->red_algo = total_dsize <= 8192 ? 0 : 1;
-                    err = mca_coll_acoll_reduce_intra(sbuf, tmp_rbuf, count, dtype, op,
+                    err = mca_coll_acoll_reduce_intra(tmp_sbuf0, tmp_rbuf, count, dtype, op,
                                                       soc_root, soc_comm, module);
                     acoll_module->red_algo = -1;
                 }
@@ -572,13 +578,8 @@ int mca_coll_acoll_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
             }
             /* Allreduce across socket/node leaders */
             if (ompi_comm_size(ldr_comm) > 1 && -1 != ldr_root) {
-                if ((MPI_IN_PLACE == sbuf)) {
-                    err = ompi_coll_base_allreduce_intra_recursivedoubling(MPI_IN_PLACE, rbuf, count, dtype, op,
-                                                                           ldr_comm, module);
-                } else {
-                    err = ompi_coll_base_allreduce_intra_recursivedoubling(tmp_sbuf, rbuf, count, dtype, op,
-                                                                           ldr_comm, module);
-                }
+                err = ompi_coll_base_allreduce_intra_recursivedoubling(tmp_sbuf, rbuf, count, dtype, op,
+                                                                       ldr_comm, module);
                 if (MPI_SUCCESS != err) {
                     if (NULL != inplacebuf_free) {
                         free(inplacebuf_free);
