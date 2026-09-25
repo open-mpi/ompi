@@ -19,6 +19,7 @@
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      Stony Brook University. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -397,13 +398,19 @@ static inline void opal_atomic_ll_32(opal_atomic_int32_t *addr, int32_t &ret);
 
 static inline void opal_atomic_sc_32(opal_atomic_int32_t *addr, int32_t newval, int &ret);
 
+static inline void opal_atomic_ll_acq_32(opal_atomic_int32_t *addr, int32_t &ret);
+
 static inline void opal_atomic_ll_64(opal_atomic_int64_t *addr, int64_t &ret);
 
 static inline void opal_atomic_sc_64(opal_atomic_int64_t *addr, int64_t newval, int &ret);
 
+static inline void opal_atomic_ll_acq_64(opal_atomic_int64_t *addr, int64_t &ret);
+
 static inline void opal_atomic_ll_ptr(opal_atomic_intptr_t *addr, intptr_t &ret);
 
 static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newval, int &ret);
+
+static inline void opal_atomic_ll_acq_ptr(opal_atomic_intptr_t *addr, intptr_t &ret);
 
 #endif
 
@@ -439,6 +446,8 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 #    include "opal/sys/arm64/atomic_llsc.h"
 #elif defined(PLATFORM_ARCH_POWERPC) && defined(PLATFORM_ARCH_64)
 #    include "opal/sys/powerpc/atomic_llsc.h"
+#elif defined(PLATFORM_ARCH_RISCV) && defined(PLATFORM_ARCH_64) && OPAL_HAVE_RISCV_LLSC_LIFO
+#    include "opal/sys/riscv64/atomic_llsc.h"
 #endif
 
 

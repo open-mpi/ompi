@@ -18,6 +18,7 @@
  * Copyright (c) 2020-2021 Google, LLC. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      Stony Brook University. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +40,8 @@
 #    define opal_atomic_ll_ptr(addr, ret) opal_atomic_ll_32((opal_atomic_int32_t *) (addr), ret)
 #    define opal_atomic_sc_ptr(addr, value, ret) \
         opal_atomic_sc_32((opal_atomic_int32_t *) (addr), (intptr_t)(value), ret)
+#    define opal_atomic_ll_acq_ptr(addr, ret) \
+        opal_atomic_ll_acq_32((opal_atomic_int32_t *) (addr), ret)
 
 #    define OPAL_HAVE_ATOMIC_LLSC_PTR 1
 
@@ -47,6 +50,8 @@
 #    define opal_atomic_ll_ptr(addr, ret) opal_atomic_ll_64((opal_atomic_int64_t *) (addr), ret)
 #    define opal_atomic_sc_ptr(addr, value, ret) \
         opal_atomic_sc_64((opal_atomic_int64_t *) (addr), (intptr_t)(value), ret)
+#    define opal_atomic_ll_acq_ptr(addr, ret) \
+        opal_atomic_ll_acq_64((opal_atomic_int64_t *) (addr), ret)
 
 #    define OPAL_HAVE_ATOMIC_LLSC_PTR 1
 

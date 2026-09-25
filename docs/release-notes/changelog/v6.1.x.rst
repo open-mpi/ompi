@@ -52,6 +52,18 @@ Open MPI version v6.1.0
   portable ``pipe()`` fallback on macOS.  See
   https://github.com/open-mpi/ompi/issues/14462 for the full analysis.
 
+- Added a new ``--enable-riscv-llsc-lifo`` / ``--disable-riscv-llsc-lifo``
+  configure option controlling whether ``opal_lifo`` / ``opal_fifo`` use
+  a RISC-V LR/SC-based pop path. That pop loop loads the next-pointer
+  between the LR and SC instructions, which lies outside the RISC-V ISA
+  "constrained LR/SC loop" definition (A-extension section 8.3), so the
+  architecturally guaranteed forward-progress property does not apply,
+  even though all known implementations handle it correctly. On a
+  native build, configure now probes for forward progress and enables
+  the path automatically when the probe succeeds; cross-compiling
+  disables it by default since the probe cannot run, and either configure
+  option overrides the auto-detection in both cases.
+
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
   bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every
