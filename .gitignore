@@ -641,7 +641,7 @@ ompi/mpi/c/abi.h
 ompi/mpi/c/abi_get_info.c
 ompi/mpi/c/abi_converters.h
 ompi/mpi/c/abi_converters.c
-ompi/mpi/c/standard_abi
+ompi/mpi/c/forum_abi
 ompi/mpi/tool/*_generated*.c
 
 # Generated Fortran Bindings

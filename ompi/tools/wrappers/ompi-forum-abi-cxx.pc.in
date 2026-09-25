@@ -32,7 +32,7 @@ URL: https://www.open-mpi.org/
 #
 prefix=@prefix@
 exec_prefix=@exec_prefix@
-includedir=@includedir@/standard_abi
+includedir=@includedir@/forum_abi
 libdir=@libdir@
 #
 # Note that -lopen-pal is NOT included in the libraries list because

@@ -468,7 +468,7 @@ def _cross_compile_header(tools, implementation):
     """Return the ABI header used to generate one cross direction.
 
     Open MPI installs its MPI Forum ABI declarations as mpi.h under the
-    standard_abi include directory.  MPICH installs a normal mpi.h that
+    forum_abi include directory.  MPICH installs a normal mpi.h that
     includes mpi_abi.h only when MPI_ABI is defined, so source parsing
     must use mpi_abi.h directly for MPICH compile-side generation.
     """
@@ -480,7 +480,7 @@ def _cross_compile_header(tools, implementation):
     if implementation == "mpich":
         candidates = (
             include_path / "mpi_abi.h",
-            include_path / "standard_abi" / "mpi.h",
+            include_path / "forum_abi" / "mpi.h",
             include_path / "mpi.h",
         )
         for candidate in candidates:
@@ -491,11 +491,11 @@ def _cross_compile_header(tools, implementation):
     # For Open MPI the plain include root also contains the normal,
     # internal-ABI mpi.h, which would silently invalidate cross ABI
     # generation if selected.  Require the MPI_H_ABI marker (as
-    # _installed_standard_abi_header does) and prefer the standard_abi
+    # _installed_standard_abi_header does) and prefer the forum_abi
     # subdirectory so an install-include-root override cannot pick the
     # non-ABI header.
     candidates = (
-        include_path / "standard_abi" / "mpi.h",
+        include_path / "forum_abi" / "mpi.h",
         include_path / "mpi.h",
         include_path / "mpi_abi.h",
     )
@@ -1980,7 +1980,7 @@ def _installed_wrapper_checks(tools, dirs, progress=None):
             command=compile_result["command"],
             returncode=compile_result["returncode"],
             log=compile_result["log"]), progress)
-    elif "standard_abi" not in compile_result["stdout"]:
+    elif "forum_abi" not in compile_result["stdout"]:
         _append_check(checks, _fail(
             "installed_standard_abi_wrapper_flags",
             "mpicc_abi does not advertise standard ABI include path",

@@ -420,9 +420,9 @@ man_pages = find_man_pages_top()
 # The two MPI object-name length limits that the *_set_name / *_get_name man
 # pages reference via substitutions.  Open MPI honors the long-standing
 # OPAL_MAX_OBJECT_NAME on its traditional ("OMPI") API entry points, and the
-# larger MPI Forum ABI value on its standard-ABI entry points.
+# larger MPI Forum ABI value on its ABI entry points.
 #
-# The Forum ABI value is read from the same standard ABI JSON that the binding
+# The Forum ABI value is read from the same ABI JSON that the binding
 # generator (ompi/mpi/bindings/c_header.py) consumes, so it remains the single
 # source of truth.  The OMPI value is read from the configured opal_config.h
 # when available, with a fallback for environments that build the docs without

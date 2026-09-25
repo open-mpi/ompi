@@ -265,7 +265,7 @@ config_window(void *base, size_t size, ptrdiff_t disp_unit,
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.handle = (uint64_t) (uintptr_t) win;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
+            /* TODO ABI (#13280): set the MPI Forum ABI handle value for the
                window win. */
             payload.handle = 0;
         }
@@ -434,7 +434,7 @@ ompi_win_free(ompi_win_t *win)
             if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
                 payload.handle = (uint64_t) (uintptr_t) win;
             } else {
-                /* TODO ABI (#13280): set the MPI Standard ABI handle value for
+                /* TODO ABI (#13280): set the MPI Forum ABI handle value for
                    the window win. */
                 payload.handle = 0;
             }
@@ -464,7 +464,7 @@ ompi_win_set_name(ompi_win_t *win, const char *win_name)
 
     /* Bound the store by the full internal buffer size (the ABI maximum); the
      * per-entry-point limit (OPAL_MAX_OBJECT_NAME for the OMPI bindings, the
-     * ABI maximum for the standard-ABI bindings) is applied by the caller. */
+     * ABI maximum for the MPI Forum ABI bindings) is applied by the caller. */
     opal_string_copy(win->w_name, win_name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
     OPAL_THREAD_UNLOCK(&(win->w_lock));
 

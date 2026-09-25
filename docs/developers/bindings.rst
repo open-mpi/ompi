@@ -150,13 +150,13 @@ code (or, for a naming or casing mistake, not until run time):
 * **Prototype parameter parsing** |mdash| the ``NAME``, ``NAME:COUNT``, and
   ``NAME:COUNT:OUTCOUNT`` forms.
 * **Name mangling** |mdash| ``MPI_Xxx`` / ``PMPI_Xxx`` / ``_c`` bigcount
-  suffixes, and the ``_ABI_INTERNAL`` suffix used to keep the standard ABI
+  suffixes, and the ``_ABI_INTERNAL`` suffix used to keep the MPI Forum ABI
   names from colliding with Open MPI's own.
 * **Prototype classification** |mdash| the predicates that decide whether a
   function gets a bigcount variant or needs user-callback wrappers.
 * **Template rendering** |mdash| that representative templates render through
   *both* the ``ompi`` and ``standard`` ABI paths without raising, and that the
-  standard ABI output calls the internal ``ompi_abi_*`` shim rather than the
+  MPI Forum ABI output calls the internal ``ompi_abi_*`` shim rather than the
   public ``MPI_*`` symbol.
 
 If you add a new type to the ``Type`` hierarchy, a new prototype form, or a new
