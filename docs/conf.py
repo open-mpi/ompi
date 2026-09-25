@@ -114,6 +114,11 @@ autoconf_min_version = f"{ompi_data['autoconf_min_version']}"
 libtool_min_version = f"{ompi_data['libtool_min_version']}"
 flex_min_version = f"{ompi_data['flex_min_version']}"
 python_min_version = f"{ompi_data['python_min_version']}"
+m4_dist_version = f"{ompi_data['m4_dist_version']}"
+autoconf_dist_version = f"{ompi_data['autoconf_dist_version']}"
+automake_dist_version = f"{ompi_data['automake_dist_version']}"
+libtool_dist_version = f"{ompi_data['libtool_dist_version']}"
+flex_dist_version = f"{ompi_data['flex_dist_version']}"
 mpi_standard_major_version = f"{ompi_data['mpi_standard_version']}"
 mpi_standard_minor_version = f"{ompi_data['mpi_standard_subversion']}"
 
@@ -463,6 +468,11 @@ rst_prolog = f"""
 .. |libtool_min_version| replace:: {libtool_min_version}
 .. |flex_min_version| replace:: {flex_min_version}
 .. |python_min_version| replace:: {python_min_version}
+.. |m4_dist_version| replace:: {m4_dist_version}
+.. |autoconf_dist_version| replace:: {autoconf_dist_version}
+.. |automake_dist_version| replace:: {automake_dist_version}
+.. |libtool_dist_version| replace:: {libtool_dist_version}
+.. |flex_dist_version| replace:: {flex_dist_version}
 .. |mpi_standard_version| replace:: {mpi_standard_major_version}.{mpi_standard_minor_version}
 .. |mpi_standard_major_version| replace:: {mpi_standard_major_version}
 .. |mpi_standard_minor_version| replace:: {mpi_standard_minor_version}

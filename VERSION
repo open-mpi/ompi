@@ -35,6 +35,15 @@ libtool_min_version=2.4.2
 flex_min_version=2.5.4
 python_min_version=3.6
 
+# Exact versions of the GNU tools used to make official distribution
+# tarballs (contrib/dist/make_dist_tarball requires these exact
+# versions).
+m4_dist_version=1.4.19
+autoconf_dist_version=2.71
+automake_dist_version=1.16.5
+libtool_dist_version=2.4.6
+flex_dist_version=2.6.4
+
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
 # have to be numeric.  Common examples include: a1 (alpha release 1),
