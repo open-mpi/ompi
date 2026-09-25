@@ -401,6 +401,15 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
             }
         }
         proc->frags_cant_match = kept;
+        /* same again for the fragments with no sequence to be ordered on.
+         * A plain list, so the ones that stay need not move at all. */
+        mca_pml_ob1_recv_frag_t *ufrag, *unext;
+        OPAL_LIST_FOREACH_SAFE(ufrag, unext, &proc->unsequenced_frags, mca_pml_ob1_recv_frag_t) {
+            if( pml_ob1_frag_is_revoked(ompi_comm, ufrag) ) {
+                opal_list_remove_item(&proc->unsequenced_frags, &ufrag->super.super);
+                opal_list_append(&nack_list, &ufrag->super.super);
+            }
+        }
     }
 
 #if OPAL_ENABLE_DEBUG
@@ -453,13 +462,16 @@ mca_pml_ob1_recv_frag_t *ompi_pml_ob1_check_cantmatch_for_match (mca_pml_ob1_com
 /**
  * Park a fragment whose sender's architecture is unknown, and so cannot
  * be converted; fetching it here is not an option, this is a btl
- * callback. Goes on frags_cant_match with the out-of-sequence fragments,
- * which also keeps this peer's message order. Callers check the peer
+ * callback. A sequenced fragment goes on frags_cant_match with the
+ * out-of-sequence ones, which also keeps this peer's message order; one
+ * the sender never numbered has no place in a queue ordered on hdr_seq
+ * and goes on unsequenced_frags instead. Callers check the peer
  * themselves. Must be called with the matching lock held, and leaves it
  * held.
  */
 static void
 pml_ob1_park_unseeded_frag (mca_btl_base_module_t *btl,
+                            ompi_communicator_t *comm_ptr,
                             mca_pml_ob1_comm_proc_t *proc,
                             const mca_pml_ob1_match_hdr_t *hdr,
                             const mca_btl_base_segment_t *segments,
@@ -469,8 +481,13 @@ pml_ob1_park_unseeded_frag (mca_btl_base_module_t *btl,
 
     MCA_PML_OB1_RECV_FRAG_ALLOC(frag);
     MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
-    ompi_pml_ob1_append_frag_to_ordered_list(&proc->frags_cant_match, frag,
-                                             proc->expected_sequence);
+    if (mca_pml_ob1_frag_is_sequenced (comm_ptr, hdr)) {
+        ompi_pml_ob1_append_frag_to_ordered_list(&proc->frags_cant_match, frag,
+                                                 proc->expected_sequence);
+    } else {
+        frag->range = NULL;
+        opal_list_append (&proc->unsequenced_frags, (opal_list_item_t *) frag);
+    }
     mca_pml_ob1_note_unseeded_frags(proc);
 }
 #endif /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
@@ -535,37 +552,38 @@ int mca_pml_ob1_drain_unseeded_frags (void)
              * left behind is an ordinary sequence gap, not our concern. */
             proc->waiting_on_arch = false;
 
-            if (OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm_ptr)) {
-                /* An overtaking communicator skips the increment for a
-                 * non-negative tag, so hdr_seq stays 0 while
-                 * expected_sequence stays at its initial 1. These
-                 * fragments were parked on their sender's architecture,
-                 * not on their order, so matching by sequence would
-                 * strand them for good -- the count released below is
-                 * the last thing that would bring anybody back here.
-                 * Flush the queue whole, as merge_cant_match() does. */
-                mca_pml_ob1_recv_frag_t *parked = proc->frags_cant_match;
+            /* Nothing will ever release these by sequence, and arrival
+             * order is the only order they have: out they all go. */
+            while (NULL != (frag = (mca_pml_ob1_recv_frag_t *)
+                                   opal_list_remove_first(&proc->unsequenced_frags))) {
+                /* Releases the lock; retaken for the next round. */
+                mca_pml_ob1_recv_frag_match_proc(frag->btl, comm_ptr, proc,
+                                                 &frag->hdr.hdr_match,
+                                                 frag->segments, frag->num_segments,
+                                                 frag->hdr.hdr_match.hdr_common.hdr_type,
+                                                 frag);
+                OB1_MATCHING_LOCK(&comm->matching_lock);
+            }
 
-                proc->frags_cant_match = NULL;
-                while (NULL != (frag = remove_head_from_ordered_list(&parked))) {
-                    /* Releases the lock; retaken for the next round. */
-                    mca_pml_ob1_recv_frag_match_proc(frag->btl, comm_ptr, proc,
-                                                     &frag->hdr.hdr_match,
-                                                     frag->segments, frag->num_segments,
-                                                     frag->hdr.hdr_match.hdr_common.hdr_type,
-                                                     frag);
-                    OB1_MATCHING_LOCK(&comm->matching_lock);
-                }
-            } else {
-                while (NULL != (frag = ompi_pml_ob1_check_cantmatch_for_match(proc))) {
-                    /* Releases the lock, and drains behind this one. */
-                    mca_pml_ob1_recv_frag_match_proc(frag->btl, comm_ptr, proc,
-                                                     &frag->hdr.hdr_match,
-                                                     frag->segments, frag->num_segments,
-                                                     frag->hdr.hdr_match.hdr_common.hdr_type,
-                                                     frag);
-                    OB1_MATCHING_LOCK(&comm->matching_lock);
-                }
+            /* And it stays empty. The peer's architecture is known from
+             * here on, so the gate that is the only way onto this queue
+             * is shut, and nothing arriving without a sequence has a
+             * reason to wait: only numbered traffic is tested for its
+             * turn. Anything below is a fragment parked from a path
+             * that has no business using this queue. */
+            assert(opal_list_is_empty(&proc->unsequenced_frags));
+
+            /* The sequenced ones waited among the ordinary gaps, and
+             * leave the ordinary way: in order, and only once their turn
+             * has come. */
+            while (NULL != (frag = ompi_pml_ob1_check_cantmatch_for_match(proc))) {
+                /* Releases the lock, and drains behind this one. */
+                mca_pml_ob1_recv_frag_match_proc(frag->btl, comm_ptr, proc,
+                                                 &frag->hdr.hdr_match,
+                                                 frag->segments, frag->num_segments,
+                                                 frag->hdr.hdr_match.hdr_common.hdr_type,
+                                                 frag);
+                OB1_MATCHING_LOCK(&comm->matching_lock);
             }
             OB1_MATCHING_UNLOCK(&comm->matching_lock);
 
@@ -646,7 +664,7 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (OPAL_UNLIKELY(!opal_proc_known(&proc->ompi_proc->super,
                                        OPAL_PROC_FLAG_INITIALIZED))) {
-        pml_ob1_park_unseeded_frag(btl, proc, hdr, segments, num_segments);
+        pml_ob1_park_unseeded_frag(btl, comm_ptr, proc, hdr, segments, num_segments);
         OB1_MATCHING_UNLOCK(&comm->matching_lock);
         return;
     }
@@ -783,6 +801,13 @@ int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm )
     OB1_MATCHING_LOCK(&pml_comm->matching_lock);
     for (uint32_t i = 0; i < pml_comm->num_procs; i++) {
         if ((NULL == (proc = pml_comm->procs[i])) || (NULL == proc->frags_cant_match)) {
+            continue;
+        }
+
+        /* A peer with fragments parked on its architecture is not one to
+         * flush: matching them would unpack with a convertor that is
+         * still ours. The drain releases them, in order, once it can. */
+        if (proc->waiting_on_arch) {
             continue;
         }
 
@@ -1252,7 +1277,7 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
     if (OPAL_UNLIKELY(!opal_proc_known(&proc->ompi_proc->super,
                                        OPAL_PROC_FLAG_INITIALIZED))) {
-        pml_ob1_park_unseeded_frag(btl, proc, hdr, segments, num_segments);
+        pml_ob1_park_unseeded_frag(btl, comm_ptr, proc, hdr, segments, num_segments);
         OB1_MATCHING_UNLOCK(&comm->matching_lock);
         return OMPI_SUCCESS;
     }
@@ -1311,12 +1336,15 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      */
 
  match_this_frag:
-    /* We're now expecting the next sequence number. */
-    /* NOTE: We should have checked for ALLOW_OVERTAKE comm flag here
-     * but adding a branch in this critical path is not ideal for performance.
-     * We decided to let it run the sequence number even we are not doing
-     * anything with it. */
-    proc->expected_sequence++;
+    /* We're now expecting the next sequence number -- unless the sender
+     * never assigned this one. Counting a fragment the sender did not
+     * count pushes expected_sequence past send_sequence, and from there
+     * every sequenced message from this peer is read as a gap, parked,
+     * and never released. The branch is the price of an assertion that
+     * applies to some of a peer's traffic and not the rest. */
+    if (mca_pml_ob1_frag_is_sequenced (comm_ptr, hdr)) {
+        proc->expected_sequence++;
+    }
 
     /* We generate the SEARCH_POSTED_QUEUE only when the message is
      * received in the correct sequence. Otherwise, we delay the event
