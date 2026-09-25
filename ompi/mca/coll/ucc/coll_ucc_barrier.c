@@ -77,7 +77,7 @@ int mca_coll_ucc_barrier_init(struct ompi_communicator_t *comm, struct ompi_info
     mca_coll_ucc_req_t *coll_req = NULL;
 
     COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
-    UCC_VERBOSE(3, "barrier_init init %p", coll_req);
+    UCC_VERBOSE(3, "barrier_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_barrier_init_common(true, ucc_module, &req, coll_req));
     *request = &coll_req->super;
     return OMPI_SUCCESS;

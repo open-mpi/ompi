@@ -136,7 +136,7 @@ int mca_coll_ucc_alltoallv_init(const void *sbuf, ompi_count_array_t scounts,
     mca_coll_ucc_req_t *coll_req = NULL;
 
     COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
-    UCC_VERBOSE(3, "alltoallv_init init %p", coll_req);
+    UCC_VERBOSE(3, "alltoallv_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_alltoallv_init_common(sbuf, scounts, sdisps, sdtype,
                                                       rbuf, rcounts, rdisps, rdtype,
                                                       true, ucc_module, &req, coll_req));
