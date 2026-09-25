@@ -385,25 +385,22 @@ int mca_pml_ob1_revoke_comm( struct ompi_communicator_t* ompi_comm, bool coll_on
                 opal_list_append(&nack_list, &frag->super.super);
             }
         }
-        /* same for the cantmatch queue/heap; this list is more complicated
-         * Keep it simple: we pop all of the complex list, put the bad items
-         * in the nack_list, and keep the good items in the keep_list;
-         * then we reinsert the good items in the cantmatch heaplist */
-        mca_pml_ob1_recv_frag_t* frag;
-        opal_list_t keep_list;
-        OBJ_CONSTRUCT(&keep_list, opal_list_t);
+        /* same for the cantmatch queue/heap, which cannot be walked where
+         * it lies: it gives up its elements at the head only, and lifting
+         * one out of the middle would mean splitting the range of
+         * contiguous sequences it sits in. So drain it and rebuild what
+         * survives into a second heap -- draining hands them over in
+         * increasing sequence, which is the cheap direction to insert. */
+        mca_pml_ob1_recv_frag_t *frag, *kept = NULL;
         while(NULL != (frag = remove_head_from_ordered_list(&proc->frags_cant_match))) {
             if( pml_ob1_frag_is_revoked(ompi_comm, frag) ) {
                 opal_list_append(&nack_list, &frag->super.super);
             }
             else {
-                opal_list_append(&keep_list, &frag->super.super);
+                ompi_pml_ob1_append_frag_to_ordered_list(&kept, frag, proc->expected_sequence);
             }
         }
-        while( NULL != (it = opal_list_remove_first(&keep_list)) ) {
-            ompi_pml_ob1_append_frag_to_ordered_list(&proc->frags_cant_match, (mca_pml_ob1_recv_frag_t*)it, proc->expected_sequence);
-        }
-        OBJ_DESTRUCT(&keep_list);
+        proc->frags_cant_match = kept;
     }
 
 #if OPAL_ENABLE_DEBUG
