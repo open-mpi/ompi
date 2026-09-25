@@ -11,7 +11,7 @@
 /*
  * Test intent:
  *   Exercise MPI_Type_get_contents in its own executable.  This API
- *   decodes implementation-owned datatype internals back into standard
+ *   decodes implementation-owned datatype internals back into MPI Forum
  *   ABI handles and constructor arguments, so it is a distinct ABI path
  *   from the constructor and envelope probes.
  *

@@ -17,7 +17,7 @@
 # Tests are grouped into subdirectories by the MPI object or interface
 # that they exercise.  mpi-abi is the exception: it is a suite of
 # multi-process MPI programs, launched by its own driver, that exercise
-# the MPI Standard ABI (see its check-local target).
+# the MPI Forum ABI (see its check-local target).
 #
 
 # t, file, datatype, general, mpi-abi, reexport, and bindings-generator are run by

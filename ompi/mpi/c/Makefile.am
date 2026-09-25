@@ -1179,7 +1179,7 @@ abi_converters.c: abi.h abi_converters.h $(OMPI_BINDINGS_GENERATOR)
 	    --output $@ \
 	    c \
 	    source \
-	    standard \
+	    forum \
 	    $<
 
 # Deal with oddballs wrt big count
@@ -1190,7 +1190,7 @@ type_get_contents_abi_generated.c: type_get_contents.c.in_nbc
 	    --output $@ \
 	    c \
 	    source \
-	    standard \
+	    forum \
 	    --suppress_bc \
 	    $(abs_top_srcdir)/ompi/mpi/c/type_get_contents.c.in_nbc
 
@@ -1201,7 +1201,7 @@ type_get_envelope_abi_generated.c: type_get_envelope.c.in_nbc
 	    --output $@ \
 	    c \
 	    source \
-	    standard \
+	    forum \
 	    --suppress_bc \
 	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope.c.in_nbc
 
@@ -1212,7 +1212,7 @@ type_get_contents_c_abi_generated.c: type_get_contents_c.c.in_obc
 	    --output $@ \
 	    c \
 	    source \
-	    standard \
+	    forum \
 	    --suppress_nbc \
 	    $(abs_top_srcdir)/ompi/mpi/c/type_get_contents_c.c.in_obc
 
@@ -1223,7 +1223,7 @@ type_get_envelope_c_abi_generated.c: type_get_envelope_c.c.in_obc
 	    --output $@ \
 	    c \
 	    source \
-	    standard \
+	    forum \
 	    --suppress_nbc \
 	    $(abs_top_srcdir)/ompi/mpi/c/type_get_envelope_c.c.in_obc
 endif

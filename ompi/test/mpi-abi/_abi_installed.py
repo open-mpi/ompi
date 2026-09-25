@@ -373,7 +373,7 @@ def _cross_compile_extra_flags(details):
     application binaries must not require more than mpi_abi as the sole
     direct MPI ABI dependency, and section 16.2.1 still requires PMPI
     alternate entry points for MPI routines.  The harness should only
-    reason about the standard ABI library, libmpi_abi; non-standard
+    reason about the MPI Forum ABI library, libmpi_abi; non-standard
     extra libraries are not part of the MPI ABI test contract.  See Open
     MPI issue #13955.
     """
@@ -491,7 +491,7 @@ def _cross_compile_header(tools, implementation):
     # For Open MPI the plain include root also contains the normal,
     # internal-ABI mpi.h, which would silently invalidate cross ABI
     # generation if selected.  Require the MPI_H_ABI marker (as
-    # _installed_standard_abi_header does) and prefer the forum_abi
+    # _installed_forum_abi_header does) and prefer the forum_abi
     # subdirectory so an install-include-root override cannot pick the
     # non-ABI header.
     candidates = (
@@ -553,7 +553,7 @@ def _cross_header_constant_semantics_check(manifest, header, implementation):
 
 
 def _cross_header_typedef_semantics_check(manifest, header, implementation):
-    """Check that standard ABI typedef names used by metadata are declared."""
+    """Check that MPI Forum ABI typedef names used by metadata are declared."""
     check_name = "cross_header_" + implementation + "_typedef_semantics"
     typedefs = _parse_c_header_typedef_names(header)
     expected = {
@@ -621,7 +621,7 @@ def _cross_header_feature_set_check(headers, manifest, expected_signatures):
     open_mpi = "open_mpi"
     mpich = "mpich"
     # This is a declared MPI Forum ABI surface comparison, not a runtime
-    # optional-feature probe.  The ABI header should expose the standard
+    # optional-feature probe.  The ABI header should expose the MPI Forum
     # ABI prototypes, typedefs, and constants that the metadata says are
     # in scope.  Runtime families such as MPI-IO, RMA, dynamic process,
     # and MPI_T events get stable configure/runtime skips in the actual
@@ -687,7 +687,7 @@ def _cross_header_semantic_checks(srcdir, manifest, tools, progress=None):
     """Run parsed semantic checks on both selected cross ABI headers."""
     checks = []
     headers = {}
-    expected_signatures, excluded_names = _standard_abi_expected_signatures(
+    expected_signatures, excluded_names = _forum_abi_expected_signatures(
         srcdir)
     for implementation in ("open_mpi", "mpich"):
         tolerated_legacy_names = (
@@ -812,10 +812,10 @@ def _cross_wrapper_intent_check(tools, dirs, implementation, details):
     header = _cross_compile_header(tools, implementation)
     missing = []
     if header is None:
-        missing.append("standard_abi_header")
+        missing.append("forum_abi_header")
     elif not any(Path(directory).resolve() == header.parent.resolve()
                  for directory in include_dirs):
-        missing.append("standard_abi_include_path")
+        missing.append("forum_abi_include_path")
     if not _words_link_library(words, "mpi_abi"):
         missing.append("libmpi_abi_link")
     if implementation == "mpich":
@@ -1266,8 +1266,8 @@ def _showme_words(mpicc_abi, option, dirs, env, name):
         return result, []
 
 
-def _installed_standard_abi_header(tools, dirs, env):
-    """Find the installed standard ABI mpi.h used by mpicc_abi.
+def _installed_forum_abi_header(tools, dirs, env):
+    """Find the installed MPI Forum ABI mpi.h used by mpicc_abi.
 
     The MPI_H_ABI marker is required so an include path that happens to
     contain another mpi.h cannot satisfy the check.  This matters because
@@ -1440,13 +1440,13 @@ def _normalize_c_typedef_reference(type_name):
 _EXPECTED_SIGNATURES_CACHE = {}
 
 
-def _standard_abi_expected_signatures(srcdir):
+def _forum_abi_expected_signatures(srcdir):
     """Build expected C/PMPI signatures from pympistandard metadata.
 
     Comparing against pympistandard avoids a circular test where the
     installed header is parsed and then used as its own authority.
     Deprecated C APIs and Fortran-only entry points are excluded by the
-    same generator-side rules used to build the standard ABI header.
+    same generator-side rules used to build the MPI Forum ABI header.
 
     The derived table is deterministic for a given srcdir, so it is
     memoized: this helper is called from both the installed header and
@@ -1527,7 +1527,7 @@ def _header_probe_source(prototypes):
         "#include \"mpi.h\"",
         "",
         "#ifndef MPI_H_ABI",
-        "#error \"standard ABI mpi.h was not used\"",
+        "#error \"MPI Forum ABI mpi.h was not used\"",
         "#endif",
         "",
     ]
@@ -1633,7 +1633,7 @@ def _signature_comparison_check(
     if missing or mismatches or extra:
         return _fail(
             check_name,
-            "standard ABI header signatures differ from MPI C signatures",
+            "MPI Forum ABI header signatures differ from MPI C signatures",
             checked=len(expected_signatures),
             missing=missing[:20],
             missing_count=len(missing),
@@ -1655,7 +1655,7 @@ def _non_abi_absence_check(
         prototypes, excluded_names,
         check_name="installed_c_header_non_abi_absence",
         tolerated_exposed_names=None):
-    """Ensure APIs excluded from the standard ABI are not exposed."""
+    """Ensure APIs excluded from the MPI Forum ABI are not exposed."""
     if tolerated_exposed_names is None:
         tolerated_exposed_names = set()
     exposed = [
@@ -1671,7 +1671,7 @@ def _non_abi_absence_check(
     if exposed:
         return _fail(
             check_name,
-            "non-ABI C APIs are exposed by the standard ABI header",
+            "non-ABI C APIs are exposed by the MPI Forum ABI header",
             exposed=exposed[:20],
             exposed_count=len(exposed),
             tolerated_exposed=tolerated_exposed,
@@ -1700,7 +1700,7 @@ def _prototype_pair_check(prototypes, excluded_names):
     if missing_pmpi:
         return _fail(
             "installed_c_header_api_prototypes",
-            "standard ABI header is missing PMPI prototypes",
+            "MPI Forum ABI header is missing PMPI prototypes",
             mpi_count=len(mpi_names),
             pmpi_count=len(pmpi_names),
             missing_pmpi=missing_pmpi[:20],
@@ -1815,7 +1815,7 @@ def _symbol_table_check(prototypes, excluded_names, tools, dirs, env):
     if missing:
         return _fail(
             "installed_libmpi_abi_symbols",
-            "libmpi_abi is missing defined standard ABI symbols",
+            "libmpi_abi is missing defined MPI Forum ABI symbols",
             library=str(library),
             checked=len(expected),
             missing=missing[:20],
@@ -1841,7 +1841,7 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs, progress=None):
     env = _installed_test_env(tools)
     if progress is not None:
         progress.start("installed_c_header_api_prototypes")
-    header = _installed_standard_abi_header(tools, dirs, env)
+    header = _installed_forum_abi_header(tools, dirs, env)
     if header is None:
         check = _skip("installed_c_header_api_prototypes",
                       SKIP_HEADER_UNAVAILABLE)
@@ -1853,7 +1853,7 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs, progress=None):
     if len(prototypes) < MIN_EXPECTED_C_HEADER_PROTOTYPES:
         check = _fail(
             "installed_c_header_api_prototypes",
-            "standard ABI header prototype parser found too few entries",
+            "MPI Forum ABI header prototype parser found too few entries",
             header=str(header),
             prototype_count=len(prototypes),
             minimum_expected=MIN_EXPECTED_C_HEADER_PROTOTYPES)
@@ -1861,7 +1861,7 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs, progress=None):
             progress.check(check)
         return [check]
 
-    expected_signatures, excluded_names = _standard_abi_expected_signatures(
+    expected_signatures, excluded_names = _forum_abi_expected_signatures(
         Path(manifest["metadata"]["api_path"]).parents[1])
     mpi_prototypes = {
         name: proto for name, proto in prototypes.items()
@@ -1904,7 +1904,7 @@ def _installed_c_header_symbol_checks(manifest, tools, dirs, progress=None):
     if compile_result["returncode"] != 0:
         _append_check(checks, _fail(
             "installed_c_header_compile_link",
-            "standard ABI header prototype compile/link probe failed",
+            "MPI Forum ABI header prototype compile/link probe failed",
             source=str(source),
             executable=str(executable),
             command=compile_result["command"],
@@ -1965,7 +1965,7 @@ def _installed_wrapper_checks(tools, dirs, progress=None):
     compile_log = dirs["logs"] / "mpicc_abi_showme_compile.json"
     link_log = dirs["logs"] / "mpicc_abi_showme_link.json"
     if progress is not None:
-        progress.start("installed_standard_abi_wrapper_flags")
+        progress.start("installed_forum_abi_wrapper_flags")
     compile_result = _command_result(
         "mpicc_abi_showme_compile",
         [mpicc_abi, "--showme:compile"],
@@ -1975,21 +1975,21 @@ def _installed_wrapper_checks(tools, dirs, progress=None):
 
     if compile_result["returncode"] != 0:
         _append_check(checks, _fail(
-            "installed_standard_abi_wrapper_flags",
+            "installed_forum_abi_wrapper_flags",
             "mpicc_abi --showme:compile failed",
             command=compile_result["command"],
             returncode=compile_result["returncode"],
             log=compile_result["log"]), progress)
     elif "forum_abi" not in compile_result["stdout"]:
         _append_check(checks, _fail(
-            "installed_standard_abi_wrapper_flags",
-            "mpicc_abi does not advertise standard ABI include path",
+            "installed_forum_abi_wrapper_flags",
+            "mpicc_abi does not advertise MPI Forum ABI include path",
             command=compile_result["command"],
             stdout=compile_result["stdout"],
             log=compile_result["log"]), progress)
     else:
         _append_check(checks, _pass(
-            "installed_standard_abi_wrapper_flags",
+            "installed_forum_abi_wrapper_flags",
             command=compile_result["command"],
             stdout=compile_result["stdout"].strip(),
             log=compile_result["log"]), progress)
@@ -2224,7 +2224,7 @@ def _fortran_coverage_audit(manifest, tools, compile_checks, runtime_checks):
             "pending_coverage_count": len(pending),
             "pending_coverage": pending[:20],
             "coverage_kind": (
-                "standard_abi" if language == "use mpi_f08"
+                "forum_abi" if language == "use mpi_f08"
                 else "regression"
             ),
         }
@@ -2444,7 +2444,7 @@ def _fortran_optional_datatype_skip(manifest, tools, progress=None):
     """Record the still-deferred optional Fortran datatype work item.
 
     The C ABI converter tests already guard optional Fortran datatype
-    declarations against the installed standard ABI header.  Exhaustive
+    declarations against the installed MPI Forum ABI header.  Exhaustive
     Fortran binding probes need generated source driven by the installed
     module declarations, which is intentionally left as a distinct open
     task so unavailable optional types become precise SKIPs instead of
@@ -2692,7 +2692,7 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
     """
     checks = []
     env = _installed_test_env(tools)
-    header = _installed_standard_abi_header(tools, dirs, env)
+    header = _installed_forum_abi_header(tools, dirs, env)
     include_fortran = _fortran_bindings_enabled(manifest)
     if header is None:
         if progress is not None:
@@ -2721,7 +2721,7 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
     if missing_names:
         _append_check(checks, _fail(
             "installed_c_probe_metadata_constants",
-            "installed standard ABI header is missing probe constants",
+            "installed MPI Forum ABI header is missing probe constants",
             header=str(header),
             missing=missing_names[:20],
             missing_count=len(missing_names),
@@ -2779,7 +2779,7 @@ def _installed_c_probe_checks(srcdir, manifest, tools, dirs, progress=None):
 
 def run_installed_checks(manifest, mode, srcdir, outdir, tools,
                          progress=None):
-    """Run checks that require an installed Open MPI standard ABI build.
+    """Run checks that require an installed Open MPI Forum ABI build.
 
     Installed checks intentionally live outside make check's normal
     check_PROGRAMS flow: they need an installed mpicc_abi/mpirun pair and
