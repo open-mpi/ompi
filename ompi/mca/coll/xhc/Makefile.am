@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
+# Copyright (c) 2021-2026 Computer Architecture and VLSI Systems (CARV)
 #                         Laboratory, ICS Forth. All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
