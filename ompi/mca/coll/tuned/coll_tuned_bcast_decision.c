@@ -207,6 +207,12 @@ int ompi_coll_tuned_bcast_intra_do_this(void *buf, size_t count, struct ompi_dat
             return ompi_coll_base_bcast_intra_bine_lat_i_new(buf, count, dtype, root, comm, module);
         case 5:
             return ompi_coll_base_bcast_intra_bine_bdw_remap(buf, count, dtype, root, comm, module);
+        default:
+            OPAL_OUTPUT_VERBOSE(
+                (COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                 "coll:tuned:bcast_intra_do_this invalid bine_imp %d for algorithm 10",
+                 bine_imp));
+            return MPI_ERR_ARG;
         }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,

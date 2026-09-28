@@ -186,6 +186,12 @@ int ompi_coll_tuned_reduce_scatter_intra_do_this(
         case 3:
             return ompi_coll_base_reduce_scatter_intra_bine_permute_remap(sbuf, rbuf, rcounts,
                                                                          dtype, op, comm, module);
+        default:
+            OPAL_OUTPUT_VERBOSE(
+                (COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                 "coll:tuned:reduce_scatter_intra_do_this invalid bine_imp %d for algorithm 5",
+                 bine_imp));
+            return MPI_ERR_ARG;
         }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
