@@ -327,7 +327,14 @@ AC_DEFUN([OMPI_SETUP_FC],[
     # Use Autoconf 2.69 Fortran detection macros for improved portability
     AS_IF([test $ompi_fc_happy -eq 1],
           [# Detect preprocessor define flag (usually -D)
-           AC_FC_PP_DEFINE])
+           AC_FC_PP_DEFINE
+
+           # Detect flag for module output directory (e.g., "-module " for Intel)
+           # Improves VPATH build support and module organization
+           AC_FC_MODULE_OUTPUT_FLAG
+           AS_IF([test -n "$FC_MODOUT"],
+                 [AC_MSG_NOTICE([Fortran module output flag: $FC_MODOUT])
+                  AC_SUBST([FC_MODOUT])])])
 
     # Use Autoconf 2.69 macro to detect .F90 preprocessing support
     # This tests if the compiler can preprocess .F90 files and sets
