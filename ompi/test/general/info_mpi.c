@@ -35,9 +35,14 @@
 static int argc_saved;
 static char **argv_saved;
 
+/* What MPI_Info_create_env reported before MPI was initialized; held for
+ * test_info_env_across_init() to compare against. */
+static MPI_Info env_before_init = MPI_INFO_NULL;
+
 static void test_info_api(void);
 static void test_info_empty_value(void);
 static void test_info_env(void);
+static void test_info_env_across_init(void);
 static void test_memkind_process(void);
 
 int main(int argc, char *argv[])
@@ -47,12 +52,19 @@ int main(int argc, char *argv[])
     argc_saved = argc;
     argv_saved = argv;
 
-    int rc = MPI_Init(&argc, &argv);
+    /* MPI_Info_create_env is one of the few calls that is legal before
+     * MPI_Init, and this is the only chance to ask it */
+    int rc = MPI_Info_create_env(argc, argv, &env_before_init);
+    test_verify("Info_create_env succeeds before MPI_Init",
+                MPI_SUCCESS == rc && MPI_INFO_NULL != env_before_init);
+
+    rc = MPI_Init(&argc, &argv);
     test_verify("MPI_Init succeeds", MPI_SUCCESS == rc);
 
     test_info_api();
     test_info_empty_value();
     test_info_env();
+    test_info_env_across_init();
     test_memkind_process();
 
     int r = test_finalize();
@@ -191,6 +203,92 @@ static void test_info_env(void)
         test_verify("create_env produced keys", n > 0);
         MPI_Info_free(&env);
     }
+}
+
+/* ------------------------------------------------------------------ */
+
+/* MPI_Info_create_env describes how this process was started, which
+ * MPI_Init does not change, so the object it returns before MPI is
+ * initialized must not contradict the one it returns after (GitHub issue
+ * #14297).  A key whose value only the runtime knows is absent from the
+ * early object; every key that is there has to survive initialization
+ * with the same value. */
+static void test_info_env_across_init(void)
+{
+    if (MPI_INFO_NULL == env_before_init) {
+        return;
+    }
+
+    MPI_Info env_after_init = MPI_INFO_NULL;
+    int rc = MPI_Info_create_env(argc_saved, argv_saved, &env_after_init);
+    test_verify("Info_create_env succeeds after MPI_Init",
+                MPI_SUCCESS == rc && MPI_INFO_NULL != env_after_init);
+    if (MPI_INFO_NULL == env_after_init) {
+        return;
+    }
+
+    /* host does not belong to the job description: opal_init_util()
+     * takes it from gethostname() before anything else runs and nothing
+     * replaces it, so it is an answer at any time.  The loop below holds
+     * it to the same value across initialization. */
+    int buflen = MPI_MAX_INFO_VAL, flag = 0;
+    char value[MPI_MAX_INFO_VAL], other[MPI_MAX_INFO_VAL];
+    char msg[MPI_MAX_INFO_KEY + 64];
+    int other_flag;
+
+    MPI_Info_get_string(env_before_init, "host", &buflen, value, &flag);
+    test_verify("host is set before MPI_Init", 1 == flag);
+
+    /* These do come from the job description: not knowable before the
+     * runtime has run, and all known once it has.  maxprocs and soft
+     * used to be answered from the static initializers of
+     * ompi_process_info as 0, and thread_level as MPI_THREAD_SINGLE,
+     * which was only the default value of the variable holding it, no
+     * level having been requested yet. */
+    static const char *const runtime_only[] = {"maxprocs", "soft",
+                                               "wdir", "thread_level",
+                                               "ompi_num_apps",
+                                               "ompi_first_rank", "ompi_np",
+                                               NULL};
+    for (int i = 0; NULL != runtime_only[i]; ++i) {
+        buflen = MPI_MAX_INFO_VAL;
+        flag = 1;
+        MPI_Info_get_string(env_before_init, runtime_only[i], &buflen, value, &flag);
+        snprintf(msg, sizeof(msg), "no %s before MPI_Init", runtime_only[i]);
+        test_verify(msg, 0 == flag);
+
+        buflen = MPI_MAX_INFO_VAL;
+        flag = 0;
+        MPI_Info_get_string(env_after_init, runtime_only[i], &buflen, value, &flag);
+        snprintf(msg, sizeof(msg), "%s after MPI_Init", runtime_only[i]);
+        test_verify(msg, 1 == flag);
+    }
+
+    int nkeys = 0;
+    MPI_Info_get_nkeys(env_before_init, &nkeys);
+    test_verify("create_env produced keys before MPI_Init", nkeys > 0);
+
+    for (int i = 0; i < nkeys; ++i) {
+        char key[MPI_MAX_INFO_KEY];
+        rc = MPI_Info_get_nthkey(env_before_init, i, key);
+        test_verify("get_nthkey on the pre-init env succeeds", MPI_SUCCESS == rc);
+        if (MPI_SUCCESS != rc) {
+            continue;
+        }
+
+        buflen = MPI_MAX_INFO_VAL;
+        flag = 0;
+        MPI_Info_get_string(env_before_init, key, &buflen, value, &flag);
+        buflen = MPI_MAX_INFO_VAL;
+        other_flag = 0;
+        MPI_Info_get_string(env_after_init, key, &buflen, other, &other_flag);
+
+        snprintf(msg, sizeof(msg), "%s is unchanged by MPI_Init", key);
+        test_verify(msg, 1 == flag && 1 == other_flag && 0 == strcmp(value, other));
+    }
+
+    MPI_Info_free(&env_after_init);
+    MPI_Info_free(&env_before_init);
 }
 
 /* ------------------------------------------------------------------ */
