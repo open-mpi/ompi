@@ -8,6 +8,52 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Updated the embedded hwloc to v2.15.0.
+
+- ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
+  detect that the two jobs are running different versions of Open MPI,
+  or that they selected different PMLs, and fail with a message naming
+  both instead of failing obscurely later.  The two roots find this
+  out through the information they already exchange on the port, which
+  now leads with the version and the PML.  Connecting two jobs has
+  always required both to be running the same version of Open MPI --
+  the content of that exchange is internal and has never been
+  compatible across versions -- and a connect against Open MPI v6.0.x
+  or earlier will now say so on this side.  The older side cannot read
+  what this one publishes and may fail less gracefully.
+
+- ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
+  hand the procs of the job they connected to the PML as one group,
+  rather than leaving each to be wired individually the first time it
+  is sent to.  The count passed along with them had always been zero,
+  so none of them were handed over at all.  One consequence is
+  user-visible: a dynamic peer that a process has no network to reach
+  now fails the connect on that process, naming the peer, where before
+  the failure waited for a send to it and arrived as a crash in the
+  sending process rather than as an error.
+
+- Open MPI no longer forces a specific Libevent back-end; Libevent now
+  picks the best mechanism available on the platform (for example,
+  ``kqueue`` on macOS and ``epoll`` on Linux).  Open MPI previously
+  forced ``select`` on macOS and ``poll`` on most other platforms, to
+  work around 2008-era problems using the scalable mechanisms with
+  pseudo-terminals.  Those problems no longer apply: the pseudo-terminals
+  in question belong to PRRTE's I/O forwarding, which does not consult
+  this setting.  The ``opal_event_include`` MCA parameter still allows a
+  specific mechanism to be selected.  Its default is now empty, which
+  means that Libevent chooses (``all`` is also still accepted with the
+  same meaning).
+
+- Fixed every MPI process crashing in ``MPI_Init()`` on macOS when Open
+  MPI was built against a macOS SDK newer than the OS it runs on -- for
+  example, the Command Line Tools installing the macOS 27 SDK on a macOS
+  26 machine.  ``pipe2()`` is declared by the newer SDK but is absent
+  from the older OS, and the bundled Libevent's ``configure`` concluded
+  it was usable, so Libevent called a symbol that resolves to NULL at
+  run time.  The bundled Libevent is now always built to use its
+  portable ``pipe()`` fallback on macOS.  See
+  https://github.com/open-mpi/ompi/issues/14462 for the full analysis.
+
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
   bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every

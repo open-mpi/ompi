@@ -8,6 +8,8 @@ Open MPI version v6.0.0
 --------------------------
 :Date: ...fill me in...
 
+- Updated the embedded hwloc to v2.15.0.
+
 - OpenSHMEM static symmetric storage is now limited to writable loadable
   segments of the main executable.  Unrelated mappings, including private
   anonymous mappings, are excluded.
