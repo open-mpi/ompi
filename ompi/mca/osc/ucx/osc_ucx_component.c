@@ -383,7 +383,7 @@ static int component_query(struct ompi_win_t *win, void **base, size_t size, ptr
                            struct ompi_communicator_t *comm, struct opal_info_t *info, int flavor) {
     int ret = component_set_priority(flavor);
     if (OMPI_SUCCESS != ret) {
-        OSC_UCX_ERROR("OSC UCX component priority set inside component query failed \n ");
+        OSC_UCX_VERBOSE(10, "OSC UCX not available (component_set_priority returned %d)", ret);
         return ret;
     }
     return mca_osc_ucx_component.priority;
@@ -585,7 +585,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, pt
 
         ret = component_set_priority(flavor);
         if (OMPI_SUCCESS != ret) {
-            OSC_UCX_ERROR("OSC UCX component priority set inside component select failed \n ");
+            OSC_UCX_VERBOSE(10, "OSC UCX not available (component_set_priority returned %d)", ret);
             return ret;
         }
 
