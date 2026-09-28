@@ -8,6 +8,8 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Updated the embedded hwloc to v2.15.0.
+
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
   detect that the two jobs are running different versions of Open MPI,
   or that they selected different PMLs, and fail with a message naming
