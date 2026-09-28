@@ -15,7 +15,7 @@
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2013-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2013-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -46,6 +46,9 @@
 #endif
 #ifdef HAVE_NETINET_IN_H
 #    include <netinet/in.h>
+#endif
+#ifdef HAVE_NET_IF_H
+#    include <net/if.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
 #    include <arpa/inet.h>
@@ -315,6 +318,15 @@ static int mca_btl_tcp_component_register(void)
         NULL, 0, 0, OPAL_INFO_LVL_2, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_btl_tcp_component.report_all_unfound_interfaces);
 
+    mca_btl_tcp_component.tcp_if_require_carrier = true;
+    (void) mca_base_component_var_register(
+        &mca_btl_tcp_component.super.btl_version, "if_require_carrier",
+        "Ignore an interface that is administratively up but has no carrier "
+        "(IFF_RUNNING clear), such as a container bridge with nothing attached. "
+        "Set to 0 to use such interfaces anyway",
+        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_4, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_btl_tcp_component.tcp_if_require_carrier);
+
     mca_btl_tcp_module.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_LOW + 100;
     mca_btl_tcp_module.super.btl_eager_limit = 64 * 1024;
     mca_btl_tcp_module.super.btl_rndv_eager_limit = 64 * 1024;
@@ -532,6 +544,32 @@ static int mca_btl_tcp_create(const int if_kindex, const char *if_name)
         if (if_kindex != selected_interface->if_kernel_index) {
             continue;
         }
+
+        /* An interface can be administratively up (IFF_UP, which is all the
+         * opal "if" components screen on) and still have no carrier
+         * (IFF_RUNNING clear) -- a container bridge with nothing attached is
+         * the ordinary way that happens, docker0 being the common case.
+         *
+         * Such an interface cannot be used, because it cannot honour its own
+         * address as the source of a connection.
+         * mca_btl_tcp_endpoint_start_connect() binds that address
+         * deliberately, so that the peer can pair btl modules by the source
+         * it sees; with the route marked linkdown the kernel sources the
+         * connection from somewhere else instead, and the peer then refuses
+         * it for the module it was meant for ("Match incoming connection ...
+         * failed").  The socket is adopted by a different module, both sides
+         * believe they are wired, and the first message that needs the
+         * mispaired module never arrives.
+         */
+#if defined(IFF_RUNNING)
+        if (mca_btl_tcp_component.tcp_if_require_carrier
+            && 0 == (selected_interface->if_flags & IFF_RUNNING)) {
+            opal_output_verbose(5, opal_btl_base_framework.framework_output,
+                                "btl: tcp: ignoring %s: administratively up but no carrier",
+                                if_name);
+            continue;
+        }
+#endif
 
         if_index = selected_interface->if_index;
 
