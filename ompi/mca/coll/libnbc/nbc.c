@@ -737,8 +737,11 @@ int NBC_Schedule_request(NBC_Schedule *schedule, ompi_communicator_t *comm,
   if (need_register) {
       int32_t tmp =
           OPAL_THREAD_ADD_FETCH32(&mca_coll_libnbc_component.active_comms, 1);
+      /* query thread-safety of the component progress engine */
+      const bool progress_thread_safe = mca_coll_libnbc_component.super.collm_data.param_field
+                                        & MCA_BASE_METADATA_PARAM_THREAD_SAFE;
       if (tmp == 1) {
-          opal_progress_register(ompi_coll_libnbc_progress);
+          opal_progress_register_thread_safe(ompi_coll_libnbc_progress, progress_thread_safe);
       }
   }
 

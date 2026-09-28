@@ -148,6 +148,15 @@ OPAL_DECLSPEC void opal_progress_set_event_poll_rate(int microseconds);
  * extraordinarily expensive operation and should not be used for
  * potentially short callback lifetimes.
  *
+ * A component-specific progress callback should generally be implemented
+ * to be thread-safe (recommended). However, some progress callbacks can
+ * be unsafe by choice for performance reason.
+ *
+ * opal_progress_register() and opal_progress_register_lp() will treat
+ * callbacks as **unsafe** by default. It is the responsibility of
+ * component developers to turn them to thread-safe (or not) and
+ * use opal_progress_register[_thread_safe][_lp]() to register.
+ *
  * @return         Number of events progressed during the callback
  */
 typedef int (*opal_progress_callback_t)(void);
@@ -161,6 +170,10 @@ typedef int (*opal_progress_callback_t)(void);
 OPAL_DECLSPEC int opal_progress_register(opal_progress_callback_t cb);
 
 OPAL_DECLSPEC int opal_progress_register_lp(opal_progress_callback_t cb);
+
+OPAL_DECLSPEC int opal_progress_register_thread_safe(opal_progress_callback_t cb, bool is_thread_safe);
+
+OPAL_DECLSPEC int opal_progress_register_thread_safe_lp(opal_progress_callback_t cb, bool is_thread_safe);
 
 /**
  * Deregister previously registered event

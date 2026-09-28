@@ -86,18 +86,46 @@ static thread_args_t thread_arg = {
  */
 static opal_atomic_lock_t progress_lock;
 
-/* callbacks to progress */
-static volatile opal_progress_callback_t *callbacks = NULL;
-static size_t callbacks_len = 0;
-static size_t callbacks_size = 0;
+/* callbacks to progress
+ *
+ * Callbacks are stored in a 2x2 table indexed by
+ *   [thread-safety class][priority]
+ *
+ * "SAFE" callbacks were explicitly registered via
+ * opal_progress_register_thread_safe(..., true) by a component
+ * maintainer who audited that the callback may be invoked concurrently
+ * with opal_progress() running on another thread (i.e. from the async
+ * progress thread). Anything registered via the original
+ * opal_progress_register()/_lp() API -- i.e. unaudited -- is treated
+ * as "UNSAFE" by default (fail closed).
+ *
+ * Only the OPAL_THREAD_SAFE row is ever progressed by the async
+ * progress thread. The OPAL_THREAD_UNSAFE row is progressed
+ * synchronously by whichever application thread calls opal_progress(),
+ * even while the async thread is running, since nothing else will ever
+ * call them. */
+typedef enum {
+    OPAL_THREAD_SAFE = 0,
+    OPAL_THREAD_UNSAFE = 1,
+    OPAL_THREAD_SAFETY_MAX
+} opal_progress_thread_safety_t;
 
-static volatile opal_progress_callback_t *callbacks_lp = NULL;
-static size_t callbacks_lp_len = 0;
-static size_t callbacks_lp_size = 0;
+typedef enum {
+    OPAL_PRIORITY_NORMAL = 0,
+    OPAL_PRIORITY_LOW = 1,
+    OPAL_PRIORITY_MAX
+} opal_progress_priority_t;
+
+typedef struct {
+    volatile opal_progress_callback_t *cbs;
+    size_t len;
+    size_t size;
+} opal_progress_cb_array_t;
+
+static opal_progress_cb_array_t callbacks[OPAL_THREAD_SAFETY_MAX][OPAL_PRIORITY_MAX];
 
 /* do we want to yield() if nothing happened */
 bool opal_progress_yield_when_idle = false;
-
 #if OPAL_PROGRESS_USE_TIMERS
 static opal_timer_t event_progress_last_time = 0;
 static opal_timer_t event_progress_delta = 0;
@@ -137,15 +165,14 @@ static void opal_progress_finalize(void)
     /* free memory associated with the callbacks */
     opal_atomic_lock(&progress_lock);
 
-    callbacks_len = 0;
-    callbacks_size = 0;
-    free((void *) callbacks);
-    callbacks = NULL;
-
-    callbacks_lp_len = 0;
-    callbacks_lp_size = 0;
-    free((void *) callbacks_lp);
-    callbacks_lp = NULL;
+    for (int t = 0; t < OPAL_THREAD_SAFETY_MAX; ++t) {
+        for (int p = 0; p < OPAL_PRIORITY_MAX; ++p) {
+            callbacks[t][p].len = 0;
+            callbacks[t][p].size = 0;
+            free((void *) callbacks[t][p].cbs);
+            callbacks[t][p].cbs = NULL;
+        }
+    }
 
     opal_atomic_unlock(&progress_lock);
 }
@@ -185,25 +212,29 @@ int opal_progress_init(void)
     }
 #endif
 
-    callbacks_size = callbacks_lp_size = 8;
+    for (int t = 0; t < OPAL_THREAD_SAFETY_MAX; ++t) {
+        for (int p = 0; p < OPAL_PRIORITY_MAX; ++p) {
+            callbacks[t][p].size = 8;
+            callbacks[t][p].len = 0;
+            callbacks[t][p].cbs = malloc(callbacks[t][p].size * sizeof(callbacks[t][p].cbs[0]));
 
-    callbacks = malloc(callbacks_size * sizeof(callbacks[0]));
-    callbacks_lp = malloc(callbacks_lp_size * sizeof(callbacks_lp[0]));
+            if (NULL == callbacks[t][p].cbs) {
+                /* roll back everything allocated until now */
+                for (int tt = 0; tt <= t; ++tt) {
+                    for (int pp = 0; pp < (tt == t ? p : OPAL_PRIORITY_MAX); ++pp) {
+                        free((void *) callbacks[tt][pp].cbs);
+                        callbacks[tt][pp].cbs = NULL;
+                        callbacks[tt][pp].size = 0;
+                        callbacks[tt][pp].len = 0;
+                    }
+                }
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
 
-    if (NULL == callbacks || NULL == callbacks_lp) {
-        free((void *) callbacks);
-        free((void *) callbacks_lp);
-        callbacks_size = callbacks_lp_size = 0;
-        callbacks = callbacks_lp = NULL;
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    for (size_t i = 0; i < callbacks_size; ++i) {
-        callbacks[i] = fake_cb;
-    }
-
-    for (size_t i = 0; i < callbacks_lp_size; ++i) {
-        callbacks_lp[i] = fake_cb;
+            for (size_t i = 0; i < callbacks[t][p].size; ++i) {
+                callbacks[t][p].cbs[i] = fake_cb;
+            }
+        }
     }
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
@@ -280,6 +311,23 @@ static int opal_progress_events(void)
 }
 
 /*
+ * Invoke every callback registered in callbacks[safety][prio] and return
+ * the number of events they reported.
+ */
+static inline int _opal_progress_callbacks_run(opal_progress_thread_safety_t safety,
+                                               opal_progress_priority_t prio)
+{
+    const opal_progress_cb_array_t *arr = &callbacks[safety][prio];
+    int events = 0;
+
+    for (size_t i = 0; i < arr->len; ++i) {
+        events += (arr->cbs[i])();
+    }
+
+    return events;
+}
+
+/*
  * Progress the event library and any functions that have registered to
  * be called.  We don't propagate errors from the progress functions,
  * so no action is taken if they return failures.  The functions are
@@ -289,32 +337,32 @@ static int opal_progress_events(void)
  * of progressed events to appear lower than it actually is.  We don't
  * care, as the cost of that happening is far outweighed by the cost
  * of the if checks (they were resulting in bad pipe stalling behavior)
+ *
+ * This variant progresses EVERY registered callback, safe and unsafe
+ * alike, and is used only when no async progress thread is running --
+ * i.e. there is only ever one thread in here, so the safe/unsafe split
+ * is irrelevant and we fall back to the historical single-array
+ * behavior.
  */
-static int _opal_progress(void)
+static int _opal_progress_full(void)
 {
-    static uint32_t num_calls = 0;
-    size_t i;
+    static uint32_t num_calls_full = 0;
     int events = 0;
 
-    /* progress all registered callbacks */
-    for (i = 0; i < callbacks_len; ++i) {
-        events += (callbacks[i])();
-    }
+    /* progress all registered callbacks, regardless of thread-safety class */
+    events += _opal_progress_callbacks_run(OPAL_THREAD_SAFE, OPAL_PRIORITY_NORMAL);
+    events += _opal_progress_callbacks_run(OPAL_THREAD_UNSAFE, OPAL_PRIORITY_NORMAL);
 
     /* Run low priority callbacks and events once every <N> calls to opal_progress().
-     * Even though "num_calls" can be modified by multiple threads, we do not use
+     * Even though "num_calls_full" can be modified by multiple threads, we do not use
      * atomic operations here, for performance reasons. In case of a race, the
      * number of calls may be inaccurate, but since it will eventually be incremented,
      * it's not a problem.
-     * If opal_async_progress_thread_spawned == false, then N = 8
-     * otherwise let's pick N = 256 for the moment (George's recommendation) and
-     * adapt it later if it takes too many resources.
+     * No async progress thread here, so N = 8, as before.
      */
-    const uint32_t mod = opal_async_progress_thread_spawned ? 0xFF : 0x7;
-    if (((num_calls++) & mod) == 0) {
-        for (i = 0; i < callbacks_lp_len; ++i) {
-            events += (callbacks_lp[i])();
-        }
+    if (((num_calls_full++) & 0x7) == 0) {
+        events += _opal_progress_callbacks_run(OPAL_THREAD_SAFE, OPAL_PRIORITY_LOW);
+        events += _opal_progress_callbacks_run(OPAL_THREAD_UNSAFE, OPAL_PRIORITY_LOW);
 
         opal_progress_events();
     } else if (num_event_users > 0) {
@@ -336,13 +384,71 @@ static int _opal_progress(void)
 }
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
+/*
+ * Progress ONLY the callbacks explicitly declared thread-safe. This is
+ * the sole function invoked by the async progress thread, and therefore
+ * the sole caller of opal_progress_events() (the libevent tick) once
+ * the async thread is running: opal_sync_event_base is not safe to
+ * drive from two threads concurrently, so _opal_progress_main_unsafe()
+ * below must never touch it while this thread is alive.
+ */
+static int _opal_progress_async_safe(void)
+{
+    static uint32_t num_calls_safe = 0;
+    int events = 0;
+
+    events += _opal_progress_callbacks_run(OPAL_THREAD_SAFE, OPAL_PRIORITY_NORMAL);
+
+    /* N = 256 for the async thread tick rate (George's recommendation);
+     * adapt later if it takes too many resources. */
+    if (((num_calls_safe++) & 0xFF) == 0) {
+        events += _opal_progress_callbacks_run(OPAL_THREAD_SAFE, OPAL_PRIORITY_LOW);
+
+        opal_progress_events();
+    } else if (num_event_users > 0) {
+        opal_progress_events();
+    }
+
+    return events;
+}
+
+/*
+ * Progress ONLY the callbacks NOT declared thread-safe (either
+ * explicitly registered unsafe, or registered via the legacy
+ * opal_progress_register()/_lp() API and therefore unaudited). Called
+ * from opal_progress() by whichever application thread invokes it,
+ * even while the async progress thread is running, since these
+ * callbacks are never touched by that thread and nothing else will
+ * ever progress them.
+ *
+ * Deliberately does NOT call opal_progress_events(): while the async
+ * thread is running it is the sole, exclusive owner of the event
+ * library tick (see _opal_progress_async_safe() above).
+ */
+static int _opal_progress_main_unsafe(void)
+{
+    static uint32_t num_calls_unsafe = 0;
+    int events = 0;
+
+    events += _opal_progress_callbacks_run(OPAL_THREAD_UNSAFE, OPAL_PRIORITY_NORMAL);
+
+    if (((num_calls_unsafe++) & 0x7) == 0) {
+        events += _opal_progress_callbacks_run(OPAL_THREAD_UNSAFE, OPAL_PRIORITY_LOW);
+    }
+
+    return events;
+}
+
+/*
+ * OPAL async progress thread to execute safe callbacks
+ */
 static void *opal_progress_async_thread_engine(opal_object_t *obj)
 {
     opal_thread_t *current_thread = (opal_thread_t *) obj;
     thread_args_t *p_thread_arg = (thread_args_t *) current_thread->t_arg;
 
     while (p_thread_arg->running) {
-        const int64_t new_events = _opal_progress();
+        const int64_t new_events = _opal_progress_async_safe();
         if (new_events > 0) {
             opal_atomic_add_fetch_64(&p_thread_arg->nb_events_reported, new_events);
         }
@@ -361,16 +467,23 @@ int opal_progress(void)
          */
         const int64_t new_events = opal_atomic_swap_64(&thread_arg.nb_events_reported, 0);
 
-        /* if no new event, then application thread may yield here */
-        if (opal_progress_yield_when_idle && new_events <= 0) {
+        /* Callbacks registered as NOT thread-safe are never touched by
+         * the async thread -- progress them synchronously here, on
+         * whichever thread called opal_progress(), or they would never
+         * make progress at all. */
+        const int unsafe_events = _opal_progress_main_unsafe();
+
+        /* if no new event at all (async-reported or unsafe-local), then
+         * application thread may yield here */
+        if (opal_progress_yield_when_idle && new_events <= 0 && unsafe_events <= 0) {
             opal_thread_yield();
         }
-        return new_events;
+        return (int) new_events + unsafe_events;
     } else {
 #endif
 
     /* no async progress thread, call the normal progress routine like before */
-    return _opal_progress();
+    return _opal_progress_full();
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 1
     }
@@ -536,77 +649,104 @@ static int _opal_progress_register(opal_progress_callback_t cb,
     return ret;
 }
 
-int opal_progress_register(opal_progress_callback_t cb)
+/*
+ * Register cb in callbacks[safety][prio], first removing it from any
+ * other slot of the table so a callback lives in exactly one slot.
+ */
+static int _opal_progress_register_in(opal_progress_callback_t cb,
+                                      opal_progress_thread_safety_t safety,
+                                      opal_progress_priority_t prio)
 {
     int ret;
 
     opal_atomic_lock(&progress_lock);
 
-    (void) _opal_progress_unregister(cb, callbacks_lp, &callbacks_lp_len);
+    for (int t = 0; t < OPAL_THREAD_SAFETY_MAX; ++t) {
+        for (int p = 0; p < OPAL_PRIORITY_MAX; ++p) {
+            if (t == (int) safety && p == (int) prio) {
+                continue;
+            }
+            (void) _opal_progress_unregister(cb, callbacks[t][p].cbs, &callbacks[t][p].len);
+        }
+    }
 
-    ret = _opal_progress_register(cb, &callbacks, &callbacks_size, &callbacks_len);
+    ret = _opal_progress_register(cb, &callbacks[safety][prio].cbs,
+                                  &callbacks[safety][prio].size,
+                                  &callbacks[safety][prio].len);
 
     opal_atomic_unlock(&progress_lock);
 
     return ret;
 }
 
+int opal_progress_register_thread_safe(opal_progress_callback_t cb, bool is_thread_safe)
+{
+    return _opal_progress_register_in(cb, is_thread_safe ? OPAL_THREAD_SAFE : OPAL_THREAD_UNSAFE,
+                                      OPAL_PRIORITY_NORMAL);
+}
+
+int opal_progress_register_thread_safe_lp(opal_progress_callback_t cb, bool is_thread_safe)
+{
+    return _opal_progress_register_in(cb, is_thread_safe ? OPAL_THREAD_SAFE : OPAL_THREAD_UNSAFE,
+                                      OPAL_PRIORITY_LOW);
+}
+
+int opal_progress_register(opal_progress_callback_t cb)
+{
+    /* By default, callbacks are treated as NOT thread-safe
+     * until a maintainer explicitly audits it and switches
+     * the component to call opal_progress_register_thread_safe().
+     * */
+    return opal_progress_register_thread_safe(cb, false);
+}
+
 int opal_progress_register_lp(opal_progress_callback_t cb)
 {
-    int ret;
-
-    opal_atomic_lock(&progress_lock);
-
-    (void) _opal_progress_unregister(cb, callbacks, &callbacks_len);
-
-    ret = _opal_progress_register(cb, &callbacks_lp, &callbacks_lp_size, &callbacks_lp_len);
-
-    opal_atomic_unlock(&progress_lock);
-
-    return ret;
+    /* same reason as opal_progress_register() above */
+    return opal_progress_register_thread_safe_lp(cb, false);
 }
 
 static int _opal_progress_unregister(opal_progress_callback_t cb,
                                      volatile opal_progress_callback_t *callback_array,
                                      size_t *callback_array_len)
 {
-    int ret = opal_progress_find_cb(cb, callback_array, *callback_array_len);
+    size_t cb_len = *callback_array_len;
+    int ret = opal_progress_find_cb(cb, callback_array, cb_len);
     if (OPAL_ERR_NOT_FOUND == ret) {
         return ret;
     }
 
     /* If we found the function we're unregistering: If callbacks_len
-       is 0, we're not goig to do anything interesting anyway, so
+       is 0, we're not going to do anything interesting anyway, so
        skip.  If callbacks_len is 1, it will soon be 0, so no need to
        do any repacking. */
-    for (size_t i = (size_t) ret; i < *callback_array_len - 1; ++i) {
+    for (size_t i = (size_t) ret; i < cb_len - 1; ++i) {
         /* copy callbacks atomically since another thread may be in
          * opal_progress(). */
         (void) opal_atomic_swap_ptr((opal_atomic_intptr_t *) (callback_array + i),
                                     (intptr_t) callback_array[i + 1]);
     }
 
-    --*callback_array_len;
-    callback_array[*callback_array_len] = fake_cb;
+    --cb_len;
+    *callback_array_len = cb_len;
+    callback_array[cb_len] = fake_cb;
 
     return OPAL_SUCCESS;
 }
 
 int opal_progress_unregister(opal_progress_callback_t cb)
 {
-    int ret;
+    int ret = OPAL_ERR_NOT_FOUND;
 
     opal_atomic_lock(&progress_lock);
 
-    ret = _opal_progress_unregister(cb, callbacks, &callbacks_len);
-
-    if (OPAL_SUCCESS != ret) {
-        /* if not in the high-priority array try to remove from the lp array.
-         * a callback will never be in both. */
-        ret = _opal_progress_unregister(cb, callbacks_lp, &callbacks_lp_len);
+    /* a callback will never be in more than one slot of the table */
+    for (int t = 0; t < OPAL_THREAD_SAFETY_MAX && OPAL_SUCCESS != ret; ++t) {
+        for (int p = 0; p < OPAL_PRIORITY_MAX && OPAL_SUCCESS != ret; ++p) {
+            ret = _opal_progress_unregister(cb, callbacks[t][p].cbs, &callbacks[t][p].len);
+        }
     }
 
     opal_atomic_unlock(&progress_lock);
-
     return ret;
 }

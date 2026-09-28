@@ -965,7 +965,9 @@ mca_btl_ofi_component_t mca_btl_ofi_component = {
                 },
             .btl_data =
                 {/* The component is not checkpoint ready */
-                 .param_field = MCA_BASE_METADATA_PARAM_NONE},
+                 .param_field = MCA_BASE_METADATA_PARAM_NONE
+                              | MCA_BASE_METADATA_PARAM_THREAD_SAFE /* btl_progress is thread-safe */
+                },
 
             .btl_init = mca_btl_ofi_component_init,
             .btl_progress = mca_btl_ofi_component_progress,
