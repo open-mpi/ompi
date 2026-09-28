@@ -111,8 +111,9 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
     for (i = 0; i < count; i++) {
         if( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ) {
             if (MPI_STATUS_IGNORE != statuses) {
-                OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, false);
+                OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, true);
             }
+            continue;
         }
         /* If this is a generalized request, we *always* have to call
            the query function to get the status (MPI-2:8.2), even if
