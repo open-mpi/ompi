@@ -11,9 +11,9 @@ Open MPI download site <https://www.open-mpi.org/software/ompi/>`_),
 Open MPI and OpenSHMEM are built with the following versions of the
 GNU Autotools:
 
-* Autoconf |autoconf_min_version|
-* Automake |automake_min_version|
-* Libtool |libtool_min_version|
+* Autoconf |autoconf_dist_version|
+* Automake |automake_dist_version|
+* Libtool |libtool_dist_version|
 
 This set of GNU Autotools invokes the ``libtool`` executable to build
 Open MPI's libraries and executables with the `-rpath CLI option
