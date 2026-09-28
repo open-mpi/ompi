@@ -127,6 +127,18 @@ int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info)
 {
     char *cptr = NULL, **tmp = NULL;
 
+    /* MPI_Info_create_env can be called before MPI is initialized and
+     * after it is finalized, and it describes how this process was
+     * started -- which does not change -- so all three points have to
+     * answer alike.  Report a key only where the field behind it has
+     * actually been populated; a field still holding the static
+     * initializer it was given in opal_process_info has not been
+     * answered by anyone, and the RTE puts it back that way on the way
+     * out.  An omitted key reads back as flag = false, which is how an
+     * info object says "not known", while a static default reads as an
+     * answer -- that is how maxprocs came to be 0 before MPI_INIT.
+     */
+
     /* fill the env info object */
 
     /* command for this app_context */
@@ -158,12 +170,15 @@ int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info)
         }
     }
 
-    /* max procs for the entire job */
-    opal_asprintf(&cptr, "%u", ompi_process_info.num_procs);
-    opal_info_set(&info->super, "maxprocs", cptr);
-    /* Open MPI does not support the "soft" option, so set it to maxprocs */
-    opal_info_set(&info->super, "soft", cptr);
-    free(cptr);
+    /* max procs for the entire job -- no job has zero processes, so a
+     * num_procs of zero is the initializer and not a job size */
+    if (0 != ompi_process_info.num_procs) {
+        opal_asprintf(&cptr, "%u", ompi_process_info.num_procs);
+        opal_info_set(&info->super, "maxprocs", cptr);
+        /* Open MPI does not support the "soft" option, so set it to maxprocs */
+        opal_info_set(&info->super, "soft", cptr);
+        free(cptr);
+    }
 
     /* the initial error handler, set it as requested (nothing if not
      * requested) */
@@ -171,7 +186,10 @@ int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info)
         opal_info_set(&info->super, "mpi_initial_errhandler", ompi_process_info.initial_errhandler);
     }
 
-    /* local host name */
+    /* local host name.  opal_init_util() filled this in from
+     * gethostname() before anything else ran, and nothing replaces it
+     * afterwards, so the answer here does not depend on when we are
+     * asked */
     opal_info_set(&info->super, "host", ompi_process_info.nodename);
 
 #ifdef HAVE_SYS_UTSNAME_H
@@ -189,7 +207,9 @@ int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info)
     }
 
     /* provide the REQUESTED thread level - may be different
-     * than the ACTUAL thread level you get.
+     * than the ACTUAL thread level you get.  MPI_UNDEFINED until
+     * MPI_INIT_THREAD names a level, and the default arm below drops
+     * the key for as long as that is so.
      * ugly, but have to do a switch to find the string representation */
     switch (ompi_mpi_thread_requested) {
     case MPI_THREAD_SINGLE:
@@ -211,10 +231,13 @@ int ompi_mpiinfo_init_env(int argc, char *argv[], ompi_info_t *info)
 
     /**** now some OMPI-specific values that other MPIs may not provide ****/
 
-    /* the number of app_contexts in this job */
-    opal_asprintf(&cptr, "%u", ompi_process_info.num_apps);
-    opal_info_set(&info->super, "ompi_num_apps", cptr);
-    free(cptr);
+    /* the number of app_contexts in this job -- as with num_procs, zero
+     * of them is the initializer rather than a count */
+    if (0 != ompi_process_info.num_apps) {
+        opal_asprintf(&cptr, "%u", ompi_process_info.num_apps);
+        opal_info_set(&info->super, "ompi_num_apps", cptr);
+        free(cptr);
+    }
 
     /* space-separated list of first MPI rank of each app_context */
     if (NULL != ompi_process_info.app_ldrs) {

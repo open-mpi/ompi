@@ -147,7 +147,11 @@ opal_atomic_int32_t ompi_mpi_state = OMPI_MPI_STATE_NOT_INITIALIZED;
 volatile bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
-int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
+/* No level has been requested until MPI_INIT_THREAD names one.  Start at
+   MPI_UNDEFINED rather than MPI_THREAD_SINGLE so that "nobody asked" is
+   distinguishable from "somebody asked for SINGLE"; MPI_INFO_ENV reports
+   this field and must not invent a request that was never made. */
+int ompi_mpi_thread_requested = MPI_UNDEFINED;
 int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 /* MPI_T process-wide thread state.  These live here in the lower
