@@ -331,6 +331,11 @@ int coll_tuned_alg_from_str(int collective_id, const char *alg_name, int *alg_va
 int coll_tuned_alg_bine_from_str(int collective_id, const char *alg_name, int *alg_value)
 {
     int rc;
+
+    if (NULL == alg_name || NULL == alg_value) {
+        return OPAL_ERROR;
+    }
+
     if (collective_id >= COLLCOUNT || collective_id < 0) {
         return OPAL_ERROR;
     }
@@ -373,12 +378,18 @@ int coll_tuned_alg_bine_to_str(int collective_id, int alg_value, char **alg_stri
     }
     if (NULL == coll_tuned_algorithm_bine_enums[collective_id]) {
         /* this collective has no registered Bine variants */
-        alg_string = NULL;
+        if (NULL != alg_string) {
+            *alg_string = NULL;
+        }
         return OPAL_SUCCESS;
     }
-    rc = coll_tuned_algorithm_bine_enums[collective_id]
-             ->string_from_value(coll_tuned_algorithm_bine_enums[collective_id], alg_value,
-                                 alg_string);
+    if (NULL != alg_string) {
+        rc = coll_tuned_algorithm_bine_enums[collective_id]
+                 ->string_from_value(coll_tuned_algorithm_bine_enums[collective_id], alg_value,
+                                     alg_string);
+    } else {
+        rc = OPAL_SUCCESS;
+    }
     return rc;
 }
 

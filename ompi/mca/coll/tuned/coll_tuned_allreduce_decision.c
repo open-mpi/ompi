@@ -195,6 +195,12 @@ int ompi_coll_tuned_allreduce_intra_do_this(const void *sbuf, void *rbuf, size_t
             return ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(sbuf, rbuf, count, dtype,
                                                                            op, comm, module,
                                                                            segsize);
+        default:
+            OPAL_OUTPUT_VERBOSE(
+                (COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                 "coll:tuned:allreduce_intra_do_this invalid bine_imp %d for algorithm 8",
+                 bine_imp));
+            return MPI_ERR_ARG;
         }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,

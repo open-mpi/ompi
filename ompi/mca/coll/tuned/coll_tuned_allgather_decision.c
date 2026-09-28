@@ -218,6 +218,12 @@ int ompi_coll_tuned_allgather_intra_do_this(const void *sbuf, size_t scount,
         case 4:
             return ompi_coll_base_allgather_intra_bine_permutation(sbuf, scount, sdtype, rbuf,
                                                                    rcount, rdtype, comm, module);
+        default:
+            OPAL_OUTPUT_VERBOSE(
+                (COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
+                 "coll:tuned:allgather_intra_do_this invalid bine_imp %d for algorithm 9",
+                 bine_imp));
+            return MPI_ERR_ARG;
         }
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
