@@ -255,6 +255,15 @@ AC_DEFUN([OMPI_SETUP_FC],[
           [OPAL_CHECK_COMPILER_WORKS([Fortran], [], [], [],
               [AC_MSG_ERROR([Could not run a simple Fortran program.  Aborting.])])])
 
+    # Detect Fortran module file extension early (e.g., .mod or .MOD)
+    # This must be done before any other macros that use $FC_MODEXT
+    # for cleanup (e.g., OMPI_FORTRAN_GET_ALIGNMENT called from
+    # OMPI_SETUP_MPI_FORTRAN)
+    AS_IF([test $ompi_fc_happy -eq 1],
+          [AC_FC_MODULE_EXTENSION
+           AS_IF([test -z "$FC_MODEXT"], [FC_MODEXT="mod"])
+           AC_SUBST([FC_MODEXT])])
+
     # OS X before 10.3 (deployment target) does not allow undefined common
     # symbols in shared libraries.  Because we can't figure out how to
     # implement MPI_STATUSES_IGNORE and friends without common symbols, on
@@ -314,6 +323,11 @@ AC_DEFUN([OMPI_SETUP_FC],[
     AS_IF([test $ompi_fc_happy -eq 1],
            [AC_FC_SRCEXT(f)
             AC_FC_SRCEXT(f90)])
+
+    # Use Autoconf 2.69 Fortran detection macros for improved portability
+    AS_IF([test $ompi_fc_happy -eq 1],
+          [# Detect preprocessor define flag (usually -D)
+           AC_FC_PP_DEFINE])
 
     # Check to see if we need additional compiler flags for
     # preprocessing .F90 files.
