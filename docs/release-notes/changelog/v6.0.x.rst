@@ -8,6 +8,17 @@ Open MPI version v6.0.0
 --------------------------
 :Date: ...fill me in...
 
+- Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
+  interface whose IP address is not unique across the job -- a container
+  bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every
+  node, is the usual cause.  Such an address was preferred when pairing
+  local and remote interfaces, because being identical it appeared to be
+  the best possible match, and it is in fact unusable: a connection to it
+  never leaves the node, and a connection from it is answered to the
+  peer's own copy of the address.  Both the address and the local
+  interface that holds it are now excluded when the peer is on another
+  node.
+
 - Open MPI no longer forces a specific Libevent back-end; Libevent now
   picks the best mechanism available on the platform (for example,
   ``kqueue`` on macOS and ``epoll`` on Linux).  Open MPI previously
