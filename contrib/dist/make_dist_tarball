@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2023 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2016      Intel, Inc. All rights reserved
+# Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -21,14 +22,9 @@
 #
 
 #
-# Version of auto tools that we want
+# The versions of the GNU tools that we want are read from the VERSION
+# file (the *_dist_version fields), below.
 #
-
-M4_TARGET_VERSION=1.4.19
-AM_TARGET_VERSION=1.16.5
-AC_TARGET_VERSION=2.71
-LT_TARGET_VERSION=2.4.6
-FLEX_TARGET_VERSION=2.6.4
 
 #
 # When running "make distcheck", use these parallelization flags.  Can
@@ -173,8 +169,8 @@ Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
 Flex:     $FLEX_TARGET_VERSION
 
-Either change this script to match the found version, or install
-the correct version of the tools.
+Either change the *_dist_version values in VERSION to match the found
+version, or install the correct version of the tools.
 ----------------------------------------------------------------------
 EOF
         if test "$gnu_version_ignore" = "0"; then
@@ -196,8 +192,8 @@ Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
 Flex:     $FLEX_TARGET_VERSION
 
-Either change this script to match the found version, or install
-the correct version of the tools.
+Either change the *_dist_version values in VERSION to match the found
+version, or install the correct version of the tools.
 ----------------------------------------------------------------------
 EOF
         if test "$gnu_version_ignore" = "0"; then
@@ -238,8 +234,8 @@ Autoconf: $AC_TARGET_VERSION
 Libtool:  $LT_TARGET_VERSION
 Flex:     $FLEX_TARGET_VERSION
 
-Either change this script to match the found version, or install
-the correct version of the tools.
+Either change the *_dist_version values in VERSION to match the found
+version, or install the correct version of the tools.
 ----------------------------------------------------------------------
 EOF
         if test "$gnu_version_ignore" = "0"; then
@@ -320,15 +316,6 @@ make_tarball() {
 start=`date`
 echo "*** Start time: $start"
 
-echo "*** Checking tools versions..."
-check_gnu_version m4 $M4_TARGET_VERSION
-check_gnu_version automake $AM_TARGET_VERSION
-check_gnu_version autoconf $AC_TARGET_VERSION
-check_gnu_version libtool $LT_TARGET_VERSION
-# Windows needs a recent version of flex; old versions don't generate
-# Windows-friendly *_lex.c files.
-check_gnu_version flex $FLEX_TARGET_VERSION
-
 #
 # Verify that we're in a top Open MPI dir
 #
@@ -380,6 +367,36 @@ echo "*** Removing old VERSION file..."
 rm -f VERSION
 echo "*** Restoring pristine VERSION file..."
 git checkout VERSION
+
+#
+# Read the versions of the GNU tools that we want from VERSION.  Do
+# this only now, after any "git pull" and after restoring the pristine
+# VERSION, so that we check against what will actually be packaged.
+#
+get_dist_version() {
+    ver=`sed -n "s/^$1_dist_version=//p" VERSION`
+    if test -z "$ver"; then
+        echo "Could not find $1_dist_version in VERSION.  Abort!" >&2
+        exit 1
+    fi
+    echo $ver
+}
+
+M4_TARGET_VERSION=`get_dist_version m4` || exit 1
+AM_TARGET_VERSION=`get_dist_version automake` || exit 1
+AC_TARGET_VERSION=`get_dist_version autoconf` || exit 1
+LT_TARGET_VERSION=`get_dist_version libtool` || exit 1
+FLEX_TARGET_VERSION=`get_dist_version flex` || exit 1
+
+echo "*** Checking tools versions..."
+check_gnu_version m4 $M4_TARGET_VERSION
+check_gnu_version automake $AM_TARGET_VERSION
+check_gnu_version autoconf $AC_TARGET_VERSION
+check_gnu_version libtool $LT_TARGET_VERSION
+# Windows needs a recent version of flex; old versions don't generate
+# Windows-friendly *_lex.c files.
+check_gnu_version flex $FLEX_TARGET_VERSION
+
 echo "*** Getting git version..."
 repo_rev=`git describe --tags --always`
 echo "    Repo rev number: $repo_rev"
