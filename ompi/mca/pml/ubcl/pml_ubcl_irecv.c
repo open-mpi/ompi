@@ -242,9 +242,9 @@ int mca_pml_ubcl_imrecv(void *buf, size_t count, ompi_datatype_t *datatype,
                         "UBCL_MODULE_IMRECV\n"));
 
     /* Create request and start communication */
-    mca_pml_ubcl_irecv_prepare(buf, count, datatype, (*message)->peer,
-                               OMPI_ANY_TAG, (*message)->comm, request,
-                               false, true, (*message)->req_ptr);
+    mca_pml_ubcl_irecv_prepare(buf, count, datatype, (*message)->peer, OMPI_ANY_TAG,
+                               (*message)->comm, request, MCA_PML_UBCL_NONBLOCKING_COMM, true,
+                               (*message)->req_ptr);
     mca_pml_ubcl_irecv_start(request);
     ompi_message_return(*message);
     *message = MPI_MESSAGE_NULL;
@@ -261,9 +261,9 @@ int mca_pml_ubcl_mrecv(void *buf, size_t count, ompi_datatype_t *datatype,
     struct ompi_request_t *request = NULL;
     int rc = 0;
     //we're matching any message tag
-    mca_pml_ubcl_irecv_prepare(buf, count, datatype, (*message)->peer,
-                               OMPI_ANY_TAG, (*message)->comm, &request,
-                               false, true, (*message)->req_ptr);
+    mca_pml_ubcl_irecv_prepare(buf, count, datatype, (*message)->peer, OMPI_ANY_TAG,
+                               (*message)->comm, &request, MCA_PML_UBCL_BLOCKING_COMM, true,
+                               (*message)->req_ptr);
     mca_pml_ubcl_irecv_start(&request);
 
     /* Wait for data to be received */
