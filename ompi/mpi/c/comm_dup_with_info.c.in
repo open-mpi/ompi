@@ -71,7 +71,7 @@ PROTOTYPE ERROR_CLASS comm_dup_with_info(COMM comm, INFO info, COMM_OUT newcomm)
     }
 #endif
 
-    rc = ompi_comm_dup_with_info (comm, &info->super, newcomm);
+    rc = ompi_comm_dup_with_info (comm, &info->super, newcomm, true);
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 
