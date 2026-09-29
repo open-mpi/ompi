@@ -8,6 +8,13 @@ Open MPI Version v5.0.11
 ------------------------------
 :Date: August 2026
 
+- OpenSHMEM static symmetric storage is now limited to writable loadable
+  segments of the main executable.  Unrelated mappings, including private
+  anonymous mappings, are excluded.
+
+- OpenSHMEM now validates peer memheap layouts before remote-key state is
+  used.  Incompatible peer layouts abort initialization with a diagnostic.
+
 - Internal PMIx and PRRTe versions:
   - PMIx (v5.0.11). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``3795947f0fa625f406f1d085d1e70a8413b3febc``.
   - PRRTE (v3.0.14). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``a99bf3a006ddc8609e85da8f8eef13ba6d27aaba``.
