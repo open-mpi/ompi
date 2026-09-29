@@ -152,6 +152,16 @@ int opal_event_init(void)
 
 int opal_event_finalize(void)
 {
+    if (NULL != opal_sync_event_base) {
+        opal_event_base_free(opal_sync_event_base);
+        opal_sync_event_base = NULL;
+    }
+
+    if (NULL != opal_event_config) {
+        event_config_free(opal_event_config);
+        opal_event_config = NULL;
+    }
+
     return OPAL_SUCCESS;
 }
 
