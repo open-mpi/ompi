@@ -5,7 +5,7 @@
  * Copyright (c) 2014-2021 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2016 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2026 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -17,6 +17,7 @@
  */
 
 #include "opal_config.h"
+
 #include "mtl_ofi.h"
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
@@ -654,7 +655,7 @@ no_hmem:
     hints->rx_attr->op_flags  = FI_COMPLETION;
     hints->tx_attr->op_flags  = FI_COMPLETION;
 
-    if (enable_mpi_threads) {
+    if (enable_mpi_threads || enable_progress_threads) {
         ompi_mtl_ofi.mpi_thread_multiple = true;
         hints->domain_attr->threading = FI_THREAD_SAFE;
     } else {
@@ -687,6 +688,20 @@ no_hmem:
     default:
         hints->domain_attr->data_progress = FI_PROGRESS_UNSPEC;
     }
+
+#if OPAL_OFI_HAVE_FI_PROGRESS_CONTROL_UNIFIED
+#if FI_MAJOR_VERSION >= 2
+    if (hints->domain_attr->threading == FI_THREAD_DOMAIN &&
+        control_progress == MTL_OFI_PROG_UNSPEC && data_progress == MTL_OFI_PROG_UNSPEC) {
+        hints->domain_attr->progress = FI_PROGRESS_CONTROL_UNIFIED;
+    }
+#elif FI_MAJOR_VERSION == 1 && FI_MINOR_VERSION >= 21
+    if (hints->domain_attr->threading == FI_THREAD_DOMAIN &&
+        control_progress == MTL_OFI_PROG_UNSPEC) {
+        hints->domain_attr->control_progress = FI_PROGRESS_CONTROL_UNIFIED;
+    }
+#endif
+#endif
 
     if (MTL_OFI_AV_TABLE == av_type) {
         hints->domain_attr->av_type          = FI_AV_TABLE;
