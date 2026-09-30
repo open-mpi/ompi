@@ -13,7 +13,7 @@
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +54,7 @@
 #elif OMPI_SIZEOF_FORTRAN_INTEGER > SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a = NULL
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
-  #define OMPI_SINGLE_NAME_DECL(a) int c_##a
+  #define OMPI_SINGLE_NAME_DECL(a) int c_##a = 0
   #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
   #define OMPI_SINGLE_NAME_CONVERT(a) &c_##a
   #define OMPI_INT_2_FINT(a) a
@@ -114,7 +114,7 @@
 #else /* int > MPI_Fint  */
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a = NULL
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
-  #define OMPI_SINGLE_NAME_DECL(a) int c_##a
+  #define OMPI_SINGLE_NAME_DECL(a) int c_##a = 0
   #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
   #define OMPI_SINGLE_NAME_CONVERT(a) &c_##a
   #define OMPI_INT_2_FINT(a) (MPI_Fint)(a)
@@ -206,10 +206,10 @@
  * For anything other than Fortran-logical == C-int or some .TRUE. is not 1 in C, we have to convert
  */
 #  define OMPI_FORTRAN_MUST_CONVERT_LOGICAL_2_INT    1
-#  define OMPI_LOGICAL_NAME_DECL(in)           int c_##in
+#  define OMPI_LOGICAL_NAME_DECL(in)           int c_##in = 0
 #  define OMPI_LOGICAL_NAME_CONVERT(in)        c_##in
 #  define OMPI_LOGICAL_SINGLE_NAME_CONVERT(in) &c_##in
-#  define OMPI_LOGICAL_ARRAY_NAME_DECL(in)     int * c_##in
+#  define OMPI_LOGICAL_ARRAY_NAME_DECL(in)     int * c_##in = NULL
 #  define OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)  c_##in
 #  define OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in,n) \
       OMPI_LOGICAL_ARRAY_NAME_CONVERT(in) = malloc((n) * sizeof(int))

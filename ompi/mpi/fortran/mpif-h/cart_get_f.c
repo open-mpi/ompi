@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -86,7 +87,13 @@ void ompi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
                           OMPI_ARRAY_NAME_CONVERT(coords));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    OMPI_ARRAY_INT_2_FINT(dims, size);
-    OMPI_ARRAY_INT_2_LOGICAL(periods, size);
-    OMPI_ARRAY_INT_2_FINT(coords, size);
+    if (MPI_SUCCESS == c_ierr) {
+        OMPI_ARRAY_INT_2_FINT(dims, size);
+        OMPI_ARRAY_INT_2_LOGICAL(periods, size);
+        OMPI_ARRAY_INT_2_FINT(coords, size);
+    } else {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(dims);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(coords);
+        OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(periods);
+    }
 }
