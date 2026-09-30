@@ -111,7 +111,7 @@ static void test_asprintf_empty_format(void)
     /* Use a variable to avoid -Wformat-zero-length on a string literal "" */
     const char *fmt = "";
 
-    rc = opal_asprintf(&s, fmt);
+    rc = opal_asprintf(&s, "%s", fmt);
     test_verify("asprintf empty format: rc == 0", 0 == rc);
     test_verify("asprintf empty format: string is empty", NULL != s && 0 == strcmp("", s));
     free(s);
@@ -160,7 +160,7 @@ static void test_vasprintf_empty_format(void)
     int rc;
     const char *fmt = "";
 
-    rc = call_vasprintf(&s, fmt);
+    rc = call_vasprintf(&s, "%s", fmt);
     test_verify("vasprintf empty format: rc == 0", 0 == rc);
     test_verify("vasprintf empty format: empty string", NULL != s && 0 == strcmp("", s));
     free(s);
@@ -225,7 +225,7 @@ static void test_snprintf_empty_format(void)
     int rc;
     const char *fmt = "";
 
-    rc = opal_snprintf(buf, sizeof(buf), fmt);
+    rc = opal_snprintf(buf, sizeof(buf), "%s", fmt);
     test_verify("snprintf empty format: rc == 0", 0 == rc);
     test_verify("snprintf empty format: empty string", 0 == strcmp("", buf));
 }
