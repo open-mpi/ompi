@@ -385,9 +385,13 @@ mca_btl_sm_component_init(int *num_btls, bool enable_progress_threads, bool enab
 
     // Note: Use the node_rank not the local_rank for the backing file.
     // This makes the file unique even when recovering from failures.
-    rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d",
+    // The jobid's job family is a 16-bit hash of the PMIx namespace, so concurrent jobs can
+    // share a jobid. Peers attach through the segment descriptor in the modex, not by
+    // rebuilding this name, so the creator's PID keeps it unique among live processes on the node.
+    rc = opal_asprintf(&sm_file, "%s" OPAL_PATH_SEP "sm_segment.%s.%u.%x.%d.%d",
                        mca_btl_sm_component.backing_directory, opal_process_info.nodename,
-                       geteuid(), OPAL_PROC_MY_NAME.jobid, opal_process_info.my_node_rank);
+                       geteuid(), OPAL_PROC_MY_NAME.jobid, opal_process_info.my_node_rank,
+                       (int) getpid());
     if (0 > rc) {
         free(btls);
         return NULL;

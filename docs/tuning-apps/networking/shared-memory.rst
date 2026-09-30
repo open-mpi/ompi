@@ -173,8 +173,8 @@ Shared Memory Mapping on the Filesystem
 The default location of the file is in the ``/dev/shm`` directory. If ``/dev/shm``
 does not exist on the system, the default location will be the OMPI session
 directory. The path is typically something like:
-``/dev/shm/sm_segment.nodename.user_id.job_id.my_node_rank``.
-For example, the full path could be: ``/dev/shm/sm_segment.x.1000.23c70000.0``.
+``/dev/shm/sm_segment.nodename.user_id.job_id.my_node_rank.pid``.
+For example, the full path could be: ``/dev/shm/sm_segment.x.1000.23c70000.0.12345``.
 
 You can use the MCA parameter ``btl_sm_backing_directory`` to place the
 directory in a non-default location.
