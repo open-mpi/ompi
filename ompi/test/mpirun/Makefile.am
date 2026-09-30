@@ -39,7 +39,9 @@
 #    job-level timeout kills it.
 
 EXTRA_DIST = \
-        async_modex_wireup.c
+        async_modex_wireup.c \
+        sm_backing_file_collision.c \
+        sm_backing_file_collision.sh
 
 # Deliberately built by the check-mpirun target rather than by Automake:
 # these are compiled with the *installed* wrapper compiler.
@@ -64,6 +66,10 @@ mpirun_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) \
 # and once with the default transports, where a fallback transport turns
 # the same failure into a hang.  Both must pass.
 #
+# The backing-file collision test runs two 2-rank jobs over btl/sm at the
+# same time: the bug only exists between concurrent jobs.  That is 4 ranks
+# at once, an exception to rule 1; each job keeps to it.
+#
 # Not an Automake-recognized hook, so declare it phony to keep make from
 # skipping it if a like-named file ever appears here.
 .PHONY: check-mpirun
@@ -81,7 +87,13 @@ check-mpirun:
 	    echo "=== async modex wire-up, default transports ==="; \
 	    OMPI_MCA_pmix_base_async_modex=1 \
 	        $(mpirun_runner) ./async_modex_wireup; \
+	    $(MPICC) -g "$(srcdir)/sm_backing_file_collision.c" \
+	        -o sm_backing_file_collision; \
+	    echo "=== concurrent jobs with colliding jobids ==="; \
+	    MPIRUN="$(MPIRUN)" MPIRUN_TIMEOUT=$(MPIRUN_TIMEOUT) $(SHELL) \
+	        "$(srcdir)/sm_backing_file_collision.sh" ./sm_backing_file_collision; \
 	fi
 
 clean-local:
-	rm -rf async_modex_wireup async_modex_wireup.dSYM
+	rm -rf async_modex_wireup async_modex_wireup.dSYM \
+	    sm_backing_file_collision sm_backing_file_collision.dSYM
