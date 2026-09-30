@@ -1,6 +1,7 @@
 /**
   Copyright (c) 2021      Mellanox Technologies. All rights reserved.
   Copyright (c) 2025      Fujitsu Limited. All rights reserved.
+  Copyright (c) 2026      NVIDIA Corporation. All rights reserved.
   $COPYRIGHT$
   Additional copyrights may follow
   $HEADER$
@@ -14,17 +15,41 @@
 #include "coll_ucc.h"
 #include "coll_ucc_dtypes.h"
 
+/*
+ * A collective UCC declined to start may safely run on the previous module:
+ * every rank evaluates the same arguments against the same team, so either all
+ * of them fall back or none of them do.
+ *
+ * The rooted collectives weaken that: the root also tests datatypes the other
+ * ranks do not have, so it can decline alone and hang the job the same way.
+ * Nothing here can detect it -- deciding together would require the peers'
+ * datatypes, which are not available -- so it remains a known limitation.
+ *
+ * A collective that failed once it was posted may not. Only the ranks that
+ * observed the failure would change module, while the rest stay in UCC waiting
+ * for peers that have left, so the job hangs instead of failing. Report the
+ * error to the caller and let the communicator's error handler decide.
+ */
 #define COLL_UCC_CHECK(_call) do {              \
         if (UCC_OK != (_call)) {                \
             goto fallback;                      \
         }                                       \
     } while(0)
 
-#define COLL_UCC_POST_AND_CHECK(_req) do {           \
-        if (UCC_OK != ucc_collective_post(_req)) {   \
-            ucc_collective_finalize(_req);           \
-            goto fallback;                           \
-        }                                            \
+#define COLL_UCC_POST_AND_CHECK(_req) do {                          \
+        ucc_status_t _post_status = ucc_collective_post(_req);      \
+        if (UCC_OK != _post_status) {                               \
+            UCC_ERROR("ucc_collective_post failed: %s",             \
+                      ucc_status_string(_post_status));             \
+            ucc_collective_finalize(_req);                          \
+            goto failed;                                            \
+        }                                                           \
+    } while(0)
+
+#define COLL_UCC_CHECK_POSTED(_call) do {       \
+        if (UCC_OK != (_call)) {                \
+            goto failed;                        \
+        }                                       \
     } while(0)
 
 #define COLL_UCC_GET_REQ(_coll_req, _comm) do {                         \
