@@ -522,7 +522,15 @@ static inline ompi_osc_rdma_sync_t *ompi_osc_rdma_module_sync_lookup (ompi_osc_r
     switch (module->all_sync.type) {
     case OMPI_OSC_RDMA_SYNC_TYPE_NONE:
         if (!module->no_locks) {
-            return ompi_osc_rdma_module_lock_find (module, target, peer);
+            ompi_osc_rdma_sync_t *lock = ompi_osc_rdma_module_lock_find (module, target, peer);
+            int32_t pending = 0;
+
+            /* Do not expose a reserved lock until the remote lock is acquired. */
+            if (NULL != lock && !opal_atomic_compare_exchange_strong_32 (&lock->lock_pending, &pending, 0)) {
+                return NULL;
+            }
+
+            return lock;
         }
 
         return NULL;
