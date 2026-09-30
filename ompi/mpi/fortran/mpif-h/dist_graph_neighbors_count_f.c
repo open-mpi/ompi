@@ -6,6 +6,7 @@
  * Copyright (c) 2011-2013 Université Bordeaux 1
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,8 +76,8 @@ void ompi_dist_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *inneighbors,
                                              OMPI_SINGLE_NAME_CONVERT(outneighbors),
                                              OMPI_LOGICAL_SINGLE_NAME_CONVERT(weighted));
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    OMPI_SINGLE_INT_2_LOGICAL(weighted);
     if (OMPI_SUCCESS == c_ierr) {
+          OMPI_SINGLE_INT_2_LOGICAL(weighted);
           OMPI_SINGLE_INT_2_FINT(inneighbors);
           OMPI_SINGLE_INT_2_FINT(outneighbors);
     }
