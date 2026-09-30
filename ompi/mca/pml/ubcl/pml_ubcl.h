@@ -122,6 +122,12 @@ struct mca_pml_comm_t {
 };
 typedef struct mca_pml_comm_t mca_pml_ubcl_comm_t;
 
+typedef enum {
+    MCA_PML_UBCL_BLOCKING_COMM,
+    MCA_PML_UBCL_NONBLOCKING_COMM,
+    MCA_PML_UBCL_PERSISTENT_COMM
+} mca_pml_ubcl_comm_form;
+
 /** Sole PML module **/
 extern mca_pml_ubcl_module_t mca_pml_ubcl_module;
 
@@ -134,7 +140,7 @@ OMPI_DECLSPEC extern mca_pml_ubcl_component_t mca_pml_ubcl_component;
 void mca_pml_ubcl_isend_start(struct ompi_request_t **request);
 void mca_pml_ubcl_irecv_prepare(void *buf, size_t count, ompi_datatype_t *datatype, int src,
                                 int tag, struct ompi_communicator_t *comm,
-                                struct ompi_request_t **request, bool persistent, bool probe,
+                                struct ompi_request_t **request, mca_pml_ubcl_comm_form, bool probe,
                                 struct ompi_message_t *message);
 void mca_pml_ubcl_irecv_start(struct ompi_request_t **request);
 

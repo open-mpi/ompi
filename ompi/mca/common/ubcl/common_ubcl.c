@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2025      Bull SAS.  All rights reserved.
+ * Copyright (c) 2025-2026 Bull SAS.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -171,4 +171,16 @@ void _mca_common_ubcl_error(char *filename, int line, int err,
     free(stack_buffer);
     free(stack);
     free(msg);
+}
+
+static ubcl_mca_state_t mca_state = UBCL_PML_NO_INIT;
+ubcl_mca_state_t mca_common_ubcl_get_state(void)
+{
+    return mca_state;
+}
+
+int mca_common_ubcl_set_state(ubcl_mca_state_t new_state)
+{
+    mca_state = new_state;
+    return OMPI_SUCCESS;
 }
