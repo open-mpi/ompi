@@ -191,6 +191,18 @@ There are a small number of style rules for Open MPI:
    * If there are no parameters to a C function, declare it with
      ``(void)`` (vs. ``()``).
 
+Documentation contributions
+---------------------------
+
+Documentation contributions, including prose and original documentation
+artwork, are submitted under the Creative Commons Attribution 4.0
+International License.  By adding a Signed-off-by line, a contributor
+certifies that they have the right to submit the documentation under that
+license.
+
+Code contributions remain subject to the Open MPI software license.  A
+contribution containing both documentation and code is licensed accordingly.
+
 Closed source contributions
 ---------------------------
 
