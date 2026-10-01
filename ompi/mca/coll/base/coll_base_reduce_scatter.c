@@ -935,7 +935,7 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     const void *sbuf, void *rbuf, ompi_count_array_t rcounts, struct ompi_datatype_t *dtype,
     struct ompi_op_t *op, struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    int size, rank, line, err = MPI_SUCCESS;
+    int size, rank, line, err = MPI_SUCCESS, tmp;
     ptrdiff_t dtsize;
     int count = 0;
     void *tmpbuf = NULL, *resbuf = NULL;
@@ -981,7 +981,7 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     if (1 == size) {
         if (MPI_IN_PLACE != sbuf) {
             err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
-            if (err < 0) {
+            if (MPI_SUCCESS != err) {
                 line = __LINE__;
                 goto err_hndl;
             }
@@ -1029,9 +1029,17 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     while (mask < size) {
         int partner;
         if (rank % 2 == 0) {
-            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
 
         next_req_r = 0;
@@ -1039,25 +1047,45 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
 
         // We start from 1 because 0 never sends block 0
         for (size_t block = 1; block < (size_t) size; block++) {
-            // Get the position of the highest set bit using clz
+            // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            int k = 31 - __builtin_clz(ompi_coll_bine_get_nu(block, size));
+            int k = opal_cube_dim((int) ompi_coll_bine_get_nu(block, size) + 1) - 1;
             // Check if this must be sent
             if (k == reverse_step) {
                 // 0 would send this block
                 size_t block_to_send, block_to_recv;
                 if (rank % 2 == 0) {
                     // I am even, thus I need to shift by rank position to the right
-                    block_to_send = ompi_coll_mod(block + rank, size);
+                    err = ompi_coll_mod(block + rank, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am even, my partner is odd, thus I need to mirror it and then shift
-                    block_to_recv = ompi_coll_mod(partner - block, size);
+                    err = ompi_coll_mod(partner - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                 } else {
                     // I am odd, thus I need to mirror it
-                    block_to_send = ompi_coll_mod(rank - block, size);
+                    err = ompi_coll_mod(rank - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am odd, my partner is even, thus I need to mirror it and then shift
-                    block_to_recv = ompi_coll_mod(block + partner, size);
+                    err = ompi_coll_mod(block + partner, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                 }
 
                 if (block_to_send != (size_t) rank) {
@@ -1264,18 +1292,37 @@ int ompi_coll_base_reduce_scatter_intra_bine_send_remap(
     int inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
     int block_first_mask = ~(inverse_mask - 1);
     int remapped_rank = ompi_coll_bine_remap_rank(size, rank);
+    if (OPAL_UNLIKELY(remapped_rank < 0)) {
+        err = MPI_ERR_ARG;
+        line = __LINE__;
+        goto err_hndl;
+    }
     while (mask < size) {
         int partner;
         if (rank % 2 == 0) {
-            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
 
         // For sure I need to send my (remapped) partner's data
         // the actual start block however must be aligned to
         // the power of two
-        int send_block_first = ompi_coll_bine_remap_rank(size, partner) & block_first_mask;
+        int send_block_first = ompi_coll_bine_remap_rank(size, partner);
+        if (OPAL_UNLIKELY(send_block_first < 0)) {
+            err = MPI_ERR_ARG;
+            line = __LINE__;
+            goto err_hndl;
+        }
+        send_block_first &= block_first_mask;
         int send_block_last = send_block_first + inverse_mask - 1;
         int send_count = displs[send_block_last] - displs[send_block_first]
                          + ompi_count_array_get(rcounts, send_block_last);
@@ -1392,6 +1439,7 @@ int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
     int *displs = (int *) malloc(size * sizeof(int));
     if (NULL == displs) {
         line = __LINE__;
+        err = MPI_ERR_NO_MEM;
         goto err_hndl;
     }
     for (int i = 0; i < size; i++) {
@@ -1399,11 +1447,12 @@ int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
         count += ompi_count_array_get(rcounts, i);
     }
 
-    void *tmpbuf, *resbuf;
+    void *tmpbuf = NULL, *resbuf = NULL;
     tmpbuf = malloc(count * dtsize);
     resbuf = malloc(count * dtsize);
     if (NULL == tmpbuf || NULL == resbuf) {
         line = __LINE__;
+        err = MPI_ERR_NO_MEM;
         goto err_hndl;
     }
    
@@ -1414,6 +1463,11 @@ int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
     // Permute memcpy
     for (int i = 0; i < size; i++) {
         int remapped_rank = ompi_coll_bine_remap_rank(size, i);
+        if (OPAL_UNLIKELY(remapped_rank < 0)) {
+            err = MPI_ERR_ARG;
+            line = __LINE__;
+            goto err_hndl;
+        }
         err = ompi_datatype_copy_content_same_ddt(dtype, ompi_count_array_get(rcounts, i),
                                             (char *) resbuf + displs[remapped_rank] * dtsize,
                                             (char *) sbuf + displs[i] * dtsize);
@@ -1427,18 +1481,37 @@ int ompi_coll_base_reduce_scatter_intra_bine_permute_remap(
     int inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
     int block_first_mask = ~(inverse_mask - 1);
     int remapped_rank = ompi_coll_bine_remap_rank(size, rank);
+    if (OPAL_UNLIKELY(remapped_rank < 0)) {
+        err = MPI_ERR_ARG;
+        line = __LINE__;
+        goto err_hndl;
+    }
     while (mask < size) {
         int partner;
         if (rank % 2 == 0) {
-            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
 
         // For sure I need to send my (remapped) partner's data
         // the actual start block however must be aligned to
         // the power of two
-        int send_block_first = ompi_coll_bine_remap_rank(size, partner) & block_first_mask;
+        int send_block_first = ompi_coll_bine_remap_rank(size, partner);
+        if (OPAL_UNLIKELY(send_block_first < 0)) {
+            err = MPI_ERR_ARG;
+            line = __LINE__;
+            goto err_hndl;
+        }
+        send_block_first &= block_first_mask;
         int send_block_last = send_block_first + inverse_mask - 1;
         int send_count = displs[send_block_last] - displs[send_block_first]
                          + ompi_count_array_get(rcounts, send_block_last);

@@ -843,11 +843,25 @@ int ompi_coll_base_alltoall_intra_bine(const void *sbuf, size_t scount,
         int partner;
         int ntbn = ompi_coll_negabinary_to_binary((mask << 1) - 1);
         if (rank % 2 == 0) {
-            partner = ompi_coll_mod(rank + ntbn, size);
+            err = ompi_coll_mod(rank + ntbn, size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            partner = ompi_coll_mod(rank - ntbn, size);
+            err = ompi_coll_mod(rank - ntbn, size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
-        min_block_s = ompi_coll_bine_remap_rank(size, partner) & block_first_mask;
+        int remap_partner = ompi_coll_bine_remap_rank(size, partner);
+        if (OPAL_UNLIKELY(remap_partner < 0)) {
+            line = __LINE__;
+            err = MPI_ERR_ARG;
+            goto err_hndl;
+        }
+        min_block_s = (size_t) (remap_partner & block_first_mask);
         max_block_s = min_block_s + inverse_mask - 1;
 
         size_t block_recvd_cnt = 0, block_send_cnt = 0;
@@ -856,7 +870,12 @@ int ompi_coll_base_alltoall_intra_bine(const void *sbuf, size_t scount,
         for (size_t i = 0; i < size; i++) {
             unsigned int block = resident_block[i % num_resident_blocks];
             // Shall I send this block? Check the negabinary thing
-            unsigned int remap_block = ompi_coll_bine_remap_rank(size, block);
+            int remap_block = ompi_coll_bine_remap_rank(size, block);
+            if (OPAL_UNLIKELY(remap_block < 0)) {
+                line = __LINE__;
+                err = MPI_ERR_ARG;
+                goto err_hndl;
+            }
             size_t offset = i * sbuf_size;
 
             // I move to the beginning of tmpbuf the blocks I want to keep,
@@ -920,21 +939,36 @@ int ompi_coll_base_alltoall_intra_bine(const void *sbuf, size_t scount,
     for (size_t i = 0; i < size; i++) {
         int rotated_i = 0;
         if ((rank % 2) == 0) {
-            rotated_i = ompi_coll_mod(i - rank, size);
+            err = ompi_coll_mod(i - rank, size, &rotated_i);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            rotated_i = ompi_coll_mod(rank - i, size);
+            err = ompi_coll_mod(rank - i, size, &rotated_i);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
         int repr = 0;
-        if (ompi_coll_bine_in_range(rotated_i, opal_cube_dim((int) size))) {
-            uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(rotated_i);
-            if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
-            repr = (int) btnb_vrank_u32;
+        uint32_t tmp;
+        if (ompi_coll_bine_try_negabinary(rotated_i, (uint32_t) opal_cube_dim((int) size), &tmp)) {
+            repr = (int) tmp;
         } else {
-            uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(rotated_i - size);
-            if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
-            repr = (int) btnb_vrank_u32;
+            if (MPI_SUCCESS != ompi_coll_binary_to_negabinary(rotated_i - size, &tmp)) {
+                line = __LINE__;
+                err = MPI_ERR_ARG;
+                goto err_hndl;
+            }
+            repr = (int) tmp;
         }
-        int index = ompi_coll_bine_remap_distance_doubling(repr);
+        int index = 0;
+        err = ompi_coll_bine_remap_distance_doubling(repr, &index);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto err_hndl;
+        }
 
         size_t offset_src = index * sbuf_size;
         size_t offset_dst = i * sbuf_size;

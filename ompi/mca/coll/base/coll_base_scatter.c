@@ -426,7 +426,7 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
                                       int root, struct ompi_communicator_t *comm,
                                       mca_coll_base_module_t *module)
 {
-    int size, rank, err = MPI_SUCCESS, line = -1, vrank, vrank_nb;
+    int size, rank, err = MPI_SUCCESS, line = -1, vrank, vrank_nb, tmp;
     int halving_direction, mask, recvd = 0, is_leaf = 0, log_2_size;
     size_t min_resident_block, max_resident_block;
     size_t sbuf_offset, rtype_size, packed_block_size;
@@ -455,7 +455,11 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
         ompi_datatype_get_extent(sdtype, &slb, &sextent);
     }
 
-    vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
+    err = ompi_coll_mod(rank - root, size, &vrank);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
     halving_direction = 1; // Down -- send bottom half
     if (vrank % 2) {
         halving_direction = -1; // Up -- send top half
@@ -476,11 +480,31 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     // Odd ranks subtracted 2^0, 2^2, 2^4, ... from min_resident_block
     //     and added 2^1, 2^3, 2^5, ... to max_resident_block
     if (vrank % 2 == 0) {
-        max_resident_block = ompi_coll_mod((rank + 0x55555555) & ((0x1 << (int) log_2_size) - 1), size);
-        min_resident_block = ompi_coll_mod((rank - 0xAAAAAAAA) & ((0x1 << (int) log_2_size) - 1), size);
+        err = ompi_coll_mod((rank + 0x55555555) & ((0x1 << (int) log_2_size) - 1), size, &tmp);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        max_resident_block = (size_t) tmp;
+        err = ompi_coll_mod((rank - 0xAAAAAAAA) & ((0x1 << (int) log_2_size) - 1), size, &tmp);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        min_resident_block = (size_t) tmp;
     } else {
-        min_resident_block = ompi_coll_mod((rank - 0x55555555) & ((0x1 << (int) log_2_size) - 1), size);
-        max_resident_block = ompi_coll_mod((rank + 0xAAAAAAAA) & ((0x1 << (int) log_2_size) - 1), size);        
+        err = ompi_coll_mod((rank - 0x55555555) & ((0x1 << (int) log_2_size) - 1), size, &tmp);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        min_resident_block = (size_t) tmp;
+        err = ompi_coll_mod((rank + 0xAAAAAAAA) & ((0x1 << (int) log_2_size) - 1), size, &tmp);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        max_resident_block = (size_t) tmp;
     }
 
     mask = 0x1 << (int) (log_2_size - 1);
@@ -510,8 +534,12 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     }
 
     {
-        uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
-        if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+        uint32_t btnb_vrank_u32;
+        if (MPI_SUCCESS != ompi_coll_binary_to_negabinary(vrank, &btnb_vrank_u32)) {
+            line = __LINE__;
+            err = MPI_ERR_ARG;
+            goto err_hndl;
+        }
         vrank_nb = (int) btnb_vrank_u32;
     }
     while (mask > 0) {
@@ -520,14 +548,28 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
         int partner, mask_lsbs, lsbs, equal_lsbs;
 
         partner = vrank_nb ^ ((mask << 1) - 1);
-        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+        err = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size, &partner);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
         mask_lsbs = (mask << 1) - 1; // Mask with num_steps - step + 1 LSBs set to 1
         lsbs = vrank_nb & mask_lsbs; // Extract k LSBs
         equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
 
         top_start = min_resident_block;
-        top_end = ompi_coll_mod(min_resident_block + mask - 1, size);
-        bottom_start = ompi_coll_mod(top_end + 1, size);
+        err = ompi_coll_mod(min_resident_block + mask - 1, size, &tmp);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        top_end = (size_t) tmp;
+        err = ompi_coll_mod(top_end + 1, size, &tmp);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        bottom_start = (size_t) tmp;
         bottom_end = max_resident_block;
         if (halving_direction == 1) {
             // Send bottom half [..., size - 1]
@@ -535,19 +577,34 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
             send_end = bottom_end;
             recv_start = top_start;
             recv_end = top_end;
-            max_resident_block = ompi_coll_mod(max_resident_block - mask, size);
+            err = ompi_coll_mod(max_resident_block - mask, size, &tmp);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            max_resident_block = (size_t) tmp;
         } else {
             // Send top half [0, ...]
             send_start = top_start;
             send_end = top_end;
             recv_start = bottom_start;
             recv_end = bottom_end;
-            min_resident_block = ompi_coll_mod(min_resident_block + mask, size);
+            err = ompi_coll_mod(min_resident_block + mask, size, &tmp);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            min_resident_block = (size_t) tmp;
         }
 
         // --- SEND LOGIC ---
         if (recvd) {
-            size_t num_to_send = ompi_coll_mod(send_end - send_start + 1, size);
+            err = ompi_coll_mod(send_end - send_start + 1, size, &tmp);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            size_t num_to_send = (size_t) tmp;
             // All ranks (root and relays) send from their resident buffer
             // using the packed block convention.
             struct ompi_datatype_t *stype_eff = MPI_PACKED;
@@ -579,7 +636,12 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
         // --- RECV LOGIC ---
         else if (equal_lsbs) {
             // Setup the buffers to be used from now on
-            size_t num_blocks = ompi_coll_mod((recv_end - recv_start + 1), size);
+            err = ompi_coll_mod((recv_end - recv_start + 1), size, &tmp);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            size_t num_blocks = (size_t) tmp;
 
             // I am a leaf and this is the last step, I do not need a tmpbuf
             if (recv_start == recv_end) {
@@ -600,7 +662,12 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
                 min_resident_block = 0;
                 max_resident_block = num_blocks - 1;
 
-                sbuf_offset = ompi_coll_mod(rank - recv_start, size);
+                err = ompi_coll_mod(rank - recv_start, size, &tmp);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+                sbuf_offset = (size_t) tmp;
                 
                 if (recv_end >= recv_start || partner != root) {
                     // Ricezione standard: un singolo blocco continuo
@@ -635,6 +702,10 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
         err = ompi_datatype_sndrcv(sbuf_ptr + (ptrdiff_t) sbuf_offset * (ptrdiff_t) packed_block_size,
                                    packed_block_size, MPI_PACKED,
                                    rbuf, rcount, rdtype);
+        if (err != MPI_SUCCESS) {
+            line = __LINE__;
+            goto err_hndl;
+        }
     }
 
     if (tmpbuf != NULL) {
