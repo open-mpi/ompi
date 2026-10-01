@@ -1,0 +1,51 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  select all|<pid> [pid...]\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+select all
+select <pid> [pid...]
+  Select which attached PIDs receive subsequent backtrace, frame, do, and
+  debugger passthrough commands.  The initial selection is all attached PIDs.
+EOF
+}
+
+run()
+{
+    if [ 0 -eq $# ] || [ "help" = "$1" ] ; then
+        detailed_help
+        return 0
+    fi
+
+    case "$1" in
+    all|"*")
+        selected_pids=$pids
+        printf "Selected PIDs:%s\n" "$(printf " %s" $selected_pids)"
+        return 0
+        ;;
+    esac
+
+    new_selection=
+    for requested_pid in "$@" ; do
+        if ! pid_is_attached "$requested_pid" ; then
+            echo "PID is not attached: $requested_pid" >&2
+            return 1
+        fi
+        new_selection="$new_selection $requested_pid"
+    done
+
+    selected_pids=$(printf "%s\n" "$new_selection" | sed 's/^ *//')
+    printf "Selected PIDs:%s\n" "$(printf " %s" $selected_pids)"
+}
