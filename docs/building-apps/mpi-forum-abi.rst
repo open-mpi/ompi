@@ -79,10 +79,10 @@ with the rest of the :doc:`MPI functionality configure options
 
 .. note:: If Open MPI is configured with ``--disable-standard-abi``,
           ``libmpi_abi``, the ``mpicc_abi`` wrapper, and the
-          ``ompi-abi*`` pkg-config files are not built or installed.
-          Such an installation supports only the Open MPI ABI: it
-          cannot compile MPI Forum ABI applications, and cannot serve
-          as the run-time MPI library for them.
+          ``ompi-forum-abi*`` pkg-config files are not built or
+          installed.  Such an installation supports only the Open MPI
+          ABI: it cannot compile MPI Forum ABI applications, and cannot
+          serve as the run-time MPI library for them.
 
           The Open MPI ABI is always built; there is no option to
           disable it.
@@ -127,13 +127,13 @@ As an alternative to using the ``mpicc_abi`` wrapper, you can use
 .. code-block:: sh
 
    shell$ export PKG_CONFIG_PATH=/opt/openmpi/lib/pkgconfig
-   shell$ gcc hello.c -o hello `pkg-config ompi-abi-c --cflags --libs`
+   shell$ gcc hello.c -o hello `pkg-config ompi-forum-abi-c --cflags --libs`
 
-Open MPI provides the following ABI pkg-config files:
+Open MPI provides the following MPI Forum ABI pkg-config files:
 
-* ``ompi-abi``: Synonym for ``ompi-abi-c``
-* ``ompi-abi-c``: C applications using the MPI Forum ABI
-* ``ompi-abi-cxx``: C++ applications using the MPI Forum ABI
+* ``ompi-forum-abi``: Synonym for ``ompi-forum-abi-c``
+* ``ompi-forum-abi-c``: C applications using the MPI Forum ABI
+* ``ompi-forum-abi-cxx``: C++ applications using the MPI Forum ABI
 
 .. note:: These pkg-config files are only installed when Open MPI is
           configured with ``--enable-standard-abi`` (the default).
@@ -189,7 +189,7 @@ When you compile and link an MPI application, you choose one of the two
 ABIs, and the resulting object files, libraries, and executables are
 bound to that ABI:
 
-* Compiling and linking with ``mpicc_abi`` (or the ``ompi-abi-c``
+* Compiling and linking with ``mpicc_abi`` (or the ``ompi-forum-abi-c``
   pkg-config file) binds the application to the **MPI Forum ABI** and
   links it against ``libmpi_abi``.
 
@@ -469,9 +469,9 @@ named with the ``OMPI_*`` and ``MPIX_*`` prefixes, such as
              ABI, and are therefore not present in ``libmpi_abi``.
 
              An application compiled with ``mpicc_abi`` |mdash| or with
-             the ``ompi-abi-c`` pkg-config file |mdash| cannot call the
-             Open MPI extensions.  Their ``OMPI_*`` and ``MPIX_*``
-             symbols will not be found at link time.
+             the ``ompi-forum-abi-c`` pkg-config file |mdash| cannot
+             call the Open MPI extensions.  Their ``OMPI_*`` and
+             ``MPIX_*`` symbols will not be found at link time.
 
 This is intentional.  The purpose of the MPI Forum ABI is that an
 application built against it can run with *any* MPI implementation that
