@@ -23,6 +23,7 @@
 #include "osc_rdma_comm.h"
 
 #include "ompi/mca/bml/base/base.h"
+#include "opal/mca/smsc/smsc.h"
 
 #define NODE_ID_TO_RANK(module, peer_data, node_id) ((int)(peer_data)->len)
 
@@ -376,6 +377,14 @@ static void ompi_osc_rdma_peer_basic_construct (ompi_osc_rdma_peer_basic_t *peer
 
 static void ompi_osc_rdma_peer_basic_destruct (ompi_osc_rdma_peer_basic_t *peer)
 {
+    /* the mapping can only exist if an smsc module was selected, and mca_smsc
+     * stays valid until the opal layer is finalized, after all windows */
+    if (NULL != peer->smsc_map_ctx) {
+        MCA_SMSC_CALL(unmap_peer_region, peer->smsc_map_ctx);
+    }
+    if (NULL != peer->smsc_endpoint) {
+        MCA_SMSC_CALL(return_endpoint, peer->smsc_endpoint);
+    }
     if (peer->base_handle && (peer->super.flags & OMPI_OSC_RDMA_PEER_BASE_FREE)) {
         free (peer->base_handle);
     }
