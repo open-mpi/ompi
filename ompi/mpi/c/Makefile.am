@@ -542,7 +542,13 @@ libmpi_c_la_LIBADD = libmpi_c_profile.la
 # Only install (and build) the MPI Forum ABI header when the ABI
 # library it targets is actually built.
 if OMPI_STANDARD_ABI
+if OMPI_ABI_ONLY
+# In ABI-only mode, install the header as the main mpi.h at the top level
+include_HEADERS = standard_abi/mpi.h
+else
+# In dual mode, install the header in standard_abi/ subdirectory
 nobase_include_HEADERS = standard_abi/mpi.h
+endif
 endif
 
 #

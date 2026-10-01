@@ -130,7 +130,10 @@ DIST_SUBDIRS = \
         $(MCA_ompi_FRAMEWORKS_SUBDIRS) \
         $(MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS)
 
-lib_LTLIBRARIES = libopen_mpi.la lib@OMPI_LIBMPI_NAME@.la
+lib_LTLIBRARIES = libopen_mpi.la
+if OMPI_BUILD_OMPI_ABI
+lib_LTLIBRARIES += lib@OMPI_LIBMPI_NAME@.la
+endif
 if OMPI_STANDARD_ABI
 lib_LTLIBRARIES += libmpi_abi.la
 endif
