@@ -106,8 +106,8 @@ def _manifest_sanity_checks(manifest):
 def _standard_abi_header_path(srcdir, builddir):
     """Return the generated source-tree/build-tree standard ABI mpi.h."""
     candidates = (
-        builddir / "ompi" / "mpi" / "c" / "standard_abi" / "mpi.h",
-        srcdir / "ompi" / "mpi" / "c" / "standard_abi" / "mpi.h",
+        builddir / "ompi" / "mpi" / "c" / "forum_abi" / "mpi.h",
+        srcdir / "ompi" / "mpi" / "c" / "forum_abi" / "mpi.h",
     )
     for candidate in candidates:
         if candidate.exists():

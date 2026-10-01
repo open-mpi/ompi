@@ -110,7 +110,7 @@ jobs:
     - name: Add Open MPI to PATH
       run: echo "${PWD}/install/bin" >> "$GITHUB_PATH"
 
-    - name: Run the MPI Standard ABI test suite
+    - name: Run the MPI Forum ABI test suite
       # Run "make check-abi" after "make install": unlike the "check-fast"
       # suite that "make check" runs above, check-abi launches real MPI jobs
       # and so needs the installed mpirun (now on PATH).  VERBOSE=1 dumps each

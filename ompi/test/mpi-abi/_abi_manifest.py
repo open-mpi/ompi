@@ -124,7 +124,7 @@ def _find_standard_abi_setting(srcdir, builddir):
             "source": "OMPI_ABI_TEST_STANDARD_ABI",
         }
 
-    conditional = _conditional_enabled(builddir, "OMPI_STANDARD_ABI")
+    conditional = _conditional_enabled(builddir, "OMPI_FORUM_ABI")
     if conditional["enabled"] is not None:
         return conditional
 

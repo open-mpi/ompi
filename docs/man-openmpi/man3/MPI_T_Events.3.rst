@@ -214,7 +214,7 @@ detail directly from the object it bound to.
    callback, and intended for identifying the object and correlating related
    events (for example pairing a "created" event with its "freed"). Do not
    dereference it. Under the Open MPI ABI the value is the C handle the
-   application holds; with the (forthcoming) MPI Standard ABI it is that ABI's
+   application holds; with the (forthcoming) MPI Forum ABI it is that ABI's
    integer handle.
 
 ``ompi.mpi.communicator_created``

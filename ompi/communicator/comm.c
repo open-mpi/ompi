@@ -309,7 +309,7 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
     if (NULL == newcomm) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    /* Allocate the name buffer at the MPI Forum ABI maximum so the standard-ABI
+    /* Allocate the name buffer at the MPI Forum ABI maximum so the ABI
      * entry points can store full-length names.  The traditional OMPI entry
      * points still limit themselves to OPAL_MAX_OBJECT_NAME. */
     newcomm->c_name = (char*) malloc (OMPI_MPI_MAX_OBJECT_NAME_ABI);
@@ -2528,7 +2528,7 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
     OPAL_THREAD_LOCK(&(comm->c_lock));
     /* Bound the store by the full internal buffer size (the ABI maximum); the
      * per-entry-point limit (OPAL_MAX_OBJECT_NAME for the OMPI bindings, the
-     * ABI maximum for the standard-ABI bindings) is applied by the caller. */
+     * ABI maximum for the MPI Forum ABI bindings) is applied by the caller. */
     opal_string_copy(comm->c_name, name, OMPI_MPI_MAX_OBJECT_NAME_ABI);
     comm->c_flags |= OMPI_COMM_NAMEISSET;
     OPAL_THREAD_UNLOCK(&(comm->c_lock));
@@ -2547,7 +2547,7 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.handle = (uint64_t) (uintptr_t) comm;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value. */
+            /* TODO ABI (#13280): set the MPI Forum ABI handle value. */
             payload.handle = 0;
         }
         mca_base_event_raise_bound(ompi_event_comm_name_set, NULL, comm, &payload);
@@ -2713,7 +2713,7 @@ int ompi_comm_free( ompi_communicator_t **comm )
         if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
             payload.handle = (uint64_t) (uintptr_t) *comm;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
+            /* TODO ABI (#13280): set the MPI Forum ABI handle value for the
                communicator *comm. */
             payload.handle = 0;
         }

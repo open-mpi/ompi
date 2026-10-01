@@ -31,11 +31,11 @@
 
 # ABI specific make components
 
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 
 noinst_LTLIBRARIES += libmpi_c_abi.la libmpi_c_abi_profile.la
 
-BUILT_SOURCES = abi.h abi_converters.h standard_abi/mpi.h
+BUILT_SOURCES = abi.h abi_converters.h forum_abi/mpi.h
 
 libmpi_c_abi_la_SOURCES = \
         abi_converters.c \
