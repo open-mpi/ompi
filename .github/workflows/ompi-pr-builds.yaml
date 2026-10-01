@@ -96,7 +96,8 @@ jobs:
         # Parallelize automake's Makefile.in generation during autogen.pl.
         export AUTOMAKE_JOBS=$NCPU
         ./autogen.pl
-        ./configure --prefix=${PWD}/install ${{ matrix.configure_options }}
+        # the CFLAGS is to catch repeats of https://github.com/open-mpi/ompi/issues/14544
+        ./configure CFLAGS="-Werror=format-security" --prefix=${PWD}/install ${{ matrix.configure_options }}
         make -j $NCPU
 
     - name: Run unit tests
