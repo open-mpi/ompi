@@ -91,6 +91,7 @@ bool ompi_mpi_compat_mpi3 = true;
 char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
 uint32_t ompi_pmix_connect_timeout = 0;
+bool ompi_mpi_dpm_group_connect = true;
 
 bool ompi_enable_timing = false;
 
@@ -398,6 +399,17 @@ int ompi_mpi_register_params(void)
                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_pmix_connect_timeout);
+
+    ompi_mpi_dpm_group_connect = true;
+    (void) mca_base_var_register ("ompi", "mpi", NULL, "dpm_group_connect",
+                                  "Whether (true) or not (false) MPI_Comm_connect/accept/spawn gives the new "
+                                  "intercommunicator the context ID of the PMIx group that connects the two sides, "
+                                  "rather than agreeing on one with the iterative algorithm, whose steps between "
+                                  "the sides are publish/lookup exchanges. Used only if both sides allow it and "
+                                  "their PMLs support extended context IDs.",
+                                  MCA_BASE_VAR_TYPE_BOOL, NULL,
+                                  0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                  &ompi_mpi_dpm_group_connect);
 
     /* check to see if we want timing information */
     /* TODO: enable OMPI init and OMPI finalize timings if

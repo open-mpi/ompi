@@ -26,6 +26,7 @@
  *                         reserved.
  * Copyright (c) 2023      Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -541,6 +542,24 @@ static inline uint32_t ompi_comm_get_local_cid (const ompi_communicator_t* comm)
 {
     return comm->c_index;
 }
+
+/**
+ * Reserve a local CID (a slot in ompi_mpi_communicators) for a
+ * communicator that does not exist yet, for callers that must publish
+ * the value before they can build the communicator. Hand the slot to the
+ * new communicator by setting its c_index before calling
+ * ompi_comm_nextcid() in an extended-CID mode, which takes it over; the
+ * communicator's destructor then frees it like any other. Give back a
+ * slot that is not handed on with ompi_comm_release_local_cid().
+ */
+int ompi_comm_reserve_local_cid (uint32_t *c_index);
+
+/**
+ * Give back a slot reserved by ompi_comm_reserve_local_cid() that no
+ * communicator took over. A slot some communicator has taken is left
+ * alone.
+ */
+void ompi_comm_release_local_cid (uint32_t c_index);
 
 int ompi_comm_get_remote_cid_from_pmix (ompi_communicator_t *comm, int dest, uint32_t *remote_cid);
 

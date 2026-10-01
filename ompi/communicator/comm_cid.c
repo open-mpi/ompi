@@ -23,7 +23,7 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting.  All rights reserved.
  * Copyright (c) 2020-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
@@ -522,11 +522,19 @@ static int ompi_comm_nextcid_ext_nb (ompi_communicator_t *newcomm, ompi_communic
         block = &comm->c_contextidb;
     }
 
-    for (unsigned int i = ompi_mpi_communicators.lowest_free ; i < mca_pml.pml_max_contextid ; ++i) {
-        bool flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i, newcomm);
-        if (true == flag) {
-            newcomm->c_index = i;
-            break;
+    if (MPI_UNDEFINED != (int) newcomm->c_index) {
+        /* the caller already holds a slot for this communicator - see
+         * ompi_comm_reserve_local_cid() - so take it over */
+        assert((void *) OMPI_COMM_SENTINEL == opal_pointer_array_get_item (&ompi_mpi_communicators,
+                                                                          newcomm->c_index));
+        opal_pointer_array_set_item (&ompi_mpi_communicators, newcomm->c_index, newcomm);
+    } else {
+        for (unsigned int i = ompi_mpi_communicators.lowest_free ; i < mca_pml.pml_max_contextid ; ++i) {
+            bool flag = opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i, newcomm);
+            if (true == flag) {
+                newcomm->c_index = i;
+                break;
+            }
         }
     }
     assert(newcomm->c_index > 2);
@@ -560,6 +568,28 @@ static int ompi_comm_nextcid_ext_nb (ompi_communicator_t *newcomm, ompi_communic
     *req = &ompi_request_empty;
     /* nothing more to do here */
     return OMPI_SUCCESS;
+}
+
+int ompi_comm_reserve_local_cid (uint32_t *c_index)
+{
+    /* The sentinel holds the slot, as it does for the iterative
+     * algorithm: ompi_comm_lookup() reports no communicator there, so a
+     * message that arrives for this CID before the communicator exists is
+     * held by the PML until it does, rather than delivered elsewhere */
+    for (unsigned int i = ompi_mpi_communicators.lowest_free ; i < mca_pml.pml_max_contextid ; ++i) {
+        if (opal_pointer_array_test_and_set_item (&ompi_mpi_communicators, i, (void *) OMPI_COMM_SENTINEL)) {
+            *c_index = i;
+            return OMPI_SUCCESS;
+        }
+    }
+    return OMPI_ERR_OUT_OF_RESOURCE;
+}
+
+void ompi_comm_release_local_cid (uint32_t c_index)
+{
+    if ((void *) OMPI_COMM_SENTINEL == opal_pointer_array_get_item (&ompi_mpi_communicators, c_index)) {
+        opal_pointer_array_set_item (&ompi_mpi_communicators, c_index, NULL);
+    }
 }
 
 int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,

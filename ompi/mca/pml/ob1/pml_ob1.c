@@ -28,6 +28,7 @@
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2026      Stony Brook University. All rights reserved.
+ * Copyright (c) 2026      Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -283,11 +284,28 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
             /* handle this CID*/
             mca_pml_ob1_handle_cid (comm, frag->hdr.hdr_ext_match.hdr_match.hdr_src, &frag->hdr.hdr_cid);
 
-            hdr = &frag->hdr.hdr_ext_match.hdr_match;
+            /* The fragment was held with its CID header in front, but from
+             * here on it is matched - and, once matched, progressed - by the
+             * header behind it: whatever reads frag->hdr looks there for
+             * the type, source, tag and sequence number. Bring that header
+             * to the front, as it would have been stored had the
+             * communicator existed when the fragment arrived. The two
+             * overlap, so go through a copy. */
+            {
+                mca_pml_ob1_hdr_t inner;
+
+                ob1_hdr_copy ((mca_pml_ob1_hdr_t *) &frag->hdr.hdr_ext_match.hdr_match, &inner);
+                ob1_hdr_copy (&inner, &frag->hdr);
+            }
+            hdr = &frag->hdr.hdr_match;
             hdr->hdr_ctx = comm->c_index;
 
-            /* NTH: this is ok because the pointer that will be freed is stored in frag->addr[] */
+            /* The payload starts past the CID header as well, and the
+             * segment is that much shorter - the length is what the
+             * receive uses to count the bytes delivered.
+             * NTH: this is ok because the pointer that will be freed is stored in frag->addr[] */
             frag->segments[0].seg_addr.pval = (void *)((uintptr_t) frag->segments[0].seg_addr.pval + sizeof (frag->hdr.hdr_cid));
+            frag->segments[0].seg_len -= sizeof (frag->hdr.hdr_cid);
         }
 
         /* Is this fragment for the current communicator ? */
