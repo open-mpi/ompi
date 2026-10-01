@@ -421,9 +421,12 @@ end program]])],
     # This must be called unconditionally (not nested in AS_IF) because
     # AC_FC_MODULE_FLAG generates an AC_CACHE_CHECK which doesn't work
     # properly when nested. The result (FC_MODINC) will be checked later.
+    # Only call it if we have a Fortran compiler and might need modules.
     AS_IF([test $ompi_fortran_happy -eq 1 && \
            test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS],
-          [AC_FC_MODULE_FLAG])
+          [
+              AC_FC_MODULE_FLAG
+          ])
 
     AS_IF([test $ompi_fortran_happy -eq 1 && \
            test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS],
@@ -438,7 +441,7 @@ end program]])],
            AC_SUBST([OMPI_FC_MODULE_FLAG])
 
            AS_IF([test -z "$FC_MODINC"],
-                 [AC_MSG_WARN([AC_FC_MODULE_FLAG could not determine module include flag])
+                 [AC_MSG_WARN([Fortran compiler module include flag could not be determined])
                   AC_MSG_ERROR([Cannot continue])])
 
            # Look for ignore TKR syntax
