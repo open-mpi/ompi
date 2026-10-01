@@ -36,5 +36,7 @@ OPAL_DECLSPEC opal_accelerator_stream_t *mca_pml_ob1_get_htod_stream(void);
 OPAL_DECLSPEC int mca_pml_ob1_progress_one_htod_event(struct mca_btl_base_descriptor_t **);
 OPAL_DECLSPEC int mca_pml_ob1_accelerator_init(void);
 OPAL_DECLSPEC void mca_pml_ob1_accelerator_fini(void);
+/* Trigger lazy stream/event creation on first device buffer use. */
+OPAL_DECLSPEC int mca_pml_ob1_accelerator_ensure_init(void);
 
 #endif /* OMPI_PML_OB1_ACCELERATOR_H */

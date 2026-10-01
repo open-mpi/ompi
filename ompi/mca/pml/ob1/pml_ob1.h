@@ -92,6 +92,8 @@ struct mca_pml_ob1_t {
     unsigned int unexpected_limit;
     /* Accelerator support initialized */
     bool accelerator_enabled;
+    /* Defer stream/event creation to first device buffer use */
+    bool accelerator_lazy_init;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t;
 

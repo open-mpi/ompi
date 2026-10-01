@@ -252,6 +252,13 @@ static int mca_pml_ob1_component_register(void)
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_ob1_accelerator_events_max);
 
+    mca_pml_ob1.accelerator_lazy_init = true;
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "accelerator_lazy_init",
+                                           "Defer accelerator stream and event creation to the first "
+                                           "MPI call that uses a device buffer (1 = defer, 0 = eager)",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_ob1.accelerator_lazy_init);
+
     return OMPI_SUCCESS;
 }
 
