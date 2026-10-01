@@ -1366,8 +1366,8 @@ err_hndl:
  * High Performance Computing, Networking, Storage and Analysis, 2025).
  * See https://arxiv.org/abs/2508.17311
  *
- * This implementation is restricted to power-of-two communicator sizes.
- * For non power-of-two sizes, the recursive doubling algorithm is used as a fallback.
+ * This implementation does not support non-commutative operation.
+ * For non-commutative operation, the recursive doubling algorithm is used as a fallback.
  */
 int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t count,
                                             struct ompi_datatype_t *dtype, struct ompi_op_t *op,
@@ -1375,7 +1375,7 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
                                             mca_coll_base_module_t *module)
 {
     int rank, size;
-    int err, line; // for error handling
+    int err = MPI_SUCCESS, line = -1; // for error handling
     char *tmpsend, *tmprecv, *inplacebuf_free = NULL;
     ptrdiff_t extent, true_extent, lb, gap, span = 0;
     
@@ -1390,15 +1390,6 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
                                                                 module);
     }
 
-    if (!ompi_coll_is_power_of_two(size)) {
-        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                     "coll:base:allreduce_intra_bine_lat WARNING: "
-                     "non-pow-2 size %d, switching to recursive doubling",
-                     size));
-        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op, comm,
-                                                                 module);
-    }
-
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allreduce_intra_bine_lat rank %d", rank));
 
@@ -1406,7 +1397,7 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
     if (1 == size) {
         if (MPI_IN_PLACE != sbuf) {
             err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
-            if (err < 0) {
+            if (MPI_SUCCESS != err) {
                 line = __LINE__;
                 goto error_hndl;
             }
@@ -1437,13 +1428,13 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
     // Copy content from sbuffer to inplacebuf
     if (MPI_IN_PLACE == sbuf) {
         err = ompi_datatype_copy_content_same_ddt(dtype, count, inplacebuf, (char *) rbuf);
-        if (err < 0) {
+        if (MPI_SUCCESS != err) {
             line = __LINE__;
             goto error_hndl;
         }
     } else {
         err = ompi_datatype_copy_content_same_ddt(dtype, count, inplacebuf, (char *) sbuf);
-        if (err < 0) {
+        if (MPI_SUCCESS != err) {
             line = __LINE__;
             goto error_hndl;
         }
@@ -1465,7 +1456,7 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
     // All the nodes that do not stop their computation will receive an alias
     // called new_node, used to calculate their correct destination wrt this
     // new "cut" topology.
-    int new_rank = rank, loop_flag = 0;
+    int new_rank = rank, is_even_extra_rank = 0;
     if (rank < (2 * extra_ranks)) {
         if (0 == (rank % 2)) {
             err = MCA_PML_CALL(send(tmpsend, count, dtype, (rank + 1), MCA_COLL_BASE_TAG_ALLREDUCE,
@@ -1474,7 +1465,7 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
                 line = __LINE__;
                 goto error_hndl;
             }
-            loop_flag = 1;
+            is_even_extra_rank = 1;
         } else {
             err = MCA_PML_CALL(recv(tmprecv, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
                                     comm, MPI_STATUS_IGNORE));
@@ -1491,15 +1482,20 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
 
             new_rank = rank >> 1;
         }
-    } else
+    } else {
         new_rank = rank - extra_ranks;
+    }
 
     // Actual allreduce computation for general cases
     int s, vdest, dest;
     for (s = 0; s < steps; s++) {
-        if (loop_flag)
+        if (is_even_extra_rank)
             break;
-        vdest = ompi_coll_bine_pi(new_rank, s, adjsize);
+        err = ompi_coll_bine_pi(new_rank, s, adjsize, &vdest);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto error_hndl;
+        }
 
         dest = is_power_of_two         ? vdest
                : (vdest < extra_ranks) ? (vdest << 1) + 1
@@ -1520,17 +1516,16 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
         }
     }
 
-    // Final results is sent to nodes that are not included in general computation
-    // (general computation loop requires 2^n nodes).
+    // Final step after the main communication loop: the general (power-of-two)
+    // loop above only involves adjsize == 2^steps ranks. The remaining
+    // extra_ranks (size - adjsize) were folded in by pairing each even extra
+    // rank with the following odd rank: the odd rank kept the data, entered the
+    // loop (new_rank = rank >> 1) and computed the complete result, while the
+    // even rank sent its data and then waited. Here the odd rank sends that
+    // final result back to its even partner, which receives it directly into
+    // rbuf.
     if (rank < (2 * extra_ranks)) {
-        if (!loop_flag) {
-            err = MCA_PML_CALL(send(tmpsend, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
-                                    MCA_PML_BASE_SEND_STANDARD, comm));
-            if (MPI_SUCCESS != err) {
-                line = __LINE__;
-                goto error_hndl;
-            }
-        } else {
+        if (is_even_extra_rank) {
             err = MCA_PML_CALL(recv(tmprecv, count, dtype, (rank + 1), MCA_COLL_BASE_TAG_ALLREDUCE,
                                     comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
@@ -1538,12 +1533,19 @@ int ompi_coll_base_allreduce_intra_bine_lat(const void *sbuf, void *rbuf, size_t
                 goto error_hndl;
             }
             tmpsend = (char *) rbuf;
+        } else {
+            err = MCA_PML_CALL(send(tmpsend, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
+                                    MCA_PML_BASE_SEND_STANDARD, comm));
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto error_hndl;
+            }
         }
     }
 
     if (tmpsend != rbuf) {
         err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf, tmpsend);
-        if (err < 0) {
+        if (MPI_SUCCESS != err) {
             line = __LINE__;
             goto error_hndl;
         }
@@ -1595,7 +1597,7 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap(const void *sbuf, void *rbuf, 
     int size, rank, dest, steps, step, line, err = MPI_SUCCESS;
     int *r_count = NULL, *s_count = NULL, *r_index = NULL, *s_index = NULL;
     size_t w_size;
-    uint32_t vrank, vdest;
+    int vrank, vdest;
 
     char *tmp_send = NULL, *tmp_recv = NULL;
     char *tmp_buf_raw = NULL, *tmp_buf;
@@ -1661,11 +1663,25 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap(const void *sbuf, void *rbuf, 
     w_size = count;
     s_index[0] = r_index[0] = 0;
     vrank = ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) rank);
+    if (OPAL_UNLIKELY(vrank < 0)) {
+        line = __LINE__;
+        err = MPI_ERR_ARG;
+        goto cleanup_and_return;
+    }
 
     // Reduce-Scatter phase
     for (step = 0; step < steps; step++) {
-        dest = ompi_coll_bine_pi(rank, step, size);
+        err = ompi_coll_bine_pi(rank, step, size, &dest);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
         vdest = ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) dest);
+        if (OPAL_UNLIKELY(vdest < 0)) {
+            line = __LINE__;
+            err = MPI_ERR_ARG;
+            goto cleanup_and_return;
+        }
 
         if (vrank < vdest) {
             r_count[step] = w_size / 2;
@@ -1702,7 +1718,11 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap(const void *sbuf, void *rbuf, 
 
     // Allgather phase
     for (step = steps - 1; step >= 0; step--) {
-        dest = ompi_coll_bine_pi(rank, step, size);
+        err = ompi_coll_bine_pi(rank, step, size, &dest);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
 
         tmp_send = (char *) rbuf + r_index[step] * extent;
         tmp_recv = (char *) rbuf + s_index[step] * extent;
@@ -1770,7 +1790,7 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
     const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype, struct ompi_op_t *op,
     struct ompi_communicator_t *comm, mca_coll_base_module_t *module)
 {
-    int size, rank, line, err = MPI_SUCCESS;
+    int size, rank, line, err = MPI_SUCCESS, tmp;
     int *blocks_to_recv = NULL;
     MPI_Request *reqs_s = NULL, *reqs_r = NULL, *requests = NULL;
     ptrdiff_t lb, extent, true_extent, gap;
@@ -1870,9 +1890,17 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
     while (mask < size) {
         int partner;
         if (rank % 2 == 0) {
-            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
 
         next_req_r = 0;
@@ -1880,25 +1908,45 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
 
         // We start from 1 because 0 never sends block 0
         for (size_t block = 1; block < (size_t) size; block++) {
-            // Get the position of the highest set bit using clz
+            // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            int k = 31 - __builtin_clz(ompi_coll_bine_get_nu(block, size));
+            int k = opal_cube_dim((int) ompi_coll_bine_get_nu(block, size) + 1) - 1;
             // Check if this must be sent
             if (k == reverse_step) {
                 // 0 would send this block
                 size_t block_to_send, block_to_recv;
                 if (rank % 2 == 0) {
                     // I am even, thus I need to shift by rank position to the right
-                    block_to_send = ompi_coll_mod(block + rank, size);
+                    err = ompi_coll_mod(block + rank, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am even, my partner is odd, thus I need to mirror it and then shift
-                    block_to_recv = ompi_coll_mod(partner - block, size);
+                    err = ompi_coll_mod(partner - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                 } else {
                     // I am odd, thus I need to mirror it
-                    block_to_send = ompi_coll_mod(rank - block, size);
+                    err = ompi_coll_mod(rank - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am odd, my partner is even, thus I need to mirror it and then shift
-                    block_to_recv = ompi_coll_mod(block + partner, size);
+                    err = ompi_coll_mod(block + partner, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                 }
 
                 if (block_to_send != (size_t) rank) {
@@ -1960,15 +2008,23 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
     while (mask > 0) {
         int partner, req_count = 0;
         if (rank % 2 == 0) {
-            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
         // We start from 1 because 0 never sends block 0
         for (size_t block = 1; block < (size_t) size; block++) {
-            // Get the position of the highest set bit using clz
+            // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            int k = 31 - __builtin_clz(ompi_coll_bine_get_nu(block, size));
+            int k = opal_cube_dim((int) ompi_coll_bine_get_nu(block, size) + 1) - 1;
             // int k = __builtin_ctz(get_nu(block, size));
             //  Check if this must be sent (recvd in allgather)
             if (k == step || block == 0) {
@@ -1977,16 +2033,36 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
                 // I invert what to send and what to receive wrt reduce-scatter
                 if (rank % 2 == 0) {
                     // I am even, thus I need to shift by rank position to the right
-                    block_to_recv = ompi_coll_mod(block + rank, size);
+                    err = ompi_coll_mod(block + rank, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am even, my partner is odd, thus I need to mirror it and then shift
-                    block_to_send = ompi_coll_mod(partner - block, size);
+                    err = ompi_coll_mod(partner - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                 } else {
                     // I am odd, thus I need to mirror it
-                    block_to_recv = ompi_coll_mod(rank - block, size);
+                    err = ompi_coll_mod(rank - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am odd, my partner is even, thus I need to mirror it and then shift
-                    block_to_send = ompi_coll_mod(block + partner, size);
+                    err = ompi_coll_mod(block + partner, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                 }
 
                 int partner_send = (block_to_send != (size_t) partner) ? partner : MPI_PROC_NULL;
@@ -2099,7 +2175,7 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
     int *r_count = NULL, *s_count = NULL, *r_index = NULL, *s_index = NULL;
     int phase_scount, phase_rcount, num_phases, inbi, vdest;
     size_t w_size, segcount;
-    uint32_t vrank;
+    int vrank;
     char *tmp_send = NULL, *tmp_recv = NULL;
     char *inbuf[2] = {NULL, NULL}, *inbuf_free[2] = {NULL, NULL};
     ptrdiff_t lb, extent, true_extent, gap = 0, inbuf_size;
@@ -2222,17 +2298,31 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
         w_size = count;
         s_index[0] = r_index[0] = 0;
         vrank = ompi_coll_bine_remap_rank((uint32_t) adjsize, (uint32_t) new_rank);
+        if (OPAL_UNLIKELY(vrank < 0)) {
+            err = MPI_ERR_ARG;
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
 
         for (step = 0; step < steps; step++) {
-            vdest = ompi_coll_bine_pi(new_rank, step, adjsize);
+            err = ompi_coll_bine_pi(new_rank, step, adjsize, &vdest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
 
             dest = is_power_of_two         ? vdest
                    : (vdest < extra_ranks) ? (vdest << 1) + 1
                                            : vdest + extra_ranks;
 
             vdest = ompi_coll_bine_remap_rank((uint32_t) adjsize, (uint32_t) vdest);
+            if (OPAL_UNLIKELY(vdest < 0)) {
+                err = MPI_ERR_ARG;
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
 
-            if (vrank < (uint32_t) vdest) {
+            if (vrank < vdest) {
                 r_count[step] = w_size / 2;
                 s_count[step] = w_size - r_count[step];
                 s_index[step] = r_index[step] + r_count[step];
@@ -2341,7 +2431,11 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
 
         // Allgather phase
         for (step = steps - 1; step >= 0; step--) {
-            vdest = ompi_coll_bine_pi(new_rank, step, adjsize);
+            err = ompi_coll_bine_pi(new_rank, step, adjsize, &vdest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
 
             dest = is_power_of_two         ? vdest
                    : (vdest < extra_ranks) ? (vdest << 1) + 1

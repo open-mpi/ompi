@@ -190,12 +190,22 @@ ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatyp
 /**
  * Convert binary to negabinary (base -2) without loops.
  * Based on: https://stackoverflow.com/questions/37637781/
- * Returns -1 if input > 0x55555555 (max representable).
+ *
+ * The transform is a bijection for every int32 input (the round-trip
+ * ompi_coll_negabinary_to_binary() is the identity), but the Bine
+ * algorithms only use patterns whose decoded value fits in the number
+ * of bits in use.  For bin > 0x55555555 (0x55555555 is the largest
+ * usable value) the resulting pattern cannot be used, so that is an
+ * error.
  */
-static inline uint32_t ompi_coll_binary_to_negabinary(int32_t bin) {
-    if(OPAL_UNLIKELY(bin > 0x55555555)) return -1;
+static inline int ompi_coll_binary_to_negabinary(int32_t bin, uint32_t *out)
+{
+    if (bin > 0x55555555) {
+        return MPI_ERR_ARG;
+    }
     const uint32_t mask = 0xAAAAAAAA;
-    return (mask + bin) ^ mask;
+    *out = (mask + (uint32_t) bin) ^ mask;
+    return MPI_SUCCESS;
 }
 
 /**
@@ -208,56 +218,113 @@ static inline int32_t ompi_coll_negabinary_to_binary(uint32_t neg) {
 }
 
 /**
- * Mathematical modulo (always non-negative).
- * C's % can return negative values.
+ * Mathematical modulo (always non-negative).  C's % can return
+ * negative values.  Returns MPI_ERR_ARG if b == 0.
  */
-static inline int ompi_coll_mod(int a, int b){
+static inline int ompi_coll_mod(int a, int b, int *res)
+{
+    if (OPAL_UNLIKELY(0 == b)) {
+        return MPI_ERR_ARG;
+    }
     int r = a % b;
-    return r < 0 ? r + b : r;
+    *res = r < 0 ? r + b : r;
+    return MPI_SUCCESS;
 }
 
 /**
- * @brief Returns if the given value is a power of two.
+ * Returns if the given value is a power of two.
  */
 static inline int ompi_coll_is_power_of_two(int value)
 {
-    return (value & (value - 1)) == 0;
+    return value > 0 && (value & (value - 1)) == 0;
 }
 
 /* Maximum number of steps a BINE collective can ever require.  MPI
-   communicator sizes are bounded by INT_MAX and BINE runs on
-   power-of-two sizes, so ceil(log2(size)) <= 30.  Used to size
-   per-step arrays. */
+ * communicator sizes are bounded by INT_MAX and BINE runs on
+ * power-of-two sizes, so ceil(log2(size)) <= 30.  Used to size
+ * per-step arrays.
+ */
 #define BINE_MAX_STEPS 30
 
-/* J(n) = (2^n - (-1)^n) / 3, the n-th Jacobsthal number (exact division) */
-static inline int ompi_coll_bine_jacobsthal(int n)
+/* J(n) = (2^n - (-1)^n) / 3, the n-th Jacobsthal number (exact division).
+ * J(n) exceeds INT_MAX when n >= 33, so the result always fits in an int
+ * within the valid input range: 0 <= n < 33.  Returns MPI_ERR_ARG for any
+ * n outside that range. 
+ */
+static inline int ompi_coll_bine_jacobsthal(int n, int *res)
 {
-    uint64_t p = UINT64_C(1) << n;
-    return (int) ((n & 1) ? (p + 1) / 3 : (p - 1) / 3);
-}
-
-/* largest signed value representable in nbits-bit negabinary */
-static inline int ompi_coll_bine_largest_negabinary(int nbits)
-{
-    uint32_t e = (nbits & 1) ? (uint32_t) nbits + 1 : (uint32_t) nbits;
-    return (int) ((((uint64_t) 1 << e) - 1) / 3);
-}
-
-/* smallest signed value representable in nbits-bit negabinary */
-static inline int ompi_coll_bine_smallest_negabinary(int nbits)
-{
-    if (nbits <= 0) {
-        return 0;
+    if (OPAL_UNLIKELY(n < 0 || n >= 33)) {
+        return MPI_ERR_ARG;
     }
-    return -2 * ompi_coll_bine_largest_negabinary(nbits - 1);
+    uint64_t p = UINT64_C(1) << n;
+    *res = (int) ((n & 1) ? (p + 1) / 3 : (p - 1) / 3);
+    return MPI_SUCCESS;
 }
 
-/* check if x is within the representable range of signed nbits-bit negabinary */
+/* largest signed value representable in nbits-bit negabinary.
+ * e = nbits (even) / nbits + 1 (odd), and (2^e - 1) / 3 exceeds INT_MAX
+ * when e >= 33, i.e. nbits >= 33.  Callers derive nbits from
+ * opal_cube_dim(size), bounded by BINE_MAX_STEPS, so nbits <= 31 in
+ * practice.  Valid input range: 0 <= nbits < 33.  Returns MPI_ERR_ARG for
+ * any nbits outside that range. 
+ */
+static inline int ompi_coll_bine_largest_negabinary(int nbits, int *res)
+{
+    if (OPAL_UNLIKELY(nbits < 0 || nbits >= 33)) {
+        return MPI_ERR_ARG;
+    }
+    uint32_t e = (nbits & 1) ? (uint32_t) nbits + 1 : (uint32_t) nbits;
+    *res = (int) ((((uint64_t) 1 << e) - 1) / 3);
+    return MPI_SUCCESS;
+}
+
+/* smallest signed value representable in nbits-bit negabinary.
+ * -2 * largest(nbits - 1) exceeds INT_MIN when nbits >= 32 (nbits = 32
+ * would multiply 1431655765 by -2).  Valid input range: 0 < nbits < 32.
+ * Returns MPI_ERR_ARG for any nbits outside that range. 
+ */
+static inline int ompi_coll_bine_smallest_negabinary(int nbits, int *res)
+{
+    if (OPAL_UNLIKELY(nbits < 1 || nbits >= 32)) {
+        return MPI_ERR_ARG;
+    }
+    int tmp;
+    int err = ompi_coll_bine_largest_negabinary(nbits - 1, &tmp);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+        return err;
+    }
+    *res = -2 * tmp;
+    return MPI_SUCCESS;
+}
+
+/* check if x is within the representable range of signed nbits-bit negabinary
+ * Valid input range: 0 < nbits < 32 (matches the smallest/largest bounds).
+ * An out-of-range nbits is treated as "not in range" (returns 0). 
+ */
 static inline int ompi_coll_bine_in_range(int x, uint32_t nbits)
 {
-    return x >= ompi_coll_bine_smallest_negabinary((int) nbits)
-           && x <= ompi_coll_bine_largest_negabinary((int) nbits);
+    int lowest, largest;
+    int err = ompi_coll_bine_smallest_negabinary((int) nbits, &lowest);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+        return 0;
+    }
+    err = ompi_coll_bine_largest_negabinary((int) nbits, &largest);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+        return 0;
+    }
+    return x >= lowest && x <= largest;
+}
+
+/*
+ *Try to produce a Bine-usable negabinary pattern for bin at the given
+ * bit width.  Returns false when bin does not fit in nbits bits.
+ */
+static inline int ompi_coll_bine_try_negabinary(int32_t bin, uint32_t nbits, uint32_t *out)
+{
+    if (!ompi_coll_bine_in_range(bin, nbits)) {
+        return 0;
+    }
+    return (MPI_SUCCESS == ompi_coll_binary_to_negabinary(bin, out));
 }
 
 /* get the negabinary representation of a rank, selecting between two possible encodings */
@@ -272,34 +339,27 @@ static inline uint32_t ompi_coll_bine_get_rank_negabinary_representation(uint32_
         return 0;
     }
 
-    uint32_t nba = UINT32_MAX, nbb = UINT32_MAX;
+    uint32_t nba = 0, nbb = 0;
+    bool nba_ok = false, nbb_ok = false;
     int num_bits = opal_cube_dim(num_ranks);
     if (OPAL_UNLIKELY(num_bits < 0 || num_bits > 31)) {
         return UINT32_MAX;
     }
 
     if (rank % 2) {
-        if (ompi_coll_bine_in_range(rank, (uint32_t) num_bits)) {
-            nba = ompi_coll_binary_to_negabinary(rank);
-        }
-        if (ompi_coll_bine_in_range(rank - num_ranks, (uint32_t) num_bits)) {
-            nbb = ompi_coll_binary_to_negabinary(rank - num_ranks);
-        }
+        nba_ok = ompi_coll_bine_try_negabinary(rank, (uint32_t) num_bits, &nba);
+        nbb_ok = ompi_coll_bine_try_negabinary(rank - num_ranks, (uint32_t) num_bits, &nbb);
     } else {
-        if (ompi_coll_bine_in_range(-rank, (uint32_t) num_bits)) {
-            nba = ompi_coll_binary_to_negabinary(-rank);
-        }
-        if (ompi_coll_bine_in_range(-rank + num_ranks, (uint32_t) num_bits)) {
-            nbb = ompi_coll_binary_to_negabinary(-rank + num_ranks);
-        }
+        nba_ok = ompi_coll_bine_try_negabinary(-rank, (uint32_t) num_bits, &nba);
+        nbb_ok = ompi_coll_bine_try_negabinary(-rank + num_ranks, (uint32_t) num_bits, &nbb);
     }
 
-    assert(nba != UINT32_MAX || nbb != UINT32_MAX);
+    assert(nba_ok || nbb_ok);
 
-    if (nba == UINT32_MAX && nbb != UINT32_MAX) {
-        return nbb;
-    } else if (nba != UINT32_MAX && nbb == UINT32_MAX) {
+    if (nba_ok && !nbb_ok) {
         return nba;
+    } else if (!nba_ok && nbb_ok) {
+        return nbb;
     } else { // Check MSB
         if (nba & (UINT32_C(0x80000000) >> (32 - num_bits))) {
             return nba;
@@ -329,29 +389,22 @@ static inline uint32_t ompi_coll_bine_nb_to_nu(uint32_t nb, uint32_t size)
 /* get the nu (step) value for a given rank, selecting the minimal encoding */
 static inline uint32_t ompi_coll_bine_get_nu(uint32_t rank, uint32_t size)
 {
-    uint32_t nba = UINT32_MAX, nbb = UINT32_MAX;
+    uint32_t nba = 0, nbb = 0;
+    bool nba_ok = false, nbb_ok = false;
     int num_bits = opal_cube_dim((int) size);
     if (rank % 2) {
-        if (ompi_coll_bine_in_range(rank, num_bits)) {
-            nba = ompi_coll_binary_to_negabinary(rank);
-        }
-        if (ompi_coll_bine_in_range(rank - size, num_bits)) {
-            nbb = ompi_coll_binary_to_negabinary(rank - size);
-        }
+        nba_ok = ompi_coll_bine_try_negabinary(rank, (uint32_t) num_bits, &nba);
+        nbb_ok = ompi_coll_bine_try_negabinary(rank - size, (uint32_t) num_bits, &nbb);
     } else {
-        if (ompi_coll_bine_in_range(-rank, num_bits)) {
-            nba = ompi_coll_binary_to_negabinary(-rank);
-        }
-        if (ompi_coll_bine_in_range(-rank + size, num_bits)) {
-            nbb = ompi_coll_binary_to_negabinary(-rank + size);
-        }
+        nba_ok = ompi_coll_bine_try_negabinary(-rank, (uint32_t) num_bits, &nba);
+        nbb_ok = ompi_coll_bine_try_negabinary(-rank + size, (uint32_t) num_bits, &nbb);
     }
-    assert(nba != UINT32_MAX || nbb != UINT32_MAX);
+    assert(nba_ok || nbb_ok);
 
-    if (nba == UINT32_MAX && nbb != UINT32_MAX) {
-        return ompi_coll_bine_nb_to_nu(nbb, size);
-    } else if (nba != UINT32_MAX && nbb == UINT32_MAX) {
+    if (nba_ok && !nbb_ok) {
         return ompi_coll_bine_nb_to_nu(nba, size);
+    } else if (!nba_ok && nbb_ok) {
+        return ompi_coll_bine_nb_to_nu(nbb, size);
     } else { // Check MSB
         int nu_a = ompi_coll_bine_nb_to_nu(nba, size);
         int nu_b = ompi_coll_bine_nb_to_nu(nbb, size);
@@ -363,12 +416,12 @@ static inline uint32_t ompi_coll_bine_get_nu(uint32_t rank, uint32_t size)
     }
 }
 
-/* remap a rank to its bine tree position */
-static inline uint32_t ompi_coll_bine_remap_rank(uint32_t num_ranks, uint32_t rank)
+/* remap a rank to its bine tree position; returns -1 on invalid input */
+static inline int ompi_coll_bine_remap_rank(uint32_t num_ranks, uint32_t rank)
 {
     uint32_t remap_rank = ompi_coll_bine_get_rank_negabinary_representation(num_ranks, rank);
     if (OPAL_UNLIKELY(remap_rank == UINT32_MAX)) {
-        return UINT32_MAX;
+        return -1;
     }
 
     if (num_ranks == 1) {
@@ -382,97 +435,126 @@ static inline uint32_t ompi_coll_bine_remap_rank(uint32_t num_ranks, uint32_t ra
 }
 
 /* get the sender rank for a given receiver in a bine tree */
-static inline int ompi_coll_bine_get_sender(uint32_t num_ranks, uint32_t rank,
-                                            uint32_t *sender)
+static inline int ompi_coll_bine_get_sender(uint32_t num_ranks, uint32_t rank, uint32_t *sender)
 {
-    int depth = 0;
+    if (OPAL_UNLIKELY(0 == num_ranks)) {
+        *sender = rank;
+        return MPI_ERR_ARG;
+    }
+
     uint32_t r = rank;
-    while (depth < (int) num_ranks) {
-        uint32_t remap = ompi_coll_bine_remap_rank(num_ranks, r);
-        if (remap == rank) {
+    for (uint32_t depth = 0; depth < BINE_MAX_STEPS; depth++) {
+        int remap = ompi_coll_bine_remap_rank(num_ranks, r);
+        if (OPAL_UNLIKELY(remap < 0)) {
+            *sender = rank;
+            return MPI_ERR_ARG;
+        }
+        if (remap == (int) rank) {
             *sender = r;
             return MPI_SUCCESS;
         }
-        r = remap;
-        depth++;
+        r = (uint32_t) remap;
     }
     *sender = rank;
     return MPI_ERR_ARG;
 }
 
-/**
- * @brief Computes the destination rank for a given process in a bine
+/*
+ * Computes the destination rank for a given process in a bine
  * algorithm step.
  *
  * This function calculates the rank to which a process will communicate
  * based on the bine algorithm, ensuring the result is within the valid
  * range of ranks.
  *
- * @param rank The rank of the current process.
- * @param step The current step in the bine algorithm.
- * @param comm_sz The total number of processes in the communicator.
- * @return The destination rank after applying the bine algorithm, a
- *         value in [0, comm_sz - 1].
+ * rank: The rank of the current process.
+ * step: The current step in the bine algorithm, in [0, BINE_MAX_STEPS).
+ * comm_sz: The total number of processes in the communicator; a positive
+ *          power of two.
+ * dest: (out) The destination rank after applying the bine algorithm, a
+ *       value in [0, comm_sz - 1].
+ *
+ * Returns MPI_SUCCESS on success, or an MPI error code.
  */
-static inline int ompi_coll_bine_pi(int rank, int step, int comm_sz)
+static inline int ompi_coll_bine_pi(int rank, int step, int comm_sz, int *dest)
 {
-    int dest;
-    int rho = ompi_coll_bine_jacobsthal(step + 1);
+    *dest = -1;
+    if (OPAL_UNLIKELY(comm_sz <= 0)) {
+        return MPI_ERR_ARG;
+    }
+
+    int rho;
+    int err = ompi_coll_bine_jacobsthal(step + 1, &rho);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+        return err;
+    }
 
     if (step & 1) {
         rho = -rho;
     }
 
     if ((rank & 1) == 0) {
-        dest = (rank + rho) % comm_sz; // Even rank
+        *dest = (rank + rho) % comm_sz; // Even rank
     } else {
-        dest = (rank - rho) % comm_sz; // Odd rank
+        *dest = (rank - rho) % comm_sz; // Odd rank
     }
 
-    if (dest < 0) {
-        dest += comm_sz; // Adjust for negative ranks
+    if (*dest < 0) {
+        *dest += comm_sz; // Adjust for negative ranks
     }
 
-    return dest;
+    return MPI_SUCCESS;
 }
 
 /* recursive helper to build permutation mapping for bine allgather */
-static inline void ompi_coll_bine_get_permutation_aux(int rank, int step, const int n_steps,
-                                                      const int adj_size, int *bitmap, int offset)
+static inline int ompi_coll_bine_get_permutation_aux(int rank, int step, const int n_steps,
+                                                     const int adj_size, int *bitmap, int offset)
 {
     *(bitmap + rank) = offset;
     if (step >= n_steps)
-        return;
+        return MPI_SUCCESS;
 
     int peer;
+    int err = MPI_SUCCESS;
 
     for (int s = step; s < n_steps; s++) {
-        peer = ompi_coll_bine_pi(rank, s, adj_size);
-        ompi_coll_bine_get_permutation_aux(peer, s + 1, n_steps, adj_size, bitmap,
-                                           offset + (1 << (n_steps - s - 1)));
+        err = ompi_coll_bine_pi(rank, s, adj_size, &peer);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            return err;
+        }
+        err = ompi_coll_bine_get_permutation_aux(peer, s + 1, n_steps, adj_size, bitmap,
+                                                 offset + (1 << (n_steps - s - 1)));
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            return err;
+        }
     }
+    return MPI_SUCCESS;
 }
 
 /* compute permutation for bine allgather block reordering */
-static inline void ompi_coll_bine_get_permutation(int rank, int step, const int n_steps,
-                                                  const int adj_size, int *bitmap, int offset)
+static inline int ompi_coll_bine_get_permutation(int rank, int step, const int n_steps,
+                                                 const int adj_size, int *bitmap, int offset)
 {
     if (step >= n_steps)
-        return;
+        return MPI_SUCCESS;
 
-    int peer = ompi_coll_bine_pi(rank, step, adj_size);
-    ompi_coll_bine_get_permutation_aux(peer, step + 1, n_steps, adj_size, bitmap, offset);
+    int peer;
+    int err = ompi_coll_bine_pi(rank, step, adj_size, &peer);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+        return err;
+    }
+    return ompi_coll_bine_get_permutation_aux(peer, step + 1, n_steps, adj_size, bitmap, offset);
 }
 
-/**
- * @brief Reorders blocks in a buffer according to a given permutation.
+/*
+ * Reorders blocks in a buffer according to a given permutation.
  *
- * @param buffer The buffer containing the blocks to reorder.
- * @param block_size The size of each block in bytes.
- * @param block_permutation The permutation of the blocks.
- * @param num_blocks The number of blocks in the buffer.
+ * buffer: The buffer containing the blocks to reorder.
+ * block_size: The size of each block in bytes.
+ * block_permutation: The permutation of the blocks.
+ * num_blocks: The number of blocks in the buffer.
  *
- * @return MPI_SUCCESS on success, or an error code.
+ * Returns MPI_SUCCESS on success, or an error code.
  */
 static inline int ompi_coll_bine_reorder_blocks(void *buffer, size_t block_size,
                                                 int *block_permutation, int num_blocks)
@@ -504,8 +586,19 @@ static inline int ompi_coll_bine_reorder_blocks(void *buffer, size_t block_size,
         memcpy(temp, buf + current * block_size, block_size);
 
         // Follow the cycle and place each block in its final position
+        if (block_permutation[current] < 0 || block_permutation[current] >= num_blocks) {
+            free(temp);
+            free(visited);
+            return MPI_ERR_ARG;
+        }
+
         while (visited[block_permutation[current]] != 1) {
             int next = block_permutation[current];
+            if (next < 0 || next >= num_blocks) {
+                free(temp);
+                free(visited);
+                return MPI_ERR_ARG;
+            }
             memcpy(buf + current * block_size, buf + next * block_size, block_size);
             visited[current] = 1;
             current = next;
@@ -522,23 +615,46 @@ static inline int ompi_coll_bine_reorder_blocks(void *buffer, size_t block_size,
     return MPI_SUCCESS;
 }
 
-// Function to calculate a Mersenne number (2^n - 1)
-static inline uint32_t ompi_coll_mersenne(int n)
+/* Function to calculate a Mersenne number (2^n - 1): the mask with bits
+ * 0..n-1 set.  The shift 1 << n fits a uint64_t for n <= 62; the value is
+ * exact in the uint32_t return only for n <= 32, which is what callers use
+ * (the reduce-scatter remap clears the current highest bit via mersenne(k + 1)).
+ * Valid input range: 0 <= n <= 62.  Returns MPI_ERR_ARG for any n outside
+ * that range.
+ */
+static inline int ompi_coll_mersenne(int n, uint32_t *res)
 {
-    uint64_t v = ((uint64_t) 1 << (n + 1)) - 1;
-    return (uint32_t) v;
+    if (OPAL_UNLIKELY(n < 0 || n > 62)) {
+        return MPI_ERR_ARG;
+    }
+    uint64_t v = ((uint64_t) 1 << n) - 1;
+    *res = (uint32_t) v;
+    return MPI_SUCCESS;
 }
 
 /* remap bits using a distance-doubling transform for bine reduce-scatter */
-static inline int ompi_coll_bine_remap_distance_doubling(uint32_t num)
+static inline int ompi_coll_bine_remap_distance_doubling(uint32_t num, int *remapped)
 {
-    int remapped = 0;
-    while (num > 0) {
-        int k = 31 - __builtin_clz(num); // Find the position of the highest set bit
-        remapped ^= (0x1 << k);          // Set the k-th bit in the remapped number
-        num ^= ompi_coll_mersenne(k);    // XOR the Mersenne number with the remaining number
+    *remapped = 0;
+    if (OPAL_UNLIKELY(0 == num)) {
+        return MPI_SUCCESS;
     }
-    return remapped;
+    if (OPAL_UNLIKELY(num >= (uint32_t) INT_MAX)) { // (int) num + 1 must stay positive in an int
+        return MPI_ERR_ARG;
+    }
+
+    while (num > 0) {
+        int k = opal_cube_dim((int) num + 1) - 1; // Find the position of the highest set bit
+        *remapped ^= (0x1 << k);          // Set the k-th bit in the remapped number
+        uint32_t mask;
+        int err = ompi_coll_mersenne(k + 1, &mask); // 2^(k+1) - 1 clears bit k, flips bits 0..k-1
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            *remapped = 0;
+            return err;
+        }
+        num ^= mask;
+    }
+    return MPI_SUCCESS;
 }
 
 /**

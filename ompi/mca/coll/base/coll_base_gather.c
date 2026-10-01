@@ -456,7 +456,7 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
                                  struct ompi_communicator_t *comm,
                                  mca_coll_base_module_t *module)
 {
-    int line = -1, size, rank, vrank, err = MPI_SUCCESS;
+    int line = -1, size, rank, vrank, err = MPI_SUCCESS, tmp;
     size_t min_block_resident, max_block_resident;
     int extension_direction;
     char *tmpbuf = NULL, *base = NULL, *dst;
@@ -505,7 +505,11 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
     }
 
     min_block_resident = rank, max_block_resident = rank;
-    vrank = ompi_coll_mod(rank - root, size);
+    err = ompi_coll_mod(rank - root, size, &vrank);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
 
     extension_direction = 1;
     if (vrank % 2) {
@@ -513,12 +517,20 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
     }
 
     int mask = 0x1, partner, mask_lsbs, lsbs, equal_lsbs;
-    uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
-    if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+    uint32_t btnb_vrank_u32;
+    if (MPI_SUCCESS != ompi_coll_binary_to_negabinary(vrank, &btnb_vrank_u32)) {
+        line = __LINE__;
+        err = MPI_ERR_ARG;
+        goto err_hndl;
+    }
     int btnb_vrank = (int) btnb_vrank_u32;
     while (mask < size) {
         partner = btnb_vrank ^ ((mask << 1) - 1);
-        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+        err = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size, &partner);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
 
         mask_lsbs = (mask << 2) - 1; // Mask for the step: (k+2) LSBs set to 1
         lsbs = btnb_vrank & mask_lsbs;  // Extract k LSBs from the negabinary rank
@@ -551,12 +563,32 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
              * Receive [recv_start, recv_end].
              **/
             if (extension_direction == 1) {
-                recv_start = ompi_coll_mod(max_block_resident + 1, size);
-                recv_end = ompi_coll_mod(max_block_resident + mask, size);
+                err = ompi_coll_mod(max_block_resident + 1, size, &tmp);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+                recv_start = (size_t) tmp;
+                err = ompi_coll_mod(max_block_resident + mask, size, &tmp);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+                recv_end = (size_t) tmp;
                 max_block_resident = recv_end;
             } else {
-                recv_end = ompi_coll_mod(min_block_resident - 1, size);
-                recv_start = ompi_coll_mod(min_block_resident - mask, size);
+                err = ompi_coll_mod(min_block_resident - 1, size, &tmp);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+                recv_end = (size_t) tmp;
+                err = ompi_coll_mod(min_block_resident - mask, size, &tmp);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+                recv_start = (size_t) tmp;
                 min_block_resident = recv_start;
             }
             if (recv_end >= recv_start) {
