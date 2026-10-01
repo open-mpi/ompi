@@ -26,7 +26,9 @@ NOTE
 ----
 
 :ref:`MPI_Info_create_env` is one of the few functions that can be called
-before :ref:`MPI_Init` and after :ref:`MPI_Finalize`.
+before :ref:`MPI_Init` and after :ref:`MPI_Finalize`. The object it
+returns then omits the fields that are only known while MPI is
+initialized; see :ref:`MPI_INFO_ENV`.
 
 ERRORS
 ------

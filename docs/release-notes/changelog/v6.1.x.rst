@@ -131,6 +131,23 @@ Open MPI version v6.1.0
   argument keywords will now require the standard-conformant naming
   scheme.
 
+- ``MPI_Info_create_env`` no longer reports fields that were never
+  filled in.  Before ``MPI_Init`` it answered ``maxprocs``, ``soft`` and
+  ``ompi_num_apps`` as ``0``, and ``thread_level`` as
+  ``MPI_THREAD_SINGLE`` although no level had been requested.  A field
+  the run-time has not supplied is now left out of the object, which
+  ``MPI_Info_get`` reports as *flag* = false, before ``MPI_Init`` and
+  after ``MPI_Finalize`` alike.  A Sessions-only program requests no
+  world thread level, so ``thread_level`` is now absent for it.
+
+- The name Open MPI reports for the local node no longer changes at
+  ``MPI_Init``: it is the ``gethostname()`` result throughout, matching
+  ``MPI_Get_processor_name``.  ``MPI_Init`` used to replace it with the
+  run-time's name for the node, which on macOS differs by a ``.local``
+  suffix, so ``host`` in ``MPI_INFO_ENV`` and the host name in Open
+  MPI's error messages changed mid-run.  Peers are still named by the
+  run-time.
+
 - ``MPI_Info_set`` now accepts a zero-length (empty) value string.  It
   previously raised ``MPI_ERR_INFO_VALUE`` for an empty value, but
   MPI-5.0 chapter 10 only limits the *maximum* length of an info
