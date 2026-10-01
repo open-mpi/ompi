@@ -34,7 +34,7 @@ def _env_bool(name):
     None means the variable is unset, so the caller applies its own
     default.  Recognized values map to True/False.  An unrecognized value
     raises rather than silently defaulting to False: a typo such as
-    OMPI_ABI_TEST_STANDARD_ABI=ture must not quietly disable ABI testing
+    OMPI_ABI_TEST_FORUM_ABI=ture must not quietly disable ABI testing
     and turn expected failures into skips.
     """
     value = os.environ.get(name)
@@ -361,13 +361,13 @@ def _abi_suitability(spec, explicit_override, identity_confirmed,
 
 
 def _read_header_markers(header):
-    """Return standard implementation markers from one mpi.h."""
+    """Return the implementation markers (MPI Forum ABI, Open MPI, MPICH) in one mpi.h."""
     markers = []
     if header is None or not Path(header).exists():
         return markers
     text = _read_text(Path(header))
     marker_patterns = (
-        ("standard_abi", r"^\s*#define\s+MPI_H_ABI\b"),
+        ("forum_abi", r"^\s*#define\s+MPI_H_ABI\b"),
         ("open_mpi", r"^\s*#define\s+OMPI_MPI_H\b"),
         ("mpich", r"^\s*#define\s+MPICH_(?:VERSION|NUMVERSION|NAME)\b"),
     )
@@ -531,7 +531,7 @@ def _open_mpi_candidate(mpicc_abi, mpirun=None, mpirun_override=False,
         re.search(r"\bOpen MPI\b", combined, re.IGNORECASE) is not None or
         _has_header_marker(headers, "open_mpi")
     )
-    has_standard_abi = _has_header_marker(headers, "standard_abi")
+    has_forum_abi = _has_header_marker(headers, "forum_abi")
     has_mpich_header = _has_header_marker(headers, "mpich")
     link_probe_words = []
     link_probe_words.extend(link_words)
@@ -539,13 +539,13 @@ def _open_mpi_candidate(mpicc_abi, mpirun=None, mpirun_override=False,
     suitability = _abi_suitability(
         {
             "identity_reason": "wrapper_not_identified_as_open_mpi",
-            "header_reason": "missing_standard_abi_header",
+            "header_reason": "missing_forum_abi_header",
             "required_libraries": ("mpi_abi",),
             "required_macros": (),
         },
         explicit_override,
         is_open_mpi,
-        has_standard_abi,
+        has_forum_abi,
         link_probe_words,
         prefix,
         library_dirs)
@@ -578,7 +578,7 @@ def _open_mpi_candidate(mpicc_abi, mpirun=None, mpirun_override=False,
                 key: _first_line(value) for key, value in outputs.items()
             },
             "is_open_mpi": is_open_mpi,
-            "has_standard_abi_header": has_standard_abi,
+            "has_forum_abi_header": has_forum_abi,
             "has_mpich_header": has_mpich_header,
             "links_mpi_abi": links_mpi_abi,
             "has_mpi_abi_library": (
@@ -778,7 +778,7 @@ def _open_mpi_report_candidates(candidates, include_invalid=False):
         if (candidate.get("valid") or
                 evidence.get("explicit_override") or
                 evidence.get("is_open_mpi") or
-                evidence.get("has_standard_abi_header") or
+                evidence.get("has_forum_abi_header") or
                 (evidence.get("links_mpi_abi") and
                  not evidence.get("has_mpich_header"))):
             reportable.append(candidate)

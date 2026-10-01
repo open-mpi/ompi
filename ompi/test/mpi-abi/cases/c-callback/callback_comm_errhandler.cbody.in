@@ -14,7 +14,7 @@
  *   callback invocation, predefined-handler restoration, and final
  *   errhandler cleanup.  This verifies that the ABI layer wraps the
  *   callback and converts the communicator argument back to the
- *   standard ABI handle before invoking user code.
+ *   MPI Forum ABI handle before invoking user code.
  */
 int ret = MPI_Init(&argc, &argv);
 if (MPI_SUCCESS != ret) {

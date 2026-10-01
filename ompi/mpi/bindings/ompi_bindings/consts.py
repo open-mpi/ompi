@@ -12,7 +12,7 @@
 """Constants used for generating bindings.
 
 This module is the single source of truth for the definitions that are
-shared by the two generators that emit the MPI Forum (standard) ABI: the
+shared by the two generators that emit the MPI Forum ABI: the
 main binding generator (bindings.py, via the ompi_bindings package) and
 the ABI header generator (c_header.py).  Those two are driven by
 different inputs -- the .c.in templates versus pympistandard plus the ABI
@@ -487,7 +487,7 @@ T_PVAR_CLASS_VALUES = [
 
 VARIOUS_CONSTANTS = {
     # Just setting this to the same as ompi ABI for right now, but will need to
-    # match the standard ABI value when defined
+    # match the MPI Forum ABI value when defined
     'MPI_MAX_LIBRARY_VERSION_STRING': 256,
     'MPI_MAX_PROCESSOR_NAME': 256,
 }
@@ -608,7 +608,7 @@ C_ATTRIBUTE_OBJS = [
 ]
 
 class ConvertFuncs:
-    """Names of conversion functions (between standard ABI and OMPI ABI)."""
+    """Names of conversion functions (between MPI Forum ABI and OMPI ABI)."""
 
     ERROR_CLASS = 'ompi_convert_abi_error_intern_error'
     ERRHANDLER = 'ompi_convert_abi_errorhandler_intern_errorhandler'
@@ -657,42 +657,42 @@ class ConvertFuncs:
     BUFFER = 'ompi_convert_abi_buffer_intern_buffer'
     OBJ_HANDLE = 'ompi_convert_abi_obj_handle_intern_obj_handle'
 
-class ConvertOMPIToStandard:
-    """Generated function for converting from OMPI to standard ABI."""
+class ConvertOMPIToForum:
+    """Generated function for converting from OMPI to MPI Forum ABI."""
 
-    COMM = 'ompi_convert_comm_ompi_to_standard'
+    COMM = 'ompi_convert_comm_ompi_to_forum'
     ERROR_CLASS = 'ompi_convert_intern_error_abi_error'
     ERRHANDLER = 'ompi_convert_intern_errorhandler_abi_errorhandler'
-    GROUP = 'ompi_convert_group_ompi_to_standard'
-    DATATYPE = 'ompi_convert_datatype_ompi_to_standard'
-    FILE = 'ompi_convert_file_ompi_to_standard'
-    MESSAGE = 'ompi_convert_message_ompi_to_standard'
-    OP = 'ompi_convert_op_ompi_to_standard'
-    SESSION = 'ompi_convert_session_ompi_to_standard'
+    GROUP = 'ompi_convert_group_ompi_to_forum'
+    DATATYPE = 'ompi_convert_datatype_ompi_to_forum'
+    FILE = 'ompi_convert_file_ompi_to_forum'
+    MESSAGE = 'ompi_convert_message_ompi_to_forum'
+    OP = 'ompi_convert_op_ompi_to_forum'
+    SESSION = 'ompi_convert_session_ompi_to_forum'
     STATUS = 'ompi_convert_intern_status_abi_status'
-    WIN = 'ompi_convert_win_ompi_to_standard'
+    WIN = 'ompi_convert_win_ompi_to_forum'
     REQUEST = 'ompi_convert_ompi_request_abi_request'
-    INFO = 'ompi_convert_info_ompi_to_standard'
-    TS_LEVEL = 'ompi_convert_ts_level_ompi_to_standard'
-    TAG = 'ompi_convert_tag_ompi_to_standard'
-    PVAR_SESSION = 'ompi_convert_pvar_session_ompi_to_standard'
-    PVAR_CLASS = 'ompi_convert_pvar_class_ompi_to_standard'
-    PVAR_HANDLE = 'ompi_convert_pvar_handle_ompi_to_standard'
-    T_VERBOSITY = 'ompi_convert_t_verbosity_ompi_to_standard'
-    T_SCOPE = 'ompi_convert_t_scope_ompi_to_standard'
-    CVAR_HANDLE = 'ompi_convert_cvar_handle_ompi_to_standard'
-    T_ENUM = 'ompi_convert_t_enum_ompi_to_standard'
-    T_BIND = 'ompi_convert_t_bind_ompi_to_standard'
-    T_SOURCE_ORDER = 'ompi_convert_source_order_ompi_to_standard'
-    ATTR_KEY = 'ompi_convert_attr_key_ompi_to_standard'
-    COMM_CMP = 'ompi_convert_comm_cmp_ompi_to_standard'
-    SOURCE = 'ompi_convert_source_ompi_to_standard'
-    SUBARRAY_ORDER = 'ompi_convert_subarray_order_ompi_to_standard'
-    MODE_BITS = 'ompi_convert_mode_bits_to_standard'
-    RMA_MODE_BITS = 'ompi_convert_rma_mode_bits_to_standard'
-    COMBINER = 'ompi_convert_combiner_to_standard'
-    TOPO = 'ompi_convert_topo_to_standard'
-    BUFFER = 'ompi_convert_buffer_to_standard'
+    INFO = 'ompi_convert_info_ompi_to_forum'
+    TS_LEVEL = 'ompi_convert_ts_level_ompi_to_forum'
+    TAG = 'ompi_convert_tag_ompi_to_forum'
+    PVAR_SESSION = 'ompi_convert_pvar_session_ompi_to_forum'
+    PVAR_CLASS = 'ompi_convert_pvar_class_ompi_to_forum'
+    PVAR_HANDLE = 'ompi_convert_pvar_handle_ompi_to_forum'
+    T_VERBOSITY = 'ompi_convert_t_verbosity_ompi_to_forum'
+    T_SCOPE = 'ompi_convert_t_scope_ompi_to_forum'
+    CVAR_HANDLE = 'ompi_convert_cvar_handle_ompi_to_forum'
+    T_ENUM = 'ompi_convert_t_enum_ompi_to_forum'
+    T_BIND = 'ompi_convert_t_bind_ompi_to_forum'
+    T_SOURCE_ORDER = 'ompi_convert_source_order_ompi_to_forum'
+    ATTR_KEY = 'ompi_convert_attr_key_ompi_to_forum'
+    COMM_CMP = 'ompi_convert_comm_cmp_ompi_to_forum'
+    SOURCE = 'ompi_convert_source_ompi_to_forum'
+    SUBARRAY_ORDER = 'ompi_convert_subarray_order_ompi_to_forum'
+    MODE_BITS = 'ompi_convert_mode_bits_to_forum'
+    RMA_MODE_BITS = 'ompi_convert_rma_mode_bits_to_forum'
+    COMBINER = 'ompi_convert_combiner_to_forum'
+    TOPO = 'ompi_convert_topo_to_forum'
+    BUFFER = 'ompi_convert_buffer_to_forum'
 
 
 # Inline function attributes
