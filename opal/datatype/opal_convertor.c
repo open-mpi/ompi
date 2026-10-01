@@ -226,6 +226,10 @@ opal_convertor_t *opal_convertor_create(int32_t remote_arch, int32_t mode)
     opal_convertor_t *convertor = OBJ_NEW(opal_convertor_t);
     opal_convertor_master_t *master;
 
+    if (OPAL_UNLIKELY(NULL == convertor)) {
+        return NULL;
+    }
+
     master = opal_convertor_find_or_create_master(remote_arch);
 
     convertor->remoteArch = remote_arch;

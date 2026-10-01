@@ -77,6 +77,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/instance/instance.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/runtime/ompi_mpit_events.h"
 #include "ompi/info/info.h"
@@ -394,14 +395,6 @@ void ompi_mpi_thread_level(int requested, int *provided)
     }
 }
 
-static void fence_release(pmix_status_t status, void *cbdata)
-{
-    volatile bool *active = (volatile bool*)cbdata;
-    OPAL_ACQUIRE_OBJECT(active);
-    *active = false;
-    OPAL_POST_OBJECT(active);
-}
-
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
                   bool reinit_ok)
 {
@@ -410,10 +403,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 #if OPAL_USING_INTERNAL_PMIX
     char *evar;
 #endif
-    volatile bool active;
-    bool background_fence = false;
-    pmix_info_t info[2];
+#if (OPAL_ENABLE_TIMING) || OPAL_ENABLE_FT_MPI
     pmix_status_t rc;
+#endif
     OMPI_TIMING_INIT(64);
 
     ompi_hook_base_mpi_init_top(argc, argv, requested, provided);
@@ -529,78 +521,33 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     }
 #endif
 
-    if (!opal_process_info.is_singleton) {
-        if (opal_pmix_base_async_modex) {
-            /* if we are doing an async modex, but we are collecting all
-             * data, then execute the non-blocking modex in the background.
-             * All calls to modex_recv will be cached until the background
-             * modex completes. If collect_all_data is false, then we skip
-             * the fence completely and retrieve data on-demand from the
-             * source node.
-             */
-            if (opal_pmix_collect_all_data) {
-                /* execute the fence_nb in the background to collect
-                 * the data */
-                background_fence = true;
-                active = true;
-                OPAL_POST_OBJECT(&active);
-                PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-                rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
-                if (PMIX_SUCCESS != rc) {
-                    active = false;
-                    if (PMIX_OPERATION_SUCCEEDED == rc) {
-                        // can return operation_succeeded if atomically completed
-                        ret = MPI_SUCCESS;
-                    } else {
-                        ret = opal_pmix_convert_status(rc);
-                        error = "PMIx_Fence_nb() failed";
-                        goto error;
-                    }
-                }
-            }
-        } else {
-            /* we want to do the modex - we block at this point, but we must
-             * do so in a manner that allows us to call opal_progress so our
-             * event library can be cycled as we have tied PMIx to that
-             * event base */
-            active = true;
-            OPAL_POST_OBJECT(&active);
-            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &opal_pmix_collect_all_data, PMIX_BOOL);
-            rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
-            if( PMIX_SUCCESS != rc) {
-                active = false;
-                if (PMIX_OPERATION_SUCCEEDED == rc) {
-                    // can return operation_succeeded if atomically completed
-                    ret = MPI_SUCCESS;
-                } else {
-                    ret = opal_pmix_convert_status(rc);
-                    error = "PMIx_Fence_nb() failed";
-                    goto error;
-                }
-            } else {
-                /* cannot just wait on thread as we need to call opal_progress */
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            }
-        }
-    }
-
-    OMPI_TIMING_NEXT("modex");
-
-    /* These are the only add_comm calls for the predefined communicators:
+    /* The connection-info exchange runs in instance init. A second
+     * collecting fence here would wait for every peer blob and defeat
+     * lazy add_procs; only the world-model add_comm calls belong here.
+     *
+     * These are the only add_comm calls for the predefined communicators:
      * instance init neither builds nor adds them, so the pair built by
      * ompi_comm_init_mpi3() above is handed to the PML exactly once.  The
      * BTLs have been able to deliver since instance init ran add_procs,
      * so a fragment for MPI_COMM_WORLD may already have arrived; the PML
      * holds anything it could not place for a communicator it had never
      * seen, and add_comm() drains that queue here. */
+
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
+    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
+    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
 
 #if OPAL_ENABLE_FT_MPI
     /* initialize the fault tolerant infrastructure (revoke, detector,
      * propagator) */
     if( ompi_ftmpi_enabled ) {
         const char *evmethod;
+        /* None of what follows can be handed a peer whose connection info
+         * is still on its way (see ompi_mpi_register_params), and this is
+         * the last point where waiting for it is allowed. */
+        rc = ompi_modex_wait_if_needed();
+        if( OMPI_SUCCESS != rc ) return rc;
         rc = ompi_comm_rbcast_init();
         if( OMPI_SUCCESS != rc ) return rc;
         rc = ompi_comm_revoke_init();
@@ -632,38 +579,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
     /* Next timing measurement */
     OMPI_TIMING_NEXT("modex-barrier");
 
-    if (!opal_process_info.is_singleton) {
-        /* if we executed the above fence in the background, then
-         * we have to wait here for it to complete. However, there
-         * is no reason to do two barriers! */
-        if (background_fence) {
-            if (active) {
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            }
-        } else if (!ompi_async_mpi_init) {
-            /* wait for everyone to reach this point - this is a hard
-             * barrier requirement at this time, though we hope to relax
-             * it at a later point */
-            bool flag = false;
-            active = true;
-            OPAL_POST_OBJECT(&active);
-            PMIX_INFO_LOAD(&info[0], PMIX_COLLECT_DATA, &flag, PMIX_BOOL);
-            rc = PMIx_Fence_nb(NULL, 0, info, 1, fence_release, (void*)&active);
-            if (PMIX_SUCCESS != rc) {
-                active = false;
-                if (PMIX_OPERATION_SUCCEEDED == rc) {
-                    // can return operation_succeeded if atomically completed
-                    ret = MPI_SUCCESS;
-                } else {
-                    ret = opal_pmix_convert_status(rc);
-                    error = "PMIx_Fence_nb() failed";
-                    goto error;
-                }
-            } else {
-                OMPI_LAZY_WAIT_FOR_COMPLETION(active);
-            }
-        }
-    }
+    /* The non-collecting MPI_Init barrier is in instance init
+     * (ompi_async_mpi_init). Do not repeat it here. */
 
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
