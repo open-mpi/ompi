@@ -64,11 +64,10 @@ static inline void get_ubcl_send_mode(mca_pml_base_send_mode_t mode, ubcl_send_m
  * MCA: then receiver may print a warning or an error.
  * SYNCHRONOUS forces STANDARD rendezvous protocols.
  */
-static inline void mca_pml_ubcl_isend_prepare(const void *buf, size_t count,
-                                              ompi_datatype_t *datatype, int dst, int tag,
-                                              mca_pml_base_send_mode_t mode,
-                                              struct ompi_communicator_t *comm,
-                                              struct ompi_request_t **request, bool persistent)
+static inline void
+mca_pml_ubcl_isend_prepare(const void *buf, size_t count, ompi_datatype_t *datatype, int dst,
+                           int tag, mca_pml_base_send_mode_t mode, struct ompi_communicator_t *comm,
+                           struct ompi_request_t **request, mca_pml_ubcl_comm_form form)
 {
     ompi_proc_t *proc;
     mca_pml_ubcl_request_t *req;
@@ -88,8 +87,7 @@ static inline void mca_pml_ubcl_isend_prepare(const void *buf, size_t count,
     }
 
     /* TODO: Find out what can be simplified in this macro and request structure */
-    MCA_PML_UBCL_SEND_REQUEST_INIT(req, buf, count, datatype, dst, tag, mode, comm, proc,
-                                   persistent);
+    MCA_PML_UBCL_SEND_REQUEST_INIT(req, buf, count, datatype, dst, tag, mode, comm, proc, form);
 
     /* Set user request */
     *request = &req->ompi_req;
@@ -118,6 +116,9 @@ void mca_pml_ubcl_isend_start(struct ompi_request_t **request)
 
     if (MCA_PML_BASE_SEND_BUFFERED == req->mode) {
         pml_ubcl_bufferize(req);
+        if (MCA_PML_UBCL_BLOCKING_COMM == req->form) {
+            req->to_free = 1;
+        }
     }
     get_ubcl_send_mode(req->mode, &send_mode);
 
@@ -192,7 +193,8 @@ int mca_pml_ubcl_isend_init(const void *buf, size_t count, ompi_datatype_t *data
     OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output, "UBCL_MODULE_ISEND_INIT\n"));
 
     /* Create request */
-    mca_pml_ubcl_isend_prepare(buf, count, datatype, dst, tag, mode, comm, request, true);
+    mca_pml_ubcl_isend_prepare(buf, count, datatype, dst, tag, mode, comm, request,
+                               MCA_PML_UBCL_PERSISTENT_COMM);
 
     return OMPI_SUCCESS;
 }
@@ -208,7 +210,8 @@ int mca_pml_ubcl_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
     OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output, "UBCL_MODULE_ISEND\n"));
 
     /* Create request and start communication */
-    mca_pml_ubcl_isend_prepare(buf, count, datatype, dst, tag, mode, comm, request, false);
+    mca_pml_ubcl_isend_prepare(buf, count, datatype, dst, tag, mode, comm, request,
+                               MCA_PML_UBCL_NONBLOCKING_COMM);
     mca_pml_ubcl_isend_start(request);
 
     return OMPI_SUCCESS;
@@ -221,24 +224,23 @@ int mca_pml_ubcl_isend(const void *buf, size_t count, ompi_datatype_t *datatype,
 int mca_pml_ubcl_send(const void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag,
                       mca_pml_base_send_mode_t mode, struct ompi_communicator_t *comm)
 {
-    int ret;
     mca_pml_ubcl_request_t *request = NULL;
     struct ompi_request_t *ompi_request;
 
     OPAL_OUTPUT_VERBOSE((50, mca_pml_ubcl_component.output, "UBCL_MODULE_SEND\n"));
 
-    ret = mca_pml_ubcl_isend(buf, count, datatype, dst, tag, mode, comm, &ompi_request);
-    if (OMPI_SUCCESS != ret || NULL == ompi_request) {
-        return ret;
+    mca_pml_ubcl_isend_prepare(buf, count, datatype, dst, tag, mode, comm, &ompi_request,
+                               MCA_PML_UBCL_BLOCKING_COMM);
+    mca_pml_ubcl_isend_start(&ompi_request);
+    if (NULL == ompi_request) {
+        return OMPI_ERROR;
     }
 
     request = container_of(ompi_request, mca_pml_ubcl_request_t, ompi_req);
 
-    if (MCA_PML_BASE_SEND_BUFFERED == mode) {
+    if (MCA_PML_BASE_SEND_BUFFERED != mode) {
         /* MPI specification: Bsend is local, no information about the remote.
          * PML/BXI always buffers Bsend data. No need to wait request completion */
-        request->to_free = 1;
-    } else {
         ompi_request_wait_completion(ompi_request);
         mca_pml_ubcl_request_finalize(request);
     }
