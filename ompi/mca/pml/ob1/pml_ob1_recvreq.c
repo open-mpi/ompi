@@ -738,6 +738,10 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc);
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 
+    if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
+        (void) mca_pml_ob1_accelerator_ensure_init();
+    }
+
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
             mca_bml_base_btl_t *bml_btl;
