@@ -16,6 +16,7 @@
  * Copyright (c) 2021      Google, LLC. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      Stony Brook University. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,10 +44,14 @@
  * is that even with an always_inline attribute the compiler may still emit instructions to store
  * then load the arguments to/from the stack. This sequence may cause the ll reservation to be
  * cancelled. */
-#define opal_atomic_ll_32(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int32_t *_addr = (addr);                                        \
-        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+
+/* Plain LL/SC: no hardware ordering.  Use these when the caller provides
+ * its own barriers or when no ordering is needed.  The "memory" clobber
+ * acts as a compiler barrier. */
+#define opal_atomic_ll_32(addr, ret)                                                        \
+    do {                                                                                    \
+        opal_atomic_int32_t *_addr = (addr);                                                \
+        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr) : "memory"); \
     } while (0)
 
 #define opal_atomic_sc_32(addr, value, ret)                         \
@@ -65,10 +70,13 @@
         ret = _ret;                                                 \
    } while (0)
 
-#define opal_atomic_ll_64(addr, ret)                                                \
-    do {                                                                            \
-        opal_atomic_int64_t *_addr = (addr);                                        \
-        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t" : "=&r"(ret) : "r"(_addr));  \
+#define opal_atomic_ll_64(addr, ret)                                \
+    do {                                                            \
+        opal_atomic_int64_t *_addr = (addr);                        \
+        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t"              \
+                             : "=&r"(ret)                           \
+                             : "r"(_addr), "m"(*_addr)              \
+                             : "memory");                           \
     } while (0)
 
 #define opal_atomic_sc_64(addr, value, ret)                               \
@@ -86,6 +94,37 @@
                              : "r"(_addr), "r"(OPAL_ASM_VALUE64(_newval)) \
                              : "cc", "memory");                           \
         ret = _ret;                                                       \
+    } while (0)
+
+/* Acquire-LL variants: lwarx/ldarx followed immediately by lwsync.
+ *
+ * lwsync (lightweight sync) provides load→load and load→store ordering
+ * unconditionally and requires no conditional branch, unlike isync.
+ * The Power ISA isync idiom requires "lwarx → branch-on-result → isync";
+ * because OPAL splits LL and SC into separate macros around arbitrary C
+ * code, that branch occurs outside the asm block, making isync inside
+ * the asm architecturally incorrect.  lwsync is the correct alternative.
+ * lwsync does not cancel the exclusive reservation set by lwarx/ldarx.
+ *
+ * Use opal_atomic_ll_acq_* when the loaded pointer will be immediately
+ * dereferenced (e.g. reading item->opal_list_next in lifo/fifo pop).
+ * Callers needing store-store ordering after a plain SC (e.g. ordering
+ * head=ghost before a subsequent tail CAS) should use an explicit
+ * opal_atomic_wmb() after the SC, outside the LL-SC retry loop. */
+#define opal_atomic_ll_acq_32(addr, ret)                                                    \
+    do {                                                                                    \
+        opal_atomic_int32_t *_addr = (addr);                                                \
+        __asm__ __volatile__("lwarx   %0, 0, %1  \n\t"                                      \
+                             "lwsync             \n\t"                                      \
+                             : "=&r"(ret) : "r"(_addr) : "memory");                         \
+    } while (0)
+
+#define opal_atomic_ll_acq_64(addr, ret)                                                    \
+    do {                                                                                    \
+        opal_atomic_int64_t *_addr = (addr);                                                \
+        __asm__ __volatile__("ldarx   %0, 0, %1  \n\t"                                      \
+                             "lwsync             \n\t"                                      \
+                             : "=&r"(ret) : "r"(_addr) : "memory");                         \
     } while (0)
 
 #include "opal/sys/atomic_impl_ptr_llsc.h"
