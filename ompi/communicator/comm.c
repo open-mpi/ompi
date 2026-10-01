@@ -23,7 +23,7 @@
  * Copyright (c) 2014-2020 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017-2022 IBM Corporation.  All rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting.  All rights reserved.
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023-2025 Advanced Micro Devices, Inc. All rights reserved.
@@ -2899,19 +2899,7 @@ int ompi_comm_get_rprocs (ompi_communicator_t *local_comm, ompi_communicator_t *
         goto err_exit;
     }
 
-    /* set the locality of the remote procs */
-    for (i=0; i < rsize; i++) {
-        /* get the locality information - all RTEs are required
-         * to provide this information at startup */
-        uint16_t *u16ptr, u16;
-        u16ptr = &u16;
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCALITY, &rprocs[i]->super.proc_name, &u16ptr, PMIX_UINT16);
-        if (OPAL_SUCCESS == rc) {
-            rprocs[i]->super.proc_flags = u16;
-        } else {
-            rprocs[i]->super.proc_flags = OPAL_PROC_NON_LOCAL;
-        }
-    }
+    /* ompi_proc_unpack() has set the remote procs' locality */
 
     /* And now add the information into the database */
     if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(rprocs, rsize)))) {

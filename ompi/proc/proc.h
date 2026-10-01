@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,6 +146,25 @@ OMPI_DECLSPEC int ompi_proc_complete_init(void);
  * @retval OMPI_ERROR   Some info could not be initialized.
  */
 OMPI_DECLSPEC int ompi_proc_complete_init_single(ompi_proc_t* proc);
+
+/**
+ * Set the locality of a proc, possibly from another job
+ *
+ * Uses the PMIX_LOCALITY the runtime or an earlier connect recorded for
+ * the proc. A proc from a job we were never connected to has none, and
+ * the runtime may know nothing else about it either, so the caller can
+ * pass what it was told about the proc by a peer that does know it. A
+ * proc on another node is non-local, and one on ours gets its relative
+ * locality computed from its locality string. The result is stored as
+ * PMIX_LOCALITY for later lookups. A proc whose node cannot be
+ * determined is taken to be non-local.
+ *
+ * @param[in] proc   the proc whose proc_flags will be set
+ * @param[in] host   the node the proc is on, or NULL to ask the runtime
+ * @param[in] locstr the proc's locality string, or NULL to ask the runtime
+ */
+OMPI_DECLSPEC void ompi_proc_set_locality(ompi_proc_t *proc, const char *host,
+                                          const char *locstr);
 
 /**
  * Finalize the OMPI Process subsystem
