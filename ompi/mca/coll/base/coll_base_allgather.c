@@ -704,7 +704,12 @@ int ompi_coll_base_allgather_intra_bine_send_remap(const void *sbuf, size_t scou
      *   and I receive the data from the rank at the inverse permutation
      * - if I gather the result for myself, I copy the data from the send buffer
      */
-    vrank = (int) ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) rank);
+    vrank = ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) rank);
+    if (OPAL_UNLIKELY(vrank < 0)) {
+        line = __LINE__;
+        err = MPI_ERR_ARG;
+        goto err_hndl;
+    }
     if (MPI_IN_PLACE == sbuf) {
         tmpsend = (char *) rbuf + (ptrdiff_t) rank * (ptrdiff_t) rcount * rext;
     } else {
@@ -745,8 +750,17 @@ int ompi_coll_base_allgather_intra_bine_send_remap(const void *sbuf, size_t scou
     send_block_location = vrank;
     for (int step = steps - 1; step >= 0; step--) {
         size_t step_scount = rcount * distance;
-        remote = ompi_coll_bine_pi(rank, step, size);
-        vremote = (int) ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) remote);
+        err = ompi_coll_bine_pi(rank, step, size, &remote);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        vremote = ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) remote);
+        if (OPAL_UNLIKELY(vremote < 0)) {
+            line = __LINE__;
+            err = MPI_ERR_ARG;
+            goto err_hndl;
+        }
 
         if (vrank < vremote) {
             tmpsend = (char *) rbuf + (ptrdiff_t) send_block_location * (ptrdiff_t) rcount * rext;
@@ -811,7 +825,7 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
                                                                 struct ompi_communicator_t *comm,
                                                                 mca_coll_base_module_t *module)
 {
-    int line = -1, rank, size, err = MPI_SUCCESS;
+    int line = -1, rank, size, err = MPI_SUCCESS, tmp;
     ptrdiff_t rlb, rext;
     ompi_request_t **requests = NULL;
 
@@ -845,7 +859,13 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
         }
     }
 
-    int inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
+    if (opal_cube_dim(size) >= 31) {
+        err = MPI_ERR_ARG;
+        line = __LINE__;
+        goto err_hndl;
+    }
+
+    unsigned int inverse_mask = 0x1U << (opal_cube_dim(size) - 1);
     int step = 0;
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
@@ -861,18 +881,25 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
     while (inverse_mask > 0) {
         int partner, req_count = 0;
         if (rank % 2 == 0) {
-            partner = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((inverse_mask << 1) - 1),
-                                    size);
+            err = ompi_coll_mod(rank + ompi_coll_negabinary_to_binary((inverse_mask << 1) - 1),
+                                size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            partner = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((inverse_mask << 1) - 1),
-                                    size);
+            err = ompi_coll_mod(rank - ompi_coll_negabinary_to_binary((inverse_mask << 1) - 1),
+                                size, &partner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
         // We start from 1 because 0 never sends block 0
         for (size_t block = 1; block < (size_t) size; block++) {
-            // Get the position of the highest set bit using clz
+            // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            int k = 31 - __builtin_clz(ompi_coll_bine_get_nu(block, size));
-            // int k = __builtin_ctz(get_nu(block, size));
+            int k = opal_cube_dim((int) ompi_coll_bine_get_nu(block, size) + 1) - 1;
             //  Check if this must be sent (recvd in allgather)
             if (k == step || block == 0) {
                 // 0 would send this block
@@ -880,16 +907,36 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
                 // I invert what to send and what to receive wrt reduce-scatter
                 if (rank % 2 == 0) {
                     // I am even, thus I need to shift by rank position to the right
-                    block_to_recv = ompi_coll_mod(block + rank, size);
+                    err = ompi_coll_mod(block + rank, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am even, my partner is odd, thus I need to mirror it and then shift
-                    block_to_send = ompi_coll_mod(partner - block, size);
+                    err = ompi_coll_mod(partner - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                 } else {
                     // I am odd, thus I need to mirror it
-                    block_to_recv = ompi_coll_mod(rank - block, size);
+                    err = ompi_coll_mod(rank - block, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_recv = (size_t) tmp;
                     // What to receive? What my partner is sending
                     // Since I am odd, my partner is even, thus I need to mirror it and then shift
-                    block_to_send = ompi_coll_mod(block + partner, size);
+                    err = ompi_coll_mod(block + partner, size, &tmp);
+                    if (MPI_SUCCESS != err) {
+                        line = __LINE__;
+                        goto err_hndl;
+                    }
+                    block_to_send = (size_t) tmp;
                 }
 
                 int partner_send = (block_to_send != (size_t) partner) ? partner : MPI_PROC_NULL;
@@ -1037,24 +1084,34 @@ int ompi_coll_base_allgather_intra_bine_2_block(const void *sbuf, size_t scount,
     my_first = rank;
     for (int step = 0; step < steps; step++) {
         MPI_Request req = MPI_REQUEST_NULL;
-        remote = ompi_coll_bine_pi(rank, step, size);
+        err = ompi_coll_bine_pi(rank, step, size, &remote);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto err_hndl;
+        }
         send_index = my_first;
 
         // Calculate the send and receive indexes by alternating send/recv direction.
         if ((step & 1) == (rank & 1)) {
-            recv_index = (send_index + mask + size) % size;
+            recv_index = (int)(((int64_t)send_index + mask) % size);
         } else {
-            recv_index = (send_index - mask + size) % size;
+            recv_index = (int)(((int64_t)send_index - mask + size) % size);
             my_first = recv_index;
         }
 
         // Control if the previously calculated indexes imply out of bound
         // send/recv. If so, split the communication with an extra send/recv.
-        extra_recv = (recv_index + mask > size) ? ((recv_index + mask) - size) : 0;
+        extra_recv = ((int64_t)recv_index + mask > size) ? (int)(((int64_t)recv_index + mask) - size) : 0;
         recv_count = mask - extra_recv;
 
-        extra_send = (send_index + mask > size) ? ((send_index + mask) - size) : 0;
+        extra_send = ((int64_t)send_index + mask > size) ? (int)(((int64_t)send_index + mask) - size) : 0;
         send_count = mask - extra_send;
+
+        if (OPAL_UNLIKELY(recv_count < 0 || send_count < 0)) {
+            err = MPI_ERR_COUNT;
+            line = __LINE__;
+            goto err_hndl;
+        }
 
         // warparound communication
         if (extra_recv != 0) {
@@ -1193,9 +1250,17 @@ int ompi_coll_base_allgather_intra_bine_permutation(const void *sbuf, size_t sco
 
     data_exchange = 1;
     for (int step = steps - 1; step >= 0; step--) {
-        remote = ompi_coll_bine_pi(rank, step, size);
+        err = ompi_coll_bine_pi(rank, step, size, &remote);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto err_hndl;
+        }
 
-        ompi_coll_bine_get_permutation(rank, step, steps, size, permutation, data_exchange);
+        err = ompi_coll_bine_get_permutation(rank, step, steps, size, permutation, data_exchange);
+        if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+            line = __LINE__;
+            goto err_hndl;
+        }
 
         tmprecv = (char *) rbuf + (ptrdiff_t) data_exchange * (ptrdiff_t) rcount * rext;
 

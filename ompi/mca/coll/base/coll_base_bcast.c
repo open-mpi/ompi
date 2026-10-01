@@ -1130,7 +1130,12 @@ int ompi_coll_base_bcast_intra_bine_lat(void *buf, size_t count, struct ompi_dat
             if (!received[proc])
                 continue;
 
-            int dest = ompi_coll_bine_pi(proc, step, size);
+            int dest;
+            err = ompi_coll_bine_pi(proc, step, size, &dest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
             received[dest] = 1;
             if (dest == rank) {
                 recv_step = step;
@@ -1151,7 +1156,11 @@ int ompi_coll_base_bcast_intra_bine_lat(void *buf, size_t count, struct ompi_dat
         int dest;
         // If I don't have the data and I am scheduled to receive it, wait for it.
         if (rank != root && recv_step == s) {
-            dest = ompi_coll_bine_pi(rank, s, size);
+            err = ompi_coll_bine_pi(rank, s, size, &dest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
             err = MCA_PML_CALL(
                 recv(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
@@ -1163,7 +1172,11 @@ int ompi_coll_base_bcast_intra_bine_lat(void *buf, size_t count, struct ompi_dat
 
         // If I already have the message, send the data.
         if (recv_step < s) {
-            dest = ompi_coll_bine_pi(rank, s, size);
+            err = ompi_coll_bine_pi(rank, s, size, &dest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
             err = MCA_PML_CALL(isend(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST,
                                      MCA_PML_BASE_SEND_STANDARD, comm, &requests[request_count]));
             if (MPI_SUCCESS != err) {
@@ -1258,7 +1271,12 @@ int ompi_coll_base_bcast_intra_bine_lat_reversed(void *buf, size_t count,
             if (!received[proc])
                 continue;
 
-            int dest = ompi_coll_bine_pi(proc, steps - step - 1, size);
+            int dest;
+            err = ompi_coll_bine_pi(proc, steps - step - 1, size, &dest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
             received[dest] = 1;
             if (dest == rank) {
                 recv_step = step;
@@ -1279,7 +1297,11 @@ int ompi_coll_base_bcast_intra_bine_lat_reversed(void *buf, size_t count,
         int dest;
         // If I don't have the data and I am scheduled to receive it, wait for it.
         if (rank != root && recv_step == s) {
-            dest = ompi_coll_bine_pi(rank, steps - s - 1, size);
+            err = ompi_coll_bine_pi(rank, steps - s - 1, size, &dest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
             err = MCA_PML_CALL(
                 recv(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST, comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
@@ -1291,7 +1313,11 @@ int ompi_coll_base_bcast_intra_bine_lat_reversed(void *buf, size_t count,
 
         // If I already have the message, send the data.
         if (recv_step < s) {
-            dest = ompi_coll_bine_pi(rank, steps - s - 1, size);
+            err = ompi_coll_bine_pi(rank, steps - s - 1, size, &dest);
+            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+                line = __LINE__;
+                goto cleanup_and_return;
+            }
             err = MCA_PML_CALL(isend(buf, count, datatype, dest, MCA_COLL_BASE_TAG_BCAST,
                                      MCA_PML_BASE_SEND_STANDARD, comm, &requests[request_count]));
             if (MPI_SUCCESS != err) {
@@ -1366,17 +1392,29 @@ int ompi_coll_base_bcast_intra_bine_lat_new(void *buf, size_t count,
         return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
     }
 
-    vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
+    err = ompi_coll_mod(rank - root, size, &vrank);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto cleanup_and_return;
+    }
     mask = size >> 1;
     recvd = (root == rank);
     {
-        uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
-        if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto cleanup_and_return; }
+        uint32_t btnb_vrank_u32;
+        if (MPI_SUCCESS != ompi_coll_binary_to_negabinary(vrank, &btnb_vrank_u32)) {
+            line = __LINE__;
+            err = MPI_ERR_ARG;
+            goto cleanup_and_return;
+        }
         btnb_vrank = (int) btnb_vrank_u32;
     }
     while (mask > 0) {
         int partner = btnb_vrank ^ ((mask << 1) - 1);
-        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+        err = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size, &partner);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto cleanup_and_return;
+        }
         int mask_lsbs = (mask << 1) - 1;   // Mask with num_steps - step + 1 LSBs set to 1
         int lsbs = btnb_vrank & mask_lsbs; // Extract k LSBs
         int equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
@@ -1438,8 +1476,8 @@ int ompi_coll_base_bcast_intra_bine_lat_i_new(void *buf, size_t count,
                                               mca_coll_base_module_t *module)
 {
     int size, rank, line, err = MPI_SUCCESS, btnb_vrank;
-    int vrank, mask, recvd, req_count = 0, steps;
-    MPI_Request *requests;
+    int vrank, mask, recvd, req_count = 0, steps = 0;
+    MPI_Request *requests = NULL;
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
@@ -1455,13 +1493,21 @@ int ompi_coll_base_bcast_intra_bine_lat_i_new(void *buf, size_t count,
         return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
     }
 
-    vrank = ompi_coll_mod(rank - root, size); // mod computes math modulo rather than reminder
+    err = ompi_coll_mod(rank - root, size, &vrank);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
     steps = opal_cube_dim(size);
     mask = 0x1 << (int) (steps - 1);
     recvd = (root == rank);
     {
-        uint32_t btnb_vrank_u32 = ompi_coll_binary_to_negabinary(vrank);
-        if (OPAL_UNLIKELY(UINT32_MAX == btnb_vrank_u32)) { line = __LINE__; err = MPI_ERR_ARG; goto err_hndl; }
+        uint32_t btnb_vrank_u32;
+        if (MPI_SUCCESS != ompi_coll_binary_to_negabinary(vrank, &btnb_vrank_u32)) {
+            line = __LINE__;
+            err = MPI_ERR_ARG;
+            goto err_hndl;
+        }
         btnb_vrank = (int) btnb_vrank_u32;
     }
     //requests = (MPI_Request *) malloc(steps * sizeof(MPI_Request));
@@ -1474,7 +1520,11 @@ int ompi_coll_base_bcast_intra_bine_lat_i_new(void *buf, size_t count,
 
     while (mask > 0) {
         int partner = btnb_vrank ^ ((mask << 1) - 1);
-        partner = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size);
+        err = ompi_coll_mod(ompi_coll_negabinary_to_binary(partner) + root, size, &partner);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
         int mask_lsbs = (mask << 1) - 1;   // Mask with num_steps - step + 1 LSBs set to 1
         int lsbs = btnb_vrank & mask_lsbs; // Extract k LSBs
         int equal_lsbs = (lsbs == 0 || lsbs == mask_lsbs);
@@ -1576,7 +1626,12 @@ int ompi_coll_base_bcast_intra_bine_bdw_remap(void *buf, size_t count,
         return MPI_SUCCESS;
     }
 
-    int vrank = ompi_coll_mod(rank - root, size);
+    int vrank;
+    err = ompi_coll_mod(rank - root, size, &vrank);
+    if (MPI_SUCCESS != err) {
+        line = __LINE__;
+        goto err_hndl;
+    }
 
     displs = (int *) malloc(size * sizeof(int));
     recvcounts = (int *) malloc(size * sizeof(int));
@@ -1595,6 +1650,11 @@ int ompi_coll_base_bcast_intra_bine_bdw_remap(void *buf, size_t count,
     int inverse_mask = 0x1 << (opal_cube_dim(size) - 1);
     int block_first_mask = ~(inverse_mask - 1);
     int remapped_rank = ompi_coll_bine_remap_rank(size, vrank);
+    if (OPAL_UNLIKELY(remapped_rank < 0)) {
+        err = MPI_ERR_ARG;
+        line = __LINE__;
+        goto err_hndl;
+    }
     int receiving_mask = inverse_mask << 1; // Root never receives. By having a large mask
                                             // inverse_mask will always be < receiving_mask
     // I receive in the step corresponding to the position (starting from right)
@@ -1608,16 +1668,35 @@ int ompi_coll_base_bcast_intra_bine_bdw_remap(void *buf, size_t count,
     while (mask < size) {
         int vpartner;
         if (vrank % 2 == 0) {
-            vpartner = ompi_coll_mod(vrank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(vrank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &vpartner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            vpartner = ompi_coll_mod(vrank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(vrank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &vpartner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
-        int partner = ompi_coll_mod(vpartner + root, size);
+        int partner;
+        err = ompi_coll_mod(vpartner + root, size, &partner);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
 
         // For sure I need to send my (remapped) partner's data
         // the actual start block however must be aligned to
         // the power of two
-        int send_block_first = ompi_coll_bine_remap_rank(size, vpartner) & block_first_mask;
+        int send_block_first = ompi_coll_bine_remap_rank(size, vpartner);
+        if (OPAL_UNLIKELY(send_block_first < 0)) {
+            err = MPI_ERR_ARG;
+            line = __LINE__;
+            goto err_hndl;
+        }
+        send_block_first &= block_first_mask;
         int send_block_last = send_block_first + inverse_mask - 1;
         int send_count = displs[send_block_last] - displs[send_block_first]
                          + recvcounts[send_block_last];
@@ -1662,11 +1741,24 @@ int ompi_coll_base_bcast_intra_bine_bdw_remap(void *buf, size_t count,
             recv_block_last = 0, recv_count = 0;
         int vpartner;
         if (vrank % 2 == 0) {
-            vpartner = ompi_coll_mod(vrank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(vrank + ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &vpartner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         } else {
-            vpartner = ompi_coll_mod(vrank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size);
+            err = ompi_coll_mod(vrank - ompi_coll_negabinary_to_binary((mask << 1) - 1), size, &vpartner);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
         }
-        int partner = ompi_coll_mod(vpartner + root, size);
+        int partner;
+        err = ompi_coll_mod(vpartner + root, size, &partner);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
 
         rpartner = (inverse_mask < receiving_mask) ? MPI_PROC_NULL : partner;
         spartner = (inverse_mask == receiving_mask) ? MPI_PROC_NULL : partner;
@@ -1678,7 +1770,13 @@ int ompi_coll_base_bcast_intra_bine_bdw_remap(void *buf, size_t count,
                          + recvcounts[send_block_last];
         }
         if (rpartner != MPI_PROC_NULL) {
-            recv_block_first = ompi_coll_bine_remap_rank(size, vpartner) & block_first_mask;
+            recv_block_first = ompi_coll_bine_remap_rank(size, vpartner);
+            if (OPAL_UNLIKELY(recv_block_first < 0)) {
+                err = MPI_ERR_ARG;
+                line = __LINE__;
+                goto err_hndl;
+            }
+            recv_block_first &= block_first_mask;
             recv_block_last = recv_block_first + inverse_mask - 1;
             recv_count = displs[recv_block_last] - displs[recv_block_first]
                          + recvcounts[recv_block_last];
