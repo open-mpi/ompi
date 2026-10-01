@@ -91,26 +91,37 @@ exit:
     return winfo;
 }
 
-static void _winfo_destructor(opal_common_ucx_winfo_t *winfo)
+/* flush and close the endpoints, leaving the worker itself alive */
+static void _winfo_close_eps(opal_common_ucx_winfo_t *winfo)
 {
+    size_t i;
+
     if (winfo->inflight_req != UCS_OK) {
         opal_common_ucx_wait_request_mt(winfo->inflight_req, "opal_common_ucx_flush");
         winfo->inflight_req = UCS_OK;
     }
 
+    if (!opal_common_ucx_thread_enabled) {
+        return;
+    }
+
+    for (i = 0; i < winfo->comm_size; i++) {
+        if (NULL != winfo->endpoints[i]) {
+            ucp_ep_destroy(winfo->endpoints[i]);
+            winfo->endpoints[i] = NULL;
+            OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_ep_counts, -1);
+        }
+        assert(winfo->inflight_ops[i] == 0);
+    }
+}
+
+static void _winfo_destructor(opal_common_ucx_winfo_t *winfo)
+{
+    _winfo_close_eps(winfo);
+
     assert(winfo->global_inflight_ops == 0);
 
     if (winfo->comm_size != 0) {
-        size_t i;
-        if (opal_common_ucx_thread_enabled) {
-            for (i = 0; i < winfo->comm_size; i++) {
-                if (NULL != winfo->endpoints[i]) {
-                    ucp_ep_destroy(winfo->endpoints[i]);
-                    OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_ep_counts, -1);
-                }
-                assert(winfo->inflight_ops[i] == 0);
-            }
-        }
         free(winfo->endpoints);
         free(winfo->inflight_ops);
     }
@@ -200,6 +211,25 @@ err_worker_create:
     OBJ_DESTRUCT(&wpool->active_workers);
     ucp_cleanup(wpool->ucp_ctx);
     return rc;
+}
+
+OPAL_DECLSPEC
+void opal_common_ucx_wpool_close_eps(opal_common_ucx_wpool_t *wpool)
+{
+    opal_common_ucx_winfo_t *winfo;
+
+    /* refcnt 0: never initialized; > 1: still in use */
+    if ((NULL == wpool) || (1 != wpool->refcnt)) {
+        return;
+    }
+
+    OPAL_LIST_FOREACH (winfo, &wpool->idle_workers, opal_common_ucx_winfo_t) {
+        _winfo_close_eps(winfo);
+    }
+
+    OPAL_LIST_FOREACH (winfo, &wpool->active_workers, opal_common_ucx_winfo_t) {
+        _winfo_close_eps(winfo);
+    }
 }
 
 OPAL_DECLSPEC

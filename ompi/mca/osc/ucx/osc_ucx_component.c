@@ -21,6 +21,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/runtime/params.h"
 #include "opal/mca/common/ucx/common_ucx.h"
 
 #include "osc_ucx.h"
@@ -353,7 +354,11 @@ static int component_set_priority(int flavor) {
     return OMPI_SUCCESS;
 }
 
-static int component_finalize(void) {
+static void component_close_eps_and_fence(void)
+{
+    ucp_worker_h fence_worker = NULL;
+    volatile int fenced = 0;
+    int ret;
 
     if (!opal_common_ucx_thread_enabled) {
         int i;
@@ -365,7 +370,44 @@ static int component_finalize(void) {
             }
         }
         free(mca_osc_ucx_component.endpoints);
+        mca_osc_ucx_component.endpoints = NULL;
+        mca_osc_ucx_component.comm_world_size = 0;
+    } else {
+        opal_common_ucx_wpool_close_eps(mca_osc_ucx_component.wpool);
     }
+
+    if (ompi_async_mpi_finalize) {
+        return;
+    }
+
+    if (mca_osc_ucx_component.env_initialized
+        && (NULL != mca_osc_ucx_component.wpool->dflt_winfo)) {
+        fence_worker = mca_osc_ucx_component.wpool->dflt_winfo->worker;
+    }
+
+    /* peers must be done flushing to us before we destroy our workers */
+    OSC_UCX_VERBOSE(1, "endpoints closed, entering finalize barrier");
+    ret = opal_common_ucx_mca_pmix_fence_nb((int *) &fenced);
+    if (OPAL_SUCCESS != ret) {
+        OSC_UCX_VERBOSE(1, "finalize barrier failed: %d", ret);
+        return;
+    }
+
+    /* opal_progress() is not safe this late in finalize */
+    while (!fenced) {
+        if (NULL != fence_worker) {
+            ucp_worker_progress(fence_worker);
+        } else {
+            usleep(1);
+        }
+    }
+
+    OSC_UCX_VERBOSE(1, "finalize barrier done, destroying workers");
+}
+
+static int component_finalize(void) {
+    component_close_eps_and_fence();
+
     opal_common_ucx_mca_deregister();
     if (mca_osc_ucx_component.env_initialized) {
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
