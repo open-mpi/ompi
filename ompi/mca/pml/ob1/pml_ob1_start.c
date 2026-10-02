@@ -100,6 +100,13 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                 /* reset the completion flag */
                 pml_request->req_pml_complete = false;
 
+                /* The persistent request is being (re)started here, which is
+                 * where it becomes active - note that sendreq may point at a
+                 * freshly allocated request for the buffered-send case above. */
+                mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
+                                                 sendreq->req_send.req_base.req_comm,
+                                                 &sendreq->req_send.req_base);
+
                 MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
                 if(rc != OMPI_SUCCESS)
                     return rc;
@@ -108,6 +115,11 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
             case MCA_PML_REQUEST_RECV:
             {
                 mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)pml_request;
+                /* The persistent request is being (re)started here, which is
+                 * where it becomes active. */
+                mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
+                                                 recvreq->req_recv.req_base.req_comm,
+                                                 &recvreq->req_recv.req_base);
                 MCA_PML_OB1_RECV_REQUEST_START(recvreq);
                 break;
             }

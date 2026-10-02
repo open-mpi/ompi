@@ -42,6 +42,7 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "pml_ob1_hdr.h"
+#include "pml_ob1_events.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/proc/proc.h"
 #include "opal/mca/allocator/base/base.h"
