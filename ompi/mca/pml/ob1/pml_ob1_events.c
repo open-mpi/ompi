@@ -45,6 +45,13 @@ static const ptrdiff_t message_offsets[] = {offsetof(mca_pml_ob1_message_event_t
                                             offsetof(mca_pml_ob1_message_event_t, context_id),
                                             offsetof(mca_pml_ob1_message_event_t, sequence)};
 
+static const mca_base_var_type_t immediate_types[] = {MCA_BASE_VAR_TYPE_INT32_T,
+                                                      MCA_BASE_VAR_TYPE_INT32_T,
+                                                      MCA_BASE_VAR_TYPE_INT64_T};
+static const ptrdiff_t immediate_offsets[] = {offsetof(mca_pml_ob1_immediate_event_t, peer),
+                                              offsetof(mca_pml_ob1_immediate_event_t, tag),
+                                              offsetof(mca_pml_ob1_immediate_event_t, length)};
+
 static const mca_base_var_type_t unex_insert_types[] = {MCA_BASE_VAR_TYPE_UINT64_T,
                                                         MCA_BASE_VAR_TYPE_INT32_T,
                                                         MCA_BASE_VAR_TYPE_INT32_T,
@@ -73,6 +80,7 @@ struct ob1_event_desc_t {
 #define OB1_REQUEST_PAYLOAD 1, request_types, request_offsets
 #define OB1_TRANSFER_PAYLOAD 2, transfer_types, transfer_offsets
 #define OB1_MESSAGE_PAYLOAD 4, message_types, message_offsets
+#define OB1_IMMEDIATE_PAYLOAD 3, immediate_types, immediate_offsets
 #define OB1_UNEX_INSERT_PAYLOAD 5, unex_insert_types, unex_insert_offsets
 #define OB1_UNEX_MATCH_PAYLOAD 2, unex_match_types, unex_match_offsets
 
@@ -123,6 +131,10 @@ static const struct ob1_event_desc_t ob1_events[] = {
      "expose no request handle.", OB1_REQUEST_PAYLOAD},
     {MCA_PML_OB1_EVENT_RECEIVE_CANCEL, "receive_cancel", "A receive request was cancelled",
      OB1_REQUEST_PAYLOAD},
+
+    {MCA_PML_OB1_EVENT_IMMEDIATE_SEND, "immediate_send",
+     "A short send completed inline, without ever allocating a request",
+     OB1_IMMEDIATE_PAYLOAD},
 };
 
 void mca_pml_ob1_events_register(const mca_base_component_t *component)

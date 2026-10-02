@@ -156,6 +156,12 @@ static inline int mca_pml_ob1_send_inline (const void *buf, size_t count,
         return rc;
     }
 
+    /* The send is already done and no request was ever allocated, so this is
+       the only chance to report it.  PERUSE could not: all of its send-side
+       tracing hangs off a request, which is why short non-synchronous sends
+       have been invisible to it. */
+    mca_pml_ob1_event_raise_immediate_send (comm, dst, tag, size);
+
     return (int) size;
 }
 

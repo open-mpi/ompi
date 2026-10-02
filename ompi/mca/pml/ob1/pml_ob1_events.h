@@ -89,6 +89,10 @@ enum {
     MCA_PML_OB1_EVENT_REQUEST_FREE,
     MCA_PML_OB1_EVENT_RECEIVE_CANCEL,
 
+    /* A send that completed inline and therefore never had a request.  See
+       the comment on mca_pml_ob1_event_raise_immediate_send(). */
+    MCA_PML_OB1_EVENT_IMMEDIATE_SEND,
+
     MCA_PML_OB1_EVENT_MAX,
 };
 
@@ -135,6 +139,14 @@ struct mca_pml_ob1_unex_match_event_t {
     uint64_t frag;
 };
 typedef struct mca_pml_ob1_unex_match_event_t mca_pml_ob1_unex_match_event_t;
+
+/* A send with no request at all. */
+struct mca_pml_ob1_immediate_event_t {
+    int32_t peer;
+    int32_t tag;
+    int64_t length;
+};
+typedef struct mca_pml_ob1_immediate_event_t mca_pml_ob1_immediate_event_t;
 
 /* Indexed by MCA_PML_OB1_EVENT_*; an entry is NULL if that event type failed
    to register (or the event framework is unavailable), which the helpers
@@ -224,6 +236,25 @@ static inline void mca_pml_ob1_event_raise_unex_match(struct ompi_communicator_t
                                &payload);
 }
 
+/* The inline send path completes a short, non-synchronous send straight into
+   the BTL and returns without ever allocating a request.  That is why PERUSE
+   never reported these sends -- all of its send-side tracing hangs off a
+   request -- and it is why this event carries the envelope and the byte count
+   instead of a correlator: there is no request for a tool to correlate with.
+   A tool that wants a complete send-side accounting needs this event plus
+   MCA_PML_OB1_EVENT_REQUEST_ACTIVATE. */
+static inline void mca_pml_ob1_event_raise_immediate_send(struct ompi_communicator_t *comm,
+                                                          int32_t peer, int32_t tag, size_t length)
+{
+    if (OPAL_LIKELY(!mca_pml_ob1_event_wanted(MCA_PML_OB1_EVENT_IMMEDIATE_SEND))) {
+        return;
+    }
+
+    mca_pml_ob1_immediate_event_t payload = {.peer = peer, .tag = tag,
+                                             .length = (int64_t) length};
+    mca_base_event_raise_bound(mca_pml_ob1_event[MCA_PML_OB1_EVENT_IMMEDIATE_SEND], NULL, comm,
+                               &payload);
+}
 END_C_DECLS
 
 #endif /* MCA_PML_OB1_EVENTS_H */
