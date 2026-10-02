@@ -115,6 +115,41 @@ any Open MPI component.  For example:
                documentation <https://openucx.org/documentation/>`_ for
                details about which environment variables are available.
 
+.. _faq-ib-locked-memory-label:
+
+Locked memory limits
+--------------------
+
+InfiniBand and RoCE use RDMA, which requires communication buffers to
+be locked ("pinned") in physical memory.  The amount of memory a
+process may lock is limited by the ``memlock`` resource limit; for
+most HPC installations it should be ``unlimited``.  It is typically
+set in a file in ``/etc/security/limits.d/`` (or in
+``/etc/security/limits.conf`` on older systems), for example:
+
+.. code-block::
+
+   * soft memlock unlimited
+   * hard memlock unlimited
+
+These files are applied by ``pam_limits`` when a user logs in.  MPI
+processes launched by a resource manager (such as Slurm, PBS/Torque,
+or LSF) are usually not started through a login session; they inherit
+the limits of the resource manager's daemon on each node.  Make sure
+those daemons are started with an unlimited locked memory limit (for
+example, with ``LimitMEMLOCK=infinity`` in the daemon's systemd
+service file), and restart them after changing it.  Some resource
+managers also propagate the limits of the shell that submitted the
+job (for example, Slurm's ``PropagateResourceLimits`` setting), so
+the limit on the submitting node can matter as well.
+
+To see the limit that MPI processes actually get, run ``ulimit -l``
+through the same launch path as your application, for example:
+
+.. code-block::
+
+   shell$ mpirun -n 2 sh -c 'ulimit -l'
+
 .. _faq-ib-troubleshoot-label:
 
 Troubleshooting and getting help
@@ -161,6 +196,6 @@ you.  Please include answers to the following questions in your e-mail:
    the reported value is not ``unlimited`` (or is not large enough for
    your application's buffers), memory registration can fail and MPI
    jobs may abort or perform poorly.  Raising this limit is a
-   system-configuration task; see the `UCX documentation
-   <https://openucx.org/documentation/>`__ and your OpenFabrics or
-   vendor documentation for how to allow locked memory on your system.
+   system-configuration task; see :ref:`faq-ib-locked-memory-label`
+   above, the `UCX documentation <https://openucx.org/documentation/>`__,
+   and your OpenFabrics or vendor documentation.
