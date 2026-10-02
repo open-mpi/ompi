@@ -53,6 +53,9 @@ static opal_accelerator_stream_t *htod_stream = NULL;
 static opal_mutex_t pml_ob1_accelerator_htod_lock;
 static opal_mutex_t pml_ob1_accelerator_dtoh_lock;
 
+/* Set to true once streams and events have been created. */
+static bool pml_ob1_accelerator_streams_initialized = false;
+
 /* Array of accelerator events to be queried for sending side and
  * receiving side. */
 static opal_accelerator_event_t **accelerator_event_dtoh_array = NULL;
@@ -75,6 +78,79 @@ static volatile int accelerator_event_dtoh_num_used, accelerator_event_htod_num_
 /* Size of array holding events */
 static int accelerator_event_htod_most = 0;
 
+/* Create streams and events on first use of a device buffer.
+ * At runtime, callers must hold pml_ob1_accelerator_htod_lock.
+ * The exception is the eager path in mca_pml_ob1_accelerator_init(),
+ * which runs single-threaded before MPI_Init completes. */
+static int mca_pml_ob1_accelerator_lazy_init(void)
+{
+    int result;
+    int i;
+
+    if (pml_ob1_accelerator_streams_initialized) {
+        return OPAL_SUCCESS;
+    }
+
+    result = opal_accelerator.create_stream(MCA_ACCELERATOR_NO_DEVICE_ID, &dtoh_stream);
+    if (OPAL_SUCCESS != result) {
+        opal_output_verbose(1, mca_pml_ob1_output, "Failed to create accelerator dtoh_stream stream.");
+        return result;
+    }
+
+    result = opal_accelerator.create_stream(MCA_ACCELERATOR_NO_DEVICE_ID, &htod_stream);
+    if (OPAL_SUCCESS != result) {
+        opal_output_verbose(1, mca_pml_ob1_output, "Failed to create accelerator htod_stream stream.");
+        OBJ_RELEASE(dtoh_stream);
+        dtoh_stream = NULL;
+        return result;
+    }
+
+    for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
+        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_dtoh_array[i],
+                                               false);
+        if (OPAL_SUCCESS != result) {
+            opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create dtoh event failed.");
+            goto cleanup;
+        }
+    }
+
+    for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
+        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_htod_array[i],
+                                               false);
+        if (OPAL_SUCCESS != result) {
+            opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create htod event failed.");
+            goto cleanup;
+        }
+    }
+
+    /* Publish the streams and events before the flag that advertises them.
+     * The matching acquire barrier is in mca_pml_ob1_accelerator_ensure_init(),
+     * so a thread that observes the flag on the lock-free fast path is
+     * guaranteed to also see the fully-created streams and event arrays
+     * (required on weakly-ordered architectures such as aarch64 and ppc64). */
+    opal_atomic_wmb();
+    pml_ob1_accelerator_streams_initialized = true;
+    return OPAL_SUCCESS;
+
+cleanup:
+    /* Release any events already created, then release the streams. */
+    for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
+        if (NULL != accelerator_event_htod_array[i]) {
+            OBJ_RELEASE(accelerator_event_htod_array[i]);
+            accelerator_event_htod_array[i] = NULL;
+        }
+        if (NULL != accelerator_event_dtoh_array[i]) {
+            OBJ_RELEASE(accelerator_event_dtoh_array[i]);
+            accelerator_event_dtoh_array[i] = NULL;
+        }
+    }
+    OBJ_RELEASE(htod_stream);
+    htod_stream = NULL;
+    OBJ_RELEASE(dtoh_stream);
+    dtoh_stream = NULL;
+    return result;
+}
+
 int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *frag)
 {
     int result;
@@ -86,6 +162,11 @@ int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *f
     /* First make sure there is room to store the event.  If not, then
      * return an error.  The error message will tell the user to try and
      * run again, but with a larger array for storing events. */
+    result = mca_pml_ob1_accelerator_ensure_init();
+    if (OPAL_SUCCESS != result) {
+        return result;
+    }
+
     OPAL_THREAD_LOCK(&pml_ob1_accelerator_htod_lock);
     if (accelerator_event_htod_num_used == mca_pml_ob1_accelerator_events_max) {
         opal_output_verbose(1, mca_pml_ob1_output, "Out of event handles. Max: %d. Suggested to rerun with new max with --mca pml_ob1_accelerator_events_max %d.",
@@ -124,10 +205,13 @@ int mca_pml_ob1_record_htod_event(char *msg, struct mca_btl_base_descriptor_t *f
 
 opal_accelerator_stream_t *mca_pml_ob1_get_dtoh_stream(void)
 {
+    (void) mca_pml_ob1_accelerator_ensure_init();
     return dtoh_stream;
 }
+
 opal_accelerator_stream_t *mca_pml_ob1_get_htod_stream(void)
 {
+    (void) mca_pml_ob1_accelerator_ensure_init();
     return htod_stream;
 }
 
@@ -183,8 +267,6 @@ int mca_pml_ob1_progress_one_htod_event(struct mca_btl_base_descriptor_t **frag)
 int mca_pml_ob1_accelerator_init(void)
 {
     int rc = OPAL_SUCCESS;
-    int result = OPAL_SUCCESS;
-    int i;
 
     if (0 == strcmp(opal_accelerator_base_selected_component.base_version.mca_component_name, "null")) {
         return 0;
@@ -192,21 +274,6 @@ int mca_pml_ob1_accelerator_init(void)
 
     OBJ_CONSTRUCT(&pml_ob1_accelerator_htod_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&pml_ob1_accelerator_dtoh_lock, opal_mutex_t);
-
-    /* Create Streams */
-    result = opal_accelerator.create_stream(MCA_ACCELERATOR_NO_DEVICE_ID, &dtoh_stream);
-    if (OPAL_SUCCESS != result) {
-        opal_output_verbose(1, mca_pml_ob1_output, "Failed to create accelerator dtoh_stream stream.");
-        rc = result;
-        goto cleanup_and_error;
-    }
-
-    result = opal_accelerator.create_stream(MCA_ACCELERATOR_NO_DEVICE_ID, &htod_stream);
-    if (OPAL_SUCCESS != result) {
-        opal_output_verbose(1, mca_pml_ob1_output, "Failed to create accelerator htod_stream stream.");
-        rc = result;
-        goto cleanup_and_error;
-    }
 
     /* Set up an array of pointers to store outstanding async dtoh events.
      * Used on the sending side for asynchronous copies. */
@@ -221,18 +288,7 @@ int mca_pml_ob1_accelerator_init(void)
         goto cleanup_and_error;
     }
 
-    /* Create the events since they can be reused. */
-    for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
-        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_dtoh_array[i], false);
-        if (OPAL_SUCCESS != result) {
-            opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create event failed.");
-            rc = OPAL_ERROR;
-            goto cleanup_and_error;
-        }
-    }
-
-    /* The first available status index is 0.  Make an empty frag
-       array. */
+    /* The first available status index is 0.  Make an empty frag array. */
     accelerator_event_dtoh_frag_array = (struct mca_btl_base_descriptor_t **) malloc(
         sizeof(struct mca_btl_base_descriptor_t *) * mca_pml_ob1_accelerator_events_max);
     if (NULL == accelerator_event_dtoh_frag_array) {
@@ -254,18 +310,7 @@ int mca_pml_ob1_accelerator_init(void)
         goto cleanup_and_error;
     }
 
-    /* Create the events since they can be reused. */
-    for (i = 0; i < mca_pml_ob1_accelerator_events_max; i++) {
-        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &accelerator_event_htod_array[i], false);
-        if (OPAL_SUCCESS != result) {
-            opal_output_verbose(1, mca_pml_ob1_output, "Accelerator create event failed.");
-            rc = OPAL_ERROR;
-            goto cleanup_and_error;
-        }
-    }
-
-    /* The first available status index is 0.  Make an empty frag
-       array. */
+    /* The first available status index is 0.  Make an empty frag array. */
     accelerator_event_htod_frag_array = (struct mca_btl_base_descriptor_t **) malloc(
         sizeof(struct mca_btl_base_descriptor_t *) * mca_pml_ob1_accelerator_events_max);
     if (NULL == accelerator_event_htod_frag_array) {
@@ -274,19 +319,28 @@ int mca_pml_ob1_accelerator_init(void)
         goto cleanup_and_error;
     }
 
+    /* When lazy init is disabled, create streams and events immediately. */
+    if (!mca_pml_ob1.accelerator_lazy_init) {
+        rc = mca_pml_ob1_accelerator_lazy_init();
+    }
+
 cleanup_and_error:
     if (OPAL_SUCCESS != rc) {
         if (NULL != accelerator_event_dtoh_array) {
             free(accelerator_event_dtoh_array);
+            accelerator_event_dtoh_array = NULL;
         }
         if (NULL != accelerator_event_dtoh_frag_array) {
             free(accelerator_event_dtoh_frag_array);
+            accelerator_event_dtoh_frag_array = NULL;
         }
         if (NULL != accelerator_event_htod_array) {
             free(accelerator_event_htod_array);
+            accelerator_event_htod_array = NULL;
         }
         if (NULL != accelerator_event_htod_frag_array) {
             free(accelerator_event_htod_frag_array);
+            accelerator_event_htod_frag_array = NULL;
         }
         OBJ_DESTRUCT(&pml_ob1_accelerator_htod_lock);
         OBJ_DESTRUCT(&pml_ob1_accelerator_dtoh_lock);
@@ -327,8 +381,12 @@ void mca_pml_ob1_accelerator_fini(void)
         free(accelerator_event_htod_frag_array);
     }
 
-    OBJ_RELEASE(htod_stream);
-    OBJ_RELEASE(dtoh_stream);
+    if (NULL != htod_stream) {
+        OBJ_RELEASE(htod_stream);
+    }
+    if (NULL != dtoh_stream) {
+        OBJ_RELEASE(dtoh_stream);
+    }
 
     OBJ_DESTRUCT(&pml_ob1_accelerator_htod_lock);
     OBJ_DESTRUCT(&pml_ob1_accelerator_dtoh_lock);
@@ -345,6 +403,21 @@ int mca_pml_ob1_accelerator_need_buffers(void * rreq,
 
 void mca_pml_ob1_accelerator_add_ipc_support(struct mca_btl_base_module_t* btl, int32_t flags,
                                              ompi_proc_t* errproc, char* btlinfo);
+
+int mca_pml_ob1_accelerator_ensure_init(void)
+{
+    int rc = OPAL_SUCCESS;
+    if (OPAL_LIKELY(pml_ob1_accelerator_streams_initialized)) {
+        /* Acquire: pair with the release (wmb) in lazy_init so the stream and
+         * event pointers read after this point are visible and non-stale. */
+        opal_atomic_rmb();
+        return OPAL_SUCCESS;
+    }
+    OPAL_THREAD_LOCK(&pml_ob1_accelerator_htod_lock);
+    rc = mca_pml_ob1_accelerator_lazy_init();
+    OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_htod_lock);
+    return rc;
+}
 
 /**
  * Handle the accelerator buffer.

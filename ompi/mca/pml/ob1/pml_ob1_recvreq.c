@@ -738,6 +738,10 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc);
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
 
+    if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
+        (void) mca_pml_ob1_accelerator_ensure_init();
+    }
+
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
             mca_bml_base_btl_t *bml_btl;
@@ -915,8 +919,14 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
         (btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_RECV)) {
         opal_accelerator_stream_t *stream = mca_pml_ob1_get_htod_stream();
-        recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
-        recvreq->req_recv.req_base.req_convertor.stream = stream;
+        /* Only switch to asynchronous copies if the stream actually exists.
+         * Lazy init can fail (e.g. stream/event creation errors), in which
+         * case get_htod_stream() returns NULL; fall back to a synchronous
+         * copy rather than installing a NULL stream with the ASYNC flag. */
+        if (NULL != stream) {
+            recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
+            recvreq->req_recv.req_base.req_convertor.stream = stream;
+        }
     }
 }
 
