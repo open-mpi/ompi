@@ -385,6 +385,7 @@ opal/util/show_help_content.c
 opal/util/keyval/keyval_lex.c
 
 ompi/test/mpirun/async_modex_wireup
+ompi/test/mpirun/sm_backing_file_collision
 
 test/simple/abort
 test/simple/accept

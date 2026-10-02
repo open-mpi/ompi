@@ -10,6 +10,14 @@ Open MPI version v6.1.0
 
 - Updated the embedded hwloc to v2.15.0.
 
+- Two jobs running at the same time on one node could open each
+  other's ``sm`` BTL shared-memory segments, and then crash or hang,
+  when their backing files shared a directory (``/dev/shm``, the
+  default on Linux).  The backing file was named from the jobid, whose
+  job family is a 16-bit hash of the job's PMIx namespace, so the jobid
+  is not unique between concurrent jobs.  The file name now also
+  includes the PID of the process that creates it.
+
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
   detect that the two jobs are running different versions of Open MPI,
   or that they selected different PMLs, and fail with a message naming
