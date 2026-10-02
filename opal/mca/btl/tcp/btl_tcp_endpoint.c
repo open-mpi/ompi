@@ -15,7 +15,7 @@
  * Copyright (c) 2014      Intel, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2018-2020 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2026 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -818,6 +818,37 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
 
     /* start the connect - will likely fail with EINPROGRESS */
     mca_btl_tcp_proc_tosocks(btl_endpoint->endpoint_addr, &endpoint_addr);
+
+    /* Ask the kernel to leave the local port unassigned until connect().
+     *
+     * The bind() below exists to pin the source address, not the source
+     * port: the port in tcp_ifaddr is zero.  Without this option the
+     * kernel must therefore choose an ephemeral port while the
+     * destination is still unknown, and can only keep it unique across
+     * the local address rather than across the whole connection tuple.
+     * Every rank on a node draws from that one space, and ports left in
+     * TIME_WAIT by earlier connections stay in it, so a job with many
+     * ranks per node and many peers each can exhaust it long before the
+     * tuple space is anywhere near full -- bind() then fails with
+     * EADDRINUSE and the endpoint is lost.  Deferring the choice to
+     * connect(), where the tuple is known, lets one local port serve any
+     * number of distinct destinations.
+     *
+     * A kernel that does not support this simply keeps the old behavior,
+     * so a failure here is not fatal.
+     */
+#if defined(IP_BIND_ADDRESS_NO_PORT)
+    {
+        int no_port = 1;
+        if (setsockopt(btl_endpoint->endpoint_sd, IPPROTO_IP, IP_BIND_ADDRESS_NO_PORT,
+                       (const char *) &no_port, sizeof(no_port))
+            < 0) {
+            opal_output_verbose(10, opal_btl_base_framework.framework_output,
+                                "btl: tcp: could not set IP_BIND_ADDRESS_NO_PORT: %s (%d)",
+                                strerror(opal_socket_errno), opal_socket_errno);
+        }
+    }
+#endif
 
     /* Bind the socket to one of the addresses associated with
      * this btl module.  This sets the source IP to one of the
