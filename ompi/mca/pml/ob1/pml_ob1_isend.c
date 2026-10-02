@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +66,9 @@ int mca_pml_ob1_isend_init(const void *buf,
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
                              PERUSE_SEND);
+    mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
+                                     sendreq->req_send.req_base.req_comm,
+                                     &sendreq->req_send.req_base);
 
     /* Work around a leak in start by marking this request as complete. The
      * problem occurred because we do not have a way to differentiate an
@@ -211,6 +215,9 @@ int mca_pml_ob1_isend(const void *buf,
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
                              PERUSE_SEND);
+    mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
+                                     sendreq->req_send.req_base.req_comm,
+                                     &sendreq->req_send.req_base);
 
     MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
     *request = (ompi_request_t *) sendreq;
@@ -232,6 +239,9 @@ alloc_ft_req:
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &(sendreq)->req_send.req_base,
                              PERUSE_SEND);
+    mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
+                                     sendreq->req_send.req_base.req_comm,
+                                     &sendreq->req_send.req_base);
 
     /* No point in starting the request, it won't go through, mark completed
      * in error for collection in future wait */
@@ -322,6 +332,9 @@ int mca_pml_ob1_send(const void *buf,
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
                              &sendreq->req_send.req_base,
                              PERUSE_SEND);
+    mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
+                                     sendreq->req_send.req_base.req_comm,
+                                     &sendreq->req_send.req_base);
 
     MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
     if (OPAL_LIKELY(rc == OMPI_SUCCESS)) {

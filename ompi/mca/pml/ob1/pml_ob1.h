@@ -18,6 +18,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2019 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +42,7 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "pml_ob1_hdr.h"
+#include "pml_ob1_events.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/proc/proc.h"
 #include "opal/mca/allocator/base/base.h"
