@@ -85,7 +85,9 @@ can specify multiple executables. The first argument, *count*, indicates
 the number of executables. The next three arguments are arrays of the
 corresponding arguments in :ref:`MPI_Comm_spawn`. The next argument,
 *array_of_info*, is an array of *info* arguments, one for each
-executable. See the INFO ARGUMENTS section for more information.
+executable. See the :ref:`INFO ARGUMENTS
+<man-openmpi-mpi-comm-spawn-multiple-info-arguments>` section for more
+information.
 
 For the Fortran version of *array_of_argv*, the element
 *array_of_argv*\ (i,j) is the jth argument to command number i.
@@ -127,6 +129,8 @@ corresponds to the i contiguous slots in this array from element
 
 Error codes are treated as for :ref:`MPI_Comm_spawn`.
 
+
+.. _man-openmpi-mpi-comm-spawn-multiple-info-arguments:
 
 INFO ARGUMENTS
 --------------

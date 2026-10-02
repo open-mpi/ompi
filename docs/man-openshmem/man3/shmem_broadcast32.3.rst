@@ -71,16 +71,16 @@ The arguments are as follows:
 target
    A symmetric data object with one of the following data types:
 
-   shmem_broadcast8, :ref:`shmem_broadcast64`: Any noncharacter type that
-      has an element size of 64 bits. No Fortran derived types or C/C++
-      structures are allowed.
+   shmem_broadcast8, :ref:`shmem_broadcast64`: Any noncharacter type
+   that has an element size of 64 bits. No Fortran derived types or
+   C/C++ structures are allowed.
 
-   :ref:`shmem_broadcast32`: Any noncharacter type that has an element size
-      of 32 bits. No Fortran derived types or C/C++ structures are
-      allowed.
+   :ref:`shmem_broadcast32`: Any noncharacter type that has an element
+   size of 32 bits. No Fortran derived types or C/C++ structures are
+   allowed.
 
-   shmem_broadcast4: Any noncharacter type that has an element size
-      of 32 bits.
+   shmem_broadcast4: Any noncharacter type that has an element size of
+   32 bits.
 
 source
    A symmetric data object that can be of any data type that is

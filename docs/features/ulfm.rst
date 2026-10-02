@@ -196,6 +196,8 @@ errmgr_detector_bar <value>`` for PRTE options.
    best used to override the default behavior after the ``--with-ft ulfm``
    opion is used.
 
+.. _ulfm-prte-level-options-label:
+
 PRTE level options
 ~~~~~~~~~~~~~~~~~~
 
@@ -258,8 +260,8 @@ this file, or by overriding the variable on the command line (e.g.,
   occasionally not be detected when they fail.
 
   .. caution:: This component is deprecated. Failure detection is now
-     performed at the PRTE level. See the section above on controlling
-     PRTE behavior for information about how to tune the failure detector.
+     performed at the PRTE level. See :ref:`ulfm-prte-level-options-label`
+     above for information about how to tune the failure detector.
 
 * ``mpi_ft_detector_thread <true|false> (default: false)`` controls
   the use of a thread to emit and receive failure detector's
