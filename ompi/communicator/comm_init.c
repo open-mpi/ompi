@@ -483,9 +483,6 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_keyhash      = NULL;
     comm->errhandler_type = OMPI_ERRHANDLER_TYPE_COMM;
     comm->error_handler  = &ompi_mpi_errors_are_fatal.eh;
-#ifdef OMPI_WANT_PERUSE
-    comm->c_peruse_handles = NULL;
-#endif
     OBJ_CONSTRUCT(&comm->c_lock, opal_mutex_t);
 
 #if OPAL_ENABLE_FT_MPI

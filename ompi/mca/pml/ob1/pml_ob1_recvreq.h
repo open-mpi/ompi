@@ -128,8 +128,6 @@ do {                                                                \
  */
 #define MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq )                              \
     do {                                                                              \
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                            \
-                                 &(recvreq->req_recv.req_base), PERUSE_RECV );        \
         ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );        \
     } while (0)
 
@@ -166,8 +164,6 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
     if(false == recvreq->req_recv.req_base.req_pml_complete){
 
         if(recvreq->req_recv.req_bytes_packed > 0) {
-            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                    &recvreq->req_recv.req_base, PERUSE_RECV );
         }
 
         for(i = 0; i < recvreq->req_rdma_cnt; i++) {
@@ -263,8 +259,6 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
             prepare_recv_req_converter(req);
         }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
-        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
-                                &req->req_recv.req_base, PERUSE_RECV);
     }
 }
 
@@ -301,9 +295,6 @@ do {                                                                            
             }                                                                     \
         }                                                                         \
         OPAL_THREAD_LOCK(&request->lock);                                         \
-        PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
-                                      &(request->req_recv.req_base), max_data,    \
-                                      PERUSE_RECV);                               \
         opal_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
                                      &data_offset );                              \
         opal_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \

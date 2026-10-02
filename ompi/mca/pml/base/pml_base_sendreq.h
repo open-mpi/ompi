@@ -35,7 +35,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/peruse/peruse-internal.h"
 
 BEGIN_C_DECLS
 

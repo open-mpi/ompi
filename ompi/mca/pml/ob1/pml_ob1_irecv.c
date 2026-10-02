@@ -30,7 +30,6 @@
 #include "ompi/request/request.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_recvfrag.h"
-#include "ompi/peruse/peruse-internal.h"
 #include "ompi/message/message.h"
 #include "ompi/memchecker.h"
 
@@ -61,9 +60,6 @@ int mca_pml_ob1_irecv_init(void *addr,
                                    addr,
                                    count, datatype, src, tag, comm, true);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
 
     /* Work around a leak in start by marking this request as complete. The
      * problem occurred because we do not have a way to differentiate an
@@ -93,9 +89,6 @@ int mca_pml_ob1_irecv(void *addr,
                                    addr,
                                    count, datatype, src, tag, comm, false);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     *request = (ompi_request_t *) recvreq;
@@ -129,9 +122,6 @@ int mca_pml_ob1_recv(void *addr,
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
                                   src, tag, comm, false);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(recvreq->req_recv.req_base),
-                             PERUSE_RECV);
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
@@ -222,9 +212,6 @@ mca_pml_ob1_imrecv( void *buf,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
 
     /* init/re-init the request */
     recvreq->req_lock = 0;
@@ -318,9 +305,6 @@ mca_pml_ob1_mrecv( void *buf,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
 
     /* init/re-init the request */
     recvreq->req_lock = 0;
