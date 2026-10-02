@@ -127,9 +127,35 @@ static const struct ob1_event_desc_t ob1_events[] = {
 
 void mca_pml_ob1_events_register(const mca_base_component_t *component)
 {
+    /* The master switch over Open MPI's built-in producers is owned by the
+       MPI layer (ompi_mpit_register_events.c), which registers it during the
+       basic instance-init phase -- before the PML framework is opened, so the
+       variable is already present when we look it up here.  We only read it:
+       calling mca_base_var_register() on an already-registered name rebinds
+       the variable's storage to the address we pass, and that storage would
+       dangle once this component is dlclose'd in a DSO build. */
+    const int *register_producers = NULL;
     mca_base_event_source_t *source = NULL;
     int source_index;
+    int var_index;
     size_t i;
+
+    var_index = mca_base_var_find("opal", "mca", "base", "event_register_producers");
+    if (0 <= var_index) {
+        (void) mca_base_var_get_value(var_index, &register_producers, NULL, NULL);
+    }
+
+    /* Drop any handles from a previous registration cycle: the event registry
+       may have been torn down since, freeing the objects these point at. */
+    for (i = 0; i < MCA_PML_OB1_EVENT_MAX; ++i) {
+        mca_pml_ob1_event[i] = NULL;
+    }
+
+    /* Honor an explicit disable.  If the switch could not be found, default to
+       enabled -- matching the variable's own default value. */
+    if (NULL != register_producers && 0 == register_producers[0]) {
+        return;
+    }
 
     source_index = mca_base_event_source_register("ompi", "Open MPI runtime events (ordered)",
                                                   MCA_BASE_EVENT_SOURCE_ORDERED,
