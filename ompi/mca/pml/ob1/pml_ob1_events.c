@@ -105,9 +105,32 @@ static const struct ob1_event_desc_t ob1_events[] = {
 
 void mca_pml_ob1_events_register(const mca_base_component_t *component)
 {
+    /* The master switch over Open MPI's built-in producers, shared with the
+       MPI layer (ompi_mpit_register_events.c).  Re-registering the variable
+       here is how a second producer reads it: mca_base_var_register points the
+       variable at this storage and fills it from the environment, whichever
+       producer gets there first.  Without this, setting the switch to 0 would
+       no longer make the event interface inert. */
+    static int register_producers = 1;
     mca_base_event_source_t *source = NULL;
     int source_index;
     size_t i;
+
+    (void) mca_base_var_register("opal", "mca", "base", "event_register_producers",
+                                 "Whether to register Open MPI's built-in MPI_T event "
+                                 "producers (default: enabled)",
+                                 MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                 MCA_BASE_VAR_SCOPE_READONLY, &register_producers);
+
+    /* Drop any handles from a previous registration cycle: the event registry
+       may have been torn down since, freeing the objects these point at. */
+    for (i = 0; i < MCA_PML_OB1_EVENT_MAX; ++i) {
+        mca_pml_ob1_event[i] = NULL;
+    }
+
+    if (!register_producers) {
+        return;
+    }
 
     source_index = mca_base_event_source_register("ompi", "Open MPI runtime events (ordered)",
                                                   MCA_BASE_EVENT_SOURCE_ORDERED,
