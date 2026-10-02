@@ -1012,7 +1012,7 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
                                     &(match->req_recv.req_base), PERUSE_RECV);
-            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_MATCH,
                                             match->req_recv.req_base.req_comm,
                                             &match->req_recv.req_base);
             SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);

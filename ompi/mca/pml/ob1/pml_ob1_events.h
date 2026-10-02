@@ -54,13 +54,15 @@ enum {
     MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN,
     MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
 
-    /* Posted-receive queue residency. */
+    /* Posted-receive queue residency, and the match that ends it. */
     MCA_PML_OB1_EVENT_POSTED_INSERT,
     MCA_PML_OB1_EVENT_POSTED_REMOVE,
+    MCA_PML_OB1_EVENT_POSTED_MATCH,
 
-    /* Unexpected queue residency. */
+    /* Unexpected queue residency, and the late receive that drains it. */
     MCA_PML_OB1_EVENT_UNEX_INSERT,
     MCA_PML_OB1_EVENT_UNEX_REMOVE,
+    MCA_PML_OB1_EVENT_UNEX_MATCH,
 
     /* Data movement for one request: begin, each further fragment or RDMA
        step, end. */

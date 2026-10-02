@@ -75,11 +75,16 @@ static const struct ob1_event_desc_t ob1_events[] = {
      "A receive request was inserted into the posted-receive queue", OB1_REQUEST_PAYLOAD},
     {MCA_PML_OB1_EVENT_POSTED_REMOVE, "posted_remove",
      "A receive request was removed from the posted-receive queue", OB1_REQUEST_PAYLOAD},
+    {MCA_PML_OB1_EVENT_POSTED_MATCH, "posted_match",
+     "An arriving message matched a request in the posted-receive queue", OB1_REQUEST_PAYLOAD},
 
     {MCA_PML_OB1_EVENT_UNEX_INSERT, "unexpected_insert",
      "An unmatched message was inserted into the unexpected-message queue", OB1_MESSAGE_PAYLOAD},
     {MCA_PML_OB1_EVENT_UNEX_REMOVE, "unexpected_remove",
      "A message was removed from the unexpected-message queue", OB1_REQUEST_PAYLOAD},
+    {MCA_PML_OB1_EVENT_UNEX_MATCH, "unexpected_match",
+     "A newly posted receive matched a message already in the unexpected-message queue",
+     OB1_REQUEST_PAYLOAD},
 
     {MCA_PML_OB1_EVENT_TRANSFER_BEGIN, "transfer_begin",
      "Data movement for a request started", OB1_TRANSFER_PAYLOAD},

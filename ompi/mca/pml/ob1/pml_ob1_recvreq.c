@@ -1413,6 +1413,10 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_MATCH_UNEX,
                                     &(req->req_recv.req_base), PERUSE_RECV);
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_UNEX_MATCH,
+                                            req->req_recv.req_base.req_comm,
+                                            &req->req_recv.req_base);
+
             hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
                                    req->req_recv.req_base.req_comm,
