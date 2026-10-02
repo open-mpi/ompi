@@ -185,6 +185,25 @@ OMPI_HIDDEN int ompit_opal_to_mpit_error (int rc)
 }
 
 /*
+ * Translate the failure of a by-index control/performance variable lookup.
+ * MPI-5.0 sec. 15.3.6 and 15.3.7 ask for MPI_T_ERR_INVALID_INDEX both when the
+ * index is out of range and when it names a variable that has been
+ * invalidated, and the MCA layer signals those two cases with three different
+ * codes depending on which lookup path was taken.
+ */
+OMPI_HIDDEN int ompit_var_index_error (int rc)
+{
+    switch (rc) {
+    case OPAL_ERR_VALUE_OUT_OF_BOUNDS:
+    case OPAL_ERR_BAD_PARAM:
+    case OPAL_ERR_NOT_FOUND:
+        return MPI_T_ERR_INVALID_INDEX;
+    default:
+        return MPI_T_ERR_INVALID;
+    }
+}
+
+/*
  * Check whether a MPI object is valid or not.
  * If invalid return true, otherwise false.
  */

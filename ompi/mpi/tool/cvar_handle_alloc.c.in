@@ -11,6 +11,7 @@
  *                         reserved.
  * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,8 +57,7 @@ PROTOTYPE ERROR_CLASS cvar_handle_alloc (INT cvar_index, OBJ_HANDLE obj_handle,
 
         rc = mca_base_var_get(cvar_index, &new_handle->var);
         if (OPAL_SUCCESS != rc) {
-            rc = (OPAL_ERR_VALUE_OUT_OF_BOUNDS == rc || OPAL_ERR_NOT_FOUND == rc) ? MPI_T_ERR_INVALID_INDEX:
-                MPI_T_ERR_INVALID;
+            rc = ompit_var_index_error (rc);
             free (new_handle);
             break;
         }
