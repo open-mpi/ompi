@@ -276,7 +276,7 @@ OMPI_HIDDEN bool ompit_obj_invalid(void *obj_handle)
         goto fn_exit;
     }
 
-    if (0 == strncmp(obj_name, "ompi_opt_t", strlen("ompi_op_t"))) {
+    if (0 == strncmp(obj_name, "ompi_op_t", strlen("ompi_op_t"))) {
         ompi_op_t *op = (ompi_op_t *) opal_obj;
         ret = (MPI_OP_NULL == op) ? true : false;
         goto fn_exit;
