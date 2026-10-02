@@ -15,6 +15,7 @@
 # Copyright (c) 2017      IBM Corporation.  All rights reserved.
 # Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -34,6 +35,8 @@ ob1_sources  = \
 	pml_ob1_comm.h \
 	pml_ob1_component.c \
 	pml_ob1_component.h \
+	pml_ob1_events.c \
+	pml_ob1_events.h \
 	pml_ob1_hdr.h \
 	pml_ob1_iprobe.c \
 	pml_ob1_irecv.c \

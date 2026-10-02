@@ -20,6 +20,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -250,6 +251,8 @@ static int mca_pml_ob1_component_register(void)
                                            "Number of events created by the ob1 component internally",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_ob1_accelerator_events_max);
+
+    mca_pml_ob1_events_register(&mca_pml_ob1_component.pmlm_version);
 
     return OMPI_SUCCESS;
 }

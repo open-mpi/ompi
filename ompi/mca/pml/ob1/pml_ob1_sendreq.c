@@ -23,6 +23,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2024      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,6 +111,9 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
         sendreq->req_send.req_base.req_free_called = true;
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
                              &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_REQUEST_FREE,
+                                        sendreq->req_send.req_base.req_comm,
+                                        &sendreq->req_send.req_base);
 
         if (sendreq->req_send.req_base.req_pml_complete) {
             /* make buffer defined when the request is completed,
@@ -211,6 +215,10 @@ mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         sendreq->req_send.req_base.req_comm,
+                                         &sendreq->req_send.req_base,
+                                         sendreq->req_send.req_bytes_packed);
     }
 
     /* signal request completion */
@@ -256,6 +264,10 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         sendreq->req_send.req_base.req_comm,
+                                         &sendreq->req_send.req_base,
+                                         sendreq->req_send.req_bytes_packed);
     }
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
@@ -921,6 +933,10 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         sendreq->req_send.req_base.req_comm,
+                                         &sendreq->req_send.req_base,
+                                         sendreq->req_send.req_bytes_packed);
     }
 
     /* send */
@@ -1231,6 +1247,9 @@ cannot_pack:
          PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
                  &(sendreq->req_send.req_base), size, PERUSE_SEND);
 #endif  /* OMPI_WANT_PERUSE */
+         mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
+                                          sendreq->req_send.req_base.req_comm,
+                                          &sendreq->req_send.req_base, size);
 
          /* At this point, check to see if the BTL is doing an asynchronous
           * copy.  This would have been initiated in the mca_bml_base_prepare_src
@@ -1391,6 +1410,12 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
                                   &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), frag->rdma_length, PERUSE_SEND );
+    mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
+                                     ((mca_pml_ob1_send_request_t *) frag->rdma_req)
+                                         ->req_send.req_base.req_comm,
+                                     &((mca_pml_ob1_send_request_t *) frag->rdma_req)
+                                          ->req_send.req_base,
+                                     frag->rdma_length);
 
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,
