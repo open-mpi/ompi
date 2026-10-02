@@ -1,7 +1,7 @@
 # General OMPI layer unit tests (`ompi/test/general/`)
 
 Single-process unit tests for the OMPI layer (the top-level `ompi/*`
-directories other than `mca`, `mpi`, `mpiext`, and `peruse`).  The tests
+directories other than `mca`, `mpi`, and `mpiext`).  The tests
 live entirely within the `ompi/` subtree and carry their own copy of the
 test harness (`support.{c,h}`).
 

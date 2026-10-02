@@ -23,9 +23,6 @@ above categories that can be used with ``configure``:
   values are ``ulfm`` and ``no`` (the default value is ``no``).  See
   :ref:`the ULFM section <ulfm-label>` for more details.
 
-* ``--enable-peruse``:
-  Enable the PERUSE MPI data analysis interface.
-
 * ``--enable-hwpc-cxi`` / ``--disable-hwpc-cxi``:
   The HPE Cassini (CXI) hardware performance counter component
   (``hook:hwpc_cxi``) is built by default.  Counter collection is enabled
