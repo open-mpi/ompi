@@ -76,8 +76,6 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
     assert (false == recvreq->req_recv.req_base.req_free_called);
 
     recvreq->req_recv.req_base.req_free_called = true;
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
-                             &(recvreq->req_recv.req_base), PERUSE_RECV );
     mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_REQUEST_FREE,
                                     recvreq->req_recv.req_base.req_comm,
                                     &recvreq->req_recv.req_base);
@@ -126,8 +124,6 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
             }
 #endif
         }
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
-                                &(request->req_recv.req_base), PERUSE_RECV );
         mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE, comm,
                                         &request->req_recv.req_base);
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
@@ -514,9 +510,6 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 
     recvreq->req_ack_sent = true;
 
-    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(recvreq->req_recv.req_base), frag->rdma_length,
-                                  PERUSE_RECV);
     mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
                                      recvreq->req_recv.req_base.req_comm,
                                      &recvreq->req_recv.req_base, frag->rdma_length);
@@ -558,9 +551,6 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
         local_handle = recvreq->local_handle;
     }
 
-    PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
-                                 &(((mca_pml_ob1_recv_request_t *) frag->rdma_req)->req_recv.req_base),
-                                 frag->rdma_length, PERUSE_RECV);
     mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
                                      ((mca_pml_ob1_recv_request_t *) frag->rdma_req)
                                          ->req_recv.req_base.req_comm,
@@ -1347,8 +1337,6 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
      * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
      * the cost of the request lock.
      */
-    PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
-                            &(req->req_recv.req_base), PERUSE_RECV);
     mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN,
                                     req->req_recv.req_base.req_comm, &req->req_recv.req_base);
 
@@ -1367,8 +1355,6 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                 req->req_recv.req_base.req_peer, req->req_recv.req_base.req_tag, ompi_comm_print_cid(comm_ptr)));
             req->req_recv.req_base.req_ompi.req_status.MPI_ERROR = ompi_comm_is_revoked(comm_ptr)? MPI_ERR_REVOKED: MPI_ERR_PROC_FAILED;
             recv_request_pml_complete( req );
-            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
-                                    &(req->req_recv.req_base), PERUSE_RECV);
             mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
                                             req->req_recv.req_base.req_comm,
                                             &req->req_recv.req_base);
@@ -1412,8 +1398,6 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     }
 
     if(OPAL_UNLIKELY(NULL == frag)) {
-        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
-                                &(req->req_recv.req_base), PERUSE_RECV);
         mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
                                         req->req_recv.req_base.req_comm, &req->req_recv.req_base);
         /* We didn't find any matches.  Record this irecv so we can match
@@ -1435,8 +1419,6 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                not user-visible receives, so they are excluded. */
             if (req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE &&
                 req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
-                PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
-                                        &(req->req_recv.req_base), PERUSE_RECV);
                 mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_INSERT,
                                                 req->req_recv.req_base.req_comm,
                                                 &req->req_recv.req_base);
@@ -1446,24 +1428,14 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
     } else {
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
-            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_MATCH_UNEX,
-                                    &(req->req_recv.req_base), PERUSE_RECV);
             mca_pml_ob1_event_raise_unex_match(req->req_recv.req_base.req_comm,
                                                &req->req_recv.req_base, frag);
 
             hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
-                                   req->req_recv.req_base.req_comm,
-                                   hdr->hdr_match.hdr_src,
-                                   hdr->hdr_match.hdr_tag,
-                                   PERUSE_RECV);
 
-            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
-                                    &(req->req_recv.req_base), PERUSE_RECV);
             mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
                                             req->req_recv.req_base.req_comm,
                                             &req->req_recv.req_base);
-
 #if MCA_PML_OB1_CUSTOM_MATCH
             custom_match_umq_remove_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq, hold_prev, hold_elem, hold_index);
 #else
