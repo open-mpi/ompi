@@ -65,6 +65,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
 
@@ -468,11 +469,14 @@ bcast_rportlen:
         goto exit;
     }
 
-    /* This is the comm_spawn error case, or a root that would not talk to
-     * the other side: either way the root is propagating to the local
-     * group that this operation has to fail. */
+    /* This is the comm_spawn error case, a root that would not talk to the
+     * other side, or a port exchange that failed: either way the root is
+     * propagating to the local group that this operation has to fail. */
     if (0 >= rportlen) {
         rc = rportlen;
+        /* no need to free rport here: no path that gets here allocated one,
+         * and everyone else has not yet allocated the array */
+        opal_argv_free(members);  // NULL on the paths that jumped here
         goto exit;
     }
 
@@ -669,6 +673,11 @@ bcast_rportlen:
                 }
             }
 
+            /* PMIx_Connect() above downloaded what these procs published, so
+             * reads for them are local from here on. Done before the init
+             * below, whose architecture read would otherwise be a fetch
+             * nobody waits for. */
+            opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
             /* ompi_proc_complete_init_single() initializes and optionally retrieves
              * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
              * them, we are just fine */
@@ -705,6 +714,16 @@ bcast_rportlen:
 
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+        if (OMPI_ERR_NOT_READY == rc) {
+            /* This call is collective and blocking with nowhere to defer
+             * the work to, so wait for the exchange and ask once more; a
+             * peer still unwired then is one no btl will ever claim. */
+            (void) ompi_modex_wait_if_needed();
+            rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+            if (OMPI_ERR_NOT_READY == rc) {
+                rc = OMPI_ERR_UNREACH;
+            }
+        }
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {

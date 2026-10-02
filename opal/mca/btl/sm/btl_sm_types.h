@@ -20,6 +20,7 @@
  * Copyright (c) 2020-2025 Google, LLC. All rights reserved.
  *
  * Copyright (c) 2019-2020 Intel, Inc.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -131,7 +132,17 @@ struct mca_btl_sm_component_t {
     unsigned int max_inline_send; /**< Limit for copy-in-copy-out fragments */
 
     mca_btl_base_endpoint_t
-        *endpoints; /**< array of local endpoints (one for each local peer including myself) */
+        *endpoints_storage; /**< array of local endpoints (one for each local peer including
+                             *   myself), as the setup paths see it while they fill it in */
+    mca_btl_base_endpoint_t
+        *endpoints; /**< the same array, published once every local peer's segment is mapped,
+                     *   and NULL until then; see
+                     *   mca_btl_sm_attach_local_peers(). A fragment path
+                     *   establishes with this single load that the whole node
+                     *   is mapped, and needs no barrier: what it reads
+                     *   afterwards is addressed off that value */
+    struct opal_proc_t **local_procs; /**< opal_proc_t * indexed by SMP local rank */
+    bool local_procs_mapped;          /**< local_procs has been filled in */
     mca_btl_base_endpoint_t **fbox_in_endpoints; /**< array of fast box in endpoints */
     unsigned int num_fbox_in_endpoints;          /**< number of fast boxes to poll */
     struct sm_fifo_t *my_fifo;                   /**< pointer to the local fifo */
@@ -150,7 +161,9 @@ typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
  */
 struct mca_btl_sm_t {
     mca_btl_base_module_t super; /**< base BTL interface */
-    bool btl_inited;             /**< flag indicating if btl has been inited */
+    /** 0 before the first init, 1 once inited. A failed init stores its
+     *  (negative) opal status here, which disables this btl for good. */
+    int btl_inited;
     mca_btl_base_module_error_cb_fn_t error_cb;
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
