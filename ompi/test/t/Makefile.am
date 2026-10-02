@@ -1,6 +1,7 @@
 # -*- makefile -*-
 #
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -40,7 +41,9 @@ check_PROGRAMS = \
         mpi_t_level_pinning \
         mpi_t_lifecycle \
         mpi_t_outlives_mpi \
+        mpi_t_pvar_monitoring \
         mpi_t_repeated_sessions \
+        mpi_t_var_index \
         mpi_t_world_close_first \
         mpi_t_world_inner \
         mpi_t_world_outlast \
@@ -120,6 +123,14 @@ mpi_t_lifecycle_LDADD = $(test_ldadd)
 mpi_t_outlives_mpi_SOURCES = mpi_t_outlives_mpi.c
 mpi_t_outlives_mpi_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 mpi_t_outlives_mpi_LDADD = $(test_ldadd)
+
+mpi_t_pvar_monitoring_SOURCES = mpi_t_pvar_monitoring.c
+mpi_t_pvar_monitoring_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_pvar_monitoring_LDADD = $(test_ldadd)
+
+mpi_t_var_index_SOURCES = mpi_t_var_index.c
+mpi_t_var_index_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_var_index_LDADD = $(test_ldadd)
 
 mpi_t_world_close_first_SOURCES = mpi_t_world_close_first.c mpi_t_lifecycle.h
 mpi_t_world_close_first_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
