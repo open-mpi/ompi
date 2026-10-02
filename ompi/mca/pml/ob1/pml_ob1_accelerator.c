@@ -123,6 +123,12 @@ static int mca_pml_ob1_accelerator_lazy_init(void)
         }
     }
 
+    /* Publish the streams and events before the flag that advertises them.
+     * The matching acquire barrier is in mca_pml_ob1_accelerator_ensure_init(),
+     * so a thread that observes the flag on the lock-free fast path is
+     * guaranteed to also see the fully-created streams and event arrays
+     * (required on weakly-ordered architectures such as aarch64 and ppc64). */
+    opal_atomic_wmb();
     pml_ob1_accelerator_streams_initialized = true;
     return OPAL_SUCCESS;
 
@@ -401,11 +407,15 @@ void mca_pml_ob1_accelerator_add_ipc_support(struct mca_btl_base_module_t* btl, 
 int mca_pml_ob1_accelerator_ensure_init(void)
 {
     int rc = OPAL_SUCCESS;
-    if (!pml_ob1_accelerator_streams_initialized) {
-        OPAL_THREAD_LOCK(&pml_ob1_accelerator_htod_lock);
-        rc = mca_pml_ob1_accelerator_lazy_init();
-        OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_htod_lock);
+    if (OPAL_LIKELY(pml_ob1_accelerator_streams_initialized)) {
+        /* Acquire: pair with the release (wmb) in lazy_init so the stream and
+         * event pointers read after this point are visible and non-stale. */
+        opal_atomic_rmb();
+        return OPAL_SUCCESS;
     }
+    OPAL_THREAD_LOCK(&pml_ob1_accelerator_htod_lock);
+    rc = mca_pml_ob1_accelerator_lazy_init();
+    OPAL_THREAD_UNLOCK(&pml_ob1_accelerator_htod_lock);
     return rc;
 }
 
