@@ -19,10 +19,15 @@
  * lifecycle of a request.  Every event is bound to MPI_T_BIND_MPI_COMM, so
  * a tool is notified only for the communicator it registered.
  *
- * The request element in a payload is the request's address as an opaque
- * uint64 correlator -- it identifies one message across its events (so a
- * tool can measure match latency, queue dwell and wire time for a single
- * message) and must never be dereferenced.
+ * Two opaque uint64 correlators appear in these payloads, and neither may
+ * ever be dereferenced.  The request element is a request's address: it ties
+ * together the events of one request (activate, transfer, complete, ...).
+ * The fragment element is the address of the unexpected-queue fragment: it
+ * stays unique for as long as a message sits unmatched in the queue, so a
+ * tool can pair an unexpected_insert with the unexpected_match that later
+ * drains the same fragment -- measuring queue dwell from the two events'
+ * timestamps and binding the message envelope (carried by the insert) to the
+ * request that finally matched it (carried by the match).
  *
  * Raising must stay free on the critical path.  Each helper below reads the
  * event's listener gate first and returns before touching the payload, so
@@ -56,12 +61,16 @@ enum {
     MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN,
     MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
 
-    /* Posted-receive queue residency. */
+    /* Posted-receive queue residency, and the match that ends it. */
     MCA_PML_OB1_EVENT_POSTED_INSERT,
     MCA_PML_OB1_EVENT_POSTED_REMOVE,
+    MCA_PML_OB1_EVENT_POSTED_MATCH,
 
-    /* Unexpected queue residency. */
+    /* Unexpected queue residency, and the late receive that drains it.  A
+       fragment only ever leaves the queue by being matched, so the match is
+       also the removal. */
     MCA_PML_OB1_EVENT_UNEX_INSERT,
+    MCA_PML_OB1_EVENT_UNEX_MATCH,
 
     /* Data movement for one request: begin, each further fragment or RDMA
        step, end. */
@@ -105,6 +114,27 @@ struct mca_pml_ob1_message_event_t {
     int32_t sequence;
 };
 typedef struct mca_pml_ob1_message_event_t mca_pml_ob1_message_event_t;
+
+/* A message entering the unexpected queue: its envelope, plus the address of
+   the fragment that now holds it.  The fragment address is an opaque uint64
+   token (never dereferenced) that stays unique while the message is queued, so
+   it pairs this insert with the match that later drains the same fragment. */
+struct mca_pml_ob1_unex_insert_event_t {
+    uint64_t frag;
+    int32_t source;
+    int32_t tag;
+    int32_t context_id;
+    int32_t sequence;
+};
+typedef struct mca_pml_ob1_unex_insert_event_t mca_pml_ob1_unex_insert_event_t;
+
+/* A late receive draining a message from the unexpected queue: the request
+   doing the draining and the same fragment token its insert carried. */
+struct mca_pml_ob1_unex_match_event_t {
+    uint64_t request;
+    uint64_t frag;
+};
+typedef struct mca_pml_ob1_unex_match_event_t mca_pml_ob1_unex_match_event_t;
 
 /* Indexed by MCA_PML_OB1_EVENT_*; an entry is NULL if that event type failed
    to register (or the event framework is unavailable), which the helpers
@@ -159,6 +189,39 @@ static inline void mca_pml_ob1_event_raise_message(int which, struct ompi_commun
     mca_pml_ob1_message_event_t payload = {.source = source, .tag = tag,
                                            .context_id = context_id, .sequence = sequence};
     mca_base_event_raise_bound(mca_pml_ob1_event[which], NULL, comm, &payload);
+}
+
+/* unexpected_insert: the envelope (as mca_pml_ob1_event_raise_message) plus the
+   fragment token that pairs this insert with its later match. */
+static inline void mca_pml_ob1_event_raise_unex_insert(struct ompi_communicator_t *comm,
+                                                       const void *frag, int32_t source,
+                                                       int32_t tag, int32_t context_id,
+                                                       int32_t sequence)
+{
+    if (OPAL_LIKELY(!mca_pml_ob1_event_wanted(MCA_PML_OB1_EVENT_UNEX_INSERT))) {
+        return;
+    }
+
+    mca_pml_ob1_unex_insert_event_t payload = {.frag = (uint64_t) (uintptr_t) frag,
+                                               .source = source, .tag = tag,
+                                               .context_id = context_id, .sequence = sequence};
+    mca_base_event_raise_bound(mca_pml_ob1_event[MCA_PML_OB1_EVENT_UNEX_INSERT], NULL, comm,
+                               &payload);
+}
+
+/* unexpected_match: the draining request plus the same fragment token the
+   matching unexpected_insert carried. */
+static inline void mca_pml_ob1_event_raise_unex_match(struct ompi_communicator_t *comm,
+                                                      const void *request, const void *frag)
+{
+    if (OPAL_LIKELY(!mca_pml_ob1_event_wanted(MCA_PML_OB1_EVENT_UNEX_MATCH))) {
+        return;
+    }
+
+    mca_pml_ob1_unex_match_event_t payload = {.request = (uint64_t) (uintptr_t) request,
+                                              .frag = (uint64_t) (uintptr_t) frag};
+    mca_base_event_raise_bound(mca_pml_ob1_event[MCA_PML_OB1_EVENT_UNEX_MATCH], NULL, comm,
+                               &payload);
 }
 
 END_C_DECLS

@@ -75,10 +75,11 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_recv_frag_t,
 /**
  * Append an unexpected descriptor to a queue. This function will allocate and
  * initialize the fragment (if necessary) and then will add it to the specified
- * queue. The allocated fragment is not returned to the caller.
+ * queue. Returns the queued fragment (the one passed in, or the freshly
+ * allocated one) so the caller can use its address as an event correlator.
  */
 
-static void
+static mca_pml_ob1_recv_frag_t *
 append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
                     const mca_pml_ob1_match_hdr_t *hdr, const mca_btl_base_segment_t *segments,
                     size_t num_segments, mca_pml_ob1_recv_frag_t* frag)
@@ -88,11 +89,12 @@ append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
         MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
     }
     opal_list_append(queue, (opal_list_item_t*)frag);
+    return frag;
 }
 
 #if MCA_PML_OB1_CUSTOM_MATCH
 
-static void
+static mca_pml_ob1_recv_frag_t *
 append_frag_to_umq(custom_match_umq *queue, mca_btl_base_module_t *btl,
                    const mca_pml_ob1_match_hdr_t *hdr, const mca_btl_base_segment_t *segments,
                    size_t num_segments, mca_pml_ob1_recv_frag_t* frag)
@@ -102,6 +104,7 @@ append_frag_to_umq(custom_match_umq *queue, mca_btl_base_module_t *btl,
     MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
   }
   custom_match_umq_append(queue, hdr->hdr_tag, hdr->hdr_src, frag);
+  return frag;
 }
 
 #endif
@@ -1177,7 +1180,7 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
                                     &(match->req_recv.req_base), PERUSE_RECV);
-            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_MATCH,
                                             match->req_recv.req_base.req_comm,
                                             &match->req_recv.req_base);
             SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
@@ -1186,10 +1189,10 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
 
         /* if no match found, place on unexpected queue */
 #if MCA_PML_OB1_CUSTOM_MATCH
-        append_frag_to_umq(comm->umq, btl, hdr, segments,
+        frag = append_frag_to_umq(comm->umq, btl, hdr, segments,
                             num_segments, frag);
 #else
-        append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
+        frag = append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
                             num_segments, frag);
 #endif
         SPC_RECORD(OMPI_SPC_UNEXPECTED, 1);
@@ -1197,8 +1200,9 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
         SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_UNEXPECTED_IN_QUEUE, OMPI_SPC_UNEXPECTED_IN_QUEUE);
         PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
-        mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_UNEX_INSERT, comm_ptr,
-                                        hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
+        mca_pml_ob1_event_raise_unex_insert(comm_ptr, frag,
+                                            hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx,
+                                            hdr->hdr_seq);
         SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
         return NULL;
     } while(true);
