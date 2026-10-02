@@ -129,10 +129,10 @@ target
    follows:
 
    shmem_comp4_prod_to_all: Complex, with an element size equal to two
-      4-byte real values.
+   4-byte real values.
 
    shmem_comp8_prod_to_all: Complex, with an element size equal to two
-      8-byte real values.
+   8-byte real values.
 
    shmem_int4_prod_to_all: Integer, with an element size of 4 bytes
 

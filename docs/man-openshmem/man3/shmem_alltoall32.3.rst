@@ -89,18 +89,18 @@ values.
 
 The arguments are as follows:
 
-A symmetric data object with one of the following data types:
+target
+   A symmetric data object large enough to receive the combined total
+   of nelems elements from each PE in the Active set, with one of the
+   following data types:
 
-   :ref:`shmem_alltoall32`: Any noncharacter type that
-      has an element size of 32 bits. No Fortran derived types or C/C++
-      structures are allowed.
+   :ref:`shmem_alltoall32`: Any noncharacter type that has an element
+   size of 32 bits. No Fortran derived types or C/C++ structures are
+   allowed.
 
-   :ref:`shmem_alltoall64`: Any noncharacter type that has an element size
-      of 64 bits. No Fortran derived types or C/C++ structures are
-      allowed.
-
-target A symmetric data object large enough to receive the combined
-total of nelems elements from each PE in the Active set.
+   :ref:`shmem_alltoall64`: Any noncharacter type that has an element
+   size of 64 bits. No Fortran derived types or C/C++ structures are
+   allowed.
 
 source
    A symmetric data object that contains nelems elements of data for
