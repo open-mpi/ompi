@@ -12,6 +12,7 @@
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -441,14 +442,20 @@ int mca_common_monitoring_register(void)
 int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
                                     size_t nprocs)
 {
-    opal_process_name_t tmp, wp_name;
+    opal_process_name_t tmp;
     size_t i;
     int peer_rank;
     uint64_t key;
+
+    /* The PML calls add_procs from ompi_mpi_instance_init_common(), which runs
+       before MPI_COMM_WORLD is built, so this function must not look at
+       ompi_mpi_comm_world -- its groups are still NULL.  The job's size and
+       this process' rank in it come from the runtime instead; for the world
+       model they are exactly MPI_COMM_WORLD's size and rank. */
     if( 0 > rank_world )
-        rank_world = ompi_comm_rank((ompi_communicator_t*)&ompi_mpi_comm_world);
+        rank_world = (int)OMPI_PROC_MY_NAME->vpid;
     if( !nprocs_world )
-        nprocs_world = ompi_comm_size((ompi_communicator_t*)&ompi_mpi_comm_world);
+        nprocs_world = (int)ompi_process_info.num_procs;
 
     if( NULL == pml_data ) {
         int array_size = (10 + max_size_histogram) * nprocs_world;
@@ -478,19 +485,18 @@ int mca_common_monitoring_add_procs(struct ompi_proc_t **procs,
         if( tmp.jobid != ompi_proc_local_proc->super.proc_name.jobid )
             continue;
 
-        /* each process will only be added once, so there is no way it already exists in the hash */
-        for( peer_rank = 0; peer_rank < nprocs_world; peer_rank++ ) {
-            wp_name = ompi_group_get_proc_name(((ompi_communicator_t*)&ompi_mpi_comm_world)->c_remote_group, peer_rank);
-            if( 0 != opal_compare_proc( tmp, wp_name ) )
-                continue;
+        /* A process of this job is rank vpid in MPI_COMM_WORLD: ompi_proc_world()
+           builds the group in vpid order.  Looking the rank up that way also
+           avoids walking the communicator's group, which does not exist yet. */
+        peer_rank = (int)tmp.vpid;
+        if( peer_rank >= nprocs_world )
+            continue;
 
-            key = *((uint64_t*)&tmp);
-            /* save the rank of the process in MPI_COMM_WORLD in the hash using the proc_name as the key */
-            if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(ompi_common_monitoring_translation_ht,
-                                                                 key, (void*)(uintptr_t)peer_rank) ) {
-                return OMPI_ERR_OUT_OF_RESOURCE;  /* failed to allocate memory or growing the hash table */
-            }
-            break;
+        key = *((uint64_t*)&tmp);
+        /* save the rank of the process in MPI_COMM_WORLD in the hash using the proc_name as the key */
+        if( OPAL_SUCCESS != opal_hash_table_set_value_uint64(ompi_common_monitoring_translation_ht,
+                                                             key, (void*)(uintptr_t)peer_rank) ) {
+            return OMPI_ERR_OUT_OF_RESOURCE;  /* failed to allocate memory or growing the hash table */
         }
     }
     return OMPI_SUCCESS;
