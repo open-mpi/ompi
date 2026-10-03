@@ -111,10 +111,17 @@ if (0 != mpit_initialization_state.failure_code) {
     local_failure = 3;
 } else if (mpit_initialization_state.calls < 1) {
     local_failure = 4;
-} else if (0 == mpit_initialization_state.instance_id) {
-    /* The instance_id should be non-zero (it is an ABI-independent correlation
-       token, not converted). */
-    fprintf(stderr, "ABI_FAIL:mpit:session_instance_id:0\n");
+} else if (mpit_initialization_state.instance_id !=
+           (uint64_t) (uintptr_t) session) {
+    /* For the session model the instance *is* the MPI_Session, so the raise
+       site in instance.c publishes the Standard-ABI session handle (converted
+       via ompi_mpit_abi_handle()), which must equal the handle MPI_Session_init
+       returned.  (Only the world model publishes an unconverted correlation
+       token.)  A mismatch means the internal ompi_instance_t pointer, or a
+       zero fallback, leaked through. */
+    fprintf(stderr, "ABI_FAIL:mpit:session_instance_id:%llu:expected_%llu\n",
+            (unsigned long long) mpit_initialization_state.instance_id,
+            (unsigned long long) (uintptr_t) session);
     local_failure = 5;
 } else if (1 != mpit_initialization_state.model) {
     /* The model should be 1 (OMPI_T_MODEL_SESSION) for MPI_Session_init. */
