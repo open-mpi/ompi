@@ -30,6 +30,8 @@
 
 #include "ompi_config.h"
 
+#include "opal/include/opal/sys/atomic.h"
+
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
 #include "ompi/file/file.h"
@@ -70,19 +72,39 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         case OMPI_ERRHANDLER_TYPE_INSTANCE: object_bind = MPI_T_BIND_MPI_SESSION; break;
         default:                            object_bind = MPI_T_BIND_NO_OBJECT;   break;
         }
-        payload.err_code = (int32_t) err_code;
-        payload.object_type = object_bind;
-        /* XXX ABI: the MPI_Errhandler handle and the invoking object's handle
-           must match the registering MPI_T tool's ABI (ompi_mpit_callback_abi). */
-        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+        /* The MPI_Errhandler handle and the invoking object's handle must match
+           the registering MPI_T tool's ABI (ompi_mpit_callback_abi).  So must
+           the err_code and object_type integer values, whose encodings differ
+           between the two ABIs.  Load with read barrier to synchronize with the
+           write barrier in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
+        if (OMPI_MPIT_ABI_OMPI == abi) {
+            /* Open MPI ABI: publish internal representations directly. */
+            payload.err_code = (int32_t) err_code;
+            payload.object_type = object_bind;
             payload.errhandler_handle = (uint64_t) (uintptr_t) errhandler;
             payload.object_handle = (uint64_t) (uintptr_t) mpi_object;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle values -- the
-               MPI_Errhandler, and mpi_object converted per object_type
-               (MPI_Comm / MPI_Win / MPI_File / MPI_Session). */
-            payload.errhandler_handle = 0;
-            payload.object_handle = 0;
+            /* MPI Standard ABI: publish integer handles and Standard-ABI
+               integer values.  The err_code and object_type integer values
+               have different encodings in the Standard ABI (roughly a third of
+               the MPI_ERR_* space differs, and MPI_T_BIND_* values are
+               internal+1), so convert them along with the handles.  The
+               errhandler is converted as an MPI_Errhandler; the invoking object
+               is converted per its binding kind (MPI_Comm / MPI_Win / MPI_File /
+               MPI_Session).  An object with no binding (e.g. a predefined
+               handler routed before MPI_INIT) has object_bind == NO_OBJECT and
+               a 0 object_handle, matching the Open MPI ABI's "0 when not
+               available" behavior. */
+            payload.err_code = ompi_mpit_abi_error((int32_t) err_code);
+            payload.object_type = ompi_mpit_abi_bind(object_bind);
+            payload.errhandler_handle
+                = ompi_mpit_abi_handle(errhandler, MPI_T_BIND_MPI_ERRHANDLER);
+            payload.object_handle
+                = (MPI_T_BIND_NO_OBJECT == object_bind)
+                      ? 0
+                      : ompi_mpit_abi_handle(mpi_object, object_bind);
         }
         mca_base_event_raise(ompi_event_errhandler_invoked, NULL, &payload);
     }
