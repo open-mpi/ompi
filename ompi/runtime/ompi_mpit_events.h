@@ -47,8 +47,9 @@ typedef enum {
 
    THREAD SAFETY: This variable is set once during initialization and read
    concurrently by event raise sites under MPI_THREAD_MULTIPLE. Access must
-   use OPAL atomic operations with proper memory ordering (write barrier before
-   store, read barrier after load). */
+   use OPAL atomic operations with proper memory ordering (write barrier then
+   opal_atomic_swap_32() to store, read barrier after load).  A plain
+   assignment is not an atomic access on every OPAL atomics backend. */
 OMPI_DECLSPEC extern opal_atomic_int32_t ompi_mpit_callback_abi;
 
 /* Convert an internal MPI object handle to the value an MPI Standard ABI

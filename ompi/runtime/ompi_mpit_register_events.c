@@ -30,8 +30,10 @@
    to OMPI_MPIT_ABI_STANDARD (open-mpi/ompi#13280).
 
    THREAD SAFETY: Accessed with OPAL atomic operations (read barrier after load
-   at raise sites, write barrier before store during initialization) to avoid
-   data races under MPI_THREAD_MULTIPLE. */
+   at raise sites; write barrier followed by opal_atomic_swap_32() to store
+   during initialization) to avoid data races under MPI_THREAD_MULTIPLE.  A
+   plain assignment is not an atomic access on every OPAL atomics backend
+   (e.g. the GCC-builtin backend types this as a bare volatile int32_t). */
 opal_atomic_int32_t ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
 
 /* Downward-installed converters from internal representations to MPI Standard
@@ -40,10 +42,12 @@ opal_atomic_int32_t ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
    ompi_mpit_register_abi_converters().  See the header for why this indirection
    is required (library layering).
 
-   THREAD SAFETY: The pointer is set once with a write barrier before the store,
-   before setting ompi_mpit_callback_abi to STANDARD, and read with a read barrier
-   after the load at raise sites.  The pointed-to struct is immutable after
-   initialization. Stored as opal_atomic_intptr_t and cast to/from pointer. */
+   THREAD SAFETY: The pointer is published with a write barrier followed by
+   opal_atomic_swap_ptr() (see the note on ompi_mpit_callback_abi above for why
+   a plain assignment is not enough), before setting ompi_mpit_callback_abi to
+   STANDARD, and read with a read barrier after the load at raise sites.  The
+   pointed-to struct is immutable after initialization.  Stored as
+   opal_atomic_intptr_t and cast to/from pointer. */
 static opal_atomic_intptr_t ompi_mpit_abi_converters_ptr = 0;
 
 void ompi_mpit_register_abi_converters(const struct ompi_mpit_abi_converters *converters)
@@ -52,7 +56,7 @@ void ompi_mpit_register_abi_converters(const struct ompi_mpit_abi_converters *co
        visible before the pointer becomes non-NULL.  The caller must ensure
        this is called BEFORE setting ompi_mpit_callback_abi to STANDARD. */
     opal_atomic_wmb();
-    ompi_mpit_abi_converters_ptr = (intptr_t) converters;
+    (void) opal_atomic_swap_ptr(&ompi_mpit_abi_converters_ptr, (intptr_t) converters);
 }
 
 uint64_t ompi_mpit_abi_handle(void *object, int handle_kind)

@@ -61,7 +61,7 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
     /* Write barrier before storing the ABI mode makes the converter set visible to
      * concurrent event producers under MPI_THREAD_MULTIPLE. */
     opal_atomic_wmb();
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
+    (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD);
 #endif
 
     if ( MPI_PARAM_CHECK ) {

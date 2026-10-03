@@ -1565,7 +1565,7 @@ INSTALLED_C_CALLBACK_PROBES = (
             "MPI_T_finalize",
             "MPI_T_init_thread",
         ),
-        "requires_feature": "mpit_events",
+        "requires_feature": ("mpit_events", "rma"),
         "skip_exit_codes": {
             77: SKIP_MPIT_EVENTS_UNAVAILABLE,
         },
@@ -1600,7 +1600,7 @@ INSTALLED_C_CALLBACK_PROBES = (
             "MPI_T_finalize",
             "MPI_T_init_thread",
         ),
-        "requires_feature": "mpit_events",
+        "requires_feature": ("mpit_events", "mpi_io"),
         "skip_exit_codes": {
             77: SKIP_MPIT_EVENTS_UNAVAILABLE,
         },
