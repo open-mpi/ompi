@@ -94,7 +94,7 @@ PROTOTYPE ERROR_CLASS init_thread(INT_OUT argc, ARGV argv, TS_LEVEL required,
     /* Write barrier before storing the ABI mode makes the converter set visible to
      * concurrent event producers under MPI_THREAD_MULTIPLE. */
     opal_atomic_wmb();
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
+    (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD);
 #endif
 
     /* Call the back-end initialization function (we need to put as
