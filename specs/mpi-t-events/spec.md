@@ -578,16 +578,22 @@ producer's responsibility, hence the per-raise-site branch.
   delivery isolation, the payload handle, and name re-query); plus
   smoke/self/reinit/inert tests.
 - **MPI Standard ABI coverage** (`ompi/test/mpi-abi/`, run by the ABI
-  harness): the `callback_mpit_event_handle` probe drives the
-  `ompi.mpi.communicator_created` event under a `libmpi_abi`-linked
-  process and asserts the payload handle is the Standard-ABI integer
-  handle of the new communicator (sec. 10), exercising the downward
-  converter registration and the raise-site conversion. Note this probe
-  is *not* object-bound, so it does not exercise the binding side: under
-  the Standard ABI, converting the tool's `obj_handle` in
-  `event_handle_alloc.c.in` remains deferred work (see sec. 10), so
-  object-bound delivery for predefined handles is not yet covered
-  end-to-end.
+  harness): a family of `callback_mpit_*` probes drive producers under a
+  `libmpi_abi`-linked process and assert that the payload values are the
+  Standard-ABI encodings (sec. 10), exercising the downward converter
+  registration and the raise-site conversion for each converter arm:
+  `callback_mpit_event_handle` (`communicator_created` handle of a new
+  communicator, plus `errhandler_invoked` on `MPI_COMM_SELF` checking the
+  handle, error code, and bind kind), `callback_mpit_event_handle_init` /
+  `_init_thread` / `_session` (`initialization` payload `thread_level`
+  and, for the session model, the `MPI_Session` handle),
+  `callback_mpit_win_created` (`win_created` handle),
+  `callback_mpit_errhandler_file` / `_session` (`errhandler_invoked` with
+  `MPI_File` / `MPI_Session` handles and bind kinds). The binding side is
+  covered by the `mpit_obj_handle_predefined` probe (`cases/c-abi/`),
+  which allocates an object-bound handle on a predefined Standard-ABI
+  handle and relies on the generated binding's `obj_handle` conversion
+  (sec. 10).
 
 ---
 

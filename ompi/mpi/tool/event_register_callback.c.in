@@ -67,10 +67,10 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
     /* Write barrier before storing the ABI mode makes the converter set visible to
      * concurrent event producers under MPI_THREAD_MULTIPLE. */
     opal_atomic_wmb();
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_STANDARD;
+    (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD);
 #else
     opal_atomic_wmb();
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
+    (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_OMPI);
 #endif
 
     /* MPI_Info is an ompi_info_t whose first member is an opal_info_t. */
