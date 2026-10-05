@@ -14,6 +14,7 @@
  * Copyright (c) 2011-2012 Universite Bordeaux 1
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,6 +98,26 @@
 #define OMPI_F2C_UNWEIGHTED(addr)  (OMPI_IS_FORTRAN_UNWEIGHTED(addr) ? MPI_UNWEIGHTED : (addr))
 #define OMPI_F2C_WEIGHTS_EMPTY(addr)  (OMPI_IS_FORTRAN_WEIGHTS_EMPTY(addr) ? MPI_WEIGHTS_EMPTY : (addr))
 #define OMPI_F2C_BUFFER_AUTOMATIC(addr) (OMPI_IS_FORTRAN_BUFFER_AUTOMATIC(addr) ? MPI_BUFFER_AUTOMATIC : (addr))
+
+/* Did a multiple-completion call leave its output arguments usable?
+ *
+ * MPI-4.1 sec. 3.7.5: a call that reports MPI_ERR_IN_STATUS has
+ * completed every operation -- some successfully, some not -- and
+ * reports the individual failures only through the statuses.  Its
+ * outcount, indices and statuses are therefore all valid, and a Fortran
+ * binding that skips converting them back leaves the caller with no way
+ * to discover which request failed.  Any other error code does leave
+ * the output arguments undefined.
+ *
+ * Only MPI_WAITALL, MPI_WAITSOME, MPI_TESTALL and MPI_TESTSOME can
+ * report MPI_ERR_IN_STATUS: they are the ones handing back an array of
+ * statuses to carry the per-request errors.  The single-status calls
+ * (MPI_WAIT, MPI_TEST, MPI_WAITANY, MPI_TESTANY) return the failing
+ * request's own error class directly, so they must keep testing for
+ * MPI_SUCCESS alone.
+ */
+#define OMPI_FORTRAN_COMPLETION_OUTPUTS_VALID(c_ierr) \
+    (MPI_SUCCESS == (c_ierr) || MPI_ERR_IN_STATUS == (c_ierr))
 
 #endif /* OMPI_BUILD_FORTRAN_BINDINGS */
 

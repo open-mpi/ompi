@@ -12,6 +12,7 @@
  * Copyright (c) 2010-2018 Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,7 +89,15 @@ void ompi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     if (OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_of_errcodes)) {
         c_errs = MPI_ERRCODES_IGNORE;
     } else {
-        OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_errcodes, OMPI_FINT_2_INT(*maxprocs));
+        /* Seed the temporary from the caller's array rather than just
+           allocating it: MPI_Comm_spawn leaves the error codes untouched
+           when it fails a parameter check, and the copy back below cannot
+           tell that case apart from a failure of the spawn itself, which
+           does fill them in.  Starting from the caller's own values makes
+           the copy back a no-op in the former case, so the caller's array
+           survives unchanged the way it does when a Fortran INTEGER is
+           the same size as a C int and no temporary is used at all. */
+        OMPI_ARRAY_FINT_2_INT(array_of_errcodes, OMPI_FINT_2_INT(*maxprocs));
         c_errs = OMPI_ARRAY_NAME_CONVERT(array_of_errcodes);
     }
 
