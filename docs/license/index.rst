@@ -18,10 +18,12 @@ the Open MPI Project under the
 <https://creativecommons.org/licenses/by/4.0/>`_.
 
 This license applies to documentation prose and original documentation
-artwork.  It does not apply to Open MPI software source code, source-code
-listings or examples that reproduce software code, or third-party material
-that is identified as being subject to other terms.  Those materials remain
-subject to their stated licenses.
+artwork.  It does not apply to code samples, whether original or reproduced:
+all code samples in the documentation are licensed under the Open MPI software
+license (BSD-3-Clause-Open-MPI), consistent with Creative Commons guidance
+that CC licenses are not suitable for software.  Third-party material that is
+identified as being subject to other terms remains subject to its stated
+license.
 
 Additional licenses
 -------------------

@@ -200,8 +200,9 @@ International License.  By adding a Signed-off-by line, a contributor
 certifies that they have the right to submit the documentation under that
 license.
 
-Code contributions remain subject to the Open MPI software license.  A
-contribution containing both documentation and code is licensed accordingly.
+Code contributions remain subject to the Open MPI software license.  This
+includes all code samples in the documentation, whether original or reproduced.
+A contribution containing both documentation and code is licensed accordingly.
 
 Closed source contributions
 ---------------------------
