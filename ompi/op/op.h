@@ -163,9 +163,6 @@ struct ompi_op_t {
         ompi_op_fortran_handler_bc_fn_t *fort_fn_bc;
     } o_func;
 
-    /** 3-buffer functions, which is only for intrinsic ops.  No need
-        for the C/C++/Fortran user-defined functions. */
-    ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
     ompi_op_type_convert_to_abi_fn_t o_datatype_converter;
 };
 
@@ -592,90 +589,6 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
         op->o_func.c_fn_bc(source, target, &full_count, &dtype);
     }
     return;
-}
-
-static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, void * restrict source2,
-                                       void * restrict result, size_t full_count, struct ompi_datatype_t *dtype)
-{
-    ompi_datatype_copy_content_same_ddt (dtype, full_count, (char*)result, (char*)source1);
-    /*
-     * MPI-5 ABI: see if we need to translate the datatype
-     */
-    if (NULL != op->o_datatype_converter) {
-        dtype = op->o_datatype_converter(dtype);
-    }
-    if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {
-        assert(full_count <= INT_MAX);
-        int count = (int)full_count;  /* protected by loop in only caller of this function */
-        op->o_func.c_fn (source2, result, &count, &dtype);
-    } else {
-        op->o_func.c_fn_bc (source2, result, &full_count, &dtype);
-    }
-}
-
-/**
- * Perform a reduction operation.
- *
- * @param op The operation (IN)
- * @param source Source1 (input) buffer (IN)
- * @param source Source2 (input) buffer (IN)
- * @param target Target (output) buffer (IN/OUT)
- * @param count Number of elements (IN)
- * @param dtype MPI datatype (IN)
- *
- * @returns void As with MPI user-defined reduction functions, there
- * is no return code from this function.
- *
- * Perform a reduction operation with count elements of type dtype in
- * the buffers source and target.  The target buffer obtains the
- * result (i.e., the original values in the target buffer are reduced
- * with the values in the source buffer and the result is stored in
- * the target buffer).
- *
- * Otherwise, this function is the same as ompi_op_reduce.
- */
-static inline void ompi_3buff_op_reduce(ompi_op_t * op, void *source1,
-                                        void *source2, void *target,
-                                        size_t full_count, ompi_datatype_t * dtype)
-{
-    void *restrict src1;
-    void *restrict src2;
-    void *restrict tgt;
-    src1 = source1;
-    src2 = source2;
-    tgt = target;
-
-    if(OPAL_UNLIKELY((full_count > INT_MAX) &&
-        (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)))) {
-        size_t done_count = 0, shift, iter_count;
-        ptrdiff_t ext, lb;
-
-        ompi_datatype_get_extent(dtype, &lb, &ext);
-
-        while(done_count < full_count) {
-            if(done_count + INT_MAX > full_count) {
-                iter_count = full_count - done_count;
-            } else {
-                iter_count = INT_MAX;
-            }
-            shift = done_count * ext;
-            // Recurse one level in iterations of 'int'
-            ompi_3buff_op_reduce(op, (char*)source1 + shift, (char *)source2 + shift,
-                                (char*)target + shift, iter_count, dtype);
-            done_count += iter_count;
-        }
-        return;
-    }
-
-    if (OPAL_LIKELY(ompi_op_is_intrinsic (op))) {
-        int count = (int)full_count;
-        op->o_3buff_intrinsic.fns[ompi_op_ddt_map[dtype->id]](src1, src2,
-                                                              tgt, &count,
-                                                              &dtype,
-                                                              op->o_3buff_intrinsic.modules[ompi_op_ddt_map[dtype->id]]);
-    } else {
-        ompi_3buff_op_user (op, src1, src2, tgt, full_count, dtype);
-    }
 }
 
 END_C_DECLS

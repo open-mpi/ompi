@@ -132,11 +132,12 @@ static inline int mca_coll_acoll_reduce_smsc_h(const void *sbuf, void *rbuf, siz
                            (char *) tmp_rbuf + chunk * l1_local_rank * dsize, my_count_size, dtype);
         }
     } else {
-        ompi_3buff_op_reduce(op,
-                             (char *) data->smsc_saddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
-                             (char *) tmp_sbuf + chunk * l1_local_rank * dsize,
-                             (char *) data->smsc_raddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
-                             my_count_size, dtype);
+        memcpy((char *) data->smsc_raddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
+               (char *) data->smsc_saddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
+               my_count_size * dsize);
+        ompi_op_reduce(op, (char *) tmp_sbuf + chunk * l1_local_rank * dsize,
+                       (char *) data->smsc_raddr[l1_gp[0]] + chunk * l1_local_rank * dsize,
+                       my_count_size, dtype);
         for (int i = 1; i < l1_gp_size; i++) {
             if (i == l1_local_rank) {
                 continue;
@@ -259,9 +260,10 @@ static inline int mca_coll_acoll_allreduce_smsc_f(const void *sbuf, void *rbuf, 
             memcpy(tmp_rbuf, tmp_sbuf, my_count_size * dsize);
         }
     } else {
-        ompi_3buff_op_reduce(op, (char *) data->smsc_saddr[0] + chunk * rank * dsize,
-                             (char *) tmp_sbuf + chunk * rank * dsize,
-                             (char *) tmp_rbuf + chunk * rank * dsize, my_count_size, dtype);
+        memcpy((char *) tmp_rbuf + chunk * rank * dsize,
+               (char *) data->smsc_saddr[0] + chunk * rank * dsize, my_count_size * dsize);
+        ompi_op_reduce(op, (char *) tmp_sbuf + chunk * rank * dsize,
+                       (char *) tmp_rbuf + chunk * rank * dsize, my_count_size, dtype);
     }
 
     err = ompi_coll_base_barrier_intra_tree(comm, module);
