@@ -845,8 +845,11 @@ static void xhc_allreduce_do_reduce(xhc_comm_t *xc, xhc_rq_item_t *member_item,
 
     xhc_atomic_rmb();
 
-    if(src2) {ompi_3buff_op_reduce(op, src2, src, dst, elements, dtype);}
-    else {ompi_op_reduce(op, src, dst, elements, dtype);}
+    /* src2, when set, is known to be distinct from dst (see above), so
+     * seed dst with it and let the two-buffer reduction accumulate src
+     * on top -- the same dst = src2 op src the three-buffer call did. */
+    if(src2) {memcpy(dst, src2, elements * dtype_size);}
+    ompi_op_reduce(op, src, dst, elements, dtype);
 
     // ---
 

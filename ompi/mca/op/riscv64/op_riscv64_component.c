@@ -141,8 +141,6 @@ static int mca_op_riscv64_component_init_query(bool enable_progress_threads,
 #if OMPI_MCA_OP_HAVE_RVV
 extern ompi_op_base_handler_fn_t
 ompi_op_riscv64_functions_rvv[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
-extern ompi_op_base_3buff_handler_fn_t
-ompi_op_riscv64_3buff_functions_rvv[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 #endif  /* OMPI_MCA_OP_HAVE_RVV */
 
 /*
@@ -170,11 +168,9 @@ static struct ompi_op_base_module_1_0_0_t *
         module = OBJ_NEW(ompi_op_base_module_t);
         for (int i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
             module->opm_fns[i] = NULL;
-            module->opm_3buff_fns[i] = NULL;
 #if OMPI_MCA_OP_HAVE_RVV
             if( mca_op_riscv64_component.hardware_available ) {
                 module->opm_fns[i] = ompi_op_riscv64_functions_rvv[op->o_f_to_c_index][i];
-                module->opm_3buff_fns[i] = ompi_op_riscv64_3buff_functions_rvv[op->o_f_to_c_index][i];
             }
 #endif  /* OMPI_MCA_OP_HAVE_RVV */
         }

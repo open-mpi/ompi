@@ -153,14 +153,10 @@ static int mca_op_aarch64_component_init_query(bool enable_progress_threads,
 #if OMPI_MCA_OP_HAVE_NEON
 extern ompi_op_base_handler_fn_t
 ompi_op_aarch64_functions_neon[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
-extern ompi_op_base_3buff_handler_fn_t
-ompi_op_aarch64_3buff_functions_neon[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 #endif  /* OMPI_MCA_OP_HAVE_NEON */
 #if OMPI_MCA_OP_HAVE_SVE
 extern ompi_op_base_handler_fn_t
 ompi_op_aarch64_functions_sve[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
-extern ompi_op_base_3buff_handler_fn_t
-ompi_op_aarch64_3buff_functions_sve[OMPI_OP_BASE_FORTRAN_OP_MAX][OMPI_OP_BASE_TYPE_MAX];
 #endif  /* OMPI_MCA_OP_HAVE_SVE */
 
 /*
@@ -190,20 +186,15 @@ static struct ompi_op_base_module_1_0_0_t *
     case OMPI_OP_BASE_FORTRAN_BXOR:
         for (int i = 0; i < OMPI_OP_BASE_TYPE_MAX; ++i) {
             module->opm_fns[i] = NULL;
-            module->opm_3buff_fns[i] = NULL;
 #if OMPI_MCA_OP_HAVE_SVE
             if( mca_op_aarch64_component.hardware_available & 2 ) {
                 module->opm_fns[i] = ompi_op_aarch64_functions_sve[op->o_f_to_c_index][i];
-                module->opm_3buff_fns[i] = ompi_op_aarch64_3buff_functions_sve[op->o_f_to_c_index][i];
             }
 #endif  /* OMPI_MCA_OP_HAVE_SVE */
 #if OMPI_MCA_OP_HAVE_NEON
             if( mca_op_aarch64_component.hardware_available & 1 ) {
                 if( NULL == module->opm_fns[i] ) {
                     module->opm_fns[i] = ompi_op_aarch64_functions_neon[op->o_f_to_c_index][i];
-                }
-                if( NULL == module->opm_3buff_fns[i] ) {
-                    module->opm_3buff_fns[i] = ompi_op_aarch64_3buff_functions_neon[op->o_f_to_c_index][i];
                 }
             }
 #endif  /* OMPI_MCA_OP_HAVE_NEON */
