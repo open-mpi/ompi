@@ -107,10 +107,10 @@ target
    version of the reduction routine being called. When calling from C,
    refer to the SYNOPSIS section for data type information.
 
-When calling from Fortran, the target data types are as follows:
+   When calling from Fortran, the target data types are as follows:
 
    shmem_comp8_max_to_all: Complex, with an element size equal to two
-      8-byte real values.
+   8-byte real values.
 
    shmem_int4_max_to_all: Integer, with an element size of 4 bytes.
 

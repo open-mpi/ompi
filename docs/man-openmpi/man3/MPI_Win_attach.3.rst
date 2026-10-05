@@ -63,7 +63,7 @@ Fortran 2008 Syntax
 
 INPUT PARAMETERS
 ----------------
-* ``win``: A window that was created with *MPI_Win_create_dynamic*
+* ``win``: A window that was created with :ref:`MPI_Win_create_dynamic`
 * ``base``: Initial address of window (choice).
 * ``size``: Size of window in bytes (nonnegative integer).
 

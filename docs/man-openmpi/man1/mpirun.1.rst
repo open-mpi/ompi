@@ -121,8 +121,8 @@ OPTIONS (OLD / HARD-CODED CONTENT |mdash| TO BE AUDITED
 
 mpirun will send the name of the directory where it was invoked on the
 local node to each of the remote nodes, and attempt to change to that
-directory.  See the "Current Working Directory" section below for
-further details.
+directory.  See the :ref:`man1-mpirun-current-working-directory`
+section below for further details.
 
 * ``<program>``: The program executable. This is identified as the
   first non-recognized argument to mpirun.

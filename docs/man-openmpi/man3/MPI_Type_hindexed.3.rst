@@ -44,7 +44,7 @@ INPUT PARAMETERS
 ----------------
 * ``count``: Number of blocks |mdash| also number of entries in array_of_displacements and array_of_blocklengths (integer).
 * ``array_of_blocklengths``: Number of elements in each block (array of nonnegative integers).
-* ``array_of_displacements``: Byte displacement of each block (C: array of *MPI_Aint*, Fortran: array of integer).
+* ``array_of_displacements``: Byte displacement of each block (C: array of ``MPI_Aint``, Fortran: array of integer).
 * ``oldtype``: Old datatype (handle).
 
 OUTPUT PARAMETERS

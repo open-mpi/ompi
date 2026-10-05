@@ -70,7 +70,7 @@ MPI API behaviors that can be used with ``configure``:
   comma-delimited list of extensions.  If no ``LIST`` is specified, all
   of the extensions are enabled.
 
-  See the "Open MPI API Extensions" section for more details.
+  See :ref:`ompi-features-extensions-label` for more details.
 
 * ``--disable-mpi-io``:
   Disable built-in support for MPI-2 I/O, likely because an
