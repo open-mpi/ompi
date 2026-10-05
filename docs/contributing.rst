@@ -92,18 +92,21 @@ Contributor's Declaration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In order to ensure that we can keep distributing Open MPI under our
-:doc:`open source license </license/index>`, we need to ensure that
-all contributions are compatible with that license.  Put differently:
+:doc:`open source licenses </license/index>`, we need to ensure that
+all contributions are compatible with those licenses.  Put differently:
 we need to have an established intellectual property pedigree of the
-code in Open MPI.  This means being able to ensure that all code
-included in Open MPI is free, open source, and able to be distributed
-under :doc:`the BSD 3 clause Open MPI variant license </license/index>`.
+code and documentation in Open MPI.  This means being able to ensure
+that all contributions are free, open source, and able to be distributed
+under the applicable Open MPI licenses: :doc:`the BSD 3 clause Open MPI
+variant license </license/index>` for code and code samples, and the
+Creative Commons Attribution 4.0 International License for documentation
+prose and artwork.
 
 Open MPI has therefore adopted requirements based on the signed-off-by
 process as described in Section 11 of the Linux kernel document on
 `Submitting Patches
 <https://www.kernel.org/doc/html/latest/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin>`_.
-Each proposed contribution to the Open MPI code base must include the
+Each proposed contribution to the Open MPI project must include the
 text ``Signed-off-by:`` followed by the contributor's name and email
 address.
 
@@ -121,16 +124,17 @@ and indicates agreement to the Developer's Certificate of Origin:
     By making a contribution to this project, I certify that:
 
     #. The contribution was created in whole or in part by me and I
-       have the right to submit it under the :doc:`Open MPI open
-       source license </license/index>`; or
+       have the right to submit it under the applicable Open MPI
+       :doc:`license </license/index>` (the Open MPI software license
+       for code and code samples, CC BY 4.0 for documentation prose
+       and artwork); or
 
     #. The contribution is based upon previous work that, to the best
        of my knowledge, is covered under an appropriate open source
        license and I have the right under that license to submit that
        work with modifications, whether created in whole or in part by
-       me, under the :doc:`Open MPI open source license
-       </license/index/>` (unless I am permitted to submit under a
-       different license); or
+       me, under the applicable Open MPI :doc:`license </license/index>`
+       (unless I am permitted to submit under a different license); or
 
     #. The contribution was provided directly to me by some other
        person who certified (1) or (2) and I have not modified it.
@@ -196,13 +200,15 @@ Documentation contributions
 
 Documentation contributions, including prose and original documentation
 artwork, are submitted under the Creative Commons Attribution 4.0
-International License.  By adding a Signed-off-by line, a contributor
-certifies that they have the right to submit the documentation under that
-license.
+International License.  Code contributions remain subject to the Open MPI
+software license.  This includes all code samples in the documentation,
+whether original or reproduced.  A contribution containing both
+documentation and code is licensed accordingly.
 
-Code contributions remain subject to the Open MPI software license.  This
-includes all code samples in the documentation, whether original or reproduced.
-A contribution containing both documentation and code is licensed accordingly.
+By adding a Signed-off-by line, a contributor certifies that they have
+the right to submit the contribution under the applicable license, as
+described in the :ref:`Contributor's Declaration
+<contributing-contributors-declaration-label>` above.
 
 Closed source contributions
 ---------------------------
