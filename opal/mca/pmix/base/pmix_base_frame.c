@@ -6,6 +6,7 @@
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2026      Nanook Consulting  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,6 +39,7 @@
 bool opal_pmix_collect_all_data = true;
 int opal_pmix_verbose_output = -1;
 bool opal_pmix_base_async_modex = true;
+opal_pmix_modex_not_ready_fn_t opal_pmix_modex_not_ready = NULL;
 opal_pmix_base_t opal_pmix_base = {.timeout = 0,
                                    .initialized = 0,
                                    .lock = {.mutex = OPAL_MUTEX_STATIC_INIT,

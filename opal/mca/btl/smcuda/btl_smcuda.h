@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2012-2023 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2024      Advanced Micro Devices, Inc. All Rights reserved.
  * $COPYRIGHT$
  *
@@ -378,7 +378,7 @@ extern int mca_btl_smcuda_finalize(struct mca_btl_base_module_t *btl);
 extern int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                                     struct opal_proc_t **procs,
                                     struct mca_btl_base_endpoint_t **peers,
-                                    struct opal_bitmap_t *reachability);
+                                    struct opal_bitmap_t *status);
 
 /**
  * PML->BTL notification of change in the process list.

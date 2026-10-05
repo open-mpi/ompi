@@ -18,6 +18,7 @@
  * Copyright (c) 2019      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -75,7 +76,7 @@ static int mca_btl_tcp_register_error_cb(struct mca_btl_base_module_t *btl,
 
 int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                           struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                          opal_bitmap_t *reachable)
+                          opal_bitmap_t *status)
 {
     mca_btl_tcp_module_t *tcp_btl = (mca_btl_tcp_module_t *) btl;
     const opal_proc_t *my_proc; /* pointer to caller's proc structure */
@@ -91,56 +92,41 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         struct opal_proc_t *opal_proc = procs[i];
         mca_btl_tcp_proc_t *tcp_proc;
         mca_btl_base_endpoint_t *tcp_endpoint;
-        bool existing_found = false;
 
-        /* Do not create loopback TCP connections */
+        /* Do not create loopback TCP connections. Final, so leave the
+         * default MCA_BTL_PROC_NOT_ELIGIBLE. */
         if (my_proc == opal_proc) {
             continue;
         }
 
-        if (NULL == (tcp_proc = mca_btl_tcp_proc_create(opal_proc))) {
+        if (NULL == (tcp_proc = mca_btl_tcp_proc_create(opal_proc, &rc))) {
+            if (OPAL_ERR_NOT_READY == rc) {
+                MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_NO_INFO);
+            }
             continue;
         }
 
+        /* The btl_proc datastructure is shared by all TCP BTL instances
+         * that are trying to reach this destination, and an endpoint on it
+         * may already have been built by an inbound connection the peer
+         * opened first, so ask for ours rather than assume it is absent.
+         */
         OPAL_THREAD_LOCK(&tcp_proc->proc_lock);
-
-        for (uint32_t j = 0; j < (uint32_t) tcp_proc->proc_endpoint_count; ++j) {
-            tcp_endpoint = tcp_proc->proc_endpoints[j];
-            if (tcp_endpoint->endpoint_btl == tcp_btl) {
-                existing_found = true;
-                break;
-            }
-        }
-
-        if (!existing_found) {
-            /* The btl_proc datastructure is shared by all TCP BTL
-             * instances that are trying to reach this destination.
-             * Cache the peer instance on the btl_proc.
-             */
-            tcp_endpoint = OBJ_NEW(mca_btl_tcp_endpoint_t);
-            if (NULL == tcp_endpoint) {
-                OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
-
-            tcp_endpoint->endpoint_btl = tcp_btl;
-            rc = mca_btl_tcp_proc_insert(tcp_proc, tcp_endpoint);
-            if (rc != OPAL_SUCCESS) {
-                OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
-                OBJ_RELEASE(tcp_endpoint);
-                continue;
-            }
-
-            OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
-            opal_list_append(&tcp_btl->tcp_endpoints, (opal_list_item_t *) tcp_endpoint);
-            OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
-        }
-
+        tcp_endpoint = mca_btl_tcp_proc_endpoint(tcp_proc, tcp_btl, &rc);
         OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
 
-        if (NULL != reachable) {
-            opal_bitmap_set_bit(reachable, i);
+        if (NULL == tcp_endpoint) {
+            if (OPAL_ERR_OUT_OF_RESOURCE == rc) {
+                return rc;
+            }
+            /* We have the peer's addresses and no interface matches,
+             * so this is final: leave MCA_BTL_PROC_NOT_ELIGIBLE. */
+            continue;
         }
+
+        /* The socket opens on the first send and this module queues what
+         * it cannot write yet, so an endpoint is usable once it exists. */
+        MCA_BTL_PROC_STATUS_SET(status, i, MCA_BTL_PROC_CONNECTED);
 
         peers[i] = tcp_endpoint;
     }
@@ -149,31 +135,60 @@ int mca_btl_tcp_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
 }
 
 int mca_btl_tcp_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
-                          struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **endpoints)
+                          struct opal_proc_t **procs,
+                          struct mca_btl_base_endpoint_t **endpoints __opal_attribute_unused__)
 {
     mca_btl_tcp_module_t *tcp_btl = (mca_btl_tcp_module_t *) btl;
     size_t i;
 
-    OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
-    for (i = 0; i < nprocs; i++) {
-        opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t *) endpoints[i]);
-    }
-    OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
-
-    /* Release outside the mutex. The endpoint destructor reaches
-     * mca_btl_tcp_proc_remove() and so takes proc_lock, while
-     * mca_btl_tcp_add_procs() takes proc_lock before this mutex; holding
-     * both here in the opposite order is an ABBA against a concurrent
-     * wire-up of another proc on this module. Off the list, an endpoint
-     * is reachable only through the caller's array.
+    /* The endpoints argument is deliberately not read. mca_bml_r2_del_procs()
+     * files one endpoint in both its btl_send and its btl_rdma array and
+     * tells the two apart by comparing the slot it has already handed us,
+     * so it can ask twice for the same endpoint -- and the slot it
+     * compares is the one OBJ_RELEASE would have nullified. Taking the
+     * peer's proc as the authority instead makes this idempotent: a
+     * second ask finds no endpoint for this module and does nothing.
      *
-     * Release a copy: OBJ_RELEASE nullifies what it is handed, and
-     * mca_bml_r2_del_procs() still reads the slots afterwards, comparing
-     * them to its btl_rdma entries to know which endpoints it has
-     * already retired.
+     * That the proc can answer at all is what makes this work: an
+     * endpoint reaches no other data structure without first being
+     * recorded on its peer's proc by mca_btl_tcp_proc_insert(), so the
+     * proc knows every endpoint any caller could name, and knows which
+     * module each one belongs to.
      */
     for (i = 0; i < nprocs; i++) {
-        mca_btl_tcp_endpoint_t *tcp_endpoint = endpoints[i];
+        mca_btl_tcp_proc_t *tcp_proc = mca_btl_tcp_proc_peek(&procs[i]->proc_name);
+        mca_btl_base_endpoint_t *tcp_endpoint;
+
+        if (NULL == tcp_proc) {
+            continue; /* never wired to this peer */
+        }
+
+        /* proc_lock then tcp_endpoints_mutex, the order
+         * mca_btl_tcp_add_procs() establishes. Unlinking here rather
+         * than in the endpoint destructor is not a choice: the
+         * destructor does not know the module's list, so an endpoint
+         * released while still on it would leave mca_btl_tcp_finalize()
+         * draining freed memory.
+         */
+        OPAL_THREAD_LOCK(&tcp_proc->proc_lock);
+        tcp_endpoint = mca_btl_tcp_proc_find_endpoint(tcp_proc, tcp_btl);
+        if (NULL != tcp_endpoint) {
+            OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
+            opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t *) tcp_endpoint);
+            OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
+        }
+        OPAL_THREAD_UNLOCK(&tcp_proc->proc_lock);
+
+        if (NULL == tcp_endpoint) {
+            continue; /* this module's endpoint is already retired */
+        }
+
+        /* Released holding neither lock. The destructor reaches
+         * mca_btl_tcp_proc_remove(), which takes proc_lock, and on the
+         * proc's last endpoint releases the proc, whose destructor takes
+         * the component's tcp_lock; doing that from inside either lock
+         * is an ABBA against a concurrent wire-up on this module.
+         */
         OBJ_RELEASE(tcp_endpoint);
     }
     return OPAL_SUCCESS;
