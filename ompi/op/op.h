@@ -598,19 +598,9 @@ static inline void ompi_3buff_op_user (ompi_op_t *op, void * restrict source1, v
                                        void * restrict result, size_t full_count, struct ompi_datatype_t *dtype)
 {
     ompi_datatype_copy_content_same_ddt (dtype, full_count, (char*)result, (char*)source1);
-    /*
-     * MPI-5 ABI: see if we need to translate the datatype
-     */
-    if (NULL != op->o_datatype_converter) {
-        dtype = op->o_datatype_converter(dtype);
-    }
-    if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {
-        assert(full_count <= INT_MAX);
-        int count = (int)full_count;  /* protected by loop in only caller of this function */
-        op->o_func.c_fn (source2, result, &count, &dtype);
-    } else {
-        op->o_func.c_fn_bc (source2, result, &full_count, &dtype);
-    }
+    /* Let ompi_op_reduce dispatch to the C or Fortran callback (and
+     * handle the MPI-5 ABI datatype translation) */
+    ompi_op_reduce(op, source2, result, full_count, dtype);
 }
 
 /**
