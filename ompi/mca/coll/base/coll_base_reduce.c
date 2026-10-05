@@ -368,7 +368,7 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, size_t or
     }
     if( inbuf_free[0] != NULL ) free(inbuf_free[0]);
     if( inbuf_free[1] != NULL ) free(inbuf_free[1]);
-    if( accumbuf_free != NULL ) free(accumbuf);
+    if( accumbuf_free != NULL ) free(accumbuf_free);
     OPAL_OUTPUT (( ompi_coll_base_framework.framework_output,
                    "ERROR_HNDL: node %d file %s line %d error %d\n",
                    rank, __FILE__, line, ret ));
