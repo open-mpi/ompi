@@ -77,6 +77,7 @@ EXTRA_DIST         = \
         llms-src/openmpi-mpi-interface-guide.md \
         llms-src/openmpi-mpi-examples.md \
         llms-src/openmpi-runtime-introspection.md \
+        _templates/*.html \
         html \
         man \
         $(SPHINX_CONFIG) \
@@ -1123,6 +1124,7 @@ $(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
 $(ALL_MAN_BUILT): $(builddir)/schizo-ompi-rst-content/schizo-ompi-cli.rstxt
 $(ALL_MAN_BUILT): $(RST_SOURCE_FILES) $(IMAGE_SOURCE_FILES)
 $(ALL_MAN_BUILT): $(TEXT_SOURCE_FILES) $(SPHINX_CONFIG)
+$(ALL_MAN_BUILT): $(srcdir)/_templates/*.html
 $(ALL_MAN_BUILT): $(CODE_OF_CONDUCT_RST)
 $(ALL_MAN_BUILT): $(SENTINEL_OMPI_MAN3_BINDING)
 $(ALL_MAN_BUILT): $(SENTINEL_OMPI_LLM)
