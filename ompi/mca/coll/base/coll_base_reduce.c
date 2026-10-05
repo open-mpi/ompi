@@ -1253,7 +1253,7 @@ int ompi_coll_base_reduce_intra_knomial( const void *sendbuf, void *recvbuf,
     for (int i = 0; i < num_children; i++) {
         ompi_op_reduce(op,
                        child_buf_start + (ptrdiff_t)i * count * extent,
-                       reduce_buf,
+                       reduce_buf_start,
                        count,
                        datatype);
     }
