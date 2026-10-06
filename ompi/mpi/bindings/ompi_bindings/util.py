@@ -137,13 +137,47 @@ def indent_lines(lines, tab, start=0):
     return new_lines
 
 
-def mpi_fn_name_from_base_fn_name(name):
-    """Convert from a base name to the standard 'MPI_*' name."""
-    return f'MPI_{name.capitalize()}'
+# Prefix configuration mapping
+MPI_PREFIX_MAP = {
+    'mpi': {'prefix': 'MPI', 'capitalize': True},
+    'mpit': {'prefix': 'MPI_T', 'capitalize': False},
+    'mpix': {'prefix': 'MPIX', 'capitalize': True},
+}
 
+def mpi_fn_name_from_base_fn_name(name, prefix_type='mpi'):
+    """Convert from a base name to the appropriate MPI function name.
+
+    Args:
+        name: Base function name
+        prefix_type: One of 'mpi', 'mpit', or 'mpix' (default: 'mpi')
+
+    Returns:
+        Fully qualified MPI function name
+
+    Examples:
+        >>> mpi_fn_name_from_base_fn_name('init', 'mpi')
+        'MPI_Init'
+        >>> mpi_fn_name_from_base_fn_name('pvar_get_num', 'mpit')
+        'MPI_T_pvar_get_num'
+        >>> mpi_fn_name_from_base_fn_name('comm_agree', 'mpix')
+        'MPIX_Comm_agree'
+    """
+    if prefix_type not in MPI_PREFIX_MAP:
+        raise ValueError(f"Unknown prefix_type: {prefix_type}. "
+                        f"Must be one of {list(MPI_PREFIX_MAP.keys())}")
+
+    config = MPI_PREFIX_MAP[prefix_type]
+    base = name.capitalize() if config['capitalize'] else name
+    return f"{config['prefix']}_{base}"
+
+# Keep old functions as deprecated wrappers for backward compatibility
 def mpit_fn_name_from_base_fn_name(name):
-    """Convert from a base name to the standard 'MPI_T_*' name."""
-    return f'MPI_T_{name}'
+    """DEPRECATED: Use mpi_fn_name_from_base_fn_name(name, 'mpit') instead."""
+    return mpi_fn_name_from_base_fn_name(name, 'mpit')
+
+def mpix_fn_name_from_base_fn_name(name):
+    """DEPRECATED: Use mpi_fn_name_from_base_fn_name(name, 'mpix') instead."""
+    return mpi_fn_name_from_base_fn_name(name, 'mpix')
 
 def abi_internal_name(extname):
     """Convert from the ABI external name to an internal name.
