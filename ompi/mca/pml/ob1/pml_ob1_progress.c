@@ -42,7 +42,7 @@ static inline int mca_pml_ob1_process_pending_accelerator_async_copies(void)
     int progress, count = 0;
 
     do {
-        progress = mca_pml_ob1_progress_one_htod_event(&frag);
+        progress = mca_pml_ob1_progress_one_event(&frag);
         if (1 == progress) {
             /* Call the finish function to make progress. */
             mca_pml_ob1_recv_request_frag_copy_finished(NULL, NULL, frag, 0);

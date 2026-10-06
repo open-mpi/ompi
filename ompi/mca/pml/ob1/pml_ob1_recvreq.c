@@ -657,9 +657,11 @@ void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvr
     /* Store the amount of bytes in unused cbdata pointer */
     des->des_cbdata = (void *) (intptr_t) bytes_delivered;
     /* Then record an event that will get triggered by a PML progress call which
-     * checks the stream events.  If we get an error, abort.  Should get message
-     * from CUDA code about what went wrong. */
-    result = mca_pml_ob1_record_htod_event("pml", des);
+     * checks the stream events.  The data was unpacked onto the device via the
+     * host-to-device stream, so record the completion event against it.  If we
+     * get an error, abort.  Should get message from CUDA code about what went
+     * wrong. */
+    result = mca_pml_ob1_record_event("pml", des, mca_pml_ob1_get_htod_stream());
     if (OMPI_SUCCESS != result) {
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         ompi_rte_abort(-1, NULL);
@@ -746,6 +748,10 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         return;
     }
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+
+    if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
+        (void) mca_pml_ob1_accelerator_ensure_init();
+    }
 
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
@@ -924,8 +930,14 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
         (btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_RECV)) {
         opal_accelerator_stream_t *stream = mca_pml_ob1_get_htod_stream();
-        recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
-        recvreq->req_recv.req_base.req_convertor.stream = stream;
+        /* Only switch to asynchronous copies if the stream actually exists.
+         * Lazy init can fail (e.g. stream/event creation errors), in which
+         * case get_htod_stream() returns NULL; fall back to a synchronous
+         * copy rather than installing a NULL stream with the ASYNC flag. */
+        if (NULL != stream) {
+            recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
+            recvreq->req_recv.req_base.req_convertor.stream = stream;
+        }
     }
 }
 

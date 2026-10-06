@@ -923,8 +923,12 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
          * so adjust the convertor accordingly.  All the subsequent fragments will
          * use the asynchronous copy. */
         opal_accelerator_stream_t *stream = mca_pml_ob1_get_dtoh_stream();
-        sendreq->req_send.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
-        sendreq->req_send.req_base.req_convertor.stream = stream;
+        /* Fall back to a synchronous copy if lazy init failed and no stream
+         * is available, instead of installing a NULL stream. */
+        if (NULL != stream) {
+            sendreq->req_send.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
+            sendreq->req_send.req_base.req_convertor.stream = stream;
+        }
     }
 
     /* ensure all prior stores (copy_in_out, rdma_frag, throttle_sends,

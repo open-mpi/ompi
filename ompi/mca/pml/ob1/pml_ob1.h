@@ -99,6 +99,7 @@ extern mca_pml_ob1_t mca_pml_ob1;
 extern int mca_pml_ob1_output;
 extern bool mca_pml_ob1_matching_protection;
 extern int mca_pml_ob1_accelerator_events_max;
+extern int mca_pml_ob1_accelerator_events_batch;
 
 /*
  * PML interface functions.

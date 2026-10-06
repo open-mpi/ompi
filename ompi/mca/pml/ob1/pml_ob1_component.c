@@ -65,6 +65,7 @@ int mca_pml_ob1_output = 0;
 static int mca_pml_ob1_verbose = 0;
 bool mca_pml_ob1_matching_protection = false;
 int mca_pml_ob1_accelerator_events_max = 400;
+int mca_pml_ob1_accelerator_events_batch = 32;
 
 mca_pml_base_component_2_1_0_t mca_pml_ob1_component = {
     /* First, the mca_base_component_t struct containing meta
@@ -248,9 +249,37 @@ static int mca_pml_ob1_component_register(void)
 
     mca_pml_ob1_accelerator_events_max = 400;
     (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "accelerator_events_max",
-                                           "Number of events created by the ob1 component internally",
+                                           "Upper bound on the number of outstanding asynchronous "
+                                           "accelerator copies tracked by the ob1 component.  The "
+                                           "event pool starts empty and grows on demand (see "
+                                           "accelerator_events_batch) up to this cap; increase it if "
+                                           "the \"Out of event handles\" message appears.",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_ob1_accelerator_events_max);
+
+    mca_pml_ob1_accelerator_events_batch = 32;
+    (void) mca_base_component_var_register(&mca_pml_ob1_component.pmlm_version, "accelerator_events_batch",
+                                           "Number of accelerator events added each time the event "
+                                           "pool is grown on demand, up to the "
+                                           "accelerator_events_max cap.  Must be at least 1.",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY, &mca_pml_ob1_accelerator_events_batch);
+
+    /* The growth batch must be positive and no larger than the cap it grows
+     * up to; clamp a misconfigured value rather than risk never freeing a
+     * slot (batch < 1) or overshooting the cap. */
+    if (mca_pml_ob1_accelerator_events_batch < 1) {
+        opal_output_verbose(1, mca_pml_ob1_output,
+                            "pml_ob1_accelerator_events_batch must be positive; clamping %d to 1.",
+                            mca_pml_ob1_accelerator_events_batch);
+        mca_pml_ob1_accelerator_events_batch = 1;
+    }
+    if (mca_pml_ob1_accelerator_events_batch > mca_pml_ob1_accelerator_events_max) {
+        opal_output_verbose(1, mca_pml_ob1_output,
+                            "pml_ob1_accelerator_events_batch (%d) exceeds pml_ob1_accelerator_events_max (%d); clamping to the cap.",
+                            mca_pml_ob1_accelerator_events_batch, mca_pml_ob1_accelerator_events_max);
+        mca_pml_ob1_accelerator_events_batch = mca_pml_ob1_accelerator_events_max;
+    }
 
     return OMPI_SUCCESS;
 }
