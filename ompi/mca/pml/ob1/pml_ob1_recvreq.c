@@ -657,9 +657,11 @@ void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvr
     /* Store the amount of bytes in unused cbdata pointer */
     des->des_cbdata = (void *) (intptr_t) bytes_delivered;
     /* Then record an event that will get triggered by a PML progress call which
-     * checks the stream events.  If we get an error, abort.  Should get message
-     * from CUDA code about what went wrong. */
-    result = mca_pml_ob1_record_htod_event("pml", des);
+     * checks the stream events.  The data was unpacked onto the device via the
+     * host-to-device stream, so record the completion event against it.  If we
+     * get an error, abort.  Should get message from CUDA code about what went
+     * wrong. */
+    result = mca_pml_ob1_record_event("pml", des, mca_pml_ob1_get_htod_stream());
     if (OMPI_SUCCESS != result) {
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         ompi_rte_abort(-1, NULL);

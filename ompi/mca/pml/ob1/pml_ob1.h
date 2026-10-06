@@ -92,8 +92,6 @@ struct mca_pml_ob1_t {
     unsigned int unexpected_limit;
     /* Accelerator support initialized */
     bool accelerator_enabled;
-    /* Defer stream/event creation to first device buffer use */
-    bool accelerator_lazy_init;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t;
 
@@ -101,6 +99,7 @@ extern mca_pml_ob1_t mca_pml_ob1;
 extern int mca_pml_ob1_output;
 extern bool mca_pml_ob1_matching_protection;
 extern int mca_pml_ob1_accelerator_events_max;
+extern int mca_pml_ob1_accelerator_events_batch;
 
 /*
  * PML interface functions.
