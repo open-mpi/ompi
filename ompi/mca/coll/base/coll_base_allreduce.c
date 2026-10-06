@@ -21,6 +21,7 @@
  * Copyright (c)           Amazon.com, Inc. or its affiliates.
  *                         All rights reserved.
  * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Stony Brook University.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1307,10 +1308,14 @@ int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf
                                        comm, comm->c_coll->coll_allgather_module);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-    for (int target = 1; target < size; target++) {
+    // reduce in rank order, as required for non-commutative operations:
+    // ompi_op_reduce computes target = source op target, so accumulate into
+    // the last block, i.e., x_0 op (x_1 op (... op x_{size-1}))
+    char *result = partial_buf_start + (ptrdiff_t)(size - 1) * count * extent;
+    for (int source = size - 2; source >= 0; source--) {
         ompi_op_reduce(op,
-                       partial_buf_start + (ptrdiff_t)target * count * extent,
-                       partial_buf_start,
+                       partial_buf_start + (ptrdiff_t)source * count * extent,
+                       result,
                        count,
                        dtype);
     }
@@ -1318,7 +1323,7 @@ int ompi_coll_base_allreduce_intra_allgather_reduce(const void *sbuf, void *rbuf
     // move data to rbuf
     err = ompi_datatype_copy_content_same_ddt(dtype, count,
                                               (char*)rbuf,
-                                              (char*)partial_buf_start);
+                                              result);
     if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
     if (NULL != partial_buf) free(partial_buf);

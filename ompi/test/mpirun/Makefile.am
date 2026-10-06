@@ -1,6 +1,7 @@
 #
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 # Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2026      Stony Brook University.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -41,6 +42,7 @@
 #    job-level timeout kills it.
 
 EXTRA_DIST = \
+        allreduce_noncommute.c \
         async_modex_wireup.c \
         any_source_oneway.c \
         late_first_contact.c \
@@ -106,6 +108,12 @@ tcp_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) \
 ASYNC_MODEX = OMPI_MCA_pmix_base_async_modex=1
 DIRECT_MODEX = OMPI_MCA_pmix_base_async_modex=1 \
         OMPI_MCA_pmix_base_collect_data=0
+
+# Force one allreduce algorithm of the tuned component
+tuned_allreduce = --mca coll basic,self,tuned,libnbc \
+        --mca coll_tuned_use_dynamic_rules 1 --mca coll_tuned_allreduce_algorithm
+# tuned allreduce algorithms that must handle non-commutative operations
+NONCOMMUTE_ALLREDUCE_ALGORITHMS = 1 2 3 6 7
 
 # Run each wire-up test twice: once with only the shared memory BTL,
 # where a wire-up failure shows up as a prompt "unable to reach" abort,
@@ -222,10 +230,16 @@ check-mpirun:
 	    $(MPICC) -g "$(srcdir)/spawn_first_touch.c" -o spawn_first_touch; \
 	    echo "=== spawn first touch, direct modex ==="; \
 	    run env $(DIRECT_MODEX) $(spawn_runner) ./spawn_first_touch; \
+	    $(MPICC) -g "$(srcdir)/allreduce_noncommute.c" -o allreduce_noncommute; \
+	    for alg in $(NONCOMMUTE_ALLREDUCE_ALGORITHMS); do \
+	        echo "=== non-commutative allreduce, tuned algorithm $$alg ==="; \
+	        run $(oversub_runner) $(tuned_allreduce) $$alg ./allreduce_noncommute; \
+	    done; \
 	fi
 
 clean-local:
-	rm -rf async_modex_wireup async_modex_wireup.dSYM \
+	rm -rf allreduce_noncommute allreduce_noncommute.dSYM \
+	    async_modex_wireup async_modex_wireup.dSYM \
 	    any_source_oneway any_source_oneway.dSYM \
 	    late_first_contact late_first_contact.dSYM \
 	    session_first_touch session_first_touch.dSYM \
