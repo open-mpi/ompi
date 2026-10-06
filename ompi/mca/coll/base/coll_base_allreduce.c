@@ -290,8 +290,8 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
  *                   automatically segmented to segment of size M/N.
  *                   Algorithm requires 2*N - 1 steps.
  *
- *   Limitations:    The algorithm DOES NOT preserve order of operations so it
- *                   can be used only for commutative operations.
+ *   Limitations:    The algorithm DOES NOT preserve order of operations, so
+ *                   non-commutative operations fall back to recursive doubling.
  *                   In addition, algorithm cannot work if the total count is
  *                   less than size.
  *         Example on 5 nodes:
@@ -373,8 +373,10 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
         return MPI_SUCCESS;
     }
 
-    /* Special case for count less than size - use recursive doubling */
-    if (count < (size_t) size) {
+    /* Special case for count less than size and for non-commutative
+     * operations, which the ring would reduce out of order - use recursive
+     * doubling */
+    if (count < (size_t) size || !ompi_op_is_commute(op)) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring rank %d/%d, count %zu, switching to recursive doubling", rank, size, count));
         return (ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf,
                                                                   count,
@@ -559,8 +561,8 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
  *                   executed.
  *                   Algorithm requires (np + 1)*(N - 1) steps.
  *
- *   Limitations:    The algorithm DOES NOT preserve order of operations so it
- *                   can be used only for commutative operations.
+ *   Limitations:    The algorithm DOES NOT preserve order of operations, so
+ *                   non-commutative operations fall back to recursive doubling.
  *                   In addition, algorithm cannot work if the total size is
  *                   less than size * segment size.
  *         Example on 3 nodes with 2 phases
@@ -650,6 +652,14 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size
             if (ret < 0) { line = __LINE__; goto error_hndl; }
         }
         return MPI_SUCCESS;
+    }
+
+    /* The ring reduces out of order, so non-commutative operations need
+     * recursive doubling */
+    if (!ompi_op_is_commute(op)) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "coll:base:allreduce_ring_segmented rank %d/%d, count %zu, switching to recursive doubling", rank, size, count));
+        return ompi_coll_base_allreduce_intra_recursivedoubling(sbuf, rbuf, count, dtype, op,
+                                                                comm, module);
     }
 
     /* Determine segment count based on the suggested segment size */

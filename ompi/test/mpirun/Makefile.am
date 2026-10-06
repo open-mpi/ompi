@@ -112,8 +112,9 @@ DIRECT_MODEX = OMPI_MCA_pmix_base_async_modex=1 \
 # Force one allreduce algorithm of the tuned component
 tuned_allreduce = --mca coll basic,self,tuned,libnbc \
         --mca coll_tuned_use_dynamic_rules 1 --mca coll_tuned_allreduce_algorithm
-# tuned allreduce algorithms that must handle non-commutative operations
-NONCOMMUTE_ALLREDUCE_ALGORITHMS = 1 2 3 6 7
+# All tuned allreduce algorithms must handle non-commutative operations,
+# some by falling back to another algorithm
+NONCOMMUTE_ALLREDUCE_ALGORITHMS = 1 2 3 4 5 6 7
 
 # Run each wire-up test twice: once with only the shared memory BTL,
 # where a wire-up failure shows up as a prompt "unable to reach" abort,
