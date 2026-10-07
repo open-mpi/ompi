@@ -21,7 +21,11 @@ static int mca_smsc_accelerator_component_close(void);
 static int mca_smsc_accelerator_component_query(void);
 static mca_smsc_module_t *mca_smsc_accelerator_component_enable(void);
 
-#define MCA_SMSC_ACCELERATOR_DEFAULT_PRIORITY 0
+/* Above the host single-copy components (xpmem 42, cma 37) so that btl/sm selects this
+ * one whenever the accelerator supports IPC: host memory still goes to the best of those
+ * as the pass-through, and device memory gets IPC instead of staging through host memory.
+ * The component disqualifies itself when the accelerator has no IPC support. */
+#define MCA_SMSC_ACCELERATOR_DEFAULT_PRIORITY 50
 static const int mca_smsc_accelerator_default_priority = MCA_SMSC_ACCELERATOR_DEFAULT_PRIORITY;
 
 mca_smsc_accelerator_component_t mca_smsc_accelerator_component = {
