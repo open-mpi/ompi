@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2013 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# Copyright (c) 2009-2021 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
+# Copyright (c) 2012-2013 Inria.  All rights reserved.
+# Copyright (c) 2013-2018 Los Alamos National Security, LLC. All rights
+#                         reserved.
+# Copyright (c) 2015-2020 Research Organization for Information Science
+#                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
+#                         reserved.
+# Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
+# Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+#
+
+# ABI specific make components
+
+noinst_LTLIBRARIES += libmpiext_xcallbacks_abi.la libmpiext_xcallbacks_abi_profile.la
+
+$(abi_interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
+
+
+abi_interface_profile_sources = \
+        op_create_x_abi_generated.c
+
+libmpiext_xcallbacks_abi_la_SOURCES = \
+        $(abi_interface_profile_sources) \
+        $(ompi_HEADERS)
+
+libmpiext_xcallbacks_abi_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=0 -DOMPI_BUILD_STANDARD_ABI
+libmpiext_xcallbacks_abi_la_LDFLAGS = -module -avoid-version
+libmpiext_xcallbacks_abi_la_LIBADD = libmpiext_xcallbacks_abi_profile.la
+
+libmpiext_xcallbacks_abi_profile_la_SOURCES = \
+        $(abi_interface_profile_sources) \
+        $(ompi_HEADERS)
+
+libmpiext_xcallbacks_abi_profile_la_CPPFLAGS = -DOMPI_NO_MPI_PROTOTYPES -DOMPI_BUILD_MPI_PROFILING=1 -DOMPI_BUILD_STANDARD_ABI
+libmpiext_xcallbacks_abi_profile_la_LDFLAGS = -module -avoid-version
