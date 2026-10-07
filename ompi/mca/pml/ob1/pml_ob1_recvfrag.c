@@ -709,13 +709,9 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
     OB1_MATCHING_UNLOCK(&comm->matching_lock);
 
     if(OPAL_LIKELY(match)) {
-        bytes_received = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
-        /* We don't need to know the total amount of bytes we just received,
-         * but we need to know if there is any data in this message. The
-         * simplest way is to get the extra length from the first segment,
-         * and then add the number of remaining segments.
-         */
-        match->req_recv.req_bytes_packed = bytes_received + (num_segments-1);
+        bytes_received = mca_pml_ob1_compute_segment_length_base (segments, num_segments,
+                                                                  OMPI_PML_OB1_MATCH_HDR_LEN);
+        match->req_recv.req_bytes_packed = bytes_received;
 
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         if(match->req_bytes_expected > 0) {
@@ -732,11 +728,10 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
                                        match->req_recv.req_base.req_datatype);
                        );
 
-            iov[0].iov_len = bytes_received;
+            iov[0].iov_len = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
             iov[0].iov_base = (IOVBASE_TYPE*)((unsigned char*)segments->seg_addr.pval +
                                               OMPI_PML_OB1_MATCH_HDR_LEN);
             while (iov_count < num_segments) {
-                bytes_received += segments[iov_count].seg_len;
                 iov[iov_count].iov_len = segments[iov_count].seg_len;
                 iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segments[iov_count].seg_addr.pval);
                 iov_count++;
