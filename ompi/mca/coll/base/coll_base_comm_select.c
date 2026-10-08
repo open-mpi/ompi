@@ -221,6 +221,7 @@ static void mca_coll_base_print_component_names(ompi_communicator_t *comm)
 struct mca_coll_base_selection_t {
     ompi_communicator_t *comm;
     ompi_communicator_t *parent;
+    bool nonblocking;    /* no caller is blocked in this creation */
     struct mca_coll_base_selection_t *next;
 };
 
@@ -229,14 +230,16 @@ static struct mca_coll_base_selection_t *mca_coll_base_selections = NULL;
 
 static void mca_coll_base_selection_register(struct mca_coll_base_selection_t *sel,
                                              ompi_communicator_t *comm,
-                                             ompi_communicator_t *parent)
+                                             ompi_communicator_t *parent,
+                                             bool nonblocking)
 {
     sel->comm = comm;
     sel->parent = parent;
+    sel->nonblocking = nonblocking;
     sel->next = NULL;
 
-    /* No parent, nothing to publish: a lookup miss reports the same. */
-    if (NULL == parent) {
+    /* Nothing to publish: a lookup miss reports the same. */
+    if (NULL == parent && !nonblocking) {
         return;
     }
 
@@ -248,7 +251,7 @@ static void mca_coll_base_selection_register(struct mca_coll_base_selection_t *s
 
 static void mca_coll_base_selection_deregister(struct mca_coll_base_selection_t *sel)
 {
-    if (NULL == sel->parent) {
+    if (NULL == sel->parent && !sel->nonblocking) {
         return;
     }
 
@@ -280,6 +283,23 @@ ompi_communicator_t *mca_coll_base_comm_select_parent(ompi_communicator_t *comm)
     return parent;
 }
 
+bool mca_coll_base_comm_select_nonblocking(ompi_communicator_t *comm)
+{
+    bool nonblocking = false;
+
+    OPAL_THREAD_LOCK(&mca_coll_base_selection_lock);
+    for (struct mca_coll_base_selection_t *sel = mca_coll_base_selections;
+         NULL != sel; sel = sel->next) {
+        if (comm == sel->comm) {
+            nonblocking = sel->nonblocking;
+            break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_coll_base_selection_lock);
+
+    return nonblocking;
+}
+
 /*
  * This function is called at the initialization time of every
  * communicator.  It is used to select which coll component will be
@@ -287,7 +307,8 @@ ompi_communicator_t *mca_coll_base_comm_select_parent(ompi_communicator_t *comm)
  *
  * This selection logic is not for the weak.
  */
-int mca_coll_base_comm_select(ompi_communicator_t * comm, ompi_communicator_t * parent)
+int mca_coll_base_comm_select(ompi_communicator_t * comm, ompi_communicator_t * parent,
+                              bool nonblocking)
 {
     struct mca_coll_base_selection_t selection;
     opal_list_t *selectable;
@@ -305,8 +326,8 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm, ompi_communicator_t * 
     comm->c_coll = (mca_coll_base_comm_coll_t*)calloc(1, sizeof(mca_coll_base_comm_coll_t));
     comm->c_coll->coll_revoke_local = mca_coll_base_revoke_local;
 
-    /* Publish the parent for the duration of query and enable. */
-    mca_coll_base_selection_register(&selection, comm, parent);
+    /* Publish the parent and the activation mode for the duration of query and enable. */
+    mca_coll_base_selection_register(&selection, comm, parent, nonblocking);
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:base:comm_select: Checking all available modules");
