@@ -1000,6 +1000,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
 
         (*newcomm)->c_index_vec = (uint32_t *)calloc(comm_size, sizeof(uint32_t));
         if (NULL == (*newcomm)->c_index_vec) {
+            ompi_comm_request_return (request);    /* also releases the context */
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -1012,7 +1013,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
         /* Initialize the PML stuff in the newcomm  */
         if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
             OBJ_RELEASE(*newcomm);
-            OBJ_RELEASE(context);
+            ompi_comm_request_return (request);
             *newcomm = MPI_COMM_NULL;
             return ret;
         }
