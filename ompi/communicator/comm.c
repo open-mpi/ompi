@@ -1848,7 +1848,23 @@ struct ompi_comm_idup_with_info_context_t {
 };
 
 typedef struct ompi_comm_idup_with_info_context_t ompi_comm_idup_with_info_context_t;
-OBJ_CLASS_INSTANCE(ompi_comm_idup_with_info_context_t, opal_object_t, NULL, NULL);
+
+static void ompi_comm_idup_with_info_context_construct (ompi_comm_idup_with_info_context_t *context)
+{
+    context->comm    = NULL;
+    context->newcomp = NULL;
+}
+
+static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_context_t *context)
+{
+    if (NULL != context->comm) {
+        OBJ_RELEASE(context->comm);
+    }
+}
+
+OBJ_CLASS_INSTANCE(ompi_comm_idup_with_info_context_t, opal_object_t,
+                   ompi_comm_idup_with_info_context_construct,
+                   ompi_comm_idup_with_info_context_destruct);
 
 static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request);
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request);
@@ -1891,6 +1907,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     }
 
     context->comm    = comm;
+    OBJ_RETAIN(comm);    /* the request's callbacks use the parent until completion */
 
     request->context = &context->super;
     request->super.req_mpi_object.comm = comm;
