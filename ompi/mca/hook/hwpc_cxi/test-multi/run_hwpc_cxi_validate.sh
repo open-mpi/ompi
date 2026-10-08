@@ -47,18 +47,31 @@ NUM_PROCS="${1:-4}"
 NUM_PPN="${2:-2}"
 LOOPS="${3:-100}"
 
-LOGS_DIR="${SCRIPT_DIR}/validation_logs"
+for _positive_integer in "${NUM_PROCS}" "${NUM_PPN}" "${LOOPS}"; do
+    if [[ ! "${_positive_integer}" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: ranks, ranks per node, and loops must be positive integers" >&2
+        exit 1
+    fi
+done
+if (( NUM_PROCS < 2 )); then
+    echo "ERROR: validation requires at least two ranks" >&2
+    exit 1
+fi
+
+LOGS_DIR="${HWPC_CXI_LOGS_DIR:-${SCRIPT_DIR}/validation_logs}"
+mkdir -p "${LOGS_DIR}"
+LOGS_DIR="$(cd "${LOGS_DIR}" && pwd)"
 BASELINE_DIR="${LOGS_DIR}/baseline"
-RUN_TAG="validate_sendrecv_$(date +%Y%m%d_%H%M%S)"
-RUN_DIR="${LOGS_DIR}/${RUN_TAG}"
-mkdir -p "${RUN_DIR}"
+RUN_DIR="$(mktemp -d "${LOGS_DIR}/validate_sendrecv_$(date +%Y%m%d_%H%M%S).XXXXXX")"
+RUN_TAG="${RUN_DIR##*/}"
+export HWPC_CXI_REQUIRE_CROSS_NODE="${HWPC_CXI_REQUIRE_CROSS_NODE:-$(( NUM_PROCS > NUM_PPN ))}"
 
 # Set default HWPC_CXI environment values unless the caller already set them.
 export OMPI_MCA_ompi_hook_hwpc_cxi_counter_file="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_file:-${SCRIPT_DIR}/my_desired_cxi_counters.txt}"
 export OMPI_MCA_ompi_hook_hwpc_cxi_counter_report="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_report:-2}"
 export OMPI_MCA_ompi_hook_hwpc_cxi_counter_summary_filter_zeros="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_summary_filter_zeros:-false}"
 export OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose:-true}"
-export OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file:-${SCRIPT_DIR}/mock_report_prefix}"
+export OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file="${OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file:-${RUN_DIR}/report}"
 #export OMPI_MCA_btl="${OMPI_MCA_btl:-^ofi}"
 
 HWPC_CXI_RUNTIME_LD_LIBRARY_PATH="${HWPC_CXI_RUNTIME_LD_LIBRARY_PATH:-}"
@@ -74,7 +87,7 @@ STDOUT_LOG="${RUN_DIR}/stdout.log"
 STDERR_LOG="${RUN_DIR}/stderr.log"
 
 if [[ ! -x "${TEST_BIN}" ]]; then
-    echo "ERROR: ${TEST_BIN} is missing or not executable. Build tests first with 'make -C test/hwpc_cxi'." >&2
+    echo "ERROR: ${TEST_BIN} is missing or not executable. Build it manually with 'make -C ompi/mca/hook/hwpc_cxi/test-multi hwpc_cxi_sendrecv_test'." >&2
     exit 1
 fi
 
@@ -89,170 +102,7 @@ fi
 
 mkdir -p "${REPORT_DIR}"
 
-# Compare HWPC_CXI counter logs by counter name and numeric values.
-# Missing counter names are errors. Numeric deviations > tolerance are warnings.
-# Optional 5th argument: pe0_gate=1 activates PE 0: gating – lines before the
-# first "PE 0:" line are ignored except those containing the word "error".
-# Default (pe0_gate=0): all counter lines are compared regardless of position.
-compare_counter_logs() {
-    local baseline_log="$1"
-    local current_log="$2"
-    local output_log="$3"
-    local tolerance_pct="$4"
-    local pe0_gate="${5:-0}"
-
-    # Pre-detect PE 0: presence only when gating is requested.
-    local base_has_pe0=0 curr_has_pe0=0
-    if [[ "${pe0_gate}" == "1" ]]; then
-        grep -q '^PE 0:' "${baseline_log}" 2>/dev/null && base_has_pe0=1
-        grep -q '^PE 0:' "${current_log}"  2>/dev/null && curr_has_pe0=1
-    fi
-
-    awk -v tolerance_pct="${tolerance_pct}" \
-        -v base_has_pe0="${base_has_pe0}" \
-        -v curr_has_pe0="${curr_has_pe0}" \
-    '
-        function is_num(v) {
-            return (v ~ /^[-+]?[0-9]+([.][0-9]+)?([eE][-+]?[0-9]+)?$/)
-        }
-        function abs(v) {
-            return v < 0 ? -v : v
-        }
-        function parse_counter_line() {
-            if (NF == 6 && $1 == "CXI_COUNTER_DATA" && $2 != "hostname" &&
-                is_num($3) && is_num($5) && is_num($6)) {
-                parsed_key = "detail" SUBSEP $2 SUBSEP $3 SUBSEP $4
-                parsed_label = $2 "/" $3 "/" $4
-                parsed_start = 5
-                parsed_count = 2
-                return 1
-            }
-            if (NF >= 8 && $1 != "Counter" && is_num($2) && is_num($3)) {
-                parsed_key = "summary" SUBSEP $1
-                parsed_label = $1
-                parsed_start = 2
-                parsed_count = NF - 1
-                return 1
-            }
-            return 0
-        }
-        BEGIN {
-            err = 0
-            warn = 0
-            n_base = 0
-            n_curr = 0
-            base_active = 0
-            curr_active = 0
-        }
-        FNR == NR {
-            if (tolower($0) ~ /error/) {
-                print "ERROR baseline line: " $0
-                err++
-                next
-            }
-            # Activate once "PE 0:" is seen (only when the file has such lines).
-            if (base_has_pe0 && $0 ~ /^PE 0:/) {
-                base_active = 1
-            }
-            # Before the activation point: skip non-counter content.
-            if (base_has_pe0 && !base_active) {
-                next
-            }
-            if (!parse_counter_line()) {
-                next
-            }
-            name = parsed_key
-            if (!(name in seen_base)) {
-                seen_base[name] = 1
-                base_names[++n_base] = name
-                base_label[name] = parsed_label
-            }
-            base_count[name] = parsed_count
-            for (i = 0; i < parsed_count; ++i) {
-                base_val[name, i + 1] = $(parsed_start + i)
-            }
-            next
-        }
-        {
-            if (tolower($0) ~ /error/) {
-                print "ERROR current line: " $0
-                err++
-                next
-            }
-            # Activate once "PE 0:" is seen (only when the file has such lines).
-            if (curr_has_pe0 && $0 ~ /^PE 0:/) {
-                curr_active = 1
-            }
-            # Before the activation point: skip non-counter content.
-            if (curr_has_pe0 && !curr_active) {
-                next
-            }
-            if (!parse_counter_line()) {
-                next
-            }
-            name = parsed_key
-            if (!(name in seen_curr)) {
-                seen_curr[name] = 1
-                curr_names[++n_curr] = name
-                curr_label[name] = parsed_label
-            }
-            curr_count[name] = parsed_count
-            for (i = 0; i < parsed_count; ++i) {
-                curr_val[name, i + 1] = $(parsed_start + i)
-            }
-        }
-        END {
-            print "Counter comparison (tolerance=" tolerance_pct "%)"
-            for (idx = 1; idx <= n_base; ++idx) {
-                name = base_names[idx]
-                label = base_label[name]
-                if (!(name in seen_curr)) {
-                    print "ERROR missing counter in current log: " label
-                    err++
-                    continue
-                }
-
-                if (base_count[name] != curr_count[name]) {
-                    print "ERROR counter column mismatch for " label ": baseline has " base_count[name] ", current has " curr_count[name]
-                    err++
-                    continue
-                }
-
-                for (i = 1; i <= base_count[name]; ++i) {
-                    b = base_val[name, i]
-                    c = curr_val[name, i]
-                    if (!is_num(b) || !is_num(c)) {
-                        print "ERROR non-numeric field for counter " label " column " i ": baseline='" b "' current='" c "'"
-                        err++
-                        continue
-                    }
-
-                    if ((b + 0) == 0) {
-                        pct = ((c + 0) == 0) ? 0 : 100
-                    } else {
-                        pct = (abs((c + 0) - (b + 0)) / abs(b + 0)) * 100
-                    }
-
-                    if (pct > tolerance_pct) {
-                        warn++
-                        printf("WARN %s col%d baseline=%s current=%s delta=%.2f%%\n", label, i, b, c, pct)
-                    }
-                }
-            }
-
-            for (idx = 1; idx <= n_curr; ++idx) {
-                name = curr_names[idx]
-                if (!(name in seen_base)) {
-                    print "ERROR new counter in current log (not in baseline): " curr_label[name]
-                    err++
-                }
-            }
-
-            print "Summary: warnings=" warn ", errors=" err
-            exit err
-        }
-    ' "${baseline_log}" "${current_log}" > "${output_log}"
-}
+source "${SCRIPT_DIR}/hwpc_cxi_compare.sh"
 
 # Fail when stdout contains numeric-heavy lines where every numeric field is zero.
 # A numeric-heavy line is defined as having at least 3 numeric tokens.
@@ -303,11 +153,17 @@ echo "========================================================"
 
 # Run the test and capture stdout / stderr separately.
 rc=0
-if srun --mpi=pmix -n "${NUM_PROCS}"  --ntasks-per-node "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"; then
+if srun --mpi=pmix --time="${HWPC_CXI_SCENARIO_TIME_LIMIT:-00:05:00}" \
+    -n "${NUM_PROCS}" --ntasks-per-node "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" > "${STDOUT_LOG}" 2> "${STDERR_LOG}"; then
     echo "RESULT: ${PASS_LABEL}"
 else
     rc=$?
     echo "RESULT: ${FAIL_LABEL} (exit code ${rc})"
+fi
+if [[ "${HWPC_CXI_REQUIRE_CROSS_NODE}" == 1 ]] && \
+    ! grep -q '^sendrecv placement: cross_node=1 peer=' "${STDERR_LOG}"; then
+    echo "TRAFFIC: ${FAIL_LABEL} (no verified cross-node peer)"
+    rc=1
 fi
 
 # Capture any report files matching the configured prefix.
@@ -364,37 +220,63 @@ elif [[ -d "${BASELINE_DIR}" ]]; then
         rc=1
     fi
 
-    # report files
-    if [[ -d "${BASELINE_DIR}/reports" ]]; then
-        shopt -s nullglob
-        for _brpt in "${BASELINE_DIR}/reports/"*; do
-            _rname="$(basename "${_brpt}")"
-            _crpt="${RUN_DIR}/reports/${_rname}"
-            if [[ -f "${_crpt}" ]]; then
-                if compare_counter_logs "${_brpt}" "${_crpt}" "${RUN_DIR}/${_rname}_counter_compare.txt" 20; then
-                    echo "report ${_rname}: MATCH (see ${RUN_DIR}/${_rname}_counter_compare.txt)"
-                else
-                    echo "report ${_rname}: ERROR (missing/invalid counters) -> ${RUN_DIR}/${_rname}_counter_compare.txt"
-                    _compare_pass=false
-                    rc=1
-                fi
+    # Compare the descriptions independently; host-report suffixes vary by run.
+    shopt -s nullglob
+    _baseline_reports=("${BASELINE_DIR}/reports/"*)
+    _current_reports=("${RUN_DIR}/reports/"*)
+    shopt -u nullglob
+    _baseline_descriptions=()
+    _current_descriptions=()
+    _baseline_host_reports=()
+    _current_host_reports=()
+    for _report in ${_baseline_reports[@]+"${_baseline_reports[@]}"}; do
+        if [[ "${_report}" == *.counter_descriptions ]]; then
+            _baseline_descriptions+=("${_report}")
+        else
+            _baseline_host_reports+=("${_report}")
+        fi
+    done
+    for _report in ${_current_reports[@]+"${_current_reports[@]}"}; do
+        if [[ "${_report}" == *.counter_descriptions ]]; then
+            _current_descriptions+=("${_report}")
+        else
+            _current_host_reports+=("${_report}")
+        fi
+    done
+
+    if (( ${#_baseline_descriptions[@]} != ${#_current_descriptions[@]} )); then
+        echo "report descriptions: ${FAIL_LABEL} (baseline/current count differs)"
+        _compare_pass=false
+        rc=1
+    elif (( ${#_baseline_descriptions[@]} > 0 )); then
+        if (( ${#_baseline_descriptions[@]} != 1 )) || \
+            ! cmp -s "${_baseline_descriptions[0]}" "${_current_descriptions[0]}"; then
+            echo "report descriptions: ${FAIL_LABEL} (missing or changed)"
+            _compare_pass=false
+            rc=1
+        else
+            echo "report descriptions: ${PASS_LABEL}"
+        fi
+    fi
+
+    if (( ${#_baseline_host_reports[@]} != ${#_current_host_reports[@]} )); then
+        echo "host reports: ${FAIL_LABEL} (baseline has ${#_baseline_host_reports[@]}, current has ${#_current_host_reports[@]})"
+        _compare_pass=false
+        rc=1
+    else
+        for (( _report_idx = 0; _report_idx < ${#_baseline_host_reports[@]}; ++_report_idx )); do
+            _brpt="${_baseline_host_reports[_report_idx]}"
+            _crpt="${_current_host_reports[_report_idx]}"
+            _rname="host_$((_report_idx + 1))"
+            _report_compare="${RUN_DIR}/${_rname}_counter_compare.txt"
+            if compare_counter_logs "${_brpt}" "${_crpt}" "${_report_compare}" 20 0 1 1; then
+                echo "report ${_rname}: ${PASS_LABEL} (see ${_report_compare})"
             else
-                echo "report ${_rname}: MISSING in current run"
+                echo "report ${_rname}: ${FAIL_LABEL} (see ${_report_compare})"
                 _compare_pass=false
                 rc=1
             fi
         done
-        if [[ -d "${RUN_DIR}/reports" ]]; then
-            for _crpt in "${RUN_DIR}/reports/"*; do
-                _rname="$(basename "${_crpt}")"
-                if [[ ! -f "${BASELINE_DIR}/reports/${_rname}" ]]; then
-                    echo "report ${_rname}: NEW (not in baseline)"
-                    _compare_pass=false
-                    rc=1
-                fi
-            done
-        fi
-        shopt -u nullglob
     fi
 
     if $_compare_pass; then
@@ -417,7 +299,9 @@ run_validation_scenario() {
     shift 4
 
     find "${run_dir}" -maxdepth 1 -type f -name "${report_pattern}" -delete 2>/dev/null || true
-    env "$@" srun --mpi=pmix -n "${NUM_PROCS}" --ntasks-per-node "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
+    env -u HWPC_CXI_TEST_REPORT_MISMATCH -u HWPC_CXI_TEST_ALTERNATE_COUNTER_FILE "$@" \
+        srun --mpi=pmix --time="${HWPC_CXI_SCENARIO_TIME_LIMIT:-00:05:00}" \
+        -n "${NUM_PROCS}" --ntasks-per-node "${NUM_PPN}" "${TEST_BIN}" "${LOOPS}" \
         > "${stdout_log}" 2> "${stderr_log}"
 }
 
@@ -437,7 +321,7 @@ FAKE_STDERR_LOG="${FAKE_RUN_DIR}/stderr.log"
 FAKE_REPORT_PREFIX="${FAKE_RUN_DIR}/hwpc_cxi_fake_report"
 
 _fake_rc=0
-if ! run_validation_scenario "${FAKE_RUN_DIR}" "hwpc_cxi_fake_report*" \
+if run_validation_scenario "${FAKE_RUN_DIR}" "hwpc_cxi_fake_report*" \
     "${FAKE_STDOUT_LOG}" "${FAKE_STDERR_LOG}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${FAKE_COUNTER_FILE}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file=${FAKE_REPORT_PREFIX}"; then
@@ -463,9 +347,9 @@ else
     _fake_node_count=$(( (NUM_PROCS + NUM_PPN - 1) / NUM_PPN ))
     _fake_expected_diag_count=$(( _fake_counter_count * _fake_node_count ))
 
-    _fake_diag_count=$(grep -ciE \
+    _fake_diag_count=$(grep -iE \
         'does not exist|not found|not recognized|unrecognized|unknown counter|invalid counter' \
-        "${FAKE_STDERR_LOG}" 2>/dev/null || true)
+        "${FAKE_STDERR_LOG}" 2>/dev/null | LC_ALL=C sort -u | awk 'END { print NR + 0 }' || true)
 
     if (( _fake_diag_count == _fake_expected_diag_count )); then
         echo "FAKE-COUNTER:    ${PASS_LABEL} (${_fake_diag_count} diagnostic line(s) found in stderr)"
@@ -481,11 +365,10 @@ echo "======================================================="
 
 # ── Report-level=1 timeout-summary test ──────────────────────────────────────
 # Run with the normal desired counter file, but force report level 1.
-# Expected stdout behavior: no CXI counter summary table; only timeout summary
-# should be emitted by HWPC_CXI.
+# Expected stdout behavior: no CXI counter summary table or zero-timeout summary.
 REPORT1_COUNTER_FILE="${SCRIPT_DIR}/my_desired_cxi_counters.txt"
 echo "========================================================"
-echo "REPORT_LEVEL=1 test (timeout summary only)"
+echo "REPORT_LEVEL=1 test (no detailed or zero-timeout summary)"
 echo "  counter_file: ${REPORT1_COUNTER_FILE}"
 echo "========================================================"
 
@@ -496,10 +379,11 @@ REPORT1_STDERR_LOG="${REPORT1_RUN_DIR}/stderr.log"
 REPORT1_REPORT_PREFIX="${REPORT1_RUN_DIR}/hwpc_cxi_report1"
 
 _report1_rc=0
-if ! run_validation_scenario "${REPORT1_RUN_DIR}" "hwpc_cxi_report1*" \
+if run_validation_scenario "${REPORT1_RUN_DIR}" "hwpc_cxi_report1*" \
     "${REPORT1_STDOUT_LOG}" "${REPORT1_STDERR_LOG}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${REPORT1_COUNTER_FILE}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report=1" \
+    "OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose=false" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file=${REPORT1_REPORT_PREFIX}"; then
     :
 else
@@ -513,12 +397,12 @@ if [[ "${_report1_rc}" -ne 0 ]]; then
     echo "REPORT_LEVEL=1:        ${FAIL_LABEL} (exit code ${_report1_rc})"
     rc=1
 else
-    if grep -qE 'OpenMPI Slingshot Network Summary: [0-9]+ network timeouts' "${REPORT1_STDOUT_LOG}"; then
-        echo "REPORT_LEVEL=1 stdout: ${PASS_LABEL} (network timeout summary present)"
-    else
-        echo "REPORT_LEVEL=1:        ${FAIL_LABEL} (stdout is missing network timeout summary)"
+    if grep -qE 'OpenMPI Slingshot Network Summary: 0 network timeouts' "${REPORT1_STDOUT_LOG}"; then
+        echo "REPORT_LEVEL=1 stdout: ${FAIL_LABEL} (zero-timeout summary is present)"
         echo "  Inspect: ${REPORT1_STDOUT_LOG}"
         rc=1
+    else
+        echo "REPORT_LEVEL=1 stdout: ${PASS_LABEL} (zero-timeout summary is absent)"
     fi
 
     # REPORT_LEVEL=1 must not emit the detailed CXI counter summary table/header.
@@ -530,16 +414,16 @@ else
         echo "REPORT_LEVEL=1 stdout: ${PASS_LABEL} (no detailed counter summary table)"
     fi
 
-    # Compare stderr against baseline stderr when available.
-    if [[ -f "${BASELINE_DIR}/stderr.log" ]]; then
-        if compare_counter_logs "${BASELINE_DIR}/stderr.log" "${REPORT1_STDERR_LOG}" "${REPORT1_RUN_DIR}/stderr_vs_baseline.txt" 20 1; then
+    # Compare against a report-level-1 baseline, not the report-level-2 stderr.
+    if [[ -f "${BASELINE_DIR}/report_level_1_stderr.log" ]]; then
+        if compare_counter_logs "${BASELINE_DIR}/report_level_1_stderr.log" "${REPORT1_STDERR_LOG}" "${REPORT1_RUN_DIR}/stderr_vs_baseline.txt" 20 1; then
             echo "REPORT_LEVEL=1 stderr: ${PASS_LABEL} (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
         else
             echo "REPORT_LEVEL=1 stderr: ${FAIL_LABEL} (see ${REPORT1_RUN_DIR}/stderr_vs_baseline.txt)"
             rc=1
         fi
     else
-        echo "REPORT_LEVEL=1 stderr: SKIP (no baseline stderr at ${BASELINE_DIR}/stderr.log)"
+        echo "REPORT_LEVEL=1 stderr: SKIP (no report-level-1 baseline at ${BASELINE_DIR}/report_level_1_stderr.log)"
     fi
 fi
 echo "======================================================="
@@ -563,7 +447,7 @@ REPORT0_STDERR_LOG="${REPORT0_RUN_DIR}/stderr.log"
 REPORT0_REPORT_PREFIX="${REPORT0_RUN_DIR}/hwpc_cxi_report0"
 
 _report0_rc=0
-if ! run_validation_scenario "${REPORT0_RUN_DIR}" "hwpc_cxi_report0*" \
+if run_validation_scenario "${REPORT0_RUN_DIR}" "hwpc_cxi_report0*" \
     "${REPORT0_STDOUT_LOG}" "${REPORT0_STDERR_LOG}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${REPORT0_COUNTER_FILE}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report=0" \
@@ -587,7 +471,10 @@ else
         echo "  Inspect: ${REPORT0_STDOUT_LOG}"
         rc=1
     else
-        mapfile -t _report0_stdout_lines < <(grep -v '^[[:space:]]*$' "${REPORT0_STDOUT_LOG}" || true)
+        _report0_stdout_lines=()
+        while IFS= read -r _report0_line; do
+            _report0_stdout_lines+=("${_report0_line}")
+        done < <(grep -v '^[[:space:]]*$' "${REPORT0_STDOUT_LOG}" || true)
         _report0_completion_re='^hwpc_cxi_sendrecv_test complete elapsed_with_mpi_init_finalize=[0-9]+([.][0-9]+)? elapsed_without_mpi_init_finalize=[0-9]+([.][0-9]+)?$'
         if (( ${#_report0_stdout_lines[@]} == 0 )); then
             echo "REPORT_LEVEL=0 stdout: ${PASS_LABEL} (empty)"
@@ -607,6 +494,12 @@ else
     else
         echo "REPORT_LEVEL=0 stderr: ${PASS_LABEL} (no HWPC_CXI output)"
     fi
+    for _report0_file in "${REPORT0_REPORT_PREFIX}"*; do
+        if [[ -e "${_report0_file}" ]]; then
+            echo "REPORT_LEVEL=0 files: ${FAIL_LABEL} (unexpected report ${_report0_file})"
+            rc=1
+        fi
+    done
 fi
 echo "======================================================="
 # ─────────────────────────────────────────────────────────────────────────────
@@ -627,7 +520,7 @@ REPORT2_STDERR_LOG="${REPORT2_RUN_DIR}/stderr.log"
 REPORT2_REPORT_PREFIX="${REPORT2_RUN_DIR}/hwpc_cxi_report2_noVerbose"
 
 _report2_rc=0
-if ! run_validation_scenario "${REPORT2_RUN_DIR}" "hwpc_cxi_report2_noVerbose*" \
+if run_validation_scenario "${REPORT2_RUN_DIR}" "hwpc_cxi_report2_noVerbose*" \
     "${REPORT2_STDOUT_LOG}" "${REPORT2_STDERR_LOG}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${REPORT2_COUNTER_FILE}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report=2" \
@@ -672,7 +565,7 @@ REPORT2_STDERR_LOG="${REPORT2_RUN_DIR}/stderr.log"
 REPORT2_REPORT_PREFIX="${REPORT2_RUN_DIR}/hwpc_cxi_report2_noVerbose_noZeros"
 
 _report2_rc=0
-if ! run_validation_scenario "${REPORT2_RUN_DIR}" "hwpc_cxi_report2_noVerbose_noZeros*" \
+if run_validation_scenario "${REPORT2_RUN_DIR}" "hwpc_cxi_report2_noVerbose_noZeros*" \
     "${REPORT2_STDOUT_LOG}" "${REPORT2_STDERR_LOG}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${REPORT2_COUNTER_FILE}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report=2" \
@@ -728,7 +621,7 @@ REPORT5_REPORT_PREFIX="${REPORT5_RUN_DIR}/hwpc_cxi_report5"
 REPORT5_EXPECTED_HOSTS="$(( (NUM_PROCS + NUM_PPN - 1) / NUM_PPN ))"
 
 _report5_rc=0
-if ! run_validation_scenario "${REPORT5_RUN_DIR}" "hwpc_cxi_report5*" \
+if run_validation_scenario "${REPORT5_RUN_DIR}" "hwpc_cxi_report5*" \
     "${REPORT5_STDOUT_LOG}" "${REPORT5_STDERR_LOG}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${REPORT5_COUNTER_FILE}" \
     "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report=5" \
@@ -746,7 +639,7 @@ _report5_files=("${REPORT5_REPORT_PREFIX}".*)
 shopt -u nullglob
 _report5_host_files=()
 _report5_description_files=()
-for _report5_file in "${_report5_files[@]}"; do
+for _report5_file in ${_report5_files[@]+"${_report5_files[@]}"}; do
     if [[ "${_report5_file}" == "${REPORT5_REPORT_PREFIX}.counter_descriptions" ]]; then
         _report5_description_files+=("${_report5_file}")
     else
@@ -754,7 +647,7 @@ for _report5_file in "${_report5_files[@]}"; do
     fi
 done
 
-printf '%s\n' "${_report5_files[@]}" > "${REPORT5_RUN_DIR}/report_files.txt"
+printf '%s\n' ${_report5_files[@]+"${_report5_files[@]}"} > "${REPORT5_RUN_DIR}/report_files.txt"
 echo "report5_file_index: ${REPORT5_RUN_DIR}/report_files.txt"
 
 if [[ "${_report5_rc}" -ne 0 ]]; then
@@ -778,7 +671,7 @@ else
     echo "REPORT_LEVEL=5 host files: ${PASS_LABEL} (${#_report5_host_files[@]} file(s))"
 fi
 
-for _report5_file in "${_report5_host_files[@]}"; do
+for _report5_file in ${_report5_host_files[@]+"${_report5_host_files[@]}"}; do
     if awk '
         function is_num(value) {
             return value ~ /^[-+]?[0-9]+([.][0-9]+)?([eE][-+]?[0-9]+)?$/
@@ -805,6 +698,153 @@ done
 echo "======================================================="
 # ─────────────────────────────────────────────────────────────────────────────
 
+for _input_case in invalid empty mixed; do
+    _input_dir="${LOGS_DIR}/input_${_input_case}_${RUN_TAG}"
+    mkdir -p "${_input_dir}"
+    _input_file="${_input_dir}/counters.txt"
+    _input_prefix="${_input_dir}/report"
+    _input_defaults=1
+    case "${_input_case}" in
+        invalid) printf 'not_a_counter\n' > "${_input_file}" ;;
+        empty) : > "${_input_file}" ;;
+        mixed)
+            printf 'lpe_rndzv_puts_0\nnot_a_counter\n' > "${_input_file}"
+            _input_defaults=0
+            ;;
+    esac
+    _input_rc=0
+    if run_validation_scenario "${_input_dir}" 'report*' \
+        "${_input_dir}/stdout.log" "${_input_dir}/stderr.log" \
+        "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${_input_file}" \
+        'OMPI_MCA_ompi_hook_hwpc_cxi_counter_report=5' \
+        'OMPI_MCA_ompi_hook_hwpc_cxi_counter_verbose=true' \
+        "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file=${_input_prefix}"; then
+        :
+    else
+        _input_rc=$?
+    fi
+    _input_ok=true
+    if (( _input_rc != 0 )) || grep -q 'ERROR:' "${_input_dir}/stderr.log"; then
+        _input_ok=false
+    fi
+    if (( _input_defaults )); then
+        if ! grep -q 'Summary of valid counters detected from the default CXI counters' "${_input_dir}/stderr.log"; then
+            _input_ok=false
+        fi
+    elif ! grep -q 'Summary of valid counters detected from CXI counter file' "${_input_dir}/stderr.log"; then
+        _input_ok=false
+    fi
+    _input_hosts=0
+    for _input_report in "${_input_prefix}".*; do
+        [[ -f "${_input_report}" ]] || continue
+        [[ "${_input_report}" == *.counter_descriptions ]] && continue
+        _input_hosts=$((_input_hosts + 1))
+        if ! awk -v defaults="${_input_defaults}" '
+            $1 == "CXI_COUNTER_DATA" && $2 != "hostname" {
+                if (NF != 6 || $4 == "not_a_counter") { bad = 1 }
+                if ($4 == "rh:sct_timeouts") { sct = 1 }
+                else if ($4 == "rh:spt_timeouts") { spt = 1 }
+                else {
+                    extended++
+                    if ($4 == "lpe_rndzv_puts_0") { selected = 1 }
+                    else if (!defaults) { bad = 1 }
+                }
+            }
+            END { exit (bad || !sct || !spt || (defaults ? extended == 0 : !selected)) }
+        ' "${_input_report}"; then
+            _input_ok=false
+        fi
+    done
+    if (( _input_hosts != REPORT5_EXPECTED_HOSTS )); then
+        _input_ok=false
+    fi
+    if $_input_ok; then
+        echo "INPUT ${_input_case}: ${PASS_LABEL} (selection and timeout counters verified)"
+    else
+        echo "INPUT ${_input_case}: ${FAIL_LABEL} (inspect ${_input_dir})"
+        rc=1
+    fi
+done
+
+for _agreement_case in reporting schema schema_names schema_order; do
+    if [[ "${_agreement_case}" != reporting ]] && (( REPORT5_EXPECTED_HOSTS < 2 )); then
+        echo "AGREEMENT ${_agreement_case}: SKIP (requires at least two nodes)"
+        continue
+    fi
+    _agreement_dir="${LOGS_DIR}/agreement_${_agreement_case}_${RUN_TAG}"
+    mkdir -p "${_agreement_dir}"
+    printf 'lpe_rndzv_puts_0\n' > "${_agreement_dir}/reference.txt"
+    printf 'rh:sct_timeouts\n' > "${_agreement_dir}/alternate.txt"
+    if [[ "${_agreement_case}" == schema_names ]]; then
+        printf 'atu_cache_evictions\n' > "${_agreement_dir}/alternate.txt"
+    elif [[ "${_agreement_case}" == schema_order ]]; then
+        printf 'lpe_rndzv_puts_0\natu_cache_evictions\n' > "${_agreement_dir}/reference.txt"
+        printf 'atu_cache_evictions\nlpe_rndzv_puts_0\n' > "${_agreement_dir}/alternate.txt"
+    fi
+    _agreement_env=()
+    if [[ "${_agreement_case}" == reporting ]]; then
+        _agreement_env+=('HWPC_CXI_TEST_REPORT_MISMATCH=1')
+        _agreement_warning='ranks disagreed on reporting level'
+    else
+        _agreement_env+=("HWPC_CXI_TEST_ALTERNATE_COUNTER_FILE=${_agreement_dir}/alternate.txt")
+        _agreement_warning='node leaders disagreed on counter schema'
+    fi
+    _agreement_rc=0
+    if run_validation_scenario "${_agreement_dir}" 'report*' \
+        "${_agreement_dir}/stdout.log" "${_agreement_dir}/stderr.log" \
+        "OMPI_MCA_ompi_hook_hwpc_cxi_counter_file=${_agreement_dir}/reference.txt" \
+        'OMPI_MCA_ompi_hook_hwpc_cxi_counter_report=2' \
+        "OMPI_MCA_ompi_hook_hwpc_cxi_counter_report_file=${_agreement_dir}/report" \
+        "${_agreement_env[@]}"; then
+        :
+    else
+        _agreement_rc=$?
+    fi
+    if (( _agreement_rc == 0 )) && \
+        grep -q "${_agreement_warning}" "${_agreement_dir}/stderr.log" && \
+        grep -q '^hwpc_cxi_sendrecv_test complete ' "${_agreement_dir}/stdout.log" && \
+        ! grep -q 'OpenMPI Slingshot' "${_agreement_dir}/stdout.log"; then
+        echo "AGREEMENT ${_agreement_case}: ${PASS_LABEL} (uniform shutdown without hanging)"
+    else
+        echo "AGREEMENT ${_agreement_case}: ${FAIL_LABEL} (exit ${_agreement_rc}; inspect ${_agreement_dir})"
+        rc=1
+    fi
+done
+
+if [[ -n "${HWPC_CXI_FIXTURE_TEST_BIN:-}" ]]; then
+    for _fixture_case in success job topology comm collection schema_equal schema_names \
+                         schema_order schema_actual_count schema_actual_order; do
+        _fixture_dir="${LOGS_DIR}/fixture_${_fixture_case}_${RUN_TAG}"
+        mkdir -p "${_fixture_dir}"
+        if env -u HWPC_CXI_TEST_REPORT_MISMATCH -u HWPC_CXI_TEST_ALTERNATE_COUNTER_FILE \
+            srun --mpi=pmix --time="${HWPC_CXI_SCENARIO_TIME_LIMIT:-00:05:00}" \
+            -n "${NUM_PROCS}" --ntasks-per-node "${NUM_PPN}" \
+            "${HWPC_CXI_FIXTURE_TEST_BIN}" --mpi-case "${_fixture_case}" \
+            > "${_fixture_dir}/stdout.log" 2> "${_fixture_dir}/stderr.log" && \
+            grep -q "^PASS: MPI fixture ${_fixture_case}$" "${_fixture_dir}/stdout.log"; then
+            echo "FIXTURE ${_fixture_case}: ${PASS_LABEL}"
+        else
+            echo "FIXTURE ${_fixture_case}: ${FAIL_LABEL} (inspect ${_fixture_dir})"
+            rc=1
+        fi
+    done
+else
+    echo "FIXTURES: SKIP (set HWPC_CXI_FIXTURE_TEST_BIN to the built test/hwpc_cxi_counters_test)"
+fi
+
+if [[ -n "${HWPC_CXI_MPI_T_TEST_BIN:-}" ]]; then
+    if srun --mpi=pmix --time="${HWPC_CXI_SCENARIO_TIME_LIMIT:-00:05:00}" \
+        -n 1 --ntasks-per-node 1 "${HWPC_CXI_MPI_T_TEST_BIN}" \
+        > "${RUN_DIR}/mpi_t_stdout.log" 2> "${RUN_DIR}/mpi_t_stderr.log"; then
+        echo "MPI_T enabled: ${PASS_LABEL}"
+    else
+        echo "MPI_T enabled: ${FAIL_LABEL}"
+        rc=1
+    fi
+else
+    echo "MPI_T enabled: SKIP (set HWPC_CXI_MPI_T_TEST_BIN to the enabled pvar test)"
+fi
+
 if $SAVE_BASELINE; then
     echo "======================================================="
     if [[ "${rc}" -ne 0 ]]; then
@@ -817,6 +857,7 @@ if $SAVE_BASELINE; then
         mkdir -p "${BASELINE_STAGE_DIR}"
         cp "${STDOUT_LOG}" "${BASELINE_STAGE_DIR}/stdout.log"
         cp "${STDERR_LOG}" "${BASELINE_STAGE_DIR}/stderr.log"
+        cp "${REPORT1_STDERR_LOG}" "${BASELINE_STAGE_DIR}/report_level_1_stderr.log"
         if [[ -d "${RUN_DIR}/reports" ]]; then
             mkdir -p "${BASELINE_STAGE_DIR}/reports"
             cp -f "${RUN_DIR}/reports/"* "${BASELINE_STAGE_DIR}/reports/"

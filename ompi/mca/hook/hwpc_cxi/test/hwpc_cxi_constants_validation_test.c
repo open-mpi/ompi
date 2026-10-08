@@ -47,6 +47,26 @@ static void test_argument_validation(void)
     const hwpc_cxi_predefined_counter_mnemonic_obj_t *mnemonic_obj = NULL;
     int counter_count = 0;
 
+    EXPECT_TRUE(hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t) 0),
+                "first group id should be valid");
+    EXPECT_TRUE(hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t)
+                                                 (HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS - 1)),
+                "last group id should be valid");
+    EXPECT_TRUE(!hwpc_cxi_counter_group_id_is_valid(HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS),
+                "group sentinel should be invalid");
+    EXPECT_TRUE(!hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t) -1),
+                "negative group id should be invalid");
+
+    EXPECT_TRUE(hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t) 0),
+                "first mnemonic id should be valid");
+    EXPECT_TRUE(hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t)
+                                                    (HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS - 1)),
+                "last mnemonic id should be valid");
+    EXPECT_TRUE(!hwpc_cxi_counter_mnemonic_id_is_valid(HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS),
+                "mnemonic sentinel should be invalid");
+    EXPECT_TRUE(!hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t) -1),
+                "negative mnemonic id should be invalid");
+
     EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(NULL, "CxiPerfStats"),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "group lookup should reject NULL output pointer");
@@ -63,7 +83,7 @@ static void test_argument_validation(void)
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "group count should reject NULL name");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(NULL, ATU_CACHE_MISS),
+    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(NULL, HWPC_CXI_ATU_CACHE_MISS),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic-by-id lookup should reject NULL output pointer");
 

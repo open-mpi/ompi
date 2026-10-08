@@ -19,10 +19,10 @@ static int ompi_hook_hwpc_cxi_component_open(void);
 static int ompi_hook_hwpc_cxi_component_close(void);
 static int ompi_hook_hwpc_cxi_component_register(void);
 
-const char *mca_hook_hwpc_cxi_component_version_string =
+OMPI_HIDDEN const char *mca_hook_hwpc_cxi_component_version_string =
     "Open MPI 'hwpc_cxi' hook MCA component version " OMPI_VERSION;
 
-const ompi_hook_base_component_1_0_0_t mca_hook_hwpc_cxi_component = {
+OMPI_HIDDEN const ompi_hook_base_component_1_0_0_t mca_hook_hwpc_cxi_component = {
     .hookm_version = {
         OMPI_HOOK_BASE_VERSION_1_0_0,
 
@@ -55,7 +55,8 @@ const ompi_hook_base_component_1_0_0_t mca_hook_hwpc_cxi_component = {
     .hookm_mpi_finalize_top = ompi_hook_hwpc_cxi_mpi_finalize_top,
     .hookm_mpi_finalize_bottom = NULL,
 };
-MCA_BASE_COMPONENT_INIT(ompi, hook, hwpc_cxi)
+OMPI_HIDDEN const mca_base_component_t *mca_hook_hwpc_cxi_component_ptr =
+    (const mca_base_component_t *)&mca_hook_hwpc_cxi_component;
 
 /* Global Component Variables */
 char *mca_hook_hwpc_cxi_counter_file = NULL;

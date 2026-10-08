@@ -22,7 +22,31 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
+
+static int configure_disagreement(void)
+{
+    if (NULL != getenv("HWPC_CXI_TEST_REPORT_MISMATCH")) {
+        const char *rank = getenv("SLURM_PROCID");
+        if (NULL == rank || 0 != setenv("OMPI_MCA_ompi_hook_hwpc_cxi_counter_report",
+                                       0 == strcmp(rank, "0") ? "0" : "2", 1)) {
+            return EXIT_FAILURE;
+        }
+    }
+    const char *alternate_file = getenv("HWPC_CXI_TEST_ALTERNATE_COUNTER_FILE");
+    if (NULL != alternate_file) {
+        const char *node = getenv("SLURM_NODEID");
+        if (NULL == node) {
+            return EXIT_FAILURE;
+        }
+        if (0 != strcmp(node, "0") &&
+            0 != setenv("OMPI_MCA_ompi_hook_hwpc_cxi_counter_file", alternate_file, 1)) {
+            return EXIT_FAILURE;
+        }
+    }
+    return EXIT_SUCCESS;
+}
 
 static double wall_time(void)
 {
@@ -36,6 +60,11 @@ int main(int argc, char **argv)
 {
     int rank = 0;
     int size = 0;
+    int peer = 1;
+    int local_leader;
+    int local_rank;
+    int candidate;
+    MPI_Comm shared_comm;
     int loops = 5000;
     const int tag = 42;
     const int work_iters = 32;
@@ -47,7 +76,14 @@ int main(int argc, char **argv)
     double start_with_mpi_init_finalize = wall_time();
     double start_without_mpi_init_finalize = 0.0;
 
-    MPI_Init(&argc, &argv);
+    if (EXIT_SUCCESS != configure_disagreement()) {
+        fprintf(stderr, "hwpc_cxi_sendrecv_test could not configure disagreement scenario\n");
+        return EXIT_FAILURE;
+    }
+
+    if (MPI_SUCCESS != MPI_Init(&argc, &argv)) {
+        return EXIT_FAILURE;
+    }
     start_without_mpi_init_finalize = MPI_Wtime();
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -68,6 +104,33 @@ int main(int argc, char **argv)
         return 77; /* 77 indicates the test was skipped. */
     }
 
+    if (MPI_SUCCESS != MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, rank,
+                                          MPI_INFO_NULL, &shared_comm)) {
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+        return EXIT_FAILURE;
+    }
+    MPI_Comm_rank(shared_comm, &local_rank);
+    local_leader = rank;
+    MPI_Bcast(&local_leader, 1, MPI_INT, 0, shared_comm);
+    candidate = 0 != local_leader ? rank : size;
+    MPI_Allreduce(&candidate, &peer, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Comm_free(&shared_comm);
+    int cross_node = peer < size;
+    const char *require_cross_node = getenv("HWPC_CXI_REQUIRE_CROSS_NODE");
+    if (!cross_node && NULL != require_cross_node && 0 == strcmp(require_cross_node, "1")) {
+        if (0 == rank) {
+            fprintf(stderr, "sendrecv placement: cross_node=0; two nodes required\n");
+        }
+        MPI_Finalize();
+        return EXIT_FAILURE;
+    }
+    if (!cross_node) {
+        peer = 1;
+    }
+    if (0 == rank) {
+        fprintf(stderr, "sendrecv placement: cross_node=%d peer=%d\n", cross_node, peer);
+    }
+
     payload = (int32_t *) malloc((size_t) payload_count * sizeof(int32_t));
     if (NULL == payload) {
         if (0 == rank) {
@@ -76,7 +139,7 @@ int main(int argc, char **argv)
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
-    if (rank < 2) {
+    if (0 == rank || peer == rank) {
         for (int i = 0; i < loops; ++i) {
             for (int j = 0; j < payload_count; ++j) {
                 payload[j] = (int32_t) ((i + 1) * 131 + j * 17);
@@ -84,8 +147,8 @@ int main(int argc, char **argv)
 
             if (0 == rank) {
                 for (int k = 0; k < work_iters; ++k) {
-                    MPI_Send(payload, payload_count, MPI_INT32_T, 1, tag, MPI_COMM_WORLD);
-                    MPI_Recv(payload, payload_count, MPI_INT32_T, 1, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Send(payload, payload_count, MPI_INT32_T, peer, tag, MPI_COMM_WORLD);
+                    MPI_Recv(payload, payload_count, MPI_INT32_T, peer, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     for (int j = 0; j < payload_count; ++j) {
                         checksum += (uint64_t) payload[j] ^ (uint64_t) (j * (i + 1));
                         payload[j] = (int32_t) ((payload[j] + 13) ^ (checksum + (uint64_t) j));

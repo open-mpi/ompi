@@ -315,8 +315,8 @@ ompi/test/monitoring/aggregate_profile.pl
 
 ompi/test/spc/spc_test
 
-ompi/test/hwpc_cxi/hwpc_cxi_sendrecv_test
-ompi/test/hwpc_cxi/validation_logs/
+ompi/mca/hook/hwpc_cxi/test-multi/hwpc_cxi_sendrecv_test
+ompi/mca/hook/hwpc_cxi/test-multi/validation_logs/
 
 ompi/mpiext/affinity/c/example
 

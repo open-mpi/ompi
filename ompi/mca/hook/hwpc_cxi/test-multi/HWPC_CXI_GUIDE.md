@@ -2,7 +2,7 @@
   SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
   SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-  Copyright (c) 2026      Copyright Hewlett Packard Enterprise Development LP
+  Copyright (c) 2026      Copyright Hewlett Packard Enterprise Development LP. All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -28,7 +28,7 @@ Helper files in this directory:
 ## Recommended Workflow
 
 1. Build Open MPI with HWPC_CXI support.
-2. Build `hwpc_cxi_sendrecv_test` in `test/hwpc_cxi`.
+2. Build `hwpc_cxi_sendrecv_test` in `test-multi` after configuring and building Open MPI.
 3. Set runtime library paths.
 4. Run `run_hwpc_cxi_validate.sh`.
 
@@ -44,7 +44,7 @@ build; for a VPATH build, they are different directories.
 
 ```bash
 export HWPC_CXI_BUILD_ROOT=/path/to/configured/open-mpi-build
-cd /path/to/open-mpi-source/ompi/test/hwpc_cxi
+cd /path/to/open-mpi-source/ompi/mca/hook/hwpc_cxi/test-multi
 ./build_with_env_and_run.sh
 ```
 
@@ -52,7 +52,7 @@ cd /path/to/open-mpi-source/ompi/test/hwpc_cxi
 
 ```bash
 export HWPC_CXI_BUILD_ROOT=/path/to/configured/open-mpi-build
-make -C "$HWPC_CXI_BUILD_ROOT/ompi/test/hwpc_cxi" hwpc_cxi_sendrecv_test
+make -C "$HWPC_CXI_BUILD_ROOT/ompi/mca/hook/hwpc_cxi/test-multi" hwpc_cxi_sendrecv_test
 ```
 
 For an in-tree build, set `HWPC_CXI_BUILD_ROOT` to the Open MPI source root.
@@ -77,20 +77,18 @@ export HWPC_CXI_RUNTIME_LD_LIBRARY_PATH="/path/to/libfabric/lib:/path/to/open-mp
 
 The scripts prepend this value to `LD_LIBRARY_PATH` at runtime.
 
-Typical environment variables used by the build system:
-
-| Variable | Purpose |
-| --- | --- |
-| `LIBFABRIC_PREFIX` | libfabric install prefix |
-| `CPPFLAGS` | includes libfabric and Open MPI headers |
-| `LDFLAGS` | libfabric and Open MPI link and rpath flags |
+The helper uses `LIBFABRIC_PREFIX` to prepend its `lib` directory to runtime
+library paths, and `OMPI_PREFIX` to prepend its `bin` and `lib` directories to
+executable and runtime library paths. Neither variable selects dependencies for
+the configured Automake build. Configure dependency locations, compiler flags
+(`CPPFLAGS`), and linker flags (`LDFLAGS`) when configuring Open MPI.
 
 ## Run The Tests
 
 ### Run The Maintained Validation Flow
 
 ```bash
-cd "$PROJECT_ROOT/ompi/test/hwpc_cxi"
+cd "$PROJECT_ROOT/ompi/mca/hook/hwpc_cxi/test-multi"
 ./run_hwpc_cxi_validate.sh 4 2 100
 ```
 
@@ -100,18 +98,10 @@ To save a baseline for future comparisons:
 ./run_hwpc_cxi_validate.sh --save-baseline 4 2 100
 ```
 
-### Compatibility Entry Point
-
-```bash
-./run_hwpc_cxi_tests.sh 4 2 100
-```
-
-`run_hwpc_cxi_tests.sh` now forwards directly to `run_hwpc_cxi_validate.sh`.
-
 ### Multi-Node Examples
 
 ```bash
-srun -N 2 -n 8 --ntasks-per-node=4 test/hwpc_cxi/hwpc_cxi_sendrecv_test 100
+srun -N 2 -n 8 --ntasks-per-node=4 ompi/mca/hook/hwpc_cxi/test-multi/hwpc_cxi_sendrecv_test 100
 ./run_hwpc_cxi_validate.sh 8 4 100
 ```
 
@@ -129,7 +119,7 @@ Successful validation runs generally show:
 
 - Build fails with missing HWPC_CXI support: verify configure used `--enable-hwpc-cxi` and the Open MPI build completed.
 - Runtime library not found: set `HWPC_CXI_RUNTIME_LD_LIBRARY_PATH` before running validation.
-- Validation script cannot find executable: rebuild from `test/hwpc_cxi` and confirm `hwpc_cxi_sendrecv_test` exists.
+- Validation script cannot find executable: configure Open MPI and manually build `hwpc_cxi_sendrecv_test` in `test-multi`.
 
 ## Quick Maintenance Checklist
 

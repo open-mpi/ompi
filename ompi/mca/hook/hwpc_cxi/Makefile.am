@@ -27,3 +27,5 @@ libmca_hook_hwpc_cxi_la_LDFLAGS = -module -avoid-version
 if HWPC_CXI_ENABLE
 SUBDIRS = test
 endif
+
+DIST_SUBDIRS = test test-multi

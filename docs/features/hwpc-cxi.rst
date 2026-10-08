@@ -26,8 +26,9 @@ A network timeout is treated as a Slingshot network event (for example, a link
 flap) that causes packet reissue from a NIC perspective. One event may surface
 as multiple NIC-level timeouts.
 
-Unless higher verbosity/reporting is requested, the one-line timeout summary can
-be suppressed when no timeouts are detected.
+At report level 1, the one-line timeout summary is suppressed when no timeouts
+are detected and verbose output is disabled. It is emitted when timeouts are
+detected, verbose output is enabled, or a higher report level is selected.
 
 Runtime Configuration
 ---------------------
@@ -60,7 +61,7 @@ MCA Options
 Controls whether Cassini counters are collected and the verbosity of reporting.
 
 * ``0``: no Cassini counters collected; feature disabled completely 
-* ``1``: network timeout counters collected, one-line display regardless of any timeouts
+* ``1``: network timeout counters collected; one-line display when timeouts are detected or verbose output is enabled
 * ``2``: option 1 + CXI counter summary report
 * ``3``: option 2 + details for all NICs on a node if said node experiences a timeout
 * ``4``: option 2 + details for all NICs on all nodes if any node experiences a timeout
@@ -107,7 +108,7 @@ reporting.
 
 Path to a file with an alternate list of counter names to collect.
 
-* If set, this list is used for extended counter selection.
+* If set, this list is used for counter selection.
 * Default timeout counters are still collected in addition.
 * Retry-handler counters should be prefixed with ``rh:``.
 * Recommended with ``ompi_hook_hwpc_cxi_counter_report >= 2``.

@@ -21,13 +21,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+SOURCE_ROOT="$(cd "${SCRIPT_DIR}/../../../../../" && pwd)"
 
 # Environment defaults (override via shell env before invocation)
 LIBFABRIC_PREFIX="${LIBFABRIC_PREFIX:-__REPLACE_ME_LIBFABRIC_PREFIX__}"
 OMPI_PREFIX="${OMPI_PREFIX:-__REPLACE_ME_OMPI_PREFIX__}"
 HWPC_CXI_BUILD_ROOT="${HWPC_CXI_BUILD_ROOT:-${SOURCE_ROOT}}"
-HWPC_CXI_BUILD_DIR="${HWPC_CXI_BUILD_ROOT}/ompi/test/hwpc_cxi"
+HWPC_CXI_BUILD_DIR="${HWPC_CXI_BUILD_ROOT}/ompi/mca/hook/hwpc_cxi/test-multi"
 
 # Runtime defaults
 NUM_PROCS=4
