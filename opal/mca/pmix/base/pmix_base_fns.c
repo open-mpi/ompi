@@ -8,7 +8,7 @@
  * Copyright (c) 2016      Mellanox Technologies, Inc.
  *                         All rights reserved.
  * Copyright (c) 2016-2022 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -277,8 +277,9 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
     opal_nptr_t *nptr;
     opal_jobid_t jid;
     uint16_t jobfam;
-    uint32_t hash32, localjob = 0;
+    uint32_t hash32, localjob = 0, bias = UINT32_MAX;
     char *p = NULL;
+    char *b = NULL;
 
     /* set a default */
     if (NULL != jobid) {
@@ -301,16 +302,33 @@ int opal_pmix_convert_nspace(opal_jobid_t *jobid, pmix_nspace_t nspace)
     }
 
     /* if we get here, we don't know this nspace */
-    /* find the "." at the end that indicates the child job */
+    /* find the "@" at the end that indicates the child job */
     if (NULL != (p = strrchr(nspace, '@'))) {
         *p = '\0';
     }
+    /* the fields in the nspace are tool-hostname-pid. Separate out
+     * the pid as we will use that as a bias to the resulting hash
+     */
+    if (NULL != (b = strrchr(nspace, '-'))) {
+        *b = '\0';
+        ++b;
+        if ('\0' != *b) {
+            bias = strtoul(b, NULL, 10);
+        }
+        --b;
+    }
+
     OPAL_HASH_STR(nspace, hash32);
+    if (NULL != b) {
+        *b = '-';
+    }
     if (NULL != p) {
         *p = '@';
         ++p;
         localjob = strtoul(p, NULL, 10);
     }
+    // fold in the pid bias
+    hash32 = hash32 ^ bias;
 
     /* now compress to 16-bits */
     jobfam = (uint16_t)(((0x0000ffff & (0xffff0000 & hash32) >> 16)) ^ (0x0000ffff & hash32));
