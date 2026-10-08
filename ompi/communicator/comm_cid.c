@@ -96,6 +96,7 @@ struct ompi_comm_cid_context_t {
     int nextcid_epoch;
 #endif /* OPAL_ENABLE_FT_MPI */
     int start;
+    bool blocking;  /* set by a blocking creation call; its callers wait on this request */
     int flag, rflag;
     int local_leader;
     int remote_leader;
@@ -945,7 +946,7 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
     if (context->comm == *newcomm || OMPI_COMM_IS_INTER(context->comm)) {
         parent = NULL;
     }
-    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm, parent))) {
+    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm, parent, !context->blocking))) {
         OBJ_RELEASE(*newcomm);
         *newcomm = MPI_COMM_NULL;
         return ret;
@@ -983,9 +984,11 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
     return OMPI_SUCCESS;
 }
 
-int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
-                           ompi_communicator_t *bridgecomm, const void *arg0,
-                           const void *arg1, bool send_first, int mode, ompi_request_t **req)
+/* blocking: the caller waits on the returned request (ompi_comm_activate). */
+static int ompi_comm_activate_nb_internal (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
+                                           ompi_communicator_t *bridgecomm, const void *arg0,
+                                           const void *arg1, bool send_first, int mode,
+                                           bool blocking, ompi_request_t **req)
 {
     ompi_comm_cid_context_t *context;
     ompi_comm_request_t *request;
@@ -1000,6 +1003,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     if (NULL == context) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    context->blocking = blocking;
 
     /* keep track of the pointer so it can be set to MPI_COMM_NULL on failure */
     context->newcommp = newcomm;
@@ -1067,6 +1071,14 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
     return ret;
 }
 
+int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
+                           ompi_communicator_t *bridgecomm, const void *arg0,
+                           const void *arg1, bool send_first, int mode, ompi_request_t **req)
+{
+    return ompi_comm_activate_nb_internal (newcomm, comm, bridgecomm, arg0, arg1, send_first, mode,
+                                           false, req);
+}
+
 int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                         ompi_communicator_t *bridgecomm, const void *arg0,
                         const void *arg1, bool send_first, int mode)
@@ -1074,7 +1086,8 @@ int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm
     ompi_request_t *req;
     int rc;
 
-    rc = ompi_comm_activate_nb (newcomm, comm, bridgecomm, arg0, arg1, send_first, mode, &req);
+    rc = ompi_comm_activate_nb_internal (newcomm, comm, bridgecomm, arg0, arg1, send_first, mode,
+                                         true, &req);
     if (OMPI_SUCCESS != rc) {
         return rc;
     }
