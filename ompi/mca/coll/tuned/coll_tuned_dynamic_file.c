@@ -12,7 +12,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
  *                         reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
@@ -195,7 +195,18 @@ static int coll_tuned_read_message_size_rule(   ompi_coll_msg_rule_t *msg_p,
 #undef OPTIONAL_READ
 }
 
-static int coll_tuned_get_comm_distribution(const opal_json_t *parent, enum comm_rank_distro_t *distro) {
+/*
+ * The rank distribution key is optional in two places: at the top level of
+ * the file, where it declares that the whole file was tuned for one
+ * particular distribution and so supplies the default for every
+ * communicator rule in it, and on an individual communicator rule, where it
+ * overrides that default.  Whichever of the two is absent falls back to the
+ * value passed in, so a file that gives neither keeps matching any
+ * distribution as it always has.
+ */
+static int coll_tuned_get_comm_distribution(const opal_json_t *parent,
+                                            enum comm_rank_distro_t fallback,
+                                            enum comm_rank_distro_t *distro) {
     int rc;
     const opal_json_t *json_val;
     const char *string_buf;
@@ -204,7 +215,7 @@ static int coll_tuned_get_comm_distribution(const opal_json_t *parent, enum comm
 
     rc = opal_json_get_key( parent, comm_rank_distro_name, &json_val);
     if (rc == OPAL_ERROR) {
-        *distro = COLL_RULES_DISTRO_ANY;
+        *distro = fallback;
         return OPAL_SUCCESS;
     }
     rc = opal_json_read_string(json_val, &string_buf, &string_len);
@@ -216,8 +227,8 @@ static int coll_tuned_get_comm_distribution(const opal_json_t *parent, enum comm
             opal_output_verbose(1, ompi_coll_tuned_stream,
                     "Unrecognized value for field \"%s\".  Got \"%s\", assuming \"%s\".",
                         comm_rank_distro_name, string_buf,
-                        coll_rules_comm_rank_distro_to_str(COLL_RULES_DISTRO_ANY) );
-            *distro = COLL_RULES_DISTRO_ANY;
+                        coll_rules_comm_rank_distro_to_str(fallback) );
+            *distro = fallback;
             rc = OPAL_SUCCESS;
         }
     }
@@ -242,6 +253,19 @@ static int ompi_coll_tuned_read_rules_json (const opal_json_t *json_root, ompi_c
     size_t jcol = 0;
     int64_t int_val;
     const char* coll_name = "";
+
+    /* Hint, given once for the whole file, that these rules were measured on
+     * a communicator with a particular rank distribution -- all ranks on one
+     * node, or one rank per node -- so that every communicator rule below
+     * does not have to repeat the key. */
+    enum comm_rank_distro_t file_distro;
+    rc = coll_tuned_get_comm_distribution(json_root, COLL_RULES_DISTRO_ANY,
+                                          &file_distro);
+    if (OPAL_SUCCESS != rc) {
+        opal_output_verbose(1, ompi_coll_tuned_stream,
+            "The top-level \"comm_rank_distribution\" field must be a string.");
+        return OPAL_ERROR;
+    }
 
     alg_rules = ompi_coll_tuned_mk_alg_rules(COLLCOUNT);
 
@@ -313,7 +337,8 @@ static int ompi_coll_tuned_read_rules_json (const opal_json_t *json_root, ompi_c
             if (rc == OPAL_ERROR) { goto error_bad_comm_rule; }
             if (rc == OPAL_SUCCESS) { com_p->mpi_comsize_max = int_val; }
 
-            rc = coll_tuned_get_comm_distribution(comm_rule, &com_p->comm_rank_distribution);
+            rc = coll_tuned_get_comm_distribution(comm_rule, file_distro,
+                                                  &com_p->comm_rank_distribution);
             if (rc == OPAL_ERROR) { goto error_bad_comm_rule; }
 
             rc = opal_json_get_key( comm_rule, "rules", &msg_size_array);
