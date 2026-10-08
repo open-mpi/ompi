@@ -99,6 +99,7 @@ Artifacts fall into two categories with different lifecycles:
 - **`llms/openmpi-mpi-examples.md`**: a curated set of small, validated MPI examples (see [Examples corpus](#examples-corpus)).
 - **`llms/openmpi-mpi-interface-guide.md`**: a concise guide for choosing among C, `mpif.h`, `use mpi`, and `use mpi_f08`.
 - **`llms/openmpi-runtime-introspection.md`**: a concise guide telling a consumer how to query an *installed* Open MPI with `ompi_info` — its version, build configuration, available MCA components, and the run-time MCA parameters those components expose, plus how to set MCA parameters (`--mca` / `OMPI_MCA_*` / parameter files). This installation-specific surface is intentionally **not** snapshotted into the corpus (see [Why no MCA-parameter snapshot](#why-no-mca-parameter-snapshot)).
+- **`llms/openmpi-release-discovery.md`**: a concise guide telling a consumer how to discover which Open MPI releases exist (and their download URLs and checksums) from the machine-readable release files on `www.open-mpi.org` (`latest_release.txt`, `releases.json`, `releases.atom`). Release lists are not snapshotted into the corpus, since any list frozen into one documentation version would go stale; `llms.txt` links the live files directly.
 - **`llms/openmpi-mpi-api.schema.json`**: the JSON Schema for the API catalog records.
 - **`llms/openmpi-docs-manifest.schema.json`**: the JSON Schema for the manifest.
 
