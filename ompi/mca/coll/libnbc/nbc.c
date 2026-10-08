@@ -538,81 +538,14 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
           buf2=opargs.buf2;
         }
 
-        /* Proof-of-concept: stage predefined contiguous device operands
-         * because ompi_op_reduce() executes host CPU kernels. */
-        {
-            uint64_t flags1 = 0, flags2 = 0;
-            int dev1 = MCA_ACCELERATOR_NO_DEVICE_ID;
-            int dev2 = MCA_ACCELERATOR_NO_DEVICE_ID;
-            int accel1 = opal_accelerator.check_addr(buf1, &dev1, &flags1);
-            int accel2 = opal_accelerator.check_addr(buf2, &dev2, &flags2);
-
-            if (accel1 < 0 || accel2 < 0) {
-                return (accel1 < 0) ? accel1 : accel2;
-            }
-
-            if (accel1 > 0 || accel2 > 0) {
-                size_t type_size = 0, bytes;
-                void *host1 = (void *) buf1, *host2 = buf2;
-                int copy_rc;
-
-                if (!NBC_Type_intrinsic(opargs.datatype)
-                    || !(opargs.datatype->super.flags & OPAL_DATATYPE_FLAG_NO_GAPS)) {
-                    return OMPI_ERR_NOT_SUPPORTED;
-                }
-                ompi_datatype_type_size(opargs.datatype, &type_size);
-                if (type_size && opargs.count > SIZE_MAX / type_size) {
-                    return OMPI_ERR_OUT_OF_RESOURCE;
-                }
-                bytes = type_size * opargs.count;
-
-                if (accel1 > 0 && bytes) {
-                    host1 = malloc(bytes);
-                    if (NULL == host1) {
-                        return OMPI_ERR_OUT_OF_RESOURCE;
-                    }
-                    copy_rc = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, dev1,
-                                                         host1, buf1, bytes,
-                                                         MCA_ACCELERATOR_TRANSFER_DTOH);
-                    if (OPAL_SUCCESS != copy_rc) {
-                        free(host1);
-                        return copy_rc;
-                    }
-                }
-                if (accel2 > 0 && bytes) {
-                    host2 = malloc(bytes);
-                    if (NULL == host2) {
-                        if (accel1 > 0) free(host1);
-                        return OMPI_ERR_OUT_OF_RESOURCE;
-                    }
-                    copy_rc = opal_accelerator.mem_copy(MCA_ACCELERATOR_NO_DEVICE_ID, dev2,
-                                                         host2, buf2, bytes,
-                                                         MCA_ACCELERATOR_TRANSFER_DTOH);
-                    if (OPAL_SUCCESS != copy_rc) {
-                        if (accel1 > 0) free(host1);
-                        free(host2);
-                        return copy_rc;
-                    }
-                }
-
-                ompi_op_reduce(opargs.op, host1, host2, opargs.count, opargs.datatype);
-
-                if (accel2 > 0 && bytes) {
-                    copy_rc = opal_accelerator.mem_copy(dev2, MCA_ACCELERATOR_NO_DEVICE_ID,
-                                                         buf2, host2, bytes,
-                                                         MCA_ACCELERATOR_TRANSFER_HTOD);
-                    if (OPAL_SUCCESS != copy_rc) {
-                        if (accel1 > 0) free(host1);
-                        free(host2);
-                        return copy_rc;
-                    }
-                }
-                if (accel1 > 0) free(host1);
-                if (accel2 > 0) free(host2);
-            } else {
-                ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
-            }
-        }
+	/* Use the selected local reduction implementation so coll/accelerator
+	 * can handle device operands without duplicating staging here. */
+	res = handle->comm->c_coll->coll_reduce_local(
+			buf1, buf2, opargs.count, opargs.datatype, opargs.op,
+			handle->comm->c_coll->coll_reduce_local_module);
+	if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+		return res;
+	}
         break;
       case COPY:
         NBC_DEBUG(5, "  COPY   (offset %li) ", offset);
