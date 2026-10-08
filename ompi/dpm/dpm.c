@@ -881,15 +881,21 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
        ompi/runtime/ompi_mpi_finalize.c for a much more detailed
        rationale. */
 
-    /* RHC: assuming for now that this must flow across all
-     * local and remote group members */
-    nprocs = comm->c_local_group->grp_proc_count + comm->c_remote_group->grp_proc_count;
+    /* this must flow across all local and remote group members. An
+     * intracommunicator's remote group IS its local group, so naming
+     * both would hand the fence every member twice - and a PMIx server
+     * that counts one expected contribution per entry then waits for
+     * twice as many as will ever arrive. */
+    nprocs = comm->c_local_group->grp_proc_count;
+    if (OMPI_COMM_IS_INTER(comm)) {
+        nprocs += comm->c_remote_group->grp_proc_count;
+    }
     names = (opal_process_name_t *) malloc(nprocs * sizeof(opal_process_name_t));
     if (NULL == names) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     ret = ompi_dpm_collect_names(comm->c_local_group, names, &n);
-    if (OMPI_SUCCESS == ret) {
+    if (OMPI_SUCCESS == ret && OMPI_COMM_IS_INTER(comm)) {
         /* do the same for the remote group */
         ret = ompi_dpm_collect_names(comm->c_remote_group, names, &n);
     }
