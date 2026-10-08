@@ -20,7 +20,7 @@
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
 # Copyright (c) 2025      Advanced Micro Devices, Inc. All Rights reserved.
-# Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
+# Copyright (c) 2026      Triad National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -33,8 +33,7 @@
 
 noinst_LTLIBRARIES += libmpiext_xcallbacks_abi.la libmpiext_xcallbacks_abi_profile.la
 
-$(abi_interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
-
+$(abi_interface_profile_sources): $(OMPI_BINDINGS_GENERATOR) abi_xcallbacks_c.h
 
 abi_interface_profile_sources = \
         op_create_x_abi_generated.c

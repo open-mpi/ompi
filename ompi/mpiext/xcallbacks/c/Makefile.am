@@ -7,6 +7,7 @@
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2022      Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2026      Triad National Security, LLC.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -15,6 +16,8 @@
 # $HEADER$
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
+
+include $(top_srcdir)/Makefile.ompi-rules
 
 # This file builds the C bindings for MPI extensions.  It must be
 # present in all MPI extensions.
@@ -51,7 +54,7 @@ interface_profile_sources = \
 
 if OMPI_GENERATE_BINDINGS
 # See OMPI_BINDINGS_GENERATOR in Makefile.ompi-rules.
-$(interface_profile_sources): $(OMPI_BINDINGS_GENERATOR) abi_xcallbacks_c.h
+$(interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
 
 #
 # The suppress bc is to suppress generation of _c suffixes to entry
@@ -106,11 +109,13 @@ libmpiext_xcallbacks_profile_c_la_LDFLAGS = -module -avoid-version
 
 libmpiext_xcallbacks_c_la_LIBADD = libmpiext_xcallbacks_profile_c.la
 
-EXTRA_DIST = $(prototype_sources)
+EXTRA_DIST = $(prototype_sources) mpix-callback-apis.json abi_xcallbacks_c.h abi_xcallbacks_c.h.in
 
-MAINTAINERCLEANFILES = *_generated.c 
+include ../tests/Makefile.include
+
+MAINTAINERCLEANFILES = *_generated.c abi_xcallbacks_c.h $(nobase_include_HEADERS)
 if OPAL_DEVEL_BUILD
-CLEANFILES += *_generated.c 
+CLEANFILES += *_generated.c abi_xcallbacks_c.h
 endif
 
 if OMPI_STANDARD_ABI
