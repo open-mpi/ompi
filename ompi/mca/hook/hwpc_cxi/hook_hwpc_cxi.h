@@ -24,18 +24,21 @@
 
 BEGIN_C_DECLS
 
-OMPI_DECLSPEC extern const ompi_hook_base_component_1_0_0_t mca_hook_hwpc_cxi_component;
+OMPI_HIDDEN extern const ompi_hook_base_component_1_0_0_t mca_hook_hwpc_cxi_component;
 
-extern char *mca_hook_hwpc_cxi_counter_file;
-extern int mca_hook_hwpc_cxi_counter_report;
-extern bool mca_hook_hwpc_cxi_counter_verbose;
-extern bool mca_hook_hwpc_cxi_counter_summary_filter_zeros;
-extern bool mca_hook_hwpc_cxi_counter_mpi_t_enable;
-extern char *mca_hook_hwpc_cxi_counter_report_file;
+OMPI_HIDDEN extern char *mca_hook_hwpc_cxi_counter_file;
+OMPI_HIDDEN extern int mca_hook_hwpc_cxi_counter_report;
+OMPI_HIDDEN extern bool mca_hook_hwpc_cxi_counter_verbose;
+OMPI_HIDDEN extern bool mca_hook_hwpc_cxi_counter_summary_filter_zeros;
+OMPI_HIDDEN extern bool mca_hook_hwpc_cxi_counter_mpi_t_enable;
+OMPI_HIDDEN extern char *mca_hook_hwpc_cxi_counter_report_file;
 
-void ompi_hook_hwpc_cxi_mpi_init_bottom(int argc, char **argv, int requested, int *provided);
+OMPI_HIDDEN void ompi_hook_hwpc_cxi_mpi_init_bottom(int argc, char **argv, int requested, int *provided);
 
-void ompi_hook_hwpc_cxi_mpi_finalize_top(void);
+OMPI_HIDDEN void ompi_hook_hwpc_cxi_mpi_finalize_top(void);
+
+OMPI_DECLSPEC void ompi_hook_hwpc_cxi_init(void);
+OMPI_DECLSPEC void ompi_hook_hwpc_cxi_fini(void);
 
 END_C_DECLS
 

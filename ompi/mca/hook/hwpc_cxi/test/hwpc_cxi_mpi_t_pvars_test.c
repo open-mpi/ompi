@@ -23,6 +23,41 @@
 #    define HWPC_CXI_MPI_T_PVARS_ENABLED_TEST 0
 #endif
 
+#if HWPC_CXI_MPI_T_PVARS_ENABLED_TEST
+static int check_pvar_read(int index)
+{
+    MPI_T_pvar_session session;
+    MPI_T_pvar_handle handle;
+    int count = 0;
+    int result = EXIT_FAILURE;
+
+    if (MPI_SUCCESS != MPI_T_pvar_session_create(&session)) {
+        return EXIT_FAILURE;
+    }
+    if (MPI_SUCCESS != MPI_T_pvar_handle_alloc(session, index, NULL, &handle, &count)) {
+        MPI_T_pvar_session_free(&session);
+        return EXIT_FAILURE;
+    }
+    if (count > 0) {
+        unsigned long *values = calloc((size_t) count, sizeof(*values));
+        if (NULL != values) {
+            if (MPI_SUCCESS == MPI_T_pvar_read(session, handle, values)
+                && MPI_SUCCESS == MPI_T_pvar_read(session, handle, values)) {
+                result = EXIT_SUCCESS;
+            }
+            free(values);
+        }
+    }
+    if (MPI_SUCCESS != MPI_T_pvar_handle_free(session, &handle)) {
+        result = EXIT_FAILURE;
+    }
+    if (MPI_SUCCESS != MPI_T_pvar_session_free(&session)) {
+        result = EXIT_FAILURE;
+    }
+    return result;
+}
+#endif
+
 int main(int argc, char **argv)
 {
     int provided;
@@ -97,6 +132,16 @@ int main(int argc, char **argv)
         printf("PVAR Index: %d Description: %s\n", pvar_index, description);
 
         if (0 == strncmp(name, "hook_hwpc_cxi_", strlen("hook_hwpc_cxi_"))) {
+#if HWPC_CXI_MPI_T_PVARS_ENABLED_TEST
+            if (MPI_T_PVAR_CLASS_COUNTER != var_class || MPI_UNSIGNED_LONG != datatype
+                || MPI_T_BIND_NO_OBJECT != bind || !readonly || !continuous
+                || 0 == description_length || EXIT_SUCCESS != check_pvar_read(pvar_index)) {
+                fprintf(stderr, "Invalid HWPC_CXI MPI_T metadata or unreadable handle: %s\n", name);
+                MPI_T_finalize();
+                MPI_Finalize();
+                return EXIT_FAILURE;
+            }
+#endif
             if (0 > hwpc_cxi_pvar_index) {
                 hwpc_cxi_pvar_index = pvar_index;
             }

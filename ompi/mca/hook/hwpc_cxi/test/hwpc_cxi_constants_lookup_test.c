@@ -52,11 +52,13 @@ static void test_group_lookup(void)
                   "lookup by pretty group name should succeed");
     EXPECT_TRUE(NULL != group_obj, "group object should be returned");
     EXPECT_TRUE(NULL != group_obj->counter_group_name, "group name should be populated");
+    EXPECT_EQ_INT(strcmp(group_obj->counter_group_name, "CXI_PERFSTATS"), 0,
+                  "group name should not contain the enum prefix");
 
     EXPECT_EQ_INT(hwpc_cxi_get_counter_group_id_by_obj(&group_id, group_obj),
                   HWPC_CXI_SUCCESS,
                   "lookup by group object should succeed");
-    EXPECT_EQ_INT(group_id, CXI_PERFSTATS,
+    EXPECT_EQ_INT(group_id, HWPC_CXI_PERFSTATS,
                   "group object should map back to its id");
 
     EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "cxi_perfstats"),
@@ -75,7 +77,7 @@ static void test_mnemonic_lookup(void)
     hwpc_cxi_predefined_counter_mnemonic_id_t mnemonic_id;
     int counter_count = 0;
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, ATU_CACHE_MISS),
+    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_ATU_CACHE_MISS),
                   HWPC_CXI_SUCCESS,
                   "lookup by mnemonic id should succeed");
     EXPECT_TRUE(NULL != mnemonic_obj, "mnemonic object should be returned");
@@ -83,12 +85,12 @@ static void test_mnemonic_lookup(void)
 
     EXPECT_EQ_INT(strcmp(mnemonic_obj->counter_name, "ATU_CACHE_MISS"),
                   0,
-                  "mnemonic name should match expected id");
+                  "mnemonic name should not contain the enum prefix");
 
     EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_id_by_obj(&mnemonic_id, mnemonic_obj),
                   HWPC_CXI_SUCCESS,
                   "lookup by mnemonic object should succeed");
-    EXPECT_EQ_INT(mnemonic_id, ATU_CACHE_MISS,
+    EXPECT_EQ_INT(mnemonic_id, HWPC_CXI_ATU_CACHE_MISS,
                   "mnemonic object should map back to its id");
 
     EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, "atu_cache_miss"),
@@ -104,7 +106,7 @@ static void test_mnemonic_lookup(void)
 static void test_mnemonic_object_lookup_errors(void)
 {
     const hwpc_cxi_predefined_counter_mnemonic_obj_t *mnemonic_obj = NULL;
-    hwpc_cxi_predefined_counter_mnemonic_id_t mnemonic_id = ATU_CACHE_MISS;
+    hwpc_cxi_predefined_counter_mnemonic_id_t mnemonic_id = HWPC_CXI_ATU_CACHE_MISS;
     hwpc_cxi_predefined_counter_mnemonic_obj_t mnemonic_copy;
 
     EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_id_by_obj(NULL, mnemonic_obj),
@@ -114,7 +116,7 @@ static void test_mnemonic_object_lookup_errors(void)
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "NULL mnemonic object should be rejected");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, ATU_CACHE_MISS),
+    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_ATU_CACHE_MISS),
                   HWPC_CXI_SUCCESS,
                   "mnemonic object setup should succeed");
     memcpy(&mnemonic_copy, mnemonic_obj, sizeof(mnemonic_copy));

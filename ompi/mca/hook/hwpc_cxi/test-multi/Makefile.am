@@ -11,20 +11,18 @@
 # $HEADER$
 #
 
-# This test requires CXI hardware and multiple processes to run.
-# "make check" tests can be found inside the mca hook module directory for hwpc_cxi
+# This hardware-dependent suite is built and run manually, outside "make check".
 EXTRA_DIST = \
     build_with_env_and_run.sh \
     run_hwpc_cxi_validate.sh \
+    hwpc_cxi_compare.sh \
     README.md \
     HWPC_CXI_GUIDE.md \
     my_desired_cxi_counters.txt \
     my_desired_fake_cxi_counters.txt
 
 if HWPC_CXI_ENABLE
-    noinst_PROGRAMS = hwpc_cxi_sendrecv_test
-
-    TESTS = hwpc_cxi_sendrecv_test
+    EXTRA_PROGRAMS = hwpc_cxi_sendrecv_test
 
     hwpc_cxi_sendrecv_test_SOURCES = hwpc_cxi_sendrecv_test.c
     hwpc_cxi_sendrecv_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)

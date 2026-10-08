@@ -36,11 +36,13 @@ Component identity:
 
 ## Validation
 
-Validation assets are under `test/hwpc_cxi/`.
+Hardware validation assets are under `test-multi/`; hardware-independent
+unit tests are under `test/` and run with `make check`.
 
 Quick start:
 
 ```bash
-cd test/hwpc_cxi
+cd ompi/mca/hook/hwpc_cxi/test-multi
+make hwpc_cxi_sendrecv_test
 ./run_hwpc_cxi_validate.sh
 ```

@@ -13,8 +13,16 @@
 
 # Unit tests for the hwpc_cxi hook module
 # These tests are hardware-independent and should run during make check.
+include $(top_srcdir)/Makefile.mca-dso-check
+
+EXTRA_DIST = check_hwpc_cxi_dynamic_symbols.sh check_hwpc_cxi_quiet.sh check_hwpc_cxi_compare.sh check_hwpc_cxi_driver.sh
+
+TEST_EXTENSIONS = .sh
+SH_LOG_COMPILER = $(SHELL)
+
 if HWPC_CXI_ENABLE
     check_PROGRAMS = \
+        hwpc_cxi_counters_test \
         hwpc_cxi_constants_lookup_test \
         hwpc_cxi_constants_validation_test \
         hwpc_cxi_report_level_0_test \
@@ -27,17 +35,30 @@ if HWPC_CXI_ENABLE
         hwpc_cxi_mpi_t_pvars_enabled_test
 
     TESTS = \
+        hwpc_cxi_counters_test \
+        check_hwpc_cxi_compare.sh \
+        check_hwpc_cxi_driver.sh \
         hwpc_cxi_constants_lookup_test \
         hwpc_cxi_constants_validation_test \
-        hwpc_cxi_report_level_0_test \
+        check_hwpc_cxi_quiet.sh \
         hwpc_cxi_mpi_init_test \
-        hwpc_cxi_mpi_init_finalize_level_0_test \
         hwpc_cxi_mpi_init_finalize_level_1_test \
         hwpc_cxi_mpi_init_finalize_level_2_test \
         hwpc_cxi_mpi_init_finalize_level_5_test \
         hwpc_cxi_mpi_t_pvars_test
 
+    check-local: check-hwpc-cxi-dynamic-symbols
+    .PHONY: check-hwpc-cxi-dynamic-symbols
+    check-hwpc-cxi-dynamic-symbols:
+	$(AM_V_at)$(SHELL) $(srcdir)/check_hwpc_cxi_dynamic_symbols.sh "$(NM)" "$(abs_top_builddir)/ompi/.libs"
     AM_CPPFLAGS = -I$(top_srcdir)/ompi/mca/hook/hwpc_cxi
+
+    hwpc_cxi_counters_test_SOURCES = hwpc_cxi_counters_test.c ../hook_hwpc_cxi_constants.c
+    hwpc_cxi_counters_test_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+    hwpc_cxi_counters_test_LDADD = \
+        $(top_builddir)/ompi/libopen_mpi.la \
+        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
     ###############################################################################################
     # Unit tests just for sanity-checking API to the static constants portion of the hook module  #
