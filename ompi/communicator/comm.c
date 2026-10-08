@@ -2058,9 +2058,14 @@ int ompi_comm_create_group (ompi_communicator_t *comm, ompi_group_t *group, int 
  */
 static int ompi_comm_set_predefined_attributes (ompi_communicator_t *comm)
 {
-    int rc = ompi_attr_hash_init (&comm->c_keyhash);
-    if (OMPI_SUCCESS != rc) {
-        return rc;
+    int rc;
+
+    /* coll selection in ompi_comm_activate may already have stored attributes */
+    if (NULL == comm->c_keyhash) {
+        rc = ompi_attr_hash_init (&comm->c_keyhash);
+        if (OMPI_SUCCESS != rc) {
+            return rc;
+        }
     }
 
     return ompi_attr_set_int (COMM_ATTR, comm, &comm->c_keyhash,
