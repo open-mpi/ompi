@@ -93,6 +93,23 @@ OBJ_CLASS_INSTANCE(ompi_communicator_t, opal_infosubscriber_t,
    shortcut for finalize and abort. */
 int ompi_comm_num_dyncomm=0;
 
+/*
+ * Allocate the name buffer for a predefined communicator at the full
+ * MPI_MAX_OBJECT_NAME size rather than at the length of the short predefined
+ * literal.  ompi_comm_set_name() copies up to MPI_MAX_OBJECT_NAME bytes into
+ * c_name, so a strdup()-sized buffer would be overflowed by a legal
+ * MPI_Comm_set_name() call on a predefined communicator.  The destructor
+ * free()s c_name, so this remains leak-free.
+ */
+static char *ompi_comm_predefined_name(const char *name)
+{
+    char *buf = (char *) malloc(MPI_MAX_OBJECT_NAME);
+    if (NULL != buf) {
+        opal_string_copy(buf, name, MPI_MAX_OBJECT_NAME);
+    }
+    return buf;
+}
+
 static int ompi_comm_finalize (void);
 
 /*
@@ -182,7 +199,7 @@ int ompi_comm_init(void)
     (void)opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 0, &ompi_mpi_comm_null);
     (void)opal_pointer_array_test_and_set_item(&ompi_mpi_communicators, 1, &ompi_mpi_comm_null);
 
-    ompi_mpi_comm_null.comm.c_name = strdup ("MPI_COMM_NULL");
+    ompi_mpi_comm_null.comm.c_name = ompi_comm_predefined_name("MPI_COMM_NULL");
     ompi_mpi_comm_null.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
 
@@ -233,7 +250,7 @@ int ompi_comm_init_mpi3 (void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
-    ompi_mpi_comm_world.comm.c_name = strdup("MPI_COMM_WORLD");
+    ompi_mpi_comm_world.comm.c_name = ompi_comm_predefined_name("MPI_COMM_WORLD");
     ompi_mpi_comm_world.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
     ompi_mpi_comm_world.comm.instance = group->grp_instance;
@@ -291,7 +308,7 @@ int ompi_comm_init_mpi3 (void)
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self.comm);
     opal_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
-    ompi_mpi_comm_self.comm.c_name = strdup("MPI_COMM_SELF");
+    ompi_mpi_comm_self.comm.c_name = ompi_comm_predefined_name("MPI_COMM_SELF");
     ompi_mpi_comm_self.comm.c_flags |= OMPI_COMM_NAMEISSET | OMPI_COMM_INTRINSIC |
         OMPI_COMM_GLOBAL_INDEX;
     ompi_mpi_comm_self.comm.instance = group->grp_instance;

@@ -217,7 +217,11 @@ static inline int memchecker_comm(MPI_Comm comm)
      */
     opal_memchecker_base_isdefined (&comm->c_lock.m_lock_atomic, sizeof(opal_atomic_lock_t));
 #endif /* 0 */
-    opal_memchecker_base_isdefined (&comm->c_name, MPI_MAX_OBJECT_NAME);
+    /* c_name is a separately-allocated buffer (not an inline array), so check
+     * the buffer it points to. Only check the NUL-terminated string length,
+     * not the entire allocated buffer, since only the string portion is
+     * initialized. */
+    opal_memchecker_base_isdefined (comm->c_name, strlen(comm->c_name) + 1);
     opal_memchecker_base_isdefined (&comm->c_my_rank, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_flags, sizeof(uint32_t));
     opal_memchecker_base_isdefined (&comm->c_local_group, sizeof(ompi_group_t *));
