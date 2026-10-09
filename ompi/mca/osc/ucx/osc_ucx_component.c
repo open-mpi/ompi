@@ -19,7 +19,9 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/osc/base/osc_base_obj_convert.h"
+#include "ompi/runtime/params.h"
 #include "opal/mca/common/ucx/common_ucx.h"
+#include "opal/mca/pmix/pmix-internal.h"
 
 #include "osc_ucx.h"
 #include "osc_ucx_request.h"
@@ -342,7 +344,15 @@ static int component_set_priority() {
     return OMPI_SUCCESS;
 }
 
-static int component_finalize(void) {
+static void component_close_eps_and_fence(void)
+{
+    volatile int fenced = 0;
+    int ret;
+
+    /* drain pending winfo flushes; in MT mode also close the winfo endpoints */
+    if (mca_osc_ucx_component.env_initialized) {
+        opal_common_ucx_wpool_close_eps(mca_osc_ucx_component.wpool);
+    }
 
     if (!opal_common_ucx_thread_enabled) {
         int i;
@@ -354,7 +364,39 @@ static int component_finalize(void) {
             }
         }
         free(mca_osc_ucx_component.endpoints);
+        mca_osc_ucx_component.endpoints = NULL;
+        mca_osc_ucx_component.comm_world_size = 0;
     }
+
+    if (ompi_async_mpi_finalize) {
+        return;
+    }
+
+    /* peers must be done flushing to us before we destroy our workers */
+    OSC_UCX_VERBOSE(1, "endpoints closed, entering finalize barrier");
+    ret = opal_common_ucx_mca_pmix_fence_nb((int *) &fenced);
+    if (PMIX_SUCCESS != ret) {
+        OSC_UCX_VERBOSE(1, "finalize barrier failed: %s", PMIx_Error_string(ret));
+        return;
+    }
+
+    /* opal_progress() is not safe this late in finalize */
+    if (mca_osc_ucx_component.env_initialized) {
+        while (!fenced) {
+            opal_common_ucx_wpool_progress(mca_osc_ucx_component.wpool);
+        }
+    } else {
+        while (!fenced) {
+            usleep(1);
+        }
+    }
+
+    OSC_UCX_VERBOSE(1, "finalize barrier done, destroying workers");
+}
+
+static int component_finalize(void) {
+    component_close_eps_and_fence();
+
     opal_common_ucx_mca_deregister();
     if (mca_osc_ucx_component.env_initialized) {
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
