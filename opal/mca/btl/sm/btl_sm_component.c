@@ -87,7 +87,7 @@ mca_btl_sm_component_t mca_btl_sm_component = {
                 },
             .btl_data =
                 {/* The component is checkpoint ready */
-                 .param_field = MCA_BASE_METADATA_PARAM_NONE
+                 .param_field = MCA_BASE_METADATA_PARAM_CHECKPOINT
                               | MCA_BASE_METADATA_PARAM_THREAD_SAFE /* btl_progress is thread-safe */
                 },
 

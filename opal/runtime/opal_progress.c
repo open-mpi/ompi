@@ -120,8 +120,30 @@ typedef struct {
     volatile opal_progress_callback_t *cbs;
     size_t len;
     size_t size;
+
+    /* Temporarily deferring free of the old cbs in case of list extension
+     * to avoid a possible use-after-free race:
+     * - A main thread registering a new cb and must extend the list (full)
+     * - A new list is allocated (doubled-size), cbs content is copied
+     *   to the new list, cbs pointer is swapped to the new list, then the
+     *   old cbs is freed
+     * - It is very likely that the async-progress thread is running
+     *   alongside and is still using the old cbs at the moment of free
+     *
+     * Callback registering will now note down the old cbs here. It will be
+     * freed-and-<replaced|cleared> either when:
+     *   - registering a new callback and need to extend again (replaced), or
+     *   - opal_progress_finalize() (cleared)
+     *
+     * Let's hope old_cbs[1] is enough (also help padding this struct :)).
+     * If it is not (e.g. too many callbacks to register at once and
+     * the async-progress thread is still stuck in the old list),
+     * we should add more old_cbs, or find another mechanism.
+     */
+    volatile opal_progress_callback_t *old_cbs;
 } opal_progress_cb_array_t;
 
+/* Registered callbacks */
 static opal_progress_cb_array_t callbacks[OPAL_THREAD_SAFETY_MAX][OPAL_PRIORITY_MAX];
 
 /* do we want to yield() if nothing happened */
@@ -156,9 +178,11 @@ static int fake_cb(void)
     return 0;
 }
 
+static int _opal_progress_register(opal_progress_callback_t cb,
+                                   opal_progress_cb_array_t *cba);
+
 static int _opal_progress_unregister(opal_progress_callback_t cb,
-                                     volatile opal_progress_callback_t *callback_array,
-                                     size_t *callback_array_len);
+                                     opal_progress_cb_array_t *cba);
 
 static void opal_progress_finalize(void)
 {
@@ -171,6 +195,7 @@ static void opal_progress_finalize(void)
             callbacks[t][p].size = 0;
             free((void *) callbacks[t][p].cbs);
             callbacks[t][p].cbs = NULL;
+            callbacks[t][p].old_cbs = NULL;
         }
     }
 
@@ -185,7 +210,9 @@ void opal_progress_shutdown_async_progress_thread(void)
         thread_arg.running = false;
         int err = opal_thread_join(&opal_progress_async_thread, NULL);
         if (OPAL_SUCCESS == err) {
-            opal_set_using_threads(false);
+            /* Jeff pointed out that unconditionally clearing the 'using_threads' here may
+             * cause data race to later service teardowns. We let it unchanged here. */
+            /* opal_set_using_threads(false); */
             opal_async_progress_thread_spawned = false;
         } else {
             OPAL_OUTPUT(
@@ -217,6 +244,7 @@ int opal_progress_init(void)
             callbacks[t][p].size = 8;
             callbacks[t][p].len = 0;
             callbacks[t][p].cbs = malloc(callbacks[t][p].size * sizeof(callbacks[t][p].cbs[0]));
+            callbacks[t][p].old_cbs = NULL;
 
             if (NULL == callbacks[t][p].cbs) {
                 /* roll back everything allocated until now */
@@ -257,8 +285,11 @@ int opal_progress_init(void)
             opal_async_progress_thread_spawned = true;
         } else {
             thread_arg.running = false;
-            OPAL_OUTPUT(
-                (debug_output, "progress: Failed to start async progress thread: err=%d", err));
+            /* strongly unset the async thread presence */
+            opal_async_progress_thread_spawned = false;
+            opal_output(0, "%s : Failed to spawn async-progress thread (err=%d), requested by user."
+                        " Will run without it.",
+                        __func__, err);
         }
     }
 #endif
@@ -273,7 +304,7 @@ int opal_progress_init(void)
 
     opal_finalize_register_cleanup(opal_progress_finalize);
 
-    return err;
+    return OPAL_SUCCESS;
 }
 
 static int opal_progress_events(void)
@@ -452,6 +483,11 @@ static void *opal_progress_async_thread_engine(opal_object_t *obj)
         if (new_events > 0) {
             opal_atomic_add_fetch_64(&p_thread_arg->nb_events_reported, new_events);
         }
+
+        /* yield the async-progress thread if no more new event processed */
+        if (opal_progress_yield_when_idle && new_events <= 0) {
+            opal_thread_yield();
+        }
     }
 
     return OPAL_THREAD_CANCELLED;
@@ -602,47 +638,53 @@ static int opal_progress_find_cb(opal_progress_callback_t cb,
 }
 
 static int _opal_progress_register(opal_progress_callback_t cb,
-                                   volatile opal_progress_callback_t **cbs, size_t *cbs_size,
-                                   size_t *cbs_len)
+                                   opal_progress_cb_array_t *cba)
 {
     int ret = OPAL_SUCCESS;
 
-    if (OPAL_ERR_NOT_FOUND != opal_progress_find_cb(cb, *cbs, *cbs_len)) {
+    if (OPAL_ERR_NOT_FOUND != opal_progress_find_cb(cb, cba->cbs, cba->len)) {
         return OPAL_SUCCESS;
     }
 
     /* see if we need to allocate more space */
-    if (*cbs_len + 1 > *cbs_size) {
+    if (cba->len + 1 > cba->size) {
         opal_progress_callback_t *tmp, *old;
 
-        tmp = (opal_progress_callback_t *) malloc(sizeof(tmp[0]) * 2 * *cbs_size);
+        tmp = (opal_progress_callback_t *) malloc(sizeof(tmp[0]) * 2 * cba->size);
         if (tmp == NULL) {
             return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
         }
 
-        if (*cbs) {
+        if (cba->cbs) {
             /* copy old callbacks */
-            memcpy(tmp, (void *) *cbs, sizeof(tmp[0]) * *cbs_size);
+            memcpy(tmp, (void *) cba->cbs, sizeof(tmp[0]) * cba->size);
         }
 
-        for (size_t i = *cbs_len; i < 2 * *cbs_size; ++i) {
+        for (size_t i = cba->len; i < 2 * cba->size; ++i) {
             tmp[i] = fake_cb;
         }
 
         opal_atomic_wmb();
 
         /* swap out callback array */
-        old = (opal_progress_callback_t *) opal_atomic_swap_ptr((opal_atomic_intptr_t *) cbs,
+        old = (opal_progress_callback_t *) opal_atomic_swap_ptr((opal_atomic_intptr_t *) (&cba->cbs),
                                                                 (intptr_t) tmp);
 
         opal_atomic_wmb();
 
-        free(old);
-        *cbs_size *= 2;
+        /* do not free old cbs right now, save it to cba to avoid use-after-free
+         * by any async-progress thread */
+        if (cba->old_cbs) {
+            /* if there is already an old_cbs, free-and-replace it,
+             * hopefully no other async-thread is still using it */
+            free(cba->old_cbs);
+        }
+        cba->old_cbs = old;
+        cba->size *= 2;
     }
 
-    cbs[0][*cbs_len] = cb;
-    ++*cbs_len;
+    cba->cbs[cba->len] = cb;
+    ++cba->len;
 
     opal_atomic_wmb();
 
@@ -666,13 +708,11 @@ static int _opal_progress_register_in(opal_progress_callback_t cb,
             if (t == (int) safety && p == (int) prio) {
                 continue;
             }
-            (void) _opal_progress_unregister(cb, callbacks[t][p].cbs, &callbacks[t][p].len);
+            (void) _opal_progress_unregister(cb, &callbacks[t][p]);
         }
     }
 
-    ret = _opal_progress_register(cb, &callbacks[safety][prio].cbs,
-                                  &callbacks[safety][prio].size,
-                                  &callbacks[safety][prio].len);
+    ret = _opal_progress_register(cb, &callbacks[safety][prio]);
 
     opal_atomic_unlock(&progress_lock);
 
@@ -707,11 +747,9 @@ int opal_progress_register_lp(opal_progress_callback_t cb)
 }
 
 static int _opal_progress_unregister(opal_progress_callback_t cb,
-                                     volatile opal_progress_callback_t *callback_array,
-                                     size_t *callback_array_len)
+                                     opal_progress_cb_array_t *cba)
 {
-    size_t cb_len = *callback_array_len;
-    int ret = opal_progress_find_cb(cb, callback_array, cb_len);
+    int ret = opal_progress_find_cb(cb, cba->cbs, cba->len);
     if (OPAL_ERR_NOT_FOUND == ret) {
         return ret;
     }
@@ -720,16 +758,15 @@ static int _opal_progress_unregister(opal_progress_callback_t cb,
        is 0, we're not going to do anything interesting anyway, so
        skip.  If callbacks_len is 1, it will soon be 0, so no need to
        do any repacking. */
-    for (size_t i = (size_t) ret; i < cb_len - 1; ++i) {
+    for (size_t i = (size_t) ret; i < cba->len - 1; ++i) {
         /* copy callbacks atomically since another thread may be in
          * opal_progress(). */
-        (void) opal_atomic_swap_ptr((opal_atomic_intptr_t *) (callback_array + i),
-                                    (intptr_t) callback_array[i + 1]);
+        (void) opal_atomic_swap_ptr((opal_atomic_intptr_t *) (cba->cbs + i),
+                                    (intptr_t) cba->cbs[i + 1]);
     }
 
-    --cb_len;
-    *callback_array_len = cb_len;
-    callback_array[cb_len] = fake_cb;
+    --cba->len;
+    cba->cbs[cba->len] = fake_cb;
 
     return OPAL_SUCCESS;
 }
@@ -743,7 +780,7 @@ int opal_progress_unregister(opal_progress_callback_t cb)
     /* a callback will never be in more than one slot of the table */
     for (int t = 0; t < OPAL_THREAD_SAFETY_MAX && OPAL_SUCCESS != ret; ++t) {
         for (int p = 0; p < OPAL_PRIORITY_MAX && OPAL_SUCCESS != ret; ++p) {
-            ret = _opal_progress_unregister(cb, callbacks[t][p].cbs, &callbacks[t][p].len);
+            ret = _opal_progress_unregister(cb, &callbacks[t][p]);
         }
     }
 

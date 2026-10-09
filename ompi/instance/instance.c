@@ -580,7 +580,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("mca_pml_base_select() failed", ret);
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_osc_base_find_available (OPAL_ENABLE_PROGRESS_THREADS, ompi_mpi_thread_multiple))) {
+    if (OMPI_SUCCESS != (ret = ompi_osc_base_find_available (opal_async_progress_thread_spawned, ompi_mpi_thread_multiple))) {
         return ompi_instance_print_error ("ompi_osc_base_find_available() failed", ret);
     }
 
@@ -856,15 +856,16 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
        time if so, then start the clock again */
     OMPI_TIMING_NEXT("barrier");
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 0
-    /* Start setting up the event engine for MPI operations.  Don't
+    /* Start setting up the event engine for MPI operations.
+       If there is no dedicated async-progress thread, then don't
        block in the event library, so that communications don't take
        forever between procs in the dynamic code.  This will increase
        CPU utilization for the remainder of MPI_INIT when we are
        blocking on RTE-level events, but may greatly reduce non-TCP
        latency. */
-    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
-#endif
+    if (!opal_async_progress_thread_spawned) {
+        opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
+    }
 
     /* Undo OPAL calling opal_progress_event_users_increment() during
        opal_init, to get better latency when not using TCP.  Do

@@ -83,7 +83,7 @@ recheck_request_status:
     }
 #endif
 
-    if( 0 == do_it_once && !opal_async_progress_thread_spawned ) {
+    if( 0 == do_it_once ) {
         /**
          * If we run the opal_progress then check the status of the request before
          * leaving. We will call the opal_progress only once per call.

@@ -50,7 +50,7 @@ int mca_topo_base_lazy_init(void)
         }
 
         if (OMPI_SUCCESS !=
-            (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            (err = mca_topo_base_find_available(opal_async_progress_thread_spawned, 1))) {
             return err;
         }
     }
