@@ -18,6 +18,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -249,7 +250,14 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
             continue;
         }
 
-        opal_atomic_wmb();
+        /* Acquire, pairing with the opal_atomic_wmb() push executes before
+         * it clears item_free.  opal_atomic_swap_32() is relaxed, so
+         * without this the read of item->opal_list_next below can be
+         * satisfied before the claim is taken and return a next pointer
+         * from before the item was last pushed.  Only the loads need
+         * ordering: two threads cannot both win the claim, because
+         * read-modify-writes on item_free are coherent even when relaxed. */
+        opal_atomic_rmb();
 
         head = item;
         /* try to swap out the head pointer */
@@ -270,8 +278,9 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
         return NULL;
     }
 
-    opal_atomic_wmb();
-
+    /* No barrier needed here: the item is off the list and we still hold
+     * its item_free claim, so no other thread can reach it before the
+     * caller pushes it again. */
     item->opal_list_next = NULL;
     return item;
 }
