@@ -931,16 +931,6 @@ int ompi_intercomm_create_from_groups (ompi_group_t *local_group, int local_lead
                                        ompi_communicator_t **newintercomm);
 
 /**
- * Take an almost complete communicator and reserve the CID as well
- * as activate it (initialize the collective and the topologies).
- */
-int ompi_comm_enable(ompi_communicator_t *old_comm,
-                     ompi_communicator_t *new_comm,
-                     int new_rank,
-                     int num_procs,
-                     ompi_proc_t** topo_procs);
-
-/**
  * Back end of MPI_DIST_GRAPH_CREATE_ADJACENT
  */
 int ompi_topo_dist_graph_create_adjacent(ompi_communicator_t *old_comm,
