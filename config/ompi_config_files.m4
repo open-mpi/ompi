@@ -66,6 +66,8 @@ AC_DEFUN([OMPI_CONFIG_FILES],[
         ompi/tools/wrappers/mpicc_abi-wrapper-data.txt
         ompi/tools/wrappers/mpic++-wrapper-data.txt
         ompi/tools/wrappers/mpifort-wrapper-data.txt
+        ompi/tools/wrappers/mpicc_abi_only-wrapper-data.txt
+        ompi/tools/wrappers/mpic++_abi_only-wrapper-data.txt
         ompi/tools/wrappers/ompi.pc
         ompi/tools/wrappers/ompi-c.pc
         ompi/tools/wrappers/ompi-cxx.pc

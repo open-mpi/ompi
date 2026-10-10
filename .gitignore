@@ -348,6 +348,8 @@ ompi/tools/wrappers/ompi-forum-abi.pc
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
+ompi/tools/wrappers/mpicc_abi_only-wrapper-data.txt
+ompi/tools/wrappers/mpic++_abi_only-wrapper-data.txt
 
 opal/asm/atomic-asm.S
 opal/asm/atomic-test

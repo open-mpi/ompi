@@ -23,4 +23,13 @@
 # t, file, datatype, general, mpi-abi, reexport, and bindings-generator are run by
 # "make check".  spc and monitoring are multi-process tests: they are
 # built, but not run by "make check".
+
+#
+# Many tests in these folders are compiled to use the OMPI ABI mpi.h so don't include
+# for MPI ABI only builds.
+
+if OMPI_BUILD_OMPI_ABI
 SUBDIRS = t file datatype general monitoring part spc mpi-abi mpirun reexport bindings-generator
+else
+SUBDIRS =  mpi-abi mpirun bindings-generator
+endif
