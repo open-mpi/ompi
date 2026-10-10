@@ -1,29 +1,48 @@
 #
-# Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
+# Copyright (c) 2021-2026 Computer Architecture and VLSI Systems (CARV)
 #                         Laboratory, ICS Forth. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
 #
 # $HEADER$
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
 [bad-hierarchy-item]
 ERROR (coll/xhc)
+Parameter: '%s'
 Unrecognized locality definition: '%s'
 In hierarchy parameter string: '%s'
 Falling back to another component
 #
 [bad-chunk-size-item]
 ERROR (coll/xhc)
+Parameter: '%s'
 Malformed chunk size item: '%s'
 In chunk size parameter string: '%s'
 Falling back to another component
 #
+[bad-chunk-size-n-items]
+ERROR (coll/xhc)
+Parameter: '%s'
+Malformed chunk_min parameter '%s'
+Too many sizes provided (%d)
+Falling back to another component
+#
 [bad-cico-max]
 ERROR (coll/xhc)
+Parameter: '%s'
 Malformed cico_max parameter '%s'
 Falling back to another component
+#
+[bad-internal-root]
+ERROR (coll/xhc)
+Bad %s internal root
+Communicator: %s (%s)
+Root requested: %d
+Number of ranks: %d
+Falling back to %d
 #
 [xhc-init-failed]
 ERROR (coll/xhc)
