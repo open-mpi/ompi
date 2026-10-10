@@ -15,6 +15,7 @@
  * Copyright (c) 2011-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -217,6 +218,9 @@ do {                                                                            
         (sendreq)->req_send.req_bytes_packed;                                        \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                                \
                             &(sendreq->req_send.req_base), PERUSE_SEND);             \
+   mca_pml_ob1_event_raise_request( MCA_PML_OB1_EVENT_REQUEST_COMPLETE,               \
+                                    (sendreq)->req_send.req_base.req_comm,            \
+                                    &(sendreq)->req_send.req_base );                  \
                                                                                      \
    ompi_request_complete( &((sendreq)->req_send.req_base.req_ompi), (with_signal) ); \
 } while(0)
@@ -266,6 +270,10 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
         if(sendreq->req_send.req_bytes_packed > 0) {
             PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
                                      &(sendreq->req_send.req_base), PERUSE_SEND);
+            mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_END,
+                                             sendreq->req_send.req_base.req_comm,
+                                             &sendreq->req_send.req_base,
+                                             sendreq->req_send.req_bytes_packed);
         }
 
         /* return mpool resources */

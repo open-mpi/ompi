@@ -281,6 +281,8 @@ static int mca_pml_ob1_component_register(void)
         mca_pml_ob1_accelerator_events_batch = mca_pml_ob1_accelerator_events_max;
     }
 
+    mca_pml_ob1_events_register(&mca_pml_ob1_component.pmlm_version);
+
     return OMPI_SUCCESS;
 }
 
