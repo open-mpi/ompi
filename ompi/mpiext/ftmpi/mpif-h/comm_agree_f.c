@@ -2,6 +2,7 @@
  * Copyright (c) 2010-2019 The University of Tennessee and the University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS(PMPIX_COMM_AGREE,
                         pmpix_comm_agree_,
                         pmpix_comm_agree__,
                         ompix_comm_agree_f,
-                        (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                        (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr),
                         (comm, flag, ierr))
 
 OMPI_GENERATE_F77_BINDINGS(MPIX_COMM_AGREE,
@@ -45,15 +46,22 @@ OMPI_GENERATE_F77_BINDINGS(MPIX_COMM_AGREE,
                         mpix_comm_agree_,
                         mpix_comm_agree__,
                         ompix_comm_agree_f,
-                        (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr),
+                        (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr),
                         (comm, flag, ierr))
 #endif
 
-void ompix_comm_agree_f(MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr)
+void ompix_comm_agree_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
-    OMPI_LOGICAL_NAME_DECL(flag);
+    OMPI_SINGLE_NAME_DECL(flag);
+
+    /* flag is INOUT: the integer the caller contributes to the bitwise AND,
+     * and on return the reduced result.  It is set even when the agreement
+     * raises MPIX_ERR_PROC_FAILED, so copy it back unconditionally. */
+    OMPI_SINGLE_FINT_2_INT(flag);
 
     *ierr = OMPI_INT_2_FINT(PMPIX_Comm_agree(c_comm,
-                                             OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag)));
+                                             OMPI_SINGLE_NAME_CONVERT(flag)));
+
+    OMPI_SINGLE_INT_2_FINT(flag);
 }
