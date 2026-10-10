@@ -182,7 +182,7 @@ $(interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
 	    c \
 	    source \
 	    ompi \
-	    --mpit \
+	    --bindings-prefix=mpit \
 	    $<
 
 .c.in_abi_generated.c:
@@ -193,7 +193,7 @@ $(interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
 	    c \
 	    source \
 	    standard \
-	    --mpit \
+	    --bindings-prefix=mpit \
 	    $<
 endif
 
