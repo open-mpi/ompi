@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,5 +62,8 @@ void ompi_win_get_info_f(MPI_Fint *win, MPI_Fint *info, MPI_Fint *ierr)
     c_win = PMPI_Win_f2c(*win);
     c_ierr = PMPI_Win_get_info(c_win, &c_info);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
-    *info = PMPI_Info_c2f(c_info);
+
+    if (MPI_SUCCESS == c_ierr) {
+        *info = PMPI_Info_c2f(c_info);
+    }
 }

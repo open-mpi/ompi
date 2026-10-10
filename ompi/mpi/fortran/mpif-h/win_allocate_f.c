@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2014 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,8 +119,11 @@ void ompi_win_allocate_f(MPI_Aint *size, MPI_Fint *disp_unit,
     c_ierr = PMPI_Win_allocate(*size, OMPI_FINT_2_INT(*disp_unit),
                                      c_info, c_comm,
                                      baseptr, &c_win);
-    *win = PMPI_Win_c2f(c_win);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (MPI_SUCCESS == c_ierr) {
+        *win = PMPI_Win_c2f(c_win);
+    }
 }
 
 /*

@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,7 +103,10 @@ void ompi_iallgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
     if (MPI_SUCCESS == ierr_c) *request = PMPI_Request_c2f(c_request);
 
-    if ( REQUEST_COMPLETE(c_request)) {
+    /* An error means the C call returned without ever producing a request,
+     * so c_request must not be dereferenced and there is nothing to hand the
+     * converted arrays to: free them here. */
+    if ( MPI_SUCCESS != ierr_c || REQUEST_COMPLETE(c_request)) {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
         OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
     } else {
