@@ -538,7 +538,14 @@ static inline int NBC_Start_round(NBC_Handle *handle) {
           buf2=opargs.buf2;
         }
 
-        ompi_op_reduce(opargs.op, buf1, buf2, opargs.count, opargs.datatype);
+	/* Use the selected local reduction implementation so coll/accelerator
+	 * can handle device operands without duplicating staging here. */
+	res = handle->comm->c_coll->coll_reduce_local(
+			buf1, buf2, opargs.count, opargs.datatype, opargs.op,
+			handle->comm->c_coll->coll_reduce_local_module);
+	if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
+		return res;
+	}
         break;
       case COPY:
         NBC_DEBUG(5, "  COPY   (offset %li) ", offset);
