@@ -10,6 +10,11 @@ Open MPI version v6.1.0
 
 - Updated the embedded hwloc to v2.15.0.
 
+- **Build System**: Open MPI now requires Autoconf 2.69 or later for
+  developers building from Git or modifying the build system. Released
+  tarballs remain unaffected. This update enables adoption of modern
+  Fortran compiler detection macros in subsequent changes.
+
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
   detect that the two jobs are running different versions of Open MPI,
   or that they selected different PMLs, and fail with a message naming
