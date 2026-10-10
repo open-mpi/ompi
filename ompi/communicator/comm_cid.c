@@ -920,9 +920,16 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
         return OMPI_SUCCESS;
     }
 
-    /* Let the collectives components fight over who will do
-       collective on this new comm.  */
-    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm))) {
+    /* Let the collectives components fight over who will do collective on
+       this new comm.  Pass the communicator it was derived from so they can
+       consult it during selection.  Two paths have no usable parent:
+       MPI_Comm_create_from_group activates over the new communicator itself,
+       and MPI_Intercomm_merge over an inter-communicator. */
+    ompi_communicator_t *parent = context->comm;
+    if (context->comm == *newcomm || OMPI_COMM_IS_INTER(context->comm)) {
+        parent = NULL;
+    }
+    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm, parent))) {
         OBJ_RELEASE(*newcomm);
         *newcomm = MPI_COMM_NULL;
         return ret;
