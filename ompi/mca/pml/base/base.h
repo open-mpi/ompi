@@ -13,6 +13,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC.  All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 
  * $COPYRIGHT$
  *
@@ -59,6 +60,12 @@ OMPI_DECLSPEC  int mca_pml_base_select(bool enable_progress_threads,
 OMPI_DECLSPEC  int mca_pml_base_progress(void);
     /* share in modex the name of the selected component */
 OMPI_DECLSPEC int mca_pml_base_pml_selected(const char *name);
+
+/* The PML name this process published in the modex; empty before
+ * selection. Not the selected component's own name, which vprotocol
+ * renames. */
+OMPI_DECLSPEC const char *mca_pml_base_pml_selected_name(void);
+
     /* verify that all new procs are using the currently selected component */
 OMPI_DECLSPEC int mca_pml_base_pml_check_selected(const char *my_pml,
                                                   struct ompi_proc_t **procs,
