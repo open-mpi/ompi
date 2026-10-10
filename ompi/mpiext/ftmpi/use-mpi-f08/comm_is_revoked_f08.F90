@@ -4,6 +4,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+! Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -20,12 +21,12 @@ subroutine MPIX_Comm_is_revoked_f08(comm, flag, ierror)
           BIND(C, name="ompix_comm_is_revoked_f")
        implicit none
        INTEGER, INTENT(IN) :: comm
-       INTEGER, INTENT(OUT) :: flag
+       LOGICAL, INTENT(OUT) :: flag
        INTEGER, INTENT(OUT) :: ierror
      end subroutine ompix_comm_is_revoked_f
   end interface
   TYPE(MPI_Comm), INTENT(IN) :: comm
-  INTEGER, INTENT(OUT) :: flag
+  LOGICAL, INTENT(OUT) :: flag
   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
   integer :: c_ierror
 
@@ -42,12 +43,12 @@ subroutine PMPIX_Comm_is_revoked_f08(comm, flag, ierror)
           BIND(C, name="ompix_comm_is_revoked_f")
        implicit none
        INTEGER, INTENT(IN) :: comm
-       INTEGER, INTENT(OUT) :: flag
+       LOGICAL, INTENT(OUT) :: flag
        INTEGER, INTENT(OUT) :: ierror
      end subroutine ompix_comm_is_revoked_f
   end interface
   TYPE(MPI_Comm), INTENT(IN) :: comm
-  INTEGER, INTENT(OUT) :: flag
+  LOGICAL, INTENT(OUT) :: flag
   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
   integer :: c_ierror
 
