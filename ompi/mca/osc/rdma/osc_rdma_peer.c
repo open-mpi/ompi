@@ -25,6 +25,7 @@
 
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/runtime/ompi_modex.h"
+#include "opal/mca/smsc/smsc.h"
 
 #define NODE_ID_TO_RANK(module, peer_data, node_id) ((int)(peer_data)->len)
 
@@ -414,6 +415,7 @@ struct ompi_osc_rdma_peer_t *ompi_osc_rdma_peer_lookup (struct ompi_osc_rdma_mod
 static void ompi_osc_rdma_peer_construct (ompi_osc_rdma_peer_t *peer)
 {
     memset ((char *) peer + sizeof (peer->super), 0, sizeof (*peer) - sizeof (peer->super));
+    OBJ_CONSTRUCT(&peer->lock, opal_mutex_t);
 }
 
 static void ompi_osc_rdma_peer_destruct (ompi_osc_rdma_peer_t *peer)
@@ -421,6 +423,7 @@ static void ompi_osc_rdma_peer_destruct (ompi_osc_rdma_peer_t *peer)
     if (peer->state_handle && (peer->flags & OMPI_OSC_RDMA_PEER_STATE_FREE)) {
         free (peer->state_handle);
     }
+    OBJ_DESTRUCT(&peer->lock);
 }
 
 OBJ_CLASS_INSTANCE(ompi_osc_rdma_peer_t, opal_list_item_t,
@@ -434,6 +437,14 @@ static void ompi_osc_rdma_peer_basic_construct (ompi_osc_rdma_peer_basic_t *peer
 
 static void ompi_osc_rdma_peer_basic_destruct (ompi_osc_rdma_peer_basic_t *peer)
 {
+    /* the mapping can only exist if an smsc module was selected, and mca_smsc
+     * stays valid until the opal layer is finalized, after all windows */
+    if (NULL != peer->smsc_map_ctx) {
+        MCA_SMSC_CALL(unmap_peer_region, peer->smsc_map_ctx);
+    }
+    if (NULL != peer->smsc_endpoint) {
+        MCA_SMSC_CALL(return_endpoint, peer->smsc_endpoint);
+    }
     if (peer->base_handle && (peer->super.flags & OMPI_OSC_RDMA_PEER_BASE_FREE)) {
         free (peer->base_handle);
     }
