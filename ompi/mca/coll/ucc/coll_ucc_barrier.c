@@ -40,7 +40,7 @@ int mca_coll_ucc_barrier(struct ompi_communicator_t *comm,
     UCC_VERBOSE(3, "running ucc barrier");
     COLL_UCC_CHECK(mca_coll_ucc_barrier_init_common(false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
-    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req));
+    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req, ucc_module));
     return OMPI_SUCCESS;
 failed:
     return OMPI_ERROR;
