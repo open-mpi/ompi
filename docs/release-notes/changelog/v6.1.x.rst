@@ -22,7 +22,9 @@ Open MPI version v6.1.0
 
   **Developer Impact**: Custom build systems or scripts that referenced
   the ``OMPI_FC_MODULE_FLAG`` variable should now use the standard
-  ``FC_MODINC`` variable set by ``AC_FC_MODULE_FLAG``. Module file
+  ``FC_MODINC`` variable set by ``AC_FC_MODULE_FLAG``. The custom M4
+  macros ``OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG`` and
+  ``OMPI_FORTRAN_CHECK_PREPROCESS_F90`` have been removed. Module file
   cleanup in configuration tests now uses the detected extension
   (``$FC_MODEXT``) instead of hardcoded ``.mod``. Fixes #139.
 
