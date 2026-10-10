@@ -28,6 +28,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -86,7 +87,15 @@ void ompi_iscatterv_f(char *sendbuf, MPI_Fint *sendcounts,
     c_sendtype = PMPI_Type_f2c(*sendtype);
     c_recvtype = PMPI_Type_f2c(*recvtype);
 
-    PMPI_Comm_size(c_comm, &size);
+    /* sendcounts and displs are only significant at the root, and on an
+     * intercommunicator they describe the remote group.  Everywhere else
+     * there is nothing to convert: a zero length leaves an empty array
+     * that the C call never looks at. */
+    if (OMPI_COMM_IS_INTER(c_comm)) {
+        size = (MPI_ROOT == OMPI_FINT_2_INT(*root)) ? ompi_comm_remote_size(c_comm) : 0;
+    } else {
+        size = (ompi_comm_rank(c_comm) == OMPI_FINT_2_INT(*root)) ? ompi_comm_size(c_comm) : 0;
+    }
     OMPI_ARRAY_FINT_2_INT(sendcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
 
