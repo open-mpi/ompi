@@ -16,14 +16,15 @@ Open MPI version v6.1.0
   Autoconf 2.69 standard macros (``AC_FC_MODULE_EXTENSION``,
   ``AC_FC_IMPLICIT_NONE``, ``AC_FC_PP_DEFINE``, ``AC_FC_PP_SRCEXT``,
   ``AC_FC_MODULE_FLAG``) for improved portability across diverse Fortran
-  compilers. The custom macro ``OMPI_FORTRAN_CHECK_PREPROCESS_F90`` has
-  been replaced with the standard ``AC_FC_PP_SRCEXT([F90])``, which
-  provides better compiler coverage. The standard ``AC_FC_MODULE_FLAG``
-  is now used to detect the Fortran module include flag (setting
-  ``FC_MODINC``), while maintaining backward compatibility via
-  ``OMPI_FC_MODULE_FLAG`` during the transition. Module file cleanup in
-  configuration tests now uses the detected extension (``$FC_MODEXT``)
-  instead of hardcoded ``.mod``.
+  compilers. The custom macros ``OMPI_FORTRAN_CHECK_PREPROCESS_F90`` and
+  ``OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG`` have been replaced with
+  their Autoconf 2.69 equivalents.
+
+  **Developer Impact**: Custom build systems or scripts that referenced
+  the ``OMPI_FC_MODULE_FLAG`` variable should now use the standard
+  ``FC_MODINC`` variable set by ``AC_FC_MODULE_FLAG``. Module file
+  cleanup in configuration tests now uses the detected extension
+  (``$FC_MODEXT``) instead of hardcoded ``.mod``. Fixes #139.
 
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
   detect that the two jobs are running different versions of Open MPI,

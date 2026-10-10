@@ -28,10 +28,10 @@ if OMPI_BUILD_FORTRAN_USEMPI_OR_USEMPIF08_EXT
 # Setup
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/base \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08 \
+             $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/base \
+             $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi \
+             $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
+             $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08 \
              -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
 flibs =
