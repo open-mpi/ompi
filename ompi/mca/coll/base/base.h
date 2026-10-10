@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -97,7 +98,31 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * communicator creation functions may be re-entered (albeit with
  * different arguments).
  */
-int mca_coll_base_comm_select(struct ompi_communicator_t *comm);
+int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
+                              struct ompi_communicator_t *parent);
+
+/**
+ * Return the communicator @c comm was derived from, while @c comm is
+ * being selected.
+ *
+ * @param comm The communicator being selected.
+ *
+ * @retval The parent communicator, or NULL.
+ *
+ * Components may call this from comm_query or module_enable to consult
+ * the communicator the new one was derived from -- for example, to
+ * inherit a collective context instead of bootstrapping a new one.
+ *
+ * The reference is borrowed: it is alive only because the MPI call
+ * creating @c comm is still on the stack.  Never keep it past the
+ * selection.
+ *
+ * NULL means either that @c comm is not being selected, or that it has
+ * no usable parent (MPI_COMM_WORLD, MPI_COMM_SELF,
+ * MPI_Comm_create_from_group and MPI_Intercomm_merge).
+ */
+OMPI_DECLSPEC struct ompi_communicator_t *
+mca_coll_base_comm_select_parent(struct ompi_communicator_t *comm);
 
 /**
  * Finalize a coll component on a specific communicator.
