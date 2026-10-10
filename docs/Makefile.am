@@ -77,6 +77,7 @@ EXTRA_DIST         = \
         llms-src/openmpi-mpi-interface-guide.md \
         llms-src/openmpi-mpi-examples.md \
         llms-src/openmpi-runtime-introspection.md \
+        llms-src/openmpi-release-discovery.md \
         html \
         man \
         $(SPHINX_CONFIG) \
@@ -1106,6 +1107,7 @@ $(SENTINEL_OMPI_LLM): mpi-standard-apis.json
 $(SENTINEL_OMPI_LLM): llms-src/openmpi-mpi-interface-guide.md
 $(SENTINEL_OMPI_LLM): llms-src/openmpi-mpi-examples.md
 $(SENTINEL_OMPI_LLM): llms-src/openmpi-runtime-introspection.md
+$(SENTINEL_OMPI_LLM): llms-src/openmpi-release-discovery.md
 $(SENTINEL_OMPI_LLM): llms-src/openmpi-mpi-api.schema.json
 $(SENTINEL_OMPI_LLM): llms-src/openmpi-docs-manifest.schema.json
 $(SENTINEL_OMPI_LLM): $(RST_SOURCE_FILES)
