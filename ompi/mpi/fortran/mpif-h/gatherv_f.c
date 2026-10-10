@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -24,6 +25,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
@@ -79,7 +81,15 @@ void ompi_gatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     c_sendtype = PMPI_Type_f2c(*sendtype);
     c_recvtype = PMPI_Type_f2c(*recvtype);
 
-    PMPI_Comm_size(c_comm, &size);
+    /* recvcounts and displs are only significant at the root, and on an
+     * intercommunicator they describe the remote group.  Everywhere else
+     * there is nothing to convert: a zero length leaves an empty array
+     * that the C call never looks at. */
+    if (OMPI_COMM_IS_INTER(c_comm)) {
+        size = (MPI_ROOT == OMPI_FINT_2_INT(*root)) ? ompi_comm_remote_size(c_comm) : 0;
+    } else {
+        size = (ompi_comm_rank(c_comm) == OMPI_FINT_2_INT(*root)) ? ompi_comm_size(c_comm) : 0;
+    }
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
 
@@ -95,4 +105,7 @@ void ompi_gatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
                          OMPI_FINT_2_INT(*root),
                          c_comm);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
 }

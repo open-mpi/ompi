@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -85,4 +86,6 @@ void ompi_group_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *
     if (MPI_SUCCESS == c_ierr) {
         *newgroup = c_newgroup->grp_f_to_c_index;
     }
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(ranks);
 }

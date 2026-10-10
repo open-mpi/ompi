@@ -2,6 +2,7 @@
  * Copyright (c) 2010-2019 The University of Tennessee and the University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +38,7 @@ OMPI_GENERATE_F77_BINDINGS(MPIX_COMM_IAGREE,
                         mpix_comm_iagree_,
                         mpix_comm_iagree__,
                         ompix_comm_iagree_f,
-                        (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *request, MPI_Fint *ierr),
+                        (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *request, MPI_Fint *ierr),
                         (comm, flag, request, ierr))
 
 OMPI_GENERATE_F77_BINDINGS(PMPIX_COMM_IAGREE,
@@ -45,18 +46,27 @@ OMPI_GENERATE_F77_BINDINGS(PMPIX_COMM_IAGREE,
                         pmpix_comm_iagree_,
                         pmpix_comm_iagree__,
                         ompix_comm_iagree_f,
-                        (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *request, MPI_Fint *ierr),
+                        (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *request, MPI_Fint *ierr),
                         (comm, flag, request, ierr))
 #endif
 
-void ompix_comm_iagree_f(MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *request, MPI_Fint *ierr)
+void ompix_comm_iagree_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
-    OMPI_LOGICAL_NAME_DECL(flag);
+    OMPI_SINGLE_NAME_DECL(flag);
+
+    /* flag is INOUT: the integer the caller contributes to the bitwise AND,
+     * and on completion the reduced result.  The agreement writes that
+     * result when the request completes, long after we have returned, so
+     * the result only reaches the caller when a Fortran INTEGER is a C int
+     * and the caller's own variable is what we hand to the agreement.
+     * Where a conversion is required this binding has no way to perform it
+     * at completion time. */
+    OMPI_SINGLE_FINT_2_INT(flag);
 
     *ierr = OMPI_INT_2_FINT(PMPIX_Comm_iagree(c_comm,
-                                              OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
+                                              OMPI_SINGLE_NAME_CONVERT(flag),
                                               &c_req));
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {

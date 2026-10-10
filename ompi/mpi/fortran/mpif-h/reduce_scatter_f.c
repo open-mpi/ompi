@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,4 +91,6 @@ void ompi_reduce_scatter_f(char *sendbuf, char *recvbuf,
                                 OMPI_ARRAY_NAME_CONVERT(recvcounts),
                                 c_type, c_op, c_comm);
    if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
 }
