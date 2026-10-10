@@ -79,25 +79,6 @@ AC_DEFINE_UNQUOTED([OMPI_GROUP_SPARSE],$GROUP_SPARSE,
     [Whether we want sparse process groups])
 
 
-#
-# Do we want to enable peruse interface?
-#
-
-AC_MSG_CHECKING([if want peruse support])
-AC_ARG_ENABLE([peruse],
-    [AS_HELP_STRING([--enable-peruse],
-                   [enable PERUSE interface (default: disabled)])])
-if test "$enable_peruse" = "yes"; then
-    AC_MSG_RESULT([yes])
-    WANT_PERUSE=1
-else
-    AC_MSG_RESULT([no])
-    WANT_PERUSE=0
-fi
-AC_DEFINE_UNQUOTED([OMPI_WANT_PERUSE],
-                   [$WANT_PERUSE],
-                   [if the peruse interface should be enabled])
-AM_CONDITIONAL(WANT_PERUSE, test "$WANT_PERUSE" = "1")
 
 #
 # Fortran MPI bindings

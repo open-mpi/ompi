@@ -481,8 +481,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * figure out if the messages are not received in the correct
          * order (if multiple network interfaces).
          */
-        PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm,
-                               hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
         /* There is no matching to be done, and no lock to be held on the communicator as
          * we know at this point that the communicator has not yet been returned to the user.
@@ -516,8 +514,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             continue;
         }
 
@@ -531,8 +527,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             /* And now the ugly part. As some fragments can be inserted in the cant_match list,
              * every time we successfully add a fragment in the unexpected list we have to make
              * sure the next one is not in the cant_match. Otherwise, we will endup in a deadlock

@@ -17,7 +17,6 @@
 #include "oshmem_config.h"
 #include "oshmem/mca/spml/spml.h"
 #include "oshmem/mca/spml/base/spml_base_request.h"
-#include "ompi/peruse/peruse-internal.h"
 
 BEGIN_C_DECLS
 

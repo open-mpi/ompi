@@ -30,7 +30,6 @@
 #include "pml_ob1.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
-#include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
 #if MPI_VERSION >= 4
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
@@ -68,9 +67,7 @@ int mca_pml_ob1_isend_init(const void *buf,
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
                                   comm, sendmode, true, ob1_proc);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(sendreq)->req_send.req_base,
-                             PERUSE_SEND);
+    // MPI_T events can be used here to instrument request activation
 
     /* Work around a leak in start by marking this request as complete. The
      * problem occurred because we do not have a way to differentiate an
@@ -229,10 +226,6 @@ int mca_pml_ob1_isend(const void *buf,
                                   dst, tag,
                                   comm, sendmode, false, ob1_proc);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(sendreq)->req_send.req_base,
-                             PERUSE_SEND);
-
     MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
     *request = (ompi_request_t *) sendreq;
     return rc;
@@ -249,10 +242,6 @@ alloc_ft_req:
                                   datatype,
                                   dst, tag,
                                   comm, sendmode, false, ob1_proc);
-
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(sendreq)->req_send.req_base,
-                             PERUSE_SEND);
 
     /* No point in starting the request, it won't go through, mark completed
      * in error for collection in future wait */
@@ -351,10 +340,6 @@ int mca_pml_ob1_send(const void *buf,
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
                                   comm, sendmode, false, ob1_proc);
-
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &sendreq->req_send.req_base,
-                             PERUSE_SEND);
 
     MCA_PML_OB1_SEND_REQUEST_START_W_SEQ(sendreq, endpoint, seqn, rc);
     if (OPAL_LIKELY(rc == OMPI_SUCCESS)) {

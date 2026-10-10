@@ -10,6 +10,11 @@ Open MPI version v6.1.0
 
 - Updated the embedded hwloc to v2.15.0.
 
+- Removed the PERUSE interface, which has been superseded by the MPI_T
+  events implementation. The ``--enable-peruse`` configure option is no
+  longer available. Applications requiring communication event
+  instrumentation should use MPI_T events instead.
+
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
   detect that the two jobs are running different versions of Open MPI,
   or that they selected different PMLs, and fail with a message naming

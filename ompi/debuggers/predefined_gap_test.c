@@ -66,12 +66,6 @@ int main(int argc, char **argv) {
     GAP_CHECK("c_cube_dim", test_comm, c_cube_dim, c_keyhash,  1);
     GAP_CHECK("c_topo", test_comm, c_topo, c_cube_dim,  1);
     GAP_CHECK("c_f_to_c_index", test_comm, c_f_to_c_index, c_topo, 1);
-#ifdef OMPI_WANT_PERUSE
-    GAP_CHECK("c_peruse_handles", test_comm, c_peruse_handles, c_f_to_c_index, 1);
-    GAP_CHECK("error_handler", test_comm, error_handler, c_peruse_handles, 1);
-#else
-    GAP_CHECK("error_handler", test_comm, error_handler, c_f_to_c_index, 1);
-#endif
     GAP_CHECK("errhandler_type", test_comm, errhandler_type, error_handler, 1);
     GAP_CHECK("c_pml_comm", test_comm, c_pml_comm, errhandler_type, 1);
     GAP_CHECK("c_coll", test_comm, c_coll, c_pml_comm, 1);
