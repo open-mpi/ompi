@@ -10,6 +10,7 @@
  *                         reserved.
  * Copyright (c) 2015-2019 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -98,7 +99,7 @@ void ompi_dist_graph_create_adjacent_f(MPI_Fint *comm_old, MPI_Fint *indegree,
     } else if (OMPI_IS_FORTRAN_WEIGHTS_EMPTY(destweights)) {
         c_destweights = MPI_WEIGHTS_EMPTY;
     } else {
-        OMPI_ARRAY_FINT_2_INT(destweights, *indegree);
+        OMPI_ARRAY_FINT_2_INT(destweights, *outdegree);
         c_destweights = OMPI_ARRAY_NAME_CONVERT(destweights);
     }
 
