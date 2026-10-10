@@ -22,7 +22,7 @@ from _abi_common import (
     FAIL_OPEN_MPI_ABI_CLASSIFICATION_UNCONFIRMED,
     SKIP_CROSS_UNSUPPORTED_PLATFORM, SKIP_MPICH_DIRECTIONS_INVALID,
     SKIP_MPICH_TOOLS_UNAVAILABLE, SKIP_OPEN_MPI_TOOLS_UNAVAILABLE,
-    SKIP_STANDARD_ABI_DISABLED, _Colors, _append_check, _check_counts,
+    SKIP_FORUM_ABI_DISABLED, _Colors, _append_check, _check_counts,
     _count_by, _fail, _language_counts, _write_json, _write_text)
 from _abi_discovery import (
     _mpich_tools_available, _open_mpi_tool_override_requested,
@@ -49,7 +49,7 @@ _CROSS_MODE_GUIDANCE = {
     ),
     SKIP_OPEN_MPI_TOOLS_UNAVAILABLE: (
         "Open MPI ABI tools were not found.  Install Open MPI with "
-        "standard ABI support, put its tools on PATH, or set "
+        "MPI Forum ABI support, put its tools on PATH, or set "
         "OMPI_ABI_TEST_MPICC_ABI and OMPI_ABI_TEST_MPIRUN.  See "
         "ompi/test/mpi-abi/README.md for check-abi-mpich setup."
     ),
@@ -68,15 +68,15 @@ _CROSS_MODE_GUIDANCE = {
 
 # Guidance that only applies when the reason is a hard mode-level FAIL.
 _CROSS_MODE_FAILURE_ONLY_GUIDANCE = {
-    SKIP_STANDARD_ABI_DISABLED: (
-        "Open MPI was configured without standard ABI support.  "
-        "Reconfigure and install Open MPI with standard ABI support "
+    SKIP_FORUM_ABI_DISABLED: (
+        "Open MPI was configured without MPI Forum ABI support.  "
+        "Reconfigure and install Open MPI with MPI Forum ABI support "
         "before running make check-abi-mpich."
     ),
     FAIL_OPEN_MPI_ABI_CLASSIFICATION_UNCONFIRMED: (
         "Open MPI ABI tools were found but could not be validated "
-        "as an Open MPI MPI Forum ABI installation.  Check the "
-        "reported discovery evidence, wrapper link flags, standard "
+        "as an Open MPI installation with MPI Forum ABI support.  Check the "
+        "reported discovery evidence, wrapper link flags, MPI Forum "
         "ABI header path, and OMPI_ABI_TEST_* overrides."
     ),
     FAIL_CROSS_PROBES_NOT_EXECUTED: (
@@ -117,12 +117,12 @@ def build_report(manifest, mode, srcdir, builddir, outdir, progress=None):
     """Run the requested mode and assemble the machine-readable report.
 
     Mode-level SKIPs are decided before running subordinate checks so a
-    build without standard ABI support remains a spec-sanctioned skip
+    build without MPI Forum ABI support remains a spec-sanctioned skip
     rather than failing completion gates or installed-tool discovery.
     """
     api_entries = manifest["apis"]
     constant_entries = manifest["constants"]
-    standard_abi = manifest["configuration"]["standard_abi"]
+    forum_abi = manifest["configuration"]["forum_abi"]
     classifications = _count_by(api_entries, "classification")
     test_status = _count_by(api_entries, "test_status")
     constant_classifications = _count_by(constant_entries, "classification")
@@ -138,9 +138,9 @@ def build_report(manifest, mode, srcdir, builddir, outdir, progress=None):
     cross_environment = None
 
     if mode in ("coverage", "check-fast", "check-abi"):
-        if standard_abi["enabled"] is False:
+        if forum_abi["enabled"] is False:
             result = "SKIP"
-            skip_reason = SKIP_STANDARD_ABI_DISABLED
+            skip_reason = SKIP_FORUM_ABI_DISABLED
 
     if result != "SKIP" and mode in ("coverage", "check-fast"):
         fast_checks = run_fast_checks(manifest, srcdir, builddir, progress)
@@ -176,15 +176,15 @@ def build_report(manifest, mode, srcdir, builddir, outdir, progress=None):
                 result = "FAIL"
 
     if mode == "check-abi-mpich":
-        if standard_abi["enabled"] is False:
+        if forum_abi["enabled"] is False:
             result = "FAIL"
             failure_guidance = _append_mode_failure(
                 cross_checks,
                 progress,
                 "mpich_prerequisites",
-                SKIP_STANDARD_ABI_DISABLED,
-                "standard ABI support is required for check-abi-mpich",
-                standard_abi=standard_abi)
+                SKIP_FORUM_ABI_DISABLED,
+                "MPI Forum ABI support is required for check-abi-mpich",
+                forum_abi=forum_abi)
         elif tools["cross"]["direction_error"]:
             result = "FAIL"
             failure_guidance = _append_mode_failure(

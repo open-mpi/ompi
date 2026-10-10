@@ -10,11 +10,11 @@
 
 # MPI ABI tests
 
-This directory contains the MPI standard ABI test runner and generated
+This directory contains the MPI Forum ABI test runner and generated
 test templates.
 
-The MPI ABI tests focus on Open MPI's standard ABI layer: the installed
-standard ABI header, wrapper compiler, ABI library, ABI helper symbols,
+The MPI ABI tests focus on Open MPI's MPI Forum ABI layer: the installed
+MPI Forum ABI header, wrapper compiler, ABI library, ABI helper symbols,
 handle/value conversion code, and public `MPI_*` entry points reached
 through that ABI path.  They are not intended to replace Open MPI's
 general MPI correctness tests.  A major assumption is that the normal
@@ -38,9 +38,9 @@ The suite has several complementary groups of checks:
 * Installed header, wrapper, link, and symbol checks.
 
   These checks use the installed `mpicc_abi` wrapper and installed
-  standard ABI header.  They verify that the wrapper advertises the
-  standard ABI include and link path, the installed header declares the
-  implemented standard ABI C APIs with signatures matching the
+  MPI Forum ABI header.  They verify that the wrapper advertises the
+  MPI Forum ABI include and link path, the installed header declares the
+  implemented MPI Forum ABI C APIs with signatures matching the
   MPI-standard-derived binding metadata, non-ABI C APIs are not
   accidentally declared, aggregate compile/link probes can force
   references to the ABI entry points, and optional symbol-table
@@ -51,12 +51,12 @@ The suite has several complementary groups of checks:
 
 * ABI converter and handle/value checks.
 
-  These installed C probes exercise the standard ABI helper functions
+  These installed C probes exercise the MPI Forum ABI helper functions
   such as `MPI_Comm_toint`, `MPI_Comm_fromint`, `MPI_Type_toint`, and
   their PMPI equivalents.  They round-trip predefined handles, null
   handles, dynamic handles, status sentinels, error classes, keyval
   sentinels, and configured datatype constants.  These checks target the
-  core ABI responsibility: converting between standard ABI integer
+  core ABI responsibility: converting between MPI Forum ABI integer
   values and Open MPI's internal handle representation without losing
   special values, optional constants, or dynamically-created objects.
 
@@ -70,7 +70,7 @@ The suite has several complementary groups of checks:
   movement, communicator/group/window/file state, request completion,
   RMA results, MPI-IO results, and other observable side effects.
   There is no mocking of OMPI back-end functions: successful probes have
-  traversed the standard ABI entry point, ABI conversion/shim code, and
+  traversed the MPI Forum ABI entry point, ABI conversion/shim code, and
   the normal Open MPI implementation underneath.
 
 * Callback and retained-lifetime probes.
@@ -87,7 +87,7 @@ The suite has several complementary groups of checks:
 
 * Fortran binding regression checks.
 
-  Open MPI does not currently implement the MPI-5 Fortran standard ABI
+  Open MPI does not currently implement the MPI-5 Fortran MPI Forum ABI
   as an ABI-capable `mpi_f08` module and wrapper path analogous to the
   C `mpicc_abi` path.  In particular, there is no `mpifort_abi`
   wrapper in this implementation.  The Fortran checks in this suite
@@ -106,9 +106,9 @@ The suite has several complementary groups of checks:
 
 * MPICH compatibility checks.
 
-  When enabled, the MPICH path compares Open MPI's standard ABI behavior
+  When enabled, the MPICH path compares Open MPI's MPI Forum ABI behavior
   against MPICH.  This is useful for identifying places where Open MPI
-  diverges from the MPI standard ABI contract rather than merely being
+  diverges from the MPI Forum ABI contract rather than merely being
   internally self-consistent.
 
 Together, these groups test the ABI layer from several directions:
@@ -116,7 +116,7 @@ metadata authority, installed artifacts, symbol reachability, handle
 translation, complete public API call paths, callback conversion, and
 MPICH compatibility behavior.  Passing these tests does not prove that
 every underlying MPI algorithm is correct; it proves that the ABI-facing
-surface is consistent with the standard ABI metadata and can successfully
+surface is consistent with the MPI Forum ABI metadata and can successfully
 drive the already-tested Open MPI implementation through the ABI layer.
 
 ## Running the tests
@@ -139,7 +139,7 @@ The optional MPICH compatibility path is:
 make check-abi-mpich
 ```
 
-`make check-abi-mpich` expects both an installed Open MPI with standard
+`make check-abi-mpich` expects both an installed Open MPI with MPI Forum
 ABI support and an installed MPICH with MPI Forum ABI support.  MPICH's
 normal internal ABI is not the MPI Forum ABI.  For MPICH 5.0.x, this
 requires configuring MPICH with `--enable-mpi-abi` so that it installs
@@ -148,7 +148,7 @@ library (`libmpi_abi`).
 
 By default, put both installations' `bin` directories on `PATH`; the
 order does not matter because the runner classifies the discovered tools
-before selecting them.  The Open MPI install must provide the standard
+before selecting them.  The Open MPI install must provide the MPI Forum
 ABI C wrapper (`mpicc_abi`) and launcher (`mpirun`); the normal Open MPI
 `mpicc` wrapper is not a substitute because it links Open MPI's internal
 ABI, not `libmpi_abi`.
@@ -170,9 +170,9 @@ compiler override as well.  Missing or invalid Open MPI or MPICH
 prerequisites are reported as failures, not skips, because invoking this
 target is an explicit request for MPICH compatibility results.
 
-The MPICH target records both standard ABI directions:
+The MPICH target records both MPI Forum ABI directions:
 
-* compile with MPICH and run against Open MPI's standard ABI runtime;
+* compile with MPICH and run against Open MPI's MPI Forum ABI runtime;
 * compile with Open MPI's `mpicc_abi` and run against MPICH.
 
 Before running those cross-direction probes, the runner compiles and
@@ -213,14 +213,14 @@ compile/link intent checks, native MPI ABI sanity checks, and the C ABI
 converter, runtime API, and callback probe families in both cross
 directions.  It is expected to fail when either implementation's MPI
 Forum ABI header, wrapper, library layout, handle conversion, callback
-conversion, or runtime behavior diverges from the MPI standard ABI
+conversion, or runtime behavior diverges from the MPI Forum ABI
 contract.
 
 Useful variables:
 
-* `OMPI_ABI_TEST_MPICC_ABI`: Open MPI standard ABI C wrapper.
+* `OMPI_ABI_TEST_MPICC_ABI`: Open MPI Forum ABI C wrapper.
 * `OMPI_ABI_TEST_MPIRUN`: Open MPI launcher.
-* `OMPI_ABI_TEST_INCLUDE_PATH`: Open MPI standard ABI include override.
+* `OMPI_ABI_TEST_INCLUDE_PATH`: Open MPI Forum ABI include override.
 * `OMPI_ABI_TEST_LIBRARY_PATH`: Open MPI ABI library path override.
 * `OMPI_ABI_TEST_LAUNCHER_ARGS`: extra Open MPI launcher arguments.
 * `MPICH_ABI_TEST_MPICC`: MPICH MPI Forum ABI C wrapper, normally

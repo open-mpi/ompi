@@ -9,7 +9,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
-"""MPI standard ABI test manifest and runner.
+"""MPI Forum ABI test manifest and runner.
 
 This implementation provides the phase 1-9 infrastructure: metadata
 loading, manifest generation, fast metadata checks, installed ABI smoke

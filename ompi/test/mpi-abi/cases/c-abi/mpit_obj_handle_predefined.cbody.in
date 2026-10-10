@@ -17,7 +17,7 @@
  *   only its own bound registration.
  *
  *   Predefined handles are represented as small sentinel integers under
- *   the standard ABI, so this specifically exercises the obj_handle
+ *   the MPI Forum ABI, so this specifically exercises the obj_handle
  *   converter's sentinel-matching path (as opposed to a dynamically
  *   created communicator, whose handle is already the real internal
  *   pointer under the Open MPI ABI and would not catch a converter that
