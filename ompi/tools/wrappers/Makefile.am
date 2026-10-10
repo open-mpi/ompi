@@ -28,13 +28,13 @@ if OPAL_INSTALL_BINARIES
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ompi.pc ompi-c.pc
 
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 pkgconfig_DATA += ompi-forum-abi.pc ompi-forum-abi-c.pc
 endif
 
 if OMPI_HAVE_CXX_COMPILER
 pkgconfig_DATA += ompi-cxx.pc
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 pkgconfig_DATA += ompi-forum-abi-cxx.pc
 endif
 endif
@@ -87,7 +87,7 @@ else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OPAL_INSTALL_BINARIES
 
 nodist_ompidata_DATA = mpicc-wrapper-data.txt
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 nodist_ompidata_DATA += mpicc_abi-wrapper-data.txt
 endif
 
@@ -102,7 +102,7 @@ endif
 install-exec-hook-always:
 	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc$(EXEEXT))
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 	(cd $(DESTDIR)$(bindir); rm -f mpicc_abi$(EXEEXT); $(LN_S) opal_wrapper$(EXEEXT) mpicc_abi$(EXEEXT))
 endif
 if OMPI_HAVE_CXX_COMPILER
@@ -139,7 +139,7 @@ uninstall-local-always:
 	$(DESTDIR)$(pkgconfigdir)/ompi-f77.pc \
 	$(DESTDIR)$(pkgconfigdir)/ompi-f90.pc \
 	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 	rm -f $(DESTDIR)$(bindir)/mpicc_abi$(EXEEXT)
 endif
 

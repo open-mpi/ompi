@@ -52,7 +52,7 @@ PROTOTYPE ERROR_CLASS win_set_name(WIN win, STRING win_name)
     /* Limit the stored name to this entry point's MPI_MAX_OBJECT_NAME by first
      * copying into a buffer of that size: @MPI_MAX_OBJECT_NAME@ expands to
      * MPI_MAX_OBJECT_NAME (== OPAL_MAX_OBJECT_NAME) for the OMPI binding and to
-     * the MPI Forum ABI maximum for the standard-ABI binding.
+     * the MPI Forum ABI maximum for the ABI binding.
      * ompi_win_set_name() then stores it into the internal buffer (sized to the
      * ABI maximum) without re-truncating. */
     char truncated_name[@MPI_MAX_OBJECT_NAME@];

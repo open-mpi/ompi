@@ -21,7 +21,7 @@ ABI compatibility to previous versions of Open MPI
 This section describes the **Open MPI ABI** compatibility between Open
 MPI releases.
 
-For information about the MPI standard ABI defined by MPI-5.0, see
+For information about the MPI Forum ABI defined by MPI-5.0, see
 :ref:`Building MPI applications using the MPI Forum ABI
 <label-building-with-mpi-abi>`.
 

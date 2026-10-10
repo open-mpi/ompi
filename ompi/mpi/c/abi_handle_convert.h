@@ -10,7 +10,7 @@
 
 /*
  * Shared offset/sentinel translation for the hand-written
- * MPI_<Handle>_fromint / MPI_<Handle>_toint standard-ABI converters
+ * MPI_<Handle>_fromint / MPI_<Handle>_toint MPI Forum ABI converters
  * (comm, errhandler, file, group, info, message, op, request, session,
  * type, win).
  *
