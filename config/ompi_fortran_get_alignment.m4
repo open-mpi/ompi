@@ -185,7 +185,7 @@ end program]])],
                           [AC_MSG_WARN([Could not determine alignment of $1])
                            AC_MSG_WARN([See config.log for details])
                            AC_MSG_ERROR([Cannot continue])])
-         rm -rf conftest* *.mod 2> /dev/null
+         rm -rf conftest* *.$FC_MODEXT 2> /dev/null
          AC_LANG_POP([Fortran])])
 
     AS_VAR_COPY([$2], [type_var])
@@ -198,7 +198,9 @@ AC_DEFUN([OMPI_FORTRAN_GET_COMMON_ALIGNMENT],[
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
           [AC_CACHE_CHECK([alignment of Fortran common], ompi_cv_fortran_common_alignment,
               [AC_LANG_PUSH([Fortran])
-               AC_LINK_IFELSE([AC_LANG_SOURCE([[ program falignment
+               # Force free-form Fortran for this test (uses F90 features)
+               AC_FC_SRCEXT([F90])
+               AC_LINK_IFELSE([AC_LANG_SOURCE([[program falignment
    use iso_c_binding, only: C_LOC, C_INTPTR_T
    implicit none
    CHARACTER, TARGET :: A, B
@@ -230,7 +232,7 @@ end program]])],
                           [AC_MSG_WARN([Could not determine common alignment])
                            AC_MSG_WARN([See config.log for details])
                            AC_MSG_ERROR([Cannot continue])])
-               rm -rf conftest* *.mod 2> /dev/null
+               rm -rf conftest* *.$FC_MODEXT 2> /dev/null
                AC_LANG_POP([Fortran])])
 
            AS_VAR_COPY([$1], [ompi_cv_fortran_common_alignment])],
