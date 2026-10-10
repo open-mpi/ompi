@@ -348,6 +348,14 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
         mca_coll_base_print_component_names(comm);
     }
 
+#if OPAL_ENABLE_FT_MPI
+    /* A failure may have revoked this comm while it was being constructed,
+     * before it had a coll module to notify; deliver that now. */
+    if( ompi_comm_is_revoked(comm) || ompi_comm_coll_revoked(comm) ) {
+        comm->c_coll->coll_revoke_local(comm);
+    }
+#endif
+
     return OMPI_SUCCESS;
 }
 
