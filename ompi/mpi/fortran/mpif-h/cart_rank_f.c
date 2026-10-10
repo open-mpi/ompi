@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2015 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -88,4 +89,6 @@ void ompi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank,
     if (MPI_SUCCESS == c_ierr) {
         OMPI_SINGLE_INT_2_FINT(rank);
     }
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(coords);
 }
