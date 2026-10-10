@@ -15,8 +15,9 @@ Open MPI version v6.1.0
   tarballs remain unaffected. The Fortran configuration now uses
   Autoconf 2.69 standard macros (``AC_FC_MODULE_EXTENSION``,
   ``AC_FC_IMPLICIT_NONE``, ``AC_FC_PP_DEFINE``, ``AC_FC_PP_SRCEXT``,
-  ``AC_FC_MODULE_FLAG``) for improved portability across diverse Fortran
-  compilers. The custom macros ``OMPI_FORTRAN_CHECK_PREPROCESS_F90`` and
+  ``AC_FC_MODULE_FLAG``, ``AC_FC_MODULE_OUTPUT_FLAG``) for improved
+  portability across diverse Fortran compilers. The custom macros
+  ``OMPI_FORTRAN_CHECK_PREPROCESS_F90`` and
   ``OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG`` have been replaced with
   their Autoconf 2.69 equivalents.
 
