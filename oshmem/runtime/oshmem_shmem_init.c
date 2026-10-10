@@ -305,14 +305,14 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     OPAL_TIMING_ENV_NEXT(timing, "open SCOLL framework");
 
-    if (OSHMEM_SUCCESS != (ret = mca_spml_base_select(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+    if (OSHMEM_SUCCESS != (ret = mca_spml_base_select(opal_async_progress_thread_spawned, 1))) {
         error = "mca_spml_base_select() failed";
         goto error;
     }
 
     OPAL_TIMING_ENV_NEXT(timing, "select SPML framework");
 
-    if (OSHMEM_SUCCESS != (ret = mca_scoll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+    if (OSHMEM_SUCCESS != (ret = mca_scoll_base_find_available(opal_async_progress_thread_spawned, 1))) {
         error = "mca_scoll_base_find_available() failed";
         goto error;
     }
@@ -389,7 +389,7 @@ static int _shmem_init(int argc, char **argv, int requested, int *provided)
 
     OPAL_TIMING_ENV_NEXT(timing, "open ATOMIC framework");
 
-    if (OSHMEM_SUCCESS != (ret = mca_atomic_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+    if (OSHMEM_SUCCESS != (ret = mca_atomic_base_find_available(opal_async_progress_thread_spawned, 1))) {
         error = "mca_atomic_base_find_available() failed";
         goto error;
     }

@@ -327,19 +327,6 @@ static void mca_btl_smcuda_component_fini(void)
         OBJ_RELEASE(mca_btl_smcuda_component.sm_seg);
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
-    /* close/cleanup fifo create for event notification */
-    if (mca_btl_smcuda_component.sm_fifo_fd > 0) {
-        /* write a done message down the pipe */
-        unsigned char cmd = DONE;
-        if (write(mca_btl_smcuda_component.sm_fifo_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
-            opal_output(0, "mca_btl_smcuda_component_close: write fifo failed: errno=%d\n", errno);
-        }
-        opal_thread_join(&mca_btl_smcuda_component.sm_fifo_thread, NULL);
-        close(mca_btl_smcuda_component.sm_fifo_fd);
-        unlink(mca_btl_smcuda_component.sm_fifo_path);
-    }
-#endif
     return;
 }
 
@@ -858,30 +845,6 @@ mca_btl_smcuda_component_init(int *num_btls, bool enable_progress_threads, bool 
         return NULL;
     }
 
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
-    /* create a named pipe to receive events  */
-    snprintf(mca_btl_smcuda_component.sm_fifo_path, sizeof(mca_btl_smcuda_component.sm_fifo_path),
-             "%s" OPAL_PATH_SEP "sm_fifo.%lu",
-             opal_process_info.job_session_dir, (unsigned long) OPAL_PROC_MY_NAME->vpid);
-    if (mkfifo(mca_btl_smcuda_component.sm_fifo_path, 0660) < 0) {
-        opal_output(0, "mca_btl_smcuda_component_init: mkfifo failed with errno=%d\n", errno);
-        return NULL;
-    }
-    mca_btl_smcuda_component.sm_fifo_fd = open(mca_btl_smcuda_component.sm_fifo_path, O_RDWR);
-    if (mca_btl_smcuda_component.sm_fifo_fd < 0) {
-        opal_output(0,
-                    "mca_btl_smcuda_component_init: "
-                    "open(%s) failed with errno=%d\n",
-                    mca_btl_smcuda_component.sm_fifo_path, errno);
-        return NULL;
-    }
-
-    OBJ_CONSTRUCT(&mca_btl_smcuda_component.sm_fifo_thread, opal_thread_t);
-    mca_btl_smcuda_component.sm_fifo_thread.t_run = (opal_thread_fn_t)
-        mca_btl_smcuda_component_event_thread;
-    opal_thread_start(&mca_btl_smcuda_component.sm_fifo_thread);
-#endif
-
     mca_btl_smcuda_component.sm_btls = (mca_btl_smcuda_t **) malloc(
         mca_btl_smcuda_component.sm_max_btls * sizeof(mca_btl_smcuda_t *));
     if (NULL == mca_btl_smcuda_component.sm_btls) {
@@ -931,28 +894,6 @@ mca_btl_smcuda_component_init(int *num_btls, bool enable_progress_threads, bool 
 
     return btls;
 }
-
-/*
- *  SM component progress.
- */
-
-#if OPAL_ENABLE_PROGRESS_THREADS == 1
-void mca_btl_smcuda_component_event_thread(opal_object_t *thread)
-{
-    while (1) {
-        unsigned char cmd;
-        if (read(mca_btl_smcuda_component.sm_fifo_fd, &cmd, sizeof(cmd)) != sizeof(cmd)) {
-            /* error condition */
-            return;
-        }
-        if (DONE == cmd) {
-            /* return when done message received */
-            return;
-        }
-        mca_btl_smcuda_component_progress();
-    }
-}
-#endif
 
 void btl_smcuda_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
 {

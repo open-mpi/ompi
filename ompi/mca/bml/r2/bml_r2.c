@@ -235,10 +235,14 @@ static void mca_bml_r2_register_progress (mca_btl_base_module_t *btl, bool hp)
                     btl->btl_component->btl_progress;
             }
 
+            /* query thread-safety of this btl progress engine */
+            const bool btl_progress_thread_safe = btl->btl_component->btl_data.param_field
+                                                  & MCA_BASE_METADATA_PARAM_THREAD_SAFE;
+
             if (hp) {
-                opal_progress_register (btl->btl_component->btl_progress);
+                opal_progress_register_thread_safe (btl->btl_component->btl_progress, btl_progress_thread_safe);
             } else {
-                opal_progress_register_lp (btl->btl_component->btl_progress);
+                opal_progress_register_thread_safe_lp (btl->btl_component->btl_progress, btl_progress_thread_safe);
             }
         }
     }
