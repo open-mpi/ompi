@@ -20,6 +20,7 @@ dnl Copyright (c) 2020      Google, LLC. All rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2021      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+dnl Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -269,8 +270,97 @@ AC_DEFUN([OPAL_ASM_CHECK_ATOMIC_FUNC],[
 
 dnl ------------------------------------------------------------------
 
+dnl Two probes for a lock-free 128-bit compare-and-swap.
+dnl
+dnl __atomic_always_lock_free() is a compile-time constant folded from
+dnl the compiler's own description of the target: true means it emits a
+dnl lock-free sequence inline.  No link and no run, so cross compiling
+dnl is no obstacle.
+dnl
+dnl __atomic_is_lock_free() also accounts for run time, the only way to
+dnl tell an instruction from a lock once libatomic owns the operation --
+dnl as on x86_64, where it reaches cmpxchg16b through an ifunc.
+AC_DEFUN([OPAL_CSWAP_INT128_ALWAYS_LOCK_FREE_TEST_SOURCE],[[
+#include <stdint.h>
+
+typedef union {
+    uint64_t fake@<:@2@:>@;
+    __int128 real;
+} ompi128;
+
+static ompi128 ptr;
+
+/* A negative array size is a compile error, so this compiles only
+ * where the compare-and-swap is lock-free without libatomic. */
+char always_lock_free@<:@__atomic_always_lock_free(16, &ptr.real) ? 1 : -1@:>@;
+]])
+
+AC_DEFUN([OPAL_CSWAP_INT128_IS_LOCK_FREE_TEST_SOURCE],[[
+#include <stdint.h>
+
+typedef union {
+    uint64_t fake@<:@2@:>@;
+    __int128 real;
+} ompi128;
+
+static ompi128 ptr;
+
+int main(int argc, char** argv)
+{
+    return __atomic_is_lock_free(16, &ptr.real) ? 0 : 1;
+}
+]])
+
+dnl ------------------------------------------------------------------
+
+dnl OPAL_CHECK_CSWAP_INT128_LOCK_FREE(result-variable)
+dnl
+dnl Decide whether a working 128-bit compare-and-swap is also lock-free,
+dnl and so usable by the only code that wants one: the counted-pointer
+dnl algorithms in opal_lifo.h / opal_fifo.h.  Those pair it with
+dnl narrower lock-free accesses to the same counted pointer, which a
+dnl lock-based emulation does not interlock with, and the list corrupts.
+dnl
+dnl Takes result-variable already set to 1 by the caller's own checks,
+dnl and clears it to 0 if the operation is not lock-free.  Also sets
+dnl opal_cswap_int128_inline to 1 if the answer is yes because the
+dnl compiler emits the operation, not because libatomic does.
+AC_DEFUN([OPAL_CHECK_CSWAP_INT128_LOCK_FREE],[
+    AC_MSG_CHECKING([if the 128-bit atomic compare-and-swap is lock-free])
+
+    opal_cswap_int128_inline=0
+    AS_IF([test "$enable_cswap_int128" = "no"],
+        [dnl Not lock-free is the one property the callers consult, so
+         dnl refusing it here covers all three of them.
+         $1=0
+         AC_MSG_RESULT([not using one, as requested])],
+        [AC_COMPILE_IFELSE([AC_LANG_SOURCE(OPAL_CSWAP_INT128_ALWAYS_LOCK_FREE_TEST_SOURCE)],
+            [$1=1
+             opal_cswap_int128_inline=1
+             AC_MSG_RESULT([yes, emitted inline])],
+            [dnl The compiler calls out to libatomic, and only libatomic
+             dnl knows whether that is an instruction or a lock.  Nothing
+             dnl we can compile or link here stands in for that, so ask.
+             AC_RUN_IFELSE([AC_LANG_SOURCE(OPAL_CSWAP_INT128_IS_LOCK_FREE_TEST_SOURCE)],
+                 [$1=1
+                  AC_MSG_RESULT([yes, lock-free in libatomic])],
+                 [$1=0
+                  AC_MSG_RESULT([no])],
+                 [AS_IF([test "$enable_libatomic_cswap_int128" = "yes"],
+                      [$1=1
+                       AC_MSG_RESULT([cannot run a test program -- assuming yes, as requested])],
+                      [$1=0
+                       AC_MSG_RESULT([cannot run a test program -- assuming no])])])])])
+])
+
+dnl ------------------------------------------------------------------
+
 AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
-  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result])
+  OPAL_VAR_SCOPE_PUSH([sync_bool_compare_and_swap_128_result sync_bool_compare_and_swap_128_CFLAGS_save sync_bool_compare_and_swap_128_LIBS_save])
+
+  sync_bool_compare_and_swap_128_CFLAGS_save=$CFLAGS
+  sync_bool_compare_and_swap_128_LIBS_save=$LIBS
+  opal_cswap_int128_inline=0
 
   # Do we have __sync_bool_compare_and_swap?
   # Use a special macro because we need to check with a few different
@@ -280,9 +370,28 @@ AC_DEFUN([OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128], [
       [sync_bool_compare_and_swap_128_result=1],
       [sync_bool_compare_and_swap_128_result=0])
 
+  # This builtin is only here as a way to reach a hardware 128-bit
+  # compare-and-swap that the __atomic builtin declines to promise is
+  # lock-free -- cmpxchg16b under -mcx16 on x86_64.  Make sure that is
+  # what we actually got.
+  AS_IF([test $sync_bool_compare_and_swap_128_result -eq 1],
+      [OPAL_CHECK_CSWAP_INT128_LOCK_FREE([sync_bool_compare_and_swap_128_result])
+       AS_IF([test $sync_bool_compare_and_swap_128_result -eq 0],
+           [# The checks above atomically set CFLAGS/LIBS or not; this
+            # one runs after the fact, so undo their side-effects.
+            CFLAGS=$sync_bool_compare_and_swap_128_CFLAGS_save
+            LIBS=$sync_bool_compare_and_swap_128_LIBS_save])])
+
   AC_DEFINE_UNQUOTED([OPAL_HAVE_SYNC_BUILTIN_CSWAP_INT128],
         [$sync_bool_compare_and_swap_128_result],
         [Whether the __sync builtin atomic compare and swap supports 128-bit values])
+
+  # Record when the answer came from __atomic_always_lock_free(), which
+  # is a proxy for __sync; opal/sys/atomic.h checks it against what the
+  # compiler says about __sync itself.
+  AC_DEFINE_UNQUOTED([OPAL_SYNC_BUILTIN_CSWAP_INT128_INLINE],
+        [$opal_cswap_int128_inline],
+        [Whether the 128-bit compare and swap is lock-free because the compiler emits it inline, rather than through libatomic])
 
   OPAL_VAR_SCOPE_POP
 ])
@@ -301,22 +410,16 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
       [atomic_compare_exchange_n_128_result=1],
       [atomic_compare_exchange_n_128_result=0])
 
-  # If we have it and it works, check to make sure it is always lock
-  # free.
+  # If we have it and it works, make sure it is lock-free.
   AS_IF([test $atomic_compare_exchange_n_128_result -eq 1],
-        [AC_MSG_CHECKING([if __int128 atomic compare-and-swap is always lock-free])
-         AC_RUN_IFELSE([AC_LANG_PROGRAM([], [if (!__atomic_always_lock_free(16, 0)) { return 1; }])],
-              [AC_MSG_RESULT([yes])],
-              [atomic_compare_exchange_n_128_result=0
-               # If this test fails, need to reset CFLAGS/LIBS (the
-               # above tests atomically set CFLAGS/LIBS or not; this
-               # test is running after the fact, so we have to undo
-               # the side-effects of setting CFLAGS/LIBS if the above
-               # tests passed).
-               CFLAGS=$atomic_compare_exchange_n_128_CFLAGS_save
-               LIBS=$atomic_compare_exchange_n_128_LIBS_save
-               AC_MSG_RESULT([no])],
-              [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+        [OPAL_CHECK_CSWAP_INT128_LOCK_FREE([atomic_compare_exchange_n_128_result])
+         AS_IF([test $atomic_compare_exchange_n_128_result -eq 0],
+             [# Need to reset CFLAGS/LIBS (the above tests atomically
+              # set CFLAGS/LIBS or not; this test is running after the
+              # fact, so we have to undo the side-effects of setting
+              # CFLAGS/LIBS if the above tests passed).
+              CFLAGS=$atomic_compare_exchange_n_128_CFLAGS_save
+              LIBS=$atomic_compare_exchange_n_128_LIBS_save])
         ])
 
   AC_DEFINE_UNQUOTED([OPAL_HAVE_GCC_BUILTIN_CSWAP_INT128],
@@ -325,7 +428,7 @@ AC_DEFUN([OPAL_CHECK_GCC_BUILTIN_CSWAP_INT128], [
 
   dnl If we could not find decent support for 128-bits __atomic let's
   dnl try the GCC _sync
-  AS_IF([test $atomic_compare_exchange_n_128_result -eq 0],
+  AS_IF([test $atomic_compare_exchange_n_128_result -eq 0 -a "$enable_cswap_int128" != "no"],
       [OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128])
 
   OPAL_VAR_SCOPE_POP
@@ -398,22 +501,16 @@ AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
       [atomic_compare_exchange_result=1],
       [atomic_compare_exchange_result=0])
 
-  # If we have it and it works, check to make sure it is always lock
-  # free.
+  # If we have it and it works, make sure it is lock-free.
   AS_IF([test $atomic_compare_exchange_result -eq 1],
-        [AC_MSG_CHECKING([if C11 __int128 atomic compare-and-swap is always lock-free])
-         AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <stdatomic.h>], [_Atomic __int128_t x; if (!atomic_is_lock_free(&x)) { return 1; }])],
-              [AC_MSG_RESULT([yes])],
-              [atomic_compare_exchange_result=0
-               # If this test fails, need to reset CFLAGS/LIBS (the
-               # above tests atomically set CFLAGS/LIBS or not; this
-               # test is running after the fact, so we have to undo
-               # the side-effects of setting CFLAGS/LIBS if the above
-               # tests passed).
-               CFLAGS=$atomic_compare_exchange_CFLAGS_save
-               LIBS=$atomic_compare_exchange_LIBS_save
-               AC_MSG_RESULT([no])],
-              [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+        [OPAL_CHECK_CSWAP_INT128_LOCK_FREE([atomic_compare_exchange_result])
+         AS_IF([test $atomic_compare_exchange_result -eq 0],
+             [# Need to reset CFLAGS/LIBS (the above tests atomically
+              # set CFLAGS/LIBS or not; this test is running after the
+              # fact, so we have to undo the side-effects of setting
+              # CFLAGS/LIBS if the above tests passed).
+              CFLAGS=$atomic_compare_exchange_CFLAGS_save
+              LIBS=$atomic_compare_exchange_LIBS_save])
         ])
 
   AC_DEFINE_UNQUOTED([OPAL_HAVE_C11_CSWAP_INT128],
@@ -422,7 +519,7 @@ AC_DEFUN([OPAL_CHECK_C11_CSWAP_INT128], [
 
   dnl If we could not find decent support for 128-bits atomic let's
   dnl try the GCC _sync
-  AS_IF([test $atomic_compare_exchange_result -eq 0],
+  AS_IF([test $atomic_compare_exchange_result -eq 0 -a "$enable_cswap_int128" != "no"],
       [OPAL_CHECK_SYNC_BUILTIN_CSWAP_INT128])
 
   OPAL_VAR_SCOPE_POP
@@ -484,20 +581,23 @@ int main(int argc, char* argv) {
 AC_DEFUN([OPAL_CHECK_CMPXCHG16B],[
     OPAL_VAR_SCOPE_PUSH([cmpxchg16b_result])
 
-    OPAL_ASM_CHECK_ATOMIC_FUNC([cmpxchg16b],
+    cmpxchg16b_result=0
+    AS_IF([test "$enable_cswap_int128" = "no"],
+          [AC_MSG_NOTICE([Not looking for cmpxchg16b: 128-bit atomics disabled by request])],
+          [OPAL_ASM_CHECK_ATOMIC_FUNC([cmpxchg16b],
                                [AC_LANG_PROGRAM([[unsigned char tmp[16];]],
                                                 [[__asm__ __volatile__ ("lock cmpxchg16b (%%rsi)" : : "S" (tmp) : "memory", "cc");]])],
                                [cmpxchg16b_result=1],
                                [cmpxchg16b_result=0])
-    # If we have it, make sure it works.
-    AS_IF([test $cmpxchg16b_result -eq 1],
-          [AC_MSG_CHECKING([if cmpxchg16b_result works])
-           AC_RUN_IFELSE([AC_LANG_SOURCE(OPAL_CMPXCHG16B_TEST_SOURCE)],
-                         [AC_MSG_RESULT([yes])],
-                         [cmpxchg16b_result=0
-                          AC_MSG_RESULT([no])],
-                         [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
-          ])
+           # If we have it, make sure it works.
+           AS_IF([test $cmpxchg16b_result -eq 1],
+                 [AC_MSG_CHECKING([if cmpxchg16b_result works])
+                  AC_RUN_IFELSE([AC_LANG_SOURCE(OPAL_CMPXCHG16B_TEST_SOURCE)],
+                                [AC_MSG_RESULT([yes])],
+                                [cmpxchg16b_result=0
+                                 AC_MSG_RESULT([no])],
+                                [AC_MSG_RESULT([cannot test -- assume yes (cross compiling)])])
+                 ])])
 
     AC_DEFINE_UNQUOTED([OPAL_HAVE_CMPXCHG16B], [$cmpxchg16b_result],
         [Whether the processor supports the cmpxchg16b instruction])
@@ -627,6 +727,27 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_ARG_ENABLE([builtin-atomics-for-ppc],
         [AS_HELP_STRING([--enable-builtin-atomics-for-ppc],
              [For performance reasons, 64-bit POWER architectures will not use C11 or GCC built-in atomics, even if --enable-c11-atomics is passed to configure.  Enabling this option will re-enable support for both C11 and GCC built-in atomics.])])
+
+    AC_ARG_ENABLE([cswap-int128],
+        [AS_HELP_STRING([--disable-cswap-int128],
+             [Do not use a 128-bit atomic compare-and-swap, even where one is available.  (default: use if available)])])
+
+    AC_ARG_ENABLE([libatomic-cswap-int128],
+        [AS_HELP_STRING([--enable-libatomic-cswap-int128],
+             [Assume that a 128-bit atomic compare-and-swap resolved out of libatomic is lock-free.  Applies only to cross-compiled builds whose compiler does not emit the operation inline, where configure cannot run a test program to ask libatomic what it does.  Enable only if you know the target's libatomic uses an instruction; assuming so wrongly corrupts data.  (default: disabled)])])
+
+    # The option only decides the one case configure cannot; say so
+    # where it has no bearing.
+    AS_IF([test "$enable_libatomic_cswap_int128" != "yes"],
+        [],
+        [test "$enable_cswap_int128" = "no"],
+        [AC_MSG_WARN([Ignoring --enable-libatomic-cswap-int128: --disable-cswap-int128 was
+also given, and that takes the 128-bit compare-and-swap away regardless of
+whether it is lock-free.])],
+        [test "$cross_compiling" != "yes"],
+        [AC_MSG_WARN([Ignoring --enable-libatomic-cswap-int128: this is not a cross-compiled
+build, so configure can run a test program and determine for itself whether the
+128-bit compare-and-swap is lock-free.])])
 
     # See the following github PR and some performance numbers/discussion:
     # https://github.com/open-mpi/ompi/pull/8649

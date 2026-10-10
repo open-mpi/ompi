@@ -92,6 +92,38 @@ Open MPI version v6.1.0
   directly while other processes reached the same memory with network
   atomics, which is the mixing that guarantee exists to prevent.
 
+- Fixed crashes and hangs in the internal atomic LIFO and FIFO on
+  architectures with no hardware 128-bit compare-and-swap, which is to
+  say RISC-V and LoongArch; 64-bit RISC-V was the first to be reported.
+  ``configure`` accepted the 128-bit compare-and-swap builtin without
+  checking that it is lock-free, so on those targets it selected an
+  algorithm that pairs that operation with narrower lock-free accesses to
+  the same memory while the operation itself was emulated by libatomic
+  with a lock, which does not interlock with them.  All three of the
+  128-bit compare-and-swap checks now agree on how lock-freedom is
+  established: the compiler is asked at compile time whether it emits
+  the operation inline, and where it does not, a test program asks
+  libatomic at run time what it does instead.  Only a cross-compiled
+  build that falls through both is left guessing, and it now guesses
+  conservatively; the new ``--enable-libatomic-cswap-int128`` option
+  overrides that for targets whose libatomic is known to use an
+  instruction.  The new ``--disable-cswap-int128`` option builds without
+  the 128-bit operation entirely.
+
+- Fixed crashes in the internal atomic LIFO and FIFO on weakly ordered
+  architectures when neither a lock-free 128-bit compare-and-swap nor
+  load-linked/store-conditional is available.  Claiming the head of the
+  list was followed by a write barrier, which does not keep the
+  subsequent read of the item's next pointer from being satisfied before
+  the claim was taken, so a pop could follow a next pointer from before
+  the item was last pushed.
+
+- Fixed a lost item in the internal atomic FIFO on weakly ordered
+  architectures.  A pop that emptied the list retired the tail without
+  first making the new head visible, so a concurrent push could observe
+  the retired tail while still reading a stale head, conclude the list
+  was empty, and store its item over the popping thread's store.
+
 - Fixed wrong answers from one-sided (RMA) operations on a window
   allocated with ``MPI_Win_allocate`` when the target is a process on the
   same node but the operation is carried out by the underlying transport
