@@ -528,6 +528,8 @@ EXTRA_DIST = $(prototype_sources) \
 	abi_converters.h \
 	abi_converters.c \
 	abi_handle_convert.h \
+	mpit_abi_handle_convert.h \
+	mpit_abi_handle_convert.c \
 	abi_get_info.c.in \
         abi.h.in
 
