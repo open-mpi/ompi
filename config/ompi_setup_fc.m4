@@ -329,10 +329,13 @@ AC_DEFUN([OMPI_SETUP_FC],[
           [# Detect preprocessor define flag (usually -D)
            AC_FC_PP_DEFINE])
 
-    # Check to see if we need additional compiler flags for
-    # preprocessing .F90 files.
+    # Use Autoconf 2.69 macro to detect .F90 preprocessing support
+    # This tests if the compiler can preprocess .F90 files and sets
+    # FCFLAGS appropriately if special flags are needed.
     AS_IF([test $ompi_fc_happy -eq 1],
-          [OMPI_FORTRAN_CHECK_PREPROCESS_F90])
+          [AC_FC_PP_SRCEXT([F90])
+           AS_IF([test "$ac_cv_fc_pp_srcext_F90" = "unknown"],
+                 [AC_MSG_ERROR([Fortran compiler cannot preprocess .F90 files])])])
 
     # Per trac #1982, on OS X, we may need some esoteric linker flags
     # in the wrapper compilers.  However, per
