@@ -8,6 +8,34 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- ``coll/ucc`` now creates a UCC context per family of communicators
+  instead of one per process over ``MPI_COMM_WORLD``.  MPI Sessions
+  programs that never create ``MPI_COMM_WORLD`` can use UCC, and a
+  derived communicator shares the context of any live communicator
+  whose process group contains all of its processes -- in the usual
+  case ``MPI_COMM_WORLD``'s -- so creating communicators costs no
+  additional context.  A communicator's UCC team is destroyed when the
+  communicator is; contexts are destroyed, and the UCC library
+  finalized, at the end of the job.  A failure to create a
+  context or a team now disables UCC for that communicator only, which
+  uses the other collective components; previously one failure
+  disabled UCC for the rest of the process.  Communicators created by
+  ``MPI_Comm_idup`` enable UCC at their first blocking collective and
+  run nonblocking collectives through the other components.  The new
+  MCA parameters ``coll_ucc_max_domains``, ``coll_ucc_domain_reuse``,
+  ``coll_ucc_team_post_agreement``, ``coll_ucc_team_create_timeout``,
+  ``coll_ucc_team_destroy_timeout``
+  and ``coll_ucc_sessions_teardown`` control this behaviour.
+
+- When the UCC library includes the SHARP transport, ``coll/ucc`` now
+  uses SHARP for ``MPI_COMM_WORLD`` only.  Other communicators use a
+  second UCC context without SHARP, so they take no SHARP resources
+  and are faster to create.  A communicator asks for SHARP by being
+  created with the info key ``ompi_comm_coll_ucc_sharp`` set to
+  ``true`` (for example with ``MPI_Comm_dup_with_info``); setting the
+  MCA parameter ``coll_ucc_derived_sharp`` to ``true`` restores SHARP
+  on every communicator.  See :ref:`label-coll-ucc-sharp` for the
+  rules.
 
 - Updated the embedded hwloc to v2.15.0.
 

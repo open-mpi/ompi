@@ -68,6 +68,7 @@
         _coll_req->super.req_free             = mca_coll_ucc_req_free;  \
         _coll_req->super.req_type             = OMPI_REQUEST_COLL;      \
         _coll_req->super.req_mpi_object.comm  = _comm;                  \
+        _coll_req->module                     = NULL;                   \
     } while(0)
 
 #define COLL_UCC_GET_REQ_PERSISTENT(_coll_req, _comm)                   \
@@ -88,9 +89,20 @@
         _coll_req->super.req_type = OMPI_REQUEST_COLL;                  \
         _coll_req->super.req_mpi_object.comm = _comm;                   \
         _coll_req->ucc_req = NULL;                                      \
+        _coll_req->module = NULL;                                       \
     } while (0)
 
+/* Only a blocking post enables; a lazy module keeps nonblocking posts on the previous module. */
 #define COLL_UCC_REQ_INIT(_coll_req, _req, _coll, _module) do{          \
+        if (OPAL_UNLIKELY(MCA_COLL_UCC_READY != (_module)->state)) {    \
+            if (NULL != (_coll_req) ||                                  \
+                OMPI_SUCCESS != mca_coll_ucc_lazy_enable(_module)) {    \
+                goto fallback;                                          \
+            }                                                           \
+        } else if (OPAL_UNLIKELY(NULL != (_coll_req) &&                 \
+                                 (_module)->lazy)) {                    \
+            goto fallback;                                              \
+        }                                                               \
         if (_coll_req) {                                                \
             _coll.mask   |= UCC_COLL_ARGS_FIELD_CB;                     \
             _coll.cb.cb   = mca_coll_ucc_completion;                    \
@@ -103,6 +115,11 @@
                                            _module->ucc_team));         \
         if (_coll_req) {                                                \
             _coll_req->ucc_req = *(_req);                               \
+            _coll_req->module  = _module;                               \
+            if (!_coll_req->super.req_persistent) {                     \
+                OPAL_THREAD_ADD_FETCH32(&_module->active, 1);           \
+                OPAL_THREAD_ADD_FETCH32(&_module->domain->active, 1);   \
+            }                                                           \
         }                                                               \
     } while(0)
 
