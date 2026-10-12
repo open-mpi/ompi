@@ -120,6 +120,7 @@ int mca_atomic_ucx_fop(shmem_ctx_t ctx,
     ucs_status_ptr_t status_ptr;
     spml_ucx_mkey_t *ucx_mkey;
     uint64_t rva;
+    int res;
     mca_spml_ucx_ctx_t *ucx_ctx = (mca_spml_ucx_ctx_t *)ctx;
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     ucp_request_param_t param = {
@@ -137,16 +138,24 @@ int mca_atomic_ucx_fop(shmem_ctx_t ctx,
 #if HAVE_DECL_UCP_ATOMIC_OP_NBX
     status_ptr = ucp_atomic_op_nbx(ucx_ctx->ucp_peers[pe].ucp_conn, op, &value, 1,
                                    rva, ucx_mkey->rkey, &param);
-    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
-                                        "ucp_atomic_op_nbx");
+    res = opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
+                                       "ucp_atomic_op_nbx");
 #else
     status_ptr = ucp_atomic_fetch_nb(ucx_ctx->ucp_peers[pe].ucp_conn,
                                      op, value, prev, size,
                                      rva, ucx_mkey->rkey,
                                      opal_common_ucx_empty_complete_cb);
-    return opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
-                                        "ucp_atomic_fetch_nb");
+    res = opal_common_ucx_wait_request(status_ptr, ucx_ctx->ucp_worker[0],
+                                       "ucp_atomic_fetch_nb");
 #endif
+
+    /* A fetching atomic that completes immediately (e.g. on a local PE) never
+       enters the UCX progress loop. A PE that polls a symmetric variable with
+       fetching atomics, such as shmem_signal_fetch(), would then never serve
+       incoming operations or flushes from other PEs, stalling them. */
+    ucp_worker_progress(ucx_ctx->ucp_worker[0]);
+
+    return res;
 }
 
 static int mca_atomic_ucx_add(shmem_ctx_t ctx,
