@@ -615,13 +615,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
        function else), but before dpm.dyncom_init, since this function
        might require collective for the CID allocation. */
     if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD, NULL))) {
         error = "mca_coll_base_comm_select(MPI_COMM_WORLD) failed";
         goto error;
     }
 
     if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_SELF))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_SELF, NULL))) {
         error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
         goto error;
     }
