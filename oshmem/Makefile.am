@@ -36,6 +36,7 @@ SUBDIRS += \
 	$(MCA_oshmem_FRAMEWORK_COMPONENT_STATIC_SUBDIRS) \
 	. \
 	test/memheap \
+	test/shmem \
 	$(MCA_oshmem_FRAMEWORK_COMPONENT_DSO_SUBDIRS)
 endif
 
@@ -45,7 +46,8 @@ DIST_SUBDIRS = \
 	shmem/fortran \
 	$(MCA_oshmem_FRAMEWORKS_SUBDIRS) \
 	$(MCA_oshmem_FRAMEWORK_COMPONENT_ALL_SUBDIRS) \
-	test/memheap
+	test/memheap \
+	test/shmem
 
 # Build The main OSHMEM library, but only if we're building OSHMEM
 lib_LTLIBRARIES =
