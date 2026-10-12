@@ -221,8 +221,8 @@ static int mca_btl_tcp_proc_create_interface_graph(mca_btl_tcp_proc_t *btl_proc,
        fields needed in the proc version */
     for (i = 0; i < btl_proc->proc_addr_count; i++) {
         /* Construct opal_if_t objects for the remote interfaces */
-        opal_if_t *interface = OBJ_NEW(opal_if_t);
-        if (NULL == interface) {
+        opal_if_t *intf = OBJ_NEW(opal_if_t);
+        if (NULL == intf) {
             rc = OPAL_ERR_OUT_OF_RESOURCE;
             goto out;
         }
@@ -232,39 +232,39 @@ static int mca_btl_tcp_proc_create_interface_graph(mca_btl_tcp_proc_t *btl_proc,
                    sizeof(struct in_addr));
             btl_proc->proc_addrs[i].addr_family = AF_INET;
 
-            memcpy(&((struct sockaddr_in *) &(interface->if_addr))->sin_addr, remote_addrs[i].addr,
+            memcpy(&((struct sockaddr_in *) &(intf->if_addr))->sin_addr, remote_addrs[i].addr,
                    sizeof(struct in_addr));
-            ((struct sockaddr *) &(interface->if_addr))->sa_family = AF_INET;
-            interface->af_family = AF_INET;
+            ((struct sockaddr *) &(intf->if_addr))->sa_family = AF_INET;
+            intf->af_family = AF_INET;
         } else if (MCA_BTL_TCP_AF_INET6 == remote_addrs[i].addr_family) {
 #if OPAL_ENABLE_IPV6
             memcpy(&btl_proc->proc_addrs[i].addr_union.addr_inet6, remote_addrs[i].addr,
                    sizeof(struct in6_addr));
             btl_proc->proc_addrs[i].addr_family = AF_INET6;
 
-            memcpy(&((struct sockaddr_in6 *) &(interface->if_addr))->sin6_addr,
+            memcpy(&((struct sockaddr_in6 *) &(intf->if_addr))->sin6_addr,
                    remote_addrs[i].addr, sizeof(struct in6_addr));
-            ((struct sockaddr *) &(interface->if_addr))->sa_family = AF_INET6;
-            interface->af_family = AF_INET6;
+            ((struct sockaddr *) &(intf->if_addr))->sa_family = AF_INET6;
+            intf->af_family = AF_INET6;
 #else
             rc = OPAL_ERR_NOT_SUPPORTED;
-            OBJ_RELEASE(interface);
+            OBJ_RELEASE(intf);
             goto out;
 #endif
         } else {
             BTL_ERROR(("Unexpected address family %d", (int) remote_addrs[i].addr_family));
             rc = OPAL_ERR_BAD_PARAM;
-            OBJ_RELEASE(interface);
+            OBJ_RELEASE(intf);
             goto out;
         }
 
         btl_proc->proc_addrs[i].addr_port = remote_addrs[i].addr_port;
         btl_proc->proc_addrs[i].addr_ifkindex = remote_addrs[i].addr_ifkindex;
 
-        interface->if_mask = remote_addrs[i].addr_mask;
-        interface->if_bandwidth = remote_addrs[i].addr_bandwidth;
+        intf->if_mask = remote_addrs[i].addr_mask;
+        intf->if_bandwidth = remote_addrs[i].addr_bandwidth;
 
-        opal_list_append(remote_list, &(interface->super));
+        opal_list_append(remote_list, &(intf->super));
     }
 
     rc = opal_bp_graph_create(NULL, NULL, &graph);
