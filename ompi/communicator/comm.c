@@ -62,6 +62,7 @@
 
 #include "ompi/attribute/attribute.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/runtime/ompi_mpit_events.h"
 #include "ompi/communicator/comm_split_type.h"
 #include "ompi/mca/pml/pml.h"
@@ -1848,6 +1849,7 @@ struct ompi_comm_idup_with_info_context_t {
     opal_object_t super;
     ompi_communicator_t *comm;
     ompi_communicator_t *newcomp;
+    int tag;    /* pml tag of this creation's cid rounds on comm */
 };
 
 typedef struct ompi_comm_idup_with_info_context_t ompi_comm_idup_with_info_context_t;
@@ -1946,6 +1948,9 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
         }
     }
 
+    /* reserved at the call, so every rank hands this tag to the same creation */
+    context->tag = ompi_coll_base_nbc_reserve_tags (comm, 1);
+
     ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, subreq, subreq[0] ? 1 : 0);
 
     /* assign the newcomm now */
@@ -1972,7 +1977,7 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, NULL,
+    rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, &context->tag,
                                NULL, false, mode, subreq);
     if (OMPI_SUCCESS != rc) {
         ompi_comm_request_return (request);
@@ -2003,7 +2008,8 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 	     ompi_comm_print_cid (context->newcomp), ompi_comm_print_cid (context->comm));
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, NULL, NULL, false, mode, subreq);
+    rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, &context->tag, NULL, false, mode,
+                                subreq);
     if ( OMPI_SUCCESS != rc ) {
         OBJ_RELEASE(context->newcomp);
         return rc;
