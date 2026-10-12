@@ -48,6 +48,15 @@ static inline void* _shrealloc(void *ptr, size_t size)
 
     RUNTIME_CHECK_INIT();
 
+    if (0 == size) {
+        /* NULL ptr behaves like shmem_malloc(0), which does nothing. A
+         * non-NULL ptr is freed as if by shmem_free. */
+        if (ptr) {
+            shmem_free(ptr);
+        }
+        return NULL;
+    }
+
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
 
     if (ptr) {
