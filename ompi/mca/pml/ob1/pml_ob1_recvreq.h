@@ -131,6 +131,9 @@ do {                                                                \
     do {                                                                              \
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                            \
                                  &(recvreq->req_recv.req_base), PERUSE_RECV );        \
+        mca_pml_ob1_event_raise_request( MCA_PML_OB1_EVENT_REQUEST_COMPLETE,           \
+                                         recvreq->req_recv.req_base.req_comm,          \
+                                         &recvreq->req_recv.req_base );               \
         ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );        \
     } while (0)
 
@@ -169,6 +172,11 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
         if(recvreq->req_recv.req_bytes_packed > 0) {
             PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
                     &recvreq->req_recv.req_base, PERUSE_RECV );
+            /* what actually reached the user buffer */
+            mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_END,
+                                             recvreq->req_recv.req_base.req_comm,
+                                             &recvreq->req_recv.req_base,
+                                             recvreq->req_bytes_received);
         }
 
         for(i = 0; i < recvreq->req_rdma_cnt; i++) {
@@ -281,6 +289,10 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
                                 &req->req_recv.req_base, PERUSE_RECV);
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         req->req_recv.req_base.req_comm,
+                                         &req->req_recv.req_base,
+                                         req->req_recv.req_bytes_packed);
     }
 }
 
@@ -320,6 +332,9 @@ do {                                                                            
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
                                       &(request->req_recv.req_base), max_data,    \
                                       PERUSE_RECV);                               \
+        mca_pml_ob1_event_raise_transfer (MCA_PML_OB1_EVENT_TRANSFER,             \
+                                          request->req_recv.req_base.req_comm,    \
+                                          &request->req_recv.req_base, max_data); \
         opal_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
                                      &data_offset );                              \
         opal_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \

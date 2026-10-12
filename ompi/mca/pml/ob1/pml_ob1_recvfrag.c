@@ -75,10 +75,11 @@ OBJ_CLASS_INSTANCE( mca_pml_ob1_recv_frag_t,
 /**
  * Append an unexpected descriptor to a queue. This function will allocate and
  * initialize the fragment (if necessary) and then will add it to the specified
- * queue. The allocated fragment is not returned to the caller.
+ * queue. Returns the queued fragment (the one passed in, or the freshly
+ * allocated one) so the caller can use its address as an event correlator.
  */
 
-static void
+static mca_pml_ob1_recv_frag_t *
 append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
                     const mca_pml_ob1_match_hdr_t *hdr, const mca_btl_base_segment_t *segments,
                     size_t num_segments, mca_pml_ob1_recv_frag_t* frag)
@@ -88,11 +89,12 @@ append_frag_to_list(opal_list_t *queue, mca_btl_base_module_t *btl,
         MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
     }
     opal_list_append(queue, (opal_list_item_t*)frag);
+    return frag;
 }
 
 #if MCA_PML_OB1_CUSTOM_MATCH
 
-static void
+static mca_pml_ob1_recv_frag_t *
 append_frag_to_umq(custom_match_umq *queue, mca_btl_base_module_t *btl,
                    const mca_pml_ob1_match_hdr_t *hdr, const mca_btl_base_segment_t *segments,
                    size_t num_segments, mca_pml_ob1_recv_frag_t* frag)
@@ -102,6 +104,7 @@ append_frag_to_umq(custom_match_umq *queue, mca_btl_base_module_t *btl,
     MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segments, num_segments, btl);
   }
   custom_match_umq_append(queue, hdr->hdr_tag, hdr->hdr_src, frag);
+  return frag;
 }
 
 #endif
@@ -639,6 +642,8 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_MESSAGE_ARRIVED, comm_ptr,
+                                    hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing
@@ -695,6 +700,8 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN, comm_ptr,
+                                    hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, NULL);
 
@@ -704,18 +711,16 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_END, comm_ptr,
+                                    hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
     /* release matching lock before processing fragment */
     OB1_MATCHING_UNLOCK(&comm->matching_lock);
 
     if(OPAL_LIKELY(match)) {
-        bytes_received = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
-        /* We don't need to know the total amount of bytes we just received,
-         * but we need to know if there is any data in this message. The
-         * simplest way is to get the extra length from the first segment,
-         * and then add the number of remaining segments.
-         */
-        match->req_recv.req_bytes_packed = bytes_received + (num_segments-1);
+        bytes_received = mca_pml_ob1_compute_segment_length_base (segments, num_segments,
+                                                                  OMPI_PML_OB1_MATCH_HDR_LEN);
+        match->req_recv.req_bytes_packed = bytes_received;
 
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         if(match->req_bytes_expected > 0) {
@@ -732,11 +737,10 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
                                        match->req_recv.req_base.req_datatype);
                        );
 
-            iov[0].iov_len = bytes_received;
+            iov[0].iov_len = segments->seg_len - OMPI_PML_OB1_MATCH_HDR_LEN;
             iov[0].iov_base = (IOVBASE_TYPE*)((unsigned char*)segments->seg_addr.pval +
                                               OMPI_PML_OB1_MATCH_HDR_LEN);
             while (iov_count < num_segments) {
-                bytes_received += segments[iov_count].seg_len;
                 iov[iov_count].iov_len = segments[iov_count].seg_len;
                 iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segments[iov_count].seg_addr.pval);
                 iov_count++;
@@ -1066,6 +1070,9 @@ static mca_pml_ob1_recv_request_t *match_incomming(const mca_pml_ob1_match_hdr_t
             opal_list_remove_item(queue, (opal_list_item_t*)(*match));
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
                     &((*match)->req_recv.req_base), PERUSE_RECV);
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
+                                            (*match)->req_recv.req_base.req_comm,
+                                            &(*match)->req_recv.req_base);
             return *match;
         }
 
@@ -1075,7 +1082,16 @@ static mca_pml_ob1_recv_request_t *match_incomming(const mca_pml_ob1_match_hdr_t
 
     return NULL;
 #else
-    return custom_match_prq_find_dequeue_verify(comm->prq, hdr->hdr_tag, hdr->hdr_src);
+    mca_pml_ob1_recv_request_t *match =
+        custom_match_prq_find_dequeue_verify(comm->prq, hdr->hdr_tag, hdr->hdr_src);
+    if (NULL != match) {
+        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
+                                &match->req_recv.req_base, PERUSE_RECV);
+        mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
+                                        match->req_recv.req_base.req_comm,
+                                        &match->req_recv.req_base);
+    }
+    return match;
 #endif
 }
 
@@ -1094,6 +1110,9 @@ static mca_pml_ob1_recv_request_t *match_incomming_no_any_source (const mca_pml_
             opal_list_remove_item (&proc->specific_receives, (opal_list_item_t *) recv_req);
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
                     &(recv_req->req_recv.req_base), PERUSE_RECV);
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
+                                            recv_req->req_recv.req_base.req_comm,
+                                            &recv_req->req_recv.req_base);
             return recv_req;
         }
     }
@@ -1161,16 +1180,19 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
                                     &(match->req_recv.req_base), PERUSE_RECV);
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_MATCH,
+                                            match->req_recv.req_base.req_comm,
+                                            &match->req_recv.req_base);
             SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
             return match;
         }
 
         /* if no match found, place on unexpected queue */
 #if MCA_PML_OB1_CUSTOM_MATCH
-        append_frag_to_umq(comm->umq, btl, hdr, segments,
+        frag = append_frag_to_umq(comm->umq, btl, hdr, segments,
                             num_segments, frag);
 #else
-        append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
+        frag = append_frag_to_list(&proc->unexpected_frags, btl, hdr, segments,
                             num_segments, frag);
 #endif
         SPC_RECORD(OMPI_SPC_UNEXPECTED, 1);
@@ -1178,6 +1200,9 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
         SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_UNEXPECTED_IN_QUEUE, OMPI_SPC_UNEXPECTED_IN_QUEUE);
         PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+        mca_pml_ob1_event_raise_unex_insert(comm_ptr, frag,
+                                            hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx,
+                                            hdr->hdr_seq);
         SPC_TIMER_STOP(OMPI_SPC_MATCH_TIME, &timer);
         return NULL;
     } while(true);
@@ -1248,6 +1273,8 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_MESSAGE_ARRIVED, comm_ptr,
+                                    hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing
@@ -1356,6 +1383,8 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN, comm_ptr,
+                                    hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
     match = match_one(btl, hdr, segments, num_segments, comm_ptr, proc, frag);
 
@@ -1365,6 +1394,8 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      */
     PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+    mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_END, comm_ptr,
+                                    hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
     /* release matching lock before processing fragment */
     OB1_MATCHING_UNLOCK(&comm->matching_lock);

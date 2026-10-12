@@ -483,6 +483,8 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          */
         PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm,
                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+        mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_MESSAGE_ARRIVED, comm,
+                                        hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
         /* There is no matching to be done, and no lock to be held on the communicator as
          * we know at this point that the communicator has not yet been returned to the user.
@@ -518,6 +520,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #endif
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
                                    hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+            mca_pml_ob1_event_raise_unex_insert(comm, frag,
+                                                hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx,
+                                                hdr->hdr_seq);
             continue;
         }
 
@@ -533,6 +538,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #endif
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
                                    hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+            mca_pml_ob1_event_raise_unex_insert(comm, frag,
+                                                hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx,
+                                                hdr->hdr_seq);
             /* And now the ugly part. As some fragments can be inserted in the cant_match list,
              * every time we successfully add a fragment in the unexpected list we have to make
              * sure the next one is not in the cant_match. Otherwise, we will endup in a deadlock
