@@ -43,14 +43,22 @@ ompi_HEADERS = mpiext_xcallbacks_c.h
 # to generated both ompi and standard abi variants
 #
 prototype_sources = \
-        op_create_x.c.in
+        op_create_x.c.in \
+        comm_create_errhandler_x.c.in \
+        win_create_errhandler_x.c.in \
+        file_create_errhandler_x.c.in \
+        session_create_errhandler_x.c.in
 
 
 # This list is spelled out explicitly (rather than derived from
 # prototype_sources with a substitution reference) because BSD make
 # does not support GNU make's pattern substitution.
 interface_profile_sources = \
-        op_create_x_ompi_generated.c
+        op_create_x_ompi_generated.c \
+        comm_create_errhandler_x_ompi_generated.c \
+        win_create_errhandler_x_ompi_generated.c \
+        file_create_errhandler_x_ompi_generated.c \
+        session_create_errhandler_x_ompi_generated.c
 
 if OMPI_GENERATE_BINDINGS
 # See OMPI_BINDINGS_GENERATOR in Makefile.ompi-rules.

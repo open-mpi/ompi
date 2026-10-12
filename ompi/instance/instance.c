@@ -163,6 +163,17 @@ static void ompi_instance_construct (ompi_instance_t *instance)
 
 static void ompi_instance_destruct(ompi_instance_t *instance)
 {
+    /* Release the error handler reference taken when it was attached to the
+     * instance (see MPI_Session_set_errhandler and the instance_null setup in
+     * ompi_mpi_instance_init_common).  For user error handlers this drops the
+     * reference count so the user destructor runs; for the predefined handler
+     * attached to ompi_mpi_instance_null it balances the matching OBJ_RETAIN,
+     * leaving the static predefined object intact. */
+    if (NULL != instance->error_handler) {
+        OBJ_RELEASE(instance->error_handler);
+        instance->error_handler = NULL;
+    }
+
     free(instance->i_name);
     instance->i_name = NULL;
     OBJ_DESTRUCT(&instance->s_lock);
@@ -337,9 +348,9 @@ int ompi_mpi_instance_retain (void)
         return OMPI_ERROR;
     }
 
-    /* setup the default error handler on instance_null */
+    /* setup instance_null; the default error handler is attached below, after
+       ompi_errhandler_init() has constructed the predefined errhandlers. */
     OBJ_CONSTRUCT(&ompi_mpi_instance_null, ompi_instance_t);
-    ompi_mpi_instance_null.instance.error_handler = &ompi_mpi_errors_return.eh;
 
     /* Convince OPAL to use our naming scheme */
     opal_process_name_print = _process_name_print_for_opal;
@@ -359,6 +370,15 @@ int ompi_mpi_instance_retain (void)
         opal_mutex_unlock (&instance_lock);
         return ompi_instance_print_error ("ompi_errhandler_init() failed", ret);
     }
+
+    /* Attach the default error handler to instance_null now that the
+       predefined errhandlers have been constructed.  OBJ_RETAIN here keeps the
+       reference counting symmetric with user sessions (which retain on
+       assignment) and with the matching OBJ_RELEASE in ompi_instance_destruct,
+       so tearing down instance_null does not drive the static predefined
+       errhandler's reference count to zero. */
+    ompi_mpi_instance_null.instance.error_handler = &ompi_mpi_errors_return.eh;
+    OBJ_RETAIN(ompi_mpi_instance_null.instance.error_handler);
 
     /* initialize error codes */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_init ())) {
