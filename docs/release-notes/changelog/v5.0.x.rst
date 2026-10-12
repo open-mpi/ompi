@@ -15,6 +15,15 @@ Open MPI Version v5.0.11
 - OpenSHMEM now validates peer memheap layouts before remote-key state is
   used.  Incompatible peer layouts abort initialization with a diagnostic.
 
+- Fixed ``MPI_Comm_idup`` hanging, or completing other nonblocking
+  collectives with wrong results, when the application posted further
+  nonblocking collectives or created another communicator on the parent
+  communicator while the ``MPI_Comm_idup`` request was outstanding.  The
+  context-id negotiation of a nonblocking duplicate now runs over
+  point-to-point messages with a tag reserved when ``MPI_Comm_idup`` is
+  called, instead of sharing the parent's nonblocking-collective stream
+  with the application.
+
 - Internal PMIx and PRRTe versions:
   - PMIx (v5.0.11). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``3795947f0fa625f406f1d085d1e70a8413b3febc``.
   - PRRTE (v3.0.14). Repo: ``https://github.com/openpmix/prrte``. Commit hash: ``a99bf3a006ddc8609e85da8f8eef13ba6d27aaba``.
