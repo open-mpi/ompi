@@ -117,9 +117,9 @@ date="September 2026"
 
 libmpi_so_version=90:0:50
 libmpi_mpifh_so_version=90:0:50
-libmpi_usempi_tkr_so_version=90:0:50
-libmpi_usempi_ignore_tkr_so_version=90:0:50
-libmpi_usempif08_so_version=90:0:50
+libmpi_usempi_tkr_so_version=90:0:0
+libmpi_usempi_ignore_tkr_so_version=90:0:0
+libmpi_usempif08_so_version=90:0:0
 libmpi_abi_so_version=1:0:0
 libopen_pal_so_version=90:0:50
 libmpi_java_so_version=90:0:50
