@@ -9,6 +9,7 @@
  *                         reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +41,7 @@ PROTOTYPE ERROR_CLASS pvar_get_info(INT pvar_index, STRING_OUT name, INT_OUT nam
            bounds checking. */
         ret = mca_base_pvar_get (pvar_index, &pvar);
         if (OMPI_SUCCESS != ret) {
-            ret = (OPAL_ERR_NOT_FOUND == ret) ? MPI_T_ERR_INVALID_INDEX : MPI_T_ERR_INVALID;
+            ret = ompit_var_index_error (ret);
             break;
         }
 

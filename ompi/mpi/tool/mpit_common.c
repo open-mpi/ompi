@@ -11,6 +11,7 @@
  * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -184,6 +185,25 @@ OMPI_HIDDEN int ompit_opal_to_mpit_error (int rc)
 }
 
 /*
+ * Translate the failure of a by-index control/performance variable lookup.
+ * MPI-5.0 sec. 15.3.6 and 15.3.7 ask for MPI_T_ERR_INVALID_INDEX both when the
+ * index is out of range and when it names a variable that has been
+ * invalidated, and the MCA layer signals those two cases with three different
+ * codes depending on which lookup path was taken.
+ */
+OMPI_HIDDEN int ompit_var_index_error (int rc)
+{
+    switch (rc) {
+    case OPAL_ERR_VALUE_OUT_OF_BOUNDS:
+    case OPAL_ERR_BAD_PARAM:
+    case OPAL_ERR_NOT_FOUND:
+        return MPI_T_ERR_INVALID_INDEX;
+    default:
+        return MPI_T_ERR_INVALID;
+    }
+}
+
+/*
  * Check whether a MPI object is valid or not.
  * If invalid return true, otherwise false.
  */
@@ -198,7 +218,7 @@ OMPI_HIDDEN bool ompit_obj_invalid(void *obj_handle)
         goto fn_exit;
     }
 
-    /* we are actually evaulating a pointer to an OMPI MPI opaque handle */
+    /* we are actually evaluating a pointer to an OMPI MPI opaque handle */
     opal_obj = *(opal_object_t **)obj_handle;
 
     /*
@@ -224,25 +244,25 @@ OMPI_HIDDEN bool ompit_obj_invalid(void *obj_handle)
      * standard concerning binding one of the T things to an MPI object.
      */
     if (0 == strncmp(obj_name, "ompi_communicator_t", strlen("ompi_communicator_t"))) {
-        ompi_communicator_t *comm = (ompi_communicator_t *)obj_handle;
+        ompi_communicator_t *comm = (ompi_communicator_t *) opal_obj;
         ret = ompi_comm_invalid(comm);
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_win_t", strlen("ompi_win_t"))) {
-        ompi_win_t *win = (ompi_win_t *)obj_handle;
+        ompi_win_t *win = (ompi_win_t *) opal_obj;
         ret = ompi_win_invalid(win);
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_file_t", strlen("ompi_file_t"))) {
-        ompi_file_t *file = (ompi_file_t *)obj_handle;
+        ompi_file_t *file = (ompi_file_t *) opal_obj;
         ret = ompi_file_invalid(file);
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_instance_t", strlen("ompi_instance_t"))) {
-        ompi_instance_t *instance = (ompi_instance_t *)obj_handle;
+        ompi_instance_t *instance = (ompi_instance_t *) opal_obj;
         ret = ompi_instance_invalid(instance);
         goto fn_exit;
     }
@@ -252,43 +272,43 @@ OMPI_HIDDEN bool ompit_obj_invalid(void *obj_handle)
      * do a smoke test for use of NULL objects.
      */
     if (0 == strncmp(obj_name, "ompi_info_t", strlen("ompi_info_t"))) {
-        ompi_info_t *info = (ompi_info_t *)obj_handle;
+        ompi_info_t *info = (ompi_info_t *) opal_obj;
         ret = (MPI_INFO_NULL == info) ? true : false;
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_datatype_t", strlen("ompi_datatype_t"))) {
-        ompi_datatype_t *datatype = (ompi_datatype_t *)obj_handle;
+        ompi_datatype_t *datatype = (ompi_datatype_t *) opal_obj;
         ret = (MPI_DATATYPE_NULL == datatype) ? true : false;
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_request_t", strlen("ompi_request_t"))) {
-        ompi_request_t *request = (ompi_request_t *)obj_handle;
+        ompi_request_t *request = (ompi_request_t *) opal_obj;
         ret = (MPI_REQUEST_NULL == request) ? true : false;
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_errhandler_t", strlen("ompi_errhandler_t"))) {
-        ompi_errhandler_t *errhandler = (ompi_errhandler_t *)obj_handle;
+        ompi_errhandler_t *errhandler = (ompi_errhandler_t *) opal_obj;
         ret = (MPI_ERRHANDLER_NULL == errhandler) ? true : false;
         goto fn_exit;
     }
 
-    if (0 == strncmp(obj_name, "ompi_opt_t", strlen("ompi_op_t"))) {
-        ompi_op_t *op = (ompi_op_t *)obj_handle;
+    if (0 == strncmp(obj_name, "ompi_op_t", strlen("ompi_op_t"))) {
+        ompi_op_t *op = (ompi_op_t *) opal_obj;
         ret = (MPI_OP_NULL == op) ? true : false;
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_message_t", strlen("ompi_message_t"))) {
-        ompi_message_t *message = (ompi_message_t *)obj_handle;
+        ompi_message_t *message = (ompi_message_t *) opal_obj;
         ret = (MPI_MESSAGE_NULL == message) ? true : false;
         goto fn_exit;
     }
 
     if (0 == strncmp(obj_name, "ompi_group_t", strlen("ompi_group_t"))) {
-        ompi_group_t *group = (ompi_group_t *)obj_handle;
+        ompi_group_t *group = (ompi_group_t *) opal_obj;
         ret = (MPI_GROUP_NULL == group) ? true : false;
         goto fn_exit;
     }

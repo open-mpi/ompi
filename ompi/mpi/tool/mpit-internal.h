@@ -8,6 +8,7 @@
  * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -68,6 +69,7 @@ OMPI_HIDDEN extern bool ompi_mpit_init_failed;
 
 OMPI_HIDDEN int ompit_var_type_to_datatype (mca_base_var_type_t type, MPI_Datatype *datatype);
 OMPI_HIDDEN int ompit_opal_to_mpit_error (int rc);
+OMPI_HIDDEN int ompit_var_index_error (int rc);
 OMPI_HIDDEN bool ompit_obj_invalid(void *obj_handle);
 
 /* --- MPI_T events support (see specs/mpi-t-events/spec.md sec. 6) --------- */
