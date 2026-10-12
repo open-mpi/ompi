@@ -44,7 +44,8 @@ soft
 
 host
    The name of the host this process is executing upon - the value
-   returned from *gethostname()*.
+   returned from *gethostname()*, as also reported by
+   :ref:`MPI_Get_processor_name`.
 
 arch
    The architecture of the host this process is executing upon. This
@@ -83,6 +84,16 @@ ompi_positioned_file_dir
    If Open MPI was asked to pre-position files, this field provides the
    top-level directory where those files were place. This is an Open
    MPI-specific field and value.
+
+
+NOTES
+-----
+
+The fields Open MPI learns from the run-time |mdash| *maxprocs*,
+*soft*, *wdir*, *thread_level*, and the ``ompi_``-prefixed fields
+|mdash| are set only while MPI is initialized. :ref:`MPI_Info_create_env`
+leaves them unset before :ref:`MPI_Init` and after :ref:`MPI_Finalize`,
+rather than reporting a value that initializing MPI would contradict.
 
 
 ERRORS
