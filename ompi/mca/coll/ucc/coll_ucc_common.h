@@ -92,16 +92,13 @@
         _coll_req->module = NULL;                                       \
     } while (0)
 
-/* Only a blocking post enables; a lazy module keeps nonblocking posts on the previous module. */
+/* Only a blocking post enables; nonblocking posts fall back until the module is READY. */
 #define COLL_UCC_REQ_INIT(_coll_req, _req, _coll, _module) do{          \
         if (OPAL_UNLIKELY(MCA_COLL_UCC_READY != (_module)->state)) {    \
             if (NULL != (_coll_req) ||                                  \
                 OMPI_SUCCESS != mca_coll_ucc_lazy_enable(_module)) {    \
                 goto fallback;                                          \
             }                                                           \
-        } else if (OPAL_UNLIKELY(NULL != (_coll_req) &&                 \
-                                 (_module)->lazy)) {                    \
-            goto fallback;                                              \
         }                                                               \
         if (_coll_req) {                                                \
             _coll.mask   |= UCC_COLL_ARGS_FIELD_CB;                     \

@@ -1509,8 +1509,7 @@ int mca_coll_ucc_lazy_enable(mca_coll_ucc_module_t *ucc_module)
             mca_coll_ucc_twin_acquire(ucc_module);
         }
         ucc_module->state = MCA_COLL_UCC_READY;
-        /* lazy stays set: a later idup of this comm posts its cid rounds here from the progress
-           loop, and on the UCC team they would cross-match user collectives (comm_cid follow-up). */
+        ucc_module->lazy  = false;    /* nonblocking posts use the team from here on */
         return OMPI_SUCCESS;
     }
 
