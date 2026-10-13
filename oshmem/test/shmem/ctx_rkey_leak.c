@@ -9,16 +9,23 @@
  */
 
 /*
- * Contexts created with shmem_ctx_create must return their UCX remote keys
- * when OpenSHMEM is finalized.  UCX reports a leak in its log (stdout by
- * default) when its library is torn down at process exit ("object ...
- * was not returned to mpool ucp_rkeys"), later than anything the process
- * itself can observe.  The test therefore runs itself again as a child
- * with stdout and stderr connected to a pipe, and the parent, which stays
- * outside OpenSHMEM, fails if the child's output contains that message or
- * if the child fails.  Only that
- * message is detected; the child also uses its contexts, so wrong results
- * fail as well.
+ * Contexts created with shmem_ctx_create must be released when OpenSHMEM
+ * is finalized, whether or not the program destroyed them: their UCX
+ * remote keys, endpoints and workers.  UCX reports such leaks in its log
+ * when its library is torn down at process exit, later than anything the
+ * process itself can observe.  The test therefore runs itself again as a
+ * child with UCX_LOG_LEVEL=info and stdout and stderr connected to a pipe,
+ * and the parent, which stays outside OpenSHMEM, fails if the child fails
+ * or if its output contains either of these UCX messages:
+ *
+ *   "was not returned to mpool ucp_rkeys"  a leaked remote key
+ *   "async thread still running"           a leaked worker
+ *
+ * The second message is what reveals a private context that was left
+ * undestroyed.  It is logged by UCX at info level, so this detection
+ * depends on the UCX version; with a UCX that does not log it the test
+ * still checks for leaked remote keys and for wrong results.  Nothing else
+ * is detected.
  *
  * NP: 4
  */
@@ -79,8 +86,9 @@ static int child_main(void)
         shmem_ctx_destroy(ctx);
     }
 
-    /* Several live contexts with different options; every other one is
-     * left undestroyed so that finalize has to release it. */
+    /* Several live contexts with different options.  Those at even indices
+     * are destroyed; the private context (1), a default one (3) and a
+     * serialized one (5) are left alive for finalize to release. */
     for (i = 0; i < NCTX; i++) {
         rc = shmem_ctx_create(options[i], &keep[i]);
         CHECK(0 == rc, "shmem_ctx_create(options %ld) failed: %d",
@@ -127,6 +135,7 @@ int main(int argc, char **argv)
         return 77;
     }
     setenv(CHILD_ENV, "1", 1);
+    setenv("UCX_LOG_LEVEL", "info", 1);
     pid = fork();
     if (pid < 0) {
         printf("SKIP: cannot fork\n");
@@ -158,8 +167,6 @@ int main(int argc, char **argv)
         return 1;
     }
     buf[len] = '\0';
-    fputs(buf, stdout);
-    fflush(stdout);
 
     waitpid(pid, &status, 0);
     if (!WIFEXITED(status) || 0 != WEXITSTATUS(status)) {
@@ -167,8 +174,16 @@ int main(int argc, char **argv)
         failed = 1;
     }
     if (NULL != strstr(buf, "not returned to mpool")) {
-        fprintf(stderr, "FAIL: UCX reported leaked objects at finalize\n");
+        fprintf(stderr, "FAIL: UCX reported leaked remote keys at finalize\n");
         failed = 1;
+    }
+    if (NULL != strstr(buf, "async thread still running")) {
+        fprintf(stderr, "FAIL: UCX reported a leaked worker at finalize\n");
+        failed = 1;
+    }
+    if (failed) {
+        fputs(buf, stdout);
+        fflush(stdout);
     }
     free(buf);
 

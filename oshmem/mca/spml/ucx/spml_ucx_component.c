@@ -317,11 +317,15 @@ static int spml_ucx_init(void)
     }
 
     mca_spml_ucx.active_array.ctxs_count = mca_spml_ucx.idle_array.ctxs_count = 0;
+    mca_spml_ucx.private_array.ctxs_count = 0;
     mca_spml_ucx.active_array.ctxs_num = mca_spml_ucx.idle_array.ctxs_num = MCA_SPML_UCX_CTXS_ARRAY_SIZE;
+    mca_spml_ucx.private_array.ctxs_num = MCA_SPML_UCX_CTXS_ARRAY_SIZE;
     mca_spml_ucx.active_array.ctxs = calloc(mca_spml_ucx.active_array.ctxs_num,
                                             sizeof(mca_spml_ucx_ctx_t *));
     mca_spml_ucx.idle_array.ctxs = calloc(mca_spml_ucx.idle_array.ctxs_num,
                                           sizeof(mca_spml_ucx_ctx_t *));
+    mca_spml_ucx.private_array.ctxs = calloc(mca_spml_ucx.private_array.ctxs_num,
+                                             sizeof(mca_spml_ucx_ctx_t *));
 
     SHMEM_MUTEX_INIT(mca_spml_ucx.internal_mutex);
     pthread_mutex_init(&mca_spml_ucx.ctx_create_mutex, NULL);
@@ -506,6 +510,10 @@ static int mca_spml_ucx_component_fini(void)
         _ctx_cleanup(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
+    for (i = 0; i < mca_spml_ucx.private_array.ctxs_count; i++) {
+        _ctx_cleanup(mca_spml_ucx.private_array.ctxs[i]);
+    }
+
 
     ret = opal_common_ucx_mca_pmix_fence_nb(&fenced);
     if (ret != PMIX_SUCCESS) {
@@ -521,6 +529,10 @@ static int mca_spml_ucx_component_fini(void)
 
         for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
             ucp_worker_progress(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
+        }
+
+        for (i = 0; i < mca_spml_ucx.private_array.ctxs_count; i++) {
+            ucp_worker_progress(mca_spml_ucx.private_array.ctxs[i]->ucp_worker[0]);
         }
         
         for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
@@ -540,6 +552,10 @@ static int mca_spml_ucx_component_fini(void)
         mca_spml_ucx_ctx_fini(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
+    for (i = 0; i < mca_spml_ucx.private_array.ctxs_count; i++) {
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.private_array.ctxs[i]);
+    }
+
     if (mca_spml_ucx_ctx_default.ucp_worker) {
         mca_spml_ucx_ctx_fini(&mca_spml_ucx_ctx_default);
     }
@@ -552,6 +568,7 @@ static int mca_spml_ucx_component_fini(void)
 
     free(mca_spml_ucx.active_array.ctxs);
     free(mca_spml_ucx.idle_array.ctxs);
+    free(mca_spml_ucx.private_array.ctxs);
 
     SHMEM_MUTEX_DESTROY(mca_spml_ucx.internal_mutex);
     pthread_mutex_destroy(&mca_spml_ucx.ctx_create_mutex);
