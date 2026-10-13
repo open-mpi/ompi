@@ -183,7 +183,7 @@ struct mca_coll_ucc_module_t {
     int                                             modules_idx;
     int                                             team_id; /* id taken from domain->team_ids, or -1 */
     int                                             state;   /* MCA_COLL_UCC_*; PENDING until lazy_enable runs */
-    bool                                            lazy;    /* nonblocking creation: UCC for blocking collectives only */
+    bool                                            lazy;    /* nonblocking creation: enable deferred to the first blocking collective */
     opal_atomic_int32_t                             active;  /* in-flight colls; drained before team destroy */
     bool                                            nosharp;        /* SHARP unwanted: prefer a SHARP-free context */
     bool                                            sharp_explicit; /* nosharp from the info key, own or dup parent's */
