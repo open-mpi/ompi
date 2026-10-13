@@ -418,25 +418,33 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
 {
     int i, j, nprocs = oshmem_num_procs();
     opal_common_ucx_del_proc_t *del_procs;
-    spml_ucx_mkey_t   *ucx_mkey;
+    ucp_peer_t *peer;
     int rc;
 
     del_procs = malloc(sizeof(*del_procs) * nprocs);
 
     for (i = 0; i < nprocs; ++i) {
-        for (j = 0; j < memheap_map->n_segments; j++) {
-            rc = mca_spml_ucx_ctx_mkey_by_seg(ctx, i, j, &ucx_mkey);
-            if (OSHMEM_SUCCESS != rc) {
-                SPML_UCX_ERROR("mca_spml_ucx_ctx_mkey_by_seg failed");
+        peer = &ctx->ucp_peers[i];
+
+        /* The memheap map is already destroyed when the SPML is finalized,
+         * so release the mkeys cached by this context rather than looping
+         * over the memheap segments. */
+        for (j = 0; j < (int)peer->mkeys_cnt; j++) {
+            if (NULL == peer->mkeys[j]) {
+                continue;
+            }
+
+            if (NULL != peer->mkeys[j]->key.rkey) {
+                rc = mca_spml_ucx_ctx_mkey_del(ctx, i, j, &peer->mkeys[j]->key);
             } else {
-                if (ucx_mkey->rkey != NULL) {
-                    rc = mca_spml_ucx_ctx_mkey_del(ctx, i, j, ucx_mkey);
-                    if (OSHMEM_SUCCESS != rc) {
-                        SPML_UCX_ERROR("mca_spml_ucx_ctx_mkey_del failed");
-                    }
-                }
+                rc = mca_spml_ucx_peer_mkey_cache_del(peer, j);
+            }
+            if (OSHMEM_SUCCESS != rc) {
+                SPML_UCX_ERROR("failed to release mkey of pe %d segment %d",
+                               i, j);
             }
         }
+        mca_spml_ucx_peer_mkey_cache_release(peer);
 
         del_procs[i].ep   = ctx->ucp_peers[i].ucp_conn;
         del_procs[i].vpid = i;
