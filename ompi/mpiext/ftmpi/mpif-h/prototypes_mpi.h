@@ -2,6 +2,7 @@
  * Copyright (c) 2019-2022 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,10 +41,10 @@
 
 BEGIN_C_DECLS
 
-PN2(void, MPIX_Comm_agree, mpix_comm_agree, MPIX_COMM_AGREE, (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
+PN2(void, MPIX_Comm_agree, mpix_comm_agree, MPIX_COMM_AGREE, (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr));
 PN2(void, MPIX_Comm_failure_ack, mpix_comm_failure_ack, MPIX_COMM_FAILURE_ACK, (MPI_Fint *comm, MPI_Fint *ierr));
 PN2(void, MPIX_Comm_failure_get_acked, mpix_comm_failure_get_acked, MPIX_COMM_FAILURE_GET_ACKED, (MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr));
-PN2(void, MPIX_Comm_iagree, mpix_comm_iagree, MPIX_COMM_IAGREE, (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *request, MPI_Fint *ierr));
+PN2(void, MPIX_Comm_iagree, mpix_comm_iagree, MPIX_COMM_IAGREE, (MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPIX_Comm_ishrink, mpix_comm_ishrink, MPIX_COMM_ISHRINK, (MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, MPI_Fint *ierr));
 PN2(void, MPIX_Comm_is_revoked, mpix_comm_is_revoked, MPIX_COMM_IS_REVOKED, (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
 PN2(void, MPIX_Comm_revoke, mpix_comm_revoke, MPIX_COMM_REVOKE, (MPI_Fint *comm, MPI_Fint *ierr));
