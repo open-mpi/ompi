@@ -24,14 +24,22 @@ OSHRUN_TIMEOUT = 120
 
 # Like the memheap tests, this is an installed-runtime target rather than
 # part of the pre-install "make check".  Set TESTS to a space-separated list
-# of test names (without ".c") to run a subset.
+# of test names (without ".c") to run a subset.  The runner's status is
+# translated explicitly: 77 is SKIP, zero is PASS, and every other status
+# fails this target.
 check-shmem:
 	@srcdir='$(srcdir)' \
 	 SHMEMCC='$(SHMEMCC)' \
 	 OSHRUN='$(OSHRUN)' \
 	 OSHRUN_TIMEOUT='$(OSHRUN_TIMEOUT)' \
 	 TESTS='$(TESTS)' \
-	 "$(srcdir)/check_shmem.sh"
+	 "$(srcdir)/check_shmem.sh"; \
+	rc=$$?; \
+	case $$rc in \
+	    0) ;; \
+	    77) echo "SKIP: shmem tests (runner exit 77)" ;; \
+	    *) exit $$rc ;; \
+	esac
 
 dist-hook:
 	cp -p $(srcdir)/*.c $(distdir)
