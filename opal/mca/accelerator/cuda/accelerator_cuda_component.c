@@ -54,6 +54,11 @@ bool mca_accelerator_cuda_init_complete = false;
 
 float *opal_accelerator_cuda_mem_bw = NULL;
 
+bool opal_accelerator_cuda_gdrcopy = true;
+size_t opal_accelerator_cuda_gdrcopy_htod_limit = 32768;
+size_t opal_accelerator_cuda_gdrcopy_dtoh_limit = 4096;
+size_t opal_accelerator_cuda_gdrcopy_max_pin = (size_t) 1 << 30;
+
 /*
  * CUDA owns the NVLink domain cache. The MCA variable below is a read-only
  * string mirror used by OMPI_COMM_TYPE_NVLINK, with
@@ -178,6 +183,34 @@ static int accelerator_cuda_component_register(void)
     (void) mca_base_var_register_synonym(ret, "opal", "accelerator", NULL,
                                          "nvlink_domain", 0);
     accelerator_cuda_nvlink_domain_mca_string_owned = true;
+
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "gdrcopy",
+                                           "Use GDRCopy, when its library and driver are present, "
+                                           "for small copies between host and device memory",
+                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_gdrcopy);
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "gdrcopy_htod_limit",
+                                           "Largest copy to device memory done with GDRCopy",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_gdrcopy_htod_limit);
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "gdrcopy_dtoh_limit",
+                                           "Largest copy from device memory done with GDRCopy. "
+                                           "CPU reads of device memory are slow, so this is "
+                                           "smaller than the limit for copies to device memory",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_gdrcopy_dtoh_limit);
+    (void) mca_base_component_var_register(&mca_accelerator_cuda_component.super.base_version,
+                                           "gdrcopy_max_pin",
+                                           "Largest device allocation GDRCopy pins and maps",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &opal_accelerator_cuda_gdrcopy_max_pin);
 
     return OPAL_SUCCESS;
 }
@@ -623,6 +656,8 @@ static void accelerator_cuda_finalize(opal_accelerator_base_module_t* module)
     if (CUDA_SUCCESS != result) {
         ctx_ok = 0;
     }
+
+    opal_accelerator_cuda_gdrcopy_finalize();
 
     if ((NULL != opal_accelerator_cuda_memcpy_stream.base.stream) && ctx_ok) {
         OBJ_DESTRUCT(&opal_accelerator_cuda_memcpy_stream);

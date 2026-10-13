@@ -71,6 +71,13 @@ OPAL_DECLSPEC extern float *opal_accelerator_cuda_mem_bw;
 
 OPAL_DECLSPEC extern int opal_accelerator_cuda_delayed_init(void);
 
+/* GDRCopy fast path for small host<->device copies */
+extern bool opal_accelerator_cuda_gdrcopy;
+extern size_t opal_accelerator_cuda_gdrcopy_htod_limit;
+extern size_t opal_accelerator_cuda_gdrcopy_dtoh_limit;
+extern size_t opal_accelerator_cuda_gdrcopy_max_pin;
+void opal_accelerator_cuda_gdrcopy_finalize(void);
+
 END_C_DECLS
 
 #endif /* MCA_ACCELERATOR_CUDA_H */

@@ -24,6 +24,7 @@
 
 #include "accelerator_cuda.h"
 #include "opal/mca/accelerator/base/base.h"
+#include "opal/mca/dl/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/util/show_help.h"
 #include "opal/util/proc.h"
@@ -693,6 +694,296 @@ static int accelerator_cuda_memcpy_async(int dest_dev_id, int src_dev_id, void *
     return OPAL_SUCCESS;
 }
 
+/*
+ * GDRCopy fast path for small copies between host and device memory.
+ *
+ * A copy through the memcpy stream costs a cuMemcpyAsync and a
+ * cuStreamSynchronize, several microseconds even for a few bytes. GDRCopy
+ * maps device memory into the process through the GPU's BAR, so a small
+ * copy becomes a CPU load or store. libgdrapi is opened at run time, so
+ * nothing is needed at build time and a node without the gdrdrv driver
+ * just keeps the stream path.
+ *
+ * Each device allocation is pinned and mapped once, on its first small
+ * copy, and kept in a small cache keyed by its CUDA buffer ID. Buffer IDs
+ * are never reused within a process, so a freed allocation can never be
+ * mistaken for a new one at the same address; its entry just ages out.
+ */
+typedef struct accelerator_cuda_gdr *accelerator_cuda_gdr_t;
+typedef struct {
+    unsigned long h;
+} accelerator_cuda_gdr_mh_t;
+/* gdr_info_v2_t from gdrapi.h 2.x */
+typedef struct {
+    uint64_t va;
+    uint64_t mapped_size;
+    uint32_t page_size;
+    uint64_t tm_cycles;
+    uint32_t cycles_per_ms;
+    unsigned mapped : 1;
+    unsigned wc_mapping : 1;
+    int mapping_type;
+} accelerator_cuda_gdr_info_t;
+
+#define ACCELERATOR_CUDA_GDR_PAGE_SIZE (1UL << 16)
+#define ACCELERATOR_CUDA_GDR_CACHE_SIZE 32
+
+static struct {
+    accelerator_cuda_gdr_t (*open)(void);
+    int (*close)(accelerator_cuda_gdr_t g);
+    int (*pin_buffer)(accelerator_cuda_gdr_t g, unsigned long addr, size_t size,
+                      uint64_t p2p_token, uint32_t va_space, accelerator_cuda_gdr_mh_t *handle);
+    int (*unpin_buffer)(accelerator_cuda_gdr_t g, accelerator_cuda_gdr_mh_t handle);
+    int (*get_info)(accelerator_cuda_gdr_t g, accelerator_cuda_gdr_mh_t handle,
+                    accelerator_cuda_gdr_info_t *info);
+    int (*map)(accelerator_cuda_gdr_t g, accelerator_cuda_gdr_mh_t handle, void **va, size_t size);
+    int (*unmap)(accelerator_cuda_gdr_t g, accelerator_cuda_gdr_mh_t handle, void *va, size_t size);
+    int (*copy_to_mapping)(accelerator_cuda_gdr_mh_t handle, void *map_d_ptr, const void *h_ptr,
+                           size_t size);
+    int (*copy_from_mapping)(accelerator_cuda_gdr_mh_t handle, void *h_ptr, const void *map_d_ptr,
+                             size_t size);
+} accelerator_cuda_gdr_fn;
+
+typedef struct {
+    unsigned long long buffer_id;
+    accelerator_cuda_gdr_mh_t mh;
+    /* device address and length of the pinned range, and its CPU mapping;
+     * map is NULL when the allocation could not be pinned */
+    uintptr_t pin_addr;
+    size_t pin_len;
+    uintptr_t va;
+    size_t mapped_size;
+    char *map;
+} accelerator_cuda_gdr_entry_t;
+
+/* -1: not opened yet, 0: unavailable, 1: open */
+static int accelerator_cuda_gdr_state = -1;
+static opal_dl_handle_t *accelerator_cuda_gdr_dl = NULL;
+static accelerator_cuda_gdr_t accelerator_cuda_gdr = NULL;
+static opal_mutex_t accelerator_cuda_gdr_lock = OPAL_MUTEX_STATIC_INIT;
+static accelerator_cuda_gdr_entry_t accelerator_cuda_gdr_cache[ACCELERATOR_CUDA_GDR_CACHE_SIZE];
+static int accelerator_cuda_gdr_ncached = 0;
+static int accelerator_cuda_gdr_next_evict = 0;
+
+static int accelerator_cuda_gdr_open(void)
+{
+    const char *libraries[] = {"libgdrapi.so.2", "libgdrapi.so", NULL};
+    const char *names[] = {"gdr_open", "gdr_close", "gdr_pin_buffer", "gdr_unpin_buffer",
+                           "gdr_get_info_v2", "gdr_map", "gdr_unmap", "gdr_copy_to_mapping",
+                           "gdr_copy_from_mapping"};
+    void **fns[] = {(void **) &accelerator_cuda_gdr_fn.open, (void **) &accelerator_cuda_gdr_fn.close,
+                    (void **) &accelerator_cuda_gdr_fn.pin_buffer,
+                    (void **) &accelerator_cuda_gdr_fn.unpin_buffer,
+                    (void **) &accelerator_cuda_gdr_fn.get_info, (void **) &accelerator_cuda_gdr_fn.map,
+                    (void **) &accelerator_cuda_gdr_fn.unmap,
+                    (void **) &accelerator_cuda_gdr_fn.copy_to_mapping,
+                    (void **) &accelerator_cuda_gdr_fn.copy_from_mapping};
+    char *err_msg = NULL;
+    int rc = OPAL_ERROR;
+
+    if (NULL == opal_dl) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    for (int i = 0; NULL != libraries[i]; ++i) {
+        rc = opal_dl_open(libraries[i], false, true, &accelerator_cuda_gdr_dl, &err_msg);
+        if (OPAL_SUCCESS == rc) {
+            break;
+        }
+    }
+    if (OPAL_SUCCESS != rc) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); ++i) {
+        if (OPAL_SUCCESS != opal_dl_lookup(accelerator_cuda_gdr_dl, names[i], fns[i], NULL)) {
+            goto error;
+        }
+    }
+    /* gdr_open fails when the gdrdrv kernel driver is not loaded */
+    accelerator_cuda_gdr = accelerator_cuda_gdr_fn.open();
+    if (NULL == accelerator_cuda_gdr) {
+        goto error;
+    }
+    opal_output_verbose(10, opal_accelerator_base_framework.framework_output,
+                        "CUDA: using GDRCopy for copies up to %zu bytes to and %zu bytes from "
+                        "device memory",
+                        opal_accelerator_cuda_gdrcopy_htod_limit,
+                        opal_accelerator_cuda_gdrcopy_dtoh_limit);
+    return OPAL_SUCCESS;
+
+error:
+    opal_dl_close(accelerator_cuda_gdr_dl);
+    accelerator_cuda_gdr_dl = NULL;
+    return OPAL_ERR_NOT_AVAILABLE;
+}
+
+static void accelerator_cuda_gdr_release(accelerator_cuda_gdr_entry_t *entry)
+{
+    if (NULL != entry->map) {
+        accelerator_cuda_gdr_fn.unmap(accelerator_cuda_gdr, entry->mh, entry->map, entry->pin_len);
+        accelerator_cuda_gdr_fn.unpin_buffer(accelerator_cuda_gdr, entry->mh);
+        entry->map = NULL;
+    }
+}
+
+/* Pin and map the whole allocation holding a device buffer. A failure is
+ * remembered in the entry, so the allocation keeps the stream path without
+ * being retried. */
+static void accelerator_cuda_gdr_pin(accelerator_cuda_gdr_entry_t *entry, uintptr_t start,
+                                     size_t size)
+{
+    accelerator_cuda_gdr_info_t info;
+    void *map;
+
+    entry->map = NULL;
+    entry->pin_addr = start & ~(ACCELERATOR_CUDA_GDR_PAGE_SIZE - 1);
+    entry->pin_len = ((start + size + ACCELERATOR_CUDA_GDR_PAGE_SIZE - 1)
+                      & ~(ACCELERATOR_CUDA_GDR_PAGE_SIZE - 1)) - entry->pin_addr;
+    if (entry->pin_len > opal_accelerator_cuda_gdrcopy_max_pin) {
+        return;
+    }
+    if (0 != accelerator_cuda_gdr_fn.pin_buffer(accelerator_cuda_gdr, entry->pin_addr,
+                                                entry->pin_len, 0, 0, &entry->mh)) {
+        return;
+    }
+    if (0 != accelerator_cuda_gdr_fn.map(accelerator_cuda_gdr, entry->mh, &map, entry->pin_len)) {
+        accelerator_cuda_gdr_fn.unpin_buffer(accelerator_cuda_gdr, entry->mh);
+        return;
+    }
+    if (0 != accelerator_cuda_gdr_fn.get_info(accelerator_cuda_gdr, entry->mh, &info)) {
+        accelerator_cuda_gdr_fn.unmap(accelerator_cuda_gdr, entry->mh, map, entry->pin_len);
+        accelerator_cuda_gdr_fn.unpin_buffer(accelerator_cuda_gdr, entry->mh);
+        return;
+    }
+    /* The range is page aligned, so the driver maps it from its start */
+    if (info.va != entry->pin_addr) {
+        accelerator_cuda_gdr_fn.unmap(accelerator_cuda_gdr, entry->mh, map, entry->pin_len);
+        accelerator_cuda_gdr_fn.unpin_buffer(accelerator_cuda_gdr, entry->mh);
+        return;
+    }
+    entry->va = info.va;
+    entry->mapped_size = info.mapped_size;
+    entry->map = map;
+}
+
+/* Copy between host and device memory with GDRCopy. Returns
+ * OPAL_ERR_NOT_AVAILABLE when the copy must take the stream path. */
+static int accelerator_cuda_gdr_copy(void *dest, const void *src, size_t size,
+                                     opal_accelerator_transfer_type_t type)
+{
+    CUpointer_attribute attrs[] = {CU_POINTER_ATTRIBUTE_MEMORY_TYPE,
+                                   CU_POINTER_ATTRIBUTE_IS_MANAGED,
+                                   CU_POINTER_ATTRIBUTE_BUFFER_ID,
+                                   CU_POINTER_ATTRIBUTE_RANGE_START_ADDR,
+                                   CU_POINTER_ATTRIBUTE_RANGE_SIZE};
+    CUmemorytype mem_type = 0;
+    unsigned int is_managed = 0;
+    unsigned long long buffer_id = 0;
+    CUdeviceptr range_start = 0;
+    size_t range_size = 0;
+    void *values[] = {&mem_type, &is_managed, &buffer_id, &range_start, &range_size};
+    accelerator_cuda_gdr_entry_t *entry = NULL;
+    uintptr_t dev_ptr;
+    bool to_device;
+    int rc = OPAL_ERR_NOT_AVAILABLE;
+
+    if (size > opal_accelerator_cuda_gdrcopy_htod_limit
+        && size > opal_accelerator_cuda_gdrcopy_dtoh_limit) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    /* Find which side is device memory, unless the caller said */
+    if (MCA_ACCELERATOR_TRANSFER_HTOD == type || MCA_ACCELERATOR_TRANSFER_UNSPEC == type) {
+        if (CUDA_SUCCESS != cuPointerGetAttributes(5, attrs, values, (CUdeviceptr) dest)) {
+            return OPAL_ERR_NOT_AVAILABLE;
+        }
+    }
+    if (CU_MEMORYTYPE_DEVICE == mem_type) {
+        to_device = true;
+        dev_ptr = (uintptr_t) dest;
+    } else {
+        if (MCA_ACCELERATOR_TRANSFER_HTOD == type
+            || CUDA_SUCCESS != cuPointerGetAttributes(5, attrs, values, (CUdeviceptr) src)
+            || CU_MEMORYTYPE_DEVICE != mem_type) {
+            return OPAL_ERR_NOT_AVAILABLE;
+        }
+        to_device = false;
+        dev_ptr = (uintptr_t) src;
+    }
+    if (is_managed || 0 == buffer_id
+        || size > (to_device ? opal_accelerator_cuda_gdrcopy_htod_limit
+                             : opal_accelerator_cuda_gdrcopy_dtoh_limit)) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    /* A device-to-device copy keeps the stream path. When the source is
+     * device memory, the destination was already found not to be. */
+    if (MCA_ACCELERATOR_TRANSFER_UNSPEC == type && to_device) {
+        /* cuPointerGetAttributes, unlike cuPointerGetAttribute, does not
+         * take an error path on host memory */
+        CUmemorytype other_type = 0;
+        void *other_value[] = {&other_type};
+        if (CUDA_SUCCESS == cuPointerGetAttributes(1, attrs, other_value, (CUdeviceptr) src)
+            && CU_MEMORYTYPE_DEVICE == other_type) {
+            return OPAL_ERR_NOT_AVAILABLE;
+        }
+    }
+
+    OPAL_THREAD_LOCK(&accelerator_cuda_gdr_lock);
+    if (OPAL_UNLIKELY(1 != accelerator_cuda_gdr_state)) {
+        if (-1 == accelerator_cuda_gdr_state) {
+            accelerator_cuda_gdr_state = (OPAL_SUCCESS == accelerator_cuda_gdr_open()) ? 1 : 0;
+        }
+        if (1 != accelerator_cuda_gdr_state) {
+            goto out;
+        }
+    }
+    for (int i = 0; i < accelerator_cuda_gdr_ncached; ++i) {
+        if (accelerator_cuda_gdr_cache[i].buffer_id == buffer_id) {
+            entry = &accelerator_cuda_gdr_cache[i];
+            break;
+        }
+    }
+    if (NULL == entry) {
+        if (accelerator_cuda_gdr_ncached < ACCELERATOR_CUDA_GDR_CACHE_SIZE) {
+            entry = &accelerator_cuda_gdr_cache[accelerator_cuda_gdr_ncached++];
+        } else {
+            entry = &accelerator_cuda_gdr_cache[accelerator_cuda_gdr_next_evict];
+            accelerator_cuda_gdr_next_evict = (accelerator_cuda_gdr_next_evict + 1)
+                                              % ACCELERATOR_CUDA_GDR_CACHE_SIZE;
+            accelerator_cuda_gdr_release(entry);
+        }
+        entry->buffer_id = buffer_id;
+        accelerator_cuda_gdr_pin(entry, (uintptr_t) range_start, range_size);
+    }
+    if (NULL == entry->map || dev_ptr < entry->va
+        || dev_ptr + size > entry->va + entry->mapped_size) {
+        goto out;
+    }
+    if (to_device) {
+        accelerator_cuda_gdr_fn.copy_to_mapping(entry->mh, entry->map + (dev_ptr - entry->va), src,
+                                                size);
+    } else {
+        accelerator_cuda_gdr_fn.copy_from_mapping(entry->mh, dest,
+                                                  entry->map + (dev_ptr - entry->va), size);
+    }
+    rc = OPAL_SUCCESS;
+out:
+    OPAL_THREAD_UNLOCK(&accelerator_cuda_gdr_lock);
+    return rc;
+}
+
+void opal_accelerator_cuda_gdrcopy_finalize(void)
+{
+    if (1 == accelerator_cuda_gdr_state) {
+        for (int i = 0; i < accelerator_cuda_gdr_ncached; ++i) {
+            accelerator_cuda_gdr_release(&accelerator_cuda_gdr_cache[i]);
+        }
+        accelerator_cuda_gdr_fn.close(accelerator_cuda_gdr);
+        opal_dl_close(accelerator_cuda_gdr_dl);
+    }
+    accelerator_cuda_gdr_ncached = 0;
+    accelerator_cuda_gdr_state = -1;
+}
+
 static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, const void *src,
                             size_t size, opal_accelerator_transfer_type_t type)
 {
@@ -707,6 +998,12 @@ static int accelerator_cuda_memcpy(int dest_dev_id, int src_dev_id, void *dest, 
         return OPAL_ERR_BAD_PARAM;
     }
     if (0 == size) {
+        return OPAL_SUCCESS;
+    }
+
+    if (opal_accelerator_cuda_gdrcopy && MCA_ACCELERATOR_TRANSFER_DTOD != type
+        && MCA_ACCELERATOR_TRANSFER_HTOH != type
+        && OPAL_SUCCESS == accelerator_cuda_gdr_copy(dest, src, size, type)) {
         return OPAL_SUCCESS;
     }
 
