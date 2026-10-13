@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      Stony Brook University. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -229,7 +230,9 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
             attempt = 0;
         }
 
-        opal_atomic_ll_ptr(&fifo->opal_fifo_head.data.item, item);
+        /* ll_acq provides acquire ordering: item fields (opal_list_next,
+         * payload) are visible after the load, paired with the wmb in push. */
+        opal_atomic_ll_acq_ptr(&fifo->opal_fifo_head.data.item, item);
         if (ghost == item) {
             if ((intptr_t) ghost == fifo->opal_fifo_tail.data.item) {
                 return NULL;
@@ -269,6 +272,14 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
 #    endif
 
     if (ghost == next) {
+        /* Ensure the head-pointer update is visible to all threads before we
+         * change the tail to ghost.  Without this barrier a concurrent push on
+         * a weak-memory architecture could observe tail=ghost while head still
+         * shows the old value; the push would then non-atomically write the new
+         * item as the head, racing with the store that set head=ghost, and the
+         * new item could become unreachable. */
+        opal_atomic_wmb();
+
         void *tmp = item;
 
         if (!opal_atomic_compare_exchange_strong_ptr(&fifo->opal_fifo_tail.data.item,

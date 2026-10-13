@@ -18,6 +18,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      Stony Brook University. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -219,7 +220,7 @@ static inline opal_list_item_t *opal_lifo_pop_atomic(opal_lifo_t *lifo)
             attempt = 0;
         }
 
-        opal_atomic_ll_ptr(&lifo->opal_lifo_head.data.item, item);
+        opal_atomic_ll_acq_ptr(&lifo->opal_lifo_head.data.item, item);
         if (&lifo->opal_lifo_ghost == item) {
             return NULL;
         }
