@@ -1064,11 +1064,7 @@ OMPI_DECLSPEC int ompi_comm_free (ompi_communicator_t **comm);
  * @param oldcomm:    original comm
  * @param bridgecomm: bridge comm for intercomm_create
  * @param mode: combination of input
- *              OMPI_COMM_CID_INTRA:        intra-comm. arg0 is NULL, or points to an
- *                                          int reserved from the parent's c_nbc_tag;
- *                                          the rounds then run point-to-point on the
- *                                          parent with that tag instead of through
- *                                          its collective module.
+ *              OMPI_COMM_CID_INTRA:        intra-comm
  *              OMPI_COMM_CID_INTER:        inter-comm
  *              OMPI_COMM_CID_GROUP:        only decide CID within the ompi_group_t
  *                                          associated with the communicator. arg0
@@ -1098,7 +1094,7 @@ OMPI_DECLSPEC int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communic
  * @param oldcomm:    original comm
  * @param bridgecomm: bridge comm for intercomm_create
  * @param mode: combination of input
- *              OMPI_COMM_CID_INTRA:        intra-comm (arg0 as for ompi_comm_nextcid)
+ *              OMPI_COMM_CID_INTRA:        intra-comm
  *              OMPI_COMM_CID_INTER:        inter-comm
  * This routine has to be thread safe in the final version.
  */
@@ -1202,7 +1198,7 @@ OMPI_DECLSPEC int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_commun
  * @param[inout] newcomm    New communicator
  * @param[in]    comm       Parent communicator
  * @param[in]    bridgecomm Bridge communicator (used for PMIX and bridge modes)
- * @param[in]    arg0       Mode argument 0 (as for ompi_comm_nextcid, INTRA included)
+ * @param[in]    arg0       Mode argument 0
  * @param[in]    arg1       Mode argument 1
  * @param[in]    send_first Send first from this process (PMIX mode only)
  * @param[in]    mode       Collective mode
