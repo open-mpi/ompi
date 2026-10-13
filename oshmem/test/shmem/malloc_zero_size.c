@@ -11,11 +11,13 @@
 /*
  * Zero-size allocation: shmem_malloc, shmem_calloc, shmem_align,
  * shmem_realloc and shmem_malloc_with_hints must return NULL and perform
- * no collective operation when the size is zero.
+ * no collective operation when the size is zero.  shmem_calloc must also
+ * return NULL when count * size overflows.
  *
  * NP: 4
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <shmem.h>
@@ -109,6 +111,16 @@ int main(void)
                     shmem_malloc_with_hints(0, SHMEM_MALLOC_ATOMICS_REMOTE));
         check_normal(round);
     }
+
+    /* A count * size product that does not fit in a size_t cannot be
+     * allocated: no memory, no barrier, and a NULL return.  The last case
+     * wraps around to a small non-zero product (8 bytes). */
+    expect_null("shmem_calloc(SIZE_MAX, 2)", shmem_calloc(SIZE_MAX, 2));
+    expect_null("shmem_calloc(SIZE_MAX / 2 + 1, 2)",
+                shmem_calloc(SIZE_MAX / 2 + 1, 2));
+    expect_null("shmem_calloc(SIZE_MAX / 8 + 2, 8)",
+                shmem_calloc(SIZE_MAX / 8 + 2, 8));
+    check_normal(5);
 
     /* shmem_realloc(NULL, n) acts like shmem_malloc(n) */
     p = shmem_realloc(NULL, 128);

@@ -39,7 +39,15 @@ void* shmem_malloc(size_t size)
 
 void* shmem_calloc(size_t count, size_t size)
 {
-    size_t req_sz = count * size;
+    size_t req_sz;
+
+    /* The allocation cannot succeed if the request does not fit in a
+     * size_t; return NULL like any other failed allocation. */
+    if (0 != count && size > SIZE_MAX / count) {
+        return NULL;
+    }
+
+    req_sz = count * size;
     if (!req_sz) return NULL;
     void *ptr = _shmalloc(req_sz);
     if (ptr) {
