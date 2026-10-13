@@ -33,18 +33,26 @@ static void expect_null(const char *what, void *p)
     }
 }
 
-/* Allocate a block, check that it is symmetric and usable, then free it. */
+/*
+ * Allocate a block, check that it is symmetric and usable, then free it.
+ * OpenSHMEM guarantees symmetric offsets within the heap, not equal virtual
+ * addresses, so symmetry is checked by using the local address of an
+ * object to reach its remote counterpart and by comparing the distance
+ * between two allocations, not by comparing pointers across PEs.
+ */
 static void check_normal(int round)
 {
-    static long addr[1];
-    long *buf;
+    static long delta[1];
+    long *buf, *buf2;
     int i, npes = shmem_n_pes();
+    int next = (me + 1) % npes;
+    int prev = (me + npes - 1) % npes;
     size_t n = 16 + round;
 
-    buf = shmem_malloc(n * sizeof(long));
+    buf = shmem_malloc((n + 1) * sizeof(long));
     if (NULL == buf) {
         printf("FAIL: PE %d: round %d: shmem_malloc(%lu) returned NULL\n",
-               me, round, (unsigned long) (n * sizeof(long)));
+               me, round, (unsigned long) ((n + 1) * sizeof(long)));
         failures++;
         /* every PE sees the same result, so this is safe */
         return;
@@ -52,21 +60,41 @@ static void check_normal(int round)
     for (i = 0; i < (int) n; i++) {
         buf[i] = me * 1000 + i;
     }
-    /* addr is static (symmetric): publish my address to PE 0's copy */
-    addr[0] = (long) buf;
+    buf[n] = -1;
     shmem_barrier_all();
-    for (i = 0; i < npes; i++) {
-        long other = shmem_g(&addr[0], i);
-        if (other != (long) buf) {
-            printf("FAIL: PE %d: round %d: address on PE %d is %p, "
-                   "local is %p\n", me, round, i, (void *) other,
-                   (void *) buf);
-            failures++;
+
+    /* write through my local address into my successor's copy */
+    shmem_long_p(&buf[n], me, next);
+    shmem_barrier_all();
+    if (buf[n] != prev) {
+        printf("FAIL: PE %d: round %d: PE %d wrote %ld through its local "
+               "address, expected %d\n", me, round, prev, buf[n], prev);
+        failures++;
+    }
+
+    /* a second block must sit at the same distance from the first on all PEs */
+    buf2 = shmem_malloc(8 * sizeof(long));
+    delta[0] = (NULL == buf2) ? 0 : (long) ((intptr_t) buf2 - (intptr_t) buf);
+    shmem_barrier_all();
+    if (NULL == buf2) {
+        printf("FAIL: PE %d: round %d: second shmem_malloc returned NULL\n",
+               me, round);
+        failures++;
+    } else {
+        for (i = 0; i < npes; i++) {
+            long other = shmem_g(&delta[0], i);
+            if (other != delta[0]) {
+                printf("FAIL: PE %d: round %d: allocation distance on PE %d "
+                       "is %ld, local is %ld\n", me, round, i, other,
+                       delta[0]);
+                failures++;
+            }
         }
     }
+
     /* data check: read a neighbor's contents */
     {
-        int peer = (me + 1) % npes;
+        int peer = next;
         long got = shmem_g(&buf[n - 1], peer);
         long want = peer * 1000 + (long) (n - 1);
         if (got != want) {
@@ -76,6 +104,7 @@ static void check_normal(int round)
         }
     }
     shmem_barrier_all();
+    shmem_free(buf2);
     shmem_free(buf);
 }
 
