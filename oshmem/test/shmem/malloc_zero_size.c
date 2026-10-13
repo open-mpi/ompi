@@ -139,6 +139,19 @@ int main(void)
     }
     check_normal(6);
 
+    /* A pointer outside the symmetric heap is not a valid argument; it must
+     * be rejected with a NULL return, not abort and not free it. */
+    {
+        int stack_var = 0;
+        void *priv = malloc(64);
+
+        expect_null("shmem_realloc(stack ptr, 0)",
+                    shmem_realloc(&stack_var, 0));
+        expect_null("shmem_realloc(private ptr, 0)", shmem_realloc(priv, 0));
+        free(priv);
+    }
+    check_normal(6);
+
     /*
      * No collective side effects: only some PEs make zero-size calls, which
      * must not consume a barrier.  If they did, the PEs would be out of step
