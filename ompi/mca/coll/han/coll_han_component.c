@@ -649,7 +649,8 @@ static int han_register(void)
                                            &(cs->max_dynamic_errors));
 
 
-    cs->han_use_persist_buffers = true;
+    /* Keep persistent HAN buffers opt-in until the alltoall GPU path is safe. */
+    cs->han_use_persist_buffers = false;
     (void) mca_base_component_var_register(&mca_coll_han_component.super.collm_version,
                                            "use_persist_buffers",
                                            "Use persistent/freelist buffers to avoid malloc/free in collectives (0 = disabled)",
