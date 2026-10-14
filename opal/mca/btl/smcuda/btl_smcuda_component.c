@@ -227,6 +227,11 @@ static int smcuda_register(void)
 
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_smcuda_component.super.btl_version, &mca_btl_smcuda.super);
+    /* After mca_btl_base_param_register() so btl_smcuda_flags cannot strip
+     * this bit. add_procs() carries a barrier across every node-local rank
+     * and numbers the segment from the whole local set, neither of which a
+     * peer-at-a-time wire-up can provide. */
+    mca_btl_smcuda.super.btl_flags |= MCA_BTL_FLAGS_REQUIRE_SYNC_INIT;
     /* If user has not set the value, then set to the defalt */
     if (0 == mca_btl_smcuda.super.btl_accelerator_max_send_size) {
         mca_btl_smcuda.super.btl_accelerator_max_send_size = 128 * 1024;
