@@ -40,7 +40,10 @@ abi_interface_profile_sources = \
         comm_create_errhandler_x_abi_generated.c \
         win_create_errhandler_x_abi_generated.c \
         file_create_errhandler_x_abi_generated.c \
-        session_create_errhandler_x_abi_generated.c
+        session_create_errhandler_x_abi_generated.c \
+        comm_create_keyval_x_abi_generated.c \
+        type_create_keyval_x_abi_generated.c \
+        win_create_keyval_x_abi_generated.c
 
 libmpiext_xcallbacks_abi_la_SOURCES = \
         $(abi_interface_profile_sources) \
