@@ -23,6 +23,27 @@ ucc_status_t mca_coll_ucc_gather_init(const void *sbuf, size_t scount, struct om
     int comm_rank = ompi_comm_rank(ucc_module->comm);
     int comm_size = ompi_comm_size(ucc_module->comm);
 
+#if UCC_API_VERSION >= UCC_VERSION(1, 8)
+    if (comm_rank == root) {
+        if ((is_inplace || ompi_datatype_is_contiguous_memory_layout(sdtype, scount)) &&
+            ompi_datatype_is_contiguous_memory_layout(rdtype, rcount * comm_size)) {
+            ucc_rdt = ompi_dtype_to_ucc_dtype(rdtype);
+            if (!is_inplace) {
+                ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+            }
+        } else {
+            ucc_sdt = COLL_UCC_DT_UNSUPPORTED;
+            ucc_rdt = COLL_UCC_DT_UNSUPPORTED;
+        }
+    } else {
+        if (ompi_datatype_is_contiguous_memory_layout(sdtype, scount)) {
+            ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+        } else {
+            ucc_sdt = COLL_UCC_DT_UNSUPPORTED;
+            ucc_rdt = COLL_UCC_DT_UNSUPPORTED;
+        }
+    }
+#else
     if (comm_rank == root) {
         if (!(is_inplace || ompi_datatype_is_contiguous_memory_layout(sdtype, scount)) ||
             !ompi_datatype_is_contiguous_memory_layout(rdtype, rcount * comm_size)) {
@@ -53,6 +74,7 @@ ucc_status_t mca_coll_ucc_gather_init(const void *sbuf, size_t scount, struct om
             goto fallback;
         }
     }
+#endif
 
     ucc_coll_args_t coll = {
         .mask      = 0,
