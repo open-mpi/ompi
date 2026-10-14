@@ -104,6 +104,7 @@ struct ompi_grequest_t {
 #endif
     void *greq_state;
     bool greq_funcs_are_c;
+    bool greq_user_freed;
 };
 /**
  * Convenience typedef
