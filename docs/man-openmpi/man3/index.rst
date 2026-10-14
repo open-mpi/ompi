@@ -554,6 +554,7 @@ MPI API manual pages (section 3)
    MPIX_Comm_ack_failed.3.rst
    MPIX_Comm_agree.3.rst
    MPIX_Comm_create_errhandler_x.3.rst
+   MPIX_Comm_create_keyval_x.3.rst
    MPIX_Comm_get_failed.3.rst
    MPIX_Comm_iagree.3.rst
    MPIX_Comm_ishrink.3.rst
@@ -565,5 +566,7 @@ MPI API manual pages (section 3)
    MPIX_Query_cuda_support.3.rst
    MPIX_Query_rocm_support.3.rst
    MPIX_Session_create_errhandler_x.3.rst
+   MPIX_Type_create_keyval_x.3.rst
    MPIX_Win_create_errhandler_x.3.rst
+   MPIX_Win_create_keyval_x.3.rst
    OMPI_Affinity_str.3.rst
