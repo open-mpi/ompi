@@ -102,6 +102,13 @@ Open MPI version v6.1.0
   MPI tree that still calls ``opal_bitmap_set_bit()`` on it will
   compile and misreport; such components must be updated.
 
+- Fixed ``btl/smcuda`` reporting every node-local peer as unreachable,
+  or hanging on first communication, since ``MPI_Init`` stopped calling
+  ``add_procs`` eagerly.  ``smcuda`` now requires a synchronizing
+  initialization, and a GPU-enabled application (CUDA or ROCM) using the
+  ``smcuda`` BTL will now wait for the connection-info modex during
+  ``MPI_Init`` again.  ``--mca btl ^smcuda`` restores the deferred wire-up.
+
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
   bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every
