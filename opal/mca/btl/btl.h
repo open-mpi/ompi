@@ -762,7 +762,7 @@ typedef int (*mca_btl_base_module_finalize_fn_t)(struct mca_btl_base_module_t *b
  * untouched process reads as MCA_BTL_PROC_NOT_ELIGIBLE. Claiming a peer
  * and having a usable endpoint are separate answers:
  * MCA_BTL_PROC_CONNECTING claims a peer still coming up, which keeps
- * the caller from handing it to a BTL of lower exclusivity.
+ * the caller from settling on a set of BTLs for it yet.
  *
  * MCA_BTL_PROC_NO_INFO means the peer's addressing has not arrived and
  * the caller must ask again; MCA_BTL_PROC_NOT_ELIGIBLE is final, and
