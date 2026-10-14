@@ -92,8 +92,10 @@ Very little, and less than the code assumes.
 
 `MCA_BTL_FLAGS_SINGLE_ADD_PROCS` is an add-side declaration -- "give me
 one `add_procs` with every proc" -- set by portals4 and usnic always and
-by tcp in `CONNECT_FULL` mode. It says nothing about the del side, and
-there is no del-side equivalent.
+by tcp in `CONNECT_FULL` mode. `mca_bml_r2_add_procs()` offers every
+module every proc of the batch, in the order they arrived, so the add
+side is honoured by construction. It says nothing about the del side,
+and there is no del-side equivalent.
 
 `mca_bml_r2_del_procs()` decomposes every request into `nprocs == 1`
 calls, and the two other `btl_del_procs` sites -- `mca_bml_r2_add_proc()`
