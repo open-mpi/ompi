@@ -54,20 +54,15 @@ static void delete_group_list(group_list_t *);
 static int group_list_id(const void*, const void*);
 static int group_list_asc(const void*, const void*);
 static int group_list_dsc(const void*, const void*);
-static int weighted_degree_asc(const void*, const void*);
 static int weighted_degree_dsc(const void*, const void*);
 static int  select_independent_groups(group_list_t **, int, int, int, double *, group_list_t **, int, double);
 static int  select_independent_groups_by_largest_index(group_list_t **, int, int, int, double *,
                                                        group_list_t **, int, double);
 static void list_to_tab(group_list_t *, group_list_t **, int);
-static void display_tab_group(group_list_t **, int, int);
 static int independent_tab(tm_tree_t **, tm_tree_t **, int);
 static void compute_weighted_degree(group_list_t **, int, int);
 void  group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **);
 static void  fast_group(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, int, double *, tm_tree_t **, int *, int);
-static int adjacency_asc(const void*, const void*);
-static int adjacency_dsc(const void*, const void*);
-static void super_fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int);
 static tm_affinity_mat_t *build_cost_matrix(tm_affinity_mat_t *, double *, double);
 static void group_nodes(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int , int, double*, double);
 static double fast_grouping(tm_affinity_mat_t *, tm_tree_t *, tm_tree_t *, int, int, double);
@@ -82,7 +77,6 @@ static tm_tree_t *bottom_up_build_tree_from_topology(tm_topology_t *, tm_affinit
 static void free_non_constraint_tree(tm_tree_t *);
 static void free_constraint_tree(tm_tree_t *);
 static void free_tab_double(double**, int);
-static void free_tab_int(int**, int );
 static void partial_aggregate_aff_mat (int, void **, int);
 static void free_affinity_mat(tm_affinity_mat_t *aff_mat);
 OMPI_HIDDEN int tm_int_cmp_inc(const void* x1, const void* x2);
@@ -364,31 +358,18 @@ static void free_tab_double(double**tab, int mat_order)
   FREE(tab);
 }
 
-static inline void free_tab_int(int**tab, int mat_order)
-{
-  int i;
-  for( i = 0 ; i < mat_order ; i++ )
-    FREE(tab[i]);
-  FREE(tab);
-}
-
 void tm_display_tab(double **tab, int mat_order)
 {
   int i, j;
-  double line, total = 0;
   int vl = tm_get_verbose_level();
 
   for( i = 0 ; i < mat_order ; i++ ){
-    line = 0;
     for( j = 0 ; j < mat_order ; j++ ){
       if(vl >= WARNING)
 	printf("%g ", tab[i][j]);
       else
 	fprintf(stderr, "%g ", tab[i][j]);
-      line += tab[i][j];
     }
-    total += line;
-    /* printf(": %g", line);*/
     if(vl >= WARNING)
       printf("\n");
     else
@@ -651,16 +632,6 @@ static int group_list_dsc(const void* x1, const void* x2)
   e2 = *((group_list_t**)x2);
 
   return (e1->val > e2->val) ? -1 : 1;
-}
-
-static inline int weighted_degree_asc(const void* x1, const void* x2)
-{
-  group_list_t *e1= NULL, *e2 = NULL;
-
-  e1 = *((group_list_t**)x1);
-  e2 = *((group_list_t**)x2);
-
-  return (e1->wg > e2->wg) ? 1 : -1;
 }
 
 static int weighted_degree_dsc(const void* x1, const void* x2)
@@ -1439,18 +1410,6 @@ static void list_to_tab(group_list_t *list, group_list_t **tab, int n)
   }
 }
 
-static inline void display_tab_group(group_list_t **tab, int n, int arity)
-{
-  int i, j;
-  if(verbose_level<DEBUG)
-    return;
-  for( i = 0 ; i < n ; i++ ){
-    for( j = 0 ; j < arity ; j++ )
-      printf("%d ", tab[i]->tab[j]->id);
-    printf(": %.2f %.2f\n", tab[i]->val, tab[i]->wg);
-  }
-}
-
 static int independent_tab(tm_tree_t **tab1, tm_tree_t **tab2, int arity)
 {
   int ii, jj;
@@ -1615,88 +1574,6 @@ static double k_partition_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_no
 
   return val;
 
-}
-
-static inline int adjacency_asc(const void* x1, const void* x2)
-{
-  adjacency_t *e1 = NULL, *e2 = NULL;
-
-  e1 = ((adjacency_t*)x1);
-  e2 = ((adjacency_t*)x2);
-
-  return (e1->val < e2->val) ? - 1 : 1;
-}
-
-static int adjacency_dsc(const void* x1, const void* x2)
-{
-  adjacency_t *e1 = NULL, *e2 = NULL;
-
-  e1 = ((adjacency_t*)x1);
-  e2 = ((adjacency_t*)x2);
-
-
-  return (e1->val > e2->val) ? -1 : 1;
-}
-
-static inline void super_fast_grouping(tm_affinity_mat_t *aff_mat, tm_tree_t *tab_node, tm_tree_t *new_tab_node, int arity, int solution_size)
-{
-  double val = 0, duration;
-  adjacency_t *graph;
-  int i, j, e, l, nb_groups;
-  int mat_order = aff_mat->order;
-  double **mat = aff_mat->mat;
-
-  assert( 2 == arity);
-
-  TIC;
-  graph = (adjacency_t*)MALLOC(sizeof(adjacency_t)*((mat_order*mat_order-mat_order)/2));
-  e = 0;
-  for( i = 0 ; i < mat_order ; i++ )
-    for( j = i+1 ; j < mat_order ; j++){
-      graph[e].i = i;
-      graph[e].j = j;
-      graph[e].val = mat[i][j];
-      e++;
-    }
-
-  duration = TOC;
-  if(verbose_level>=DEBUG)
-    printf("linearization=%fs\n", duration);
-
-
-  assert( e == (mat_order*mat_order-mat_order)/2);
-  TIC;
-  qsort(graph, e, sizeof(adjacency_t), adjacency_dsc);
-  duration = TOC;
-  if(verbose_level>=DEBUG)
-    printf("sorting=%fs\n", duration);
-
-  TIC;
-
-TIC;
-  l = 0;
-  nb_groups = 0;
-  for( i = 0 ; (i < e) && (l < solution_size) ; i++ )
-    if(tm_try_add_edge(tab_node, &new_tab_node[l], arity, graph[i].i, graph[i].j, &nb_groups))
-      l++;
-
-  for( l = 0 ; l < solution_size ; l++ ){
-    tm_update_val(aff_mat, &new_tab_node[l]);
-    val += new_tab_node[l].val;
-  }
-
-  duration = TOC;
-  if(verbose_level>=DEBUG)
-    printf("Grouping=%fs\n", duration);
-
-
-  if(verbose_level>=DEBUG)
-    printf("val=%f\n", val);
-
-
-  display_grouping(new_tab_node, solution_size, arity, val);
-
-  FREE(graph);
 }
 
 
