@@ -154,6 +154,12 @@ Open MPI version v6.1.0
 - OpenSHMEM now validates peer memheap layouts before remote-key state is
   used.  Incompatible peer layouts abort initialization with a diagnostic.
 
+- OpenSHMEM ``shmem_malloc``, ``shmalloc``, ``shmem_align``, ``shmemalign``
+  and ``shmem_malloc_with_hints`` now return ``NULL`` without calling a
+  barrier when the requested size is zero, as OpenSHMEM 1.5 requires.
+  Previously they returned a valid pointer and synchronized all PEs.
+  ``shmem_realloc(ptr, 0)`` now frees ``ptr`` and returns ``NULL``.
+
 - Nonblocking file I/O no longer loses data when the operating system's
   asynchronous I/O queue fills, which on macOS it readily does: the
   ``posix`` ``fbtl`` component sized its batch of concurrent ``aio_write``
