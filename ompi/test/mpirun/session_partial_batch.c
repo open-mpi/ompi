@@ -30,12 +30,6 @@
  *
  * A failure is as likely to hang as to report an unreachable peer, so
  * launch with --timeout.
- *
- * Not run with the TCP BTL alone under a direct modex, which hangs:
- * a peer accepts a connection it cannot match to a process entry.  It
- * reproduces without any of the above -- the pair, the direct modex and
- * self,tcp are all it takes -- and predates this test, so the leg is
- * left out rather than wired in failing.  Put it back with the fix.
  */
 
 #include <mpi.h>

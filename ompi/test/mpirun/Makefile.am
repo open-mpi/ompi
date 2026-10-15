@@ -216,6 +216,8 @@ check-mpirun:
 	    run $(tcp_runner) ./tcp_stranger_connect; \
 	    echo "=== tcp stranger connect, several links per interface ==="; \
 	    run $(tcp_runner) --mca btl_tcp_links 2 ./tcp_stranger_connect; \
+	    echo "=== tcp stranger connect, direct modex ==="; \
+	    run env $(DIRECT_MODEX) $(tcp_runner) ./tcp_stranger_connect; \
 	    echo "=== late first contact, full modex ==="; \
 	    run $(oversub_runner) ./late_first_contact; \
 	    echo "=== late first contact, direct modex, shared memory only ==="; \
@@ -262,6 +264,9 @@ check-mpirun:
 	        ./session_partial_batch; \
 	    echo "=== session partial batch, tcp only ==="; \
 	    run $(trio_runner) --mca pml ob1 --mca btl self,tcp \
+	        ./session_partial_batch; \
+	    echo "=== session partial batch, direct modex, tcp only ==="; \
+	    run env $(DIRECT_MODEX) $(trio_runner) --mca pml ob1 --mca btl self,tcp \
 	        ./session_partial_batch; \
 	    echo "=== session partial batch, tcp connecting the full job ==="; \
 	    run $(trio_runner) --mca pml ob1 --mca btl self,tcp \
