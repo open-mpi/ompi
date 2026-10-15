@@ -79,6 +79,7 @@
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/mca/reachable/base/base.h"
 #include "opal/mca/threads/threads.h"
+#include "opal/mca/timer/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/ethtool.h"
 #include "opal/util/event.h"
@@ -270,6 +271,37 @@ OBJ_CLASS_INSTANCE(mca_btl_tcp_event_t, opal_list_item_t, mca_btl_tcp_event_cons
                    mca_btl_tcp_event_destruct);
 
 /*
+ * An inbound connection held until its peer's modex info arrives.
+ * Derived from the event above so it lands on tcp_events and component
+ * close tears it down; the socket is this record's until an endpoint
+ * takes it.
+ */
+struct mca_btl_tcp_pending_accept_t {
+    mca_btl_tcp_event_t super;
+    opal_process_name_t guid;
+    struct sockaddr_storage addr;
+    opal_timer_t deadline;
+    int sd;
+};
+typedef struct mca_btl_tcp_pending_accept_t mca_btl_tcp_pending_accept_t;
+
+static void mca_btl_tcp_pending_accept_construct(mca_btl_tcp_pending_accept_t *pending)
+{
+    pending->sd = -1;
+}
+
+static void mca_btl_tcp_pending_accept_destruct(mca_btl_tcp_pending_accept_t *pending)
+{
+    if (0 <= pending->sd) {
+        CLOSE_THE_SOCKET(pending->sd);
+        pending->sd = -1;
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_btl_tcp_pending_accept_t, mca_btl_tcp_event_t,
+                   mca_btl_tcp_pending_accept_construct, mca_btl_tcp_pending_accept_destruct);
+
+/*
  * functions for receiving event callbacks
  */
 static void mca_btl_tcp_component_recv_handler(int, short, void *);
@@ -388,6 +420,12 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_tcp_param_register_int("handshake_timeout", "Timeout (usec) for connection handshake. Connection is dropped if the handshake has not been received during this time frame",
                                    1 * 1000000  /* 1s */, OPAL_INFO_LVL_4,
                                    &mca_btl_tcp_component.tcp_handshake_timeout);
+    mca_btl_tcp_param_register_int("accept_retry_interval", "How often (usec) to look again for the modex info of a peer whose incoming connection arrived before it",
+                                   100  /* .1ms */, OPAL_INFO_LVL_5,
+                                   &mca_btl_tcp_component.tcp_accept_retry_interval);
+    mca_btl_tcp_param_register_int("accept_retry_timeout", "How long (usec) to keep looking before dropping the connection. A safety net against a peer that never resolves, not a latency control",
+                                   30 * 1000000  /* 30s */, OPAL_INFO_LVL_5,
+                                   &mca_btl_tcp_component.tcp_accept_retry_timeout);
 
     mca_btl_tcp_component.tcp_connect_mode = MCA_BTL_TCP_CONNECT_LAZY;
     rc = mca_base_var_enum_create("btl_tcp_connect_mode", mca_btl_tcp_connect_mode_values,
@@ -1526,6 +1564,81 @@ static void mca_btl_tcp_component_accept_handler(int incoming_sd, short ignored,
     }
 }
 
+static void mca_btl_tcp_pending_accept_handler(int sd, short flags, void *user);
+
+/* Look again a little later; what changes the answer runs elsewhere. */
+static void mca_btl_tcp_pending_accept_arm(mca_btl_tcp_pending_accept_t *pending)
+{
+    struct timeval tv;
+
+    tv.tv_sec = mca_btl_tcp_component.tcp_accept_retry_interval / 1000000;
+    tv.tv_usec = mca_btl_tcp_component.tcp_accept_retry_interval % 1000000;
+    opal_event_evtimer_set(mca_btl_tcp_event_base, &pending->super.event,
+                           mca_btl_tcp_pending_accept_handler, pending);
+    opal_event_evtimer_add(&pending->super.event, &tv);
+}
+
+/*
+ * Hold the connection rather than hang up on a peer that is waiting for
+ * it and will not offer another.  Bounded, because a guid naming our own
+ * job but no live rank of it still builds a process entry, and the fetch
+ * that starts carries no PMIX_IMMEDIATE, so PMIx may wait forever.
+ * Generous, though: a legitimate peer under a direct modex was measured
+ * at two seconds.
+ */
+static void mca_btl_tcp_pending_accept_defer(const opal_process_name_t *guid,
+                                             const struct sockaddr_storage *addr, int sd)
+{
+    mca_btl_tcp_pending_accept_t *pending = OBJ_NEW(mca_btl_tcp_pending_accept_t);
+
+    if (NULL == pending) {
+        CLOSE_THE_SOCKET(sd);
+        return;
+    }
+    pending->guid = *guid;
+    pending->addr = *addr;
+    pending->deadline = opal_timer_base_get_usec()
+                        + (opal_timer_t) mca_btl_tcp_component.tcp_accept_retry_timeout;
+    pending->sd = sd;
+    mca_btl_tcp_pending_accept_arm(pending);
+}
+
+static void mca_btl_tcp_pending_accept_handler(int sd, short flags, void *user)
+{
+    mca_btl_tcp_pending_accept_t *pending = (mca_btl_tcp_pending_accept_t *) user;
+    mca_btl_tcp_proc_t *btl_proc;
+    int accepted_sd, rc;
+
+    btl_proc = mca_btl_tcp_proc_lookup(&pending->guid, &rc);
+    if (NULL == btl_proc) {
+        if (OPAL_ERR_NOT_READY == rc) {
+            if (opal_timer_base_get_usec() < pending->deadline) {
+                mca_btl_tcp_pending_accept_arm(pending);
+                return;
+            }
+            opal_show_help("help-mpi-btl-tcp.txt", "server accept modex timeout", true,
+                           opal_process_info.nodename, getpid(),
+                           OPAL_NAME_PRINT(pending->guid),
+                           mca_btl_tcp_component.tcp_accept_retry_timeout);
+            OBJ_RELEASE(pending);
+            return;
+        }
+        /* Any other status is final: a peer whose fetch failed reads as
+         * published-or-absent from then on. */
+        opal_show_help("help-mpi-btl-tcp.txt", "server accept cannot find guid", true,
+                       opal_process_info.nodename, getpid());
+        OBJ_RELEASE(pending);
+        return;
+    }
+
+    /* accept() takes the socket over on every path, so drop this
+     * record's claim on it first. */
+    accepted_sd = pending->sd;
+    pending->sd = -1;
+    mca_btl_tcp_proc_accept(btl_proc, (struct sockaddr *) &pending->addr, accepted_sd);
+    OBJ_RELEASE(pending);
+}
+
 /**
  * Event callback when there is data available on the registered
  * socket to recv. This callback is triggered only once per lifetime
@@ -1544,6 +1657,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
     mca_btl_tcp_endpoint_hs_msg_t hs_msg;
     struct timeval save, tv;
     socklen_t rcvtimeo_save_len = sizeof(save);
+    int rc;
 
     /* Note, Socket will be in blocking mode during initial handshake
      * hence setting SO_RCVTIMEO to a timeout here to avoid waiting
@@ -1648,15 +1762,6 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
         }
     }
 
-    /* lookup the corresponding process */
-    btl_proc = mca_btl_tcp_proc_lookup(&guid);
-    if (NULL == btl_proc) {
-        opal_show_help("help-mpi-btl-tcp.txt", "server accept cannot find guid", true,
-                       opal_process_info.nodename, getpid());
-        CLOSE_THE_SOCKET(sd);
-        return;
-    }
-
     /* lookup peer address */
     if (getpeername(sd, (struct sockaddr *) &addr, &addr_len) != 0) {
         if (ENOTCONN != opal_socket_errno) {
@@ -1664,6 +1769,23 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void *user)
                            opal_process_info.nodename, getpid(), strerror(opal_socket_errno),
                            opal_socket_errno);
         }
+        CLOSE_THE_SOCKET(sd);
+        return;
+    }
+
+    /* lookup the corresponding process */
+    btl_proc = mca_btl_tcp_proc_lookup(&guid, &rc);
+    if (NULL == btl_proc) {
+        if (OPAL_ERR_NOT_READY == rc) {
+            /* The peer's modex info has not arrived yet.  A peer that
+             * dialled an address we published has committed its own, so
+             * this is worth waiting out -- within a deadline, since only
+             * a well-behaved peer is described by that. */
+            mca_btl_tcp_pending_accept_defer(&guid, &addr, sd);
+            return;
+        }
+        opal_show_help("help-mpi-btl-tcp.txt", "server accept cannot find guid", true,
+                       opal_process_info.nodename, getpid());
         CLOSE_THE_SOCKET(sd);
         return;
     }

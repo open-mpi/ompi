@@ -51,9 +51,6 @@ TCP's mode without the shared-memory BTL dominating, use:
 
    shell$ mpirun --mca pml ob1 --mca btl self,tcp --mca btl_tcp_connect_mode full ...
 
-Multiple TCP modules with progress or MPI threads still force
-``full`` regardless of this setting.
-
 Coexisting with a high-speed network
 ------------------------------------
 
