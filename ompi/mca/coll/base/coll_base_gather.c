@@ -83,7 +83,7 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, size_t scount,
         } else {
             /* root is not on 0, allocate temp buffer for recv,
              * rotate data at the end */
-            tempbuf = (char *) malloc(rsize);
+            tempbuf = (char *) ompi_coll_base_scratch_get(module, 0, rsize);
             if (NULL == tempbuf) {
                 err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
             }
@@ -104,11 +104,15 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, size_t scount,
         total_recv = rcount;
     } else if (!(vrank % 2)) {
         /* other non-leaf nodes, allocate temp buffer for data received from
-         * children, the most we need is half of the total data elements due
-         * to the property of binimoal tree */
+         * children: the subtree of vrank holds the blocks vrank to
+         * vrank + lowbit(vrank) - 1, cut at the end of the communicator */
+        int subtree = vrank & -vrank;
+        if (subtree > size - vrank) {
+            subtree = size - vrank;
+        }
         ompi_datatype_type_extent(sdtype, &sextent);
-        ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * size, &sgap);
-        tempbuf = (char *) malloc(ssize);
+        ssize = opal_datatype_span(&sdtype->super, (int64_t)scount * subtree, &sgap);
+        tempbuf = (char *) ompi_coll_base_scratch_get(module, 0, ssize);
         if (NULL == tempbuf) {
             err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
         }
@@ -135,19 +139,20 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, size_t scount,
     if (!(vrank % 2)) {
         /* all non-leaf nodes recv from children */
         for (i = 0; i < bmtree->tree_nextsize; i++) {
-            int mycount = 0, vkid;
+            size_t mycount = 0;
+            int vkid;
             /* figure out how much data I have to send to this child */
             vkid = (bmtree->tree_next[i] - root + size) % size;
             mycount = vkid - vrank;
-            if (mycount > (size - vkid))
+            if (mycount > (size_t) (size - vkid))
                 mycount = size - vkid;
             mycount *= rcount;
 
             OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
-                         "ompi_coll_base_gather_intra_binomial rank %d recv %d mycount = %d",
+                         "ompi_coll_base_gather_intra_binomial rank %d recv %d mycount = %zu",
                          rank, bmtree->tree_next[i], mycount));
 
-            err = MCA_PML_CALL(recv(ptmp + total_recv*rextent, (ptrdiff_t)rcount * size - total_recv, rdtype,
+            err = MCA_PML_CALL(recv(ptmp + total_recv*rextent, mycount, rdtype,
                                     bmtree->tree_next[i], MCA_COLL_BASE_TAG_GATHER,
                                     comm, &status));
             if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
@@ -181,17 +186,17 @@ ompi_coll_base_gather_intra_binomial(const void *sbuf, size_t scount,
                                                       (char *) rbuf, ptmp + rextent * (ptrdiff_t)rcount * (ptrdiff_t)(size-root));
             if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-            free(tempbuf);
+            ompi_coll_base_scratch_put(module, 0, tempbuf);
         }
     } else if (!(vrank % 2)) {
         /* other non-leaf nodes */
-        free(tempbuf);
+        ompi_coll_base_scratch_put(module, 0, tempbuf);
     }
     return MPI_SUCCESS;
 
  err_hndl:
     if (NULL != tempbuf)
-        free(tempbuf);
+        ompi_coll_base_scratch_put(module, 0, tempbuf);
 
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,  "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
