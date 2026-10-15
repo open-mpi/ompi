@@ -39,7 +39,7 @@ END SUBROUTINE binky]])],
              [AS_VAR_SET(elemental_var, yes)],
              [AS_VAR_SET(elemental_var, no)])
         touch conftest_foo.mod
-        rm -rf *.mod 2>/dev/null
+        rm -rf *.$FC_MODEXT 2>/dev/null
         AC_LANG_POP([Fortran])
        ])
 
