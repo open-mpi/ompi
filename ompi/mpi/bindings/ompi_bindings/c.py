@@ -991,10 +991,10 @@ def generate_source(args, out):
     """Generate source file."""
     out.dump(f'/* {consts.GENERATED_MESSAGE} */')
     template = SourceTemplate.load(args.source_file, type_constructor=Type.construct)
-    if args.mpit  == True:
-        base_name = util.mpit_fn_name_from_base_fn_name(template.prototype.name)
-    else:
-        base_name = util.mpi_fn_name_from_base_fn_name(template.prototype.name)
+    base_name = util.mpi_fn_name_from_base_fn_name(
+        template.prototype.name,
+        args.bindings_prefix
+    )
     if args.type == 'ompi':
         ompi_abi(base_name, template, out, args.suppress_bc, args.suppress_nbc)
     else:
