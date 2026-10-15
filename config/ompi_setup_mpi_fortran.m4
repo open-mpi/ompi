@@ -417,31 +417,15 @@ end program]])],
     # Fortran use mpi or use mpi_f08 MPI bindings
     #--------------------------------------------
 
-    # Use Autoconf 2.69 standard macro to detect module include flag.
-    # This must be called unconditionally (not nested in AS_IF) because
-    # AC_FC_MODULE_FLAG generates an AC_CACHE_CHECK which doesn't work
-    # properly when nested. The result (FC_MODINC) will be checked later.
-    # Only call it if we have a Fortran compiler and might need modules.
-    AS_IF([test $ompi_fortran_happy -eq 1 && \
-           test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS],
-          [
-              AC_FC_MODULE_FLAG
-          ])
 
     AS_IF([test $ompi_fortran_happy -eq 1 && \
            test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS],
-          [ # Look for the fortran module compiler flag
-           OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG([],
-               [AC_MSG_WARN([*** Could not determine the fortran compiler flag to indicate where modules reside])
-                AC_MSG_ERROR([*** Cannot continue])])
-
-           # For backward compatibility during transition, maintain OMPI_FC_MODULE_FLAG
-           # as an alias to FC_MODINC. This will be removed in a future phase.
-           OMPI_FC_MODULE_FLAG="$FC_MODINC"
-           AC_SUBST([OMPI_FC_MODULE_FLAG])
+          [ # Use Autoconf 2.69 standard macro to detect module include flag
+           # Sets FC_MODINC (e.g., -I, -M, -p)
+           AC_FC_MODULE_FLAG
 
            AS_IF([test -z "$FC_MODINC"],
-                 [AC_MSG_WARN([Fortran compiler module include flag could not be determined])
+                 [AC_MSG_WARN([Could not determine Fortran module include flag])
                   AC_MSG_ERROR([Cannot continue])])
 
            # Look for ignore TKR syntax
