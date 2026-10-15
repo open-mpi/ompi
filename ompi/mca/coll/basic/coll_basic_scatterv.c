@@ -28,6 +28,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/pml/pml.h"
 #include "coll_basic.h"
 
@@ -51,6 +52,7 @@ mca_coll_basic_scatterv_intra(const void *sbuf, ompi_count_array_t scounts,
     char *ptmp;
     ptrdiff_t lb, extent;
     size_t sdsize;
+    ompi_request_t **reqs;
 
     /* Initialize */
 
@@ -84,36 +86,47 @@ mca_coll_basic_scatterv_intra(const void *sbuf, ompi_count_array_t scounts,
         return OMPI_ERROR;
     }
 
+    /* Start every send before waiting for any: a blocking send of a rendezvous message waits
+     * for its receiver, and the receivers after it would wait in turn. */
+    reqs = ompi_coll_base_comm_get_reqs(module->base_data, size);
+    if (NULL == reqs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     for (i = 0; i < size; ++i) {
-        ptmp = ((char *) sbuf) + (extent * ompi_disp_array_get(disps, i));
-
-        /* simple optimization */
-
-        if (i == rank) {
-            /* simple optimization or a local operation */
-            if (ompi_count_array_get(scounts, i) > 0 && MPI_IN_PLACE != rbuf) {
-                err = ompi_datatype_sndrcv(ptmp, ompi_count_array_get(scounts, i), sdtype, rbuf, rcount,
-                                      rdtype);
-                if (MPI_SUCCESS != err) {
-                    return err;
-                }
-            }
-        } else {
-            /* Only send if there is something to send */
-            if (ompi_count_array_get(scounts, i) > 0) {
-                err = MCA_PML_CALL(send(ptmp, ompi_count_array_get(scounts, i), sdtype, i,
-                                        MCA_COLL_BASE_TAG_SCATTERV,
-                                        MCA_PML_BASE_SEND_STANDARD, comm));
-                if (MPI_SUCCESS != err) {
-                    return err;
-                }
-            }
+        reqs[i] = MPI_REQUEST_NULL;
+        /* Only send if there is something to send */
+        if (i == rank || 0 == ompi_count_array_get(scounts, i)) {
+            continue;
         }
+        ptmp = ((char *) sbuf) + (extent * ompi_disp_array_get(disps, i));
+        err = MCA_PML_CALL(isend(ptmp, ompi_count_array_get(scounts, i), sdtype, i,
+                                 MCA_COLL_BASE_TAG_SCATTERV,
+                                 MCA_PML_BASE_SEND_STANDARD, comm, &reqs[i]));
+        if (MPI_SUCCESS != err) {
+            ompi_coll_base_free_reqs(reqs, i + 1);
+            return err;
+        }
+    }
+
+    /* simple optimization or a local operation */
+    if (ompi_count_array_get(scounts, rank) > 0 && MPI_IN_PLACE != rbuf) {
+        ptmp = ((char *) sbuf) + (extent * ompi_disp_array_get(disps, rank));
+        err = ompi_datatype_sndrcv(ptmp, ompi_count_array_get(scounts, rank), sdtype, rbuf, rcount,
+                                   rdtype);
+        if (MPI_SUCCESS != err) {
+            ompi_coll_base_free_reqs(reqs, size);
+            return err;
+        }
+    }
+
+    err = ompi_request_wait_all(size, reqs, MPI_STATUSES_IGNORE);
+    if (MPI_SUCCESS != err) {
+        ompi_coll_base_free_reqs(reqs, size);
     }
 
     /* All done */
 
-    return MPI_SUCCESS;
+    return err;
 }
 
 
