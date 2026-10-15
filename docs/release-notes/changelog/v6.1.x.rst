@@ -8,6 +8,7 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+
 - Updated the embedded hwloc to v2.15.0.
 
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
@@ -64,6 +65,13 @@ Open MPI version v6.1.0
   peer's own copy of the address.  Both the address and the local
   interface that holds it are now excluded when the peer is on another
   node.
+
+- Fixed wrong answers from one-sided (RMA) accumulate operations on a
+  window with one MPI process per node, when the network does not
+  guarantee that its atomics and CPU atomics are atomic with respect to
+  each other.  A process performed atomics on its own window memory
+  directly while other processes reached the same memory with network
+  atomics, which is the mixing that guarantee exists to prevent.
 
 - Fixed wrong answers from one-sided (RMA) operations on a window
   allocated with ``MPI_Win_allocate`` when the target is a process on the
