@@ -151,6 +151,11 @@ Open MPI version v6.1.0
   segments of the main executable.  Unrelated mappings, including private
   anonymous mappings, are excluded.
 
+- OpenSHMEM contexts created with ``shmem_ctx_create`` now release their
+  remote keys when OpenSHMEM is finalized.  Previously every such context
+  leaked one remote key per peer and memory segment, which UCX reported as
+  ``was not returned to mpool ucp_rkeys``.
+
 - OpenSHMEM now validates peer memheap layouts before remote-key state is
   used.  Incompatible peer layouts abort initialization with a diagnostic.
 
