@@ -1,0 +1,54 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  frame <function>\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+frame <function>
+  Find the first frame in the current thread whose debugger backtrace line
+  contains <function>, then select that frame in every selected debugger.
+EOF
+}
+
+run()
+{
+    require_selection || return 1
+
+    if [ 0 -eq $# ] || [ "help" = "$1" ] ; then
+        detailed_help
+        return 0
+    fi
+
+    function_name=$*
+    frame_command=$(debugger_current_backtrace_command)
+
+    for pid in $selected_pids ; do
+        raw_file="$tmpdir/$pid.frame.bt"
+        run_debugger_commands "$pid" "$frame_command" "$raw_file" || return 1
+
+        frame_number=$(debugger_find_frame_number "$raw_file" "$function_name")
+
+        printf "\nPID %s: %s\n" "$pid" "$program_base"
+        printf "%s\n" "----------------------------------------------------------------"
+        if [ -z "$frame_number" ] ; then
+            printf "No frame matching %s\n" "$function_name"
+            continue
+        fi
+
+        select_command=$(debugger_select_frame_command "$frame_number")
+        run_debugger_commands "$pid" "$select_command" \
+            "$tmpdir/$pid.frame.select" || return 1
+        cat "$tmpdir/$pid.frame.select"
+    done
+}

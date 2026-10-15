@@ -24,6 +24,7 @@ that can aid debugging.
    debug-options
    serial-debug
    parallel-debug
+   pdeb
    lost-output
    memchecker
    valgrind
