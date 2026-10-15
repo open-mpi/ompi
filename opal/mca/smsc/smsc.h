@@ -93,6 +93,29 @@ typedef int (*mca_smsc_module_copy_fn_t)(mca_smsc_endpoint_t *endpoint, void *lo
  * be used to clear the mapping. It is the caller's responsibility to unmap the region using the
  * returned context.
  */
+/**
+ * @brief Start copying data from a peer's memory space on an accelerator stream
+ *
+ * Optional. A module that can copy asynchronously (device memory on an accelerator) queues the
+ * copy on *stream, creating the stream first if *stream is NULL, and returns 1; the copy is
+ * complete once the stream reaches that point. A copy it cannot queue is done synchronously, as
+ * copy_from does, and 0 is returned.
+ *
+ * @param(in) endpoint       endpoint for the peer
+ * @param(in) local_address  local destination
+ * @param(in) remote_address remote source
+ * @param(in) size           bytes to copy
+ * @param(in) reg_handle     registration handle, as for copy_from
+ * @param(inout) stream      accelerator stream to queue the copy on
+ *
+ * @returns 1 when queued, 0 when completed, or an OPAL error code
+ */
+struct opal_accelerator_stream_t;
+typedef int (*mca_smsc_module_copy_async_fn_t)(mca_smsc_endpoint_t *endpoint, void *local_address,
+                                              void *remote_address, size_t size,
+                                              void *reg_handle,
+                                              struct opal_accelerator_stream_t **stream);
+
 typedef void *(*mca_smsc_module_map_peer_region_fn_t)(mca_smsc_endpoint_t *endpoint, uint64_t flags,
                                                       void *remote_address, size_t size,
                                                       void **local_mapping);
@@ -173,6 +196,10 @@ struct mca_smsc_module_t {
     mca_smsc_module_register_region_fn_t register_region;
     /** Deregister a memory region for use with single-copy. */
     mca_smsc_module_deregister_region_fn_t deregister_region;
+
+    /* Optional: NULL if the module only copies synchronously. */
+    /** Start a copy from a peer's memory space on an accelerator stream. */
+    mca_smsc_module_copy_async_fn_t copy_from_async;
 };
 
 typedef struct mca_smsc_module_t mca_smsc_module_t;

@@ -250,6 +250,7 @@ static int mca_btl_sm_component_open(void)
 
 static int mca_btl_sm_component_close(void)
 {
+    mca_btl_sm_async_gets_fini();
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_eager);
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_user);
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_max_send);
@@ -576,6 +577,8 @@ static int mca_btl_sm_component_progress(void)
     }
 
     mca_btl_sm_progress_endpoints();
+
+    count += mca_btl_sm_progress_async_gets();
 
     if (NULL == mca_btl_sm_component.my_fifo
         || SM_FIFO_FREE == mca_btl_sm_component.my_fifo->fifo_head) {

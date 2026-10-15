@@ -154,6 +154,18 @@ int mca_btl_sm_get(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint
                    void *cbdata);
 
 /**
+ * Complete gets whose accelerator copy has finished.
+ *
+ * @returns the number of gets completed
+ */
+int mca_btl_sm_progress_async_gets(void);
+
+/**
+ * Release the accelerator streams and events used by gets.
+ */
+void mca_btl_sm_async_gets_fini(void);
+
+/**
  * Allocate a segment.
  *
  * @param btl (IN)      BTL module
