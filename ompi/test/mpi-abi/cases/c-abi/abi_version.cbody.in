@@ -10,8 +10,8 @@
 
 /*
  * Test intent:
- *   Verify the installed standard ABI library reports the ABI version
- *   that the installed standard ABI header promised at compile time.
+ *   Verify the installed MPI Forum ABI library reports the ABI version
+ *   that the installed MPI Forum ABI header promised at compile time.
  */
 int major = -1;
 int minor = -1;

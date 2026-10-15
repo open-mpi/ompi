@@ -10,7 +10,7 @@
 
 /*
  * Test intent:
- *   Exercise the smallest standard ABI MPI lifetime: initialize once,
+ *   Exercise the smallest MPI Forum ABI MPI lifetime: initialize once,
  *   finalize once, and verify the calls return through libmpi_abi.
  */
 int ret = MPI_Init(&argc, &argv);

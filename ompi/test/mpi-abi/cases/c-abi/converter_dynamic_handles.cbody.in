@@ -11,7 +11,7 @@
 /*
  * Test intent:
  *   Create representative dynamic MPI objects and verify each dynamic
- *   handle round-trips through the standard ABI converter helpers.
+ *   handle round-trips through the MPI Forum ABI converter helpers.
  */
 #define ABI_CHECK_DYNAMIC_HANDLE(kind, type, value, code) do {              \
     int abi_value = MPI_ ## kind ## _toint(value);                      \

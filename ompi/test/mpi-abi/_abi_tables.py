@@ -83,7 +83,7 @@ INSTALLED_C_ABI_PROBES = (
         "rank_count": 1,
         # obj_handle is the ADDRESS of a variable holding the bound
         # object's handle (MPI-5.0 p.751), not the handle value itself.
-        # Binding to a PREDEFINED communicator exercises the standard-ABI
+        # Binding to a PREDEFINED communicator exercises the MPI Forum ABI
         # obj_handle converter's sentinel-matching path: the small ABI
         # integer for MPI_COMM_WORLD/MPI_COMM_SELF must be translated to
         # the real internal object identity before being compared against

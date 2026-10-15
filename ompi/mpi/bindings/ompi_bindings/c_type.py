@@ -10,7 +10,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 """C type definitions."""
 from abc import ABC, abstractmethod
-from ompi_bindings.consts import ConvertFuncs, ConvertOMPIToStandard, IGNORED_STATUS_HANDLES
+from ompi_bindings.consts import ConvertFuncs, ConvertOMPIToForum, IGNORED_STATUS_HANDLES
 from ompi_bindings import util 
 
 class Type(ABC):
@@ -18,7 +18,7 @@ class Type(ABC):
 
     PARAMS_OMPI_ABI = {}
 
-    PARAMS_STANDARD_ABI = {}
+    PARAMS_FORUM_ABI = {}
 
     def __init__(self, type_name, name=None,
                  mangle_name=lambda name: util.abi_internal_name(name),
@@ -34,20 +34,20 @@ class Type(ABC):
         """Construct the parameter for the given ABI and type."""
         if abi_type == 'ompi':
             return Type.PARAMS_OMPI_ABI[type_name](type_name, **kwargs)
-        elif abi_type == 'standard':
-            return Type.PARAMS_STANDARD_ABI[type_name](type_name, **kwargs)
+        elif abi_type == 'forum':
+            return Type.PARAMS_FORUM_ABI[type_name](type_name, **kwargs)
         else:
             raise RuntimeError(f'invalid ABI type {abi_type}')
 
     @staticmethod
-    def add_type(type_name, abi_type=('ompi', 'standard')):
+    def add_type(type_name, abi_type=('ompi', 'forum')):
         """Add a new class corresponding to a type."""
         def wrapper(class_):
             if 'ompi' in abi_type:
                 Type.PARAMS_OMPI_ABI[type_name] = class_
-            if 'standard' in abi_type:
-#               print("Adding type " + str(type_name) + " to PARAMS_STANDARD_ABI")
-                Type.PARAMS_STANDARD_ABI[type_name] = class_
+            if 'forum' in abi_type:
+#               print("Adding type " + str(type_name) + " to PARAMS_FORUM_ABI")
+                Type.PARAMS_FORUM_ABI[type_name] = class_
             return class_
         return wrapper
 
@@ -97,7 +97,7 @@ class Type(ABC):
         """Return True if this parameter generates async memory cleanup code."""
         return False
 
-class StandardABIType(Type):
+class ForumABIType(Type):
 
     @property
     def tmpname(self):
@@ -116,8 +116,8 @@ class TypeErrorClass(Type):
     def return_code(self, name):
         return [f'return {name};']
 
-@Type.add_type('ERROR_CLASS', abi_type=['standard'])
-class TypeErrorClassStandard(StandardABIType):
+@Type.add_type('ERROR_CLASS', abi_type=['forum'])
+class TypeErrorClassForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'int'
@@ -127,7 +127,7 @@ class TypeErrorClassStandard(StandardABIType):
         return [f'int {self.tmpname} = {ConvertFuncs.ERROR_CLASS}({self.name});']
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.ERROR_CLASS}({name});']
+        return [f'return {ConvertOMPIToForum.ERROR_CLASS}({name});']
 
 
 @Type.add_type('ERROR_CLASS_OUT', abi_type=['ompi'])
@@ -136,15 +136,15 @@ class TypeErrorClassOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('ERROR_CLASS_OUT', abi_type=['standard'])
-class TypeErrorClassOutStandard(StandardABIType):
+@Type.add_type('ERROR_CLASS_OUT', abi_type=['forum'])
+class TypeErrorClassOutForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'int *'
 
     @property
     def final_code(self): 
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.ERROR_CLASS}(*{self.name});']
 
     @property
     def argument(self):
@@ -166,8 +166,8 @@ class TypeErrorCode(Type):
     def return_code(self, name):
         return [f'return {name};']
 
-@Type.add_type('ERROR_CODE', abi_type=['standard'])
-class TypeErrorCodeStandard(StandardABIType):
+@Type.add_type('ERROR_CODE', abi_type=['forum'])
+class TypeErrorCodeForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'int'
@@ -177,7 +177,7 @@ class TypeErrorCodeStandard(StandardABIType):
         return [f'int {self.tmpname} = {ConvertFuncs.ERROR_CLASS}({self.name});']
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.ERROR_CLASS}({name});']
+        return [f'return {ConvertOMPIToForum.ERROR_CLASS}({name});']
 
 
 @Type.add_type('ERROR_CODE_OUT', abi_type=['ompi'])
@@ -186,15 +186,15 @@ class TypeErrorCodeOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('ERROR_CODE_OUT', abi_type=['standard'])
-class TypeErrorCodeOutStandard(StandardABIType):
+@Type.add_type('ERROR_CODE_OUT', abi_type=['forum'])
+class TypeErrorCodeOutForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'int *'
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERROR_CLASS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.ERROR_CLASS}(*{self.name});']
 
     @property
     def argument(self):
@@ -227,12 +227,12 @@ class TypeBufferAddrOut(Type):
         return f'void *'
 
 
-@Type.add_type('BUFFER_ADDR_OUT', abi_type=['standard'])
-class TypeBufferAddrOutStandard(StandardABIType):
+@Type.add_type('BUFFER_ADDR_OUT', abi_type=['forum'])
+class TypeBufferAddrOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *(void **){self.name} = {ConvertOMPIToStandard.BUFFER}(*(void **){self.name});']
+        return [f'if (NULL != {self.name}) *(void **){self.name} = {ConvertOMPIToForum.BUFFER}(*(void **){self.name});']
 
     def type_text(self, enable_count=False):
         return f'void *'
@@ -242,8 +242,8 @@ class TypeBufferAddrOutStandard(StandardABIType):
         return f'{self.name}'
 
 
-@Type.add_type('BUFFER', abi_type=['standard'])
-class TypeBufferStandard(StandardABIType):
+@Type.add_type('BUFFER', abi_type=['forum'])
+class TypeBufferForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -252,8 +252,8 @@ class TypeBufferStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'void *'
 
-@Type.add_type('BUFFER_CONST', abi_type=['standard'])
-class TypeBufferConstStandard(StandardABIType):
+@Type.add_type('BUFFER_CONST', abi_type=['forum'])
+class TypeBufferConstForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -470,8 +470,8 @@ class TypeErrcodeArrayOut(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'int {self.name}[]'
 
-@Type.add_type('ERRCODE_ARRAY_OUT', abi_type=['standard'])
-class TypeErrcodeArrayOutStandard(StandardABIType):
+@Type.add_type('ERRCODE_ARRAY_OUT', abi_type=['forum'])
+class TypeErrcodeArrayOutForum(ForumABIType):
     """Array of MPI error codes returned by the spawn calls.
 
     The intern layer fills the array with OMPI-internal error codes,
@@ -504,7 +504,7 @@ class TypeErrcodeArrayOutStandard(StandardABIType):
     def final_code(self):
         code = [f'if (NULL != {self.tmpname})' + ' {']
         code.append(f'for (MPI_Count i = 0; i < size_{self.tmpname}; ++i)' + ' {')
-        code.append(f'{self.name}[i] = {ConvertOMPIToStandard.ERROR_CLASS}({self.tmpname}[i]);')
+        code.append(f'{self.name}[i] = {ConvertOMPIToForum.ERROR_CLASS}({self.tmpname}[i]);')
         code.append('}')
         code.append(f'free({self.tmpname});')
         code.append('}')
@@ -631,8 +631,8 @@ class TypeDatatypeArrayAsync(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'const {self.type_text(enable_count=enable_count)} {self.name}[]'
 
-@Type.add_type('DATATYPE', abi_type=['standard'])
-class TypeDatatypeStandard(StandardABIType):
+@Type.add_type('DATATYPE', abi_type=['forum'])
+class TypeDatatypeForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -642,18 +642,18 @@ class TypeDatatypeStandard(StandardABIType):
         return 'MPI_Datatype'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.DATATYPE}({name});']
+        return [f'return {ConvertOMPIToForum.DATATYPE}({name});']
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_Datatype')
 
 
-@Type.add_type('DATATYPE_OUT', abi_type=['standard'])
-class TypeDatatypeOutStandard(StandardABIType):
+@Type.add_type('DATATYPE_OUT', abi_type=['forum'])
+class TypeDatatypeOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.DATATYPE}((MPI_Datatype) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.DATATYPE}((MPI_Datatype) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Datatype')
@@ -663,8 +663,8 @@ class TypeDatatypeOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Datatype *) {self.name}'
 
-@Type.add_type('DATATYPE_INOUT', abi_type=['standard'])
-class TypeDatatypeInoutStandard(StandardABIType):
+@Type.add_type('DATATYPE_INOUT', abi_type=['forum'])
+class TypeDatatypeInoutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -672,7 +672,7 @@ class TypeDatatypeInoutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.DATATYPE}((MPI_Datatype) {self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.DATATYPE}((MPI_Datatype) {self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Datatype')
@@ -682,8 +682,8 @@ class TypeDatatypeInoutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Datatype *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
-@Type.add_type('DATATYPE_ARRAY', abi_type=['standard'])
-class TypeDatatypeArrayStandard(StandardABIType):
+@Type.add_type('DATATYPE_ARRAY', abi_type=['forum'])
+class TypeDatatypeArrayForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -726,8 +726,8 @@ class TypeDatatypeArrayStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Datatype *) {self.tmpname}'
 
-@Type.add_type('DATATYPE_ARRAY_ASYNC', abi_type=['standard'])
-class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
+@Type.add_type('DATATYPE_ARRAY_ASYNC', abi_type=['forum'])
+class TypeDatatypeArrayAsyncForum(TypeDatatypeArrayForum):
 
     @property
     def need_async_cleanup(self):
@@ -747,8 +747,8 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         code.append('}')
         return code
 
-@Type.add_type('DATATYPE_ARRAY_OUT', abi_type=['standard'])
-class TypeDatatypeArrayOutStandard(StandardABIType):
+@Type.add_type('DATATYPE_ARRAY_OUT', abi_type=['forum'])
+class TypeDatatypeArrayOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -760,7 +760,7 @@ class TypeDatatypeArrayOutStandard(StandardABIType):
     @property
     def final_code(self):
         code = [f'for(MPI_Count i=0;i<size_{self.tmpname};i++)' + '{']
-        code.append(f'{self.name}[i] = {ConvertOMPIToStandard.DATATYPE}({self.tmpname}[i]);')
+        code.append(f'{self.name}[i] = {ConvertOMPIToForum.DATATYPE}({self.tmpname}[i]);')
         code.append('}')
         code.append(f'free({self.tmpname});')
         return code
@@ -785,8 +785,8 @@ class TypeTEventDatatypeArrayOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Datatype *'
 
-@Type.add_type('T_EVENT_DATATYPE_ARRAY_OUT', abi_type=['standard'])
-class TypeTEventDatatypeArrayOutStandard(StandardABIType):
+@Type.add_type('T_EVENT_DATATYPE_ARRAY_OUT', abi_type=['forum'])
+class TypeTEventDatatypeArrayOutForum(ForumABIType):
     """Datatype array filled by MPI_T_event_get_info (MPI Forum ABI).
 
     The caller passes the array capacity in *count_param on input; the
@@ -805,7 +805,7 @@ class TypeTEventDatatypeArrayOutStandard(StandardABIType):
         code = [f'if (NULL != {self.name} && NULL != {self.count_param})' + ' {']
         code.append(f'    int n_{self.name} = (*{self.count_param} < capacity_{self.name}) ? *{self.count_param} : capacity_{self.name};')
         code.append(f'    for (int i = 0; i < n_{self.name}; ++i)' + ' {')
-        code.append(f'        {self.name}[i] = {ConvertOMPIToStandard.DATATYPE}((MPI_Datatype) {self.name}[i]);')
+        code.append(f'        {self.name}[i] = {ConvertOMPIToForum.DATATYPE}((MPI_Datatype) {self.name}[i]);')
         code.append('    }')
         code.append('}')
         return code
@@ -820,8 +820,8 @@ class TypeTEventDatatypeArrayOutStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Datatype *) {self.name}'
 
-@Type.add_type('NEIGHBOR_DATATYPE_ARRAY', abi_type=['standard'])
-class TypeNeighborDatatypeArrayStandard(TypeDatatypeArrayStandard):
+@Type.add_type('NEIGHBOR_DATATYPE_ARRAY', abi_type=['forum'])
+class TypeNeighborDatatypeArrayForum(TypeDatatypeArrayForum):
 
     @property
     def init_code(self):
@@ -857,8 +857,8 @@ class TypeNeighborDatatypeArrayStandard(TypeDatatypeArrayStandard):
         code.append('}')
         return code
 
-@Type.add_type('NEIGHBOR_DATATYPE_ARRAY_ASYNC', abi_type=['standard'])
-class TypeNeighborDatatypeArrayAsyncStandard(TypeNeighborDatatypeArrayStandard):
+@Type.add_type('NEIGHBOR_DATATYPE_ARRAY_ASYNC', abi_type=['forum'])
+class TypeNeighborDatatypeArrayAsyncForum(TypeNeighborDatatypeArrayForum):
 
     @property
     def need_async_cleanup(self):
@@ -885,8 +885,8 @@ class TypeOp(Type):
         return 'MPI_Op'
 
 
-@Type.add_type('OP', abi_type=['standard'])
-class TypeOpStandard(StandardABIType):
+@Type.add_type('OP', abi_type=['forum'])
+class TypeOpForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -899,7 +899,7 @@ class TypeOpStandard(StandardABIType):
         return 'MPI_Op'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.OP}({name});']
+        return [f'return {ConvertOMPIToForum.OP}({name});']
 
 @Type.add_type('OP_OUT', abi_type=['ompi'])
 class TypeOpOut(Type):
@@ -907,12 +907,12 @@ class TypeOpOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Op *'
 
-@Type.add_type('OP_OUT', abi_type=['standard'])
-class TypeOpOutStandard(StandardABIType):
+@Type.add_type('OP_OUT', abi_type=['forum'])
+class TypeOpOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.OP}((MPI_Op) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.OP}((MPI_Op) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Op')
@@ -926,8 +926,8 @@ class TypeOpOutStandard(StandardABIType):
 class TypeOpInOut(TypeOpOut):
     pass
 
-@Type.add_type('OP_INOUT', abi_type=['standard'])
-class TypeOpInOutStandard(StandardABIType):
+@Type.add_type('OP_INOUT', abi_type=['forum'])
+class TypeOpInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -935,7 +935,7 @@ class TypeOpInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.OP}((MPI_Op) {self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.OP}((MPI_Op) {self.tmpname});']
         
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Op')
@@ -951,8 +951,8 @@ class TypeTag(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('TAG', abi_type=['standard'])
-class TypeTagStandard(StandardABIType):
+@Type.add_type('TAG', abi_type=['forum'])
+class TypeTagForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -967,12 +967,12 @@ class TypeTagOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('TAG_OUT', abi_type=['standard'])
-class TypeTagOutStandard(StandardABIType):
+@Type.add_type('TAG_OUT', abi_type=['forum'])
+class TypeTagOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.TAG}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.TAG}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -987,8 +987,8 @@ class TypeRoot(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('ROOT', abi_type=['standard'])
-class TypeRootStandard(StandardABIType):
+@Type.add_type('ROOT', abi_type=['forum'])
+class TypeRootForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1003,8 +1003,8 @@ class TypeSource(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('SOURCE', abi_type=['standard'])
-class TypeSourceStandard(StandardABIType):
+@Type.add_type('SOURCE', abi_type=['forum'])
+class TypeSourceForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1022,8 +1022,8 @@ class TypeSourceArray(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'const int {self.name}[]'
 
-@Type.add_type('SOURCE_ARRAY', abi_type=['standard'])
-class TypeSourceArrayStandard(StandardABIType):
+@Type.add_type('SOURCE_ARRAY', abi_type=['forum'])
+class TypeSourceArrayForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1056,12 +1056,12 @@ class TypeSourceOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('SOURCE_OUT', abi_type=['standard'])
-class TypeSourceOutStandard(StandardABIType):
+@Type.add_type('SOURCE_OUT', abi_type=['forum'])
+class TypeSourceOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.SOURCE}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.SOURCE}(*{self.name});']
  
     def type_text(self, enable_count=False):
         return f'int *'
@@ -1079,8 +1079,8 @@ class TypeSourceArrayOut(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'int {self.name}[]'
 
-@Type.add_type('SOURCE_ARRAY_OUT', abi_type=['standard'])
-class TypeSourceArrayOutStandard(StandardABIType):
+@Type.add_type('SOURCE_ARRAY_OUT', abi_type=['forum'])
+class TypeSourceArrayOutForum(ForumABIType):
         
     @property
     def init_code(self):
@@ -1092,7 +1092,7 @@ class TypeSourceArrayOutStandard(StandardABIType):
     def final_code(self):
         code = [f'if (NULL != {self.name}){{']
         code.append(f'for(int i=0;i<{self.count_param};i++){{')
-        code.append(f'{self.name}[i] = {ConvertOMPIToStandard.SOURCE}({self.tmpname}[i]);')
+        code.append(f'{self.name}[i] = {ConvertOMPIToForum.SOURCE}({self.tmpname}[i]);')
         code.append('}')
         code.append('}')
         code.append(f'free({self.tmpname});')
@@ -1110,8 +1110,8 @@ class TypeCommunicator(Type):
      def type_text(self, enable_count=False):
          return 'MPI_Comm'
 
-@Type.add_type('COMM', abi_type=['standard'])
-class TypeCommunicatorStandard(StandardABIType):
+@Type.add_type('COMM', abi_type=['forum'])
+class TypeCommunicatorForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1121,7 +1121,7 @@ class TypeCommunicatorStandard(StandardABIType):
         return 'MPI_Comm'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.COMM}({name});']
+        return [f'return {ConvertOMPIToForum.COMM}({name});']
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_Comm')
@@ -1134,12 +1134,12 @@ class TypeCommunicatorOut(Type):
         return 'MPI_Comm *'
 
 
-@Type.add_type('COMM_OUT', abi_type=['standard'])
-class TypeCommunicatorOutStandard(StandardABIType):
+@Type.add_type('COMM_OUT', abi_type=['forum'])
+class TypeCommunicatorOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMM}((MPI_Comm) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.COMM}((MPI_Comm) *{self.name});']
  
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm')
@@ -1157,8 +1157,8 @@ class TypeCommInOut(Type):
         return 'MPI_Comm *'
 
 
-@Type.add_type('COMM_INOUT', abi_type=['standard'])
-class TypeCommInOutStandard(StandardABIType):
+@Type.add_type('COMM_INOUT', abi_type=['forum'])
+class TypeCommInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1166,7 +1166,7 @@ class TypeCommInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMM}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.COMM}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm')
@@ -1184,8 +1184,8 @@ class TypeWin(Type):
         return 'MPI_Win'
 
 
-@Type.add_type('WIN', abi_type=['standard'])
-class TypeWinStandard(StandardABIType):
+@Type.add_type('WIN', abi_type=['forum'])
+class TypeWinForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1195,7 +1195,7 @@ class TypeWinStandard(StandardABIType):
         return 'MPI_Win'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.WIN}({name});']
+        return [f'return {ConvertOMPIToForum.WIN}({name});']
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_Win')
@@ -1207,12 +1207,12 @@ class TypeWinOut(Type):
         return 'MPI_Win *'
 
 
-@Type.add_type('WIN_OUT', abi_type=['standard'])
-class TypeWinOutStandard(StandardABIType):
+@Type.add_type('WIN_OUT', abi_type=['forum'])
+class TypeWinOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.WIN}((MPI_Win) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.WIN}((MPI_Win) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win')
@@ -1229,8 +1229,8 @@ class TypeWinInOut(Type):
         return 'MPI_Win *'
 
 
-@Type.add_type('WIN_INOUT', abi_type=['standard'])
-class TypeWinInOutStandard(StandardABIType):
+@Type.add_type('WIN_INOUT', abi_type=['forum'])
+class TypeWinInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1238,7 +1238,7 @@ class TypeWinInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.WIN}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.WIN}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win')
@@ -1255,8 +1255,8 @@ class TypeRequest(Type):
         return 'MPI_Request'
 
 
-@Type.add_type('REQUEST', abi_type=['standard'])
-class TypeRequestStandard(StandardABIType):
+@Type.add_type('REQUEST', abi_type=['forum'])
+class TypeRequestForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1281,8 +1281,8 @@ class TypeConstRequest(TypeRequest):
         else:
             return f'const MPI_Request {self.name}[]'
 
-@Type.add_type('REQUEST_CONST', abi_type=['standard'])
-class TypeConstRequestStandard(TypeRequestStandard):
+@Type.add_type('REQUEST_CONST', abi_type=['forum'])
+class TypeConstRequestForum(TypeRequestForum):
 
     @property
     def init_code(self):
@@ -1320,7 +1320,7 @@ class TypeConstRequestStandard(TypeRequestStandard):
         return 'MPI_Request'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.REQUEST}({name});']
+        return [f'return {ConvertOMPIToForum.REQUEST}({name});']
 
     def parameter(self, enable_count=False, **kwargs):
         type_name = self.mangle_name('MPI_Request')
@@ -1336,8 +1336,8 @@ class TypeRequestInOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Request *'
 
-@Type.add_type('REQUEST_INOUT', abi_type=['standard'])
-class TypeRequestInOutStandard(StandardABIType):
+@Type.add_type('REQUEST_INOUT', abi_type=['forum'])
+class TypeRequestInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1355,12 +1355,12 @@ class TypeRequestInOutStandard(StandardABIType):
     @property
     def final_code(self):
         if self.count_param is None:
-            code = [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.REQUEST}({self.tmpname});']
+            code = [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.REQUEST}({self.tmpname});']
         else:
             code = [f'if (NULL != {self.name})' + '{']
             code.append(f'if (NULL != {self.tmpname})' + '{')
             code.append('for (int i = 0; i < %s; ++i) {' % (self.count_param,))
-            code.append(f'{self.name}[i] = {ConvertOMPIToStandard.REQUEST}({self.tmpname}[i]);')
+            code.append(f'{self.name}[i] = {ConvertOMPIToForum.REQUEST}({self.tmpname}[i]);')
             code.append('}')
             code.append('}')
             code.append('}')
@@ -1392,8 +1392,8 @@ class TypeStatus(Type):
     def type_text(self, enable_count=False):
         return 'const MPI_Status *'
 
-@Type.add_type('STATUS', abi_type=['standard'])
-class TypeStatusStandard(StandardABIType):
+@Type.add_type('STATUS', abi_type=['forum'])
+class TypeStatusForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1425,8 +1425,8 @@ class TypeStatusOut(Type):
             return f'MPI_Status {self.name}[]'
 
 
-@Type.add_type('STATUS_OUT', abi_type=['standard'])
-class TypeStatusOutStandard(StandardABIType):
+@Type.add_type('STATUS_OUT', abi_type=['forum'])
+class TypeStatusOutForum(ForumABIType):
 
     def if_should_set_status(self):
         """Generate the condition to check if the status(es) should be set."""
@@ -1470,12 +1470,12 @@ class TypeStatusOutStandard(StandardABIType):
     def final_code(self):
         code = [self.if_should_set_status()]
         if self.count_param is None:
-            code.append(f'{ConvertOMPIToStandard.STATUS}({self.name}, &{self.tmpname});')
+            code.append(f'{ConvertOMPIToForum.STATUS}({self.name}, &{self.tmpname});')
         else:
             code.append(f'if (NULL != {self.tmpname}) ' + '{')
             code.extend([
                 'for (int i = 0; i < %s; ++i) {' % (self.outcount_param,),
-                f'{ConvertOMPIToStandard.STATUS}(&{self.name}[i], &{self.tmpname}[i]);',
+                f'{ConvertOMPIToForum.STATUS}(&{self.name}[i], &{self.tmpname}[i]);',
                 '}',
             ])
             code.append('}')
@@ -1513,8 +1513,8 @@ class TypeStatusInOut(Type):
 #
 # so far there are no vectors of statuses for inout in the the standard
 #
-@Type.add_type('STATUS_INOUT', abi_type=['standard'])
-class TypeStatusInOutStandard(StandardABIType):
+@Type.add_type('STATUS_INOUT', abi_type=['forum'])
+class TypeStatusInOutForum(ForumABIType):
 
     def if_should_set_status(self):
         """Generate the condition to check if the status(es) should be set."""
@@ -1542,7 +1542,7 @@ class TypeStatusInOutStandard(StandardABIType):
     @property
     def final_code(self):
         code = [self.if_should_set_status()]
-        code.append(f'{ConvertOMPIToStandard.STATUS}({self.name}, &{self.tmpname});')
+        code.append(f'{ConvertOMPIToForum.STATUS}({self.name}, &{self.tmpname});')
         code.append('}')
         return code
 
@@ -1615,8 +1615,8 @@ class TypeInfo(Type):
         return 'MPI_Info'
 
 
-@Type.add_type('INFO', abi_type=['standard'])
-class TypeInfoStandard(StandardABIType):
+@Type.add_type('INFO', abi_type=['forum'])
+class TypeInfoForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1626,7 +1626,7 @@ class TypeInfoStandard(StandardABIType):
         return 'MPI_Info'
         
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.INFO}({name});']
+        return [f'return {ConvertOMPIToForum.INFO}({name});']
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_Info')
@@ -1638,8 +1638,8 @@ class TypeInfoOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Info *'
 
-@Type.add_type('INFO_OUT', abi_type=['standard'])
-class TypeInfoOutStandard(StandardABIType):
+@Type.add_type('INFO_OUT', abi_type=['forum'])
+class TypeInfoOutForum(ForumABIType):
 
     @property
     def argument(self):
@@ -1651,14 +1651,14 @@ class TypeInfoOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.INFO}((MPI_Info) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.INFO}((MPI_Info) *{self.name});']
 
 @Type.add_type('INFO_INOUT', abi_type=['ompi'])
 class TypeInfoInOut(TypeInfoOut):
     pass
 
-@Type.add_type('INFO_INOUT', abi_type=['standard'])
-class TypeInfoInOutStandard(StandardABIType):
+@Type.add_type('INFO_INOUT', abi_type=['forum'])
+class TypeInfoInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1666,7 +1666,7 @@ class TypeInfoInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.INFO}((MPI_Info) {self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.INFO}((MPI_Info) {self.tmpname});']
 
     @property
     def argument(self):
@@ -1686,8 +1686,8 @@ class TypeInfoArray(Type):
         return f'const MPI_Info {self.name}[]'
 
 
-@Type.add_type('INFO_ARRAY', abi_type=['standard'])
-class TypeInfoArrayStandard(StandardABIType):
+@Type.add_type('INFO_ARRAY', abi_type=['forum'])
+class TypeInfoArrayForum(ForumABIType):
 
 #
 # TODO may need a better way to generalize for case of non-explicit count_param
@@ -1730,8 +1730,8 @@ class TypeFile(Type):
         return 'MPI_File'
 
 
-@Type.add_type('FILE', abi_type=['standard'])
-class TypeFileStandard(StandardABIType):
+@Type.add_type('FILE', abi_type=['forum'])
+class TypeFileForum(ForumABIType):
 
 #   @property
 #   def argument(self):
@@ -1748,7 +1748,7 @@ class TypeFileStandard(StandardABIType):
         return self.mangle_name('MPI_File')
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.FILE}({name});']
+        return [f'return {ConvertOMPIToForum.FILE}({name});']
 
 @Type.add_type('FILE_OUT', abi_type=['ompi'])
 class TypeFileOut(Type):
@@ -1757,8 +1757,8 @@ class TypeFileOut(Type):
         return 'MPI_File *'
 
 
-@Type.add_type('FILE_OUT', abi_type=['standard'])
-class TypeFileOutStandard(StandardABIType):
+@Type.add_type('FILE_OUT', abi_type=['forum'])
+class TypeFileOutForum(ForumABIType):
 
     @property
     def argument(self):
@@ -1766,7 +1766,7 @@ class TypeFileOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.FILE}((MPI_File) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.FILE}((MPI_File) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_File')
@@ -1778,8 +1778,8 @@ class TypeFileInOut(TypeFileOut):
     def type_text(self, enable_count=False):
         return 'MPI_File *'
 
-@Type.add_type('FILE_INOUT', abi_type=['standard'])
-class TypeFileInOutStandard(TypeFileOutStandard):
+@Type.add_type('FILE_INOUT', abi_type=['forum'])
+class TypeFileInOutForum(TypeFileOutForum):
 
     @property
     def init_code(self):
@@ -1787,7 +1787,7 @@ class TypeFileInOutStandard(TypeFileOutStandard):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.FILE}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.FILE}({self.tmpname});']
 
     @property
     def argument(self):
@@ -1800,8 +1800,8 @@ class TypeMessage(Type):
         return 'MPI_Message'
 
 
-@Type.add_type('MESSAGE', abi_type=['standard'])
-class TypeMessageStandard(StandardABIType):
+@Type.add_type('MESSAGE', abi_type=['forum'])
+class TypeMessageForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1818,7 +1818,7 @@ class TypeMessageStandard(StandardABIType):
         return 'MPI_Message'
 
 #   def return_code(self, name):
-#       return [f'return {ConvertOMPIToStandard.MESSAGE}({name});']
+#       return [f'return {ConvertOMPIToForum.MESSAGE}({name});']
         
 @Type.add_type('MESSAGE_OUT', abi_type=['ompi'])
 class TypeMessageOut(Type):
@@ -1827,12 +1827,12 @@ class TypeMessageOut(Type):
         return 'MPI_Message *'
 
 
-@Type.add_type('MESSAGE_OUT', abi_type=['standard'])
-class TypeMessageOutStandard(StandardABIType):
+@Type.add_type('MESSAGE_OUT', abi_type=['forum'])
+class TypeMessageOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.MESSAGE}((MPI_Message) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.MESSAGE}((MPI_Message) *{self.name});']
 
     @property
     def argument(self):
@@ -1849,8 +1849,8 @@ class TypeMessageInOut(Type):
         return 'MPI_Message *'
 
 
-@Type.add_type('MESSAGE_INOUT', abi_type=['standard'])
-class TypeMessageInOutStandard(StandardABIType):
+@Type.add_type('MESSAGE_INOUT', abi_type=['forum'])
+class TypeMessageInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1858,7 +1858,7 @@ class TypeMessageInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.MESSAGE}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.MESSAGE}({self.tmpname});']
 
     @property
     def argument(self):
@@ -1876,8 +1876,8 @@ class TypeTSLevel(Type):
         return 'int'
 
 
-@Type.add_type('TS_LEVEL', abi_type=['standard'])
-class TypeTSLevelStandard(StandardABIType):
+@Type.add_type('TS_LEVEL', abi_type=['forum'])
+class TypeTSLevelForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -1887,7 +1887,7 @@ class TypeTSLevelStandard(StandardABIType):
         return 'int'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.TS_LEVEL}({name});']
+        return [f'return {ConvertOMPIToForum.TS_LEVEL}({name});']
 
     def type_text(self, enable_count=False):
         return 'int'
@@ -1900,12 +1900,12 @@ class TypeTSLevelOut(Type):
         return 'int *'
 
 
-@Type.add_type('TS_LEVEL_OUT', abi_type=['standard'])
-class TypeTSLevelOutStandard(StandardABIType):
+@Type.add_type('TS_LEVEL_OUT', abi_type=['forum'])
+class TypeTSLevelOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.TS_LEVEL}((int) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.TS_LEVEL}((int) *{self.name});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -1921,8 +1921,8 @@ class TypeCommErrhandlerFunction(Type):
         return 'MPI_Comm_errhandler_function *'
 
 
-@Type.add_type('COMM_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeCommErrhandlerFunctionStandard(StandardABIType):
+@Type.add_type('COMM_ERRHANDLER_FUNCTION', abi_type=['forum'])
+class TypeCommErrhandlerFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm_errhandler_function')
@@ -1939,8 +1939,8 @@ class TypeFileErrhandlerFunction(Type):
         return 'MPI_File_errhandler_function *'
 
 
-@Type.add_type('FILE_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeFileErrhandlerFunctionStandard(StandardABIType):
+@Type.add_type('FILE_ERRHANDLER_FUNCTION', abi_type=['forum'])
+class TypeFileErrhandlerFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_File_errhandler_function')
@@ -1957,8 +1957,8 @@ class TypeCopyFunction(Type):
         return 'MPI_Copy_function *'
 
 
-@Type.add_type('COPY_FUNCTION', abi_type=['standard'])
-class TypeCopyFunctionStandard(StandardABIType):
+@Type.add_type('COPY_FUNCTION', abi_type=['forum'])
+class TypeCopyFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'MPI_Copy_function *'
@@ -1970,8 +1970,8 @@ class TypeDeleteFunction(Type):
         return 'MPI_Delete_function *'
 
 
-@Type.add_type('DELETE_FUNCTION', abi_type=['standard'])
-class TypeDeleteFunctionStandard(StandardABIType):
+@Type.add_type('DELETE_FUNCTION', abi_type=['forum'])
+class TypeDeleteFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'MPI_Delete_function *'
@@ -1988,8 +1988,8 @@ class TypeUserFunction(Type):
         return 'MPI_User_function_c *' if enable_count else 'MPI_User_function *'
 
 
-@Type.add_type('USER_FUNCTION', abi_type=['standard'])
-class TypeUserFunctionStandard(Type):
+@Type.add_type('USER_FUNCTION', abi_type=['forum'])
+class TypeUserFunctionForum(Type):
 
     def type_text(self, enable_count=False):
         return 'MPI_User_function_c *' if enable_count else 'MPI_User_function *'
@@ -2001,8 +2001,8 @@ class TypeCommCopyAttrFunction(Type):
         return 'MPI_Comm_copy_attr_function *'
 
 
-@Type.add_type('COMM_COPY_ATTR_FUNCTION', abi_type=['standard'])
-class TypeCommCopyAttrFunctionStandard(StandardABIType):
+@Type.add_type('COMM_COPY_ATTR_FUNCTION', abi_type=['forum'])
+class TypeCommCopyAttrFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm_copy_attr_function')
@@ -2052,15 +2052,15 @@ class TypeCommCopyAttrFunctionStandard(StandardABIType):
         code.append('static int ompi_abi_copy_attr_fn(MPI_Comm oldcomm, int comm_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)')
         code.append('{')
         code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
-        code.append('    MPI_Comm_ABI_INTERNAL comm_tmp = ompi_convert_comm_ompi_to_standard(oldcomm);')
-        code.append('    int comm_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(comm_keyval);')
+        code.append('    MPI_Comm_ABI_INTERNAL comm_tmp = ompi_convert_comm_ompi_to_forum(oldcomm);')
+        code.append('    int comm_keyval_tmp = ompi_convert_attr_key_ompi_to_forum(comm_keyval);')
         code.append('    return helper->user_copy_fn((MPI_Comm_ABI_INTERNAL)comm_tmp, comm_keyval_tmp, helper->user_extra_state, attribute_val_in, attribute_val_out, flag);')
         code.append('}')
         code.append('static int ompi_abi_delete_attr_fn(MPI_Comm oldcomm, int comm_keyval, void *attribute_val, void *extra_state)')
         code.append('{')
         code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
-        code.append('    MPI_Comm_ABI_INTERNAL comm_tmp = ompi_convert_comm_ompi_to_standard(oldcomm);')
-        code.append('    int comm_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(comm_keyval);')
+        code.append('    MPI_Comm_ABI_INTERNAL comm_tmp = ompi_convert_comm_ompi_to_forum(oldcomm);')
+        code.append('    int comm_keyval_tmp = ompi_convert_attr_key_ompi_to_forum(comm_keyval);')
         code.append('    return helper->user_delete_fn((MPI_Comm_ABI_INTERNAL)comm_tmp, comm_keyval_tmp, attribute_val, helper->user_extra_state);')
         code.append('}')
         return code
@@ -2072,8 +2072,8 @@ class TypeCommDeleteAttrFunction(Type):
         return 'MPI_Comm_delete_attr_function *'
 
 
-@Type.add_type('COMM_DELETE_ATTR_FUNCTION', abi_type=['standard'])
-class TypeCommDeleteAttrFunctionStandard(StandardABIType):
+@Type.add_type('COMM_DELETE_ATTR_FUNCTION', abi_type=['forum'])
+class TypeCommDeleteAttrFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Comm_delete_attr_function')
@@ -2103,8 +2103,8 @@ class TypeGrequestQueryFunction(Type):
         return 'MPI_Grequest_query_function *'
 
 
-@Type.add_type('GREQUEST_QUERY_FUNCTION', abi_type=['standard'])
-class TypeGrequestQueryFunctionStandard(Type):
+@Type.add_type('GREQUEST_QUERY_FUNCTION', abi_type=['forum'])
+class TypeGrequestQueryFunctionForum(Type):
     """Generalized request query callback (MPI Forum ABI).
 
     The intern layer invokes the query callback with an intern-layout
@@ -2181,8 +2181,8 @@ class TypeGrequestFreeFunction(Type):
         return 'MPI_Grequest_free_function *'
 
 
-@Type.add_type('GREQUEST_FREE_FUNCTION', abi_type=['standard'])
-class TypeGrequestFreeFunctionStandard(Type):
+@Type.add_type('GREQUEST_FREE_FUNCTION', abi_type=['forum'])
+class TypeGrequestFreeFunctionForum(Type):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Grequest_free_function')
@@ -2205,8 +2205,8 @@ class TypeGrequestCancelFunction(Type):
         return 'MPI_Grequest_cancel_function *'
 
 
-@Type.add_type('GREQUEST_CANCEL_FUNCTION', abi_type=['standard'])
-class TypeGrequestCancelFunctionStandard(Type):
+@Type.add_type('GREQUEST_CANCEL_FUNCTION', abi_type=['forum'])
+class TypeGrequestCancelFunctionForum(Type):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Grequest_cancel_function')
@@ -2232,8 +2232,8 @@ class TypeDatarepConversionFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Datarep_conversion_function_c *' if enable_count else 'MPI_Datarep_conversion_function *'
 
-@Type.add_type('DATAREP_CONVERSION_FUNCTION', abi_type=['standard'])
-class TypeDatarepConversionFunctionStandard(Type):
+@Type.add_type('DATAREP_CONVERSION_FUNCTION', abi_type=['forum'])
+class TypeDatarepConversionFunctionForum(Type):
     """Datarep conversion callback (MPI Forum ABI).
 
     Passed through unwrapped: every io component's register_datarep
@@ -2259,8 +2259,8 @@ class TypeDatarepExtentFunction(Type):
         return 'MPI_Datarep_extent_function *'
 
 
-@Type.add_type('DATAREP_EXTENT_FUNCTION', abi_type=['standard'])
-class TypeDatarepExtentFunctionStandard(Type):
+@Type.add_type('DATAREP_EXTENT_FUNCTION', abi_type=['forum'])
+class TypeDatarepExtentFunctionForum(Type):
 
     def type_text(self, enable_count=False):
         return 'MPI_Datarep_extent_function *'
@@ -2272,8 +2272,8 @@ class TypeSessionErrhandlerFunction(Type):
         return 'MPI_Session_errhandler_function *'
 
 
-@Type.add_type('SESSION_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeSessionErrhandlerFunctionStandard(StandardABIType):
+@Type.add_type('SESSION_ERRHANDLER_FUNCTION', abi_type=['forum'])
+class TypeSessionErrhandlerFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Session_errhandler_function')
@@ -2289,8 +2289,8 @@ class TypeTypeCopyAttrFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_Type_copy_attr_function *'
 
-@Type.add_type('TYPE_COPY_ATTR_FUNCTION', abi_type=['standard'])
-class TypeTypeCopyAttrFunctionStandard(StandardABIType):
+@Type.add_type('TYPE_COPY_ATTR_FUNCTION', abi_type=['forum'])
+class TypeTypeCopyAttrFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Type_copy_attr_function')
@@ -2336,15 +2336,15 @@ class TypeTypeCopyAttrFunctionStandard(StandardABIType):
         code.append('static int ompi_abi_copy_attr_fn(MPI_Datatype oldtype, int type_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)')
         code.append('{')
         code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
-        code.append('    MPI_Datatype_ABI_INTERNAL type_tmp = ompi_convert_datatype_ompi_to_standard(oldtype);')
-        code.append('    int type_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(type_keyval);')
+        code.append('    MPI_Datatype_ABI_INTERNAL type_tmp = ompi_convert_datatype_ompi_to_forum(oldtype);')
+        code.append('    int type_keyval_tmp = ompi_convert_attr_key_ompi_to_forum(type_keyval);')
         code.append('    return helper->user_copy_fn((MPI_Datatype_ABI_INTERNAL)type_tmp, type_keyval_tmp, helper->user_extra_state, attribute_val_in, attribute_val_out, flag);')
         code.append('}')
         code.append('static int ompi_abi_delete_attr_fn(MPI_Datatype oldtype, int type_keyval, void *attribute_val, void *extra_state)')
         code.append('{')
         code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
-        code.append('    MPI_Datatype_ABI_INTERNAL type_tmp = ompi_convert_datatype_ompi_to_standard(oldtype);')
-        code.append('    int type_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(type_keyval);')
+        code.append('    MPI_Datatype_ABI_INTERNAL type_tmp = ompi_convert_datatype_ompi_to_forum(oldtype);')
+        code.append('    int type_keyval_tmp = ompi_convert_attr_key_ompi_to_forum(type_keyval);')
         code.append('    return helper->user_delete_fn((MPI_Datatype_ABI_INTERNAL)type_tmp, type_keyval_tmp, attribute_val, helper->user_extra_state);')
         code.append('}')
         return code
@@ -2356,8 +2356,8 @@ class TypeTypeDeleteAttrFunction(Type):
         return 'MPI_Type_delete_attr_function *'
 
 
-@Type.add_type('TYPE_DELETE_ATTR_FUNCTION', abi_type=['standard'])
-class TypeTypeDeleteAttrFunctionStandard(StandardABIType):
+@Type.add_type('TYPE_DELETE_ATTR_FUNCTION', abi_type=['forum'])
+class TypeTypeDeleteAttrFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Type_delete_attr_function')
@@ -2386,8 +2386,8 @@ class TypeWinErrhandlerFunction(Type):
         return 'MPI_Win_errhandler_function *'
 
 
-@Type.add_type('WIN_ERRHANDLER_FUNCTION', abi_type=['standard'])
-class TypeWinErrhandlerFunctionStandard(StandardABIType):
+@Type.add_type('WIN_ERRHANDLER_FUNCTION', abi_type=['forum'])
+class TypeWinErrhandlerFunctionForum(ForumABIType):
                 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win_errhandler_function')
@@ -2404,8 +2404,8 @@ class TypeWinCopyAttrFunction(Type):
         return 'MPI_Win_copy_attr_function *'
 
 
-@Type.add_type('WIN_COPY_ATTR_FUNCTION', abi_type=['standard'])
-class TypeWinCopyAttrFunctionStandard(StandardABIType):
+@Type.add_type('WIN_COPY_ATTR_FUNCTION', abi_type=['forum'])
+class TypeWinCopyAttrFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win_copy_attr_function')
@@ -2450,15 +2450,15 @@ class TypeWinCopyAttrFunctionStandard(StandardABIType):
         code.append('static int ompi_abi_copy_attr_fn(MPI_Win oldwin, int win_keyval, void *extra_state, void *attribute_val_in, void *attribute_val_out, int *flag)')
         code.append('{')
         code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
-        code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_standard(oldwin);')
-        code.append('    int win_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(win_keyval);')
+        code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_forum(oldwin);')
+        code.append('    int win_keyval_tmp = ompi_convert_attr_key_ompi_to_forum(win_keyval);')
         code.append('    return helper->user_copy_fn((MPI_Win_ABI_INTERNAL)win_tmp, win_keyval_tmp, helper->user_extra_state, attribute_val_in, attribute_val_out, flag);')
         code.append('}')
         code.append('static int ompi_abi_delete_attr_fn(MPI_Win oldwin, int win_keyval, void *attribute_val, void *extra_state)')
         code.append('{')
         code.append('    ompi_abi_wrapper_helper_t *helper = (ompi_abi_wrapper_helper_t *)extra_state;')
-        code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_standard(oldwin);')
-        code.append('    int win_keyval_tmp = ompi_convert_attr_key_ompi_to_standard(win_keyval);')
+        code.append('    MPI_Win_ABI_INTERNAL win_tmp = ompi_convert_win_ompi_to_forum(oldwin);')
+        code.append('    int win_keyval_tmp = ompi_convert_attr_key_ompi_to_forum(win_keyval);')
         code.append('    return helper->user_delete_fn((MPI_Win_ABI_INTERNAL)win_tmp, win_keyval_tmp, attribute_val, helper->user_extra_state);')
         code.append('}')
         return code
@@ -2471,8 +2471,8 @@ class TypeWinDeleteAttrFunction(Type):
         return 'MPI_Win_delete_attr_function *'
 
 
-@Type.add_type('WIN_DELETE_ATTR_FUNCTION', abi_type=['standard'])
-class TypeWinDeleteAttrFunctionStandard(StandardABIType):
+@Type.add_type('WIN_DELETE_ATTR_FUNCTION', abi_type=['forum'])
+class TypeWinDeleteAttrFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Win_delete_attr_function')
@@ -2500,8 +2500,8 @@ class TypeErrhandler(Type):
         return 'MPI_Errhandler'
 
 
-@Type.add_type('ERRHANDLER', abi_type=['standard'])
-class TypeErrhandlerStandard(StandardABIType):
+@Type.add_type('ERRHANDLER', abi_type=['forum'])
+class TypeErrhandlerForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2514,7 +2514,7 @@ class TypeErrhandlerStandard(StandardABIType):
         return 'MPI_Errhandler'
         
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.ERRHANDLER}({name});']
+        return [f'return {ConvertOMPIToForum.ERRHANDLER}({name});']
 
 @Type.add_type('ERRHANDLER_OUT', abi_type=['ompi'])
 class TypeErrhandlerOut(Type):
@@ -2523,12 +2523,12 @@ class TypeErrhandlerOut(Type):
         return 'MPI_Errhandler *'
 
 
-@Type.add_type('ERRHANDLER_OUT', abi_type=['standard'])
-class TypeErrhandlerOutStandard(Type):
+@Type.add_type('ERRHANDLER_OUT', abi_type=['forum'])
+class TypeErrhandlerOutForum(Type):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERRHANDLER}((MPI_Errhandler) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.ERRHANDLER}((MPI_Errhandler) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Errhandler')
@@ -2542,8 +2542,8 @@ class TypeErrhandlerOutStandard(Type):
 class TypeErrhandlerInOut(TypeErrhandlerOut):
     pass
 
-@Type.add_type('ERRHANDLER_INOUT', abi_type=['standard'])
-class TypeErrhandlerInOutStandard(StandardABIType):
+@Type.add_type('ERRHANDLER_INOUT', abi_type=['forum'])
+class TypeErrhandlerInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2551,7 +2551,7 @@ class TypeErrhandlerInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ERRHANDLER}((MPI_Errhandler) {self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.ERRHANDLER}((MPI_Errhandler) {self.tmpname});']
         
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Errhandler')
@@ -2568,8 +2568,8 @@ class TypeGroup(Type):
         return 'MPI_Group'
 
 
-@Type.add_type('GROUP', abi_type=['standard'])
-class TypeGroupStandard(StandardABIType):
+@Type.add_type('GROUP', abi_type=['forum'])
+class TypeGroupForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_Group')
@@ -2582,7 +2582,7 @@ class TypeGroupStandard(StandardABIType):
         return 'MPI_Group'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.GROUP}({name});']
+        return [f'return {ConvertOMPIToForum.GROUP}({name});']
 
 
 @Type.add_type('GROUP_OUT', abi_type=['ompi'])
@@ -2592,12 +2592,12 @@ class TypeGroupOut(Type):
         return 'MPI_Group *'
 
 
-@Type.add_type('GROUP_OUT', abi_type=['standard'])
-class TypeGroupOutStandard(StandardABIType):
+@Type.add_type('GROUP_OUT', abi_type=['forum'])
+class TypeGroupOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.GROUP}((MPI_Group) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.GROUP}((MPI_Group) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Group')
@@ -2615,8 +2615,8 @@ class TypeGroupInOut(Type):
         return 'MPI_Group *'
 
 
-@Type.add_type('GROUP_INOUT', abi_type=['standard'])
-class TypeGroupInOutStandard(StandardABIType):
+@Type.add_type('GROUP_INOUT', abi_type=['forum'])
+class TypeGroupInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2624,7 +2624,7 @@ class TypeGroupInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.GROUP}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.GROUP}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Group')
@@ -2647,8 +2647,8 @@ class TypeSessionOut(Type):
         return 'MPI_Session *'
 
 
-@Type.add_type('SESSION_INOUT', abi_type=['standard'])
-class TypeSessionInOutStandard(StandardABIType):
+@Type.add_type('SESSION_INOUT', abi_type=['forum'])
+class TypeSessionInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2656,7 +2656,7 @@ class TypeSessionInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.SESSION}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.SESSION}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Session')
@@ -2667,12 +2667,12 @@ class TypeSessionInOutStandard(StandardABIType):
         return f'(MPI_Session *) (NULL != {self.name} ? &{self.tmpname} : NULL)'
 
 
-@Type.add_type('SESSION_OUT', abi_type=['standard'])
-class TypeSessionOutStandard(StandardABIType):
+@Type.add_type('SESSION_OUT', abi_type=['forum'])
+class TypeSessionOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.SESSION}((MPI_Session) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.SESSION}((MPI_Session) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_Session')
@@ -2690,8 +2690,8 @@ class TypeSession(Type):
         return 'MPI_Session'
 
 
-@Type.add_type('SESSION', abi_type=['standard'])
-class TypeSessionStandard(StandardABIType):
+@Type.add_type('SESSION', abi_type=['forum'])
+class TypeSessionForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2704,7 +2704,7 @@ class TypeSessionStandard(StandardABIType):
         return 'MPI_Session'
 
     def return_code(self, name):
-        return [f'return {ConvertOMPIToStandard.SESSION}({name});']
+        return [f'return {ConvertOMPIToForum.SESSION}({name});']
 
 
 @Type.add_type('T_ENUM', abi_type=['ompi'])
@@ -2713,8 +2713,8 @@ class TypeTEnum(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_enum'
 
-@Type.add_type('T_ENUM', abi_type=['standard'])
-class TypeTEnumStandard(StandardABIType):
+@Type.add_type('T_ENUM', abi_type=['forum'])
+class TypeTEnumForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2732,12 +2732,12 @@ class TypeTEnumOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_enum *'
 
-@Type.add_type('T_ENUM_OUT', abi_type=['standard'])
-class TypeTEnumOutStandard(StandardABIType):
+@Type.add_type('T_ENUM_OUT', abi_type=['forum'])
+class TypeTEnumOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_ENUM}((MPI_T_enum) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.T_ENUM}((MPI_T_enum) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_enum')
@@ -2753,8 +2753,8 @@ class TypeCvarHandle(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_cvar_handle'
 
-@Type.add_type('CVAR_HANDLE', abi_type=['standard'])
-class TypeCvarHandleStandard(StandardABIType):
+@Type.add_type('CVAR_HANDLE', abi_type=['forum'])
+class TypeCvarHandleForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2772,12 +2772,12 @@ class TypeCvarHandleOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_cvar_handle *'
 
-@Type.add_type('CVAR_HANDLE_OUT', abi_type=['standard'])
-class TypeCvarHandleOutStandard(StandardABIType):
+@Type.add_type('CVAR_HANDLE_OUT', abi_type=['forum'])
+class TypeCvarHandleOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.CVAR_HANDLE}((MPI_T_cvar_handle) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.CVAR_HANDLE}((MPI_T_cvar_handle) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_cvar_handle')
@@ -2793,8 +2793,8 @@ class TypeCvarHandleInOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_cvar_handle *'
 
-@Type.add_type('CVAR_HANDLE_INOUT', abi_type=['standard'])
-class TypeCvarHandleInOutStandard(StandardABIType):
+@Type.add_type('CVAR_HANDLE_INOUT', abi_type=['forum'])
+class TypeCvarHandleInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2802,7 +2802,7 @@ class TypeCvarHandleInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.CVAR_HANDLE}((MPI_T_cvar_handle) {self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.CVAR_HANDLE}((MPI_T_cvar_handle) {self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_cvar_handle')
@@ -2827,12 +2827,12 @@ class TypeBindOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('BIND_OUT', abi_type=['standard'])
-class TypeBindOutStandard(StandardABIType):
+@Type.add_type('BIND_OUT', abi_type=['forum'])
+class TypeBindOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_BIND}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.T_BIND}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -2847,8 +2847,8 @@ class TypeEventRegistration(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_event_registration'
 
-@Type.add_type('EVENT_REGISTRATION', abi_type=['standard'])
-class TypeEventRegistrationStandard(StandardABIType):
+@Type.add_type('EVENT_REGISTRATION', abi_type=['forum'])
+class TypeEventRegistrationForum(ForumABIType):
     """MPI_T event registration handle (MPI Forum ABI).
 
     Unlike the other MPI_T handle types (CVAR_HANDLE, PVAR_HANDLE,
@@ -2872,8 +2872,8 @@ class TypeEventRegistrationOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_event_registration *'
 
-@Type.add_type('EVENT_REGISTRATION_OUT', abi_type=['standard'])
-class TypeEventRegistrationOutStandard(StandardABIType):
+@Type.add_type('EVENT_REGISTRATION_OUT', abi_type=['forum'])
+class TypeEventRegistrationOutForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_event_registration')
@@ -2889,8 +2889,8 @@ class TypePvarHandle(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_pvar_handle'
 
-@Type.add_type('PVAR_HANDLE', abi_type=['standard'])
-class TypePvarHandleStandard(StandardABIType):
+@Type.add_type('PVAR_HANDLE', abi_type=['forum'])
+class TypePvarHandleForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2908,12 +2908,12 @@ class TypePvarHandleOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_pvar_handle *'
 
-@Type.add_type('PVAR_HANDLE_OUT', abi_type=['standard'])
-class TypePvarHandleOutStandard(StandardABIType):
+@Type.add_type('PVAR_HANDLE_OUT', abi_type=['forum'])
+class TypePvarHandleOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_HANDLE}((MPI_T_pvar_handle) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.PVAR_HANDLE}((MPI_T_pvar_handle) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_handle')
@@ -2929,8 +2929,8 @@ class TypePvarHandleInout(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_pvar_handle *'
 
-@Type.add_type('PVAR_HANDLE_INOUT', abi_type=['standard'])
-class TypePvarHandleInoutStandard(StandardABIType):
+@Type.add_type('PVAR_HANDLE_INOUT', abi_type=['forum'])
+class TypePvarHandleInoutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2938,7 +2938,7 @@ class TypePvarHandleInoutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_HANDLE}((MPI_T_pvar_handle){self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.PVAR_HANDLE}((MPI_T_pvar_handle){self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_handle')
@@ -2954,8 +2954,8 @@ class TypePvarSession(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_pvar_session'
 
-@Type.add_type('PVAR_SESSION', abi_type=['standard'])
-class TypePvarSessionStandard(StandardABIType):
+@Type.add_type('PVAR_SESSION', abi_type=['forum'])
+class TypePvarSessionForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -2974,12 +2974,12 @@ class TypePvarSessionOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_pvar_session *'
 
-@Type.add_type('PVAR_SESSION_OUT', abi_type=['standard'])
-class TypePvarSessionOutStandard(StandardABIType):
+@Type.add_type('PVAR_SESSION_OUT', abi_type=['forum'])
+class TypePvarSessionOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_SESSION}((MPI_T_pvar_session)*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.PVAR_SESSION}((MPI_T_pvar_session)*{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_session')
@@ -2996,8 +2996,8 @@ class TypePvarSessionInOut(Type):
         return 'MPI_T_pvar_session *'
 
 
-@Type.add_type('PVAR_SESSION_INOUT', abi_type=['standard'])
-class TypePvarSessionInOutStandard(StandardABIType):
+@Type.add_type('PVAR_SESSION_INOUT', abi_type=['forum'])
+class TypePvarSessionInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3005,7 +3005,7 @@ class TypePvarSessionInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_SESSION}((MPI_T_pvar_session){self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.PVAR_SESSION}((MPI_T_pvar_session){self.tmpname});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_pvar_session')
@@ -3021,8 +3021,8 @@ class TypeTVerbosity(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('T_VERBOSITY', abi_type=['standard'])
-class TypeTVerbosityStandard(StandardABIType):
+@Type.add_type('T_VERBOSITY', abi_type=['forum'])
+class TypeTVerbosityForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3041,12 +3041,12 @@ class TypeTVerbosityOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('T_VERBOSITY_OUT', abi_type=['standard'])
-class TypeTVerbosityOutStandard(StandardABIType):
+@Type.add_type('T_VERBOSITY_OUT', abi_type=['forum'])
+class TypeTVerbosityOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_VERBOSITY}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.T_VERBOSITY}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3061,12 +3061,12 @@ class TypeTScopeOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('T_SCOPE_OUT', abi_type=['standard'])
-class TypeTScopeOutStandard(StandardABIType):
+@Type.add_type('T_SCOPE_OUT', abi_type=['forum'])
+class TypeTScopeOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_SCOPE}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.T_SCOPE}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3081,8 +3081,8 @@ class TypePvarClass(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('PVAR_CLASS', abi_type=['standard'])
-class TypePvarClassStandard(StandardABIType):
+@Type.add_type('PVAR_CLASS', abi_type=['forum'])
+class TypePvarClassForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3101,12 +3101,12 @@ class TypePvarClassOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('PVAR_CLASS_OUT', abi_type=['standard'])
-class TypePvarClassOutStandard(StandardABIType):
+@Type.add_type('PVAR_CLASS_OUT', abi_type=['forum'])
+class TypePvarClassOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.PVAR_CLASS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.PVAR_CLASS}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -3121,8 +3121,8 @@ class TypeCbSafety(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_cb_safety'
 
-@Type.add_type('CB_SAFETY', abi_type=['standard'])
-class TypeCbSafetyStandard(StandardABIType):
+@Type.add_type('CB_SAFETY', abi_type=['forum'])
+class TypeCbSafetyForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3140,8 +3140,8 @@ class TypeSourceOrder(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_source_order'
 
-@Type.add_type('SOURCE_ORDER', abi_type=['standard'])
-class TypeSourceOrderStandard(StandardABIType):
+@Type.add_type('SOURCE_ORDER', abi_type=['forum'])
+class TypeSourceOrderForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3160,12 +3160,12 @@ class TypeSourceOrderOut(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_source_order *'
 
-@Type.add_type('SOURCE_ORDER_OUT', abi_type=['standard'])
-class TypeSourceOrderOutStandard(StandardABIType):
+@Type.add_type('SOURCE_ORDER_OUT', abi_type=['forum'])
+class TypeSourceOrderOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.T_SOURCE_ORDER}((MPI_T_source_order) *{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.T_SOURCE_ORDER}((MPI_T_source_order) *{self.name});']
 
     def type_text(self, enable_count=False):
         type_name = self.mangle_name('MPI_T_source_order')
@@ -3181,8 +3181,8 @@ class TypeEventFreeCBFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_event_free_cb_function'
 
-@Type.add_type('EVENT_FREE_CB_FUNCTION', abi_type=['standard'])
-class TypeEventFreeCBFunctionStandard(StandardABIType):
+@Type.add_type('EVENT_FREE_CB_FUNCTION', abi_type=['forum'])
+class TypeEventFreeCBFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'MPI_T_event_free_cb_function'
@@ -3197,8 +3197,8 @@ class TypeEventDroppedCBFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_event_dropped_cb_function'
 
-@Type.add_type('EVENT_DROPPED_CB_FUNCTION', abi_type=['standard'])
-class TypeEventDroppedCBFunctionStandard(StandardABIType):
+@Type.add_type('EVENT_DROPPED_CB_FUNCTION', abi_type=['forum'])
+class TypeEventDroppedCBFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'MPI_T_event_dropped_cb_function'
@@ -3213,8 +3213,8 @@ class TypeEventCBFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_T_event_cb_function'
 
-@Type.add_type('EVENT_CB_FUNCTION', abi_type=['standard'])
-class TypeEventCBFunctionStandard(StandardABIType):
+@Type.add_type('EVENT_CB_FUNCTION', abi_type=['forum'])
+class TypeEventCBFunctionForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return 'MPI_T_event_cb_function'
@@ -3241,8 +3241,8 @@ class TypeAttrKey(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('ATTR_KEY', abi_type=['standard'])
-class TypeAttrKeyStandard(StandardABIType):
+@Type.add_type('ATTR_KEY', abi_type=['forum'])
+class TypeAttrKeyForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3257,12 +3257,12 @@ class TypeAttrKeyOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('ATTR_KEY_OUT', abi_type=['standard'])
-class TypeAttrKeyOutStandard(StandardABIType):
+@Type.add_type('ATTR_KEY_OUT', abi_type=['forum'])
+class TypeAttrKeyOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ATTR_KEY}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.ATTR_KEY}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -3277,8 +3277,8 @@ class TypeAttrKeyInOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('ATTR_KEY_INOUT', abi_type=['standard'])
-class TypeAttrKeyInOutStandard(StandardABIType):
+@Type.add_type('ATTR_KEY_INOUT', abi_type=['forum'])
+class TypeAttrKeyInOutForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3286,7 +3286,7 @@ class TypeAttrKeyInOutStandard(StandardABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.ATTR_KEY}({self.tmpname});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.ATTR_KEY}({self.tmpname});']
 
     def type_text(self, enable_count=False):
         return f'int *'
@@ -3301,8 +3301,8 @@ class TypeSplitType(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('SPLIT_TYPE', abi_type=['standard'])
-class TypeSplitTypeStandard(StandardABIType):
+@Type.add_type('SPLIT_TYPE', abi_type=['forum'])
+class TypeSplitTypeForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3317,8 +3317,8 @@ class TypeSubarrayOrder(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('SUBARRAY_ORDER', abi_type=['standard'])
-class TypeSubArrayOrderStandard(StandardABIType):
+@Type.add_type('SUBARRAY_ORDER', abi_type=['forum'])
+class TypeSubArrayOrderForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3340,8 +3340,8 @@ class TypeWeightType(Type):
 # TODO this can be made better if we could handle "const int" 
 # better as arg to the converter code.
 #
-@Type.add_type('WEIGHTS', abi_type=['standard'])
-class TypeWeightStandard(StandardABIType):
+@Type.add_type('WEIGHTS', abi_type=['forum'])
+class TypeWeightForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3363,12 +3363,12 @@ class TypeCommCmpOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('COMM_CMP_OUT', abi_type=['standard'])
-class TypeCommCmpOutStandard(StandardABIType):
+@Type.add_type('COMM_CMP_OUT', abi_type=['forum'])
+class TypeCommCmpOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMM_CMP}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.COMM_CMP}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3384,8 +3384,8 @@ class TypeEventInstance(Type):
         return 'MPI_T_event_instance'
 
 
-@Type.add_type('EVENT_INSTANCE', abi_type=['standard'])
-class TypeEventInstanceStandard(StandardABIType):
+@Type.add_type('EVENT_INSTANCE', abi_type=['forum'])
+class TypeEventInstanceForum(ForumABIType):
 
     def type_text(self, enable_count=False):
         return self.mangle_name('MPI_T_event_instance')
@@ -3403,8 +3403,8 @@ class TypeDistributionArray(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'const int {self.name}[]'
 
-@Type.add_type('DISTRIB_ARRAY', abi_type=['standard'])
-class TypeDistributionArrayStandard(StandardABIType):
+@Type.add_type('DISTRIB_ARRAY', abi_type=['forum'])
+class TypeDistributionArrayForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3441,8 +3441,8 @@ class TypeDargsArray(Type):
     def parameter(self, enable_count=False, **kwargs):
         return f'const int {self.name}[]'
 
-@Type.add_type('DARGS_ARRAY', abi_type=['standard'])
-class TypeDargsArrayStandard(StandardABIType):
+@Type.add_type('DARGS_ARRAY', abi_type=['forum'])
+class TypeDargsArrayForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3483,8 +3483,8 @@ class TypeModeBitsOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('MODE_BITS', abi_type=['standard'])
-class TypeModeBitsStandard(StandardABIType):
+@Type.add_type('MODE_BITS', abi_type=['forum'])
+class TypeModeBitsForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3493,12 +3493,12 @@ class TypeModeBitsStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('MODE_BITS_OUT', abi_type=['standard'])
-class TypeModeBitsOutStandard(StandardABIType):
+@Type.add_type('MODE_BITS_OUT', abi_type=['forum'])
+class TypeModeBitsOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.MODE_BITS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.MODE_BITS}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3519,8 +3519,8 @@ class TypeRmaModeBitsOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('RMA_MODE_BITS', abi_type=['standard'])
-class TypeRmaModeBitsStandard(StandardABIType):
+@Type.add_type('RMA_MODE_BITS', abi_type=['forum'])
+class TypeRmaModeBitsForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3529,12 +3529,12 @@ class TypeRmaModeBitsStandard(StandardABIType):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('RMA_MODE_BITS_OUT', abi_type=['standard'])
-class TypeRmaModeBitsOutStandard(StandardABIType):
+@Type.add_type('RMA_MODE_BITS_OUT', abi_type=['forum'])
+class TypeRmaModeBitsOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.RMA_MODE_BITS}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.RMA_MODE_BITS}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3549,8 +3549,8 @@ class TypeWhence(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('WHENCE', abi_type=['standard'])
-class TypeWhenceStandard(StandardABIType):
+@Type.add_type('WHENCE', abi_type=['forum'])
+class TypeWhenceForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3565,12 +3565,12 @@ class TypeCombinerOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('COMBINER_OUT', abi_type=['standard'])
-class TypeCombinerOutStandard(StandardABIType):
+@Type.add_type('COMBINER_OUT', abi_type=['forum'])
+class TypeCombinerOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.COMBINER}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.COMBINER}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3585,8 +3585,8 @@ class TypeWinLock(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('WIN_LOCK', abi_type=['standard'])
-class TypeWinLockStandard(StandardABIType):
+@Type.add_type('WIN_LOCK', abi_type=['forum'])
+class TypeWinLockForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3601,12 +3601,12 @@ class TopoOut(Type):
     def type_text(self, enable_count=False):
         return 'int *'
 
-@Type.add_type('TOPO_OUT', abi_type=['standard'])
-class TopoOutStandard(StandardABIType):
+@Type.add_type('TOPO_OUT', abi_type=['forum'])
+class TopoOutForum(ForumABIType):
 
     @property
     def final_code(self):
-        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToStandard.TOPO}(*{self.name});']
+        return [f'if (NULL != {self.name}) *{self.name} = {ConvertOMPIToForum.TOPO}(*{self.name});']
 
     def type_text(self, enable_count=False):
         return 'int *'
@@ -3621,8 +3621,8 @@ class TypeClass(Type):
     def type_text(self, enable_count=False):
         return 'int'
 
-@Type.add_type('TYPECLASS', abi_type=['standard'])
-class TypeClassStandard(StandardABIType):
+@Type.add_type('TYPECLASS', abi_type=['forum'])
+class TypeClassForum(ForumABIType):
 
     @property
     def init_code(self):
@@ -3637,8 +3637,8 @@ class TypeObjHandle(Type):
     def type_text(self, enable_count=False):
         return 'void *'
 
-@Type.add_type('OBJ_HANDLE', abi_type=['standard'])
-class TypeObjHandleStandard(StandardABIType):
+@Type.add_type('OBJ_HANDLE', abi_type=['forum'])
+class TypeObjHandleForum(ForumABIType):
     """The obj_handle parameter of the MPI_T handle-allocation routines.
 
     Per MPI-5.0 (e.g. p.751), obj_handle is the ADDRESS of a local
@@ -3648,7 +3648,7 @@ class TypeObjHandleStandard(StandardABIType):
     standard requires it be ignored for an MPI_T_BIND_NO_OBJECT
     variable/event).
 
-    Under the standard ABI, the *pointed-to* handle is the ABI-encoded
+    Under the MPI Forum ABI, the *pointed-to* handle is the ABI-encoded
     value that ConvertFuncs.OBJ_HANDLE
     (ompi_convert_abi_obj_handle_intern_obj_handle) knows how to
     translate to an internal pointer.  So: dereference

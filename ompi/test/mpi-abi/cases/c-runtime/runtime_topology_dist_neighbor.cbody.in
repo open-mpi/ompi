@@ -65,7 +65,7 @@ int displs[1] = {0};
 /*
  * Neighborhood alltoallw uses MPI_Aint byte displacements in the ABI
  * header.  Keep this distinct from ordinary Alltoallw below, whose
- * current standard ABI C prototype uses int byte displacements.
+ * current MPI Forum ABI C prototype uses int byte displacements.
  */
 MPI_Aint aint_displs[1] = {0};
 MPI_Datatype types[1] = {MPI_INT};

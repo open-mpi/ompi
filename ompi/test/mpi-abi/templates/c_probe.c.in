@@ -15,7 +15,7 @@
 #include <string.h>
 
 #ifndef MPI_H_ABI
-#error "standard ABI mpi.h was not used"
+#error "MPI Forum ABI mpi.h was not used"
 #endif
 
 @PROLOGUE@

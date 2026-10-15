@@ -18,7 +18,7 @@ import sys
 
 CLASS_IMPLEMENTED = "implemented"
 CLASS_NOT_IMPLEMENTED = "not_implemented"
-CLASS_NOT_IN_STANDARD_ABI = "not_in_standard_abi"
+CLASS_NOT_IN_FORUM_ABI = "not_in_forum_abi"
 CLASS_UNSUPPORTED_BY_BUILD = "unsupported_by_build"
 CLASS_UNSUPPORTED_BY_OPEN_MPI = "unsupported_by_open_mpi"
 
@@ -26,13 +26,13 @@ TEST_NOT_WRITTEN = "test_not_written_yet"
 TEST_NOT_APPLICABLE = "not_applicable"
 TEST_CALLBACK_DEFERRED = "callback_deferred"
 
-SKIP_STANDARD_ABI_DISABLED = "standard_abi_disabled"
+SKIP_FORUM_ABI_DISABLED = "forum_abi_disabled"
 SKIP_OPEN_MPI_TOOLS_UNAVAILABLE = "open_mpi_tools_unavailable"
 FAIL_OPEN_MPI_ABI_CLASSIFICATION_UNCONFIRMED = (
     "open_mpi_abi_classification_unconfirmed"
 )
 SKIP_MPICH_TOOLS_UNAVAILABLE = "mpich_tools_unavailable"
-SKIP_HEADER_UNAVAILABLE = "generated_standard_abi_header_unavailable"
+SKIP_HEADER_UNAVAILABLE = "generated_forum_abi_header_unavailable"
 SKIP_LINKAGE_INSPECTION_UNAVAILABLE = "linkage_inspection_unavailable"
 SKIP_SYMBOL_DIAGNOSTICS_UNAVAILABLE = "symbol_diagnostics_unavailable"
 # Plural: ALL Fortran bindings are disabled (e.g. a C probe that itself
@@ -83,7 +83,7 @@ EXPECTED_CONSTANT_COUNT = 373
 DEFAULT_COMMAND_TIMEOUT = 30
 MIN_EXPECTED_C_HEADER_PROTOTYPES = 1000
 
-# Offset added to Open MPI internal handle indices to form standard ABI
+# Offset added to Open MPI internal handle indices to form MPI Forum ABI
 # integer handle values.  Must match OMPI_ABI_HANDLE_BASE_OFFSET in
 # ompi/mpi/c/abi_converters.h.
 OMPI_ABI_HANDLE_BASE_OFFSET = 16385
@@ -123,7 +123,7 @@ ANSI_RESET = "\033[m"
 VALID_CLASSIFICATIONS = {
     CLASS_IMPLEMENTED,
     CLASS_NOT_IMPLEMENTED,
-    CLASS_NOT_IN_STANDARD_ABI,
+    CLASS_NOT_IN_FORUM_ABI,
     CLASS_UNSUPPORTED_BY_BUILD,
     CLASS_UNSUPPORTED_BY_OPEN_MPI,
 }

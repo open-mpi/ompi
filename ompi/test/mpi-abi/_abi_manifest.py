@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _abi_common import (
-    CLASS_IMPLEMENTED, CLASS_NOT_IMPLEMENTED, CLASS_NOT_IN_STANDARD_ABI,
+    CLASS_IMPLEMENTED, CLASS_NOT_IMPLEMENTED, CLASS_NOT_IN_FORUM_ABI,
     EXPECTED_API_COUNT, EXPECTED_CONSTANT_COUNT, EXPECTED_METADATA_VERSION,
     TEST_CALLBACK_DEFERRED, TEST_NOT_APPLICABLE, TEST_NOT_WRITTEN,
     _read_json)
@@ -115,13 +115,13 @@ def _feature_requirement(family):
     return None
 
 
-def _find_standard_abi_setting(srcdir, builddir):
-    """Detect whether this build configured Open MPI standard ABI support."""
-    override = _env_bool("OMPI_ABI_TEST_STANDARD_ABI")
+def _find_forum_abi_setting(srcdir, builddir):
+    """Detect whether this build configured Open MPI Forum ABI support."""
+    override = _env_bool("OMPI_ABI_TEST_FORUM_ABI")
     if override is not None:
         return {
             "enabled": override,
-            "source": "OMPI_ABI_TEST_STANDARD_ABI",
+            "source": "OMPI_ABI_TEST_FORUM_ABI",
         }
 
     conditional = _conditional_enabled(builddir, "OMPI_FORUM_ABI")
@@ -367,7 +367,7 @@ def _classify_api(srcdir, api_key, api):
 
     if not any((c_expressible, f90_expressible, f08_expressible,
                 mpif_expressible)):
-        classification = CLASS_NOT_IN_STANDARD_ABI
+        classification = CLASS_NOT_IN_FORUM_ABI
         test_status = TEST_NOT_APPLICABLE
     elif _source_exists(srcdir, stem):
         classification = CLASS_IMPLEMENTED
@@ -408,7 +408,7 @@ def _classify_api(srcdir, api_key, api):
 
 
 def _classify_constant(key, constant):
-    """Classify one standard ABI constant metadata entry."""
+    """Classify one MPI Forum ABI constant metadata entry."""
     c_handle = constant.get("handle_types", {}).get("c", {})
     return {
         "kind": "constant",
@@ -476,7 +476,7 @@ def load_metadata(srcdir):
 def build_manifest(srcdir, builddir):
     """Build the full test manifest from metadata and configure output."""
     metadata = load_metadata(srcdir)
-    standard_abi = _find_standard_abi_setting(srcdir, builddir)
+    forum_abi = _find_forum_abi_setting(srcdir, builddir)
     fortran = _detect_fortran_support(builddir)
     optional_features = _detect_optional_features(builddir)
 
@@ -508,7 +508,7 @@ def build_manifest(srcdir, builddir):
             "abi_metadata": metadata["abi_metadata"],
         },
         "configuration": {
-            "standard_abi": standard_abi,
+            "forum_abi": forum_abi,
             "fortran": fortran,
             "optional_features": optional_features,
         },

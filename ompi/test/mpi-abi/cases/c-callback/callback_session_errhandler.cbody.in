@@ -12,7 +12,7 @@
  * Test intent:
  *   Exercise session errhandler callback creation, get/set/call,
  *   callback invocation, predefined-handler restoration, session
- *   finalize, and errhandler cleanup through the standard ABI layer.
+ *   finalize, and errhandler cleanup through the MPI Forum ABI layer.
  */
 session_errhandler_state.session = MPI_SESSION_NULL;
 session_errhandler_state.calls = 0;

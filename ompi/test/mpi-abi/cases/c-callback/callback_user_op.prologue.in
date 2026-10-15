@@ -27,7 +27,7 @@ static struct user_op_state user_op_state;
  * The datatype the callback expects to receive on its next invocation.
  * The body sets this before each reduction so the callback can verify
  * that the ABI op datatype converter (o_datatype_converter) translated
- * OMPI's internal handle to exactly the standard ABI handle the caller
+ * OMPI's internal handle to exactly the MPI Forum ABI handle the caller
  * passed in -- across several predefined types and a derived type.
  */
 static MPI_Datatype user_op_expected_datatype = MPI_DATATYPE_NULL;

@@ -10,7 +10,7 @@
 
 /*
  * Test intent:
- *   The standard-ABI entry points must store and return object names up to the
+ *   The MPI Forum ABI entry points must store and return object names up to the
  *   MPI Forum ABI value of MPI_MAX_OBJECT_NAME, which is larger than Open MPI's
  *   long-standing internal limit (OPAL_MAX_OBJECT_NAME == 64).  Set a name that
  *   is longer than 64 bytes but shorter than MPI_MAX_OBJECT_NAME on a datatype
@@ -25,7 +25,7 @@ if (MPI_SUCCESS != ret) {
     return 1;
 }
 
-/* This probe is compiled against the standard ABI mpi.h, so MPI_MAX_OBJECT_NAME
+/* This probe is compiled against the MPI Forum ABI mpi.h, so MPI_MAX_OBJECT_NAME
  * is the MPI Forum ABI value.  Construct a name that is longer than the
  * historical 64-byte Open MPI limit but still fits (with its terminating null)
  * within MPI_MAX_OBJECT_NAME. */

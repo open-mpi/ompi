@@ -10,7 +10,7 @@
 
 /*
  * Test intent:
- *   Define datatype attribute callbacks that validate the standard ABI
+ *   Define datatype attribute callbacks that validate the MPI Forum ABI
  *   datatype and keyval values passed into user callbacks.  The body
  *   drives duplicate, explicit-delete, and datatype-free paths.
  */

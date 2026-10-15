@@ -12,14 +12,14 @@
 """Unit tests for the MPI binding generator.
 
 The generator under ompi/mpi/bindings/ produces both the Open MPI
-bindings and the MPI Forum (standard) ABI bindings.  A defect in it can
+bindings and the MPI Forum ABI bindings.  A defect in it can
 silently emit malformed bindings that are only caught at compile time --
 or, for a naming/casing mistake, not until run time.
 
 The functions exercised here are pure and deterministic: parameter
 parsing, name mangling, prototype classification, and replacement
 generation.  The rendering tests additionally drive real .c.in templates
-through both the 'ompi' and 'standard' code paths, which is the part most
+through both the 'ompi' and 'forum' code paths, which is the part most
 likely to regress when the ABI type hierarchy is extended.
 
 No MPI installation, launcher, or compiler is required, so this runs
@@ -72,7 +72,7 @@ def make_prototype(name, *param_texts):
 def render(template_name, abi_type):
     """Render a real .c.in template through the generator; return the text.
 
-    Note that this drives c.ompi_abi() / c.standard_abi() directly, which is
+    Note that this drives c.ompi_abi() / c.forum_abi() directly, which is
     the code under test.  The '/* THIS FILE IS GENERATED ... */' banner is
     emitted by c.generate_source() around them, so it is not in this output.
     """
@@ -84,16 +84,16 @@ def render(template_name, abi_type):
     if abi_type == 'ompi':
         c.ompi_abi(base_name, template, out)
     else:
-        c.standard_abi(base_name, template, out)
+        c.forum_abi(base_name, template, out)
     return buf.getvalue()
 
 
 def render_obj_handle_converter():
-    """Render the MPI_T obj_handle standard-ABI dispatcher; return the text.
+    """Render the MPI_T obj_handle MPI Forum ABI dispatcher; return the text.
 
     This drives ABIConverterBuilder.generate_obj_handle_convert_fn() directly,
     which is the converter that MPI_T_Cvar/Event/Pvar_handle_alloc rely on to
-    translate a standard-ABI predefined handle into its internal form.
+    translate an MPI Forum ABI predefined handle into its internal form.
     """
     buf = io.StringIO()
     builder = c.ABIConverterBuilder(util.OutputFile(buf))
@@ -148,7 +148,7 @@ class TestParameterParsing(unittest.TestCase):
 
     def test_construct_forwards_counts_to_the_type(self):
         param, = make_params('STATUS_OUT statuses:incount:*outcount')
-        constructed = param.construct(abi_type='standard')
+        constructed = param.construct(abi_type='forum')
         self.assertEqual(constructed.name, 'statuses')
         self.assertEqual(constructed.count_param, 'incount')
         self.assertEqual(constructed.outcount_param, '*outcount')
@@ -237,7 +237,7 @@ class TestGenerateReplacements(unittest.TestCase):
     def test_covers_the_constants_the_templates_actually_use(self):
         # The body substitution is '@KEY@' -> value, so a constant that a
         # template references but that is missing from MAX_STRING_LEN_CONSTANTS
-        # would be emitted verbatim into the standard ABI source and fail to
+        # would be emitted verbatim into the MPI Forum ABI source and fail to
         # compile (or, worse, resolve to the wrong value).
         self.assertIn('MPI_MAX_ERROR_STRING', consts.MAX_STRING_LEN_CONSTANTS)
         self.assertIn('MPI_MAX_OBJECT_NAME', consts.MAX_STRING_LEN_CONSTANTS)
@@ -248,33 +248,33 @@ class TestTypeRegistry(unittest.TestCase):
 
     def test_both_registries_are_populated(self):
         self.assertTrue(Type.PARAMS_OMPI_ABI)
-        self.assertTrue(Type.PARAMS_STANDARD_ABI)
+        self.assertTrue(Type.PARAMS_FORUM_ABI)
 
     def test_construct_dispatches_per_abi(self):
         ompi_comm = Type.construct('ompi', 'COMM', name='comm')
-        standard_comm = Type.construct('standard', 'COMM', name='comm')
+        forum_comm = Type.construct('forum', 'COMM', name='comm')
         self.assertEqual(ompi_comm.name, 'comm')
-        self.assertEqual(standard_comm.name, 'comm')
-        # The standard ABI has to convert the handle, so it must use a
+        self.assertEqual(forum_comm.name, 'comm')
+        # The MPI Forum ABI has to convert the handle, so it must use a
         # distinct class from the OMPI one.
-        self.assertIsNot(type(ompi_comm), type(standard_comm))
+        self.assertIsNot(type(ompi_comm), type(forum_comm))
 
     def test_construct_rejects_an_unknown_abi(self):
         with self.assertRaises(RuntimeError):
             Type.construct('nonesuch', 'COMM', name='comm')
 
-    def test_standard_abi_types_use_a_tmp_argument(self):
-        # StandardABIType passes a converted temporary to the back end rather
+    def test_forum_abi_types_use_a_tmp_argument(self):
+        # ForumABIType passes a converted temporary to the back end rather
         # than the user's handle; if this regressed, the generated code would
         # hand an ABI handle straight to the OMPI internals.
-        standard_comm = Type.construct('standard', 'COMM', name='comm')
-        self.assertEqual(standard_comm.tmpname, 'comm_tmp')
-        self.assertEqual(standard_comm.argument, 'comm_tmp')
+        forum_comm = Type.construct('forum', 'COMM', name='comm')
+        self.assertEqual(forum_comm.tmpname, 'comm_tmp')
+        self.assertEqual(forum_comm.argument, 'comm_tmp')
 
-    def test_every_standard_type_is_also_an_ompi_type(self):
-        # A type registered only for the standard ABI could never be used by a
+    def test_every_forum_type_is_also_an_ompi_type(self):
+        # A type registered only for the MPI Forum ABI could never be used by a
         # template, since every template is generated for both ABIs.
-        missing = set(Type.PARAMS_STANDARD_ABI) - set(Type.PARAMS_OMPI_ABI)
+        missing = set(Type.PARAMS_FORUM_ABI) - set(Type.PARAMS_OMPI_ABI)
         self.assertEqual(missing, set())
 
 
@@ -293,7 +293,7 @@ class TestTemplateRendering(unittest.TestCase):
 
     def test_renders_for_both_abis(self):
         for template_name, public_name in sorted(self.TEMPLATES.items()):
-            for abi_type in ('ompi', 'standard'):
+            for abi_type in ('ompi', 'forum'):
                 with self.subTest(template=template_name, abi=abi_type):
                     text = render(template_name, abi_type)
                     self.assertTrue(text.strip())
@@ -313,32 +313,32 @@ class TestTemplateRendering(unittest.TestCase):
         self.assertNotIn('MPI_Comm_create_keyval_c',
                          render('comm_create_keyval.c.in', 'ompi'))
 
-    def test_standard_render_uses_the_internal_back_end_name(self):
-        # The standard ABI entry point must call the internal ompi_abi_*
+    def test_forum_render_uses_the_internal_back_end_name(self):
+        # The MPI Forum ABI entry point must call the internal ompi_abi_*
         # shim, never the public MPI_* symbol of the upper layer.
-        text = render('send.c.in', 'standard')
+        text = render('send.c.in', 'forum')
         self.assertIn('ompi_abi_send', text)
 
-    def test_standard_render_emits_callback_wrappers(self):
-        # comm_create_keyval takes user callbacks, which the standard ABI must
+    def test_forum_render_emits_callback_wrappers(self):
+        # comm_create_keyval takes user callbacks, which the MPI Forum ABI must
         # wrap so that the user's function sees ABI handles.
-        text = render('comm_create_keyval.c.in', 'standard')
+        text = render('comm_create_keyval.c.in', 'forum')
         self.assertIn('MPI_Comm_create_keyval', text)
         self.assertIn('_ABI_INTERNAL', text)
 
-    def test_standard_render_uses_the_outcount_as_the_copy_back_bound(self):
+    def test_forum_render_uses_the_outcount_as_the_copy_back_bound(self):
         # MPI_Waitsome writes only *outcount entries, so the ABI status
         # copy-back loop must be bounded by *outcount, not by incount.
-        text = render('waitsome.c.in', 'standard')
+        text = render('waitsome.c.in', 'forum')
         self.assertIn('*outcount', text)
 
 
 class TestObjHandleConverter(unittest.TestCase):
-    """The MPI_T obj_handle standard-ABI dispatcher.
+    """The MPI_T obj_handle MPI Forum ABI dispatcher.
 
     MPI_T_Cvar_handle_alloc / MPI_T_Event_handle_alloc / MPI_T_Pvar_handle_alloc
     accept a generic obj_handle whose concrete type is not known from the
-    signature.  Under the standard ABI that handle arrives as a small integer
+    signature.  Under the MPI Forum ABI that handle arrives as a small integer
     and must be routed to the right per-type converter based on its value.  The
     dispatcher is generated by iterating the shared consts.* predefined-handle
     lists, so every predefined handle those lists know about -- and only those

@@ -12,7 +12,7 @@
  * Test intent:
  *   Exercise retained converted-array lifetime for a nonblocking
  *   collective.  MPI_Ialltoallw takes count, displacement, and datatype
- *   arrays that the standard ABI wrapper must convert before entering
+ *   arrays that the MPI Forum ABI wrapper must convert before entering
  *   Open MPI.  After MPI_Ialltoallw returns, this probe overwrites the
  *   user-side arrays before MPI_Wait.  Completion must still use the
  *   originally supplied values; otherwise the ABI wrapper retained the

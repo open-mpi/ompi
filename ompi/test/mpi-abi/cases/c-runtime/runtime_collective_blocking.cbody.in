@@ -69,7 +69,7 @@ if (MPI_SUCCESS != ret ||
 }
 MPI_Datatype types[2] = {MPI_INT, MPI_INT};
 /*
- * The standard ABI Alltoallw prototype uses int byte displacements
+ * The MPI Forum ABI Alltoallw prototype uses int byte displacements
  * here, not element displacements.  Use explicit byte offsets so the
  * probe checks the ABI signature correctly.
  */

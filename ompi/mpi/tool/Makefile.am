@@ -192,7 +192,7 @@ $(interface_profile_sources): $(OMPI_BINDINGS_GENERATOR)
 	    --output $@ \
 	    c \
 	    source \
-	    standard \
+	    forum \
 	    --mpit \
 	    $<
 endif
