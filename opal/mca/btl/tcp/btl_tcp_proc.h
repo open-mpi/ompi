@@ -67,7 +67,7 @@ typedef struct mca_btl_tcp_proc_t mca_btl_tcp_proc_t;
 OBJ_CLASS_DECLARATION(mca_btl_tcp_proc_t);
 
 mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status);
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name);
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name, int *status);
 mca_btl_tcp_proc_t *mca_btl_tcp_proc_peek(const opal_process_name_t *name);
 mca_btl_base_endpoint_t *mca_btl_tcp_proc_find_endpoint(mca_btl_tcp_proc_t *,
                                                         mca_btl_tcp_module_t *);
