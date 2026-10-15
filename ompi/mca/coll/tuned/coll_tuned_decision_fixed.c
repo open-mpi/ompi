@@ -1879,6 +1879,7 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, size_t scount,
      *  {3, "ring"},
      *  {4, "neighbor"},
      *  {5, "two_proc"},
+     *  {6, "sparbit"},
      */
     if (communicator_size == 2) {
         if (per_rank_dsize < 2048) {
@@ -1905,18 +1906,51 @@ int ompi_coll_tuned_allgatherv_intra_dec_fixed(const void *sbuf, size_t scount,
             alg = 4;
         }
     } else if (communicator_size < 16) {
+        /* Bruck's large indexed messages serialize here as they do on 16-31 ranks (see
+         * below). Device buffers do better with neighbor exchange from 1 KB per rank, under
+         * both the BTL and the MTL. For host buffers Bruck stays ahead only below 4 KB;
+         * above it sparbit is faster, except at 16-64 KB where neighbor exchange is. Neighbor
+         * exchange needs an even number of ranks and becomes ring otherwise, so odd sizes
+         * take sparbit. */
+        int dev_id;
+        uint64_t flags;
+        bool even = (0 == communicator_size % 2);
+
         if (per_rank_dsize < 1024) {
             alg = 1;
-        } else {
+        } else if (opal_accelerator.check_addr(rbuf, &dev_id, &flags) > 0) {
+            alg = even ? 4 : 6;
+        } else if (per_rank_dsize < 4096) {
             alg = 2;
+        } else if (even && per_rank_dsize >= 16384 && per_rank_dsize < 65536) {
+            alg = 4;
+        } else {
+            alg = 6;
         }
     } else if (communicator_size < 32) {
         if (per_rank_dsize < 128) {
             alg = 1;
-        } else if (per_rank_dsize < 262144) {
+        } else if (per_rank_dsize < 2048) {
             alg = 2;
         } else {
-            alg = 3;
+            /* Bruck's later rounds move many blocks at once as one indexed message. Under ob1
+             * those large non-contiguous rendezvous serialize across the ranks, whatever the
+             * btl. Neighbor exchange sends two contiguous blocks a round and avoids that; it
+             * is also faster from 32 KB through the MTL, and it falls back to ring for an odd
+             * number of ranks. Sparbit, which also sends contiguous blocks but in log(p)
+             * rounds, is faster still for host buffers except around 32 KB. Device buffers
+             * keep Bruck below 8 KB and take neighbor exchange above, as sparbit is slower for
+             * them at several sizes. */
+            int dev_id;
+            uint64_t flags;
+
+            if (opal_accelerator.check_addr(rbuf, &dev_id, &flags) > 0) {
+                alg = (per_rank_dsize < 8192) ? 2 : 4;
+            } else if (per_rank_dsize >= 32768 && per_rank_dsize < 65536) {
+                alg = 4;
+            } else {
+                alg = 6;
+            }
         }
     } else if (communicator_size < 64) {
         if (per_rank_dsize < 256) {
