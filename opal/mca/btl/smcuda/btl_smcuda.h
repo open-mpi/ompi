@@ -201,6 +201,8 @@ struct mca_btl_smcuda_component_t {
     char *sm_ctl_file_name;
     char *sm_rndv_file_name;
 
+    int smcuda_enable;
+
     int cuda_ipc_verbose;
     int cuda_ipc_output;
     int use_cuda_ipc;

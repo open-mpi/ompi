@@ -465,6 +465,19 @@ several GPUs may be equidistant.
 Run-time tuning and debugging
 -----------------------------
 
+Enabling the ``smcuda`` BTL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``smcuda`` BTL is disabled by default: even when the component is
+built and selected, it returns early at startup and creates no
+shared-memory backing files unless it has been explicitly enabled.  To
+use the ``smcuda`` BTL, set the ``btl_smcuda_enable`` MCA parameter to
+``1``:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca pml ob1 --mca btl self,smcuda --mca btl_smcuda_enable 1 ...
+
 CUDA IPC in the shared-memory BTL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

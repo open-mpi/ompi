@@ -146,6 +146,16 @@ static int mca_btl_smcuda_component_verify(void)
 
 static int smcuda_register(void)
 {
+    mca_btl_smcuda_component.smcuda_enable = 0;
+    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
+                                           "enable",
+                                           "[0|1] Enable/Disable the smcuda BTL component; "
+                                           "must be set to 1 to use the component",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &mca_btl_smcuda_component.smcuda_enable);
+
     /* register SM component parameters */
     mca_btl_smcuda_component.mpool_min_size = 134217728;
     (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version, "min_size",
@@ -253,6 +263,10 @@ static int smcuda_register(void)
 
 static int mca_btl_smcuda_component_open(void)
 {
+    if (!mca_btl_smcuda_component.smcuda_enable) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
     if (OPAL_SUCCESS != mca_btl_smcuda_component_verify()) {
         return OPAL_ERROR;
     }
