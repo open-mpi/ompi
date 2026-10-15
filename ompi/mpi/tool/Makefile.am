@@ -52,7 +52,7 @@ endif
 
 #
 # the following must be processed by binding framework
-# to generated both ompi and standard abi variants
+# to generated both ompi and MPI Forum ABI variants
 #
 prototype_sources = \
 	category_changed.c.in \
@@ -208,7 +208,7 @@ if OPAL_DEVEL_BUILD
 CLEANFILES += *_generated.c 
 endif
 
-if OMPI_STANDARD_ABI
+if OMPI_FORUM_ABI
 include Makefile_abi.include
 endif
 

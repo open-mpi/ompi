@@ -78,7 +78,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             payload.errhandler_handle = (uint64_t) (uintptr_t) errhandler;
             payload.object_handle = (uint64_t) (uintptr_t) mpi_object;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle values -- the
+            /* TODO ABI (#13280): set the MPI Forum ABI handle values -- the
                MPI_Errhandler, and mpi_object converted per object_type
                (MPI_Comm / MPI_Win / MPI_File / MPI_Session). */
             payload.errhandler_handle = 0;

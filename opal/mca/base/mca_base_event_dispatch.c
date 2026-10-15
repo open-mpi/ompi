@@ -472,7 +472,7 @@ int mca_base_event_handle_alloc(int event_index, void *obj_handle,
        reject a missing object.
        XXX ABI (#13280): under the Open MPI ABI the MPI handle IS the internal
        object pointer the producer raises with, so a single deref suffices; the
-       MPI Standard ABI path must convert its integer handle to that internal
+       MPI Forum ABI path must convert its integer handle to that internal
        pointer here. */
     void *bound_obj = NULL;
     if (MCA_BASE_VAR_BIND_NO_OBJECT != event->bind) {
