@@ -277,15 +277,15 @@ AC_ARG_ENABLE([standard-abi],
                     [Enable building the MPI Forum ABI library (default: enabled)])])
 if test "$enable_standard_abi" = "no"; then
     AC_MSG_RESULT([no])
-    ompi_standard_abi=0
+    ompi_build_standard_abi=0
 else
     AC_MSG_RESULT([yes])
-    ompi_standard_abi=1
+    ompi_build_standard_abi=1
 fi
-AC_DEFINE_UNQUOTED([OMPI_STANDARD_ABI],[$ompi_standard_abi],
+AC_DEFINE_UNQUOTED([OMPI_BUILD_STANDARD_ABI],[$ompi_build_standard_abi],
                    [Whether we want to build the MPI Forum ABI library])
-AM_CONDITIONAL(OMPI_STANDARD_ABI,[test $ompi_standard_abi = 1])
-AS_IF([test $ompi_standard_abi -eq 1],
+AM_CONDITIONAL(OMPI_BUILD_STANDARD_ABI,[test $ompi_build_standard_abi = 1])
+AS_IF([test $ompi_build_standard_abi -eq 1],
       [gen_abi="yes"],
       [gen_abi="no"])
 OPAL_SUMMARY_ADD([Miscellaneous], [MPI Forum ABI support], [], [$gen_abi])
@@ -316,5 +316,5 @@ AC_DEFINE_UNQUOTED([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi],
                    [Whether we are building the traditional Open MPI ABI library])
 AC_SUBST([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi])
 AM_CONDITIONAL([OMPI_BUILD_OMPI_ABI], [test $ompi_build_ompi_abi = 1])
-AM_CONDITIONAL([OMPI_ABI_ONLY], [test $ompi_build_ompi_abi = 0 && test $ompi_standard_abi = 1])
+AM_CONDITIONAL([OMPI_ABI_ONLY], [test $ompi_build_ompi_abi = 0 && test $ompi_build_standard_abi = 1])
 ])dnl

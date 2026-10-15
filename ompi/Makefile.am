@@ -134,7 +134,7 @@ lib_LTLIBRARIES = libopen_mpi.la
 if OMPI_BUILD_OMPI_ABI
 lib_LTLIBRARIES += lib@OMPI_LIBMPI_NAME@.la
 endif
-if OMPI_STANDARD_ABI
+if OMPI_BUILD_STANDARD_ABI
 lib_LTLIBRARIES += libmpi_abi.la
 endif
 

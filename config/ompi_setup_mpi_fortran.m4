@@ -37,7 +37,7 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
 
     # In ABI-only mode, we don't build Fortran bindings but still need
     # Fortran datatype awareness for internal MPI datatype handling
-    AS_IF([test "$ompi_build_ompi_abi" = "0" && test "$ompi_standard_abi" = "1"], [
+    AS_IF([test "$ompi_build_ompi_abi" = "0" && test "$ompi_build_standard_abi" = "1"], [
         # Force no Fortran bindings to be built or installed
         OMPI_MIN_REQUIRED_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
         OMPI_TRY_FORTRAN_BINDINGS=$OMPI_FORTRAN_NO_BINDINGS
