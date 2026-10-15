@@ -93,6 +93,9 @@ PROTOTYPE VOID alltoallw_init(BUFFER_ASYNC x1, COUNT_ARRAY sendcounts,
         }
         ompi_coll_base_append_array_to_release(c_request, c_recvtypes);
         ompi_coll_base_add_release_arrays_cb(c_request);
+    } else {
+        free(c_sendtypes);
+        free(c_recvtypes);
     }
 
     OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(sendcounts, tmp_sendcounts, c_request, c_ierr, idx);
