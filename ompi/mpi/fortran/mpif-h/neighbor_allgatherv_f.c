@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/mpi/fortran/base/fortran_base_topo_neighbors.h"
 
 #if OMPI_BUILD_MPI_PROFILING
 #if OPAL_HAVE_WEAK_ALIASES
@@ -73,7 +75,7 @@ void ompi_neighbor_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *se
 {
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype, c_recvtype;
-    int size, ierr_c;
+    int indegree, outdegree, ierr_c;
     OMPI_ARRAY_NAME_DECL(recvcounts);
     OMPI_ARRAY_NAME_DECL(displs);
 
@@ -81,9 +83,14 @@ void ompi_neighbor_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *se
     c_sendtype = PMPI_Type_f2c(*sendtype);
     c_recvtype = PMPI_Type_f2c(*recvtype);
 
-    PMPI_Comm_size(c_comm, &size);
-    OMPI_ARRAY_FINT_2_INT(recvcounts, size);
-    OMPI_ARRAY_FINT_2_INT(displs, size);
+    ierr_c = ompi_fortran_neighbor_count(c_comm, &indegree, &outdegree);
+    if (MPI_SUCCESS != ierr_c) {
+        if (NULL != ierr) *ierr = OMPI_INT_2_FINT(ierr_c);
+        return;
+    }
+
+    OMPI_ARRAY_FINT_2_INT(recvcounts, indegree);
+    OMPI_ARRAY_FINT_2_INT(displs, indegree);
 
     sendbuf = (char *) OMPI_F2C_IN_PLACE(sendbuf);
     sendbuf = (char *) OMPI_F2C_BOTTOM(sendbuf);

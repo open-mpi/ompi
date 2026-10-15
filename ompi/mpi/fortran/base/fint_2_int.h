@@ -41,7 +41,6 @@
   #define OMPI_SINGLE_NAME_CONVERT(a) a
   #define OMPI_INT_2_FINT(a) a
   #define OMPI_FINT_2_INT(a) a
-  #define OMPI_PFINT_2_PINT(a) a
   #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n)
   #define OMPI_ARRAY_FINT_2_INT(in, n)
   #define OMPI_2_DIM_ARRAY_FINT_2_INT(in, n, dim2)
@@ -59,7 +58,6 @@
   #define OMPI_SINGLE_NAME_CONVERT(a) &c_##a
   #define OMPI_INT_2_FINT(a) a
   #define OMPI_FINT_2_INT(a) (int) (a)
-  #define OMPI_PFINT_2_PINT(a) (int *) (a)
 
   /* This is for OUT parameters. Does only alloc */
   #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) \
@@ -119,7 +117,6 @@
   #define OMPI_SINGLE_NAME_CONVERT(a) &c_##a
   #define OMPI_INT_2_FINT(a) (MPI_Fint)(a)
   #define OMPI_FINT_2_INT(a) (a)
-  #define OMPI_PFINT_2_PINT(a) a
 
   /* This is for OUT parameters. Does only alloc */
   #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) \
