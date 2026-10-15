@@ -22,7 +22,7 @@
  * Copyright (c) 2016-2017 IBM Corporation.  All rights reserved.
  * Copyright (c) 2017      FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2020      BULL S.A.S. All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +45,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_object.h"
+#include "opal/mca/threads/mutex.h"
 #include "ompi/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/coll/coll.h"
@@ -208,14 +209,87 @@ static void mca_coll_base_print_component_names(ompi_communicator_t *comm)
 }
 
 /*
+ * One in-flight mca_coll_base_comm_select().  Each invocation registers a
+ * record held on its own stack, so a parent is reachable for exactly as
+ * long as the call that knows it.
+ *
+ * Keyed on the communicator rather than the thread, since MPI_Comm_idup
+ * selects from wherever the request is progressed.  Selections nest and
+ * can run concurrently, so records retire out of order and each
+ * invocation unlinks its own.
+ */
+struct mca_coll_base_selection_t {
+    ompi_communicator_t *comm;
+    ompi_communicator_t *parent;
+    struct mca_coll_base_selection_t *next;
+};
+
+static opal_mutex_t mca_coll_base_selection_lock = OPAL_MUTEX_STATIC_INIT;
+static struct mca_coll_base_selection_t *mca_coll_base_selections = NULL;
+
+static void mca_coll_base_selection_register(struct mca_coll_base_selection_t *sel,
+                                             ompi_communicator_t *comm,
+                                             ompi_communicator_t *parent)
+{
+    sel->comm = comm;
+    sel->parent = parent;
+    sel->next = NULL;
+
+    /* No parent, nothing to publish: a lookup miss reports the same. */
+    if (NULL == parent) {
+        return;
+    }
+
+    OPAL_THREAD_LOCK(&mca_coll_base_selection_lock);
+    sel->next = mca_coll_base_selections;
+    mca_coll_base_selections = sel;
+    OPAL_THREAD_UNLOCK(&mca_coll_base_selection_lock);
+}
+
+static void mca_coll_base_selection_deregister(struct mca_coll_base_selection_t *sel)
+{
+    if (NULL == sel->parent) {
+        return;
+    }
+
+    OPAL_THREAD_LOCK(&mca_coll_base_selection_lock);
+    for (struct mca_coll_base_selection_t **pp = &mca_coll_base_selections;
+         NULL != *pp; pp = &(*pp)->next) {
+        if (sel == *pp) {
+            *pp = sel->next;
+            break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_coll_base_selection_lock);
+}
+
+ompi_communicator_t *mca_coll_base_comm_select_parent(ompi_communicator_t *comm)
+{
+    ompi_communicator_t *parent = NULL;
+
+    OPAL_THREAD_LOCK(&mca_coll_base_selection_lock);
+    for (struct mca_coll_base_selection_t *sel = mca_coll_base_selections;
+         NULL != sel; sel = sel->next) {
+        if (comm == sel->comm) {
+            parent = sel->parent;
+            break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_coll_base_selection_lock);
+
+    return parent;
+}
+
+/*
  * This function is called at the initialization time of every
  * communicator.  It is used to select which coll component will be
  * active for a given communicator.
  *
  * This selection logic is not for the weak.
  */
-int mca_coll_base_comm_select(ompi_communicator_t * comm)
+int mca_coll_base_comm_select(ompi_communicator_t * comm, ompi_communicator_t * parent)
 {
+    struct mca_coll_base_selection_t selection;
     opal_list_t *selectable;
     opal_list_item_t *item;
     char* which_func = "unknown";
@@ -231,6 +305,9 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     comm->c_coll = (mca_coll_base_comm_coll_t*)calloc(1, sizeof(mca_coll_base_comm_coll_t));
     comm->c_coll->coll_revoke_local = mca_coll_base_revoke_local;
 
+    /* Publish the parent for the duration of query and enable. */
+    mca_coll_base_selection_register(&selection, comm, parent);
+
     opal_output_verbose(10, ompi_coll_base_framework.framework_output,
                         "coll:base:comm_select: Checking all available modules");
     selectable = check_components(&ompi_coll_base_framework.framework_components, comm);
@@ -240,6 +317,7 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
        collective modules available, then print error and return. */
     if (NULL == selectable) {
         /* There's no modules available */
+        mca_coll_base_selection_deregister(&selection);
         opal_show_help("help-mca-coll-base.txt",
                        "comm-select:none-available", true);
         return OMPI_ERROR;
@@ -276,6 +354,9 @@ int mca_coll_base_comm_select(ompi_communicator_t * comm)
     }
     /* Done with the list from the check_components() call so release it. */
     OBJ_RELEASE(selectable);
+
+    /* Every module is queried and enabled; stop publishing the parent. */
+    mca_coll_base_selection_deregister(&selection);
 
     /* check to make sure no NULLs */
     if (CHECK_NULL(which_func, comm, allgather) ||
