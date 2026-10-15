@@ -48,6 +48,12 @@ functions it offers:
   datatypes corresponding to short / half-precision floating point C
   and C++ language types, when such types are available.
 
+* :doc:`xcallbacks </features/extended-callbacks>`: Provides the
+  ``MPIX_Op_create_x``, ``MPIX_*_create_errhandler_x``, and
+  ``MPIX_*_create_keyval_x`` APIs for attaching extra state and
+  destructor callbacks to MPI objects, enabling external language
+  bindings (particularly Fortran) to manage per-object context.
+
 * :doc:`example </features/extension-example>`: A non-functional
   extension whose only purpose is to demonstrate how to create a new
   Open MPI extension.
@@ -57,6 +63,7 @@ functions it offers:
 
    extension-affinity
    extension-shortfloat
+   extended-callbacks
    extension-example
 
 Compiling the extensions
