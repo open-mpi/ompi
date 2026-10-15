@@ -154,6 +154,23 @@ int mca_btl_sm_get(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint
                    void *cbdata);
 
 /**
+ * Set up the module's state for gets from device buffers.
+ */
+int mca_btl_sm_async_gets_init(mca_btl_sm_t *sm_btl);
+
+/**
+ * Complete gets whose accelerator copy has finished.
+ *
+ * @returns the number of gets completed
+ */
+int mca_btl_sm_progress_async_gets(mca_btl_sm_t *sm_btl);
+
+/**
+ * Release the accelerator stream and events used by gets.
+ */
+void mca_btl_sm_async_gets_fini(mca_btl_sm_t *sm_btl);
+
+/**
  * Allocate a segment.
  *
  * @param btl (IN)      BTL module
