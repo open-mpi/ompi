@@ -1411,10 +1411,15 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( const void *sbuf, void *rbuf
                 alg = 3;
             }
         } else if (communicator_size < 32) {
+            /* Ring moves a 1/p block per step over p-1 steps; butterfly and recursive halving,
+             * in log(p) steps, are faster than ring from 256 KB on (once their temporary buffers
+             * are kept across calls): butterfly up to 2 MB, recursive halving above. */
             if (total_dsize < 262144) {
                 alg = 2;
+            } else if (total_dsize < 2097152) {
+                alg = 4;
             } else {
-                alg = 3;
+                alg = 2;
             }
         } else if (communicator_size < 64) {
             if (total_dsize < 64) {
