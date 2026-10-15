@@ -10,8 +10,8 @@ how Open MPI's plugins are usually unrelated to each other).  These
 extensions provide new functions and/or constants that are available
 to MPI applications.
 
-.. warning:: These extensions are neither standard nor portable to
-   other MPI implementations!
+.. warning:: These extensions are not standard and may not be portable
+   to other MPI implementations.
 
    They are a mechanism for the Open MPI developer community to
    provide new functionality to users, typically before it becomes
