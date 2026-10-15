@@ -109,6 +109,12 @@ Open MPI version v6.1.0
   ``smcuda`` BTL will now wait for the connection-info modex during
   ``MPI_Init`` again.  ``--mca btl ^smcuda`` restores the deferred wire-up.
 
+- The ``btl/smcuda`` component is now disabled by default and must be
+  explicitly enabled with the new ``btl_smcuda_enable`` MCA parameter
+  (set it to ``1``).  When not enabled, the component returns early at
+  startup and no longer creates its shared-memory backing files, which
+  previously happened even when ``smcuda`` was not selected.
+
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
   bridge such as ``docker0``, which is commonly ``172.17.0.1`` on every

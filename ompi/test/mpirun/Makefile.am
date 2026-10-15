@@ -185,14 +185,14 @@ check-mpirun:
 	            | grep -q btl_smcuda_flags; then \
 	        echo "=== async modex wire-up, smcuda only ==="; \
 	        run env $(ASYNC_MODEX) \
-	            $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda \
+	            $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda --mca btl_smcuda_enable 1 \
 	            ./async_modex_wireup; \
 	        echo "=== async modex wire-up, direct modex, smcuda only ==="; \
 	        run env $(DIRECT_MODEX) \
-	            $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda \
+	            $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda --mca btl_smcuda_enable 1 \
 	            ./async_modex_wireup; \
 	        echo "=== ANY_SOURCE one-way, smcuda only ==="; \
-	        run $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda \
+	        run $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda --mca btl_smcuda_enable 1 \
 	            ./any_source_oneway; \
 	    else \
 	        echo "SKIP: btl/smcuda is not built"; \
@@ -239,7 +239,7 @@ check-mpirun:
 	    if $(OMPI_INFO) --param btl smcuda --level 9 2>/dev/null \
 	            | grep -q btl_smcuda_flags; then \
 	        echo "=== wireup stress rma, smcuda only ==="; \
-	        run $(oversub_runner) --mca pml ob1 --mca btl self,smcuda \
+	        run $(oversub_runner) --mca pml ob1 --mca btl self,smcuda --mca btl_smcuda_enable 1 \
 	            ./wireup_stress rma; \
 	    fi; \
 	    $(MPICC) -g "$(srcdir)/session_first_touch.c" -o session_first_touch -lpthread; \

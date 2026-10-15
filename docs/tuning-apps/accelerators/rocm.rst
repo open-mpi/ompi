@@ -92,12 +92,14 @@ in a single node scenario:
   support single-copy data transfers for host-memory through
   e.g. ``xpmem`` or ``cma``.  Hence, the performance of host-memory
   based data transfers might be lower than with the default ``btl/sm``
-  component. Example:
+  component.  The ``btl/smcuda`` component is disabled by default and
+  must be explicitly enabled by setting the ``btl_smcuda_enable`` MCA
+  parameter to ``1``.  Example:
 
 .. code-block:: sh
 
   # Use btl/smcuda instead of btl/sm for communication
-  shell$ mpirun --mca btl smcuda,tcp,self -n 64 ./<my_executable>
+  shell$ mpirun --mca btl smcuda,tcp,self --mca btl_smcuda_enable 1 -n 64 ./<my_executable>
 
 /////////////////////////////////////////////////////////////////////////
 
