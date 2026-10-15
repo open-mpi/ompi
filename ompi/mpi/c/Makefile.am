@@ -41,6 +41,14 @@
 
 include $(top_srcdir)/Makefile.ompi-rules
 
+# The "_ompi_generated.c" / "_abi_generated.c" suffixes name every C binding
+# emitted by bindings.py (see the .c.in_ompi_generated.c suffix rule below).
+# These suffixes are load-bearing beyond this file: the configure-time probe
+# in config/ompi_configure_options.m4 globs the tree for "*_generated.c"
+# to decide whether pregenerated sources exist (and thus whether Python is
+# required to build), and the MAINTAINERCLEANFILES / CLEANFILES "*_generated.c"
+# globs rely on them too.  If you change a suffix, update those sites in
+# lockstep.
 SUFFIXES= _ompi_generated.c _abi_generated.c .c.in .c.in_obc .c.in_nbc
 
 # The C bindings are compiled exactly once: the profiling compile emits both
