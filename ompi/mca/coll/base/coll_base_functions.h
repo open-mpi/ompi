@@ -519,6 +519,11 @@ struct mca_coll_base_comm_t {
 
     /* in-order binary tree (root of the in-order binary tree is rank 0) */
     ompi_coll_tree_t *cached_in_order_bintree;
+
+    /* scratch buffers kept across calls, see ompi_coll_base_scratch_get() */
+    void *scratch[2];
+    size_t scratch_size[2];
+    bool scratch_busy[2];
 };
 typedef struct mca_coll_base_comm_t mca_coll_base_comm_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_coll_base_comm_t);

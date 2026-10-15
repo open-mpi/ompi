@@ -261,6 +261,19 @@ int ompi_coll_base_file_peek_next_char_is(FILE *fptr, int *fileline, int expecte
 int ompi_coll_base_file_peek_next_char_isdigit(FILE *fptr);
 
 /* Miscellaneous function */
+/**
+ * Scratch memory for a blocking collective, kept with the communicator.
+ *
+ * A temporary buffer malloc'ed and freed on every call is handed back to the system once it is
+ * large enough (an mmap, or a heap trim), and the next call then faults it in again and has its
+ * memory registered again by the network. Two slots are kept per communicator, each up to
+ * OMPI_COLL_BASE_SCRATCH_MAX bytes; anything else (a larger size, a slot already in use, a
+ * module without base data) is a plain malloc. Release with ompi_coll_base_scratch_put().
+ */
+#define OMPI_COLL_BASE_SCRATCH_MAX (32 * 1024 * 1024)
+void *ompi_coll_base_scratch_get(mca_coll_base_module_t *module, int slot, size_t size);
+void ompi_coll_base_scratch_put(mca_coll_base_module_t *module, int slot, void *buf);
+
 const char* mca_coll_base_colltype_to_str(int collid);
 int mca_coll_base_name_to_colltype(const char* name);
 

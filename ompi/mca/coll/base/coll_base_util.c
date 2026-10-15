@@ -673,3 +673,33 @@ const char* mca_coll_base_colltype_to_str(int collid)
     }
     return colltype_translation_table[collid];
 }
+
+void *ompi_coll_base_scratch_get(mca_coll_base_module_t *module, int slot, size_t size)
+{
+    mca_coll_base_comm_t *data = (NULL == module) ? NULL : module->base_data;
+
+    if (NULL == data || size > OMPI_COLL_BASE_SCRATCH_MAX || data->scratch_busy[slot]) {
+        return malloc(size);
+    }
+    if (NULL == data->scratch[slot] || data->scratch_size[slot] < size) {
+        free(data->scratch[slot]);
+        data->scratch[slot] = malloc(0 < size ? size : 1);
+        data->scratch_size[slot] = (NULL == data->scratch[slot]) ? 0 : size;
+        if (NULL == data->scratch[slot]) {
+            return NULL;
+        }
+    }
+    data->scratch_busy[slot] = true;
+    return data->scratch[slot];
+}
+
+void ompi_coll_base_scratch_put(mca_coll_base_module_t *module, int slot, void *buf)
+{
+    mca_coll_base_comm_t *data = (NULL == module) ? NULL : module->base_data;
+
+    if (NULL != data && NULL != buf && buf == data->scratch[slot]) {
+        data->scratch_busy[slot] = false;
+        return;
+    }
+    free(buf);
+}

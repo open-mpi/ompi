@@ -102,7 +102,7 @@ ompi_coll_base_reduce_scatter_block_basic_linear(const void *sbuf, void *rbuf, s
         if (0 == rank) {
             /* temporary receive buffer.  See coll_basic_reduce.c for
                details on sizing */
-            recv_buf_free = (char*) malloc(span);
+            recv_buf_free = (char*) ompi_coll_base_scratch_get(module, 0, span);
             if (NULL == recv_buf_free) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
@@ -152,7 +152,7 @@ ompi_coll_base_reduce_scatter_block_basic_linear(const void *sbuf, void *rbuf, s
         if (0 == rank) {
             /* temporary receive buffer.  See coll_basic_reduce.c for
                details on sizing */
-            recv_buf_free = (char*) malloc(span);
+            recv_buf_free = (char*) ompi_coll_base_scratch_get(module, 0, span);
             if (NULL == recv_buf_free) {
                 err = OMPI_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
@@ -175,7 +175,7 @@ ompi_coll_base_reduce_scatter_block_basic_linear(const void *sbuf, void *rbuf, s
     }
 
  cleanup:
-    if (NULL != recv_buf_free) free(recv_buf_free);
+    ompi_coll_base_scratch_put(module, 0, recv_buf_free);
 
     return err;
 }
@@ -230,8 +230,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     }
     ompi_datatype_type_extent(dtype, &extent);
     span = opal_datatype_span(&dtype->super, totalcount, &gap);
-    tmpbuf_raw = malloc(span);
-    tmprecv_raw = malloc(span);
+    tmpbuf_raw = ompi_coll_base_scratch_get(module, 0, span);
+    tmprecv_raw = ompi_coll_base_scratch_get(module, 1, span);
     if (NULL == tmpbuf_raw || NULL == tmprecv_raw) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
@@ -369,10 +369,8 @@ cleanup_and_return:
         ompi_datatype_destroy(&dtypesend);
     if (dtyperecv)
         ompi_datatype_destroy(&dtyperecv);
-    if (tmpbuf_raw)
-        free(tmpbuf_raw);
-    if (tmprecv_raw)
-        free(tmprecv_raw);
+    ompi_coll_base_scratch_put(module, 0, tmpbuf_raw);
+    ompi_coll_base_scratch_put(module, 1, tmprecv_raw);
     return err;
 }
 
@@ -432,8 +430,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     totalcount = comm_size * (size_t)rcount;
     ompi_datatype_type_extent(dtype, &extent);
     span = opal_datatype_span(&dtype->super, totalcount, &gap);
-    tmpbuf_raw = malloc(span);
-    tmprecv_raw = malloc(span);
+    tmpbuf_raw = ompi_coll_base_scratch_get(module, 0, span);
+    tmprecv_raw = ompi_coll_base_scratch_get(module, 1, span);
     if (NULL == tmpbuf_raw || NULL == tmprecv_raw) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
@@ -577,10 +575,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     }
 
 cleanup_and_return:
-    if (tmpbuf_raw)
-        free(tmpbuf_raw);
-    if (tmprecv_raw)
-        free(tmprecv_raw);
+    ompi_coll_base_scratch_put(module, 0, tmpbuf_raw);
+    ompi_coll_base_scratch_put(module, 1, tmprecv_raw);
     return err;
 }
 
@@ -672,8 +668,8 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
     totalcount = comm_size * (size_t)rcount;
     ompi_datatype_type_extent(dtype, &extent);
     span = opal_datatype_span(&dtype->super, totalcount, &gap);
-    tmpbuf[0] = malloc(span);
-    tmpbuf[1] = malloc(span);
+    tmpbuf[0] = ompi_coll_base_scratch_get(module, 0, span);
+    tmpbuf[1] = ompi_coll_base_scratch_get(module, 1, span);
     if (NULL == tmpbuf[0] || NULL == tmpbuf[1]) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
@@ -844,10 +840,8 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
     }
 
 cleanup_and_return:
-    if (tmpbuf[0])
-        free(tmpbuf[0]);
-    if (tmpbuf[1])
-        free(tmpbuf[1]);
+    ompi_coll_base_scratch_put(module, 0, tmpbuf[0]);
+    ompi_coll_base_scratch_put(module, 1, tmpbuf[1]);
     return err;
 }
 
@@ -910,8 +904,8 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     totalcount = comm_size * (size_t)rcount;
     ompi_datatype_type_extent(dtype, &extent);
     span = opal_datatype_span(&dtype->super, totalcount, &gap);
-    tmpbuf[0] = malloc(span);
-    tmpbuf[1] = malloc(span);
+    tmpbuf[0] = ompi_coll_base_scratch_get(module, 0, span);
+    tmpbuf[1] = ompi_coll_base_scratch_get(module, 1, span);
     if (NULL == tmpbuf[0] || NULL == tmpbuf[1]) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
@@ -970,9 +964,7 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
 cleanup_and_return:
-    if (tmpbuf[0])
-        free(tmpbuf[0]);
-    if (tmpbuf[1])
-        free(tmpbuf[1]);
+    ompi_coll_base_scratch_put(module, 0, tmpbuf[0]);
+    ompi_coll_base_scratch_put(module, 1, tmpbuf[1]);
     return err;
 }

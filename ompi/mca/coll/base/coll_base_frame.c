@@ -109,6 +109,10 @@ coll_base_comm_destruct(mca_coll_base_comm_t *data)
     if (data->cached_in_order_bintree) { /* destroy in order bintree if defined */
         ompi_coll_base_topo_destroy_tree (&data->cached_in_order_bintree);
     }
+    for (int i = 0; i < 2; ++i) {
+        free(data->scratch[i]);
+        data->scratch[i] = NULL;
+    }
 }
 
 OBJ_CLASS_INSTANCE(mca_coll_base_comm_t, opal_object_t,
