@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#include <limits.h>
+
 #include "opal/util/output.h"
 
 #include "ompi/op/op.h"
@@ -681,6 +684,34 @@ static void OP_CONCAT(ompi_op_avx_2buff_##op##_double,PREPEND)(const void *_in, 
     OP_AVX_FLOAT_FUNC(add)
     OP_AVX_DOUBLE_FUNC(add)
 
+/*
+ * A complex value has the same representation and alignment as an array
+ * of two values of the corresponding real type (C11 6.2.5p13), and a
+ * complex sum is componentwise, so summing count complex values is the
+ * same computation as summing 2 * count reals.  Reuse the real kernels
+ * above instead of vectorizing this a second time.  The doubled count
+ * does not necessarily fit in an int, hence the chunking.
+ */
+#define OP_AVX_COMPLEX_ADD_FUNC(type_name, base_type)                   \
+static void OP_CONCAT(ompi_op_avx_2buff_add_##type_name,PREPEND)(const void *_in, void *_out, int *count, \
+                                                                 struct ompi_datatype_t **dtype, \
+                                                                 struct ompi_op_base_module_1_0_0_t *module) \
+{                                                                       \
+    base_type *in = (base_type*)_in, *out = (base_type*)_out;           \
+    int left_over = *count;                                             \
+    while( left_over > 0 ) {                                            \
+        int how_much = (left_over > (INT_MAX / 2)) ? (INT_MAX / 2) : left_over; \
+        int reals = 2 * how_much;                                       \
+        OP_CONCAT(ompi_op_avx_2buff_add_##base_type,PREPEND)(in, out, &reals, dtype, module); \
+        in += reals;                                                    \
+        out += reals;                                                   \
+        left_over -= how_much;                                          \
+    }                                                                   \
+}
+
+    OP_AVX_COMPLEX_ADD_FUNC(c_float_complex, float)
+    OP_AVX_COMPLEX_ADD_FUNC(c_double_complex, double)
+
 /*************************************************************************
  * Product
  *************************************************************************/
@@ -1269,6 +1300,29 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_double,PREPEND)(const void *_in1,
     OP_AVX_FLOAT_FUNC_3(add)
     OP_AVX_DOUBLE_FUNC_3(add)
 
+/* See the comment on OP_AVX_COMPLEX_ADD_FUNC above. */
+#define OP_AVX_COMPLEX_ADD_FUNC_3(type_name, base_type)                 \
+static void OP_CONCAT(ompi_op_avx_3buff_add_##type_name,PREPEND)(const void *_in1, const void *_in2, \
+                                                                 void *_out, int *count, \
+                                                                 struct ompi_datatype_t **dtype, \
+                                                                 struct ompi_op_base_module_1_0_0_t *module) \
+{                                                                       \
+    base_type *in1 = (base_type*)_in1, *in2 = (base_type*)_in2, *out = (base_type*)_out; \
+    int left_over = *count;                                             \
+    while( left_over > 0 ) {                                            \
+        int how_much = (left_over > (INT_MAX / 2)) ? (INT_MAX / 2) : left_over; \
+        int reals = 2 * how_much;                                       \
+        OP_CONCAT(ompi_op_avx_3buff_add_##base_type,PREPEND)(in1, in2, out, &reals, dtype, module); \
+        in1 += reals;                                                   \
+        in2 += reals;                                                   \
+        out += reals;                                                   \
+        left_over -= how_much;                                          \
+    }                                                                   \
+}
+
+    OP_AVX_COMPLEX_ADD_FUNC_3(c_float_complex, float)
+    OP_AVX_COMPLEX_ADD_FUNC_3(c_double_complex, double)
+
 /*************************************************************************
  * Product
  *************************************************************************/
@@ -1373,6 +1427,14 @@ static void OP_CONCAT(ompi_op_avx_3buff_##op##_double,PREPEND)(const void *_in1,
     [OMPI_OP_BASE_TYPE_FLOAT] = FLOAT(name, ftype),                         \
     [OMPI_OP_BASE_TYPE_DOUBLE] = DOUBLE(name, ftype)
 
+#define FLOAT_COMPLEX(name, ftype) OP_CONCAT(ompi_op_avx_##ftype##_##name##_c_float_complex,PREPEND)
+#define DOUBLE_COMPLEX(name, ftype) OP_CONCAT(ompi_op_avx_##ftype##_##name##_c_double_complex,PREPEND)
+
+/* Only MPI_SUM: a complex product is not a componentwise operation. */
+#define COMPLEX_SUM(name, ftype)                                            \
+    [OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX] = FLOAT_COMPLEX(name, ftype),       \
+    [OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX] = DOUBLE_COMPLEX(name, ftype)
+
 /*
  * MPI_OP_NULL
  * All types
@@ -1404,6 +1466,7 @@ ompi_op_base_handler_fn_t OP_CONCAT(ompi_op_avx_functions, PREPEND)[OMPI_OP_BASE
     [OMPI_OP_BASE_FORTRAN_SUM] = {
         C_INTEGER(sum, 2buff),
         FLOATING_POINT(add, 2buff),
+        COMPLEX_SUM(add, 2buff),
     },
     /* Corresponds to MPI_PROD */
     [OMPI_OP_BASE_FORTRAN_PROD] = {
@@ -1467,6 +1530,7 @@ ompi_op_base_3buff_handler_fn_t OP_CONCAT(ompi_op_avx_3buff_functions, PREPEND)[
     [OMPI_OP_BASE_FORTRAN_SUM] = {
         C_INTEGER(sum, 3buff),
         FLOATING_POINT(add, 3buff),
+        COMPLEX_SUM(add, 3buff),
     },
     /* Corresponds to MPI_PROD */
     [OMPI_OP_BASE_FORTRAN_PROD] = {

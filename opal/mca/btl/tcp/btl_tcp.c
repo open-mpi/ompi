@@ -156,11 +156,26 @@ int mca_btl_tcp_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
 
     OPAL_THREAD_LOCK(&tcp_btl->tcp_endpoints_mutex);
     for (i = 0; i < nprocs; i++) {
-        mca_btl_tcp_endpoint_t *tcp_endpoint = endpoints[i];
-        opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t *) tcp_endpoint);
-        OBJ_RELEASE(tcp_endpoint);
+        opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t *) endpoints[i]);
     }
     OPAL_THREAD_UNLOCK(&tcp_btl->tcp_endpoints_mutex);
+
+    /* Release outside the mutex. The endpoint destructor reaches
+     * mca_btl_tcp_proc_remove() and so takes proc_lock, while
+     * mca_btl_tcp_add_procs() takes proc_lock before this mutex; holding
+     * both here in the opposite order is an ABBA against a concurrent
+     * wire-up of another proc on this module. Off the list, an endpoint
+     * is reachable only through the caller's array.
+     *
+     * Release a copy: OBJ_RELEASE nullifies what it is handed, and
+     * mca_bml_r2_del_procs() still reads the slots afterwards, comparing
+     * them to its btl_rdma entries to know which endpoints it has
+     * already retired.
+     */
+    for (i = 0; i < nprocs; i++) {
+        mca_btl_tcp_endpoint_t *tcp_endpoint = endpoints[i];
+        OBJ_RELEASE(tcp_endpoint);
+    }
     return OPAL_SUCCESS;
 }
 

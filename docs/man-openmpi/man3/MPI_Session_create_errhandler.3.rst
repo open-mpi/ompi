@@ -14,7 +14,7 @@ attached to sessions
 INPUT PARAMETER
 ---------------
 
-* ``function`` : User-defined error handling procedure (function).
+* ``session_errhandler_fn`` : User-defined error handling procedure (function).
 
 OUTPUT PARAMETERS
 -----------------

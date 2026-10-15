@@ -120,7 +120,7 @@ OMPI_DECLSPEC extern opal_list_t  ompi_proc_list;
  * includes the architecture and hostname, which will be available by
  * the conclusion of the stage gate.
  *
- * @retval OMPI_SUCESS  System successfully initialized
+ * @retval OMPI_SUCCESS  System successfully initialized
  * @retval OMPI_ERROR   Initialization failed due to unspecified error
  */
 OMPI_DECLSPEC int ompi_proc_init(void);
@@ -339,7 +339,7 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist,
  *                         provided if information is not needed.
  * @param[out] newproclist List of new procs added as a result of
  *                         the unpack operation.  NULL may be
- *                         provided if informationis not needed.
+ *                         provided if information is not needed.
  *
  * Return value:
  *   OMPI_SUCCESS               on success
@@ -361,7 +361,7 @@ OMPI_DECLSPEC int ompi_proc_unpack(pmix_data_buffer_t *buf,
  * @note This is primarily used when restarting a process and thus
  * need to update the jobid and node name.
  *
- * @retval OMPI_SUCESS  System successfully refreshed
+ * @retval OMPI_SUCCESS  System successfully refreshed
  * @retval OMPI_ERROR   Refresh failed due to unspecified error
  */
 OMPI_DECLSPEC int ompi_proc_refresh(void);
@@ -372,10 +372,22 @@ OMPI_DECLSPEC int ompi_proc_refresh(void);
  * @param[in] proc_name opal process name
  *
  * @returns cached or new ompi_proc_t for the given process name
+ * @returns NULL if the name belongs to a job we have not been introduced
+ *          to, or on allocation failure
  *
  * This function looks up the given process name in the hash of existing
  * ompi_proc_t structures. If no ompi_proc_t structure exists matching the
  * given name a new ompi_proc_t is allocated, initialized, and returned.
+ *
+ * @note Every caller must handle NULL. A name is only built into a proc if
+ * its jobid is one we have been introduced to: our own, recorded by
+ * ompi_proc_init(), and every job the runtime hands us through
+ * ompi_proc_find_and_add() -- instance setup, ompi_proc_unpack(), and dpm,
+ * which introduces a job before it connects to it. Any other name is
+ * refused, because this is also OPAL's opal_proc_for_name hook and some
+ * callers reach it with a name read out of an inbound connection
+ * handshake rather than one the runtime gave them. A jobid, once known,
+ * stays known for the life of the process.
  *
  * @note The ompi_proc_t is added to the local list of processes but is not
  * added to any communicator. ompi_comm_peer_lookup is responsible for caching

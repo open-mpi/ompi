@@ -221,7 +221,7 @@ mca_pml_ob1_set_allow_overtake(opal_infosubscriber_t* obj,
      */
     if (opal_str_to_bool(value)) {
         if (!allow_overtake_was_set) {
-            ompi_comm->c_flags |= OMPI_COMM_ASSERT_ALLOW_OVERTAKE;
+            ompi_comm->c_assertions |= OMPI_COMM_ASSERT_ALLOW_OVERTAKE;
             mca_pml_ob1_merge_cant_match(ompi_comm);
         }
         return "true";

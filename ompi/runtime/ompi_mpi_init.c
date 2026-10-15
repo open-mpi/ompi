@@ -31,6 +31,7 @@
  *                         reserved.
  * Copyright (c) 2025      Advanced Micro Devices, Inc. All rights reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,7 +147,11 @@ opal_atomic_int32_t ompi_mpi_state = OMPI_MPI_STATE_NOT_INITIALIZED;
 volatile bool ompi_rte_initialized = false;
 
 bool ompi_mpi_thread_multiple = false;
-int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
+/* No level has been requested until MPI_INIT_THREAD names one.  Start at
+   MPI_UNDEFINED rather than MPI_THREAD_SINGLE so that "nobody asked" is
+   distinguishable from "somebody asked for SINGLE"; MPI_INFO_ENV reports
+   this field and must not invent a request that was never made. */
+int ompi_mpi_thread_requested = MPI_UNDEFINED;
 int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 /* MPI_T process-wide thread state.  These live here in the lower
@@ -585,6 +590,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
 
     OMPI_TIMING_NEXT("modex");
 
+    /* These are the only add_comm calls for the predefined communicators:
+     * instance init neither builds nor adds them, so the pair built by
+     * ompi_comm_init_mpi3() above is handed to the PML exactly once.  The
+     * BTLs have been able to deliver since instance init ran add_procs,
+     * so a fragment for MPI_COMM_WORLD may already have arrived; the PML
+     * holds anything it could not place for a communicator it had never
+     * seen, and add_comm() drains that queue here. */
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
 
@@ -686,13 +698,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
        function else), but before dpm.dyncom_init, since this function
        might require collective for the CID allocation. */
     if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_WORLD, NULL))) {
         error = "mca_coll_base_comm_select(MPI_COMM_WORLD) failed";
         goto error;
     }
 
     if (OMPI_SUCCESS !=
-        (ret = mca_coll_base_comm_select(MPI_COMM_SELF))) {
+        (ret = mca_coll_base_comm_select(MPI_COMM_SELF, NULL))) {
         error = "mca_coll_base_comm_select(MPI_COMM_SELF) failed";
         goto error;
     }

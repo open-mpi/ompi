@@ -26,7 +26,7 @@ EXTRA_DIST += \
         mpi/help-mpi-api.txt \
         mpi/bindings/bindings.py \
         mpi/bindings/c_header.py \
-        mpi/bindings/check_f08_names.py \
+        mpi/bindings/check_fortran_param_names.py \
         mpi/bindings/ompi_bindings/consts.py \
         mpi/bindings/ompi_bindings/c.py \
         mpi/bindings/ompi_bindings/c_type.py \

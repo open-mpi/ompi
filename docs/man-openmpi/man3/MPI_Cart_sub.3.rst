@@ -22,7 +22,7 @@ INPUT PARAMETERS
 OUTPUT PARAMETERS
 -----------------
 
-* ``comm_new`` : Communicator containing the subgrid that includes the
+* ``newcomm`` : Communicator containing the subgrid that includes the
    calling process (handle).
 * ``ierror`` : Fortran only: Error status (integer).
 
@@ -41,11 +41,11 @@ Example: Assume that ``MPI_Cart_create( ..., comm)`` has defined a (2 x 3 x
 
 .. code-block:: c
 
-   MPI_Cart_sub(comm, remain_dims, comm_new);
+   MPI_Cart_sub(comm, remain_dims, newcomm);
 
 will create three communicators, each with eight processes in a 2 x 4
 Cartesian topology. If remain_dims = (false, false, true) then the call
-to MPI_Cart_sub(comm, remain_dims, comm_new) will create six
+to MPI_Cart_sub(comm, remain_dims, newcomm) will create six
 nonoverlapping communicators, each with four processes, in a
 one-dimensional Cartesian topology.
 

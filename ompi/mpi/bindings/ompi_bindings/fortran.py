@@ -127,8 +127,13 @@ class FortranBinding:
         """Return a list of required use statments."""
         use = self._use()
         stmts = []
-        for mod, names in use.items():
-            names = ', '.join(names)
+        # Sort both the modules and the names within each module so the
+        # generated code is identical between builds.  Sorting the names
+        # is required: set iteration order depends on PYTHONHASHSEED.
+        # The module order already follows the parameter order, but
+        # sorting it too keeps the output stable if that ever changes.
+        for mod, names in sorted(use.items()):
+            names = ', '.join(sorted(names))
             stmts.append(f'use :: {mod}, only: {names}')
         return stmts
 

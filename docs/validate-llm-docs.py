@@ -204,7 +204,8 @@ def main():
             # Curated sources are hand-written Markdown, not RST-derived.
             if fn in ('openmpi-mpi-interface-guide.md',
                       'openmpi-mpi-examples.md',
-                      'openmpi-runtime-introspection.md'):
+                      'openmpi-runtime-introspection.md',
+                      'openmpi-release-discovery.md'):
                 continue
             text = read_text(os.path.join(root, fn))
             for label, pat in UNRESOLVED:

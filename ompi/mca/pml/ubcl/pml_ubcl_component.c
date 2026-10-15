@@ -144,7 +144,7 @@ int mca_pml_ubcl_component_register(void)
         MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9, MCA_BASE_VAR_SCOPE_READONLY,
         &mca_pml_ubcl_component.warn_on_truncate);
 
-    mca_pml_ubcl_component.abort_on_truncate = true;
+    mca_pml_ubcl_component.abort_on_truncate = false;
     (void) mca_base_component_var_register(
         component, "abort_on_truncate",
         "Allow PML to print error and abort in case of MPI_ERR_TRUNCATE", MCA_BASE_VAR_TYPE_BOOL,

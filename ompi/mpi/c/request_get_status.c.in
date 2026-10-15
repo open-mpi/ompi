@@ -64,7 +64,7 @@ PROTOTYPE ERROR_CLASS request_get_status(REQUEST request, INT_OUT flag,
     if( (request == MPI_REQUEST_NULL) || (request->req_state == OMPI_REQUEST_INACTIVE) ) {
         *flag = true;
         if( MPI_STATUS_IGNORE != status ) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         return MPI_SUCCESS;
     }

@@ -14,7 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
- * Copyright (c) 2021-2025 Nanook Consulting  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021-2022 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
@@ -69,6 +69,7 @@ opal_process_name_t pmix_name_invalid = {UINT32_MAX, UINT32_MAX};
  * infrastructure that manages its structure (e.g., OpenPMIx). If we setup this
  * session directory structure, then we shall cleanup after ourselves.
  */
+static bool destroy_top_session_dir = false;
 static bool destroy_job_session_dir = false;
 static bool destroy_proc_session_dir = false;
 
@@ -604,17 +605,19 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
 
-    /* set our hostname */
-    ev1 = NULL;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &OPAL_PROC_MY_NAME,
-                                   (char**)&ev1, PMIX_STRING);
-    if (PMIX_SUCCESS == ret && NULL != ev1) {
-        if (NULL != opal_process_info.nodename) {
-            free(opal_process_info.nodename);
-        }
-        opal_process_info.nodename = ev1;  // ev1 is an allocated string
-        ev1 = NULL;  // protect the string
-    }
+    /* our hostname is already set: opal_init_util() took it from
+     * gethostname() long before we got here, and we deliberately leave
+     * it at that.  PMIX_HOSTNAME is the name the launcher chose to call
+     * this node, which is not always what the node calls itself -- on
+     * macOS, gethostname() carries a ".local" suffix that PMIx does not
+     * -- and replacing one with the other here would mean the process
+     * answers with two different names over its lifetime, notably
+     * through MPI_INFO_ENV before and after MPI_INIT.  It would also
+     * disagree with MPI_GET_PROCESSOR_NAME, which asks the OS directly.
+     * Peers' hostnames still come from PMIX_HOSTNAME by way of
+     * opal_get_proc_hostname(); nothing in Open MPI decides anything
+     * from comparing the two, they only appear in messages.
+     */
 
     /* get our local rank from PMIx */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
@@ -857,8 +860,13 @@ int ompi_rte_init(int *pargc, char ***pargv)
     if (0 == opal_process_info.num_local_peers) {
         if (NULL != peers) {
             opal_process_info.num_local_peers = opal_argv_count(peers) - 1;
+        } else if (opal_process_info.is_singleton) {
+            /* if we are a singleton, then we have no local peers */
+            opal_process_info.num_local_peers = 0;
         } else {
-            opal_process_info.num_local_peers = 1;
+            ret = OPAL_ERR_BAD_PARAM;
+            error = "local peers";
+            goto error;
         }
     }
     /* if my local rank if too high, then that's an error */
@@ -953,28 +961,47 @@ static bool check_file(const char *root, const char *path)
 
 int ompi_rte_finalize(void)
 {
+    /* remove the session directories we created, and release all three
+     * paths either way -- the string is ours whether we made the
+     * directory or PMIx handed it to us */
+    if (NULL != opal_process_info.proc_session_dir) {
+        if (destroy_proc_session_dir) {
+            opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
+                                    true, check_file);
+            destroy_proc_session_dir = false;
+        }
+        free(opal_process_info.proc_session_dir);
+        opal_process_info.proc_session_dir = NULL;
+    }
 
-    /* cleanup the session directory we created */
-    if (NULL != opal_process_info.job_session_dir && destroy_job_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.job_session_dir,
-                                false, check_file);
-        free(opal_process_info.job_session_dir);
-        opal_process_info.job_session_dir = NULL;
-        destroy_job_session_dir = false;
+    if (NULL != opal_process_info.job_session_dir) {
+        if (destroy_job_session_dir) {
+            opal_os_dirpath_destroy(opal_process_info.job_session_dir,
+                                    true, check_file);
+            destroy_job_session_dir = false;
+        }
     }
 
     if (NULL != opal_process_info.top_session_dir) {
+        if (destroy_top_session_dir) {
+            opal_os_dirpath_destroy(opal_process_info.top_session_dir,
+                                    true, check_file);
+            destroy_top_session_dir = false;
+        }
         free(opal_process_info.top_session_dir);
         opal_process_info.top_session_dir = NULL;
     }
 
-    if (NULL != opal_process_info.proc_session_dir && destroy_proc_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
-                                false, check_file);
-        free(opal_process_info.proc_session_dir);
-        opal_process_info.proc_session_dir = NULL;
-        destroy_proc_session_dir = false;
-    }
+    /* put the job description back the way we found it.  Consumers tell
+     * "the RTE never told us" from "the RTE told us this" by the field
+     * still holding its static initializer -- no job has zero processes
+     * or zero app contexts -- so a field we leave behind at its last
+     * value is read as an answer after we are gone.  The strings below
+     * are released for the same reason as much as to free them.
+     */
+    opal_process_info.num_procs = 0;
+    opal_process_info.num_apps = 0;
+    opal_process_info.univ_size = 0;
 
     if (NULL != opal_process_info.app_sizes) {
         free(opal_process_info.app_sizes);
@@ -1052,8 +1079,17 @@ void ompi_rte_abort_peers(opal_process_name_t *procs,
     return;
 }
 
-static size_t handler = SIZE_MAX;
 static volatile bool debugger_event_active = true;
+
+static void _reg_fn(pmix_status_t status, size_t evhandler_ref, void *cbdata)
+{
+    opal_pmix_lock_t *lock = (opal_pmix_lock_t *) cbdata;
+
+    lock->status = status;
+    lock->errhandler_ref = evhandler_ref;
+
+    OPAL_PMIX_WAKEUP_THREAD(lock);
+}
 
 static void _release_fn(size_t refid, pmix_status_t status,
                         const pmix_proc_t *source,
@@ -1076,9 +1112,11 @@ void ompi_rte_breakpoint(char *name)
     int rc, code = PMIX_DEBUGGER_RELEASE;
     pmix_info_t info[2];
     opal_process_name_t pname;
+    opal_pmix_lock_t lock;
+    size_t handler = SIZE_MAX;
 
     if (NULL != name
-        && NULL != (evar = getenv("OMPI_BREAKPOINT"))
+        && NULL != (evar = getenv("PMIX_BREAKPOINT"))
         && 0 != strcasecmp(evar, name)) {
         /* they don't want to stop here */
         return;
@@ -1094,9 +1132,17 @@ void ompi_rte_breakpoint(char *name)
         return;
     }
 
-    /* register an event handler for the PMIX_ERR_DEBUGGER_RELEASE event */
+    /* register an event handler for the PMIX_ERR_DEBUGGER_RELEASE event.
+     * We must capture the reference id PMIx assigns us, or we cannot
+     * deregister the handler again below. */
     PMIX_INFO_LOAD(&directive, PMIX_EVENT_HDLR_NAME, "MPI-DEBUGGER-ATTACH", PMIX_STRING);
-    PMIx_Register_event_handler(&code, 1, &directive, 1, _release_fn, NULL, NULL);
+    OPAL_PMIX_CONSTRUCT_LOCK(&lock);
+    PMIx_Register_event_handler(&code, 1, &directive, 1, _release_fn, _reg_fn, (void *) &lock);
+    OPAL_PMIX_WAIT_THREAD(&lock);
+    if (PMIX_SUCCESS == lock.status) {
+        handler = lock.errhandler_ref;
+    }
+    OPAL_PMIX_DESTRUCT_LOCK(&lock);
     PMIX_INFO_DESTRUCT(&directive);
 
     /* notify the host that we are waiting in MPI_Init */
@@ -1112,7 +1158,9 @@ void ompi_rte_breakpoint(char *name)
     OMPI_WAIT_FOR_COMPLETION(debugger_event_active);
 
     /* deregister the event handler */
-    PMIx_Deregister_event_handler(handler, NULL, NULL);
+    if (SIZE_MAX != handler) {
+        PMIx_Deregister_event_handler(handler, NULL, NULL);
+    }
 }
 
 /*
@@ -1133,32 +1181,50 @@ void ompi_rte_wait_for_debugger(void)
 
 static int _setup_top_session_dir(char **sdir)
 {
+    /*
+     * Use a session directory structure similar to prrte (create only one
+     * directory for the top session) so that it can be cleaned up correctly
+     * when terminated.
+     */
     char *tmpdir;
+    int rc;
+    uid_t uid = geteuid();
+    pid_t pid = getpid();
 
     if( NULL == (tmpdir = getenv("TMPDIR")) )
         if( NULL == (tmpdir = getenv("TEMP")) )
             if( NULL == (tmpdir = getenv("TMP")) )
                 tmpdir = "/tmp";
 
-    *sdir = strdup(tmpdir);
+    if (0 > opal_asprintf(sdir, "%s/%s.%s.%lu.%lu",
+                              tmpdir, "ompi",
+                              opal_process_info.nodename,
+                              (unsigned long)pid, (unsigned long) uid)) {
+        opal_process_info.top_session_dir = NULL;
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    rc = opal_os_dirpath_create(opal_process_info.top_session_dir, 0700);
+    if (OPAL_SUCCESS != rc) {
+        // could not create top session dir
+        free(opal_process_info.top_session_dir);
+        opal_process_info.top_session_dir = NULL;
+        return rc;
+    }
+    destroy_top_session_dir = true;
     return OPAL_SUCCESS;
 }
 
 static int _setup_job_session_dir(char **sdir)
 {
     int rc;
-    /* get the effective uid */
-    uid_t uid = geteuid();
 
-    if (0 > opal_asprintf(sdir, "%s/ompi.%s.%lu/jf.0/%u",
+    if (0 > opal_asprintf(sdir, "%s/%u",
                           opal_process_info.top_session_dir,
-                          opal_process_info.nodename,
-                          (unsigned long)uid,
                           opal_process_info.my_name.jobid)) {
         opal_process_info.job_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rc = opal_os_dirpath_create(opal_process_info.job_session_dir, 0755);
+    rc = opal_os_dirpath_create(opal_process_info.job_session_dir, 0700);
     if (OPAL_SUCCESS != rc) {
         // could not create session dir
         free(opal_process_info.job_session_dir);
@@ -1179,7 +1245,7 @@ static int _setup_proc_session_dir(char **sdir)
         opal_process_info.proc_session_dir = NULL;
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    rc = opal_os_dirpath_create(opal_process_info.proc_session_dir, 0755);
+    rc = opal_os_dirpath_create(opal_process_info.proc_session_dir, 0700);
     if (OPAL_SUCCESS != rc) {
         // could not create session dir
         free(opal_process_info.proc_session_dir);

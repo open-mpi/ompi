@@ -34,12 +34,8 @@ static int verbose_level = ERROR;
 static bucket_list_t global_bl = {0};
 
 static int tab_cmp(const void*,const void*);
-static int old_bucket_id(int,int,bucket_list_t);
 static int bucket_id(int,int,bucket_list_t);
-static void display_bucket(bucket_t *);
-static void check_bucket(bucket_t *,double **,double, double);
 static void display_pivots(bucket_list_t);
-static void display_bucket_list(bucket_list_t);
 static void add_to_bucket(int,int,int,bucket_list_t);
 static void dfs(int,int,int,double *,double *,int,int);
 static void built_pivot_tree(bucket_list_t);
@@ -83,35 +79,6 @@ static int tab_cmp(const void* x1,const void* x2)
 }
 
 
-static inline int old_bucket_id(int i,int j,bucket_list_t bucket_list)
-{
-  double *pivot = NULL,val;
-  int n,sup,inf,p;
-
-  pivot = bucket_list->pivot;
-  n = bucket_list->nb_buckets;
-  val = bucket_list->tab[i][j];
-
-  inf = -1;
-  sup = n;
-
-  while( (sup - inf) > 1){
-    p = (sup + inf)/2;
-    /* printf("%f [%d,%d,%d]=%f\n",val,inf,p,sup,pivot[p]); */
-    if( val < pivot[p] ){
-      inf = p;
-      if( inf == sup )
-	inf--;
-    } else {
-      sup = p;
-      if( sup == inf )
-	sup++;
-    }
-  }
-  /*exit(-1);*/
-  return sup;
-}
-
 static int bucket_id(int i,int j,bucket_list_t bucket_list)
 {
   double *pivot_tree = NULL,val;
@@ -132,57 +99,12 @@ static int bucket_id(int i,int j,bucket_list_t bucket_list)
   return (int)pivot_tree[p];
 }
 
-static void  display_bucket(bucket_t *b)
-{
-  printf("\tb.bucket=%p\n",(void *)b->bucket);
-  printf("\tb.bucket_len=%d\n",(int)b->bucket_len);
-  printf("\tb.nb_elem=%d\n",(int)b->nb_elem);
-}
-
-static void check_bucket(bucket_t *b,double **tab,double inf, double sup)
-{
-  int i,j,k;
-  for( k = 0 ; k < b->nb_elem ; k++ ){
-    i = b->bucket[k].i;
-    j = b->bucket[k].j;
-    if((tab[i][j] < inf) || (tab[i][j] > sup)){
-      if(verbose_level >= CRITICAL)
-	fprintf(stderr,"[%d] (%d,%d):%f not in [%f,%f]\n",k,i,j,tab[i][j],inf,sup);
-      exit(-1);
-    }
-  }
-}
-
 static void display_pivots(bucket_list_t bucket_list)
 {
   int i;
   for( i = 0 ; i < bucket_list->nb_buckets-1 ; i++)
     printf("pivot[%d]=%f\n",i,bucket_list->pivot[i]);
   printf("\n");
-}
-
-static inline void display_bucket_list(bucket_list_t bucket_list)
-{
-  int i;
-  double inf,sup;
-
-  /*display_pivots(bucket_list);*/
-
-  for(i = 0 ; i < bucket_list->nb_buckets ; i++){
-    inf = bucket_list->pivot[i];
-    sup = bucket_list->pivot[i-1];
-    if( i == 0 )
-      sup=DBL_MAX;
-    if( i == bucket_list->nb_buckets - 1 )
-      inf = 0;
-    if(verbose_level >= DEBUG){
-      printf("Bucket %d:\n",i);
-      display_bucket(bucket_list->bucket_tab[i]);
-      printf("\n");
-    }
-    check_bucket(bucket_list->bucket_tab[i],bucket_list->tab,inf,sup);
-  }
-
 }
 
 static void add_to_bucket(int id,int i,int j,bucket_list_t bucket_list)

@@ -165,6 +165,11 @@ OPAL_DECLSPEC extern int (*opal_convert_string_to_jobid)(opal_jobid_t *jobid,
  * Lookup an opal_proc_t by name
  *
  * @param name (IN) name to lookup
+ *
+ * Returns NULL if the upper layer will not vouch for the name -- it may
+ * have come from a peer rather than from the runtime -- or if the proc
+ * could not be created. A caller that resolves a name out of an inbound
+ * connection handshake has to expect that and drop the connection.
  */
 OPAL_DECLSPEC extern struct opal_proc_t *(*opal_proc_for_name)(const opal_process_name_t name);
 

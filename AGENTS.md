@@ -391,10 +391,13 @@ honor:
   artifacts (catalog, corpora, per-symbol pages, manifest) regenerate
   automatically from the man-page RST and binding metadata, so they
   cannot drift. The *curated* sources under
-  [`docs/llms-src/`](docs/llms-src/) (the interface guide, examples, and
-  the `ompi_info` runtime-introspection guide) can: when a PR changes
-  public MPI documentation, update the affected curated files when
-  relevant. If you change the curated examples or the
+  [`docs/llms-src/`](docs/llms-src/) (the interface guide, examples,
+  the `ompi_info` runtime-introspection guide, and the release-discovery
+  guide) can: when a PR changes public MPI documentation, update the
+  affected curated files when relevant.  The release-discovery guide
+  mirrors the "Detecting new releases programmatically" section of
+  [`docs/installing-open-mpi/downloading.rst`](docs/installing-open-mpi/downloading.rst);
+  keep the two in sync. If you change the curated examples or the
   JSON Schemas, regenerate
   `specs/llms-friendly-docs/sample-records.jsonl` so `make check`
   (which validates the artifacts) still passes. See

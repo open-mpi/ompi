@@ -367,9 +367,6 @@ static int sm_finalize(struct mca_btl_base_module_t *btl)
     free(component->fbox_in_endpoints);
     component->fbox_in_endpoints = NULL;
 
-    opal_shmem_unlink(&mca_btl_sm_component.seg_ds);
-    opal_shmem_segment_detach(&mca_btl_sm_component.seg_ds);
-
     return OPAL_SUCCESS;
 }
 
@@ -528,6 +525,13 @@ static void mca_btl_sm_endpoint_constructor(mca_btl_sm_endpoint_t *ep)
     OBJ_CONSTRUCT(&ep->pending_frags, opal_list_t);
     OBJ_CONSTRUCT(&ep->pending_frags_lock, opal_mutex_t);
     ep->fifo = NULL;
+    /* An endpoint is reached through storage this component allocated
+     * zeroed, but it can also be constructed a second time over a peer
+     * that was torn down, and a send_count left past the fast box
+     * threshold would never equal it again. */
+    ep->send_count = 0;
+    ep->fbox_in.buffer = NULL;
+    ep->fbox_out.buffer = NULL;
     ep->fbox_out.fbox = NULL;
 }
 

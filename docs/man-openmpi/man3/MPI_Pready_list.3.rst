@@ -15,7 +15,7 @@ are ready to be transferred.
 INPUT PARAMETERS
 ----------------
 * ``length``: The length of the given partition array (integer).
-* ``partitions``: An array of numbers of partitions to mark ready for transfer (integer).
+* ``array_of_partitions``: An array of numbers of partitions to mark ready for transfer (integer).
 * ``request``: Communication request (handle).
 
 OUTPUT PARAMETERS

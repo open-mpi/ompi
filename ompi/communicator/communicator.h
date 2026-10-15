@@ -818,6 +818,10 @@ typedef struct ompi_comm_rbcast_message_t {
     uint8_t  type;
 } ompi_comm_rbcast_message_t;
 
+/* The return value is not a status: it says whether the message is news
+ * to us and therefore has to be forwarded to complete the broadcast.
+ * Zero stops it here -- a duplicate, or nothing this process has to act
+ * on -- and non-zero passes it on. */
 typedef int (*ompi_comm_rbcast_cb_t)(ompi_communicator_t* comm, ompi_comm_rbcast_message_t* msg);
 
 OMPI_DECLSPEC int ompi_comm_rbcast_register_cb_type(ompi_comm_rbcast_cb_t callback);
@@ -967,12 +971,16 @@ OMPI_DECLSPEC int ompi_comm_split (ompi_communicator_t *comm, int color, int key
  * @param comm: input communicator
  * @param color
  * @param key
+ * @param pass_on_topo: ignored. Splitting a communicator does not propagate
+ *                   the topology of the parent, and no caller has ever asked
+ *                   it to; the parameter is kept only to spare the call sites.
  *
  * @
  */
 OMPI_DECLSPEC int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
                                              opal_info_t *info,
-                                             ompi_communicator_t **newcomm, bool pass_on_topo );
+                                             ompi_communicator_t **newcomm,
+                                             bool pass_on_topo __opal_attribute_unused__ );
 
 /**
  * split a communicator based on type and key. Parameters
@@ -1016,8 +1024,16 @@ OMPI_DECLSPEC int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t
  *
  * @param comm:      input communicator
  * @param newcomm:   the new communicator or MPI_COMM_NULL if any error is detected.
+ * @param inherit_cached_info: propagate the information cached on comm -- its
+ *                   attributes and its topology -- to newcomm. Duplication is
+ *                   the only MPI communicator constructor that does so, but
+ *                   the topology constructors duplicate a communicator merely
+ *                   to attach a topology of their own and must not inherit
+ *                   either.
  */
-OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, opal_info_t *info, ompi_communicator_t **newcomm);
+OMPI_DECLSPEC int ompi_comm_dup_with_info (ompi_communicator_t *comm, opal_info_t *info,
+                                           ompi_communicator_t **newcomm,
+                                           bool inherit_cached_info);
 
 /**
  * dup a communicator (non-blocking) with info.

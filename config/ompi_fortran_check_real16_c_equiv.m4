@@ -75,7 +75,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
                                      AS_IF([test "$ac_cv_type__Quad" != "yes"],
                                            [CFLAGS="$CFLAGS_save"])
                                      ])
-                              AS_IF([test "$ac_cv_type__Quad" != "yes"],
+                              AS_IF([test "$ac_cv_type__Quad" = "yes"],
                                     [AC_MSG_CHECKING([if the compiler _Quad == REAL*16])
                                      OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([_Quad], [q])
                                      AS_IF([test "$fortran_real16_happy" = "yes"],

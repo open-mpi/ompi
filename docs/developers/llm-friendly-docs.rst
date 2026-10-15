@@ -121,8 +121,9 @@ What is generated
   artifact that carries build identity (git commit/describe and
   ``generated_at``).
 * The curated ``llms/openmpi-mpi-interface-guide.md``,
-  ``llms/openmpi-mpi-examples.md``, and
-  ``llms/openmpi-runtime-introspection.md`` (hand-written sources under
+  ``llms/openmpi-mpi-examples.md``,
+  ``llms/openmpi-runtime-introspection.md``, and
+  ``llms/openmpi-release-discovery.md`` (hand-written sources under
   ``docs/llms-src/``), plus the two published ``*.schema.json`` files. The
   runtime-introspection guide tells a consumer how to query an *installed*
   Open MPI with ``ompi_info`` --- its version, build configuration, available
@@ -133,7 +134,13 @@ What is generated
   component set, immediately drift, and could not be produced at all on Read the
   Docs (which builds the docs without a full Open MPI install). The corpus
   therefore points consumers at the live, self-describing command output
-  instead.
+  instead. Similarly, the release-discovery guide does not list Open MPI
+  releases (any list frozen into one documentation version would go stale);
+  it points consumers at the machine-readable release files on
+  ``www.open-mpi.org``, which ``llms.txt`` also links directly. It is the
+  LLM-oriented companion of the "Detecting new releases programmatically"
+  section in ``docs/installing-open-mpi/downloading.rst``; keep the two in
+  sync.
 
 How they are built
 ------------------
@@ -353,12 +360,13 @@ functions, cross-check that every intended function actually has an
 ``MPI_*.3.rst`` page.
 
 **Curated docs and samples.** The generated artifacts cannot drift, but the
-curated ``docs/llms-src/`` files (interface guide, examples, and
-runtime-introspection guide) can. A pull request that changes public MPI
-documentation should also update the affected curated files when relevant ---
-for example, the runtime-introspection guide if the ``ompi_info`` interface or
-the MCA parameter-setting conventions change (this expectation is also recorded
-in the top-level ``AGENTS.md``). When the curated examples or a schema change, regenerate
+curated ``docs/llms-src/`` files (interface guide, examples,
+runtime-introspection guide, and release-discovery guide) can. A pull request
+that changes public MPI documentation should also update the affected curated
+files when relevant --- for example, the runtime-introspection guide if the
+``ompi_info`` interface or the MCA parameter-setting conventions change, or the
+release-discovery guide if the format of the web site's release files changes
+(this expectation is also recorded in the top-level ``AGENTS.md``). When the curated examples or a schema change, regenerate
 ``specs/llms-friendly-docs/sample-records.jsonl`` so ``make check`` continues to
 pass.
 

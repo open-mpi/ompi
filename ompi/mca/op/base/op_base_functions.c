@@ -14,6 +14,7 @@
  * Copyright (c) 2013      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,23 @@
 #endif
 
 #include "ompi/mca/op/op.h"
+
+/*
+ * Quad precision complex, the C type that can be behind Fortran's
+ * COMPLEX*32.  The compiler may spell the underlying real type either
+ * _Float128 or __float128; mirror the choice made by the OPAL datatype
+ * engine (see opal/datatype/opal_datatype_constructors.h) so that both
+ * layers agree on which type MPI_COMPLEX32 is made of.
+ */
+#if defined(HAVE__FLOAT128) && defined(HAVE__FLOAT128__COMPLEX)
+#define OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX 1
+#define OMPI_OP_BASE_FLOAT128_COMPLEX_T _Float128 _Complex
+#elif defined(HAVE___FLOAT128) && defined(HAVE___FLOAT128__COMPLEX)
+#define OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX 1
+#define OMPI_OP_BASE_FLOAT128_COMPLEX_T __float128 _Complex
+#else
+#define OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX 0
+#endif
 
 
 /*
@@ -349,6 +367,9 @@ COMPLEX_SUM_FUNC(c_short_float_complex, opal_short_float_t)
 OP_FUNC(sum, c_float_complex, float _Complex, +=)
 OP_FUNC(sum, c_double_complex, double _Complex, +=)
 OP_FUNC(sum, c_long_double_complex, long double _Complex, +=)
+#if OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX
+OP_FUNC(sum, c_float128_complex, OMPI_OP_BASE_FLOAT128_COMPLEX_T, +=)
+#endif
 
 /*************************************************************************
  * Product
@@ -421,6 +442,9 @@ COMPLEX_PROD_FUNC(c_short_float_complex, opal_short_float_t)
 OP_FUNC(prod, c_float_complex, float _Complex, *=)
 OP_FUNC(prod, c_double_complex, double _Complex, *=)
 OP_FUNC(prod, c_long_double_complex, long double _Complex, *=)
+#if OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX
+OP_FUNC(prod, c_float128_complex, OMPI_OP_BASE_FLOAT128_COMPLEX_T, *=)
+#endif
 
 /*************************************************************************
  * Logical AND
@@ -1009,6 +1033,9 @@ COMPLEX_SUM_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
 OP_FUNC_3BUF(sum, c_float_complex, float _Complex, +)
 OP_FUNC_3BUF(sum, c_double_complex, double _Complex, +)
 OP_FUNC_3BUF(sum, c_long_double_complex, long double _Complex, +)
+#if OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX
+OP_FUNC_3BUF(sum, c_float128_complex, OMPI_OP_BASE_FLOAT128_COMPLEX_T, +)
+#endif
 
 /*************************************************************************
  * Product
@@ -1081,6 +1108,9 @@ COMPLEX_PROD_FUNC_3BUF(c_short_float_complex, opal_short_float_t)
 OP_FUNC_3BUF(prod, c_float_complex, float _Complex, *)
 OP_FUNC_3BUF(prod, c_double_complex, double _Complex, *)
 OP_FUNC_3BUF(prod, c_long_double_complex, long double _Complex, *)
+#if OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX
+OP_FUNC_3BUF(prod, c_float128_complex, OMPI_OP_BASE_FLOAT128_COMPLEX_T, *)
+#endif
 
 /*************************************************************************
  * Logical AND
@@ -1493,12 +1523,18 @@ LOC_FUNC_3BUF(minloc, long_double_int, <)
 #define FLOAT_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_float_complex
 #define DOUBLE_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_double_complex
 #define LONG_DOUBLE_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_long_double_complex
+#if OMPI_OP_BASE_HAVE_FLOAT128_COMPLEX
+#define FLOAT128_COMPLEX(name, ftype) ompi_op_base_##ftype##_##name##_c_float128_complex
+#else
+#define FLOAT128_COMPLEX(name, ftype) NULL
+#endif
 
 #define COMPLEX(name, ftype)                                                  \
     [OMPI_OP_BASE_TYPE_C_SHORT_FLOAT_COMPLEX] = SHORT_FLOAT_COMPLEX(name, ftype), \
     [OMPI_OP_BASE_TYPE_C_FLOAT_COMPLEX] = FLOAT_COMPLEX(name, ftype),         \
     [OMPI_OP_BASE_TYPE_C_DOUBLE_COMPLEX] = DOUBLE_COMPLEX(name, ftype),       \
-    [OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX] = LONG_DOUBLE_COMPLEX(name, ftype)
+    [OMPI_OP_BASE_TYPE_C_LONG_DOUBLE_COMPLEX] = LONG_DOUBLE_COMPLEX(name, ftype), \
+    [OMPI_OP_BASE_TYPE_C_FLOAT128_COMPLEX] = FLOAT128_COMPLEX(name, ftype)
 
 /** Byte ****************************************************************/
 

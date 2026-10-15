@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2018-2019 Intel, Inc.  All rights reserved.
  *
- * Copyright (c) 2018-2025 Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2018-2026 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020-2023 Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -349,11 +349,21 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
     domain_attr.control_progress = progress_mode;
     domain_attr.data_progress = progress_mode;
 
-    if (enable_mpi_threads) {
+    if (enable_mpi_threads || enable_progress_threads) {
         domain_attr.threading = FI_THREAD_SAFE;
     } else {
         domain_attr.threading = FI_THREAD_DOMAIN;
     }
+
+#if OPAL_OFI_HAVE_FI_PROGRESS_CONTROL_UNIFIED
+    if (domain_attr.threading == FI_THREAD_DOMAIN && progress_mode == FI_PROGRESS_UNSPEC) {
+#if FI_MAJOR_VERSION >= 2
+        domain_attr.progress = FI_PROGRESS_CONTROL_UNIFIED;
+#elif FI_MAJOR_VERSION == 1 && FI_MINOR_VERSION >= 21
+        domain_attr.control_progress = FI_PROGRESS_CONTROL_UNIFIED;
+#endif
+    }
+#endif
 
     /* select endpoint type */
     ep_attr.type = FI_EP_RDM;
@@ -471,8 +481,10 @@ no_hmem:
         struct fi_info *tmp = info_list;
         while (tmp && NULL != unique_domains) {
             if (OPAL_SUCCESS == validate_info(tmp, required_caps, include_list, exclude_list)) {
-                const char *p = (NULL != tmp->fabric_attr) ? tmp->fabric_attr->prov_name : NULL;
-                const char *d = (NULL != tmp->domain_attr) ? tmp->domain_attr->name : NULL;
+                /* validate_info() succeeded, so it already dereferenced both
+                 * fabric_attr and domain_attr; they are guaranteed non-NULL. */
+                const char *p = tmp->fabric_attr->prov_name;
+                const char *d = tmp->domain_attr->name;
                 if (NULL == first_prov) first_prov = p;
                 if (NULL != first_prov && NULL != p && 0 == strcmp(first_prov, p) && NULL != d) {
                     /* Only count unique domain names */
@@ -528,9 +540,10 @@ no_hmem:
             if (OPAL_SUCCESS != validate_info(info, required_caps, include_list, exclude_list)) {
                 continue;
             }
-            const char *prov = (NULL != info->fabric_attr)
-                               ? info->fabric_attr->prov_name : NULL;
-            const char *d = (NULL != info->domain_attr) ? info->domain_attr->name : NULL;
+            /* validate_info() succeeded, so it already dereferenced both
+             * fabric_attr and domain_attr; they are guaranteed non-NULL. */
+            const char *prov = info->fabric_attr->prov_name;
+            const char *d = info->domain_attr->name;
             if (NULL != first_prov && NULL != prov && NULL != d
                 && 0 == strcmp(first_prov, prov) && 0 == strcmp(want, d)) {
                 (void) mca_btl_ofi_init_device(info);

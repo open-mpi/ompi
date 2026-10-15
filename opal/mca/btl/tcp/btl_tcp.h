@@ -17,6 +17,7 @@
  *                         reserved.
  * Copyright (c) 2019-2020 Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -146,6 +147,10 @@ struct mca_btl_tcp_component_t {
      * that are not found?
      */
     bool report_all_unfound_interfaces;
+    /**< Skip an interface that is administratively up but has no carrier.
+         Such an interface cannot honour its own address as the source of a
+         connection, which is what the peer pairs btl modules by. */
+    bool tcp_if_require_carrier;
 };
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 
@@ -166,6 +171,12 @@ struct mca_btl_tcp_module_t {
                                            sending address for this
                                            BTL */
     uint32_t tcp_ifmask;                /**< BTL interface netmask */
+    bool tcp_shared_addr;               /**< This interface's address was also
+                                             seen on another node, so it cannot
+                                             be the source of a connection to
+                                             one.  Latched the first time a peer
+                                             advertises the address; see
+                                             mca_btl_tcp_addr_local_index() */
 
     opal_mutex_t tcp_endpoints_mutex;
     opal_list_t tcp_endpoints;

@@ -183,7 +183,7 @@ dnl external hwloc is not going to be used.  Assumes that if
 dnl this function is called, that success means the internal package
 dnl will be used.
 AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
-    OPAL_VAR_SCOPE_PUSH([subconfig_happy internal_hwloc_location extra_configure_args found_enable_plugins hwloc_config_arg pkg_config_file pkg_config_happy])
+    OPAL_VAR_SCOPE_PUSH([subconfig_happy internal_hwloc_location extra_configure_args found_enable_plugins hwloc_config_arg pkg_config_file pkg_config_happy opal_hwloc_rocm_dir opal_hwloc_rocm_major opal_hwloc_rocm_minor opal_hwloc_hip_version_h])
 
     extra_configure_args=
 
@@ -210,6 +210,26 @@ AC_DEFUN([_OPAL_CONFIG_HWLOC_INTERNAL], [
     # would end up with a dependency on libcuda (and similar).
     AS_IF([test $found_enable_plugins -eq 0 -a "$enable_dlopen" != "no"],
           [extra_configure_args="--enable-plugins"])
+
+    # ROCm < 7.1 uses rocm-smi as the production library; amd-smi is only
+    # a technology preview on those versions and should not be used by hwloc.
+    # Detect the ROCm version now (before hwloc sub-configure runs) by
+    # grepping hip_version.h from the path given to --with-rocm.
+    opal_hwloc_rocm_dir=
+    AS_IF([test "x$with_rocm" != x -a "x$with_rocm" != xno -a "x$with_rocm" != xyes],
+          [opal_hwloc_rocm_dir="$with_rocm"],
+          [test -d /opt/rocm],
+          [opal_hwloc_rocm_dir=/opt/rocm])
+    opal_hwloc_hip_version_h="${opal_hwloc_rocm_dir}/include/hip/hip_version.h"
+    AS_IF([test -f "$opal_hwloc_hip_version_h"],
+          [opal_hwloc_rocm_major=$(grep 'define HIP_VERSION_MAJOR' "$opal_hwloc_hip_version_h" | awk '{print $[]3}')
+           opal_hwloc_rocm_minor=$(grep 'define HIP_VERSION_MINOR' "$opal_hwloc_hip_version_h" | awk '{print $[]3}')
+           AC_MSG_NOTICE([hwloc: ROCm version detected: $opal_hwloc_rocm_major.$opal_hwloc_rocm_minor])
+           AS_IF([test "$opal_hwloc_rocm_major" -lt 7 || \
+                  (test "$opal_hwloc_rocm_major" -eq 7 && \
+                   test "$opal_hwloc_rocm_minor" -lt 1)],
+                 [OPAL_APPEND([extra_configure_args], [--disable-rsmi-amd])
+                  AC_MSG_NOTICE([hwloc: disabling amd-smi RSMI path (ROCm < 7.1)])])])
 
     # Note: To update the version of hwloc shipped, update the
     # constant in autogen.pl.

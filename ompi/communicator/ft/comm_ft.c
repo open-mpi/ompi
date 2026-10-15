@@ -311,7 +311,7 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
                         NULL,                     /* local_ranks */
                         0,                        /* remote_size */
                         NULL,                     /* remote_ranks */
-                        comm->c_keyhash,          /* attrs */
+                        NULL,                     /* attrs */
                         comm->error_handler,      /* error handler */
                         alive_group,              /* local group */
                         alive_rgroup,             /* remote group */
@@ -589,7 +589,7 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                            NULL,                     /* local_ranks */
                            0,                        /* remote_size */
                            NULL,                     /* remote_ranks */
-                           comm->c_keyhash,          /* attrs */
+                           NULL,                     /* attrs */
                            comm->error_handler,      /* error handler */
                            context->alive_group,     /* local group */
                            context->alive_rgroup,    /* remote group */

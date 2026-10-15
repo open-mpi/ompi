@@ -60,6 +60,7 @@ static void mca_rcache_grdma_finalize(mca_rcache_base_module_t *rcache);
 static bool mca_rcache_grdma_evict(mca_rcache_base_module_t *rcache);
 static int mca_rcache_grdma_add_to_gc(mca_rcache_base_registration_t *grdma_reg);
 static int check_for_accelerator_freed_memory(mca_rcache_base_module_t *rcache, void *addr, size_t size);
+static bool mca_rcache_accelerator_previously_freed_memory(mca_rcache_base_registration_t *reg);
 
 static inline bool registration_flags_cacheable(uint32_t flags)
 {
@@ -231,6 +232,10 @@ struct mca_rcache_base_find_args_t {
     unsigned char *base;
     unsigned char *bound;
     int access_flags;
+    /** verify that a candidate accelerator registration still refers to the
+     *  allocation it was created for. Only set on the accelerator fast path,
+     *  where the caller has not already swept the range for freed memory. */
+    bool validate_accelerator;
 };
 
 typedef struct mca_rcache_base_find_args_t mca_rcache_base_find_args_t;
@@ -280,6 +285,14 @@ static int mca_rcache_grdma_check_cached(mca_rcache_base_registration_t *grdma_r
         return 0;
     }
 
+    if (args->validate_accelerator && (grdma_reg->flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM)
+        && mca_rcache_accelerator_previously_freed_memory(grdma_reg)) {
+        /* The allocation this registration was created for has been freed and
+         * the address range reused, i.e. an alloc/free/alloc sequence. Retire
+         * the registration and let the caller fall through to the slow path. */
+        return mca_rcache_grdma_add_to_gc(grdma_reg);
+    }
+
     if (OPAL_UNLIKELY((args->access_flags & grdma_reg->access_flags) != args->access_flags)) {
         args->access_flags |= grdma_reg->access_flags;
 
@@ -312,6 +325,7 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) rcache;
     const bool bypass_cache = !!(flags & MCA_RCACHE_FLAGS_CACHE_BYPASS);
     const bool persist = !!(flags & MCA_RCACHE_FLAGS_PERSIST);
+    const bool accelerator_mem = !!(flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM) && !bypass_cache;
     mca_rcache_base_registration_t *grdma_reg;
     opal_free_list_item_t *item;
     unsigned char *base, *bound;
@@ -324,7 +338,45 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
     base = OPAL_DOWN_ALIGN_PTR(addr, page_size, unsigned char *);
     bound = OPAL_ALIGN_PTR((intptr_t) addr + size, page_size, unsigned char *) - 1;
 
-    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM && !bypass_cache) {
+    if (accelerator_mem && !persist) {
+        /* Accelerator fast path. Cached registrations are matched by
+         * containment, so the cheap page-aligned range computed above is
+         * enough to find one -- no need to ask the accelerator for the
+         * allocation's real bounds first. That lets a cache hit avoid both
+         * driver calls the slow path below makes (get_address_range() to
+         * expand the range, and the sweep for freed memory), which is all a
+         * hit costs today. The candidate is instead validated in place by the
+         * validate_accelerator check in mca_rcache_grdma_check_cached, so a
+         * registration whose allocation was freed and its address reused is
+         * still never returned.
+         *
+         * This lookup can only miss where the slow path would have hit -- for
+         * example when the allocation base is not page aligned, so the aligned
+         * base lands below reg->base and containment fails. The slow path
+         * repeats the lookup with the expanded range, so a false miss costs an
+         * extra lookup and can never produce a duplicate registration. */
+        do_unregistration_gc(rcache);
+
+        mca_rcache_base_find_args_t fast_args = {.reg = NULL,
+                                                 .rcache_grdma = rcache_grdma,
+                                                 .base = base,
+                                                 .bound = bound,
+                                                 .access_flags = access_flags,
+                                                 .validate_accelerator = true};
+        rc = mca_rcache_base_vma_iterate(rcache_grdma->cache->vma_module, base, size, false,
+                                         mca_rcache_grdma_check_cached, (void *) &fast_args);
+        if (1 == rc) {
+            *reg = fast_args.reg;
+            return OPAL_SUCCESS;
+        }
+
+        /* carry over any access flags accumulated from registrations this
+         * lookup retired, so the registration created below is not narrower
+         * than the one it replaces */
+        access_flags = fast_args.access_flags;
+    }
+
+    if (accelerator_mem) {
         size_t psize;
         int res = opal_accelerator.get_address_range(MCA_ACCELERATOR_NO_DEVICE_ID, addr, (void **)&base, &psize);
         if (OPAL_SUCCESS != res) {
@@ -372,7 +424,7 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
     grdma_reg->flags = flags;
     grdma_reg->access_flags = access_flags;
     grdma_reg->ref_count = 1;
-    if (flags & MCA_RCACHE_FLAGS_ACCELERATOR_MEM && !bypass_cache) {
+    if (accelerator_mem) {
         opal_accelerator.get_buffer_id(MCA_ACCELERATOR_NO_DEVICE_ID, grdma_reg->base, &grdma_reg->gpu_bufID);
     }
 

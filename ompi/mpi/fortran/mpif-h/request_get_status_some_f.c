@@ -13,6 +13,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -128,7 +129,11 @@ void ompi_request_get_status_some_f(MPI_Fint *incount, MPI_Fint *array_of_reques
                     }
                 }
             }
+        } else {
+            OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_indices);
         }
+    } else {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_indices);
     }
     free(c_req);
 }

@@ -34,6 +34,7 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/memchecker.h"
+#include "ompi/mca/topo/base/base.h"
 
 PROTOTYPE ERROR_CLASS cart_map(COMM comm, INT ndims, INT_ARRAY dims,
                                INT_ARRAY periods, INT_OUT newrank)
@@ -62,10 +63,10 @@ PROTOTYPE ERROR_CLASS cart_map(COMM comm, INT ndims, INT_ARRAY dims,
     }
 
     if(!OMPI_COMM_IS_CART(comm)) {
-        /* In case the communicator has no topo-module attached to
-           it, we just return the "default" value suggested by MPI:
-           newrank = rank */
-        *newrank = ompi_comm_rank(comm);
+        /* No Cartesian topo-module is attached (the normal case).  Use
+           the base mapping so ranks outside the requested grid receive
+           MPI_UNDEFINED, per MPI-4.1 sec. 8.5.8. */
+        err = mca_topo_base_cart_map(comm, ndims, dims, periods, newrank);
     } else {
         err = comm->c_topo->topo.cart.cart_map(comm, ndims, dims,
                                                periods, newrank);

@@ -2,7 +2,7 @@
  * Copyright (c) 2021      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
- * Copyright (c) 2022-2025 NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2022-2026 NVIDIA Corporation. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
  * $COPYRIGHT$
@@ -664,7 +664,7 @@ int mca_coll_ucc_req_free(struct ompi_request_t **ompi_req)
     {
         mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t *) ompi_req[0];
         if (true == coll_req->super.req_persistent) {
-            UCC_VERBOSE(5, "%s free %p", "<coll>_init", coll_req);
+            UCC_VERBOSE(5, "%s free %p", "<coll>_init", (void *)coll_req);
             if (NULL != coll_req->ucc_req) {
                 ucc_status_t rc_ucc;
                 rc_ucc = ucc_collective_finalize(coll_req->ucc_req);
@@ -684,10 +684,16 @@ int mca_coll_ucc_req_free(struct ompi_request_t **ompi_req)
 void mca_coll_ucc_completion(void *data, ucc_status_t status)
 {
     mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t*)data;
+
+    if (UCC_OK != status) {
+        UCC_ERROR("ucc collective completed with %s",
+                  ucc_status_string(status));
+        coll_req->super.req_status.MPI_ERROR = MPI_ERR_OTHER;
+    }
     if (false == coll_req->super.req_persistent) {
         ucc_collective_finalize(coll_req->ucc_req);
     } else {
-        UCC_VERBOSE(5, "%s done %p", "<coll>_init", coll_req);
+        UCC_VERBOSE(5, "%s done %p", "<coll>_init", (void *)coll_req);
         assert(!REQUEST_COMPLETE(&coll_req->super));
     }
     ompi_request_complete(&coll_req->super, true);
@@ -713,7 +719,7 @@ int mca_coll_ucc_req_start(size_t count, struct ompi_request_t **requests)
             }
             continue;
         }
-        UCC_VERBOSE(5, "%s post %p", "<coll>_init", coll_req);
+        UCC_VERBOSE(5, "%s post %p", "<coll>_init", (void *)coll_req);
         assert(REQUEST_COMPLETE(&coll_req->super));
         assert(OMPI_REQUEST_INACTIVE == coll_req->super.req_state);
 
@@ -727,7 +733,7 @@ int mca_coll_ucc_req_start(size_t count, struct ompi_request_t **requests)
         if (UCC_OK != rc_ucc) {
             UCC_ERROR("ucc_collective_post failed: %s", ucc_status_string(rc_ucc));
             coll_req->super.req_complete = REQUEST_COMPLETED;
-            coll_req->super.req_status.MPI_ERROR = MPI_ERR_INTERN;
+            coll_req->super.req_status.MPI_ERROR = MPI_ERR_OTHER;
             if (OMPI_SUCCESS == rc) {
                 rc = OMPI_ERROR;
             }

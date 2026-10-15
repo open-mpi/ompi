@@ -35,6 +35,15 @@ libtool_min_version=2.4.2
 flex_min_version=2.5.4
 python_min_version=3.6
 
+# Exact versions of the GNU tools used to make official distribution
+# tarballs (contrib/dist/make_dist_tarball requires these exact
+# versions).
+m4_dist_version=1.4.21
+autoconf_dist_version=2.73
+automake_dist_version=1.19
+libtool_dist_version=2.6.2
+flex_dist_version=2.6.4
+
 # greek is generally used for alpha or beta release tags.  If it is
 # non-empty, it will be appended to the version number.  It does not
 # have to be numeric.  Common examples include: a1 (alpha release 1),
@@ -42,7 +51,7 @@ python_min_version=3.6
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=rc1
+greek=rc2
 
 # If repo_rev is empty, then the repository version number will be
 # obtained during "make dist" via the "git describe --tags --always"
@@ -108,9 +117,9 @@ date="September 2026"
 
 libmpi_so_version=90:0:50
 libmpi_mpifh_so_version=90:0:50
-libmpi_usempi_tkr_so_version=90:0:50
-libmpi_usempi_ignore_tkr_so_version=90:0:50
-libmpi_usempif08_so_version=90:0:50
+libmpi_usempi_tkr_so_version=90:0:0
+libmpi_usempi_ignore_tkr_so_version=90:0:0
+libmpi_usempif08_so_version=90:0:0
 libmpi_abi_so_version=1:0:0
 libopen_pal_so_version=90:0:50
 libmpi_java_so_version=90:0:50

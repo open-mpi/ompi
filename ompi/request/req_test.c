@@ -43,7 +43,7 @@ recheck_request_status:
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         return OMPI_SUCCESS;
     }
@@ -172,7 +172,7 @@ int ompi_request_default_test_any(
     } else {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
     }
     return OMPI_SUCCESS;

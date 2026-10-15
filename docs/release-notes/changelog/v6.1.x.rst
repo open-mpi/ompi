@@ -8,6 +8,9 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+
+- Updated the embedded hwloc to v2.15.0.
+
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
   detect that the two jobs are running different versions of Open MPI,
   or that they selected different PMLs, and fail with a message naming
@@ -111,6 +114,33 @@ Open MPI version v6.1.0
   error handler through the request, and a nonblocking file request did
   not record which file it came from, so invoking the error handler
   dereferenced a null pointer.
+
+- Fixed the ``INTENT`` for the ``info_used`` parameter of ``MPI_Win_get_info``,
+  the ``errhandler`` parameter of ``MPI_Session_set_errhandler`` and the
+  ``flag`` parameter of ``MPI_Parrived`` in the ``use mpi`` Fortran
+  bindings.
+
+- Adjusted many Fortran ``use mpi`` API bindings to use the argument
+  names as defined by the standard. Calling these functions using
+  argument keywords will now require the standard-conformant naming
+  scheme.
+
+- ``MPI_Info_create_env`` no longer reports fields that were never
+  filled in.  Before ``MPI_Init`` it answered ``maxprocs``, ``soft`` and
+  ``ompi_num_apps`` as ``0``, and ``thread_level`` as
+  ``MPI_THREAD_SINGLE`` although no level had been requested.  A field
+  the run-time has not supplied is now left out of the object, which
+  ``MPI_Info_get`` reports as *flag* = false, before ``MPI_Init`` and
+  after ``MPI_Finalize`` alike.  A Sessions-only program requests no
+  world thread level, so ``thread_level`` is now absent for it.
+
+- The name Open MPI reports for the local node no longer changes at
+  ``MPI_Init``: it is the ``gethostname()`` result throughout, matching
+  ``MPI_Get_processor_name``.  ``MPI_Init`` used to replace it with the
+  run-time's name for the node, which on macOS differs by a ``.local``
+  suffix, so ``host`` in ``MPI_INFO_ENV`` and the host name in Open
+  MPI's error messages changed mid-run.  Peers are still named by the
+  run-time.
 
 - ``MPI_Info_set`` now accepts a zero-length (empty) value string.  It
   previously raised ``MPI_ERR_INFO_VALUE`` for an empty value, but

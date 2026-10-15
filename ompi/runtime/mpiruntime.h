@@ -73,7 +73,8 @@ OMPI_DECLSPEC extern volatile uint32_t ompi_mpit_init_count;
    ompi/runtime/ompi_mpi_init.c); MPI_THREAD_SINGLE when no epoch is
    active.  Same locking discipline as ompi_mpit_init_count. */
 OMPI_DECLSPEC extern int ompi_mpit_thread_level;
-/** Thread level requested to \c MPI_Init_thread() */
+/** Thread level requested to \c MPI_Init_thread(); \c MPI_UNDEFINED
+    until one is requested */
 OMPI_DECLSPEC extern int ompi_mpi_thread_requested;
 /** Thread level provided by Open MPI */
 OMPI_DECLSPEC extern int ompi_mpi_thread_provided;

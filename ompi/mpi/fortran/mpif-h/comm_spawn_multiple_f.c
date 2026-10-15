@@ -15,6 +15,7 @@
  * Copyright (c) 2016      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -102,7 +103,16 @@ void ompi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
         for (i=0; i<array_size; i++) {
             maxprocs += OMPI_ARRAY_NAME_CONVERT(array_maxprocs)[i];
         }
-        OMPI_ARRAY_FINT_2_INT_ALLOC(array_errcds, maxprocs);
+        /* Seed the temporary from the caller's array rather than just
+           allocating it: MPI_Comm_spawn_multiple leaves the error codes
+           untouched when it fails a parameter check, and the copy back
+           below cannot tell that case apart from a failure of the spawn
+           itself, which does fill them in.  Starting from the caller's own
+           values makes the copy back a no-op in the former case, so the
+           caller's array survives unchanged the way it does when a Fortran
+           INTEGER is the same size as a C int and no temporary is used at
+           all. */
+        OMPI_ARRAY_FINT_2_INT(array_errcds, maxprocs);
         c_errs = OMPI_ARRAY_NAME_CONVERT(array_errcds);
     }
 

@@ -53,13 +53,12 @@ PROTOTYPE ERROR_CLASS wait(REQUEST_INOUT request, STATUS_OUT status)
 
     if (MPI_REQUEST_NULL == *request) {
         if (MPI_STATUS_IGNORE != status) {
-            OMPI_COPY_STATUS(status, ompi_status_empty, false);
             /*
-             * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
+             * An empty status is defined to carry MPI_ERROR = MPI_SUCCESS, so
+             * copy the error field here even though this is a
+             * single-completion call.
              */
-            MEMCHECKER(
-                opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
-            );
+            OMPI_COPY_STATUS(status, ompi_status_empty, true);
         }
         return MPI_SUCCESS;
     }

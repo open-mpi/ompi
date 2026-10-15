@@ -7,9 +7,12 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2023-2026 Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Nanook Consulting  All rights reserved.
+ * Copyright (c) 2026      BULL S.A.S.  All rights reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2026      Nanook Consulting  All rights reserved.
+ * Copyright (c) 2026      BULL S.A.S.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -149,8 +152,9 @@ static opal_finalize_domain_t ompi_instance_common_domain;
 static void ompi_instance_construct (ompi_instance_t *instance)
 {
     instance->i_f_to_c_index = opal_pointer_array_add (&ompi_instance_f_to_c_table, instance);
+    instance->i_name = (char*) malloc (MPI_MAX_OBJECT_NAME);
     instance->i_name[0] = '\0';
-    instance->i_flags = 0;
+    instance->i_flags   = 0;
     instance->i_keyhash = NULL;
     OBJ_CONSTRUCT(&instance->s_lock, opal_mutex_t);
     instance->errhandler_type = OMPI_ERRHANDLER_TYPE_INSTANCE;
@@ -159,6 +163,8 @@ static void ompi_instance_construct (ompi_instance_t *instance)
 
 static void ompi_instance_destruct(ompi_instance_t *instance)
 {
+    free(instance->i_name);
+    instance->i_name = NULL;
     OBJ_DESTRUCT(&instance->s_lock);
 }
 
@@ -203,8 +209,11 @@ opal_pointer_array_t ompi_instance_f_to_c_table = {{0}};
  * PMIx event handlers
  */
 
-static size_t ompi_default_pmix_err_handler = 0;
-static size_t ompi_ulfm_pmix_err_handler = 0;
+/* PMIx hands out event handler reference ids starting at zero, so zero
+ * cannot double as "no handler registered" -- use SIZE_MAX instead, as
+ * ompi/errhandler/errhandler.c already does. */
+static size_t ompi_default_pmix_err_handler = SIZE_MAX;
+static size_t ompi_ulfm_pmix_err_handler = SIZE_MAX;
 
 /*
  * MPI extensions initialization function pointer
@@ -414,7 +423,7 @@ static void evhandler_dereg_callbk(pmix_status_t status,
 static int ompi_mpi_instance_init_common (int argc, char **argv)
 {
     int ret;
-    bool need_world_comms;
+    bool requires_world;
     ompi_proc_t **procs;
     size_t nprocs;
     volatile bool active;
@@ -439,32 +448,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
 
     if (OPAL_SUCCESS != (ret = opal_arch_set_fortran_logical_size(sizeof(ompi_fortran_logical_t)))) {
         return ompi_instance_print_error ("ompi_mpi_init: opal_arch_set_fortran_logical_size failed", ret);
-    }
-
-    /* _After_ opal_init_util() but _before_ orte_init(), we need to
-       set an MCA param that tells libevent that it's ok to use any
-       mechanism in libevent that is available on this platform (e.g.,
-       epoll and friends).  Per opal/event/event.s, we default to
-       select/poll -- but we know that MPI processes won't be using
-       pty's with the event engine, so it's ok to relax this
-       constraint and let any fd-monitoring mechanism be used. */
-
-    ret = mca_base_var_find("opal", "event", "*", "event_include");
-    if (ret >= 0) {
-        char *allvalue = "all";
-        /* We have to explicitly "set" the MCA param value here
-           because libevent initialization will re-register the MCA
-           param and therefore override the default. Setting the value
-           here puts the desired value ("all") in different storage
-           that is not overwritten if/when the MCA param is
-           re-registered. This is unless the user has specified a different
-           value for this MCA parameter. Make sure we check to see if the
-           default is specified before forcing "all" in case that is not what
-           the user desires. Note that we do *NOT* set this value as an
-           environment variable, just so that it won't be inherited by
-           any spawned processes and potentially cause unintended
-           side-effects with launching RTE tools... */
-        mca_base_var_set_value(ret, allvalue, 4, MCA_BASE_VAR_SOURCE_DEFAULT, NULL);
     }
 
     OMPI_TIMING_NEXT("initialization");
@@ -517,7 +500,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     OPAL_PMIX_DESTRUCT_LOCK(&mylock);
     PMIX_INFO_DESTRUCT(&info[0]);
     if (PMIX_SUCCESS != rc) {
-        ompi_default_pmix_err_handler = 0;
+        ompi_default_pmix_err_handler = SIZE_MAX;
         ret = opal_pmix_convert_status(rc);
         return ret;
     }
@@ -541,7 +524,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     PMIX_INFO_DESTRUCT(&info[0]);
     PMIX_INFO_DESTRUCT(&info[1]);
     if (PMIX_SUCCESS != rc) {
-        ompi_ulfm_pmix_err_handler = 0;
+        ompi_ulfm_pmix_err_handler = SIZE_MAX;
         ret = opal_pmix_convert_status(rc);
         return ret;
     }
@@ -729,14 +712,23 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
     }
 
-    need_world_comms = mca_pml_base_requires_world() || mca_osc_base_requires_world();
-    if (need_world_comms) {
-        /* need to set up comm world for this instance -- XXX -- FIXME -- probably won't always
-         * be the case. */
-        if (OMPI_SUCCESS != (ret = ompi_comm_init_mpi3 ())) {
-            return ompi_instance_print_error ("ompi_comm_init_mpi3 () failed", ret);
-        }
-    }
+    /* The predefined MPI-3 communicators are not built here.  They belong
+     * to the World Model, which builds them once after this function has
+     * returned, and cannot do it any earlier: MPI_COMM_WORLD records the
+     * instance it lives in, and this instance is not published until
+     * ompi_mpi_instance_init() is done with it.  Building them here as
+     * well can cost a message, because the second construction runs over
+     * the first -- it hands the PML a new and empty communicator and
+     * orphans everything the PML had already matched against the old one,
+     * with the sender none the wiser.  Waiting loses nothing: the PML
+     * parks a fragment it cannot place on its non-existing communicator
+     * queue, and add_comm() drains that queue.
+     *
+     * The world requirement itself still matters, but it is about procs
+     * rather than communicators: it comes from a BTL that wants every
+     * proc in the job in a single add_procs() call, so below it only
+     * chooses how the procs are collected. */
+    requires_world = mca_pml_base_requires_world() || mca_osc_base_requires_world();
 
     /* initialize file handles */
     if (OMPI_SUCCESS != (ret = ompi_file_init ())) {
@@ -789,7 +781,7 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
     /* some btls/mtls require we call add_procs with all procs in the job.
      * since the btls/mtls have no visibility here it is up to the pml to
      * convey this requirement */
-    if (need_world_comms) {
+    if (requires_world) {
         if (NULL == (procs = ompi_proc_world (&nprocs))) {
             return ompi_instance_print_error ("ompi_proc_get_allocated () failed", ret);
         }
@@ -812,29 +804,6 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
         return ret;
     } else if (OMPI_SUCCESS != ret) {
         return ompi_instance_print_error ("PML add procs failed", ret);
-    }
-
-    /* ompi_comm_init_mpi3() (above) marks the predefined world/self
-       communicators OMPI_COMM_PML_ADDED, but the matching
-       MCA_PML_CALL(add_comm()) calls live only in the World Model path
-       (ompi_mpi_init()).  When the communicator subsystem was set up
-       here -- a sessions-only process whose pml/osc requires the world,
-       e.g. ob1 over a multi-interface tcp btl at MPI_THREAD_MULTIPLE --
-       the flag was a lie: teardown then calls pml del_comm() on
-       communicators the PML has never seen, and ob1 dereferences the
-       NULL c_pml_comm.  Add them for real, now that add_procs() has
-       run.  The c_pml_comm guard keeps the World Model path (which
-       re-runs ompi_comm_init_mpi3() and performs its own add_comm()
-       calls after this function returns) from double-adding. */
-    if (need_world_comms && NULL == ompi_mpi_comm_world.comm.c_pml_comm) {
-        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
-        if (OMPI_SUCCESS != ret) {
-            return ompi_instance_print_error ("PML add comm (world) failed", ret);
-        }
-        ret = MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
-        if (OMPI_SUCCESS != ret) {
-            return ompi_instance_print_error ("PML add comm (self) failed", ret);
-        }
     }
 
     /* Determine the overall threadlevel support of all processes
@@ -1197,20 +1166,20 @@ static int ompi_mpi_instance_finalize_common (void)
         ompi_mpi_main_thread = NULL;
     }
 
-    if (0 != ompi_default_pmix_err_handler) {
+    if (SIZE_MAX != ompi_default_pmix_err_handler) {
         OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
         PMIx_Deregister_event_handler(ompi_default_pmix_err_handler, evhandler_dereg_callbk, &mylock);
         OPAL_PMIX_WAIT_THREAD(&mylock);
         OPAL_PMIX_DESTRUCT_LOCK(&mylock);
-        ompi_default_pmix_err_handler = 0;
+        ompi_default_pmix_err_handler = SIZE_MAX;
     }
 
-    if (0 != ompi_ulfm_pmix_err_handler) {
+    if (SIZE_MAX != ompi_ulfm_pmix_err_handler) {
         OPAL_PMIX_CONSTRUCT_LOCK(&mylock);
         PMIx_Deregister_event_handler(ompi_ulfm_pmix_err_handler, evhandler_dereg_callbk, &mylock);
         OPAL_PMIX_WAIT_THREAD(&mylock);
         OPAL_PMIX_DESTRUCT_LOCK(&mylock);
-        ompi_ulfm_pmix_err_handler = 0;
+        ompi_ulfm_pmix_err_handler = SIZE_MAX;
     }
 
     /* Close our frameworks before leaving the RTE.  ompi_rte_finalize() calls

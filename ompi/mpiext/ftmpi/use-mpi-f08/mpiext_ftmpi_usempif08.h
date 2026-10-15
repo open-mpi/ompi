@@ -3,6 +3,7 @@
 ! Copyright (c) 2018-2022 The University of Tennessee and the University
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
+! Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -155,7 +156,7 @@ subroutine mpix_comm_iagree_f08(comm,flag,request,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Request
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   INTEGER, INTENT(INOUT), ASYNCHRONOUS :: flag ! should use OMPI_ASYNCHRONOUS
+   INTEGER, INTENT(INOUT) OMPI_ASYNCHRONOUS :: flag
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine mpix_comm_iagree_f08
@@ -166,7 +167,7 @@ subroutine pmpix_comm_iagree_f08(comm,flag,request,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Request
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   INTEGER, INTENT(INOUT), ASYNCHRONOUS :: flag ! should use OMPI_ASYNCHRONOUS
+   INTEGER, INTENT(INOUT) OMPI_ASYNCHRONOUS :: flag
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine pmpix_comm_iagree_f08
@@ -197,7 +198,7 @@ subroutine mpix_comm_ishrink_f08(comm,newcomm,request,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Request
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Comm), INTENT(OUT) OMPI_ASYNCHRONOUS :: newcomm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine mpix_comm_ishrink_f08
@@ -208,7 +209,7 @@ subroutine pmpix_comm_ishrink_f08(comm,newcomm,request,ierror)
    use :: mpi_f08_types, only : MPI_Comm, MPI_Request
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+   TYPE(MPI_Comm), INTENT(OUT) OMPI_ASYNCHRONOUS :: newcomm
    TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine pmpix_comm_ishrink_f08
