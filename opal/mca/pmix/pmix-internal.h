@@ -12,6 +12,7 @@
  * Copyright (c) 2021-2024 Nanook Consulting  All rights reserved.
  * Copyright (c) 2021      Argonne National Laboratory.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -671,20 +672,30 @@ OPAL_DECLSPEC void opal_pmix_finalize_nspace_tracker(void);
         }                                                               \
     } while (0)
 
-#define OPAL_PMIX_CONVERT_STRING_TO_PROCT(p, s)  \
-    do {                                         \
-        char *_ptr;                              \
-        _ptr = strrchr((s), '.');                \
-        *_ptr = '\0';                            \
-        _ptr++;                                  \
-        PMIX_LOAD_NSPACE((p)->nspace, (s));      \
-        if ('*' == *_ptr) {                      \
-            (p)->rank = PMIX_RANK_WILDCARD;      \
-        } else if ('$' == *_ptr) {               \
-            (p)->rank = PMIX_RANK_INVALID;       \
-        } else {                                 \
-            (p)->rank = strtoul(_ptr, NULL, 10); \
-        }                                        \
+/* A string with no delimiter in it is not a proc name at all. Take the
+ * whole of it as the nspace and say the rank is invalid, rather than
+ * dereferencing what strrchr() did not find: the strings reaching here
+ * include ones a peer put on a port key, so a malformed one is a
+ * diagnosable error and must not be a crash. */
+#define OPAL_PMIX_CONVERT_STRING_TO_PROCT(p, s)      \
+    do {                                             \
+        char *_ptr;                                  \
+        _ptr = strrchr((s), '.');                    \
+        if (NULL == _ptr) {                          \
+            PMIX_LOAD_NSPACE((p)->nspace, (s));      \
+            (p)->rank = PMIX_RANK_INVALID;           \
+        } else {                                     \
+            *_ptr = '\0';                            \
+            _ptr++;                                  \
+            PMIX_LOAD_NSPACE((p)->nspace, (s));      \
+            if ('*' == *_ptr) {                      \
+                (p)->rank = PMIX_RANK_WILDCARD;      \
+            } else if ('$' == *_ptr) {               \
+                (p)->rank = PMIX_RANK_INVALID;       \
+            } else {                                 \
+                (p)->rank = strtoul(_ptr, NULL, 10); \
+            }                                        \
+        }                                            \
     } while (0)
 
 OPAL_DECLSPEC int opal_pmix_register_cleanup(char *path, bool directory, bool ignore,
