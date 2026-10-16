@@ -63,7 +63,9 @@ static int mca_btl_sm_get_async(mca_btl_base_module_t *btl, mca_btl_base_endpoin
                                 mca_btl_base_rdma_completion_fn_t cbfunc, void *cbcontext,
                                 void *cbdata)
 {
-    int slot = endpoint->peer_smp_rank % MCA_BTL_SM_GET_STREAMS;
+    unsigned int nstreams = mca_btl_sm_component.accelerator_get_streams;
+    int slot = endpoint->peer_smp_rank
+               % ((0 < nstreams && nstreams <= MCA_BTL_SM_GET_STREAMS) ? nstreams : MCA_BTL_SM_GET_STREAMS);
     opal_accelerator_event_t *event = NULL;
     mca_btl_sm_async_get_t *get;
     int ret;

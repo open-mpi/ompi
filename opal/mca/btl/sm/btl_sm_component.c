@@ -183,6 +183,17 @@ static int mca_btl_sm_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_sm_component.fbox_max);
 
+    /* One stream was as fast as eight or faster: the copies into one device run one after
+     * another either way, and what the asynchronous gets save is the host waiting on each */
+    mca_btl_sm_component.accelerator_get_streams = 1;
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
+                                           "accelerator_get_streams",
+                                           "Accelerator streams that gets from peers' device "
+                                           "buffers are queued on, chosen by peer (1-8, default: 1)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_sm_component.accelerator_get_streams);
+
     mca_btl_sm_component.fbox_size = 4096;
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "fbox_size",
                                            "Size of per-peer fast transfer buffers. Must be a power of two (default: 4k)",

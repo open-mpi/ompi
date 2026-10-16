@@ -124,6 +124,7 @@ struct mca_btl_sm_component_t {
     unsigned int
         fbox_threshold; /**< number of sends required before we setup a send fast box for a peer */
     unsigned int fbox_max;  /**< maximum number of send fast boxes to allocate */
+    unsigned int accelerator_get_streams; /**< accelerator streams for asynchronous gets */
     unsigned int fbox_size; /**< size of each peer fast box allocation */
 
     int single_copy_mechanism; /**< single copy mechanism to use */
