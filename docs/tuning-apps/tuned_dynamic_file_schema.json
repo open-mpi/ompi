@@ -18,6 +18,10 @@
         "description": "The schema used for validation",
         "type": "string"
       },
+      "comm_rank_distribution" : {
+        "description": "Declares that this whole file was tuned for communicators whose ranks are distributed this way.  It supplies the default for every communicator rule in the file; an individual rule may still override it.",
+        "anyOf" : { "$ref" : "#/$defs/comm_rank_distribution" }
+      },
       "collectives" : {
         "description": "The collectives, each with their own rules.  Each collective is indicated by a lowercase property such as \"allgather\"",
         "type": "object",
@@ -44,6 +48,10 @@
     },
 
     "$defs": {
+        "comm_rank_distribution": {
+            "enum" : ["any", "one-per-node", "single-node"]
+        },
+
         "msg_size_rule": {
             "type": "object",
             "required": ["alg"],
@@ -86,8 +94,8 @@
                     "anyOf" :  { "$ref" : "#/$defs/int_or_inf" }
                 },
                 "comm_rank_distribution" : {
-                    "description" : "A description of how the ranks are distributed within the communicator",
-                    "enum" : ["any", "one-per-node", "single-node"]
+                    "description" : "A description of how the ranks are distributed within the communicator.  Overrides the file-level declaration, if any; defaults to \"any\".",
+                    "anyOf" :  { "$ref" : "#/$defs/comm_rank_distribution" }
                 },
 
                 "rules" : {

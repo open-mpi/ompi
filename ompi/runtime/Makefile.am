@@ -13,6 +13,7 @@
 # Copyright (c) 2014-2019 Intel, Inc.  All rights reserved.
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -26,22 +27,23 @@
 EXTRA_DIST += runtime/help-mpi-runtime.txt
 
 headers += \
-		runtime/mpiruntime.h \
-		runtime/params.h \
-		runtime/ompi_info_support.h \
-		runtime/ompi_spc.h \
-		runtime/ompi_rte.h \
-		runtime/ompi_mpit_events.h
+        runtime/mpiruntime.h \
+        runtime/params.h \
+	runtime/ompi_info_support.h \
+	runtime/ompi_spc.h \
+	runtime/ompi_rte.h \
+	runtime/ompi_modex.h \
+	runtime/ompi_mpit_events.h
 
 libopen_mpi_la_SOURCES += \
-		runtime/ompi_mpi_init.c \
-		runtime/ompi_mpi_abort.c \
-		runtime/ompi_mpi_dynamics.c \
-		runtime/ompi_mpi_finalize.c \
-		runtime/ompi_mpi_params.c \
-		runtime/ompi_mpi_preconnect.c \
-		runtime/ompi_info_support.c \
-		runtime/ompi_spc.c \
-		runtime/ompi_rte.c \
-		runtime/ompi_mpit_register_events.c
-
+        runtime/ompi_mpi_init.c \
+        runtime/ompi_mpi_abort.c \
+        runtime/ompi_mpi_dynamics.c \
+        runtime/ompi_mpi_finalize.c \
+        runtime/ompi_mpi_params.c \
+        runtime/ompi_mpi_preconnect.c \
+	runtime/ompi_info_support.c \
+	runtime/ompi_spc.c \
+	runtime/ompi_rte.c \
+	runtime/ompi_modex.c \
+	runtime/ompi_mpit_register_events.c

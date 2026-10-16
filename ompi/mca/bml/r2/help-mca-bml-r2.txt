@@ -32,3 +32,20 @@ specify the "self" BTL.
   BTLs attempted: %s
 
 Your MPI job is now going to abort; sorry.
+#
+[peer info unavailable]
+One MPI process is unable to reach another, because the run-time system
+never delivered the second process' connection information.  No Open MPI
+device could be selected without it: rather than every device reporting
+that it cannot reach this peer, none of them was ever in a position to
+answer.
+
+  Process 1 (%s) is on host: %s
+  Process 2 (%s) is on host: %s
+
+This is not a matter of which devices are available, so selecting
+different ones will not help.  Re-running the job with "--mca
+pmix_base_verbose 1" will report the error the run-time system gave
+when the information was requested.
+
+Your MPI job is now going to abort; sorry.

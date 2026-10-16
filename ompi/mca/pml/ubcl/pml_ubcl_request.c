@@ -49,6 +49,8 @@ int mca_pml_ubcl_request_start(size_t count, struct ompi_request_t **requests)
     int ret = OMPI_SUCCESS;
     for (size_t i = 0; i < count; i++) {
         mca_pml_ubcl_request_t *req = container_of(requests[i], mca_pml_ubcl_request_t, ompi_req);
+        mca_pml_ubcl_comm_form form = req->form;
+        bool persistent = MCA_PML_UBCL_PERSISTENT_COMM == form ? true : false;
 
         /* Save callback fields if they are not ours */
         if(mca_pml_ubcl_request_complete_cb != req->ompi_req.req_complete_cb) {
@@ -61,7 +63,7 @@ int mca_pml_ubcl_request_start(size_t count, struct ompi_request_t **requests)
         }
 
         /* Reset fields if persistent request */
-        OMPI_REQUEST_INIT(&req->ompi_req, req->ompi_req.req_persistent);
+        OMPI_REQUEST_INIT(&req->ompi_req, persistent);
         req->ompi_req.req_complete_cb = mca_pml_ubcl_request_complete_cb;
         req->completed = 0;
         req->message = NULL;

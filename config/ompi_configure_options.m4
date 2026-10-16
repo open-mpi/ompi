@@ -19,6 +19,8 @@ dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2013      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2015-2018 Research Organization for Information Science
 dnl                         and Technology (RIST). All rights reserved.
+dnl Copyright (c) 2026      Triad National Security, LLC. All rights
+dnl                         reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -257,11 +259,16 @@ AM_CONDITIONAL(OMPI_OMPIO_SUPPORT, test "$ompi_want_ompio" = "1")
 AC_ARG_ENABLE([deprecate-mpif-h],
               [AS_HELP_STRING([--enable-deprecate-mpif-h],
                               [Mark the mpif.h bindings as deprecated (default: enabled)])])
-# If the binding source files don't exist, then we need Python to generate them
+# If the C binding source files have already been generated (e.g. we are
+# building from a release tarball), we can build without Python.  Otherwise
+# we need Python to generate them.  Probe for any generated binding rather
+# than a single hard-coded name so this stays correct if the per-function
+# names change; it only needs updating if the "*_generated.c" suffix
+# convention itself changes (see SUFFIXES in ompi/mpi/c/Makefile.am).
 AM_PATH_PYTHON([3.6],,[:])
-binding_file="${srcdir}/ompi/mpi/c/ompi_send_generated.c"
-AS_IF([! test -e "$binding_file" && test "$PYTHON" = ":"],
-      [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the bindings. Aborting])])
+AS_IF([test "$PYTHON" = ":"],
+      [AS_IF([! ls "${srcdir}"/ompi/mpi/c/*_generated.c >/dev/null 2>&1],
+             [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the bindings. Aborting])])])
 AM_CONDITIONAL(OMPI_GENERATE_BINDINGS,[test "$PYTHON" != ":"])
 
 AC_MSG_CHECKING([if want to enable MPI Forum ABI library])

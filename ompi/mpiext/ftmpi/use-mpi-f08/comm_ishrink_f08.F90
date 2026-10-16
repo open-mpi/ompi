@@ -4,6 +4,7 @@
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+! Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -11,6 +12,8 @@
 ! $HEADER$
 ! SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 !
+
+#include "ompi/mpi/fortran/configure-fortran-output.h"
 
 subroutine MPIX_Comm_ishrink_f08(comm, newcomm, request, ierror)
   use :: mpi_f08_types, only : MPI_Comm, MPI_Request
@@ -26,7 +29,7 @@ subroutine MPIX_Comm_ishrink_f08(comm, newcomm, request, ierror)
      end subroutine ompix_comm_ishrink_f
   end interface
   TYPE(MPI_Comm), INTENT(IN) :: comm
-  TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+  TYPE(MPI_Comm), INTENT(OUT) OMPI_ASYNCHRONOUS :: newcomm
   TYPE(MPI_Request), INTENT(OUT) :: request
   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
   integer :: c_ierror
@@ -50,7 +53,7 @@ subroutine PMPIX_Comm_ishrink_f08(comm, newcomm, request, ierror)
      end subroutine ompix_comm_ishrink_f
   end interface
   TYPE(MPI_Comm), INTENT(IN) :: comm
-  TYPE(MPI_Comm), INTENT(OUT) :: newcomm
+  TYPE(MPI_Comm), INTENT(OUT) OMPI_ASYNCHRONOUS :: newcomm
   TYPE(MPI_Request), INTENT(OUT) :: request
   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
   integer :: c_ierror

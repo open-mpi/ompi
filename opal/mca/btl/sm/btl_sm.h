@@ -93,6 +93,19 @@ static inline void sm_memmove(void *dst, void *src, size_t size)
 }
 
 /**
+ * Map the shared-memory segment of every local peer, and publish the
+ * endpoint array once they are all there.
+ *
+ * The node is the unit, not the peer: posting a fragment chains it onto
+ * the previous item in the destination's fifo, which lives in a third
+ * local peer's segment. Only this btl's own job is covered.
+ *
+ * @return OPAL_SUCCESS once this btl can be used, OPAL_ERR_NOT_READY
+ *         while some local peer's blob has not reached this process.
+ */
+int mca_btl_sm_attach_local_peers(void);
+
+/**
  * Initiate a send to the peer.
  *
  * @param btl (IN)      BTL module

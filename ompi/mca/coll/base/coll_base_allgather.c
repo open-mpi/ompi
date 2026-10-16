@@ -789,6 +789,13 @@ int ompi_coll_base_allgather_intra_k_bruck(const void *sbuf, size_t scount,
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
+    /* The phase loop below advances by multiplying with the radix, so
+     * anything below 2 never terminates. */
+    if( radix < 2 ) {
+        OPAL_OUTPUT((ompi_coll_base_framework.framework_output,"coll:base:allgather_intra_k_bruck WARNING invalid radix %d smaller than min 2, forcing to min!", radix));
+        radix = 2;
+    }
+
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                  "coll:base:allgather_intra_k_bruck radix %d rank %d", radix, rank));
     err = ompi_datatype_get_extent (rdtype, &rlb, &rextent);

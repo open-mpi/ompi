@@ -1,6 +1,7 @@
 /**
   Copyright (c) 2021      Mellanox Technologies. All rights reserved.
   Copyright (c) 2025      Fujitsu Limited. All rights reserved.
+  Copyright (c) 2026      NVIDIA Corporation. All rights reserved.
   $COPYRIGHT$
   Additional copyrights may follow
   $HEADER$
@@ -14,17 +15,41 @@
 #include "coll_ucc.h"
 #include "coll_ucc_dtypes.h"
 
+/*
+ * A collective UCC declined to start may safely run on the previous module:
+ * every rank evaluates the same arguments against the same team, so either all
+ * of them fall back or none of them do.
+ *
+ * The rooted collectives weaken that: the root also tests datatypes the other
+ * ranks do not have, so it can decline alone and hang the job the same way.
+ * Nothing here can detect it -- deciding together would require the peers'
+ * datatypes, which are not available -- so it remains a known limitation.
+ *
+ * A collective that failed once it was posted may not. Only the ranks that
+ * observed the failure would change module, while the rest stay in UCC waiting
+ * for peers that have left, so the job hangs instead of failing. Report the
+ * error to the caller and let the communicator's error handler decide.
+ */
 #define COLL_UCC_CHECK(_call) do {              \
         if (UCC_OK != (_call)) {                \
             goto fallback;                      \
         }                                       \
     } while(0)
 
-#define COLL_UCC_POST_AND_CHECK(_req) do {           \
-        if (UCC_OK != ucc_collective_post(_req)) {   \
-            ucc_collective_finalize(_req);           \
-            goto fallback;                           \
-        }                                            \
+#define COLL_UCC_POST_AND_CHECK(_req) do {                          \
+        ucc_status_t _post_status = ucc_collective_post(_req);      \
+        if (UCC_OK != _post_status) {                               \
+            UCC_ERROR("ucc_collective_post failed: %s",             \
+                      ucc_status_string(_post_status));             \
+            ucc_collective_finalize(_req);                          \
+            goto failed;                                            \
+        }                                                           \
+    } while(0)
+
+#define COLL_UCC_CHECK_POSTED(_call) do {       \
+        if (UCC_OK != (_call)) {                \
+            goto failed;                        \
+        }                                       \
     } while(0)
 
 #define COLL_UCC_GET_REQ(_coll_req, _comm) do {                         \
@@ -43,6 +68,7 @@
         _coll_req->super.req_free             = mca_coll_ucc_req_free;  \
         _coll_req->super.req_type             = OMPI_REQUEST_COLL;      \
         _coll_req->super.req_mpi_object.comm  = _comm;                  \
+        _coll_req->module                     = NULL;                   \
     } while(0)
 
 #define COLL_UCC_GET_REQ_PERSISTENT(_coll_req, _comm)                   \
@@ -63,9 +89,17 @@
         _coll_req->super.req_type = OMPI_REQUEST_COLL;                  \
         _coll_req->super.req_mpi_object.comm = _comm;                   \
         _coll_req->ucc_req = NULL;                                      \
+        _coll_req->module = NULL;                                       \
     } while (0)
 
+/* Only a blocking post enables; nonblocking posts fall back until the module is READY. */
 #define COLL_UCC_REQ_INIT(_coll_req, _req, _coll, _module) do{          \
+        if (OPAL_UNLIKELY(MCA_COLL_UCC_READY != (_module)->state)) {    \
+            if (NULL != (_coll_req) ||                                  \
+                OMPI_SUCCESS != mca_coll_ucc_lazy_enable(_module)) {    \
+                goto fallback;                                          \
+            }                                                           \
+        }                                                               \
         if (_coll_req) {                                                \
             _coll.mask   |= UCC_COLL_ARGS_FIELD_CB;                     \
             _coll.cb.cb   = mca_coll_ucc_completion;                    \
@@ -78,10 +112,16 @@
                                            _module->ucc_team));         \
         if (_coll_req) {                                                \
             _coll_req->ucc_req = *(_req);                               \
+            _coll_req->module  = _module;                               \
+            if (!_coll_req->super.req_persistent) {                     \
+                OPAL_THREAD_ADD_FETCH32(&_module->active, 1);           \
+                OPAL_THREAD_ADD_FETCH32(&_module->domain->active, 1);   \
+            }                                                           \
         }                                                               \
     } while(0)
 
-static inline ucc_status_t coll_ucc_req_wait(ucc_coll_req_h req)
+static inline ucc_status_t coll_ucc_req_wait(ucc_coll_req_h req,
+                                             mca_coll_ucc_module_t *module)
 {
     ucc_status_t status;
     while (UCC_OK != (status = ucc_collective_test(req))) {
@@ -91,7 +131,7 @@ static inline ucc_status_t coll_ucc_req_wait(ucc_coll_req_h req)
             ucc_collective_finalize(req);
             return status;
         }
-        ucc_context_progress(mca_coll_ucc_component.ucc_context);
+        ucc_context_progress(module->domain->ucc_context);
         opal_progress();
     }
     return ucc_collective_finalize(req);

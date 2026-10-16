@@ -29,6 +29,8 @@ suppress an ``html_extra_path`` entry; see specs/llms-friendly-docs/spec.md):
       openmpi-mpi-api-fortran-use-mpi-f08.md
       openmpi-mpi-interface-guide.md      (curated; copied from llms-src)
       openmpi-mpi-examples.md             (curated; copied from llms-src)
+      openmpi-runtime-introspection.md    (curated; copied from llms-src)
+      openmpi-release-discovery.md        (curated; copied from llms-src)
       openmpi-mpi-api.schema.json         (curated; copied from llms-src)
       openmpi-docs-manifest.schema.json   (curated; copied from llms-src)
       openmpi-docs-manifest.json
@@ -107,6 +109,7 @@ CURATED_FILES = [
     "openmpi-mpi-interface-guide.md",
     "openmpi-mpi-examples.md",
     "openmpi-runtime-introspection.md",
+    "openmpi-release-discovery.md",
     "openmpi-mpi-api.schema.json",
     "openmpi-docs-manifest.schema.json",
 ]
@@ -1350,6 +1353,29 @@ def build_llms_txt(version_info, linkmaker, rtd_slug, present_curated,
             "comprehensive, self-describing, machine-readable dump.", "",
             "- [Runtime introspection with ompi_info]({})".format(
                 link("llms/openmpi-runtime-introspection.md")), "",
+        ]
+    # Release discovery: which Open MPI versions exist is not a property of
+    # any one documentation version, so point at the web site's
+    # machine-readable release files (absolute URLs, regardless of the link
+    # strategy, since they are not part of this documentation tree).
+    if 'openmpi-release-discovery.md' in present_curated:
+        lines += [
+            "## Discovering Open MPI releases", "",
+            "To find out which Open MPI versions exist (e.g., whether a newer "
+            "release is available) and to get release download URLs and "
+            "checksums, use the machine-readable files on the Open MPI web "
+            "site instead of scraping its download pages. The JSON documents "
+            "are the primary interface and carry the most information.", "",
+            "- [Release discovery guide]({})".format(
+                link("llms/openmpi-release-discovery.md")),
+            "- [Latest recommended release (plain text)]"
+            "(https://www.open-mpi.org/software/ompi/current/downloads/"
+            "latest_release.txt)",
+            "- [Index of all release series and versions (JSON)]"
+            "(https://www.open-mpi.org/software/ompi/releases.json)",
+            "- [Feed of recent releases (Atom; for feed readers --- "
+            "prefer the JSON index above)]"
+            "(https://www.open-mpi.org/software/ompi/releases.atom)", "",
         ]
     # Command (man1) man pages: a Markdown corpus, no catalog records.
     if man1_pages:

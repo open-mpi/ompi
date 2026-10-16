@@ -14,6 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +27,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 
 #if OMPI_BUILD_MPI_PROFILING
@@ -85,7 +87,8 @@ void ompi_allgatherv_init_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendty
     c_recvtype = PMPI_Type_f2c(*recvtype);
     c_info = PMPI_Info_f2c(*info);
 
-    PMPI_Comm_size(c_comm, &size);
+    /* On an intercommunicator the counts describe the remote group. */
+    size = OMPI_COMM_IS_INTER(c_comm) ? ompi_comm_remote_size(c_comm) : ompi_comm_size(c_comm);
     OMPI_ARRAY_FINT_2_INT(recvcounts, size);
     OMPI_ARRAY_FINT_2_INT(displs, size);
 

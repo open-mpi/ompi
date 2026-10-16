@@ -16,7 +16,6 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -25,7 +24,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2023-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +64,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
 
@@ -669,10 +669,12 @@ bcast_rportlen:
                 }
             }
 
-            /* ompi_proc_complete_init_single() initializes and optionally retrieves
-             * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
-             * them, we are just fine */
-            ompi_proc_complete_init_single(proc);
+            /* PMIx_Connect() above downloaded what these procs
+             * published, so reads for them are local from here on.
+             * Said before the init below, whose architecture read
+             * would otherwise be a fetch nobody waits for. */
+            opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
+
             /* if this proc is local, then get its locality */
             for (prn = 0; prn < nprn; prn++) {
                 uint16_t u16;
@@ -699,12 +701,39 @@ bcast_rportlen:
                 PMIx_Store_internal(&pxproc, PMIX_LOCALITY, &pval);
                 break;
             }
+
+            /* After the locality above, not before: a peer known to be
+             * node-local takes our architecture without a modex read,
+             * and skips the locality read this would otherwise do and
+             * the loop above would then overwrite.
+             *
+             * What can fail here is that architecture, not the
+             * locality, which is answered inside either way. Without an
+             * architecture the proc keeps our convertor and would
+             * silently mistranslate, so it cannot be waved through.
+             * Saying AVAILABLE first rules out the "not published yet"
+             * answer, which is the one this has no way to wait for. */
+            rc = ompi_proc_complete_init_single(proc);
+            if (OMPI_SUCCESS != rc) {
+                OMPI_ERROR_LOG(rc);
+                goto exit;
+            }
         }
         free(local_ranks);
         local_ranks = NULL;
 
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+        if (OMPI_ERR_NOT_READY == rc) {
+            /* This call is collective and blocking with nowhere to defer
+             * the work to, so wait for the exchange and ask once more; a
+             * peer still unwired then is one no btl will ever claim. */
+            (void) ompi_modex_wait_if_needed();
+            rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+            if (OMPI_ERR_NOT_READY == rc) {
+                rc = OMPI_ERR_UNREACH;
+            }
+        }
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {
@@ -851,15 +880,20 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
        ompi/runtime/ompi_mpi_finalize.c for a much more detailed
        rationale. */
 
-    /* RHC: assuming for now that this must flow across all
-     * local and remote group members */
-    nprocs = comm->c_local_group->grp_proc_count + comm->c_remote_group->grp_proc_count;
+    /* This must flow across all local and remote group members.  An
+     * intracomm has only the local group (the remote group points by
+     * design to the same group), so walking both would name every peer
+     * twice. */
+    nprocs = comm->c_local_group->grp_proc_count;
+    if (OMPI_COMM_IS_INTER(comm)) {
+        nprocs += comm->c_remote_group->grp_proc_count;
+    }
     names = (opal_process_name_t *) malloc(nprocs * sizeof(opal_process_name_t));
     if (NULL == names) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     ret = ompi_dpm_collect_names(comm->c_local_group, names, &n);
-    if (OMPI_SUCCESS == ret) {
+    if (OMPI_SUCCESS == ret && OMPI_COMM_IS_INTER(comm)) {
         /* do the same for the remote group */
         ret = ompi_dpm_collect_names(comm->c_remote_group, names, &n);
     }

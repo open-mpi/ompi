@@ -257,15 +257,17 @@ static inline int mca_coll_acoll_reduce_smsc(const void *sbuf, void *rbuf, size_
 
     int ret;
 
-    ret = comm->c_coll->coll_allgather(sbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_sbuf,
+    ret = ompi_coll_base_allgather_intra_recursivedoubling(sbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_sbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
     if (MPI_SUCCESS != ret) {
         return ret;
     }
-    ret = comm->c_coll->coll_allgather(rbuf_vaddr, sizeof(void *), MPI_BYTE, data->allshm_rbuf,
+    ret = ompi_coll_base_allgather_intra_recursivedoubling(rbuf_vaddr, sizeof(void *),
+                                       MPI_BYTE, data->allshm_rbuf,
                                        sizeof(void *), MPI_BYTE, comm,
-                                       comm->c_coll->coll_allgather_module);
+                                       module);
 
     if (MPI_SUCCESS != ret) {
         return ret;
@@ -281,8 +283,9 @@ static inline int mca_coll_acoll_reduce_smsc(const void *sbuf, void *rbuf, size_
     size_t my_count_size = (l1_local_rank == (l1_gp_size - 1)) ? chunk + count % l1_gp_size : chunk;
 
     if (rank == l1_gp[0]) {
-        if (MPI_IN_PLACE != sbuf)
-            memcpy(tmp_rbuf, sbuf, my_count_size * dsize);
+        if (tmp_rbuf != tmp_sbuf) {
+            memcpy(tmp_rbuf, tmp_sbuf, my_count_size * dsize);
+        }
         for (int i = 1; i < l1_gp_size; i++) {
             ompi_op_reduce(op, (char *) data->smsc_saddr[l1_gp[i]] + chunk * l1_local_rank * dsize,
                            (char *) tmp_rbuf + chunk * l1_local_rank * dsize, my_count_size, dtype);

@@ -2,6 +2,7 @@
  * Copyright (c) 2022      The University of Tennessee and the University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,6 +53,14 @@ OMPI_GENERATE_F77_BINDINGS(MPIX_COMM_ACK_FAILED,
 void ompix_comm_ack_failed_f(MPI_Fint *comm, MPI_Fint *num_to_ack, MPI_Fint *num_acked, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
+    int c_ierr;
+    OMPI_SINGLE_NAME_DECL(num_acked);
 
-    *ierr = OMPI_INT_2_FINT(PMPIX_Comm_ack_failed(c_comm, OMPI_FINT_2_INT(*num_to_ack), OMPI_PFINT_2_PINT(num_acked)));
+    c_ierr = PMPIX_Comm_ack_failed(c_comm, OMPI_FINT_2_INT(*num_to_ack),
+                                   OMPI_SINGLE_NAME_CONVERT(num_acked));
+    *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (MPI_SUCCESS == c_ierr) {
+        OMPI_SINGLE_INT_2_FINT(num_acked);
+    }
 }

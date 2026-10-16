@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -180,9 +181,39 @@ ompi_pml_ob1_check_cantmatch_for_match(mca_pml_ob1_comm_proc_t *proc);
  */
 int mca_pml_ob1_merge_cant_match( ompi_communicator_t * ompi_comm );
 
+/**
+ * Note that this peer has fragments parked on its architecture; must be
+ * called with the matching lock held. Takes one progress count per peer,
+ * not per fragment, released when that peer is drained.
+ */
+void mca_pml_ob1_note_unseeded_frags (mca_pml_ob1_comm_proc_t *proc);
+
+/**
+ * Re-drive, in every communicator, the fragments parked because their
+ * sender's architecture was unknown, and report how many peers were
+ * freed. Runs from mca_pml_ob1_progress(), never from a btl callback.
+ */
+int mca_pml_ob1_drain_unseeded_frags (void);
+
 void ompi_pml_ob1_append_frag_to_ordered_list(mca_pml_ob1_recv_frag_t** queue,
                                                   mca_pml_ob1_recv_frag_t* frag,
                                                   uint16_t seq);
+
+/**
+ * Does this fragment's hdr_seq mean anything?
+ *
+ * An overtaking communicator skips the send-side counter for a
+ * non-negative tag (mca_pml_ob1_isend), so every one of those arrives as
+ * sequence 0: they cannot be ordered against each other, they cannot be
+ * waited for, and expected_sequence must not count them. Negative tags
+ * stay sequenced even there, which is why this is not simply the
+ * assertion itself.
+ */
+static inline bool mca_pml_ob1_frag_is_sequenced (ompi_communicator_t *comm,
+                                                  const mca_pml_ob1_match_hdr_t *hdr)
+{
+    return (!OMPI_COMM_CHECK_ASSERT_ALLOW_OVERTAKE(comm) || 0 > hdr->hdr_tag);
+}
 
 void mca_pml_ob1_handle_cid (ompi_communicator_t *comm, int src, mca_pml_ob1_cid_hdr_t *hdr_cid);
 

@@ -61,6 +61,7 @@ struct mca_pml_ubcl_request_t {
     opal_free_list_item_t super;
     ompi_request_t ompi_req; /**< Base request */
     mca_pml_ubcl_request_type_t type;
+    mca_pml_ubcl_comm_form form;
 
     /* PML parameters */
     uint64_t to_free:1;
@@ -159,12 +160,16 @@ int mca_pml_ubcl_request_need_xpack(mca_pml_ubcl_request_t *req,
  * Generic convinience macros
  */
 #define MCA_PML_UBCL_SEND_REQUEST_INIT(req, _buf, _count, _datatype, _dst, _tag, _mode, _comm,   \
-                                       _proc, _persistent)                           \
+                                       _proc, _form)                                             \
     do {                                                                                         \
         OBJ_RETAIN(_comm);                                                                       \
         OMPI_DATATYPE_RETAIN(_datatype);                                                         \
         OBJ_CONSTRUCT(&(req)->ompi_req, ompi_request_t);                                         \
-        OMPI_REQUEST_INIT(&req->ompi_req, _persistent);                                          \
+        if (MCA_PML_UBCL_PERSISTENT_COMM == _form) {                                             \
+            OMPI_REQUEST_INIT(&req->ompi_req, true);                                             \
+        } else {                                                                                 \
+            OMPI_REQUEST_INIT(&req->ompi_req, false);                                            \
+        }                                                                                        \
         (req)->ompi_req.req_type = OMPI_REQUEST_PML;                                             \
         (req)->ompi_req.req_start = mca_pml_ubcl_request_start;                                  \
         (req)->ompi_req.req_free = mca_pml_ubcl_request_free;                                    \
@@ -174,6 +179,7 @@ int mca_pml_ubcl_request_need_xpack(mca_pml_ubcl_request_t *req,
         (req)->saved_complete_cb = NULL;                                                         \
         (req)->saved_complete_cb_data = NULL;                                                    \
         (req)->type = MCA_PML_UBCL_REQUEST_SEND;                                                 \
+        (req)->form = _form;                                                                     \
         (req)->to_free = 0;                                                                      \
         (req)->completed = 0;                                                                    \
         (req)->is_buffered = 0;                                                                  \
@@ -190,8 +196,10 @@ int mca_pml_ubcl_request_need_xpack(mca_pml_ubcl_request_t *req,
         OBJ_CONSTRUCT(&(req)->convertor, opal_convertor_t);                                      \
         opal_convertor_copy_and_prepare_for_send(_proc->super.proc_convertor, &_datatype->super, \
                                                  _count, _buf, 0, &(req)->convertor);            \
-        (req)->need_xpack = mca_pml_ubcl_request_need_xpack((req),                               \
-                ((mca_common_ubcl_endpoint_t *)(req)->proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML])->type);                    \
+        (req)->need_xpack = mca_pml_ubcl_request_need_xpack(                                     \
+            (req), ((mca_common_ubcl_endpoint_t *) (req)                                         \
+                        ->proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_PML])                      \
+                       ->type);                                                                  \
         (req)->message = NULL;                                                                   \
         (req)->prematched_req = NULL;                                                            \
         (req)->is_any_tag = 0;                                                                   \
@@ -219,48 +227,52 @@ int mca_pml_ubcl_request_need_xpack(mca_pml_ubcl_request_t *req,
         }                                                                                                        \
     } while (0)
 
-#define MCA_PML_UBCL_RECV_REQUEST_INIT(req, _buf, _count, _datatype, _src,     \
-                                       _tag, _comm, _proc, _persistent,        \
-                                       _probe, _mes)                           \
-    do {                                                                       \
-        OBJ_RETAIN(_comm);                                                     \
-        OMPI_DATATYPE_RETAIN(_datatype);                                       \
-        OBJ_CONSTRUCT(&(req)->ompi_req, ompi_request_t);                       \
-        OMPI_REQUEST_INIT(&req->ompi_req, _persistent);                        \
-        (req)->ompi_req.req_type = OMPI_REQUEST_PML;                           \
-        (req)->ompi_req.req_start = mca_pml_ubcl_request_start;                \
-        (req)->ompi_req.req_free = mca_pml_ubcl_request_free;                  \
-        (req)->ompi_req.req_cancel = mca_pml_ubcl_request_cancel;              \
-        (req)->ompi_req.req_complete_cb = mca_pml_ubcl_request_complete_cb;    \
-        (req)->ompi_req.req_mpi_object.comm = _comm;                           \
-        (req)->saved_complete_cb = NULL;                                       \
-        (req)->saved_complete_cb_data = NULL;                                  \
-        (req)->type = MCA_PML_UBCL_REQUEST_RECV;                               \
-        (req)->to_free = 0;                                                    \
-        (req)->completed = 0;                                                  \
-        (req)->is_buffered = 0;                                                \
-        (req)->is_buffer_malloced = 0;                                         \
-        (req)->buf = _buf;                                                     \
-        (req)->count = _count;                                                 \
-        (req)->datatype = _datatype;                                           \
-        (req)->rank = _src;                                                    \
-        (req)->tag = _tag;                                                     \
-        (req)->error = MPI_SUCCESS;                                            \
-        (req)->mode = MCA_PML_BASE_SEND_SIZE;                                  \
-        (req)->comm = _comm;                                                   \
-        (req)->proc = _proc;                                                   \
-        OBJ_CONSTRUCT(&(req)->convertor, opal_convertor_t);                    \
-        (req)->message = (void *) _mes;                                        \
-        (req)->prematched_req = NULL;                                          \
-        (req)->is_any_tag = (_tag == OMPI_ANY_TAG);                            \
-        opal_atomic_lock_init(&((req)->req_lock), OPAL_ATOMIC_LOCK_UNLOCKED);  \
-        (req)->ubcl_operation_handle = NULL;                                   \
-        if (OMPI_ANY_SOURCE == (req)->rank) {                                  \
-            (req)->is_any_src = 1;                                             \
-        } else {                                                               \
-            (req)->is_any_src = 0;                                             \
-        }                                                                      \
-        MCA_PML_UBCL_RECV_REQUEST_CONVERTOR_INIT(req);                         \
+#define MCA_PML_UBCL_RECV_REQUEST_INIT(req, _buf, _count, _datatype, _src, _tag, _comm, _proc, \
+                                       _form, _probe, _mes)                                    \
+    do {                                                                                       \
+        OBJ_RETAIN(_comm);                                                                     \
+        OMPI_DATATYPE_RETAIN(_datatype);                                                       \
+        OBJ_CONSTRUCT(&(req)->ompi_req, ompi_request_t);                                       \
+        if (MCA_PML_UBCL_PERSISTENT_COMM == _form) {                                           \
+            OMPI_REQUEST_INIT(&req->ompi_req, true);                                           \
+        } else {                                                                               \
+            OMPI_REQUEST_INIT(&req->ompi_req, false);                                          \
+        }                                                                                      \
+        (req)->ompi_req.req_type = OMPI_REQUEST_PML;                                           \
+        (req)->ompi_req.req_start = mca_pml_ubcl_request_start;                                \
+        (req)->ompi_req.req_free = mca_pml_ubcl_request_free;                                  \
+        (req)->ompi_req.req_cancel = mca_pml_ubcl_request_cancel;                              \
+        (req)->ompi_req.req_complete_cb = mca_pml_ubcl_request_complete_cb;                    \
+        (req)->ompi_req.req_mpi_object.comm = _comm;                                           \
+        (req)->saved_complete_cb = NULL;                                                       \
+        (req)->saved_complete_cb_data = NULL;                                                  \
+        (req)->type = MCA_PML_UBCL_REQUEST_RECV;                                               \
+        (req)->form = _form;                                                                   \
+        (req)->to_free = 0;                                                                    \
+        (req)->completed = 0;                                                                  \
+        (req)->is_buffered = 0;                                                                \
+        (req)->is_buffer_malloced = 0;                                                         \
+        (req)->buf = _buf;                                                                     \
+        (req)->count = _count;                                                                 \
+        (req)->datatype = _datatype;                                                           \
+        (req)->rank = _src;                                                                    \
+        (req)->tag = _tag;                                                                     \
+        (req)->error = MPI_SUCCESS;                                                            \
+        (req)->mode = MCA_PML_BASE_SEND_SIZE;                                                  \
+        (req)->comm = _comm;                                                                   \
+        (req)->proc = _proc;                                                                   \
+        OBJ_CONSTRUCT(&(req)->convertor, opal_convertor_t);                                    \
+        (req)->message = (void *) _mes;                                                        \
+        (req)->prematched_req = NULL;                                                          \
+        (req)->is_any_tag = (_tag == OMPI_ANY_TAG);                                            \
+        opal_atomic_lock_init(&((req)->req_lock), OPAL_ATOMIC_LOCK_UNLOCKED);                  \
+        (req)->ubcl_operation_handle = NULL;                                                   \
+        if (OMPI_ANY_SOURCE == (req)->rank) {                                                  \
+            (req)->is_any_src = 1;                                                             \
+        } else {                                                                               \
+            (req)->is_any_src = 0;                                                             \
+        }                                                                                      \
+        MCA_PML_UBCL_RECV_REQUEST_CONVERTOR_INIT(req);                                         \
     } while (0)
 
 #define MCA_PML_UBCL_RECV_REQUEST_MPROBE_TO_MRECV(req, _buf, _count, _datatype) \

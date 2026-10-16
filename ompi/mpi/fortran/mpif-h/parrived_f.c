@@ -13,6 +13,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,10 +74,13 @@ void ompi_parrived_f(MPI_Fint *request, MPI_Fint *partition, ompi_fortran_logica
 
     c_ierr = PMPI_Parrived(c_req, OMPI_FINT_2_INT(*partition), OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag));
 
-    OMPI_SINGLE_INT_2_LOGICAL(flag);
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
-    if (MPI_SUCCESS == c_ierr && *flag) {
-        *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);
+    if (MPI_SUCCESS == c_ierr) {
+        OMPI_SINGLE_INT_2_LOGICAL(flag);
+
+        if (*flag) {
+            *request = OMPI_INT_2_FINT(c_req->req_f_to_c_index);
+        }
     }
 }

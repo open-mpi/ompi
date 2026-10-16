@@ -102,13 +102,10 @@ all flavors of lex and doing more interesting work on Open MPI, we
 greatly prefer the latter.
 
 Note that no testing has been performed to see what the minimum
-version of Flex is required by Open MPI.  We suggest that you use
-v2.5.35 at the earliest.
-
-For now, Open MPI will allow developer builds with Flex |flex_min_version|.  This
-is primarily motivated by the fact that RedHat/CentOS 5 ships with
-Flex 2.5.4.  It is likely that someday Open MPI developer builds will
-require Flex version >=2.5.35.
+version of Flex is required by Open MPI.  The Flex-generated sources
+in official distribution tarballs are made with Flex
+|flex_dist_version|; we suggest that you use a similarly recent
+version.
 
 Note that the ``flex``-generated code generates some compiler warnings
 on some platforms, but the warnings do not seem to be consistent or

@@ -23,6 +23,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2024      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,6 +111,9 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
         sendreq->req_send.req_base.req_free_called = true;
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
                              &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_REQUEST_FREE,
+                                        sendreq->req_send.req_base.req_comm,
+                                        &sendreq->req_send.req_base);
 
         if (sendreq->req_send.req_base.req_pml_complete) {
             /* make buffer defined when the request is completed,
@@ -127,6 +131,42 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     }
     return OMPI_SUCCESS;
 }
+
+#if OPAL_ENABLE_FT_MPI
+/**
+ * Remove a send from the list waiting on its peer's connection info, if
+ * still there. True when it was, which guarantees no btl has seen it.
+ */
+static bool mca_pml_ob1_unstage_send(mca_pml_ob1_send_request_t *sendreq)
+{
+    mca_pml_ob1_send_request_t *item;
+    bool found = false;
+
+    /* Unlocked fast path: only the thread that owns a request parks it,
+     * and that thread is this one, so the list cannot gain this request
+     * while we look. Reading empty means the drain already holds it. */
+    if( opal_list_is_empty(&mca_pml_ob1.modex_pending) ) {
+        return false;
+    }
+
+    /* Searched, not just removed: the drain takes items off this same
+     * list under this same lock. */
+    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+    OPAL_LIST_FOREACH(item, &mca_pml_ob1.modex_pending, mca_pml_ob1_send_request_t) {
+        if( item == sendreq ) {
+            opal_list_remove_item(&mca_pml_ob1.modex_pending, (opal_list_item_t *) sendreq);
+            found = true;
+            break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+
+    if( found ) {
+        mca_pml_ob1_enable_progress(-1);
+    }
+    return found;
+}
+#endif  /* OPAL_ENABLE_FT_MPI */
 
 static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int complete)
 {
@@ -155,6 +195,14 @@ static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int c
                                 "Send_request_cancel: cancel granted for request %p because peer %d is dead\n",
                                 (void*)request, pml_req->req_send.req_base.req_peer);
         request->req_status._cancelled = true;
+        /* Never reached a btl and never will, so complete it outright
+         * rather than wait for a completion that cannot come. Leaving it
+         * linked would also have the drain send to a dead process, on a
+         * request the application may already have freed. */
+        if( mca_pml_ob1_unstage_send(pml_req) ) {
+            send_request_pml_complete(pml_req);
+            return OMPI_SUCCESS;
+        }
         if( NULL != pml_req->rdma_frag ) {
             MCA_PML_OB1_RDMA_FRAG_RETURN(pml_req->rdma_frag);
             pml_req->rdma_frag = NULL;
@@ -211,6 +259,10 @@ mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         sendreq->req_send.req_base.req_comm,
+                                         &sendreq->req_send.req_base,
+                                         sendreq->req_send.req_bytes_packed);
     }
 
     /* signal request completion */
@@ -256,6 +308,10 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         sendreq->req_send.req_base.req_comm,
+                                         &sendreq->req_send.req_base,
+                                         sendreq->req_send.req_bytes_packed);
     }
 
     OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, req_bytes_delivered);
@@ -654,6 +710,14 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
             /* signal request completion */
             SPC_USER_OR_MPI(sendreq->req_send.req_base.req_ompi.req_status.MPI_TAG, (ompi_spc_value_t)size,
                             OMPI_SPC_BYTES_SENT_USER, OMPI_SPC_BYTES_SENT_MPI);
+            /* the send is already done, so raise the begin of the transfer
+             * the completion below is about to report the end of */
+            if( sendreq->req_send.req_bytes_packed > 0 ) {
+                mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                                 sendreq->req_send.req_base.req_comm,
+                                                 &sendreq->req_send.req_base,
+                                                 sendreq->req_send.req_bytes_packed);
+            }
             send_request_pml_complete(sendreq);
             return OMPI_SUCCESS;
         }
@@ -921,6 +985,10 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
                                  &(sendreq->req_send.req_base), PERUSE_SEND );
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         sendreq->req_send.req_base.req_comm,
+                                         &sendreq->req_send.req_base,
+                                         sendreq->req_send.req_bytes_packed);
     }
 
     /* send */
@@ -1231,6 +1299,9 @@ cannot_pack:
          PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
                  &(sendreq->req_send.req_base), size, PERUSE_SEND);
 #endif  /* OMPI_WANT_PERUSE */
+         mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
+                                          sendreq->req_send.req_base.req_comm,
+                                          &sendreq->req_send.req_base, size);
 
          /* At this point, check to see if the BTL is doing an asynchronous
           * copy.  This would have been initiated in the mca_bml_base_prepare_src
@@ -1391,6 +1462,12 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
                                   &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), frag->rdma_length, PERUSE_SEND );
+    mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
+                                     ((mca_pml_ob1_send_request_t *) frag->rdma_req)
+                                         ->req_send.req_base.req_comm,
+                                     &((mca_pml_ob1_send_request_t *) frag->rdma_req)
+                                          ->req_send.req_base,
+                                     frag->rdma_length);
 
     rc = mca_bml_base_put (bml_btl, frag->local_address, frag->remote_address, local_handle,
                            (mca_btl_base_registration_handle_t *) frag->remote_handle, frag->rdma_length,

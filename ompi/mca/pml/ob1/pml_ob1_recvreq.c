@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012-2015 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2012      FUJITSU LIMITED.  All rights reserved.
@@ -24,6 +24,7 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,6 +78,9 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
     recvreq->req_recv.req_base.req_free_called = true;
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
                              &(recvreq->req_recv.req_base), PERUSE_RECV );
+    mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_REQUEST_FREE,
+                                    recvreq->req_recv.req_base.req_comm,
+                                    &recvreq->req_recv.req_base);
 
     if (recvreq->req_recv.req_base.req_pml_complete) {
         /* make buffer defined when the request is completed,
@@ -124,6 +128,8 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
         }
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
                                 &(request->req_recv.req_base), PERUSE_RECV );
+        mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE, comm,
+                                        &request->req_recv.req_base);
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
 #if OPAL_ENABLE_FT_MPI
         opal_output_verbose(10, ompi_ftmpi_output_handle,
@@ -158,6 +164,13 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
      */
 
     ompi_request->req_status._cancelled = true;
+    /* PERUSE had no event for a cancellation; a tool otherwise cannot tell
+       this request apart from one that was matched and completed.  Raised on
+       the common successful-cancellation path (after the matching lock is
+       released) so it also covers an FT-MPI cancellation that is granted
+       because the matched peer has died. */
+    mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_RECEIVE_CANCEL, comm,
+                                    &request->req_recv.req_base);
     recv_request_pml_complete(request);
 
     /*
@@ -299,12 +312,15 @@ static int mca_pml_ob1_recv_request_ack(
 {
     ompi_proc_t* proc = (ompi_proc_t*)recvreq->req_recv.req_base.req_proc;
     mca_bml_base_endpoint_t* bml_endpoint = NULL;
+    int eprc;
 
-    bml_endpoint = mca_bml_base_get_endpoint (proc);
+    bml_endpoint = mca_bml_base_get_endpoint (proc, &eprc);
 
     /* by default copy everything */
     recvreq->req_send_offset = bytes_received;
-    if(hdr->hdr_msg_length > bytes_received) {
+    /* No endpoint means no BTL list to choose an RDMA protocol from, so
+     * stay with copy in/out. */
+    if(NULL != bml_endpoint && hdr->hdr_msg_length > bytes_received) {
         size_t rdma_num = mca_pml_ob1_rdma_pipeline_btls_count (bml_endpoint);
         /*
          * lookup request buffer to determine if memory is already
@@ -501,6 +517,9 @@ static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
                                   &(recvreq->req_recv.req_base), frag->rdma_length,
                                   PERUSE_RECV);
+    mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
+                                     recvreq->req_recv.req_base.req_comm,
+                                     &recvreq->req_recv.req_base, frag->rdma_length);
 
     /* send rdma request to peer */
     rc = mca_bml_base_send (bml_btl, ctl, MCA_PML_OB1_HDR_TYPE_PUT);
@@ -542,6 +561,12 @@ int mca_pml_ob1_recv_request_get_frag (mca_pml_ob1_rdma_frag_t *frag)
     PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
                                  &(((mca_pml_ob1_recv_request_t *) frag->rdma_req)->req_recv.req_base),
                                  frag->rdma_length, PERUSE_RECV);
+    mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
+                                     ((mca_pml_ob1_recv_request_t *) frag->rdma_req)
+                                         ->req_recv.req_base.req_comm,
+                                     &((mca_pml_ob1_recv_request_t *) frag->rdma_req)
+                                          ->req_recv.req_base,
+                                     frag->rdma_length);
 
     /* queue up get request */
     rc = mca_bml_base_get (bml_btl, frag->local_address, frag->remote_address, local_handle,
@@ -654,9 +679,11 @@ void mca_pml_ob1_recv_request_frag_copy_start( mca_pml_ob1_recv_request_t* recvr
     /* Store the amount of bytes in unused cbdata pointer */
     des->des_cbdata = (void *) (intptr_t) bytes_delivered;
     /* Then record an event that will get triggered by a PML progress call which
-     * checks the stream events.  If we get an error, abort.  Should get message
-     * from CUDA code about what went wrong. */
-    result = mca_pml_ob1_record_htod_event("pml", des);
+     * checks the stream events.  The data was unpacked onto the device via the
+     * host-to-device stream, so record the completion event against it.  If we
+     * get an error, abort.  Should get message from CUDA code about what went
+     * wrong. */
+    result = mca_pml_ob1_record_event("pml", des, mca_pml_ob1_get_htod_stream());
     if (OMPI_SUCCESS != result) {
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
         ompi_rte_abort(-1, NULL);
@@ -735,8 +762,18 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     }
 
     /* lookup bml datastructures */
-    bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc);
+    bml_endpoint = mca_bml_base_get_endpoint (recvreq->req_recv.req_base.req_proc, &rc);
+    if (OPAL_UNLIKELY(NULL == bml_endpoint)) {
+        /* No endpoint back to that peer yet, so no rdma btl to get with;
+         * ask the sender to fall back on send/recv. */
+        mca_pml_ob1_recv_request_ack(recvreq, btl, &hdr->hdr_rndv, 0);
+        return;
+    }
     rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+
+    if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
+        (void) mca_pml_ob1_accelerator_ensure_init();
+    }
 
     if (OPAL_UNLIKELY(NULL == rdma_bml)) {
         if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) {
@@ -915,8 +952,14 @@ void mca_pml_ob1_recv_request_progress_rndv( mca_pml_ob1_recv_request_t* recvreq
     if ((recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_ACCELERATOR) &&
         (btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_COPY_ASYNC_RECV)) {
         opal_accelerator_stream_t *stream = mca_pml_ob1_get_htod_stream();
-        recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
-        recvreq->req_recv.req_base.req_convertor.stream = stream;
+        /* Only switch to asynchronous copies if the stream actually exists.
+         * Lazy init can fail (e.g. stream/event creation errors), in which
+         * case get_htod_stream() returns NULL; fall back to a synchronous
+         * copy rather than installing a NULL stream with the ASYNC flag. */
+        if (NULL != stream) {
+            recvreq->req_recv.req_base.req_convertor.flags |= CONVERTOR_ACCELERATOR_ASYNC;
+            recvreq->req_recv.req_base.req_convertor.stream = stream;
+        }
     }
 }
 
@@ -1134,17 +1177,6 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
         mca_pml_ob1_recv_request_t *req)
 {
     opal_list_append(queue, (opal_list_item_t*)req);
-
-#if OMPI_WANT_PERUSE
-    /**
-     * We don't want to generate this kind of event for MPI_Probe.
-     */
-    if (req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE &&
-        req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
-        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
-                                &(req->req_recv.req_base), PERUSE_RECV);
-    }
-#endif
 }
 
 /*
@@ -1302,6 +1334,14 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
     MCA_PML_BASE_RECV_START(&req->req_recv);
 
+    /* A named recv wires that one peer so a send-side endpoint exists
+     * before the wait. ANY_SOURCE must not wire every rank; sm attaches
+     * the sender on the first incoming FIFO item. */
+    if (OMPI_ANY_SOURCE != req->req_recv.req_base.req_peer) {
+        mca_pml_ob1_prepare_recv_proc(
+            mca_pml_ob1_peer_lookup(comm, req->req_recv.req_base.req_peer)->ompi_proc);
+    }
+
     OB1_MATCHING_LOCK(&ob1_comm->matching_lock);
     /**
      * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
@@ -1309,6 +1349,8 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
      */
     PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
                             &(req->req_recv.req_base), PERUSE_RECV);
+    mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_BEGIN,
+                                    req->req_recv.req_base.req_comm, &req->req_recv.req_base);
 
     /* assign sequence number */
     req->req_recv.req_base.req_sequence = ob1_comm->recv_sequence++;
@@ -1327,6 +1369,9 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
             recv_request_pml_complete( req );
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
                                     &(req->req_recv.req_base), PERUSE_RECV);
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
+                                            req->req_recv.req_base.req_comm,
+                                            &req->req_recv.req_base);
             OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
             return;
         }
@@ -1369,10 +1414,12 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
     if(OPAL_UNLIKELY(NULL == frag)) {
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
                                 &(req->req_recv.req_base), PERUSE_RECV);
+        mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
+                                        req->req_recv.req_base.req_comm, &req->req_recv.req_base);
         /* We didn't find any matches.  Record this irecv so we can match
            it when the message comes in. */
         if(OPAL_LIKELY(req->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE &&
-                       req->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE))
+                       req->req_recv.req_base.req_type != MCA_PML_REQUEST_IMPROBE)) {
 #if MCA_PML_OB1_CUSTOM_MATCH
             custom_match_prq_append(ob1_comm->prq, req,
                                     req->req_recv.req_base.req_tag,
@@ -1380,12 +1427,29 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 #else
             append_recv_req_to_queue(queue, req);
 #endif
+            /* Both append paths above enqueue the posted receive, so the insert
+               event is raised here rather than inside either one -- otherwise a
+               custom-matcher build (which never calls append_recv_req_to_queue)
+               would emit posted_match with no preceding posted_insert.
+               MPI_Probe/Mprobe park a request on the queue too, but they are
+               not user-visible receives, so they are excluded. */
+            if (req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE &&
+                req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
+                PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
+                                        &(req->req_recv.req_base), PERUSE_RECV);
+                mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_INSERT,
+                                                req->req_recv.req_base.req_comm,
+                                                &req->req_recv.req_base);
+            }
+        }
         req->req_match_received = false;
         OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
     } else {
         if(OPAL_LIKELY(!IS_PROB_REQ(req))) {
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_MATCH_UNEX,
                                     &(req->req_recv.req_base), PERUSE_RECV);
+            mca_pml_ob1_event_raise_unex_match(req->req_recv.req_base.req_comm,
+                                               &req->req_recv.req_base, frag);
 
             hdr = (mca_pml_ob1_hdr_t*)frag->segments->seg_addr.pval;
             PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
@@ -1396,6 +1460,9 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_SEARCH_UNEX_Q_END,
                                     &(req->req_recv.req_base), PERUSE_RECV);
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
+                                            req->req_recv.req_base.req_comm,
+                                            &req->req_recv.req_base);
 
 #if MCA_PML_OB1_CUSTOM_MATCH
             custom_match_umq_remove_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq, hold_prev, hold_elem, hold_index);
@@ -1433,6 +1500,18 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                "recreated" as a receive request, and the frag will be
                restarted with this request during mrecv */
 
+            /* Unlike a plain probe, an mprobe takes ownership of the
+               fragment and removes it from the unexpected queue, so the
+               later mrecv will not produce an unexpected match.  Raise the
+               match/search-end events here, mirroring the ordinary receive
+               branch, so the unexpected-queue bookkeeping stays balanced
+               against the earlier unexpected-insert event. */
+            mca_pml_ob1_event_raise_unex_match(req->req_recv.req_base.req_comm,
+                                               &req->req_recv.req_base, frag);
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
+                                            req->req_recv.req_base.req_comm,
+                                            &req->req_recv.req_base);
+
 #if MCA_PML_OB1_CUSTOM_MATCH
             custom_match_umq_remove_hold(req->req_recv.req_base.req_comm->c_pml_comm->umq, hold_prev, hold_elem, hold_index);
 #else
@@ -1447,6 +1526,13 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
                                                    frag->segments, frag->num_segments);
 
         } else {
+            /* A plain probe leaves the matched fragment in the unexpected
+               queue for a subsequent receive, so no unexpected match is
+               reported here.  The search of the unexpected queue is over,
+               though, so close the bracket opened by search-begin. */
+            mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_SEARCH_UNEX_END,
+                                            req->req_recv.req_base.req_comm,
+                                            &req->req_recv.req_base);
             OB1_MATCHING_UNLOCK(&ob1_comm->matching_lock);
             mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
                                                    frag->segments, frag->num_segments);

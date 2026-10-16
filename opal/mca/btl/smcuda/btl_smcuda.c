@@ -14,7 +14,7 @@
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2017 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012-2024 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2014-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
@@ -472,7 +472,8 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int32_t my_s
     return OPAL_SUCCESS;
 }
 
-static struct mca_btl_base_endpoint_t *create_sm_endpoint(int local_proc, struct opal_proc_t *proc)
+static struct mca_btl_base_endpoint_t *create_sm_endpoint(int peer_smp_rank,
+                                                          struct opal_proc_t *proc)
 {
     struct mca_btl_base_endpoint_t *ep;
 
@@ -483,7 +484,7 @@ static struct mca_btl_base_endpoint_t *create_sm_endpoint(int local_proc, struct
     ep = (struct mca_btl_base_endpoint_t *) malloc(sizeof(struct mca_btl_base_endpoint_t));
     if (NULL == ep)
         return NULL;
-    ep->peer_smp_rank = local_proc + mca_btl_smcuda_component.num_smp_procs;
+    ep->peer_smp_rank = peer_smp_rank;
 
     OBJ_CONSTRUCT(&ep->pending_sends, opal_list_t);
     OBJ_CONSTRUCT(&ep->endpoint_lock, opal_mutex_t);
@@ -507,10 +508,10 @@ static struct mca_btl_base_endpoint_t *create_sm_endpoint(int local_proc, struct
 
 int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
                              struct opal_proc_t **procs, struct mca_btl_base_endpoint_t **peers,
-                             opal_bitmap_t *reachability)
+                             opal_bitmap_t *status)
 {
     int return_code = OPAL_SUCCESS;
-    int32_t n_local_procs = 0, proc, j, my_smp_rank = -1;
+    int32_t proc, j;
     const opal_proc_t *my_proc; /* pointer to caller's proc structure */
     mca_btl_smcuda_t *smcuda_btl;
     bool have_connected_peer = false;
@@ -518,9 +519,21 @@ int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
     /* for easy access to the mpool_sm_module */
     mca_common_sm_mpool_module_t *sm_mpool_modp = NULL;
 
+    /* Which slot of the segment is ours, and how many slots there are, come
+     * from the runtime rather than from this array. The caller hands a btl
+     * only the procs still looking for one, and btl/self claims the local
+     * proc in a higher exclusivity tier, so our own proc is never in it. */
+    const int32_t my_smp_rank = (int32_t) opal_process_info.my_local_rank;
+    const int32_t n_local_procs = (int32_t) opal_process_info.num_local_peers + 1;
+
     /* initializion */
 
     smcuda_btl = (mca_btl_smcuda_t *) btl;
+
+    if (0 > my_smp_rank || my_smp_rank >= n_local_procs) {
+        return OPAL_ERROR;
+    }
+    mca_btl_smcuda_component.my_smp_rank = my_smp_rank;
 
     /* get pointer to my proc structure */
     if (NULL == (my_proc = opal_proc_local_get()))
@@ -528,26 +541,46 @@ int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
 
     /* Get unique host identifier for each process in the list,
      * and idetify procs that are on this host.  Add procs on this
-     * host to shared memory reachbility list.  Also, get number
-     * of local procs in the procs list. */
+     * host to shared memory reachbility list. */
     for (proc = 0; proc < (int32_t) nprocs; proc++) {
+        uint16_t peer_local_rank;
+        uint16_t *peer_local_rank_ptr = &peer_local_rank;
+        int rc;
+
         /* check to see if this proc can be reached via shmem (i.e.,
-           if they're on my local host and in my job) */
+           if they're on my local host and in my job). Neither test needs
+           anything the peer published, so a no is final: leave the
+           default MCA_BTL_PROC_NOT_ELIGIBLE. */
         if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid
             || !OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
             peers[proc] = NULL;
             continue;
         }
-        /* check to see if this is me */
+        /* check to see if this is me. No endpoint and no claim, so that
+         * btl/self, not this btl, carries a message to ourselves. */
         if (my_proc == procs[proc]) {
-            my_smp_rank = mca_btl_smcuda_component.my_smp_rank = n_local_procs++;
+            peers[proc] = NULL;
             continue;
+        }
+
+        /* A peer occupies the slot its local rank names, not the one its
+         * position here would: with our own proc absent, every peer above
+         * us would be numbered one too low, and both ends index the same
+         * shared fifo array. */
+        OPAL_MODEX_RECV_VALUE(rc, PMIX_LOCAL_RANK, &procs[proc]->proc_name,
+                              &peer_local_rank_ptr, PMIX_UINT16);
+        if (PMIX_SUCCESS != rc) {
+            BTL_VERBOSE(("could not read the local rank for peer %s. rc=%d",
+                         OPAL_NAME_PRINT(procs[proc]->proc_name), rc));
+            peers[proc] = NULL;
+            return_code = OPAL_ERROR;
+            goto CLEANUP;
         }
 
         /* we have someone to talk to */
         have_connected_peer = true;
 
-        if (!(peers[proc] = create_sm_endpoint(n_local_procs, procs[proc]))) {
+        if (!(peers[proc] = create_sm_endpoint((int32_t) peer_local_rank, procs[proc]))) {
             return_code = OPAL_ERROR;
             goto CLEANUP;
         }
@@ -556,23 +589,12 @@ int mca_btl_smcuda_add_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         peers[proc]->ipcstate = IPC_INIT;
         peers[proc]->ipctries = 0;
 
-        n_local_procs++;
-
-        /* add this proc to shared memory accessibility list */
-        return_code = opal_bitmap_set_bit(reachability, proc);
-        if (OPAL_SUCCESS != return_code)
-            goto CLEANUP;
+        MCA_BTL_PROC_STATUS_SET(status, proc, MCA_BTL_PROC_CONNECTED);
     }
 
     /* jump out if there's not someone we can talk to */
     if (!have_connected_peer)
         goto CLEANUP;
-
-    /* make sure that my_smp_rank has been defined */
-    if (-1 == my_smp_rank) {
-        return_code = OPAL_ERROR;
-        goto CLEANUP;
-    }
 
     if (!smcuda_btl->btl_inited) {
         return_code = smcuda_btl_first_time_init(smcuda_btl, my_smp_rank,

@@ -30,6 +30,30 @@ can specify them explicitly on the ``mpirun`` command line:
              that your program will run fine until a process tries to
              send to itself).
 
+When BTL endpoints are constructed
+----------------------------------
+
+By default the TCP BTL constructs a peer endpoint on first use rather
+than during ``MPI_Init``.  The ``btl_tcp_connect_mode`` MCA parameter
+selects that behavior:
+
+* ``lazy`` (default) |mdash| first send, receive, or incoming fragment
+  constructs the endpoint.
+* ``sync_init`` |mdash| wait for the connection-info modex and construct
+  endpoints during ``MPI_Init``.
+* ``full`` |mdash| like ``sync_init``, and require a single
+  ``add_procs`` of the whole job.
+
+The ``ob1`` PML ORs these requirements across selected BTLs.  To force
+TCP's mode without the shared-memory BTL dominating, use:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca pml ob1 --mca btl self,tcp --mca btl_tcp_connect_mode full ...
+
+Multiple TCP modules with progress or MPI threads still force
+``full`` regardless of this setting.
+
 Coexisting with a high-speed network
 ------------------------------------
 

@@ -390,7 +390,9 @@ int mca_btl_ofi_context_progress(mca_btl_ofi_context_t *context)
             MCA_BTL_OFI_ABORT();
         } else {
             switch(cqerr.err) {
+#ifdef EREMOTEIO
             case FI_EREMOTEIO:
+#endif
             case FI_EHOSTUNREACH:
             case FI_ECONNABORTED:
             case FI_ECONNRESET:

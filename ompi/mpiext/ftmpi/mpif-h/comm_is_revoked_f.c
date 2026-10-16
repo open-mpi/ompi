@@ -3,6 +3,7 @@
  * Copyright (c) 2010-2019 The University of Tennessee and the University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -59,4 +60,6 @@ void ompix_comm_is_revoked_f(MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_F
 
     *ierr = OMPI_INT_2_FINT(PMPIX_Comm_is_revoked(c_comm,
                                                   OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag)));
+
+    OMPI_SINGLE_INT_2_LOGICAL(flag);
 }

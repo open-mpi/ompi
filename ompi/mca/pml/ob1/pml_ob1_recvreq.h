@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -130,6 +131,9 @@ do {                                                                \
     do {                                                                              \
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                            \
                                  &(recvreq->req_recv.req_base), PERUSE_RECV );        \
+        mca_pml_ob1_event_raise_request( MCA_PML_OB1_EVENT_REQUEST_COMPLETE,           \
+                                         recvreq->req_recv.req_base.req_comm,          \
+                                         &recvreq->req_recv.req_base );               \
         ompi_request_complete( &(recvreq->req_recv.req_base.req_ompi), true );        \
     } while (0)
 
@@ -168,6 +172,11 @@ recv_request_pml_complete(mca_pml_ob1_recv_request_t *recvreq)
         if(recvreq->req_recv.req_bytes_packed > 0) {
             PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
                     &recvreq->req_recv.req_base, PERUSE_RECV );
+            /* what actually reached the user buffer */
+            mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_END,
+                                             recvreq->req_recv.req_base.req_comm,
+                                             &recvreq->req_recv.req_base,
+                                             recvreq->req_bytes_received);
         }
 
         for(i = 0; i < recvreq->req_rdma_cnt; i++) {
@@ -230,6 +239,10 @@ extern void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req);
 
 static inline void prepare_recv_req_converter(mca_pml_ob1_recv_request_t *req)
 {
+    /* An ANY_SOURCE recv wires nothing, so no endpoint has seeded this
+     * peer's architecture; it is first needed here. */
+    (void) ompi_proc_ensure_arch(req->req_recv.req_base.req_proc);
+
     if( req->req_recv.req_base.req_datatype->super.size | req->req_recv.req_base.req_count ) {
         opal_convertor_copy_and_prepare_for_recv(
                 req->req_recv.req_base.req_proc->super.proc_convertor,
@@ -258,13 +271,28 @@ static inline void recv_req_matched(mca_pml_ob1_recv_request_t *req,
 
     if(req->req_recv.req_bytes_packed > 0) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-        if(MPI_ANY_SOURCE == req->req_recv.req_base.req_peer) {
-            /* non wildcard prepared during post recv */
+        const bool wildcard = (MPI_ANY_SOURCE == req->req_recv.req_base.req_peer);
+
+        /* A wildcard recv had no peer to build a convertor from until
+         * this match. A named one built its own at post time assuming
+         * the peer's architecture is ours, so rebuild if that was wrong
+         * -- cleaned up first, as OPAL_CONVERTOR_PREPARE wants a clean
+         * convertor. Unseeded peers' fragments are parked, never matched. */
+        if(wildcard
+           || OPAL_UNLIKELY(req->req_recv.req_base.req_convertor.remoteArch
+                            != req->req_recv.req_base.req_proc->super.proc_convertor->remoteArch)) {
+            if(!wildcard) {
+                opal_convertor_cleanup(&req->req_recv.req_base.req_convertor);
+            }
             prepare_recv_req_converter(req);
         }
 #endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_XFER_BEGIN,
                                 &req->req_recv.req_base, PERUSE_RECV);
+        mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
+                                         req->req_recv.req_base.req_comm,
+                                         &req->req_recv.req_base,
+                                         req->req_recv.req_bytes_packed);
     }
 }
 
@@ -304,6 +332,9 @@ do {                                                                            
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
                                       &(request->req_recv.req_base), max_data,    \
                                       PERUSE_RECV);                               \
+        mca_pml_ob1_event_raise_transfer (MCA_PML_OB1_EVENT_TRANSFER,             \
+                                          request->req_recv.req_base.req_comm,    \
+                                          &request->req_recv.req_base, max_data); \
         opal_convertor_set_position( &(request->req_recv.req_base.req_convertor), \
                                      &data_offset );                              \
         opal_convertor_unpack( &(request)->req_recv.req_base.req_convertor,       \
@@ -413,16 +444,22 @@ static inline void mca_pml_ob1_recv_request_schedule(
 }
 
 static inline void mca_pml_ob1_add_ack_to_pending(ompi_proc_t *proc, uintptr_t src_req, void *dst_req,
-                                                  uint64_t send_offset, uint64_t send_size) {
+                                                  uint64_t send_offset, uint64_t send_size,
+                                                  bool nordma) {
     mca_pml_ob1_hdr_t hdr = {
         .hdr_ack = {
-            .hdr_common = { .hdr_type = MCA_PML_OB1_HDR_TYPE_ACK },
+            .hdr_common = { .hdr_type = MCA_PML_OB1_HDR_TYPE_ACK,
+                            .hdr_flags = nordma ? MCA_PML_OB1_HDR_FLAGS_NORDMA : 0 },
             .hdr_src_req = { .lval = src_req },
             .hdr_dst_req = { .pval = dst_req },
             .hdr_send_offset = send_offset,
             .hdr_send_size = send_size,
         },
     };
+
+    /* The retry copies this header to the wire verbatim, so convert it
+     * here, as the fin and cid headers are. */
+    ob1_hdr_hton(&hdr, MCA_PML_OB1_HDR_TYPE_ACK, proc);
 
     mca_pml_ob1_add_to_pending(proc, /*bml_btl=*/NULL, /*order=*/0,
                                &hdr, sizeof(hdr.hdr_ack));
@@ -439,10 +476,18 @@ mca_pml_ob1_recv_request_ack_send(mca_btl_base_module_t* btl,
                                   uint64_t size, bool nordma)
 {
     size_t i;
+    int rc;
     mca_bml_base_btl_t* bml_btl;
-    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc);
+    mca_bml_base_endpoint_t* endpoint = mca_bml_base_get_endpoint (proc, &rc);
 
-    assert (NULL != endpoint);
+    /* That peer reached us before we had reason to wire it back. Queue
+     * whatever the reason -- the sender is blocked on this ack, so
+     * dropping it hangs both peers; progress retries the pending list. */
+    if (OPAL_UNLIKELY(NULL == endpoint)) {
+        mca_pml_ob1_add_ack_to_pending(proc, hdr_src_req, hdr_dst_req,
+                                       hdr_send_offset, size, nordma);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /**
      * If a btl has been requested then send the ack using that specific device, otherwise
@@ -459,7 +504,7 @@ mca_pml_ob1_recv_request_ack_send(mca_btl_base_module_t* btl,
     }
 
     mca_pml_ob1_add_ack_to_pending(proc, hdr_src_req, hdr_dst_req,
-                                   hdr_send_offset, size);
+                                   hdr_send_offset, size, nordma);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
 }

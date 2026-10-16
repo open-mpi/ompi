@@ -137,9 +137,48 @@ sizes are allowed, and won't emit warnings.
 
 The process for selecting the matching rule is a simple first-match principle.
 During communicator creation, the first set of communicator-rules which
-satisfies the requirements (`comm_size_min`/`comm_size_max`) is selected. Then,
-during each collective call, the message size is used to find the first matching
-entry in the "rules" list.
+satisfies the requirements (`comm_size_min`/`comm_size_max`, and
+`comm_rank_distribution` if given) is selected. Then, during each collective
+call, the message size is used to find the first matching entry in the "rules"
+list.
+
+Rules may also be restricted by how the communicator's ranks are spread over
+the nodes of the job, using the `comm_rank_distribution` field.  Three values
+are accepted: `single-node`, matching only communicators all of whose ranks
+share one node; `one-per-node`, matching only communicators with at most one
+rank per node; and `any`, the default, which matches regardless.  This matters
+because the two extremes are tuned by entirely different quantities ---
+shared-memory copy bandwidth and cache capacity in one case, network latency
+and injection rate in the other --- so the best algorithm at a given
+communicator and message size frequently differs between them.
+
+The field may be given on an individual communicator rule, or once at the top
+level of the file to declare that the whole file was tuned for one
+distribution.  The top-level declaration supplies the default for every
+communicator rule in the file, and an individual rule may still override it.
+A file that gives neither matches any distribution, as it always has.
+
+.. code-block:: json
+
+    {
+        "rule_file_version" : 3,
+        "module" : "tuned",
+        "comm_rank_distribution" : "single-node",
+        "collectives" : {
+            "allgather" :
+            [
+                {
+                    "comm_size_min" : 8,
+                    "rules" : [ { "msg_size_min" : 2048, "alg" : "sparbit" } ]
+                }
+            ]
+        }
+    }
+
+Here the single rule applies only when all of the communicator's ranks are on
+one node, without the field having to be repeated on each communicator rule.
+Note that rules are still matched in file order, so a rule bearing `any`
+placed ahead of a more specific one will be chosen first.
 
 The algorithm selected is indicated by the `alg` field.  It may be either an
 integer mapping to the classic file format, or a string.  In both cases, the

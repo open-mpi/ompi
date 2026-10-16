@@ -1,7 +1,8 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2019-2024 Bull SAS.  All rights reserved.
+ * Copyright (c) 2019-2026 Bull SAS.  All rights reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,7 +64,8 @@ mca_pml_ubcl_module_t mca_pml_ubcl_module = {
         .pml_dump           = mca_pml_ubcl_dump,
         .pml_max_contextid  = PML_UBCL_MAX_CID, /** Comes from pml_ubcl.h */
         .pml_max_tag        = PML_UBCL_MAX_TAG, /** Comes from pml_ubcl.h */
-        .pml_flags          = MCA_PML_BASE_FLAG_REQUIRE_WORLD,
+        .pml_flags          = MCA_PML_BASE_FLAG_REQUIRE_WORLD |
+                              MCA_PML_BASE_FLAG_REQUIRE_SYNC_INIT,
         .pml_get_transports = NULL
     }
 };
@@ -113,6 +115,7 @@ int mca_pml_ubcl_add_comm(struct ompi_communicator_t *comm)
 
     comm->c_pml_comm = new_ubcl_comm;
 
+    mca_common_ubcl_set_state(UBCL_PML_COMM_CREATED);
     OPAL_OUTPUT_VERBOSE(
         (50, mca_pml_ubcl_component.output, "UBCL_MODULE_ADD_COMM %s\n", ompi_comm_print_cid(comm)));
 

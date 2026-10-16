@@ -414,7 +414,9 @@ static int mca_coll_acoll_bcast_intra_node(void *buff, size_t count, struct ompi
     nreqs = 0;
     preq = reqs;
     err = MPI_SUCCESS;
-    if (no_sg) {
+    /* Ignore no_sg when use_numa to avoid deadlock. */
+    int eff_no_sg = no_sg && !use_numa;
+    if (eff_no_sg) {
         is_base = 1;
     } else {
         int ind1 = use_numa ? MCA_COLL_ACOLL_NUMA : MCA_COLL_ACOLL_L3CACHE;
@@ -437,18 +439,19 @@ static int mca_coll_acoll_bcast_intra_node(void *buff, size_t count, struct ompi
         err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
         if (MPI_SUCCESS != err) {
             ompi_coll_base_free_reqs(reqs, nreqs);
+            return err;
         }
     }
 
     /* If single stage, return */
-    if (no_sg) {
+    if (eff_no_sg) {
         ompi_coll_base_free_reqs(reqs, nreqs);
         return err;
     }
 
     subgrp_size = use_numa ? ompi_comm_size(subc->numa_comm) : subc->subgrp_size;
     /* All leaf ranks receive from the respective base rank */
-    if ((subgrp_size > 1) && !no_sg) {
+    if ((subgrp_size > 1) && !eff_no_sg) {
         err = bcast_intra[lin_2](buff, count, datatype, subc_roots[MCA_COLL_ACOLL_LEAF],
                                  subcomms[MCA_COLL_ACOLL_LEAF], preq, &nreqs, world_rank);
     }
@@ -458,6 +461,7 @@ static int mca_coll_acoll_bcast_intra_node(void *buff, size_t count, struct ompi
         err = ompi_request_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
         if (MPI_SUCCESS != err) {
             ompi_coll_base_free_reqs(reqs, nreqs);
+            return err;
         }
     }
 

@@ -12,6 +12,8 @@
  * correct: zero events/sources, and the standard error contracts hold.
  */
 
+#include "opal_config.h"
+
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>

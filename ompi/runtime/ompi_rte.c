@@ -605,17 +605,19 @@ int ompi_rte_init(int *pargc, char ***pargv)
     }
 
 
-    /* set our hostname */
-    ev1 = NULL;
-    OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, PMIX_HOSTNAME, &OPAL_PROC_MY_NAME,
-                                   (char**)&ev1, PMIX_STRING);
-    if (PMIX_SUCCESS == ret && NULL != ev1) {
-        if (NULL != opal_process_info.nodename) {
-            free(opal_process_info.nodename);
-        }
-        opal_process_info.nodename = ev1;  // ev1 is an allocated string
-        ev1 = NULL;  // protect the string
-    }
+    /* our hostname is already set: opal_init_util() took it from
+     * gethostname() long before we got here, and we deliberately leave
+     * it at that.  PMIX_HOSTNAME is the name the launcher chose to call
+     * this node, which is not always what the node calls itself -- on
+     * macOS, gethostname() carries a ".local" suffix that PMIx does not
+     * -- and replacing one with the other here would mean the process
+     * answers with two different names over its lifetime, notably
+     * through MPI_INFO_ENV before and after MPI_INIT.  It would also
+     * disagree with MPI_GET_PROCESSOR_NAME, which asks the OS directly.
+     * Peers' hostnames still come from PMIX_HOSTNAME by way of
+     * opal_get_proc_hostname(); nothing in Open MPI decides anything
+     * from comparing the two, they only appear in messages.
+     */
 
     /* get our local rank from PMIx */
     OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
@@ -960,30 +962,49 @@ static bool check_file(const char *root, const char *path)
 int ompi_rte_finalize(void)
 {
 
-    /* cleanup the session directory we created */
-    if (NULL != opal_process_info.proc_session_dir && destroy_proc_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
-                                true, check_file);
+    /* remove the session directories we created, and release all three
+     * paths either way -- the string is ours whether we made the
+     * directory or PMIx handed it to us */
+    if (NULL != opal_process_info.proc_session_dir) {
+        if (destroy_proc_session_dir) {
+            opal_os_dirpath_destroy(opal_process_info.proc_session_dir,
+                                    true, check_file);
+            destroy_proc_session_dir = false;
+        }
         free(opal_process_info.proc_session_dir);
         opal_process_info.proc_session_dir = NULL;
-        destroy_proc_session_dir = false;
     }
 
-    if (NULL != opal_process_info.job_session_dir && destroy_job_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.job_session_dir,
-                                true, check_file);
+    if (NULL != opal_process_info.job_session_dir) {
+        if (destroy_job_session_dir) {
+            opal_os_dirpath_destroy(opal_process_info.job_session_dir,
+                                    true, check_file);
+            destroy_job_session_dir = false;
+        }
         free(opal_process_info.job_session_dir);
         opal_process_info.job_session_dir = NULL;
-        destroy_job_session_dir = false;
     }
 
-    if (NULL != opal_process_info.top_session_dir && destroy_top_session_dir) {
-        opal_os_dirpath_destroy(opal_process_info.top_session_dir,
-                                true, check_file);
+    if (NULL != opal_process_info.top_session_dir) {
+        if (destroy_top_session_dir) {
+            opal_os_dirpath_destroy(opal_process_info.top_session_dir,
+                                    true, check_file);
+            destroy_top_session_dir = false;
+        }
         free(opal_process_info.top_session_dir);
         opal_process_info.top_session_dir = NULL;
-        destroy_top_session_dir = false;
     }
+
+    /* put the job description back the way we found it.  Consumers tell
+     * "the RTE never told us" from "the RTE told us this" by the field
+     * still holding its static initializer -- no job has zero processes
+     * or zero app contexts -- so a field we leave behind at its last
+     * value is read as an answer after we are gone.  The strings below
+     * are released for the same reason as much as to free them.
+     */
+    opal_process_info.num_procs = 0;
+    opal_process_info.num_apps = 0;
+    opal_process_info.univ_size = 0;
 
     if (NULL != opal_process_info.app_sizes) {
         free(opal_process_info.app_sizes);

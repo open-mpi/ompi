@@ -1,7 +1,8 @@
 
 /**
- * Copyright (c) 2021 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2021      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2025      Fujitsu Limited. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation. All rights reserved.
  * $COPYRIGHT$
  * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
  *
@@ -81,8 +82,10 @@ int mca_coll_ucc_alltoall(const void *sbuf, size_t scount, struct ompi_datatype_
                                                      rbuf, rcount, rdtype,
                                                      false, ucc_module, &req, NULL));
     COLL_UCC_POST_AND_CHECK(req);
-    COLL_UCC_CHECK(coll_ucc_req_wait(req));
+    COLL_UCC_CHECK_POSTED(coll_ucc_req_wait(req, ucc_module));
     return OMPI_SUCCESS;
+failed:
+    return OMPI_ERROR;
 fallback:
     UCC_VERBOSE(3, "running fallback alltoall");
     return ucc_module->previous_alltoall(sbuf, scount, sdtype, rbuf, rcount, rdtype,
@@ -107,6 +110,10 @@ int mca_coll_ucc_ialltoall(const void *sbuf, size_t scount, struct ompi_datatype
     COLL_UCC_POST_AND_CHECK(req);
     *request = &coll_req->super;
     return OMPI_SUCCESS;
+failed:
+    mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
+    *request = MPI_REQUEST_NULL;
+    return OMPI_ERROR;
 fallback:
     UCC_VERBOSE(3, "running fallback ialltoall");
     if (coll_req) {
@@ -126,7 +133,7 @@ int mca_coll_ucc_alltoall_init(const void *sbuf, size_t scount, struct ompi_data
     mca_coll_ucc_req_t *coll_req = NULL;
 
     COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
-    UCC_VERBOSE(3, "alltoall_init init %p", coll_req);
+    UCC_VERBOSE(3, "alltoall_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_alltoall_init_common(sbuf, scount, sdtype,
                                                      rbuf, rcount, rdtype,
                                                      true, ucc_module, &req, coll_req));

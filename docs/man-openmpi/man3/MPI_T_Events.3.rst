@@ -75,9 +75,13 @@ sequence is:
 #. Locate the event type, either by name with :ref:`MPI_T_event_get_index` or
    by iterating 0..N-1 from :ref:`MPI_T_event_get_num` and inspecting each with
    :ref:`MPI_T_event_get_info`.
-#. Allocate a *registration handle* with :ref:`MPI_T_event_handle_alloc`. All
-   built-in event types use ``MPI_T_BIND_NO_OBJECT``, so pass a NULL object
-   handle.
+#. Allocate a *registration handle* with :ref:`MPI_T_event_handle_alloc`,
+   passing the object handle the event's ``bind`` requires (query it with
+   :ref:`MPI_T_event_get_info`): a NULL object handle for
+   ``MPI_T_BIND_NO_OBJECT`` event types, or the address of a handle of the
+   bound class otherwise -- for example a communicator for the
+   ``MPI_T_BIND_MPI_COMM`` point-to-point events. See
+   `Binding an event to a specific object`_ below.
 #. Attach a callback with :ref:`MPI_T_event_register_callback`, choosing a
    *callback safety level* (``MPI_T_CB_REQUIRE_NONE``,
    ``MPI_T_CB_REQUIRE_MPI_RESTRICTED``, or ``MPI_T_CB_REQUIRE_THREAD_SAFE``;
@@ -138,9 +142,10 @@ Query these properties at run time with :ref:`MPI_T_source_get_info`.
 
 ``ompi``
    Ordered (``MPI_T_SOURCE_ORDERED``); default clock; supports ad-hoc timestamp
-   reads. The domain for essentially all of Open MPI's lifecycle events:
-   initialization/finalization, communicator, RMA window, and error-handler
-   events. Because the source is ordered, the timestamps of
+   reads. The domain for essentially all of Open MPI's events: the lifecycle
+   ones (initialization/finalization, communicator, RMA window, and
+   error-handler) and the point-to-point events raised by the ``ob1`` PML.
+   Because the source is ordered, the timestamps of
    successive events from it are monotonically non-decreasing, so a tool can use
    them to order the events.
 
@@ -152,8 +157,8 @@ Query these properties at run time with :ref:`MPI_T_source_get_info`.
    per-occurrence chronology is not preserved -- currently just the OS-level
    memory-release event (``ompi.mca.memory.patcher.released``, below).
 
-Why two sources, and what timestamps mean
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Sources, ordering, and timestamps
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A *source* in MPI_T is fundamentally a clock-and-ordering domain, not a way to
 group events by subsystem (event names and MPI_T categories already serve that
@@ -177,14 +182,15 @@ timestamps that share a source establish an ordering.
 EVENT TYPES
 -----------
 
-Most built-in event types bind to no MPI object: the ``bind`` value returned by
+Many built-in event types bind to no MPI object: the ``bind`` value returned by
 :ref:`MPI_T_event_get_info` is ``MPI_T_BIND_NO_OBJECT``, so a tool passes a NULL
 object handle to :ref:`MPI_T_event_handle_alloc` and a single registration
-observes every instance. One event type, ``ompi.mpi.communicator_name_set``, is
-instead *bound* to a communicator (``bind`` is ``MPI_T_BIND_MPI_COMM``): a tool
-binds each registration to one specific communicator and is notified only when
-*that* communicator is affected. See `Binding an event to a specific object`_
-below. The *element layout* described for each event is the ordered sequence of
+observes every instance. The others are *bound* to a communicator (``bind`` is
+``MPI_T_BIND_MPI_COMM``): a tool binds each registration to one specific
+communicator and is notified only when *that* communicator is affected. Those
+are ``ompi.mpi.communicator_name_set`` and the eighteen point-to-point event
+types listed under `Point-to-point events from the ob1 PML`_. See `Binding an
+event to a specific object`_ below. The *element layout* described for each event is the ordered sequence of
 typed fields each instance carries, read with :ref:`MPI_T_event_read` or copied
 with :ref:`MPI_T_event_copy`. The *source* of an instance can be queried in the
 callback with :ref:`MPI_T_event_get_source`. The "level" shown is the MPI_T
@@ -331,6 +337,88 @@ detail directly from the object it bound to.
    * ``flavor`` (``int32``) -- the ``MPI_WIN_FLAVOR_*`` value of the window being
      freed.
    * ``handle`` (``uint64``) -- the ``MPI_Win`` handle value.
+
+Point-to-point events from the ob1 PML
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``ob1`` PML contributes eighteen event types covering its matching engine
+and the lifecycle of a point-to-point request. Every one of them is source
+``ompi``, level 4, and **bound to a communicator** (``bind`` =
+``MPI_T_BIND_MPI_COMM``; see `Binding an event to a specific object`_), so a
+registration observes only traffic on the communicator it was bound to.
+
+Three correlators recur across their payloads:
+
+* ``request`` (``uint64``) -- the address of ob1's internal request structure,
+  an opaque token that must never be dereferenced. It ties together the events
+  belonging to one request.
+* ``frag`` (``uint64``) -- the same, for the fragment holding a queued
+  unexpected message. It pairs an ``unexpected_insert`` with the
+  ``unexpected_match`` that drains that fragment. The value is **not** globally
+  unique within the process: fragments come from a pool, so once
+  ``unexpected_match`` has fired that fragment can be recycled and the same
+  value reappear for an unrelated message. A tool must retire the token there
+  rather than treat it as a lasting identity; the same applies to ``request``
+  once the request is freed.
+* the *envelope* -- ``source``, ``tag``, ``context_id`` and ``sequence`` (all
+  ``int32``) -- used where ob1 has a wire header but no request yet.
+
+``ompi.pml_ob1_message_arrived``
+   Envelope. A match header for the bound communicator arrived from a peer.
+
+``ompi.pml_ob1_search_posted_begin``, ``ompi.pml_ob1_search_posted_end``
+   Envelope. Bracket the search of the posted-receive queue for a match for
+   that arriving message.
+
+``ompi.pml_ob1_search_unexpected_begin``, ``ompi.pml_ob1_search_unexpected_end``
+   ``request``. Bracket the search of the unexpected-message queue made on
+   behalf of a newly posted receive.
+
+``ompi.pml_ob1_posted_insert``, ``ompi.pml_ob1_posted_remove``
+   ``request``. The receive request entered, or left, the posted-receive queue.
+
+``ompi.pml_ob1_posted_match``
+   ``request``. An arriving message matched this already-posted request.
+
+``ompi.pml_ob1_unexpected_insert``
+   ``frag`` + envelope (5 elements). A message matching no posted receive was
+   queued as unexpected.
+
+``ompi.pml_ob1_unexpected_match``
+   ``request`` + ``frag`` (2 elements). A later receive matched a queued
+   message and drained its fragment; ``frag`` is the token that fragment's
+   ``unexpected_insert`` carried. Matching is the only way a fragment leaves
+   the queue, so this is also its removal.
+
+``ompi.pml_ob1_transfer_begin``, ``ompi.pml_ob1_transfer``, ``ompi.pml_ob1_transfer_end``
+   ``request`` + ``length`` (``int64``). The start, an intermediate fragment or
+   RDMA step, and the completion of a request's data movement. On
+   ``transfer_end`` for a receive, ``length`` counts the bytes that actually
+   reached the user buffer, which is less than the message size on a truncated
+   receive.
+
+``ompi.pml_ob1_request_activate``, ``ompi.pml_ob1_request_complete``
+   ``request``. The request was activated, and later completed.
+
+``ompi.pml_ob1_request_free``
+   ``request``. The user released the request handle, either with
+   :ref:`MPI_Request_free` or implicitly when a nonblocking request completed.
+   This ends the handle's user-visible lifetime but does not imply the transfer
+   finished, since an active request may be freed. It is not raised for
+   blocking calls, which expose no handle.
+
+``ompi.pml_ob1_receive_cancel``
+   ``request``. The receive request was cancelled.
+
+``ompi.pml_ob1_immediate_send``
+   ``peer`` (``int32``), ``tag`` (``int32``), ``length`` (``int64``). A short,
+   non-synchronous send that completed straight into the BTL without ever
+   allocating a request. It carries the envelope and byte count rather than a
+   correlator precisely because there is no request to correlate with, and it
+   is the only event such a send produces.
+
+Memory-release events
+^^^^^^^^^^^^^^^^^^^^^
 
 ``ompi.mca.memory.patcher.released``
    Source ``ompi.unordered``; level 4. Present only where the ``ompi.unordered``

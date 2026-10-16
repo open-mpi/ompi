@@ -8,6 +8,8 @@ Open MPI version v6.0.0
 --------------------------
 :Date: ...fill me in...
 
+- Updated the embedded hwloc to v2.15.0.
+
 - Added support for the MPI-4.0 embiggened APIs (i.e., functions with
   ``MPI_Count`` parameters).
 

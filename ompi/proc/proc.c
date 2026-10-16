@@ -20,6 +20,7 @@
  * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
  *
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,12 +46,19 @@
 #include "ompi/proc/proc.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
 
 opal_list_t  ompi_proc_list = {{0}};
 static opal_mutex_t ompi_proc_lock;
 static opal_hash_table_t ompi_proc_hash;
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+/* Serializes architecture (and convertor) seeding, reachable from any
+ * thread that first talks to a peer. Not ompi_proc_lock: that one is
+ * held across complete_init_single. */
+static opal_mutex_t ompi_proc_arch_lock = OPAL_MUTEX_STATIC_INIT;
+#endif
 
 ompi_proc_t* ompi_proc_local_proc = NULL;
 
@@ -169,10 +177,68 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
 
     /* by default we consider process to be remote */
     proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
+
+    /* Built after the exchange delivered, so this peer's data is local */
+    if (ompi_modex_all_ready()) {
+        opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
+    }
+
     *procp = proc;
 
     return OMPI_SUCCESS;
 }
+
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+/**
+ * Give the proc the peer's architecture, and a matching convertor if it
+ * differs from ours. Must hold ompi_proc_arch_lock: seeding twice leaks
+ * a convertor and drops a reference we no longer own.
+ */
+static int ompi_proc_seed_arch (ompi_proc_t *proc)
+{
+    /* if the proc is local, then no need to fetch it */
+    if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
+        proc->super.proc_arch = opal_local_arch;
+    } else {
+        uint32_t *ui32ptr = &(proc->super.proc_arch);
+        int ret;
+
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, "OMPI_ARCH", &proc->super.proc_name,
+                                       (void**)&ui32ptr, PMIX_UINT32);
+        if (OPAL_SUCCESS == ret) {
+            /* if arch is different than mine, create a new convertor for this proc */
+            if (proc->super.proc_arch != opal_local_arch) {
+                opal_convertor_t *convertor = opal_convertor_create(proc->super.proc_arch, 0);
+
+                /* Built before the local one is let go, so that failing
+                 * here leaves the proc with the convertor it had and
+                 * unannounced, rather than with none and announced. */
+                if (NULL == convertor) {
+                    return OMPI_ERR_OUT_OF_RESOURCE;
+                }
+                OBJ_RELEASE(proc->super.proc_convertor);
+                proc->super.proc_convertor = convertor;
+            }
+        } else if (OMPI_ERR_NOT_IMPLEMENTED == ret || ompi_modex_proc_ready(proc)) {
+            /* Either the runtime lacks that key, or the peer's local
+             * data holds no architecture: built without heterogeneous
+             * support, so it can only be running ours. */
+            proc->super.proc_arch = opal_local_arch;
+        } else {
+            /* Not published yet: proc_convertor is still the local one,
+             * which would silently mistranslate, so the caller retries. */
+            return OMPI_ERR_NOT_READY;
+        }
+    }
+
+    /* The convertor has to be in place before the flag that announces
+     * it: readers test the flag without the lock. */
+    opal_atomic_wmb();
+    opal_proc_learned(&proc->super, OPAL_PROC_FLAG_INITIALIZED);
+
+    return OMPI_SUCCESS;
+}
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
 /**
  * Finish setting up an ompi_proc_t
@@ -188,39 +254,48 @@ int ompi_proc_complete_init_single (ompi_proc_t *proc)
 {
     if ((OMPI_CAST_RTE_NAME(&proc->super.proc_name)->jobid == OMPI_PROC_MY_NAME->jobid) &&
         (OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid  == OMPI_PROC_MY_NAME->vpid)) {
-        /* nothing else to do */
+        /* nothing else to do; our own architecture and data are here */
+        opal_proc_learned(&proc->super,
+                          OPAL_PROC_FLAG_AVAILABLE | OPAL_PROC_FLAG_INITIALIZED);
         return OMPI_SUCCESS;
     }
 
+    if (OPAL_PROC_NON_LOCAL == proc->super.proc_flags ||
+        0 == proc->super.proc_flags) {
+        uint16_t u16, *u16ptr = &u16;
+        int loc_ret;
+        OPAL_MODEX_RECV_VALUE_OPTIONAL(loc_ret, PMIX_LOCALITY, &proc->super.proc_name,
+                                       &u16ptr, PMIX_UINT16);
+        if (OPAL_SUCCESS == loc_ret) {
+            proc->super.proc_flags = u16;
+        }
+        /* A miss is final: ompi_rte_init() computes locality for every
+         * PMIX_LOCAL_PEERS name before any proc exists, so absence only
+         * means not node-local -- the OPAL_PROC_NON_LOCAL default. This
+         * macro returns the raw PMIx code anyway, where a miss is
+         * PMIX_ERR_NOT_FOUND == -46 == OPAL_ERR_TAKE_NEXT_OPTION. */
+    }
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    /* get the remote architecture - this might force a modex except
-     * for those environments where the RM provides it */
-    {
-        uint32_t *ui32ptr;
-        int ret;
-        /* if the proc is local, then no need to fetch it */
-        if (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags)) {
-            proc->super.proc_arch = opal_local_arch;
-        } else {
-            ui32ptr = &(proc->super.proc_arch);
-            OPAL_MODEX_RECV_VALUE_OPTIONAL(ret, "OMPI_ARCH", &proc->super.proc_name,
-                                           (void**)&ui32ptr, PMIX_UINT32);
-            if (OPAL_SUCCESS == ret) {
-                /* if arch is different than mine, create a new convertor for this proc */
-                if (proc->super.proc_arch != opal_local_arch) {
-                    OBJ_RELEASE(proc->super.proc_convertor);
-                    proc->super.proc_convertor = opal_convertor_create(proc->super.proc_arch, 0);
-                }
-            } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
-                proc->super.proc_arch = opal_local_arch;
-            } else {
-                return ret;
-            }
+    /* Get the remote architecture; it selects the convertor used for
+     * that peer, so it is read once and only once. */
+    if (!opal_proc_known(&proc->super, OPAL_PROC_FLAG_INITIALIZED)) {
+        int ret = OMPI_SUCCESS;
+
+        opal_mutex_lock (&ompi_proc_arch_lock);
+        if (!opal_proc_known(&proc->super, OPAL_PROC_FLAG_INITIALIZED)) {
+            ret = ompi_proc_seed_arch (proc);
+        }
+        opal_mutex_unlock (&ompi_proc_arch_lock);
+
+        if (OMPI_SUCCESS != ret) {
+            return ret;
         }
     }
 #else
     /* must be same arch as my own */
     proc->super.proc_arch = opal_local_arch;
+    opal_proc_learned(&proc->super, OPAL_PROC_FLAG_INITIALIZED);
 #endif
 
     return OMPI_SUCCESS;
@@ -259,11 +334,8 @@ static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_na
         goto exit;
     }
 
-    /* finish filling in the important proc data fields */
-    ret = ompi_proc_complete_init_single (proc);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
-        goto exit;
-    }
+    /* Leave the proc a skeleton; locality and the peer's architecture
+     * are filled in when the PML builds the BML endpoint. */
 exit:
     return proc;
 }
@@ -332,6 +404,8 @@ int ompi_proc_init(void)
     ompi_proc_local_proc = proc;
     proc->super.proc_flags = OPAL_PROC_ALL_LOCAL;
     proc->super.proc_arch = opal_local_arch;
+    opal_proc_learned(&proc->super,
+                      OPAL_PROC_FLAG_AVAILABLE | OPAL_PROC_FLAG_INITIALIZED);
     /* Register the local proc with OPAL */
     opal_proc_local_set(&proc->super);
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -417,26 +491,8 @@ int ompi_proc_complete_init(void)
         }
     }
 
-    /* if cutoff is larger than # of procs - add all processes
-     * NOTE that local procs will be automatically skipped as they
-     * are already in the hash table
-     */
-    if (ompi_process_info.num_procs < ompi_add_procs_cutoff) {
-        /* since ompi_proc_for_name is locking internally -
-         * we need to release lock here
-         */
-        opal_mutex_unlock (&ompi_proc_lock);
-
-        for (ompi_vpid_t i = 0 ; i < ompi_process_info.num_procs ; ++i ) {
-            opal_process_name_t proc_name;
-            proc_name.jobid = OMPI_PROC_MY_NAME->jobid;
-            proc_name.vpid = i;
-            (void) ompi_proc_for_name (proc_name);
-        }
-
-        /* acquire lock back for the next step - sort */
-        opal_mutex_lock (&ompi_proc_lock);
-    }
+    /* Do not force-create every remote rank. Groups keep sentinels;
+     * the PML materializes a skeleton on first use. */
 
     opal_list_sort (&ompi_proc_list, ompi_proc_compare_vid);
 
@@ -681,8 +737,14 @@ int ompi_proc_refresh(void)
             ompi_proc_local_proc = proc;
             proc->super.proc_flags = OPAL_PROC_ALL_LOCAL;
             proc->super.proc_arch = opal_local_arch;
+            opal_proc_learned(&proc->super,
+                              OPAL_PROC_FLAG_AVAILABLE | OPAL_PROC_FLAG_INITIALIZED);
             opal_proc_local_set(&proc->super);
         } else {
+            /* The name just changed, so everything known was known about
+             * somebody else. A full reset rather than named flags is safe
+             * here: a restart walk, with nothing else running. */
+            opal_proc_forget_all(&proc->super);
             ret = ompi_proc_complete_init_single (proc);
             if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 break;
@@ -858,14 +920,27 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
              * to us
              */
             newprocs[newprocs_len++] = plist[i];
+        }
 
-            /* update all the values */
+        /* A proc we already know can still be an unseeded skeleton, and
+         * it will not find these values in a modex never sent to us. */
+        if (!opal_proc_known(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED)) {
+            /* update all the values from the packed proc, not the modex */
             plist[i]->super.proc_arch = new_arch;
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->super.proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
+                opal_convertor_t *convertor = opal_convertor_create(plist[i]->super.proc_arch, 0);
+
+                /* As above: the local convertor is kept until there is
+                 * one to put in its place. */
+                if (NULL == convertor) {
+                    free(plist);
+                    free(newprocs);
+                    return OMPI_ERR_OUT_OF_RESOURCE;
+                }
                 OBJ_RELEASE(plist[i]->super.proc_convertor);
-                plist[i]->super.proc_convertor = opal_convertor_create(plist[i]->super.proc_arch, 0);
+                plist[i]->super.proc_convertor = convertor;
 #else
                 char *errhost = opal_get_proc_hostname(&plist[i]->super);
                 opal_show_help("help-mpi-runtime.txt",
@@ -878,6 +953,10 @@ ompi_proc_unpack(pmix_data_buffer_t* buf,
                 return OMPI_ERR_NOT_SUPPORTED;
 #endif
             }
+
+            /* Announce the convertor only once it is the peer's. */
+            opal_atomic_wmb();
+            opal_proc_learned(&plist[i]->super, OPAL_PROC_FLAG_INITIALIZED);
 
             /* get the locality information - all RTEs are required
              * to provide this information at startup */
