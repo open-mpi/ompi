@@ -272,9 +272,13 @@ AS_IF([test "$PYTHON" = ":"],
 AM_CONDITIONAL(OMPI_GENERATE_BINDINGS,[test "$PYTHON" != ":"])
 
 AC_MSG_CHECKING([if want to enable MPI Forum ABI library])
+AC_ARG_ENABLE([mpi-abi],
+    [AS_HELP_STRING([--enable-mpi-abi],
+                    [Synonym for --enable-standard-abi])])
 AC_ARG_ENABLE([standard-abi],
     [AS_HELP_STRING([--enable-standard-abi],
                     [Enable building the MPI Forum ABI library (default: enabled)])])
+AS_IF([test -z "${enable_standard_abi}"], [enable_standard_abi=${enable_mpi_abi}])
 if test "$enable_standard_abi" = "no"; then
     AC_MSG_RESULT([no])
     ompi_build_standard_abi=0
