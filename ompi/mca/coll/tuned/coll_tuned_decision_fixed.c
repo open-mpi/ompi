@@ -517,6 +517,23 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(const void *sbuf, size_t scount,
      *  {4, "linear_sync"},
      *  {5, "two_proc"},
      */
+    if (4194304 <= total_dsize && communicator_size <= 8) {
+        /* Device buffers on one node move by IPC copies, and the copies into one device run one
+         * after another: pairwise, one peer per step, lets every device copy from a different
+         * peer at a time, where linear has them all start on the same ones. On one node it is
+         * the fastest from 4 MB per peer. Host buffers stay with the table: pairwise was slower
+         * for them. */
+        int dev_id;
+        uint64_t flags;
+
+        if (opal_accelerator.check_addr(rbuf, &dev_id, &flags) > 0
+            && !ompi_group_have_remote_peers(comm->c_local_group)) {
+            return ompi_coll_tuned_alltoall_intra_do_this (sbuf, scount, sdtype, rbuf, rcount,
+                                                           rdtype, comm, module, 2, 0, 0,
+                                                           ompi_coll_tuned_alltoall_max_requests);
+        }
+    }
+
     if (communicator_size == 2) {
         if (total_dsize < 2) {
             alg = 2;
