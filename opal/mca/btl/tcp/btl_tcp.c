@@ -184,10 +184,9 @@ int mca_btl_tcp_del_procs(struct mca_btl_base_module_t *btl, size_t nprocs,
         }
 
         /* Released holding neither lock. The destructor reaches
-         * mca_btl_tcp_proc_remove(), which takes proc_lock, and on the
-         * proc's last endpoint releases the proc, whose destructor takes
-         * the component's tcp_lock; doing that from inside either lock
-         * is an ABBA against a concurrent wire-up on this module.
+         * mca_btl_tcp_proc_remove(), which takes proc_lock; doing that
+         * from inside either lock is an ABBA against a concurrent
+         * wire-up on this module.
          */
         OBJ_RELEASE(tcp_endpoint);
     }
