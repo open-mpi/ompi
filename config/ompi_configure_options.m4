@@ -312,6 +312,14 @@ if test "$enable_ompi_abi" = "no"; then
         AC_MSG_ERROR([--disable-ompi-abi requires --enable-standard-abi])
     fi
     ompi_build_ompi_abi=0
+
+    AC_MSG_WARN([************************************************************])
+    AC_MSG_WARN([Building in ABI-only mode (--disable-ompi-abi)])
+    AC_MSG_WARN([Limitations:])
+    AC_MSG_WARN([  * No Fortran bindings (mpifort, mpif77, mpif90)])
+    AC_MSG_WARN([  * No OpenSHMEM support])
+    AC_MSG_WARN([  * Only C MPI applications are supported])
+    AC_MSG_WARN([************************************************************])
 else
     AC_MSG_RESULT([no])
     ompi_build_ompi_abi=1
