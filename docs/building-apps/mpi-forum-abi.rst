@@ -73,56 +73,99 @@ ABI) and ``libmpi_abi`` (the MPI Forum ABI), along with the compiler
 wrappers and ``pkg-config`` files for each.
 
 The MPI Forum ABI support is controlled by the ``--enable-standard-abi``
-/ ``--disable-standard-abi`` ``configure`` options, which are described
-with the rest of the :doc:`MPI functionality configure options
+(or its synonym ``--enable-mpi-abi``) and ``--disable-ompi-abi``
+``configure`` options, which are described with the rest of the
+:doc:`MPI functionality configure options
 </installing-open-mpi/configure-cli-options/mpi>`.
 
-.. note:: If Open MPI is configured with ``--disable-standard-abi``,
-          ``libmpi_abi``, the ``mpicc_abi`` wrapper, and the
-          ``ompi-forum-abi*`` pkg-config files are not built or
-          installed.  Such an installation supports only the Open MPI
-          ABI: it cannot compile MPI Forum ABI applications, and cannot
-          serve as the run-time MPI library for them.
+.. note:: Open MPI supports three build configurations:
 
-          The Open MPI ABI is always built; there is no option to
-          disable it.
+          * **Default (both ABIs)**: Both ``libmpi`` and ``libmpi_abi``
+            are built and installed. Applications can use either ABI.
+          * **Traditional Open MPI ABI only** (``--disable-mpi-abi``):
+            Only ``libmpi`` is built. MPI Forum ABI support is disabled.
+          * **MPI Forum ABI only** (``--disable-ompi-abi``): Only
+            ``libmpi_abi`` is built. The traditional Open MPI ABI is
+            disabled.
+
+.. warning:: **Limitations in MPI Forum ABI-only mode**
+             (``--disable-ompi-abi``):
+
+             * **No Fortran bindings**: The MPI Forum ABI standard
+               currently only defines a C ABI. Fortran bindings
+               (``mpif.h``, ``mpi`` module, ``mpi_f08`` module) are not
+               available in ABI-only mode.
+             * **No OpenSHMEM support**: OpenSHMEM requires the
+               traditional Open MPI ABI and is automatically disabled in
+               ABI-only mode.
 
 How to build an application using the MPI Forum ABI
 ----------------------------------------------------
 
-Use the ``mpicc_abi`` compiler wrapper to compile and link C MPI
-applications against the MPI Forum ABI:
+There are three ways to compile and link C MPI applications against the
+MPI Forum ABI:
+
+**Method 1: Use the mpicc wrapper with the -standard-abi flag**
+
+.. code-block:: sh
+
+   shell$ mpicc -standard-abi hello.c -o hello
+
+The ``-standard-abi`` flag tells ``mpicc`` to use the MPI Forum ABI
+instead of the traditional Open MPI ABI. You can also use ``-mpi-abi``
+as a synonym:
+
+.. code-block:: sh
+
+   shell$ mpicc -mpi-abi hello.c -o hello
+
+**Method 2: Use the mpicc_abi convenience wrapper**
 
 .. code-block:: sh
 
    shell$ mpicc_abi hello.c -o hello
 
-Then launch the application with the ``mpirun`` from the MPI
-implementation that will provide ``libmpi_abi`` at run time:
+The ``mpicc_abi`` wrapper is equivalent to ``mpicc -standard-abi``.
+
+**Method 3: Use pkg-config**
+
+See :ref:`Using pkg-config with the MPI Forum ABI
+<label-mpi-abi-pkgconfig>`, below.
+
+When using the MPI Forum ABI, Open MPI automatically:
+
+* Defines the ``MPI_ABI`` preprocessor macro
+* Includes the MPI Forum ABI header (which uses the standard ABI types
+  and constants)
+* Links against ``libmpi_abi``
+
+You can inspect the wrapper-provided flags with:
+
+.. code-block:: sh
+
+   shell$ mpicc -standard-abi --showme:compile
+   -DMPI_ABI -I/opt/openmpi/include
+   shell$ mpicc -standard-abi --showme:link
+   -L/opt/openmpi/lib -lmpi_abi
+
+Then launch the application with ``mpirun``:
 
 .. code-block:: sh
 
    shell$ mpirun -np 2 ./hello
 
-When using Open MPI's ``mpicc_abi``, the wrapper adds the MPI Forum ABI
-header directory and links against ``libmpi_abi``.  You can inspect the
-wrapper-provided flags with:
+.. note:: In a default Open MPI installation (both ABIs built), ``mpicc``
+          without any flags uses the traditional Open MPI ABI. Use
+          ``-standard-abi`` or ``-ompi-abi`` to explicitly select which
+          ABI to use.
 
-.. code-block:: sh
-
-   shell$ mpicc_abi --showme:compile
-   shell$ mpicc_abi --showme:link
-
-The MPI Forum ABI ``mpi.h`` is installed under
-``$prefix/include/standard_abi``.  The normal Open MPI ``mpi.h`` remains
-installed under ``$prefix/include`` and is used by the normal ``mpicc``
-wrapper.
+.. _label-mpi-abi-pkgconfig:
 
 Using ``pkg-config`` with the MPI Forum ABI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As an alternative to using the ``mpicc_abi`` wrapper, you can use
-``pkg-config`` to build MPI Forum ABI applications:
+As an alternative to using ``mpicc -standard-abi`` or ``mpicc_abi``,
+you can use ``pkg-config`` to build MPI Forum ABI applications:
 
 .. code-block:: sh
 
