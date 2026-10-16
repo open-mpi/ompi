@@ -41,7 +41,9 @@ opal_show_subtitle "General configuration options"
 #
 
 AC_MSG_CHECKING([Checking if this is a developer copy])
-if test -d ${OPAL_TOP_SRCDIR}/.git; then
+# In a git worktree, .git is a file pointing at the real git dir, not a
+# directory, so check for both.
+if test -d ${OPAL_TOP_SRCDIR}/.git || test -f ${OPAL_TOP_SRCDIR}/.git; then
     OPAL_DEVEL=1
     AC_MSG_RESULT([yes])
 else
