@@ -336,7 +336,7 @@ void ompi_info_do_config(bool want_all)
        built by default but can be disabled via --disable-standard-abi. */
     opal_info_out("Open MPI ABI", "bindings:abi:ompi", "yes");
     opal_info_out("MPI Forum ABI", "bindings:abi:mpi_forum",
-                  OMPI_STANDARD_ABI ? "yes" : "no");
+                  OMPI_BUILD_STANDARD_ABI ? "yes" : "no");
 
     opal_info_out("Wrapper compiler rpath", "compiler:all:rpath",
                   WRAPPER_RPATH_SUPPORT);

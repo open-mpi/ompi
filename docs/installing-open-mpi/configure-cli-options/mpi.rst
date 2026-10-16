@@ -52,17 +52,37 @@ MPI API behaviors that can be used with ``configure``:
   Fortran bindings modulefiles.  By default, Open MPI will install
   Fortran modulefiles into ``$libdir``.
 
-* ``--enable-standard-abi``:
-  Enable building the MPI standard ABI support library.  This option is
-  enabled by default.
+* ``--enable-standard-abi`` / ``--enable-mpi-abi``:
+  Enable building the MPI Forum standard ABI support library.  This
+  option is enabled by default. The two option names are synonyms.
 
-  When enabled, Open MPI builds and installs ``libmpi_abi`` and the
-  standard ABI C compiler wrapper ``mpicc_abi``.  The wrapper uses the
-  standard ABI ``mpi.h`` installed under
-  ``$prefix/include/standard_abi`` and links applications against
-  ``libmpi_abi``.
+  When enabled, Open MPI builds and installs ``libmpi_abi``, the
+  ``mpicc_abi`` convenience wrapper, and ``ompi-forum-abi*``
+  pkg-config files.
 
-  Use ``--disable-standard-abi`` to disable this support.
+  Use ``--disable-standard-abi`` or ``--disable-mpi-abi`` to disable
+  this support and build only the traditional Open MPI ABI.
+
+* ``--disable-ompi-abi``:
+  Disable building the traditional Open MPI ABI library.  This option
+  requires ``--enable-standard-abi`` (or ``--enable-mpi-abi``).
+
+  When used with ``--enable-standard-abi``, Open MPI builds **only**
+  the MPI Forum standard ABI (``libmpi_abi``), not the traditional
+  Open MPI ABI (``libmpi``).
+
+  .. warning:: **Limitations of ABI-only mode** (``--disable-ompi-abi``):
+
+               * **No Fortran bindings**: The MPI Forum standard
+                 currently only defines a C ABI. No Fortran compiler
+                 wrappers (``mpifort``, ``mpif77``, ``mpif90``) or
+                 bindings are available.
+               * **No OpenSHMEM support**: OpenSHMEM requires the
+                 traditional Open MPI ABI and is disabled in
+                 ABI-only mode.
+
+  By default, Open MPI builds both the traditional Open MPI ABI and
+  the MPI Forum standard ABI, allowing applications to use either.
 
 * ``--enable-mpi-ext[=LIST]``:
   Enable Open MPI's non-portable API extensions.  ``LIST`` is a
