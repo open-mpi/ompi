@@ -1313,7 +1313,15 @@ int ompi_coll_tuned_reduce_intra_singlenode_dec_fixed( const void *sendbuf, void
     } else if (total_dsize < 8192) {
         alg = 8;
     } else if (communicator_size < 12) {
-        alg = (power_of_two && total_dsize >= 1048576) ? 7 : 1;
+        /* On 8 ranks the root's linear receive is the slowest choice from
+         * 8KB up through both the BTL and the MTL; binomial is faster, and
+         * from 128KB Rabenseifner more so.  9 to 11 ranks were not measured
+         * again and keep linear. */
+        if (power_of_two) {
+            alg = (total_dsize >= 131072) ? 7 : 5;
+        } else {
+            alg = 1;
+        }
     } else if (power_of_two && communicator_size <= 16 && total_dsize >= 524288) {
         alg = 7;
     } else {
