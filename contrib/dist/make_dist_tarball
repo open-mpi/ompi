@@ -53,6 +53,7 @@ gnu_version_ignore=0
 dist_target=distcheck
 distcheck_flags="AM_MAKEFLAGS=$DISTCHECK_MAKE_FLAGS"
 git_update=1
+tarball_version_override=
 
 if test "`basename $0`" = "make_tarball"; then
     dist_target=dist
@@ -75,6 +76,7 @@ while test "$1" != ""; do
         --dirtyok) dirty_ok=1 ;;
         --verok) gnu_version_ignore=1;;
         --no-git-update) git_update=0;;
+        --tarball-version) tarball_version_override=$2; shift ;;
         *)
             cat <<EOF
 Unrecognized argument: $1
@@ -89,6 +91,12 @@ Valid arguments:
   --dirtyok       Ok if the source tree is dirty
   --verok         Ignore result of autotools version checking
   --no-git-update Skip "git pull" part, assume local repo is updated already
+  --tarball-version STRING
+                  Set tarball_version in VERSION to STRING instead of
+                  emptying it.  This makes the resulting tarball be named
+                  openmpi-STRING.tar.* (rather than deriving the name from
+                  major/minor/release/greek).  Used by the nightly build to
+                  produce names like openmpi-main-<timestamp>-<githash>.
 EOF
             exit 1
             ;;
@@ -417,11 +425,21 @@ echo "*** Removing version numbers from VERSION..."
 version_files=VERSION
 release_date=`date '+%b %d, %Y'`
 echo "    Release date: $release_date"
+
+# Normally we empty tarball_version so that the tarball name is derived
+# from major/minor/release (+ greek).  If the caller passed
+# --tarball-version, substitute that exact string instead, so the
+# tarball is named openmpi-<tarball_version>.tar.* (used by the nightly
+# build to produce names like openmpi-main-<timestamp>-<githash>).
+if test -n "$tarball_version_override"; then
+    echo "    Overriding tarball_version with: $tarball_version_override"
+fi
+
 for file in $version_files; do
     echo " - $file"
     sed -e 's/^repo_rev=.*/'repo_rev=$repo_rev/ \
         -e "s/^date=.*/date=\"$release_date\"/" \
-        -e "s/^tarball_version=.*/tarball_version=/" \
+        -e "s/^tarball_version=.*/tarball_version=$tarball_version_override/" \
         $file > $file.new
     cp -f $file.new $file
     rm $file.new
