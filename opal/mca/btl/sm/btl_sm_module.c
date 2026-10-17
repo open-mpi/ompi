@@ -268,7 +268,9 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
     mca_btl_sm_modex_t *modex = NULL;
     char *segment_base;
-    size_t msg_size;
+    /* Zero quiets a false maybe-uninitialized warning, and fails the
+     * length validation below if ever read unset for real. */
+    size_t msg_size = 0;
     int rc;
 
     uint16_t peer_local_rank;
