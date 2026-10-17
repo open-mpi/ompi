@@ -143,6 +143,10 @@ struct mca_btl_sm_component_t {
                      *   afterwards is addressed off that value */
     struct opal_proc_t **local_procs; /**< opal_proc_t * indexed by SMP local rank */
     bool local_procs_mapped;          /**< local_procs has been filled in */
+    uint64_t attach_epoch; /**< opal_modex_knowledge_epoch as of the last incomplete pass
+                            *   over the node's segments; zero before the first. Another
+                            *   pass is pointless until the runtime delivers something,
+                            *   and sm_fifo_read() asks on every progress tick */
     mca_btl_base_endpoint_t **fbox_in_endpoints; /**< array of fast box in endpoints */
     unsigned int num_fbox_in_endpoints;          /**< number of fast boxes to poll */
     struct sm_fifo_t *my_fifo;                   /**< pointer to the local fifo */
