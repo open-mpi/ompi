@@ -324,47 +324,47 @@ static int init_sm_endpoint(struct mca_btl_base_endpoint_t **ep_out, struct opal
             mca_btl_sm.super.btl_put = NULL;
             mca_btl_sm.super.btl_flags &= ~MCA_BTL_FLAGS_RDMA;
         }
-            /* Validate the peer-supplied descriptor length before trusting it.
-             * The modex must actually contain seg_ds_size bytes of seg_ds, and
-             * that length must fit in opal_shmem_ds_t. */
-            const size_t modex_hdr_size = sizeof(*modex) - sizeof(modex->seg_ds);
-            if (modex->seg_ds_size <= 0
-                || (size_t) modex->seg_ds_size > sizeof(opal_shmem_ds_t)
-                || msg_size < modex_hdr_size
-                || (size_t) modex->seg_ds_size > msg_size - modex_hdr_size) {
-                free(modex);
-                OBJ_DESTRUCT(ep);
-                *ep_out = NULL;
-                OPAL_THREAD_UNLOCK(&component->lock);
-                return OPAL_ERR_BAD_PARAM;
-            }
+        /* Validate the peer-supplied descriptor length before trusting it.
+         * The modex must actually contain seg_ds_size bytes of seg_ds, and
+         * that length must fit in opal_shmem_ds_t. */
+        const size_t modex_hdr_size = sizeof(*modex) - sizeof(modex->seg_ds);
+        if (modex->seg_ds_size <= 0
+            || (size_t) modex->seg_ds_size > sizeof(opal_shmem_ds_t)
+            || msg_size < modex_hdr_size
+            || (size_t) modex->seg_ds_size > msg_size - modex_hdr_size) {
+            free(modex);
+            OBJ_DESTRUCT(ep);
+            *ep_out = NULL;
+            OPAL_THREAD_UNLOCK(&component->lock);
+            return OPAL_ERR_BAD_PARAM;
+        }
 
-            /* Always allocate the full struct so later consumers (detach,
-             * opal_shmem_sizeof_shmem_ds) cannot read or write past the end
-             * of the heap object. */
-            ep->seg_ds = calloc(1, sizeof(opal_shmem_ds_t));
-            if (NULL == ep->seg_ds) {
-                free(modex);
-                OBJ_DESTRUCT(ep);
-                *ep_out = NULL;
-                OPAL_THREAD_UNLOCK(&component->lock);
-                return OPAL_ERR_OUT_OF_RESOURCE;
-            }
+        /* Always allocate the full struct so later consumers (detach,
+         * opal_shmem_sizeof_shmem_ds) cannot read or write past the end
+         * of the heap object. */
+        ep->seg_ds = calloc(1, sizeof(opal_shmem_ds_t));
+        if (NULL == ep->seg_ds) {
+            free(modex);
+            OBJ_DESTRUCT(ep);
+            *ep_out = NULL;
+            OPAL_THREAD_UNLOCK(&component->lock);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
 
-            memcpy(ep->seg_ds, &modex->seg_ds, modex->seg_ds_size);
-            /* Guarantee seg_name is NUL-terminated even if the peer sent an
-             * unterminated path, so opal_shmem_sizeof_shmem_ds()'s strlen
-             * cannot run past the buffer. */
-            ep->seg_ds->seg_name[OPAL_PATH_MAX - 1] = '\0';
+        memcpy(ep->seg_ds, &modex->seg_ds, modex->seg_ds_size);
+        /* Guarantee seg_name is NUL-terminated even if the peer sent an
+         * unterminated path, so opal_shmem_sizeof_shmem_ds()'s strlen
+         * cannot run past the buffer. */
+        ep->seg_ds->seg_name[OPAL_PATH_MAX - 1] = '\0';
 
-            segment_base = opal_shmem_segment_attach(ep->seg_ds);
-            if (NULL == segment_base) {
-                free(modex);
-                OBJ_DESTRUCT(ep);
-                *ep_out = NULL;
-                OPAL_THREAD_UNLOCK(&component->lock);
-                return OPAL_ERROR;
-            }
+        segment_base = opal_shmem_segment_attach(ep->seg_ds);
+        if (NULL == segment_base) {
+            free(modex);
+            OBJ_DESTRUCT(ep);
+            *ep_out = NULL;
+            OPAL_THREAD_UNLOCK(&component->lock);
+            return OPAL_ERROR;
+        }
 
         OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
 
