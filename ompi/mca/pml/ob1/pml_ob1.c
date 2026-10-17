@@ -310,6 +310,17 @@ static bool mca_pml_ob1_start_staged(mca_pml_ob1_send_request_t *sendreq)
 
     ep = mca_pml_ob1_ensure_endpoint(proc, &rc);
     if (NULL == ep) {
+#if OPAL_ENABLE_FT_MPI
+        /* A dead peer publishes nothing, so there is no later tick on
+         * which this would succeed. Ahead of the NOT_READY retry, which
+         * would otherwise park this request for good: the peer's death
+         * is not something the runtime answers a modex get with. */
+        if (!ompi_proc_is_active(proc)) {
+            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = MPI_ERR_PROC_FAILED;
+            send_request_pml_complete(sendreq);
+            return true;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
         /* A LOCAL Get can miss a blob that is on its way. NOT_READY means
          * try again on a later tick; anything else is final. */
         if (OMPI_ERR_NOT_READY == rc) {
