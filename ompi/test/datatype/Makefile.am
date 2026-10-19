@@ -36,7 +36,7 @@ include $(top_srcdir)/Makefile.mca-dso-check
 # expose.  So in ABI-only mode we build only sizedtypes, which uses just
 # the public MPI datatype API; it is compiled with -DMPI_ABI (as the
 # mpicc_abi wrapper does) and linked against libmpi_abi.
-if OMPI_ABI_ONLY
+if OMPI_STANDARD_ABI_ONLY
 TESTS = sizedtypes
 MPI_CHECKS =
 # -DMPI_ABI makes <mpi.h> short-circuit to "standard_abi/mpi.h", which is
@@ -78,7 +78,7 @@ common_ldflags = $(OMPI_PKG_CONFIG_LDFLAGS)
 # In ABI-only mode libopen_mpi is not built; the only test built here
 # (sizedtypes) uses just the public MPI datatype API, so link
 # libmpi_abi (OMPI_MAKE_CHECK_LIBMPI_NAME) and libopen-pal only.
-if OMPI_ABI_ONLY
+if OMPI_STANDARD_ABI_ONLY
 mpi_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la

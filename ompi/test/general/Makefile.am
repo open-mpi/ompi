@@ -41,7 +41,7 @@ libompitest_support_a_SOURCES = support.c support.h
 # or exercise Open MPI-specific state (datatype, proc, info_t, info_mpi,
 # seq_tracker), and abi_fortran needs the Fortran bindings that are
 # disabled in ABI-only mode.
-if OMPI_ABI_ONLY
+if OMPI_STANDARD_ABI_ONLY
 check_PROGRAMS = \
 	mpi_init \
 	op \
@@ -98,7 +98,7 @@ TESTS = $(check_PROGRAMS)
 # here reference only standard MPI_* entry points (plus a few OPAL
 # symbols in libopen-pal), so link libmpi_abi
 # (OMPI_MAKE_CHECK_LIBMPI_NAME) and libopen-pal only.
-if OMPI_ABI_ONLY
+if OMPI_STANDARD_ABI_ONLY
 ompi_test_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \

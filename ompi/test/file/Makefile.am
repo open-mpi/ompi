@@ -38,7 +38,7 @@ common_ldflags = $(OMPI_PKG_CONFIG_LDFLAGS)
 # tests use only the public MPI-IO API, so compile them with -DMPI_ABI
 # (as the mpicc_abi wrapper does, making <mpi.h> resolve to the MPI Forum
 # ABI header) and link libmpi_abi and libopen-pal only.
-if OMPI_ABI_ONLY
+if OMPI_STANDARD_ABI_ONLY
 # -DMPI_ABI makes <mpi.h> short-circuit to "standard_abi/mpi.h", which is
 # generated in the build tree under ompi/mpi/c.
 AM_CPPFLAGS = -DMPI_ABI -I$(top_builddir)/ompi/mpi/c
