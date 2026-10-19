@@ -1192,12 +1192,21 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
  */
 int ompi_comm_determine_first_auto ( ompi_communicator_t* intercomm );
 
+/**
+ * Activate a new communicator: register it with the PML and let the collective
+ * components select a module for it.
+ *
+ * On failure *newcomm is untouched -- it is neither released nor set to
+ * MPI_COMM_NULL -- so releasing the new communicator remains the caller's
+ * job, as it is with ompi_comm_nextcid().
+ */
 OMPI_DECLSPEC int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                                       ompi_communicator_t *bridgecomm, const void *arg0,
                                       const void *arg1, bool send_first, int mode);
 
 /**
- * Non-blocking variant of comm_activate.
+ * Non-blocking variant of comm_activate.  Same ownership rule on failure:
+ * *newcomm stays the caller's to release.
  *
  * @param[inout] newcomm    New communicator
  * @param[in]    comm       Parent communicator

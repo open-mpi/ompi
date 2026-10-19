@@ -590,6 +590,12 @@ int ompi_comm_create_w_info (ompi_communicator_t *comm, ompi_group_t *group, opa
         free ( rranks );
     }
 
+    /* a half-built communicator is ours to drop */
+    if ( OMPI_SUCCESS != rc && NULL != newcomp && MPI_COMM_NULL != newcomp ) {
+        OBJ_RELEASE(newcomp);
+        newcomp = MPI_COMM_NULL;
+    }
+
     *newcomm = newcomp;
     return ( rc );
 }
@@ -832,13 +838,21 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
     free ( lranks );
     free ( rranks );
 
-    /* Step 4: if we are not part of the comm, free the struct   */
-    /* --------------------------------------------------------- */
-    if (inter && my_rsize == 0) {
-        color = MPI_UNDEFINED;
-    }
-    if ( NULL != newcomp && MPI_UNDEFINED == color ) {
-        ompi_comm_free ( &newcomp );
+    if ( OMPI_SUCCESS != rc ) {
+        /* a half-built communicator is ours to drop */
+        if ( NULL != newcomp && MPI_COMM_NULL != newcomp ) {
+            OBJ_RELEASE(newcomp);
+        }
+        newcomp = MPI_COMM_NULL;
+    } else {
+        /* Step 4: if we are not part of the comm, free the struct   */
+        /* --------------------------------------------------------- */
+        if (inter && my_rsize == 0) {
+            color = MPI_UNDEFINED;
+        }
+        if ( NULL != newcomp && MPI_UNDEFINED == color ) {
+            ompi_comm_free ( &newcomp );
+        }
     }
 
     *newcomm = newcomp;
@@ -2112,6 +2126,7 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) tag, NULL, false,
                             OMPI_COMM_CID_GROUP_NEW);
     if ( OMPI_SUCCESS != rc ) {
+        OBJ_RELEASE(newcomp);
         return rc;
     }
 
@@ -2134,6 +2149,7 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     rc = ompi_comm_activate (&newcomp, newcomp, NULL, &(int) {0xfeed}, NULL,
                              false, OMPI_COMM_CID_GROUP);
     if ( OMPI_SUCCESS != rc ) {
+        OBJ_RELEASE(newcomp);
         return rc;
     }
 
