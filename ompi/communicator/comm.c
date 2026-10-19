@@ -1863,6 +1863,7 @@ struct ompi_comm_idup_with_info_context_t {
     opal_object_t super;
     ompi_communicator_t *comm;
     ompi_communicator_t *newcomp;
+    ompi_communicator_t **newcomm_out;    /* the handle the caller was given */
     int tag;    /* pml tag of this creation's cid rounds on comm */
 };
 
@@ -1870,8 +1871,9 @@ typedef struct ompi_comm_idup_with_info_context_t ompi_comm_idup_with_info_conte
 
 static void ompi_comm_idup_with_info_context_construct (ompi_comm_idup_with_info_context_t *context)
 {
-    context->comm    = NULL;
-    context->newcomp = NULL;
+    context->comm        = NULL;
+    context->newcomp     = NULL;
+    context->newcomm_out = NULL;
 }
 
 static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_context_t *context)
@@ -1884,6 +1886,21 @@ static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_
 OBJ_CLASS_INSTANCE(ompi_comm_idup_with_info_context_t, opal_object_t,
                    ompi_comm_idup_with_info_context_construct,
                    ompi_comm_idup_with_info_context_destruct);
+
+/* Take the new communicator back from a creation that fails after
+ * MPI_Comm_idup() has already returned the handle.  The application has no
+ * other way to learn that the object it was given is gone, so clear its handle
+ * along with our reference. */
+static void ompi_comm_idup_with_info_discard (ompi_comm_idup_with_info_context_t *context)
+{
+    if (NULL != context->newcomp) {
+        OBJ_RELEASE(context->newcomp);
+        context->newcomp = NULL;
+    }
+    if (NULL != context->newcomm_out) {
+        *context->newcomm_out = MPI_COMM_NULL;
+    }
+}
 
 static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request);
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request);
@@ -1968,6 +1985,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, subreq, subreq[0] ? 1 : 0);
 
     /* assign the newcomm now */
+    context->newcomm_out = newcomm;
     *newcomm = context->newcomp;
 
     /* kick off the request */
@@ -1984,6 +2002,13 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
     ompi_request_t *subreq[1];
     int rc, mode;
 
+    /* ompi_comm_request_progress() runs this even when the construction
+     * subrequest failed, so there may be no usable communicator to go on with */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        ompi_comm_idup_with_info_discard (context);
+        return request->super.req_status.MPI_ERROR;
+    }
+
     if (OMPI_COMM_IS_INTER(context->comm)){
         mode  = OMPI_COMM_CID_INTER;
     } else {
@@ -1994,8 +2019,12 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
     rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, &context->tag,
                                NULL, false, mode, subreq);
     if (OMPI_SUCCESS != rc) {
-        ompi_comm_request_return (request);
-        OBJ_RELEASE(context->newcomp);
+        /* Returning the request here would hand it back to the free list while
+         * the progress loop still holds it and the caller still owns it, and
+         * would release the context this callback goes on to read.  Leave both
+         * alone: an error return completes the request, and the caller returns
+         * it. */
+        ompi_comm_idup_with_info_discard (context);
         return rc;
     }
 
@@ -2011,6 +2040,13 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
     ompi_request_t *subreq[1];
     int rc, mode;
 
+    /* the cid negotiation may have failed, in which case the new communicator
+     * has no context id and must not be named or activated */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        ompi_comm_idup_with_info_discard (context);
+        return request->super.req_status.MPI_ERROR;
+    }
+
     if (OMPI_COMM_IS_INTER(context->comm)){
         mode  = OMPI_COMM_CID_INTER;
     } else {
@@ -2025,7 +2061,7 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
     rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, &context->tag, NULL, false, mode,
                                 subreq);
     if ( OMPI_SUCCESS != rc ) {
-        OBJ_RELEASE(context->newcomp);
+        ompi_comm_idup_with_info_discard (context);
         return rc;
     }
 
@@ -2036,7 +2072,17 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
 {
-    /* nothing to be done */
+    ompi_comm_idup_with_info_context_t *context =
+        (ompi_comm_idup_with_info_context_t *) request->context;
+
+    /* ompi_comm_request_progress() replaces the request status with whatever
+     * the last callback returns, so a failed activation has to be reported
+     * from here or the creation is reported as having succeeded */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        ompi_comm_idup_with_info_discard (context);
+        return request->super.req_status.MPI_ERROR;
+    }
+
     return MPI_SUCCESS;
 }
 
