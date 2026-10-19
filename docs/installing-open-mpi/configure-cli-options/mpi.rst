@@ -52,26 +52,24 @@ MPI API behaviors that can be used with ``configure``:
   Fortran bindings modulefiles.  By default, Open MPI will install
   Fortran modulefiles into ``$libdir``.
 
-* ``--enable-standard-abi`` / ``--enable-mpi-abi``:
-  Enable building the MPI Forum standard ABI support library.  This
-  option is enabled by default. The two option names are synonyms.
+* ``--enable-mpi-abi[=MODE]``:
+  Select which MPI ABIs Open MPI builds.  ``MODE`` is one of:
 
-  When enabled, Open MPI builds and installs ``libmpi_abi``, the
-  ``mpicc_abi`` convenience wrapper, and ``ompi-forum-abi*``
-  pkg-config files.
+  * ``both`` (the default): build both the traditional Open MPI ABI
+    (``libmpi``) and the MPI Forum standard ABI (``libmpi_abi``),
+    allowing applications to use either.  A bare ``--enable-mpi-abi``
+    (with no ``=MODE``) also selects ``both``.
+  * ``standard`` (or ``forum``): build **only** the MPI Forum standard
+    ABI.  This is "ABI-only" mode (see the limitations below).
+  * ``ompi``: build **only** the traditional Open MPI ABI; no
+    ``libmpi_abi`` is produced.
 
-  Use ``--disable-standard-abi`` or ``--disable-mpi-abi`` to disable
-  this support and build only the traditional Open MPI ABI.
+  When the MPI Forum standard ABI is built, Open MPI installs
+  ``libmpi_abi``, the ``mpicc_abi`` convenience wrapper, and
+  ``ompi-forum-abi*`` pkg-config files.
 
-* ``--disable-ompi-abi``:
-  Disable building the traditional Open MPI ABI library.  This option
-  requires ``--enable-standard-abi`` (or ``--enable-mpi-abi``).
-
-  When used with ``--enable-standard-abi``, Open MPI builds **only**
-  the MPI Forum standard ABI (``libmpi_abi``), not the traditional
-  Open MPI ABI (``libmpi``).
-
-  .. warning:: **Limitations of ABI-only mode** (``--disable-ompi-abi``):
+  .. warning:: **Limitations of ABI-only mode**
+               (``--enable-mpi-abi=standard``):
 
                * **No Fortran bindings**: The MPI Forum standard
                  currently only defines a C ABI. No Fortran compiler
@@ -81,8 +79,15 @@ MPI API behaviors that can be used with ``configure``:
                  traditional Open MPI ABI and is disabled in
                  ABI-only mode.
 
-  By default, Open MPI builds both the traditional Open MPI ABI and
-  the MPI Forum standard ABI, allowing applications to use either.
+  .. note:: **Deprecated synonyms.**  The older boolean options are
+            still accepted (with a deprecation warning) but should be
+            replaced with ``--enable-mpi-abi=MODE``:
+
+            * ``--enable-standard-abi`` / ``--disable-standard-abi`` ---
+              formerly toggled the MPI Forum standard ABI.
+            * ``--disable-ompi-abi`` --- equivalent to
+              ``--enable-mpi-abi=standard``; required the standard ABI
+              to be enabled.
 
 * ``--enable-mpi-ext[=LIST]``:
   Enable Open MPI's non-portable API extensions.  ``LIST`` is a

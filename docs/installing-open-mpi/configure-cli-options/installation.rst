@@ -333,8 +333,11 @@ be used with ``configure``:
   these libraries for their own purposes. This option is *not*
   intended for typical users of Open MPI.
 
-* ``--disable-ompi-abi``:
-  Disable building the Open MPI-specific ABI library (``libmpi.so``).
-  When used with ``--enable-standard-abi``, only the MPI standard ABI
-  library (``libmpi_abi.so``), the standard ``mpi.h`` header, and
-  standard wrapper compilers (``mpicc``, etc.) are installed.
+* ``--enable-mpi-abi=standard``:
+  Build only the MPI Forum standard ABI library (``libmpi_abi.so``),
+  the standard ``mpi.h`` header, and the standard wrapper compilers
+  (``mpicc``, etc.); the Open MPI-specific ABI library (``libmpi.so``)
+  is not built.  See ``--enable-mpi-abi`` in the :doc:`MPI functionality
+  configure options <mpi>` for the full set of modes.  (The older
+  ``--disable-ompi-abi`` spelling is still accepted as a deprecated
+  synonym.)
