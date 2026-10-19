@@ -30,6 +30,38 @@ libompitest_support_a_SOURCES = support.c support.h
 # NOTE: test program names must avoid Automake's built-in recursive
 # target names (info, dvi, ps, pdf, html, tags, check, ...).  The
 # ompi/info test is therefore named "info_t" rather than "info".
+#
+# In ABI-only mode (--disable-ompi-abi) only libmpi_abi is built, so we
+# build just the subset of tests that use only the public MPI C API.
+# They are compiled with -DMPI_ABI (see AM_CPPFLAGS below) exactly as
+# the mpicc_abi wrapper does, which makes <mpi.h> resolve to the MPI
+# Forum ABI header, and are linked against libmpi_abi (see
+# ompi_test_ldadd).  The tests omitted here call internal OMPI routines
+# directly (e.g. ompi_info_get(), ompi_datatype_*(), ompi_seq_tracker_*)
+# or exercise Open MPI-specific state (datatype, proc, info_t, info_mpi,
+# seq_tracker), and abi_fortran needs the Fortran bindings that are
+# disabled in ABI-only mode.
+if OMPI_ABI_ONLY
+check_PROGRAMS = \
+	mpi_init \
+	op \
+	communicator \
+	group \
+	attribute \
+	errhandler \
+	request \
+	win \
+	instance \
+	file \
+	message \
+	hw_resource_info
+
+# Compile against the MPI Forum ABI header, as the mpicc_abi wrapper
+# does.  -DMPI_ABI makes <mpi.h> short-circuit to "standard_abi/mpi.h";
+# that header is generated in the build tree under ompi/mpi/c, so add it
+# to the include path.
+AM_CPPFLAGS = -DMPI_ABI -I$(top_builddir)/ompi/mpi/c
+else
 check_PROGRAMS = \
 	info_t \
 	seq_tracker \
@@ -49,6 +81,7 @@ check_PROGRAMS = \
 	message \
 	abi_fortran \
 	hw_resource_info
+endif
 
 TESTS = $(check_PROGRAMS)
 
@@ -60,11 +93,23 @@ TESTS = $(check_PROGRAMS)
 # linker does not always pull it in transitively (e.g. in some
 # uninstalled "make check" / distro linker configurations), so link it
 # explicitly.  libopen-pal underlies both.
+#
+# In ABI-only mode libopen_mpi is not built: the public-API tests built
+# here reference only standard MPI_* entry points (plus a few OPAL
+# symbols in libopen-pal), so link libmpi_abi
+# (OMPI_MAKE_CHECK_LIBMPI_NAME) and libopen-pal only.
+if OMPI_ABI_ONLY
+ompi_test_ldadd = \
+        $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
+        libompitest_support.a
+else
 ompi_test_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la \
         libompitest_support.a
+endif
 
 info_t_SOURCES = info.c
 info_t_LDADD = $(ompi_test_ldadd)
