@@ -395,6 +395,10 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
     *newcomm = newcomp;
 
  cleanup:
+    /* a half-built communicator is ours to drop */
+    if( OMPI_SUCCESS != exit_status && NULL != newcomp && MPI_COMM_NULL != newcomp ) {
+        OBJ_RELEASE(newcomp);
+    }
     if( NULL != failed_group ) {
         OBJ_RELEASE(failed_group);
         failed_group = NULL;

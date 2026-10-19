@@ -947,8 +947,8 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
         parent = NULL;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm, parent, !context->blocking))) {
-        OBJ_RELEASE(*newcomm);
-        *newcomm = MPI_COMM_NULL;
+        /* the new communicator stays the caller's to release, as with
+         * ompi_comm_nextcid(); see the note on ompi_comm_activate_nb_internal */
         return ret;
     }
 
@@ -984,7 +984,16 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
     return OMPI_SUCCESS;
 }
 
-/* blocking: the caller waits on the returned request (ompi_comm_activate). */
+/* blocking: the caller waits on the returned request (ompi_comm_activate).
+ *
+ * On failure *newcomm is left exactly as it was passed in: the activation
+ * never releases it and never stores MPI_COMM_NULL in it.  The new
+ * communicator belongs to the caller until the activation succeeds, which is
+ * the same contract as ompi_comm_nextcid().  Having only some of the exits
+ * here release and null it made the callers unsafe either way -- the ones
+ * that release their handle ended up doing it to MPI_COMM_NULL, and the ones
+ * that do not leaked on the remaining exits.
+ */
 static int ompi_comm_activate_nb_internal (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                                            ompi_communicator_t *bridgecomm, const void *arg0,
                                            const void *arg1, bool send_first, int mode,
@@ -1039,9 +1048,7 @@ static int ompi_comm_activate_nb_internal (ompi_communicator_t **newcomm, ompi_c
     if (MPI_UNDEFINED != (*newcomm)->c_local_group->grp_my_rank) {
         /* Initialize the PML stuff in the newcomm  */
         if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
-            OBJ_RELEASE(*newcomm);
             ompi_comm_request_return (request);
-            *newcomm = MPI_COMM_NULL;
             return ret;
         }
         OMPI_COMM_SET_PML_ADDED(*newcomm);
