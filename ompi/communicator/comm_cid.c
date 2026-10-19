@@ -1170,6 +1170,14 @@ done:
 static int ompi_comm_activate_nb_complete (ompi_comm_request_t *request)
 {
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
+
+    /* The progress loop runs this even when the disjointness reduction failed,
+     * and then replaces the request status with what we return here.  Report
+     * the failure instead of selecting a collective module on its result. */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        return request->super.req_status.MPI_ERROR;
+    }
+
     return ompi_comm_activate_complete (context);
 }
 
