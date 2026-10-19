@@ -72,24 +72,28 @@ ABI: a default Open MPI installation provides ``libmpi`` (the Open MPI
 ABI) and ``libmpi_abi`` (the MPI Forum ABI), along with the compiler
 wrappers and ``pkg-config`` files for each.
 
-The MPI Forum ABI support is controlled by the ``--enable-standard-abi``
-(or its synonym ``--enable-mpi-abi``) and ``--disable-ompi-abi``
-``configure`` options, which are described with the rest of the
+The MPI Forum ABI support is controlled by the ``--enable-mpi-abi=MODE``
+``configure`` option, which is described with the rest of the
 :doc:`MPI functionality configure options
 </installing-open-mpi/configure-cli-options/mpi>`.
 
-.. note:: Open MPI supports three build configurations:
+.. note:: Open MPI supports three build configurations, selected with
+          ``--enable-mpi-abi=MODE``:
 
-          * **Default (both ABIs)**: Both ``libmpi`` and ``libmpi_abi``
-            are built and installed. Applications can use either ABI.
-          * **Traditional Open MPI ABI only** (``--disable-mpi-abi``):
+          * **Default (both ABIs)** (``--enable-mpi-abi=both``, or
+            omit the option): Both ``libmpi`` and ``libmpi_abi`` are
+            built and installed. Applications can use either ABI.
+          * **Traditional Open MPI ABI only** (``--enable-mpi-abi=ompi``):
             Only ``libmpi`` is built. MPI Forum ABI support is disabled.
-          * **MPI Forum ABI only** (``--disable-ompi-abi``): Only
-            ``libmpi_abi`` is built. The traditional Open MPI ABI is
-            disabled.
+          * **MPI Forum ABI only** (``--enable-mpi-abi=standard``, also
+            spelled ``forum``): Only ``libmpi_abi`` is built. The
+            traditional Open MPI ABI is disabled.
+
+          The older ``--enable-standard-abi`` / ``--disable-ompi-abi``
+          options are still accepted as deprecated synonyms.
 
 .. warning:: **Limitations in MPI Forum ABI-only mode**
-             (``--disable-ompi-abi``):
+             (``--enable-mpi-abi=standard``):
 
              * **No Fortran bindings**: The MPI Forum ABI standard
                currently only defines a C ABI. Fortran bindings
@@ -178,8 +182,9 @@ Open MPI provides the following MPI Forum ABI pkg-config files:
 * ``ompi-forum-abi-c``: C applications using the MPI Forum ABI
 * ``ompi-forum-abi-cxx``: C++ applications using the MPI Forum ABI
 
-.. note:: These pkg-config files are only installed when Open MPI is
-          configured with ``--enable-standard-abi`` (the default).
+.. note:: These pkg-config files are only installed when the MPI Forum
+          ABI is built, i.e. ``--enable-mpi-abi=both`` (the default) or
+          ``--enable-mpi-abi=standard``.
 
 Like the ``mpicc_abi`` wrapper, these pkg-config files link only
 against ``libmpi_abi`` and use the MPI Forum ABI header from
@@ -202,7 +207,7 @@ own ABI.  The ``MPI Forum ABI`` line reflects whether the installation
 was configured with the MPI Forum ABI support enabled (see
 :ref:`label-mpi-abi-enable-disable`, above); it is ``yes`` by default,
 and ``no`` in an installation configured with
-``--disable-standard-abi``.
+``--enable-mpi-abi=ompi``.
 
 The same values are available in ``ompi_info``'s machine-readable
 output, which is more convenient for scripts:
@@ -281,7 +286,7 @@ Building the other implementation with MPI Forum ABI support
 
 An MPI implementation only provides the MPI Forum ABI library if it was
 built with MPI Forum ABI support enabled.  Open MPI builds ``libmpi_abi``
-by default (see ``--enable-standard-abi``).  Other implementations may
+by default (see ``--enable-mpi-abi``).  Other implementations may
 gate their MPI Forum ABI library behind a build-time option and may not
 build it by default.
 
