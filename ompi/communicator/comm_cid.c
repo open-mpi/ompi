@@ -1694,8 +1694,16 @@ static int ompi_comm_allreduce_group_nb (int *inbuf, int *outbuf, int count,
     peers_group[1] = (group_rank * 2 + 1) < group_size ? group_rank * 2 + 1: MPI_PROC_NULL;
     peers_group[2] = (group_rank * 2 + 2) < group_size ? group_rank * 2 + 2 : MPI_PROC_NULL;
 
-    /* translate the ranks into the ranks of the parent communicator */
-    ompi_group_translate_ranks (group, 3, peers_group, comm->c_local_group, context->peers_comm);
+    if (group == comm->c_local_group) {
+        /* The INTRA mode builds the tree over the parent's own group, where the
+         * translation is the identity.  ompi_group_translate_ranks() would scan
+         * the whole group once per peer to rediscover that, on every round of
+         * every creation. */
+        memcpy (context->peers_comm, peers_group, sizeof (peers_group));
+    } else {
+        /* translate the ranks into the ranks of the parent communicator */
+        ompi_group_translate_ranks (group, 3, peers_group, comm->c_local_group, context->peers_comm);
+    }
 
     /* reduce */
     memmove (outbuf, inbuf, sizeof (int) * count);
