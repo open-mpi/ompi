@@ -51,7 +51,7 @@
 #  - bindings-generator: tests for the binding generation infrastructure
 #
 
-if OMPI_ABI_ONLY
+if OMPI_STANDARD_ABI_ONLY
 SUBDIRS = file datatype general part mpi-abi mpirun bindings-generator
 else
 if OMPI_BUILD_OMPI_ABI

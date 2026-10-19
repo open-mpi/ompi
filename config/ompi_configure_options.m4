@@ -328,5 +328,5 @@ AC_DEFINE_UNQUOTED([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi],
                    [Whether we are building the traditional Open MPI ABI library])
 AC_SUBST([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi])
 AM_CONDITIONAL([OMPI_BUILD_OMPI_ABI], [test $ompi_build_ompi_abi = 1])
-AM_CONDITIONAL([OMPI_ABI_ONLY], [test $ompi_build_ompi_abi = 0 && test $ompi_build_standard_abi = 1])
+AM_CONDITIONAL([OMPI_STANDARD_ABI_ONLY], [test $ompi_build_ompi_abi = 0 && test $ompi_build_standard_abi = 1])
 ])dnl
