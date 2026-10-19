@@ -33,10 +33,24 @@ common_ldflags = $(OMPI_PKG_CONFIG_LDFLAGS)
 # a dependency of libmpi, but the linker does not always pull it in
 # transitively (e.g. in some uninstalled "make check" / distro linker
 # configurations), so link it explicitly.
+#
+# In ABI-only mode (--disable-ompi-abi) only libmpi_abi is built: these
+# tests use only the public MPI-IO API, so compile them with -DMPI_ABI
+# (as the mpicc_abi wrapper does, making <mpi.h> resolve to the MPI Forum
+# ABI header) and link libmpi_abi and libopen-pal only.
+if OMPI_ABI_ONLY
+# -DMPI_ABI makes <mpi.h> short-circuit to "standard_abi/mpi.h", which is
+# generated in the build tree under ompi/mpi/c.
+AM_CPPFLAGS = -DMPI_ABI -I$(top_builddir)/ompi/mpi/c
+common_ldadd = \
+        $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+else
 common_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+endif
 
 file_info_defaults_SOURCES = file_info_defaults.c $(common_headers)
 file_info_defaults_LDFLAGS = $(common_ldflags)

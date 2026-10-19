@@ -28,6 +28,21 @@ include $(top_srcdir)/Makefile.mca-dso-check
 # to_self and reduce_local are built but not run, as they were in
 # test/datatype before this directory existed.  (reduce_local is driven
 # by getopt() command-line arguments; see check_op.sh.)
+#
+# In ABI-only mode (--disable-ompi-abi) only libmpi_abi is built.  Every
+# test here except sizedtypes either links libopen_mpi, calls
+# ompi_datatype_*()/opal_datatype_*() directly, or (mpi_datatype_bigcount)
+# touches Open MPI-specific MPI_Status fields that the Forum ABI does not
+# expose.  So in ABI-only mode we build only sizedtypes, which uses just
+# the public MPI datatype API; it is compiled with -DMPI_ABI (as the
+# mpicc_abi wrapper does) and linked against libmpi_abi.
+if OMPI_ABI_ONLY
+TESTS = sizedtypes
+MPI_CHECKS =
+# -DMPI_ABI makes <mpi.h> short-circuit to "standard_abi/mpi.h", which is
+# generated in the build tree under ompi/mpi/c.
+AM_CPPFLAGS = -DMPI_ABI -I$(top_builddir)/ompi/mpi/c
+else
 TESTS = \
         position \
         position_noncontig \
@@ -46,6 +61,7 @@ TESTS = \
         opt_desc_equiv
 
 MPI_CHECKS = to_self pack_description_sweep reduce_local
+endif
 
 check_PROGRAMS = $(TESTS) $(MPI_CHECKS)
 
@@ -59,10 +75,19 @@ common_ldflags = $(OMPI_PKG_CONFIG_LDFLAGS)
 # the linker does not always pull it in transitively (e.g. in some
 # uninstalled "make check" / distro linker configurations), so link it
 # explicitly.
+# In ABI-only mode libopen_mpi is not built; the only test built here
+# (sizedtypes) uses just the public MPI datatype API, so link
+# libmpi_abi (OMPI_MAKE_CHECK_LIBMPI_NAME) and libopen-pal only.
+if OMPI_ABI_ONLY
+mpi_ldadd = \
+        $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
+        $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+else
 mpi_ldadd = \
         $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(top_builddir)/ompi/libopen_mpi.la \
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+endif
 
 # Tests that exercise only the internal datatype engine (no MPI_* APIs)
 # link libopen_mpi directly for the internal OMPI symbols; they do not

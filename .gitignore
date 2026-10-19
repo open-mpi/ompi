@@ -288,6 +288,7 @@ ompi/test/general/datatype
 ompi/test/general/errhandler
 ompi/test/general/file
 ompi/test/general/group
+ompi/test/general/hw_resource_info
 ompi/test/general/info_mpi
 ompi/test/general/info_t
 ompi/test/general/instance

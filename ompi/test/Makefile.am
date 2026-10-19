@@ -25,11 +25,38 @@
 # built, but not run by "make check".
 
 #
-# Many tests in these folders are compiled to use the OMPI ABI mpi.h so don't include
-# for MPI ABI only builds.
+# Test coverage in ABI-only mode (--disable-ompi-abi):
+#
+# In ABI-only mode only the MPI Forum standard ABI library (libmpi_abi)
+# and header are built; libopen_mpi and libmpi are not.  Tests that use
+# only the public MPI C API still run: their Makefiles compile them with
+# -DMPI_ABI (exactly as the mpicc_abi wrapper does) so that <mpi.h>
+# resolves to the Forum ABI header, and link them against libmpi_abi.
+# The file, part, general, and datatype subdirectories each build their
+# public-API-only subset this way (see their Makefile.am files).
+#
+# Subdirectories dropped entirely in ABI-only mode:
+#  - t: excluded for now pending the MPI_T fixes in
+#    https://github.com/open-mpi/ompi/pull/14306
+#  - monitoring, spc: multi-process tests that link internal Open MPI
+#    symbols; not run by "make check" in any case
+#  - reexport: dlsym()s internal handles (e.g. ompi_mpi_comm_world) out
+#    of libmpi, which does not exist in ABI-only mode
+#
+# Always-included subdirectories:
+#  - mpi-abi: comprehensive suite for the MPI Forum standard ABI,
+#    including cross-ABI checks, installed artifact validation, and
+#    conformance tests
+#  - mpirun: tests for the launcher, which works with both ABIs
+#  - bindings-generator: tests for the binding generation infrastructure
+#
 
+if OMPI_ABI_ONLY
+SUBDIRS = file datatype general part mpi-abi mpirun bindings-generator
+else
 if OMPI_BUILD_OMPI_ABI
 SUBDIRS = t file datatype general monitoring part spc mpi-abi mpirun reexport bindings-generator
 else
-SUBDIRS =  mpi-abi mpirun bindings-generator
+SUBDIRS = file datatype general monitoring part spc mpi-abi mpirun reexport bindings-generator
+endif
 endif
