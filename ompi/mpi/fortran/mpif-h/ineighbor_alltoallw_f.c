@@ -132,12 +132,17 @@ void ompi_ineighbor_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
         free(c_sendtypes);
         free(c_recvtypes);
     } else {
+        /* The displacements are MPI_Aint and went through untouched, so
+         * only the counts can be ours, and only when the conversion
+         * actually allocated.  The type vectors always are. */
+        void *own_scounts = NULL, *own_rcounts = NULL;
+
         if((void *)recvcounts != (void *)OMPI_ARRAY_NAME_CONVERT(recvcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
+            own_scounts = OMPI_ARRAY_NAME_CONVERT(sendcounts);
+            own_rcounts = OMPI_ARRAY_NAME_CONVERT(recvcounts);
         }
-        ompi_coll_base_append_array_to_release(c_request, c_sendtypes);
-        ompi_coll_base_append_array_to_release(c_request, c_recvtypes);
-        ompi_coll_base_add_release_arrays_cb(c_request);
+        ompi_coll_base_nbc_set_cleanup_w(c_request, own_scounts, NULL,
+                                         own_rcounts, NULL,
+                                         c_sendtypes, c_recvtypes);
     }
 }

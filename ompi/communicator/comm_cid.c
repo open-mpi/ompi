@@ -619,12 +619,12 @@ int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *com
     }
 
     request->context = &context->super;
-    request->super.req_mpi_object.comm = context->comm;
+    request->super.super.req_mpi_object.comm = context->comm;
 
     ompi_comm_request_schedule_append (request, ompi_comm_allreduce_getnextcid, NULL, 0);
     ompi_comm_request_start (request);
 
-    *req = &request->super;
+    *req = &request->super.super;
 
 
     return OMPI_SUCCESS;
@@ -739,11 +739,11 @@ static int ompi_comm_checkcid (ompi_comm_request_t *request)
     int ret;
     int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
-    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+    if (OMPI_SUCCESS != request->super.super.req_status.MPI_ERROR) {
         if (participate) {
             opal_pointer_array_set_item(&ompi_mpi_communicators, context->nextlocal_cid, NULL);
         }
-        return request->super.req_status.MPI_ERROR;
+        return request->super.super.req_status.MPI_ERROR;
     }
 
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
@@ -790,11 +790,11 @@ static int ompi_comm_nextcid_check_flag (ompi_comm_request_t *request)
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
     int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
 
-    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+    if (OMPI_SUCCESS != request->super.super.req_status.MPI_ERROR) {
         if (participate) {
             opal_pointer_array_set_item(&ompi_mpi_communicators, context->nextcid, NULL);
         }
-        return request->super.req_status.MPI_ERROR;
+        return request->super.super.req_status.MPI_ERROR;
     }
 
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
@@ -1066,7 +1066,7 @@ static int ompi_comm_activate_nb_internal (ompi_communicator_t **newcomm, ompi_c
 
     ompi_comm_request_start (request);
 
-    *req = &request->super;
+    *req = &request->super.super;
 
     return ret;
 }
@@ -1239,7 +1239,7 @@ static int ompi_comm_allreduce_inter_nb (int *inbuf, int *outbuf,
     }
 
     ompi_comm_request_start (request);
-    *req = &request->super;
+    *req = &request->super.super;
 
     return OMPI_SUCCESS;
 }
@@ -1411,7 +1411,7 @@ static int ompi_comm_allreduce_intra_bridge_nb (int *inbuf, int *outbuf,
 
     ompi_comm_request_start (request);
 
-    *req = &request->super;
+    *req = &request->super.super;
 
     return OMPI_SUCCESS;
 }
@@ -1689,7 +1689,7 @@ static int ompi_comm_allreduce_group_nb (int *inbuf, int *outbuf, int count,
     ompi_comm_request_schedule_append (request, ompi_comm_allreduce_group_recv_complete, subreq, subreq_count);
 
     ompi_comm_request_start (request);
-    *req = &request->super;
+    *req = &request->super.super;
 
     return OMPI_SUCCESS;
 }
@@ -1701,7 +1701,7 @@ static int ompi_comm_allreduce_group_nb (int *inbuf, int *outbuf, int count,
  *  agree on the same list.
  */
 static int ompi_comm_ft_allreduce_agree_completion(ompi_comm_request_t* request) {
-    int rc = request->super.req_status.MPI_ERROR;
+    int rc = request->super.super.req_status.MPI_ERROR;
     ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t*) request->context;
     ompi_group_t **failed_group = (ompi_group_t**)&context->inbuf;
 
@@ -1714,7 +1714,7 @@ static int ompi_comm_ft_allreduce_agree_completion(ompi_comm_request_t* request)
                                        failed_group, true,
                                        comm, &subreq, comm->c_coll->coll_iagree_module);
         if( OPAL_LIKELY(OMPI_SUCCESS == rc) ) {
-            request->super.req_status.MPI_ERROR = MPI_SUCCESS;
+            request->super.super.req_status.MPI_ERROR = MPI_SUCCESS;
             return ompi_comm_request_schedule_append(request, ompi_comm_ft_allreduce_agree_completion, &subreq, 1);
         }
     }
@@ -1742,7 +1742,7 @@ static int ompi_comm_ft_allreduce_intra_nb(int *inbuf, int *outbuf, int count,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     request->context = &context->super;
-    request->super.req_mpi_object.comm = comm;
+    request->super.super.req_mpi_object.comm = comm;
 
     /** Because the agreement operates "in place",
      *  one needs first to copy the inbuf into the outbuf
@@ -1768,7 +1768,7 @@ static int ompi_comm_ft_allreduce_intra_nb(int *inbuf, int *outbuf, int count,
 
     ompi_comm_request_schedule_append (request, ompi_comm_ft_allreduce_agree_completion, &subreq, 1);
     ompi_comm_request_start (request);
-    *req = &request->super;
+    *req = &request->super.super;
     return OMPI_SUCCESS;
 }
 

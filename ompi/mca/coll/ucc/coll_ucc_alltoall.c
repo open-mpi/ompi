@@ -108,7 +108,7 @@ int mca_coll_ucc_ialltoall(const void *sbuf, size_t scount, struct ompi_datatype
                                                      rbuf, rcount, rdtype,
                                                      false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -137,7 +137,7 @@ int mca_coll_ucc_alltoall_init(const void *sbuf, size_t scount, struct ompi_data
     COLL_UCC_CHECK(mca_coll_ucc_alltoall_init_common(sbuf, scount, sdtype,
                                                      rbuf, rcount, rdtype,
                                                      true, ucc_module, &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback alltoall_init");

@@ -18,6 +18,7 @@
 #include "ompi_config.h"
 
 #include "ompi/request/request.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 
 #include "coll_portals4.h"
 
@@ -41,7 +42,7 @@ typedef enum ompi_coll_portals4_request_type_t ompi_coll_portals4_request_type_t
 
 
 struct ompi_coll_portals4_request_t {
-    ompi_request_t super;
+    ompi_coll_base_nbc_request_t super;
     ompi_coll_portals4_request_type_t type;
     bool is_sync;
 
@@ -179,14 +180,14 @@ OBJ_CLASS_DECLARATION(ompi_coll_portals4_request_t);
         opal_free_list_item_t *item;                                      \
         item = opal_free_list_get(&mca_coll_portals4_component.requests); \
                 req = (ompi_coll_portals4_request_t*) item;               \
-                OMPI_REQUEST_INIT(&req->super, false);                    \
-                req->super.req_mpi_object.comm = comm;                    \
-                req->super.req_state = OMPI_REQUEST_ACTIVE;               \
+                OMPI_REQUEST_INIT(&req->super.super.super, false);               \
+                req->super.super.super.req_mpi_object.comm = comm;               \
+                req->super.super.super.req_state = OMPI_REQUEST_ACTIVE;          \
     } while (0)
 
 #define OMPI_COLL_PORTALS4_REQUEST_RETURN(req)                       \
     do {                                                             \
-        OMPI_REQUEST_FINI(&(req)->super);                            \
+        OMPI_REQUEST_FINI(&(req)->super.super.super);                      \
         opal_free_list_return(&mca_coll_portals4_component.requests, \
                 (opal_free_list_item_t*) req);                       \
     } while (0)

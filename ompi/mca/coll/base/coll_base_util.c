@@ -38,6 +38,7 @@
 #include "coll_base_util.h"
 #include "coll_base_functions.h"
 #include <ctype.h>
+#include <string.h>
 
 int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
                                     ompi_datatype_t* sdatatype,
@@ -135,55 +136,186 @@ int ompi_rounddown(int num, int factor)
 }
 
 /**
- * Release all objects and arrays stored into the nbc_request.
- * The release_arrays are temporary memory to stored the values
- * converted from Fortran or elsewhere, and should disappear in same time as the
- * request itself.
+ * Drop the reference counts this request holds on the caller's objects.
+ * The retain helpers write the typed spellings of the two-pointer union for
+ * readability; this reads them back generically.
  */
-static void
-release_objs_callback(struct ompi_coll_base_nbc_request_t *request)
+static void nbc_release_objs(ompi_coll_base_nbc_request_t *request)
 {
-    if (NULL != request->data.refcounted.objs.objs[0]) {
-        OBJ_RELEASE(request->data.refcounted.objs.objs[0]);
-        request->data.refcounted.objs.objs[0] = NULL;
-    }
-    if (NULL != request->data.refcounted.objs.objs[1]) {
-        OBJ_RELEASE(request->data.refcounted.objs.objs[1]);
-        request->data.refcounted.objs.objs[1] = NULL;
-    }
-    for(int i = 0; i < OMPI_REQ_NB_RELEASE_ARRAYS; i++ ) {
-        /* Atomically claim each slot: the post-append drain in
-         * ompi_coll_base_add_release_arrays_cb() can race with this
-         * callback on an asynchronous-progress completion, and the
-         * swap guarantees each array is freed exactly once. */
-        void *array = (void *) opal_atomic_swap_ptr(
-            &request->data.release_arrays[i], (intptr_t) NULL);
-        if (NULL == array) {
-            break;
+    for (int i = 0; i < 2; i++) {
+        if (NULL != request->data.objs.objs[i]) {
+            OBJ_RELEASE(request->data.objs.objs[i]);
+            request->data.objs.objs[i] = NULL;
         }
-        free(array);
     }
 }
 
-static int complete_objs_callback(struct ompi_request_t *req) {
-    struct ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
-    int rc = OMPI_SUCCESS;
-    assert (NULL != request);
-    if (NULL != request->cb.req_complete_cb) {
-        rc = request->cb.req_complete_cb(request->req_complete_cb_data);
+/**
+ * Same, for the *w shapes, where what is reference counted is the elements
+ * of the type vectors rather than a pair of scalar datatypes.  The vectors
+ * themselves are left in place: a language cleanup may still have to free
+ * them, and it runs after this.
+ */
+static void nbc_release_vecs(ompi_coll_base_nbc_request_t *request)
+{
+    if (NULL != request->data.w.stypes) {
+        for (int i = 0; i < request->data.w.scount; i++) {
+            if (NULL != request->data.w.stypes[i] &&
+                !ompi_datatype_is_predefined(request->data.w.stypes[i])) {
+                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.w.stypes[i]);
+            }
+        }
     }
-    release_objs_callback(request);
+    if (NULL != request->data.w.rtypes) {
+        for (int i = 0; i < request->data.w.rcount; i++) {
+            if (NULL != request->data.w.rtypes[i] &&
+                !ompi_datatype_is_predefined(request->data.w.rtypes[i])) {
+                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.w.rtypes[i]);
+            }
+        }
+    }
+    request->data.w.scount = 0;
+    request->data.w.rcount = 0;
+}
+
+static void nbc_cleanup_v(ompi_api_request_t *req)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
+
+    free(request->data.v.scounts);
+    free(request->data.v.sdispls);
+    free(request->data.v.rcounts);
+    free(request->data.v.rdispls);
+}
+
+static void nbc_cleanup_w(ompi_api_request_t *req)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
+
+    free(request->data.w.scounts);
+    free(request->data.w.sdispls);
+    free(request->data.w.rcounts);
+    free(request->data.w.rdispls);
+    free(request->data.w.stypes);
+    free(request->data.w.rtypes);
+}
+
+/**
+ * Disposal.  Runs the internal release, then the language cleanup, then the
+ * component's own dispose.  That order is mandatory: the *w cleanup frees
+ * the very array whose elements the release hook just dropped, and the
+ * component has to come last because it hands the request back to a free
+ * list, after which none of these fields may be read.
+ */
+static int nbc_dispose_callback(struct ompi_request_t **rptr)
+{
+    ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **) rptr;
+    ompi_request_free_fn_t dispose;
+
+    /* Freeing a request with an operation still outstanding is erroneous
+     * for a collective, and the temporaries below are still being read by
+     * the component.  Refuse before touching any of them.  libnbc and
+     * portals4 check this themselves; doing it here makes it uniform. */
+    if (!REQUEST_COMPLETE(&request->super.super)) {
+        return MPI_ERR_REQUEST;
+    }
+
+    if (NULL != request->release) {
+        request->release(request);
+        request->release = NULL;
+    }
+    ompi_api_request_dispose(&request->super);
+
+    /* These requests are recycled through component free lists, which do
+     * not re-run the constructor, so leave the payload zeroed for the next
+     * user rather than relying on each hook to tidy up after itself. */
+    memset(&request->data, 0, sizeof(request->data));
+
+    dispose = request->req_dispose;
+    request->req_dispose = NULL;
+    request->super.super.req_free = dispose;
+    if (NULL != dispose) {
+        return dispose(rptr);
+    }
+    *rptr = MPI_REQUEST_NULL;
+    return OMPI_SUCCESS;
+}
+
+/**
+ * Displace the component's dispose hook so the two hooks above get to run
+ * while the request is still alive.  Idempotent.
+ */
+static inline void nbc_hook_disposal(ompi_coll_base_nbc_request_t *request)
+{
+    if (nbc_dispose_callback != request->super.super.req_free) {
+        request->req_dispose = request->super.super.req_free;
+        request->super.super.req_free = nbc_dispose_callback;
+    }
+}
+
+int ompi_coll_base_nbc_set_lang_hooks(ompi_request_t *req,
+                                      ompi_api_request_hook_fn_t complete,
+                                      ompi_api_request_hook_fn_t cleanup)
+{
+    int rc = ompi_api_request_set_lang_hooks(req, complete, cleanup);
+
+    if (OMPI_SUCCESS == rc) {
+        nbc_hook_disposal((ompi_coll_base_nbc_request_t *) req);
+    }
     return rc;
 }
 
-static int free_objs_callback(struct ompi_request_t **rptr) {
-    struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **)rptr;
-    int rc = OMPI_SUCCESS;
-    if (NULL != request->cb.req_free) {
-        rc = request->cb.req_free(rptr);
+int ompi_coll_base_nbc_set_cleanup_v(ompi_request_t *req,
+                                     void *scounts, void *sdispls,
+                                     void *rcounts, void *rdispls)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
+
+    if (!ompi_api_request_is(req)) {
+        free(scounts);
+        free(sdispls);
+        free(rcounts);
+        free(rdispls);
+        return OMPI_SUCCESS;
     }
-    release_objs_callback(request);
-    return rc;
+
+    if (NULL != scounts) { request->data.v.scounts = scounts; }
+    if (NULL != sdispls) { request->data.v.sdispls = sdispls; }
+    if (NULL != rcounts) { request->data.v.rcounts = rcounts; }
+    if (NULL != rdispls) { request->data.v.rdispls = rdispls; }
+
+    return ompi_coll_base_nbc_set_lang_hooks(req, NULL, nbc_cleanup_v);
+}
+
+int ompi_coll_base_nbc_set_cleanup_w(ompi_request_t *req,
+                                     void *scounts, void *sdispls,
+                                     void *rcounts, void *rdispls,
+                                     ompi_datatype_t **stypes,
+                                     ompi_datatype_t **rtypes)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
+
+    if (!ompi_api_request_is(req)) {
+        /* ompi_coll_base_retain_datatypes_w() bailed out on the same
+         * request, so nothing was retained and the vectors are just
+         * memory. */
+        free(scounts);
+        free(sdispls);
+        free(rcounts);
+        free(rdispls);
+        free(stypes);
+        free(rtypes);
+        return OMPI_SUCCESS;
+    }
+
+    if (NULL != scounts) { request->data.w.scounts = scounts; }
+    if (NULL != sdispls) { request->data.w.sdispls = sdispls; }
+    if (NULL != rcounts) { request->data.w.rcounts = rcounts; }
+    if (NULL != rdispls) { request->data.w.rdispls = rdispls; }
+    if (NULL != stypes)  { request->data.w.stypes  = stypes;  }
+    if (NULL != rtypes)  { request->data.w.rtypes  = rtypes;  }
+
+    return ompi_coll_base_nbc_set_lang_hooks(req, NULL, nbc_cleanup_w);
 }
 
 int ompi_coll_base_retain_op( ompi_request_t *req, ompi_op_t *op,
@@ -195,32 +327,21 @@ int ompi_coll_base_retain_op( ompi_request_t *req, ompi_op_t *op,
     }
     if (!ompi_op_is_intrinsic(op)) {
         OBJ_RETAIN(op);
-        request->data.refcounted.op.op = op;
+        request->data.op.op = op;
         retain = true;
     }
     if (!ompi_datatype_is_predefined(type)) {
         OBJ_RETAIN(type);
-        request->data.refcounted.op.datatype = type;
+        request->data.op.datatype = type;
         retain = true;
     }
     if (OPAL_UNLIKELY(retain)) {
-        /* We need to consider two cases :
-         * - non blocking collectives:
-         *     the objects can be released when MPI_Wait() completes
-         *     and we use the req_complete_cb callback
-         * - persistent non blocking collectives:
-         *     the objects can only be released when the request is freed
-         *     (e.g. MPI_Request_free() completes) and we use req_free callback
-         */
-        if (req->req_persistent) {
-            request->cb.req_free = req->req_free;
-            req->req_free = free_objs_callback;
-        } else {
-            request->cb.req_complete_cb = req->req_complete_cb;
-            request->req_complete_cb_data = req->req_complete_cb_data;
-            req->req_complete_cb = complete_objs_callback;
-            req->req_complete_cb_data = request;
-        }
+        /* The references are dropped at disposal, not at completion: a
+         * persistent request reuses them on every MPI_Start, and for a
+         * non-persistent one disposal follows completion within the same
+         * MPI call anyway. */
+        request->release = nbc_release_objs;
+        nbc_hook_disposal(request);
     }
     return OMPI_SUCCESS;
 }
@@ -234,70 +355,19 @@ int ompi_coll_base_retain_datatypes( ompi_request_t *req, ompi_datatype_t *stype
     }
     if (NULL != stype && !ompi_datatype_is_predefined(stype)) {
         OBJ_RETAIN(stype);
-        request->data.refcounted.types.stype = stype;
+        request->data.types.stype = stype;
         retain = true;
     }
     if (NULL != rtype && !ompi_datatype_is_predefined(rtype)) {
         OBJ_RETAIN(rtype);
-        request->data.refcounted.types.rtype = rtype;
+        request->data.types.rtype = rtype;
         retain = true;
     }
     if (OPAL_UNLIKELY(retain)) {
-        if (req->req_persistent) {
-            request->cb.req_free = req->req_free;
-            req->req_free = free_objs_callback;
-        } else {
-            request->cb.req_complete_cb = req->req_complete_cb;
-            request->req_complete_cb_data = req->req_complete_cb_data;
-            req->req_complete_cb = complete_objs_callback;
-            req->req_complete_cb_data = request;
-        }
+        request->release = nbc_release_objs;
+        nbc_hook_disposal(request);
     }
     return OMPI_SUCCESS;
-}
-
-static void release_vecs_callback(ompi_coll_base_nbc_request_t *request)
-{
-    if (NULL != request->data.refcounted.vecs.stypes) {
-        for (int i = 0; i < request->data.refcounted.vecs.scount; i++) {
-            if (NULL != request->data.refcounted.vecs.stypes[i] &&
-                !ompi_datatype_is_predefined(request->data.refcounted.vecs.stypes[i])) {
-                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.refcounted.vecs.stypes[i]);
-            }
-        }
-        request->data.refcounted.vecs.stypes = NULL;
-    }
-    if (NULL != request->data.refcounted.vecs.rtypes) {
-        for (int i = 0; i < request->data.refcounted.vecs.rcount; i++) {
-            if (NULL != request->data.refcounted.vecs.rtypes[i] &&
-                !ompi_datatype_is_predefined(request->data.refcounted.vecs.rtypes[i])) {
-                OMPI_DATATYPE_RELEASE_NO_NULLIFY(request->data.refcounted.vecs.rtypes[i]);
-            }
-        }
-        request->data.refcounted.vecs.rtypes = NULL;
-    }
-    release_objs_callback(request);
-}
-
-static int complete_vecs_callback(struct ompi_request_t *req) {
-    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
-    int rc = OMPI_SUCCESS;
-    assert (NULL != request);
-    if (NULL != request->cb.req_complete_cb) {
-        rc = request->cb.req_complete_cb(request->req_complete_cb_data);
-    }
-    release_vecs_callback(request);
-    return rc;
-}
-
-static int free_vecs_callback(struct ompi_request_t **rptr) {
-    struct ompi_coll_base_nbc_request_t *request = *(ompi_coll_base_nbc_request_t **)rptr;
-    int rc = OMPI_SUCCESS;
-    if (NULL != request->cb.req_free) {
-        rc = request->cb.req_free(rptr);
-    }
-    release_vecs_callback(request);
-    return rc;
 }
 
 int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
@@ -306,7 +376,7 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
                                        bool use_topo)
 {
     ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
-    ompi_communicator_t *comm = request->super.req_mpi_object.comm;
+    ompi_communicator_t *comm = request->super.super.req_mpi_object.comm;
     int scount, rcount;
 
     if (REQUEST_COMPLETE(req)) {
@@ -337,71 +407,28 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
         }
     }
     if (OPAL_LIKELY(retain)) {
-        request->data.refcounted.vecs.stypes = (ompi_datatype_t **) stypes;
-        request->data.refcounted.vecs.rtypes = (ompi_datatype_t **) rtypes;
-        request->data.refcounted.vecs.scount = scount;
-        request->data.refcounted.vecs.rcount = rcount;
-        if (req->req_persistent) {
-            request->cb.req_free = req->req_free;
-            req->req_free = free_vecs_callback;
-        } else {
-            request->cb.req_complete_cb = req->req_complete_cb;
-            request->req_complete_cb_data = req->req_complete_cb_data;
-            req->req_complete_cb = complete_vecs_callback;
-            req->req_complete_cb_data = request;
-        }
-    }
-    return OMPI_SUCCESS;
-}
-
-int ompi_coll_base_add_release_arrays_cb(ompi_request_t *req)
-{
-    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *)req;
-
-    assert(NULL != request);
-
-    if (req->req_persistent) {
-        if (req->req_free != free_objs_callback &&
-            req->req_free != free_vecs_callback) {
-            /* Chain whatever free hook is installed (including none),
-             * the same way the retain helpers do.  Our own hooks
-             * already drain the release arrays. */
-            request->cb.req_free = req->req_free;
-            req->req_free = free_objs_callback;
-        }
-    } else if (req->req_complete_cb != complete_objs_callback &&
-               req->req_complete_cb != complete_vecs_callback) {
-        request->cb.req_complete_cb = req->req_complete_cb;
-        request->req_complete_cb_data = req->req_complete_cb_data;
-        req->req_complete_cb = complete_objs_callback;
-        req->req_complete_cb_data = request;
-    }
-
-    /* The operation may already have completed -- either before this
-     * call (the completion callback ran too early to see the arrays,
-     * or was not installed yet) or concurrently with it.  Drain
-     * inline in that case; the atomic swap in release_objs_callback()
-     * makes the two drains safe against each other.  Persistent
-     * requests are excluded: their arrays must live until the request
-     * is freed, and the req_free hook above handles that. */
-    if (!req->req_persistent && REQUEST_COMPLETE(req)) {
-        release_objs_callback(request);
+        /* Record the vectors themselves so the release hook can walk them
+         * again at disposal.  A Fortran binding that converted these
+         * arrays reuses these same pointers for its cleanup rather than
+         * recording a second copy of them. */
+        request->data.w.stypes = (ompi_datatype_t **) stypes;
+        request->data.w.rtypes = (ompi_datatype_t **) rtypes;
+        request->data.w.scount = scount;
+        request->data.w.rcount = rcount;
+        request->release = nbc_release_vecs;
+        nbc_hook_disposal(request);
     }
     return OMPI_SUCCESS;
 }
 
 static void nbc_req_constructor(ompi_coll_base_nbc_request_t *req)
 {
-    req->cb.req_complete_cb = NULL;
-    req->req_complete_cb_data = NULL;
-    req->data.refcounted.objs.objs[0] = NULL;
-    req->data.refcounted.objs.objs[1] = NULL;
-    for (int i = 0; i < OMPI_REQ_NB_RELEASE_ARRAYS; i++ ) {
-        req->data.release_arrays[i] = 0;
-    }
+    req->req_dispose = NULL;
+    req->release = NULL;
+    memset(&req->data, 0, sizeof(req->data));
 }
 
-OBJ_CLASS_INSTANCE(ompi_coll_base_nbc_request_t, ompi_request_t, nbc_req_constructor, NULL);
+OBJ_CLASS_INSTANCE(ompi_coll_base_nbc_request_t, ompi_api_request_t, nbc_req_constructor, NULL);
 
 /* File reading functions */
 static void skiptonewline (FILE *fptr, int *fileline)

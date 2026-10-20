@@ -457,7 +457,7 @@ int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** 
     context->alive_group = NULL;
     context->alive_rgroup = NULL;
     request->context = &context->super;
-    request->super.req_mpi_object.comm = comm;
+    request->super.super.req_mpi_object.comm = comm;
 
     /*
      * Step 1: Agreement on failed group in comm
@@ -500,7 +500,7 @@ int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** 
 
     /* kick off the request */
     ompi_comm_request_start(request);
-    *req = &request->super;
+    *req = &request->super.super;
 
     return OMPI_SUCCESS;
 }
@@ -522,7 +522,7 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                          "%s ompi: comm_ishrink: AGREE: %g seconds",
                          OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), stop-context->start));
 #endif
-    rc = request->super.req_status.MPI_ERROR;
+    rc = request->super.super.req_status.MPI_ERROR;
     if( (OMPI_SUCCESS != rc) && (MPI_ERR_PROC_FAILED != rc) ) {
         opal_output(0, "%s:%d Agreement failure: %d\n", __FILE__, __LINE__, rc);
         OBJ_RELEASE(context->failed_group);
@@ -533,7 +533,7 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
     if( MPI_ERR_PROC_FAILED == rc ) {
         /* previous round found more failures, redo */
         OBJ_RELEASE(context->failed_group);
-        request->super.req_status.MPI_ERROR = MPI_SUCCESS;
+        request->super.super.req_status.MPI_ERROR = MPI_SUCCESS;
         context->flag = 1;
         rc = comm->c_coll->coll_iagree( &context->flag,
                                         1,
@@ -625,7 +625,7 @@ static int ompi_comm_ishrink_check_setrank(ompi_comm_request_t *request) {
     }
 
     /* check errors in prior step */
-    rc = request->super.req_status.MPI_ERROR;
+    rc = request->super.super.req_status.MPI_ERROR;
     if( OMPI_SUCCESS != rc ) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
                             "%s ompi: comm_ishrink: Construction failed with error %d",
@@ -684,7 +684,7 @@ static int ompi_comm_ishrink_check_cid(ompi_comm_request_t *request) {
     double stop;
 #endif
 
-    rc = request->super.req_status.MPI_ERROR;
+    rc = request->super.super.req_status.MPI_ERROR;
     if( OMPI_SUCCESS != rc ) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
                             "%s ompi: comm_ishrink: Determine context id failed with error %d",
@@ -744,7 +744,7 @@ static int ompi_comm_ishrink_check_activate(ompi_comm_request_t *request) {
     double stop;
 #endif
 
-    rc = request->super.req_status.MPI_ERROR;
+    rc = request->super.super.req_status.MPI_ERROR;
     if( OMPI_SUCCESS != rc ) {
         opal_output_verbose(1, ompi_ftmpi_output_handle,
                             "%s ompi: comm_ishrink: Activation failed with error %d",
