@@ -30,8 +30,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/include/opal/sys/atomic.h"
-
 #include "opal/util/info_subscriber.h"
 #include "opal/util/string_copy.h"
 

@@ -44,7 +44,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "opal/include/opal/sys/atomic.h"
 #include "ompi/constants.h"
 #include "opal/mca/accelerator/accelerator.h"
 #include "opal/mca/base/mca_base_var.h"

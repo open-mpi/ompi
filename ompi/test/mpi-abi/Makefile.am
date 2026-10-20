@@ -71,6 +71,10 @@ C_CALLBACK_CASES = \
         cases/c-callback/callback_comm_attr.prologue.in \
         cases/c-callback/callback_datarep.cbody.in \
         cases/c-callback/callback_datarep.prologue.in \
+        cases/c-callback/callback_file_errhandler.cbody.in \
+        cases/c-callback/callback_file_errhandler.prologue.in \
+        cases/c-callback/callback_grequest.cbody.in \
+        cases/c-callback/callback_grequest.prologue.in \
         cases/c-callback/callback_mpit_errhandler_file.cbody.in \
         cases/c-callback/callback_mpit_errhandler_file.prologue.in \
         cases/c-callback/callback_mpit_errhandler_session.cbody.in \
@@ -87,10 +91,6 @@ C_CALLBACK_CASES = \
         cases/c-callback/callback_mpit_events.prologue.in \
         cases/c-callback/callback_mpit_win_created.cbody.in \
         cases/c-callback/callback_mpit_win_created.prologue.in \
-        cases/c-callback/callback_file_errhandler.cbody.in \
-        cases/c-callback/callback_file_errhandler.prologue.in \
-        cases/c-callback/callback_grequest.cbody.in \
-        cases/c-callback/callback_grequest.prologue.in \
         cases/c-callback/callback_session_errhandler.cbody.in \
         cases/c-callback/callback_session_errhandler.prologue.in \
         cases/c-callback/callback_type_attr.cbody.in \

@@ -69,7 +69,6 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
     opal_atomic_wmb();
     (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD);
 #else
-    opal_atomic_wmb();
     (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_OMPI);
 #endif
 

@@ -18,7 +18,7 @@
 
 #include "ompi_config.h"
 
-#include "opal/include/opal_stdatomic.h"
+#include "opal/sys/atomic.h"
 #include "opal/mca/base/mca_base_event.h"
 
 BEGIN_C_DECLS
@@ -33,8 +33,9 @@ BEGIN_C_DECLS
    representation of the MPI object handles carried in event payloads
    (communicator, window, error-handler, session): the Open MPI ABI uses the
    internal object pointer; the MPI Standard ABI uses an integer handle.  A
-   process links exactly one ABI, so this is process-global; it is set by
-   MPI_T_event_register_callback() and read by the producer raise sites. */
+   process links exactly one ABI, so this is process-global; it is set by the
+   Standard-ABI init entry points (MPI_Init / MPI_Init_thread / MPI_Session_init)
+   and read by the producer raise sites. */
 typedef enum {
     OMPI_MPIT_ABI_OMPI = 0,     /* Open MPI ABI: handle == internal object pointer */
     OMPI_MPIT_ABI_STANDARD = 1  /* MPI Standard ABI: handle == integer handle */
@@ -46,10 +47,8 @@ typedef enum {
    Standard-ABI integer handle values instead of internal object pointers.
 
    THREAD SAFETY: This variable is set once during initialization and read
-   concurrently by event raise sites under MPI_THREAD_MULTIPLE. Access must
-   use OPAL atomic operations with proper memory ordering (write barrier then
-   opal_atomic_swap_32() to store, read barrier after load).  A plain
-   assignment is not an atomic access on every OPAL atomics backend. */
+   concurrently by event raise sites under MPI_THREAD_MULTIPLE. Write uses
+   opal_atomic_swap_32(); read is a plain load followed by opal_atomic_rmb(). */
 OMPI_DECLSPEC extern opal_atomic_int32_t ompi_mpit_callback_abi;
 
 /* Convert an internal MPI object handle to the value an MPI Standard ABI

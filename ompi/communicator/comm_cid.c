@@ -39,7 +39,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/include/opal/sys/atomic.h"
 #include "opal/mca/pmix/base/base.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/util/printf.h"
