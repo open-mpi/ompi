@@ -17,6 +17,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,6 +127,7 @@ void ompi_neighbor_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
         ompi_coll_base_append_array_to_release(c_request, c_sendtypes);
+        ompi_coll_base_append_array_to_release(c_request, c_recvtypes);
         if ((void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
             ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
             ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
@@ -135,5 +137,6 @@ void ompi_neighbor_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
         OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
         free(c_sendtypes);
+        free(c_recvtypes);
     }
 }
