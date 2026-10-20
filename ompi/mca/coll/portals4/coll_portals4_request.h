@@ -3,6 +3,7 @@
  * Copyright (c) 2015      Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -185,7 +186,7 @@ OBJ_CLASS_DECLARATION(ompi_coll_portals4_request_t);
 
 #define OMPI_COLL_PORTALS4_REQUEST_RETURN(req)                       \
     do {                                                             \
-        OMPI_REQUEST_FINI(&request->super);                          \
+        OMPI_REQUEST_FINI(&(req)->super);                            \
         opal_free_list_return(&mca_coll_portals4_component.requests, \
                 (opal_free_list_item_t*) req);                       \
     } while (0)
