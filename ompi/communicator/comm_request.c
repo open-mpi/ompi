@@ -130,7 +130,17 @@ static int ompi_comm_request_progress (void)
             /* don't call ompi_request_test_all as it causes a recursive call into opal_progress */
             while (request_item->subreq_count) {
                 ompi_request_t *subreq = request_item->subreqs[request_item->subreq_count-1];
+#if OPAL_ENABLE_FT_MPI
+                /* A subrequest whose peer has died, or whose communicator has
+                 * been revoked, will never complete on its own.  Nothing above
+                 * us can notice: ompi_request_is_failed() declines to act on
+                 * the OMPI_REQUEST_COMM the application waits on, precisely
+                 * because the error is expected to surface here. */
+                if( REQUEST_COMPLETE(subreq)
+                 || OPAL_UNLIKELY( ompi_request_is_failed(subreq) )) {
+#else
                 if( REQUEST_COMPLETE(subreq) ) {
+#endif /* OPAL_ENABLE_FT_MPI */
                     if (OMPI_SUCCESS != subreq->req_status.MPI_ERROR) {
                         /* Let it continue but mark it as failed, so
                          * that it does some subreqs cleanup */
