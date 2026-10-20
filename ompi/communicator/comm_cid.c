@@ -1594,6 +1594,10 @@ static int ompi_comm_allreduce_group_broadcast (ompi_comm_request_t *request)
     int subreq_count = 0;
     int rc;
 
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        return request->super.req_status.MPI_ERROR;
+    }
+
     for (int i = 0 ; i < 2 ; ++i) {
         if (MPI_PROC_NULL != context->peers_comm[i + 1]) {
             rc = MCA_PML_CALL(isend(context->outbuf, context->count, MPI_INT, context->peers_comm[i+1],
@@ -1615,6 +1619,14 @@ static int ompi_comm_allreduce_group_recv_complete (ompi_comm_request_t *request
     int *tmp = context->tmpbuf;
     ompi_request_t *subreq[2];
     int rc;
+
+    /* A round that failed carries no data to reduce, and the rounds that would
+     * follow it have nothing to carry either.  Report the error rather than
+     * letting this request complete successfully, which would hand the cid
+     * negotiation an answer it never received. */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        return request->super.req_status.MPI_ERROR;
+    }
 
     for (int i = 0 ; i < 2 ; ++i) {
         if (MPI_PROC_NULL != context->peers_comm[i + 1]) {
