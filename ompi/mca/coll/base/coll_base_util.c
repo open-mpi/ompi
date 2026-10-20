@@ -13,7 +13,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
  *
- * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
  *
@@ -319,25 +319,24 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *req,
         scount = rcount = OMPI_COMM_IS_INTER(comm)?ompi_comm_remote_size(comm):ompi_comm_size(comm);
     }
 
-    request->data.refcounted.vecs.scount = 0;  /* default value */
+    bool retain = false;
     if (NULL != stypes) {
         for (int i = 0; i < scount; i++) {
             if (NULL != stypes[i] && !ompi_datatype_is_predefined(stypes[i])) {
                 OBJ_RETAIN(stypes[i]);
-                request->data.refcounted.vecs.scount = i;  /* last valid type */
+                retain = true;
             }
         }
     }
-    request->data.refcounted.vecs.rcount = 0;  /* default value */
     if (NULL != rtypes) {
         for (int i = 0; i < rcount; i++) {
             if (NULL != rtypes[i] && !ompi_datatype_is_predefined(rtypes[i])) {
                 OBJ_RETAIN(rtypes[i]);
-                request->data.refcounted.vecs.rcount = i;  /* last valid type */
+                retain = true;
             }
         }
     }
-    if (OPAL_LIKELY(request->data.refcounted.vecs.scount | request->data.refcounted.vecs.rcount) ) {
+    if (OPAL_LIKELY(retain)) {
         request->data.refcounted.vecs.stypes = (ompi_datatype_t **) stypes;
         request->data.refcounted.vecs.rtypes = (ompi_datatype_t **) rtypes;
         request->data.refcounted.vecs.scount = scount;
