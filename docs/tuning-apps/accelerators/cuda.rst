@@ -465,6 +465,24 @@ several GPUs may be equidistant.
 Run-time tuning and debugging
 -----------------------------
 
+Enabling the ``smcuda`` BTL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``smcuda`` BTL will not start unless it has been explicitly
+requested or enabled.  The ``btl_smcuda_enable`` MCA parameter
+controls this:
+
+* ``-1`` (default): start only when ``smcuda`` is explicitly listed
+  via ``--mca btl smcuda`` (or equivalent).
+* ``0``: always disabled.
+* ``1``: always enabled regardless of the BTL selection list.
+
+The typical invocation is therefore:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca pml ob1 --mca btl self,smcuda ...
+
 CUDA IPC in the shared-memory BTL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
