@@ -19,7 +19,7 @@
  * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
  *                         rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -693,7 +693,10 @@ request_free(struct ompi_request_t **ompi_req)
         return MPI_ERR_REQUEST;
     }
 
-    OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
+    /* NBC_Progress() releases the schedule and the temporary buffer when a
+     * non-persistent request completes, but a persistent one is meant to be
+     * started again and so keeps both until it is freed -- here. */
+    NBC_Return_handle(request);
     *ompi_req = MPI_REQUEST_NULL;
 
     return OMPI_SUCCESS;
