@@ -22,6 +22,38 @@
 #include "ompi/request/request.h"
 #include <math.h>
 
+/* Send-side state for one peer: a child in bcast, the parent in reduce. */
+typedef struct ompi_coll_adapt_peer_send_s {
+    /* Sends posted to this peer that have not completed yet */
+    int ongoing;
+    /* Standard sends owed before the next synchronous one; starts at zero so
+     * the first send to a peer is synchronous */
+    int until_sync;
+} ompi_coll_adapt_peer_send_t;
+
+/*
+ * Pick the send mode for the next segment going to a peer.
+ *
+ * An eager standard send completes once the BTL takes the data, so credits
+ * alone bound only local buffer use and let a fast sender turn the pipeline
+ * into unexpected messages.  A synchronous send completes on peer match, so
+ * one per credit window bounds how far ahead of the peer we run.
+ *
+ * The interval must not be negative; zero makes every send synchronous.  A
+ * lost update to the countdown only shifts a checkpoint by a segment, so it
+ * needs no atomics.
+ */
+static inline mca_pml_base_send_mode_t
+ompi_coll_adapt_peer_send_mode(ompi_coll_adapt_peer_send_t *peer, int interval)
+{
+    if (0 == peer->until_sync) {
+        peer->until_sync = interval;
+        return MCA_PML_BASE_SEND_SYNCHRONOUS;
+    }
+    --(peer->until_sync);
+    return MCA_PML_BASE_SEND_STANDARD;
+}
+
 /*
  * Install the completion callback of a request that has not been started.
  *
@@ -44,15 +76,11 @@ static inline void ompi_coll_adapt_request_set_callback(ompi_request_t *request,
  * Post a point-to-point operation with its completion callback already in
  * place.
  *
- * The callback has to be installed while the request is still inactive.  A
- * started request can complete on another thread before the installation is
- * visible to it, and the callback is then never run at all: the completion
- * found nothing to call, and the installation found nothing to complete.
- * Creating the request inactive and starting it afterwards removes the
- * window rather than racing in it.
+ * The callback must be installed while the request is inactive: a started
+ * request can complete before the installation is visible, and the callback
+ * then never runs at all.
  *
- * The request is left persistent, so the callback owns it and must free it,
- * which is what the ADAPT callbacks already do.
+ * The request stays persistent, so the callback owns it and must free it.
  */
 static inline int ompi_coll_adapt_isend_with_cb(const void *buf, size_t count,
                                                 ompi_datatype_t *datatype, int dst, int tag,
