@@ -5,7 +5,7 @@
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -260,20 +260,20 @@ static int send_cb(ompi_request_t * req)
                              send_context->con->ireduce_tag - send_context->seg_index));
 
         ompi_request_t *send_req;
-        err = MCA_PML_CALL(isend
-                           (send_context->buff, send_count, send_context->con->datatype,
-                            send_context->peer,
-                            context->con->ireduce_tag - send_context->seg_index,
-                            MCA_PML_BASE_SEND_STANDARD, send_context->con->comm, &send_req));
+
+        /* Release the item before starting the send: the request can complete
+         * inline, and the callback runs before we get back here. */
+        OBJ_RELEASE(item);
+
+        err = ompi_coll_adapt_isend_with_cb(send_context->buff, send_count,
+                                            send_context->con->datatype,
+                                            send_context->peer,
+                                            context->con->ireduce_tag - send_context->seg_index,
+                                            MCA_PML_BASE_SEND_STANDARD, send_context->con->comm,
+                                            send_cb, send_context, &send_req);
         if (MPI_SUCCESS != err) {
             return err;
         }
-
-        /* Release the item */
-        OBJ_RELEASE(item);
-
-        /* Set the send callback */
-        ompi_request_set_callback(send_req, send_cb, send_context);
     }
 
     int32_t num_sent = opal_atomic_add_fetch_32((opal_atomic_int32_t*)&(context->con->num_sent_segs), 1);
@@ -343,15 +343,15 @@ static int recv_cb(ompi_request_t * req)
                              (void *) inbuf,
                              recv_context->con->ireduce_tag - recv_context->seg_index));
         ompi_request_t *recv_req;
-        err = MCA_PML_CALL(irecv(temp_recv_buf, recv_count, recv_context->con->datatype,
-                                 recv_context->peer,
-                                 recv_context->con->ireduce_tag - recv_context->seg_index,
-                                 recv_context->con->comm, &recv_req));
+        err = ompi_coll_adapt_irecv_with_cb(temp_recv_buf, recv_count,
+                                            recv_context->con->datatype,
+                                            recv_context->peer,
+                                            recv_context->con->ireduce_tag - recv_context->seg_index,
+                                            recv_context->con->comm,
+                                            recv_cb, recv_context, &recv_req);
         if (MPI_SUCCESS != err) {
             return err;
         }
-        /* Set the receive callback */
-        ompi_request_set_callback(recv_req, recv_cb, recv_context);
     }
 
     /* Do the op */
@@ -437,17 +437,21 @@ static int recv_cb(ompi_request_t * req)
                                  send_context->con->ireduce_tag - send_context->seg_index));
 
             ompi_request_t *send_req;
-            err = MCA_PML_CALL(isend(send_context->buff, send_count, send_context->con->datatype,
-                                     send_context->peer,
-                                     send_context->con->ireduce_tag - send_context->seg_index,
-                                     MCA_PML_BASE_SEND_STANDARD, send_context->con->comm, &send_req));
+
+            /* Release the item before starting the send: the request can
+             * complete inline, and the callback runs before we get back. */
+            OBJ_RELEASE(item);
+
+            err = ompi_coll_adapt_isend_with_cb(send_context->buff, send_count,
+                                                send_context->con->datatype,
+                                                send_context->peer,
+                                                send_context->con->ireduce_tag - send_context->seg_index,
+                                                MCA_PML_BASE_SEND_STANDARD,
+                                                send_context->con->comm,
+                                                send_cb, send_context, &send_req);
             if (MPI_SUCCESS != err) {
                 return err;
             }
-            OBJ_RELEASE(item);
-
-            /* Set the send callback */
-            ompi_request_set_callback(send_req, send_cb, send_context);
         }
     }
 
@@ -707,14 +711,13 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
 
                 /* Create a recv request */
                 ompi_request_t *recv_req;
-                err = MCA_PML_CALL(irecv
-                                    (temp_recv_buf, recv_count, dtype, tree->tree_next[i],
-                                    con->ireduce_tag - seg_index, comm, &recv_req));
+                err = ompi_coll_adapt_irecv_with_cb(temp_recv_buf, recv_count, dtype,
+                                                    tree->tree_next[i],
+                                                    con->ireduce_tag - seg_index, comm,
+                                                    recv_cb, context, &recv_req);
                 if (MPI_SUCCESS != err) {
                     return err;
                 }
-                /* Set the recv callback */
-                ompi_request_set_callback(recv_req, recv_cb, context);
             }
         }
     }
@@ -757,16 +760,14 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
 
             /* Create send request */
             ompi_request_t *send_req;
-            err = MCA_PML_CALL(isend
-                                (context->buff, send_count, dtype, tree->tree_prev,
-                                con->ireduce_tag - context->seg_index,
-                                sendmode, comm, &send_req));
+            err = ompi_coll_adapt_isend_with_cb(context->buff, send_count, dtype,
+                                                tree->tree_prev,
+                                                con->ireduce_tag - context->seg_index,
+                                                sendmode, comm,
+                                                send_cb, context, &send_req);
             if (MPI_SUCCESS != err) {
                 return err;
             }
-
-            /* Set the send callback */
-            ompi_request_set_callback(send_req, send_cb, context);
         }
 
     }
