@@ -21,7 +21,7 @@
  *
  * This translation unit lives in libmpi_abi and provides the converter.  The
  * Standard-ABI init entry points (MPI_Init / MPI_Init_thread / MPI_Session_init)
- * install it downward with ompi_mpit_register_abi_handle_convert(), mirroring
+ * install it downward with ompi_mpit_register_abi_converters(), mirroring
  * ompi_mpi_instance_register_mpiext_init().
  */
 
@@ -42,7 +42,7 @@
 
 #include "ompi/runtime/ompi_mpit_events.h"
 
-uint64_t ompi_mpit_abi_handle_convert_impl(void *object, int handle_kind)
+static uint64_t ompi_mpit_abi_handle_convert_impl(void *object, int handle_kind)
 {
     if (NULL == object) {
         return 0;
@@ -76,19 +76,19 @@ uint64_t ompi_mpit_abi_handle_convert_impl(void *object, int handle_kind)
     }
 }
 
-int32_t ompi_mpit_abi_error_convert_impl(int32_t err_code)
+static int32_t ompi_mpit_abi_error_convert_impl(int32_t err_code)
 {
     /* Map an internal MPI error code to its MPI Standard ABI value. */
     return (int32_t) ompi_convert_intern_error_abi_error((int) err_code);
 }
 
-int32_t ompi_mpit_abi_bind_convert_impl(int32_t object_bind)
+static int32_t ompi_mpit_abi_bind_convert_impl(int32_t object_bind)
 {
     /* Map an internal MPI_T_BIND_* value to its MPI Standard ABI value. */
     return (int32_t) ompi_convert_t_bind_ompi_to_standard((int) object_bind);
 }
 
-int32_t ompi_mpit_abi_thread_level_convert_impl(int32_t thread_level)
+static int32_t ompi_mpit_abi_thread_level_convert_impl(int32_t thread_level)
 {
     /* Map an internal MPI_THREAD_* value to its MPI Standard ABI value. */
     return (int32_t) ompi_convert_ts_level_ompi_to_standard((int) thread_level);

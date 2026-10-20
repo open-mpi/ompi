@@ -13,7 +13,8 @@
  *   Validate end-to-end MPI_T event payload encoding for MPI_Init.
  *   The initialization event callback is registered via MPI_T_event_register_callback
  *   before MPI_Init, and the test verifies that the initialization event
- *   payload carries correct Standard-ABI handle and thread_level values.
+ *   payload carries a correct Standard-ABI instance_id value (the instance_id
+ *   is an ABI-independent correlation token for the world model).
  */
 
 /* Initialize MPI_T first so we can register callbacks before MPI_Init.
@@ -115,12 +116,10 @@ if (0 != mpit_initialization_state.failure_code) {
        token, not converted). */
     fprintf(stderr, "ABI_FAIL:mpit:init_instance_id:0\n");
     local_failure = 5;
-} else if (mpit_initialization_state.thread_level != MPI_THREAD_SINGLE) {
-    /* The thread_level in the event should be MPI_THREAD_SINGLE for MPI_Init. */
-    fprintf(stderr, "ABI_FAIL:mpit:init_thread_level:%d:%d\n",
-            mpit_initialization_state.thread_level, MPI_THREAD_SINGLE);
-    local_failure = 6;
 }
+/* Note: MPI_Init implicitly uses MPI_THREAD_SINGLE, which is 0 in both the
+   internal and Standard ABIs, so a thread_level check here would not actually
+   verify conversion. The _init_thread test covers thread_level conversion. */
 
 ret = MPI_T_event_handle_free(mpit_initialization_state.registration, NULL, NULL);
 if (MPI_SUCCESS != ret && 0 == local_failure) {

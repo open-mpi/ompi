@@ -30,8 +30,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/include/opal/sys/atomic.h"
-
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
 #include "ompi/file/file.h"

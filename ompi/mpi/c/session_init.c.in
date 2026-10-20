@@ -12,7 +12,6 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "opal/include/opal/sys/atomic.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/info/info.h"
@@ -20,7 +19,7 @@
 #include "ompi/instance/instance.h"
 #include "ompi/mpiext/mpiext.h"
 #include "ompi/runtime/ompi_mpit_events.h"
-/* Declares ompi_mpit_abi_handle_convert_impl(); only *referenced* in the
+/* Declares ompi_mpit_abi_standard_converters; only *referenced* in the
    Standard-ABI compile (guarded by OMPI_ABI_SRC in the body below), but
    included unconditionally because OMPI_ABI_SRC is not yet defined this early
    in the generated file. */

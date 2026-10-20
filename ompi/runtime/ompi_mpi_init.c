@@ -748,20 +748,27 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         /* The world model exposes no user-facing instance handle (MPI_Init
            returns none), so instance_id is purely an internal correlation token
            (init<->finalize) and is ABI-independent -- unlike the session model,
-           where instance_id is the MPI_Session handle and is ABI-gated.
-           ompi_mpit_abi_thread_level() is called unconditionally (no ABI gate)
-           because it returns the value unchanged when no converter is registered
-           (Open MPI ABI), so it is safe for both ABIs. */
+           where instance_id is the MPI_Session handle and is ABI-gated. */
         struct {
             int32_t  model;
             int32_t  thread_level;
             int32_t  world_rank;
             int32_t  world_size;
             uint64_t instance_id;
-        } payload = {OMPI_T_MODEL_WORLD,
-                     ompi_mpit_abi_thread_level((int32_t) *provided),
-                     ompi_comm_rank(MPI_COMM_WORLD), ompi_comm_size(MPI_COMM_WORLD),
-                     (uint64_t) (uintptr_t) ompi_mpi_instance_default};
+        } payload;
+        payload.model = OMPI_T_MODEL_WORLD;
+        payload.world_rank = ompi_comm_rank(MPI_COMM_WORLD);
+        payload.world_size = ompi_comm_size(MPI_COMM_WORLD);
+        payload.instance_id = (uint64_t) (uintptr_t) ompi_mpi_instance_default;
+        /* The thread_level value encoding differs between ABIs, so convert it
+           when the Standard ABI is active. */
+        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
+        opal_atomic_rmb();
+        if (OMPI_MPIT_ABI_OMPI == abi) {
+            payload.thread_level = (int32_t) *provided;
+        } else {
+            payload.thread_level = ompi_mpit_abi_thread_level((int32_t) *provided);
+        }
         mca_base_event_raise(ompi_event_initialization, NULL, &payload);
     }
 
