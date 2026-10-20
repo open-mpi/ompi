@@ -10,6 +10,7 @@
  * Copyright (c) 2016      IBM Corporation.  All rights reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -144,7 +145,7 @@ static int ompi_comm_request_progress (void)
                     if (OMPI_SUCCESS != subreq->req_status.MPI_ERROR) {
                         /* Let it continue but mark it as failed, so
                          * that it does some subreqs cleanup */
-                        request->super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
+                        request->super.super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
                     }
                     if (!(request_item->flags & OMPI_COMM_REQ_FLAG_RETAIN_SUBREQ)) {
                         ompi_request_free (&subreq);
@@ -174,8 +175,8 @@ static int ompi_comm_request_progress (void)
         /* if the request schedule is empty then the request is complete */
         if (0 == opal_list_get_size (&request->schedule)) {
             opal_list_remove_item (&ompi_comm_requests_active, (opal_list_item_t *) request);
-            request->super.req_status.MPI_ERROR = (OMPI_SUCCESS == rc) ? MPI_SUCCESS : rc;
-            ompi_request_complete (&request->super, true);
+            request->super.super.req_status.MPI_ERROR = (OMPI_SUCCESS == rc) ? MPI_SUCCESS : rc;
+            ompi_request_complete (&request->super.super, true);
         }
     }
 
@@ -202,8 +203,8 @@ void ompi_comm_request_start (ompi_comm_request_t *request)
         ompi_comm_request_progress_active = true;
     }
 
-    request->super.req_state = OMPI_REQUEST_ACTIVE;
-    request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+    request->super.super.req_state = OMPI_REQUEST_ACTIVE;
+    request->super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
 
     opal_mutex_unlock (&ompi_comm_request_mutex);
 }
@@ -256,11 +257,12 @@ static int ompi_comm_request_free (struct ompi_request_t **ompi_req)
 static void ompi_comm_request_construct (ompi_comm_request_t *request)
 {
     request->context = NULL;
+    request->lang_data = NULL;
 
-    request->super.req_type = OMPI_REQUEST_COMM;
-    request->super.req_status._cancelled = 0;
-    request->super.req_free = ompi_comm_request_free;
-    request->super.req_cancel = ompi_comm_request_cancel;
+    request->super.super.req_type = OMPI_REQUEST_COMM;
+    request->super.super.req_status._cancelled = 0;
+    request->super.super.req_free = ompi_comm_request_free;
+    request->super.super.req_cancel = ompi_comm_request_cancel;
 
     OBJ_CONSTRUCT(&request->schedule, opal_list_t);
 }
@@ -270,7 +272,7 @@ static void ompi_comm_request_destruct (ompi_comm_request_t *request)
     OBJ_DESTRUCT(&request->schedule);
 }
 
-OBJ_CLASS_INSTANCE(ompi_comm_request_t, ompi_request_t,
+OBJ_CLASS_INSTANCE(ompi_comm_request_t, ompi_api_request_t,
                    ompi_comm_request_construct,
                    ompi_comm_request_destruct);
 
@@ -301,7 +303,12 @@ void ompi_comm_request_return (ompi_comm_request_t *request)
         request->context = NULL;
     }
 
-    OMPI_REQUEST_FINI(&request->super);
+    /* opal_free_list_return() below does not run the destructor, so a
+     * recycled request carries whatever the last user left here. */
+    ompi_api_request_dispose (&request->super);
+    request->lang_data = NULL;
+
+    OMPI_REQUEST_FINI(&request->super.super);
     opal_free_list_return (&ompi_comm_requests, (opal_free_list_item_t *) request);
 }
 

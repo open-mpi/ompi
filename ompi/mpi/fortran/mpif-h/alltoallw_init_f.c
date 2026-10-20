@@ -14,6 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -118,19 +119,24 @@ void ompi_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
-        ompi_coll_base_append_array_to_release(c_request, c_recvtypes);
+        /* The type vectors are always ours; the count and displacement
+         * arrays only when the conversion actually allocated, and the send
+         * side only when it exists at all (MPI_IN_PLACE skips it). */
+        void *own_scounts = NULL, *own_sdispls = NULL;
+        void *own_rcounts = NULL, *own_rdispls = NULL;
+
         if ((void *)recvcounts != (void *)OMPI_ARRAY_NAME_CONVERT(recvcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(rdispls));
+            own_rcounts = OMPI_ARRAY_NAME_CONVERT(recvcounts);
+            own_rdispls = OMPI_ARRAY_NAME_CONVERT(rdispls);
         }
-        if (NULL != c_sendtypes) {
-            ompi_coll_base_append_array_to_release(c_request, c_sendtypes);
-            if ((void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
-                ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
-                ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sdispls));
-            }
+        if (NULL != c_sendtypes
+            && (void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
+            own_scounts = OMPI_ARRAY_NAME_CONVERT(sendcounts);
+            own_sdispls = OMPI_ARRAY_NAME_CONVERT(sdispls);
         }
-        ompi_coll_base_add_release_arrays_cb(c_request);
+        ompi_coll_base_nbc_set_cleanup_w(c_request, own_scounts, own_sdispls,
+                                         own_rcounts, own_rdispls,
+                                         c_sendtypes, c_recvtypes);
     } else {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);

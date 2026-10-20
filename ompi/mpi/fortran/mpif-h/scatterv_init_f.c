@@ -115,9 +115,10 @@ void ompi_scatterv_init_f(char *sendbuf, MPI_Fint *sendcounts,
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
         if ((void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(displs));
-            ompi_coll_base_add_release_arrays_cb(c_request);
+            ompi_coll_base_nbc_set_cleanup_v(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                                             OMPI_ARRAY_NAME_CONVERT(displs),
+                                             NULL,
+                                             NULL);
         }
      } else {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);

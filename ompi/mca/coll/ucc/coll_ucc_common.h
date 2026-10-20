@@ -60,14 +60,14 @@
             goto fallback;                                              \
         }                                                               \
         _coll_req = (mca_coll_ucc_req_t*)item;                          \
-        OMPI_REQUEST_INIT(&_coll_req->super, false);                    \
-        _coll_req->super.req_complete_cb      = NULL;                   \
-        _coll_req->super.req_complete_cb_data = NULL;                   \
-        _coll_req->super.req_status.MPI_ERROR = MPI_SUCCESS;            \
-        _coll_req->super.req_state            = OMPI_REQUEST_ACTIVE;    \
-        _coll_req->super.req_free             = mca_coll_ucc_req_free;  \
-        _coll_req->super.req_type             = OMPI_REQUEST_COLL;      \
-        _coll_req->super.req_mpi_object.comm  = _comm;                  \
+        OMPI_REQUEST_INIT(&_coll_req->super.super.super, false);                    \
+        _coll_req->super.super.super.req_complete_cb      = NULL;                   \
+        _coll_req->super.super.super.req_complete_cb_data = NULL;                   \
+        _coll_req->super.super.super.req_status.MPI_ERROR = MPI_SUCCESS;            \
+        _coll_req->super.super.super.req_state            = OMPI_REQUEST_ACTIVE;    \
+        _coll_req->super.super.super.req_free             = mca_coll_ucc_req_free;  \
+        _coll_req->super.super.super.req_type             = OMPI_REQUEST_COLL;      \
+        _coll_req->super.super.super.req_mpi_object.comm  = _comm;                  \
         _coll_req->module                     = NULL;                   \
     } while(0)
 
@@ -80,14 +80,14 @@
             goto fallback;                                              \
         }                                                               \
         _coll_req = (mca_coll_ucc_req_t *) item;                        \
-        OMPI_REQUEST_INIT(&_coll_req->super, true);                     \
-        _coll_req->super.req_complete_cb = NULL;                        \
-        _coll_req->super.req_complete_cb_data = NULL;                   \
-        _coll_req->super.req_status.MPI_ERROR = MPI_SUCCESS;            \
-        _coll_req->super.req_free = mca_coll_ucc_req_free;              \
-        _coll_req->super.req_start = mca_coll_ucc_req_start;            \
-        _coll_req->super.req_type = OMPI_REQUEST_COLL;                  \
-        _coll_req->super.req_mpi_object.comm = _comm;                   \
+        OMPI_REQUEST_INIT(&_coll_req->super.super.super, true);                     \
+        _coll_req->super.super.super.req_complete_cb = NULL;                        \
+        _coll_req->super.super.super.req_complete_cb_data = NULL;                   \
+        _coll_req->super.super.super.req_status.MPI_ERROR = MPI_SUCCESS;            \
+        _coll_req->super.super.super.req_free = mca_coll_ucc_req_free;              \
+        _coll_req->super.super.super.req_start = mca_coll_ucc_req_start;            \
+        _coll_req->super.super.super.req_type = OMPI_REQUEST_COLL;                  \
+        _coll_req->super.super.super.req_mpi_object.comm = _comm;                   \
         _coll_req->ucc_req = NULL;                                      \
         _coll_req->module = NULL;                                       \
     } while (0)
@@ -113,7 +113,7 @@
         if (_coll_req) {                                                \
             _coll_req->ucc_req = *(_req);                               \
             _coll_req->module  = _module;                               \
-            if (!_coll_req->super.req_persistent) {                     \
+            if (!_coll_req->super.super.super.req_persistent) {                     \
                 OPAL_THREAD_ADD_FETCH32(&_module->active, 1);           \
                 OPAL_THREAD_ADD_FETCH32(&_module->domain->active, 1);   \
             }                                                           \

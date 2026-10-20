@@ -126,13 +126,18 @@ void ompi_neighbor_alltoallw_init_f(char *sendbuf, MPI_Fint *sendcounts,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
-        ompi_coll_base_append_array_to_release(c_request, c_sendtypes);
-        ompi_coll_base_append_array_to_release(c_request, c_recvtypes);
+        /* The displacements are MPI_Aint and went through untouched, so
+         * only the counts can be ours, and only when the conversion
+         * actually allocated.  The type vectors always are. */
+        void *own_scounts = NULL, *own_rcounts = NULL;
+
         if ((void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
+            own_scounts = OMPI_ARRAY_NAME_CONVERT(sendcounts);
+            own_rcounts = OMPI_ARRAY_NAME_CONVERT(recvcounts);
         }
-        ompi_coll_base_add_release_arrays_cb(c_request);
+        ompi_coll_base_nbc_set_cleanup_w(c_request, own_scounts, NULL,
+                                         own_rcounts, NULL,
+                                         c_sendtypes, c_recvtypes);
     } else {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
         OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);

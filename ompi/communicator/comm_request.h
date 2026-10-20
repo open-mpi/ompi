@@ -4,6 +4,7 @@
  *                         reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,10 +26,15 @@
 #define OMPI_COMM_REQ_FLAG_RETAIN_SUBREQ  0x00000001
 
 typedef struct ompi_comm_request_t {
-    ompi_request_t super;
+    ompi_api_request_t super;
 
     opal_object_t *context;
     opal_list_t schedule;
+
+    /* Whatever a language binding parked for its hooks to find; opaque
+     * here.  MPIX_Comm_ishrink is the only user today.  Write it before
+     * installing the completion hook, which is what publishes it. */
+    void *lang_data;
 } ompi_comm_request_t;
 OBJ_CLASS_DECLARATION(ompi_comm_request_t);
 

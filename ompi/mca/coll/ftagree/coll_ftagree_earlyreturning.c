@@ -26,6 +26,7 @@
 #include "ompi/datatype/ompi_datatype_internal.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/bml/base/base.h"
@@ -376,7 +377,7 @@ OBJ_CLASS_INSTANCE(ompi_coll_ftagree_era_agreement_info_t,
                    era_agreement_info_destructor);
 
 struct era_iagree_request_s {
-    ompi_request_t        super;
+    ompi_coll_base_nbc_request_t super;
     era_identifier_t      agreement_id;
     void                 *contrib;
     ompi_group_t        **outgroup;
@@ -384,7 +385,7 @@ struct era_iagree_request_s {
 };
 
 OBJ_CLASS_INSTANCE(ompi_coll_ftagree_era_iagree_request_t,
-                   ompi_request_t,
+                   ompi_coll_base_nbc_request_t,
                    NULL,
                    NULL);
 
@@ -1788,7 +1789,7 @@ static void era_decide(ompi_coll_ftagree_era_value_t *decided_value, ompi_coll_f
                          ci->agreement_id.ERAID_FIELDS.epoch,
                          ci->agreement_id.ERAID_FIELDS.agreementid,
                          era_status_to_string(ci->status)));
-        ompi_request_complete(&ci->req->super, true);
+        ompi_request_complete(&ci->req->super.super.super, true);
     }
 }
 
@@ -3306,7 +3307,7 @@ static int era_iagree_req_free(struct ompi_request_t** rptr)
     if( NULL != req->ci )
         req->ci->req = NULL;
     req->ci = NULL;
-    OMPI_REQUEST_FINI(&req->super);
+    OMPI_REQUEST_FINI(&req->super.super.super);
     opal_free_list_return( &era_iagree_requests,
                            (opal_free_list_item_t*)(req));
     *rptr = MPI_REQUEST_NULL;
@@ -3323,7 +3324,7 @@ static int era_iagree_req_complete_cb(struct ompi_request_t* request)
 
     rc = mca_coll_ftagree_era_complete_agreement(req->agreement_id, req->contrib, req->outgroup);
     req->ci = NULL;
-    req->super.req_status.MPI_ERROR = rc;
+    req->super.super.super.req_status.MPI_ERROR = rc;
     return 0;
 }
 
@@ -3345,24 +3346,24 @@ int mca_coll_ftagree_iera_intra(void *contrib,
     if( NULL == item ) return OMPI_ERR_OUT_OF_RESOURCE;
     req = (ompi_coll_ftagree_era_iagree_request_t*)item;
 
-    OMPI_REQUEST_INIT(&req->super, false);
-    assert(MPI_UNDEFINED == req->super.req_f_to_c_index);
+    OMPI_REQUEST_INIT(&req->super.super.super, false);
+    assert(MPI_UNDEFINED == req->super.super.super.req_f_to_c_index);
 
     mca_coll_ftagree_era_prepare_agreement(comm, *group, op, dt, dt_count, contrib, module,
                                                      &agreement_id, &ci);
-    req->super.req_state = OMPI_REQUEST_ACTIVE;
-    req->super.req_type = OMPI_REQUEST_COLL;
-    req->super.req_status.MPI_SOURCE = MPI_ANY_SOURCE;
-    req->super.req_status.MPI_ERROR = MPI_SUCCESS;
-    req->super.req_status.MPI_TAG = MPI_ANY_TAG;
-    req->super.req_status._ucount = 0;
-    req->super.req_status._cancelled = 0;
-    req->super.req_mpi_object.comm = comm;
-    req->super.req_complete_cb_data = NULL;
+    req->super.super.super.req_state = OMPI_REQUEST_ACTIVE;
+    req->super.super.super.req_type = OMPI_REQUEST_COLL;
+    req->super.super.super.req_status.MPI_SOURCE = MPI_ANY_SOURCE;
+    req->super.super.super.req_status.MPI_ERROR = MPI_SUCCESS;
+    req->super.super.super.req_status.MPI_TAG = MPI_ANY_TAG;
+    req->super.super.super.req_status._ucount = 0;
+    req->super.super.super.req_status._cancelled = 0;
+    req->super.super.super.req_mpi_object.comm = comm;
+    req->super.super.super.req_complete_cb_data = NULL;
 
-    req->super.req_free = era_iagree_req_free;
-    req->super.req_cancel = NULL; /**< Don't know how to cancel an immediate agreement */
-    req->super.req_complete_cb = era_iagree_req_complete_cb;
+    req->super.super.super.req_free = era_iagree_req_free;
+    req->super.super.super.req_cancel = NULL; /**< Don't know how to cancel an immediate agreement */
+    req->super.super.super.req_complete_cb = era_iagree_req_complete_cb;
 
     req->agreement_id = agreement_id;
     req->contrib = contrib;
@@ -3375,11 +3376,11 @@ int mca_coll_ftagree_iera_intra(void *contrib,
         /**< must call this now, since it won't have been called in prepare
          *   as the request was not saved in ci at this time */
         opal_mutex_lock(&era_mutex);
-        ompi_request_complete(&req->super, false);
+        ompi_request_complete(&req->super.super.super, false);
         opal_mutex_unlock(&era_mutex);
     }
 
-    *request = &req->super;
+    *request = &req->super.super.super;
 
     return OMPI_SUCCESS;
 }
