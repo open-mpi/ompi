@@ -1,0 +1,676 @@
+// -*- groovy -*-
+//
+// Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All rights reserved.
+// $COPYRIGHT$
+//
+// Additional copyrights may follow
+//
+// $HEADER$
+// SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+//
+// Nightly distribution tarball builder for a single Open MPI branch.
+//
+// This pipeline is intended to be configured as a *multibranch* job on the
+// Open MPI community Jenkins server.  Each branch of the multibranch job
+// builds exactly one branch of Open MPI; the branch being built is simply
+// the branch Jenkins checked out (env.BRANCH_NAME).
+//
+// What it does, once per day:
+//
+//   1. Determine the git revision currently checked out for this branch.
+//   2. Look in S3 for the most recent recorded build of this branch.  If the
+//      recorded revision matches the current revision (i.e., the branch has
+//      not changed since the last run), skip the build entirely.
+//   3. Otherwise, rewrite the VERSION file the way the Python nightly builder
+//      does (tarball_version=<branch>-<timestamp>-<githash>, repo_rev=<githash>),
+//      then run autogen.pl / configure / make distcheck to produce the
+//      distribution tarball(s).
+//   4. Upload the tarball(s) to S3, along with a build-history JSON record
+//      and a latest_snapshot.txt pointer, and regenerate the md5sums.txt /
+//      sha1sums.txt indexes.
+//   5. Expire and delete old builds beyond the configured max_count.
+//
+// WORKSPACE layout:
+//   ompi-source/          Open MPI source tree (git checkout)
+//   ompi-scripts/         ompi-scripts checkout (autotools build helper +
+//                         autotools patches)
+//   autotools-install/    Symlink to the autotools install built for this job
+
+// ---------------------------------------------------------------------------
+// Configuration.  These mirror the config_data block of the historical
+// openmpi-nightly-tarball script.  They can be overridden via the matching
+// Jenkins job parameters without editing this file.
+// ---------------------------------------------------------------------------
+
+properties([
+    // Only one build of a given branch may run at a time.  In a multibranch
+    // job each branch is its own job, so disableConcurrentBuilds() scopes the
+    // lock per branch: if a build for this branch is already running, a newly
+    // triggered one waits for it to finish rather than running concurrently
+    // (which would race on the per-branch S3 build history and cleanup).
+    disableConcurrentBuilds(),
+    // Run once daily, allowing Jenkins to pick a random minute of the hour.
+    // Clock is assumed ot be UTC.
+    pipelineTriggers([cron('H 2 * * *')]),
+    parameters([
+        string(name: 'S3_BUCKET',
+               defaultValue: 'open-mpi-nightly',
+               description: 'S3 bucket to publish nightly tarballs to.'),
+        string(name: 'S3_BASENAME',
+               defaultValue: 'nightly/open-mpi/',
+               description: 'Key prefix within the bucket (basename).  ' +
+                            'Must end with a trailing slash.'),
+        string(name: 'AWS_REGION',
+               defaultValue: 'us-west-2',
+               description: 'AWS region for the S3 bucket.'),
+        string(name: 'MAX_COUNT',
+               defaultValue: '7',
+               description: 'Maximum number of valid builds to keep per ' +
+                            'branch before expiring the oldest.'),
+        string(name: 'OMPI_SCRIPTS_REPO',
+               defaultValue: 'https://github.com/open-mpi/ompi-scripts.git',
+               description: 'Repository providing the autotools build helper ' +
+                            '(open-mpi-autotools-build.sh) and its patches.'),
+        string(name: 'OMPI_SCRIPTS_BRANCH',
+               defaultValue: 'master',
+               description: 'Branch of OMPI_SCRIPTS_REPO to check out.'),
+    ])
+])
+
+// The project short names, matching the historical config_data.
+def PROJECT_SHORT_NAME     = 'openmpi'
+def PROJECT_VERY_SHORT     = 'ompi'
+
+// The branch we are building is whatever this multibranch job checked out.
+def branchName = env.BRANCH_NAME
+
+// Only build release-relevant branches: "main" or a release branch of the
+// form vMAJOR.MINOR.x (e.g. v6.0.x).  Other branches (feature branches, PR
+// branches picked up by the multibranch job, etc.) are not nightly-tarballed.
+if (!(branchName == 'main' || branchName ==~ /v[0-9]+\.[0-9]+\.x/)) {
+    echo "--> Branch '${branchName}' is not 'main' or a vX.Y.x release " +
+         "branch; skipping nightly tarball build."
+    currentBuild.result = 'NOT_BUILT'
+    currentBuild.displayName = "#${currentBuild.number} - ${branchName} - skipped"
+    currentBuild.description =
+        "<b>Branch:</b> ${branchName}<br>\n" +
+        "<b>Status:</b> not eligible for nightly tarball; skipped<br>\n"
+    return
+}
+
+// Initial display name / description.  These get refined once we know the
+// git revision (and again if we skip or publish), following the style of the
+// release tarball builder (open-mpi.dist.create-tarball.groovy).
+currentBuild.displayName = "#${currentBuild.number} - ${branchName}"
+currentBuild.description = "<b>Branch:</b> ${branchName}<br>\n"
+
+node("release-builder") {
+    // Per-branch output location in S3, e.g. "main/" or "v6.0.x/".
+    def outputLocation = "${branchName}/"
+    def buildUnixTime  = (System.currentTimeMillis() / 1000L) as long
+    def buildTime      = utcStamp(buildUnixTime)
+
+    def revision = ''
+
+    stage('Checkout') {
+        dir('ompi-source') {
+            checkout(changelog: false, poll: false, scm: scm)
+            // Submodules are required to build Open MPI tarballs.
+            sh 'git submodule update --init --recursive'
+            // Short (7-char) revision, matching the historical builder's
+            // "git rev-parse --short=7".
+            revision = sh(
+                script: 'git rev-parse --short=7 HEAD',
+                returnStdout: true).trim()
+        }
+        echo "--> Branch: ${branchName}"
+        echo "--> Revision: ${revision}"
+
+        // Now that we know the revision, refine the display name and
+        // description (release-tarball-builder style).
+        currentBuild.displayName = "#${currentBuild.number} - ${branchName} - ${revision}"
+        currentBuild.description =
+            "<b>Branch:</b> ${branchName}<br>\n" +
+            "<b>Revision:</b> ${revision}<br>\n"
+    }
+
+    // -----------------------------------------------------------------------
+    // Change detection: has the branch moved since our last recorded build?
+    // -----------------------------------------------------------------------
+    def lastRevision = ''
+    stage('Check for changes') {
+        lastRevision = lastRecordedRevision(params.S3_BUCKET, params.S3_BASENAME,
+                                             params.AWS_REGION, outputLocation,
+                                             branchName)
+        echo "--> Last recorded revision: '${lastRevision}'"
+        if (lastRevision == revision) {
+            echo "--> Build for revision ${revision} already exists; skipping."
+            currentBuild.result = 'NOT_BUILT'
+            currentBuild.description =
+                "${currentBuild.description}" +
+                "<b>Status:</b> no change since last build; skipped<br>\n"
+        } else {
+            echo "--> Found new revision ${revision}; building."
+        }
+    }
+
+    if (lastRevision == revision) {
+        // Nothing to do.  Clean up and return without failing the job.
+        cleanWs(notFailBuild: true)
+        return
+    }
+
+    // -----------------------------------------------------------------------
+    // Build the tarball.
+    // -----------------------------------------------------------------------
+    def versionString = "${branchName}-${buildTime}-${revision}"
+
+    // Location of the autotools install symlink created by the autotools
+    // build helper, and the ompi-scripts checkout that provides it.
+    def autotoolsInstall = "${env.WORKSPACE}/autotools-install"
+    def scriptsDir       = "${env.WORKSPACE}/ompi-scripts"
+
+    stage('Install Autotools') {
+        // Check out ompi-scripts, which provides the autotools build helper
+        // and its patch set.  (This Jenkinsfile lives in the ompi repo, so we
+        // fetch ompi-scripts separately.)
+        //
+        // Note: ompi-scripts' default branch is "master".  We pin an explicit
+        // refspec for the requested branch and reference it as
+        // "refs/remotes/origin/<branch>" so the checkout resolves reliably
+        // even with a shallow (depth 1) fetch -- a bare "*/<branch>" branch
+        // spec can fail to resolve against a shallow single-branch fetch.
+        dir('ompi-scripts') {
+            checkout(changelog: false, poll: false,
+                     scm: [$class: 'GitSCM',
+                           branches: [[name: "refs/remotes/origin/${params.OMPI_SCRIPTS_BRANCH}"]],
+                           extensions: [[$class: 'CloneOption', shallow: true, depth: 1]],
+                           userRemoteConfigs: [[
+                               url: params.OMPI_SCRIPTS_REPO,
+                               refspec: "+refs/heads/${params.OMPI_SCRIPTS_BRANCH}:refs/remotes/origin/${params.OMPI_SCRIPTS_BRANCH}"]]])
+        }
+
+        // Build (or reuse a cached) autotools install, following the official
+        // open-mpi.dist.create-tarball.groovy release job.  The helper reads
+        // the required Autotools versions from the branch's VERSION file (-y),
+        // falling back to contrib/dist/make_dist_tarball (-z), applies any
+        // patches from autotools-patches (-p), builds into/reuses a cache
+        // under $HOME/autotools-builds (-r), and symlinks the selected install
+        // into ${WORKSPACE}/autotools-install (-t).
+        //
+        // As in the release job, writing autotools artifacts into $HOME is
+        // safe here because these nightly jobs run on dedicated EC2 Jenkins
+        // workers.  If this pipeline is ever retargeted to shared-account
+        // nodes, change -r to a job-private location.
+        sh """/bin/bash ${scriptsDir}/jenkins/open-mpi-autotools-build.sh \
+            -d \
+            -p ${scriptsDir}/jenkins/autotools-patches \
+            -t ${autotoolsInstall} \
+            -r ${env.HOME}/autotools-builds \
+            -y ${env.WORKSPACE}/ompi-source/VERSION \
+            -z ${env.WORKSPACE}/ompi-source/contrib/dist/make_dist_tarball"""
+    }
+
+    def distDir = "${env.WORKSPACE}/dist-files"
+
+    stage('Build tarball') {
+        // Produce the distribution tarball by delegating to the branch's own
+        // contrib/dist/make_dist_tarball, exactly as the official release job
+        // (open-mpi.dist.create-tarball.groovy) does.  We no longer hand-edit
+        // the VERSION file: make_dist_tarball restores a pristine VERSION from
+        // git and performs all version substitution itself.
+        //
+        //   --no-git-update   We already checked out the target revision; do
+        //                     not let make_dist_tarball run "git pull".
+        //   --greekonly       Build a single tarball.  (With --tarball-version
+        //                     set, the greek portion of the name is overridden
+        //                     anyway, so greek vs. non-greek is moot; we just
+        //                     want exactly one artifact.)
+        //   --distdir         Drop the finished tarball(s) into dist-files/.
+        //   --tarball-version Set tarball_version to our nightly version
+        //                     string so the tarball is named
+        //                     openmpi-<branch>-<timestamp>-<githash>.tar.*,
+        //                     matching the historical nightly naming.
+        //
+        // autogen.pl / configure run with the just-built autotools injected
+        // onto PATH and LD_LIBRARY_PATH, matching the release job's
+        // withEnv(["PATH+AUTOTOOLS=...", "LD_LIBRARY_PATH+AUTOTOOLS=..."])
+        // pattern.  (make_dist_tarball clears LD_LIBRARY_PATH itself around
+        // the actual "make distcheck" step.)
+        //
+        // Lie about $USER (as the historical builder does) so that autogen.pl
+        // skips all .ompi_ignore'd directories and does not .ompi_unignore
+        // them.
+        //
+        // Before building, initialize the OMPI Python virtualenv the same way
+        // open-mpi.dist.create-tarball.build-tarball.sh does: source
+        // ${HOME}/ompi-setup-python.sh (which activates the venv and sets
+        // ${PIP_CMD}) and install every requirements.txt in the source tree.
+        // This must happen in the *same* shell invocation as make_dist_tarball
+        // so the activated venv is still in effect when the tarball is built
+        // (autogen.pl / the docs build need these Python modules).
+        sh "rm -rf ${distDir} && mkdir -p ${distDir}"
+        dir('ompi-source') {
+            withEnv(["USER=${PROJECT_VERY_SHORT}builder",
+                     "PATH+AUTOTOOLS=${autotoolsInstall}/bin",
+                     "LD_LIBRARY_PATH+AUTOTOOLS=${autotoolsInstall}/lib"]) {
+                sh """
+                    if test -r "\${HOME}/ompi-setup-python.sh" ; then
+                        echo "--> Initializing Python environment"
+                        . "\${HOME}/ompi-setup-python.sh"
+                        find . -name "requirements.txt" -exec \${PIP_CMD} install -r {} \\;
+                    else
+                        echo "--> No Python environment found, hoping for the best."
+                    fi
+
+                    contrib/dist/make_dist_tarball \
+                        --no-git-update \
+                        --greekonly \
+                        --distdir ${distDir} \
+                        --tarball-version ${versionString}
+                """
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Find the dist tarball(s) produced by make_dist_tarball.  Discovered once
+    // here and reused by both the tarball build check and Publish below.
+    // These are bare filenames relative to ${distDir} / the dist-files dir.
+    // -----------------------------------------------------------------------
+    def artifactList
+    stage('Find tarball') {
+        def artifacts = sh(
+            script: "cd ${distDir} && ls -1 *.tar.gz *.tar.bz2 2>/dev/null || true",
+            returnStdout: true).trim()
+        if (!artifacts) {
+            error('No distribution tarball (*.tar.gz / *.tar.bz2) found ' +
+                  'in dist-files/ after make_dist_tarball.')
+        }
+        artifactList = artifacts.split('\\r?\\n')
+        echo "--> Artifacts: ${artifactList.join(', ')}"
+    }
+
+    // -----------------------------------------------------------------------
+    // Verify the tarball builds from a pristine tarball environment.
+    //
+    // A release tarball must build WITHOUT any of the tooling that is only
+    // needed to build from a git checkout: the Autotools, m4, flex, and
+    // pandoc.  The release-builder image has all of those installed (the
+    // Autotools via the autotools-install symlink we build above, and pandoc
+    // in /usr/local/bin), so we deliberately build this check in an
+    // environment where none of them are reachable:
+    //
+    //   * The Python venv is NOT activated (unlike the tarball build above),
+    //     so the docs build cannot fall back on venv-provided tools.
+    //   * ${autotoolsInstall}/bin is NOT added to PATH, so configure/make
+    //     cannot find autoconf/automake/libtool/m4/etc.
+    //   * /usr/local/bin is stripped from PATH, so pandoc (the only useful
+    //     thing in /usr/local/bin on these images) is not found.
+    //
+    // If configure or make reaches for any of those, the build fails here --
+    // which is exactly the regression we want to catch.  We build against the
+    // system XPMEM and the libfabric/UCX installed under ${HOME}/packages by
+    // customize-ami.sh, and run "make all install check".
+    //
+    // We strip /usr/local/bin out of the node's PATH here in Groovy and inject
+    // the result with withEnv, rather than editing PATH inside the shell, so
+    // the override is visible to the whole sh step and matches the withEnv
+    // PATH handling used elsewhere in these jobs.  (We never add
+    // ${autotoolsInstall} to PATH in the first place, so there is nothing to
+    // remove for the Autotools.)  install goes to a scratch prefix inside the
+    // build directory.
+    stage('Tarball build check') {
+        def tarball = "${distDir}/${artifactList[0]}"
+        def workDir = "${env.WORKSPACE}/tarball-build-check"
+
+        // Drop /usr/local/bin from the node PATH so pandoc (the only useful
+        // thing in /usr/local/bin on the release-builder image) is not found.
+        def cleanPath = env.PATH.split(':').findAll { it != '/usr/local/bin' }.join(':')
+        echo "--> Tarball build PATH: ${cleanPath}"
+
+	dir("ompi-tarball-build") {
+            withEnv(["PATH=${cleanPath}"]) {
+		sh """
+                    set -e
+
+                    rm -rf *
+
+                    tar xf '${tarball}'
+                    directory=\$(ls -1d openmpi-*/ | head -n 1)
+                    cd "\${directory}"
+
+                    ./configure \
+                        --prefix='${workDir}/install' \
+                        --with-xpmem \
+                        --with-libfabric=\${HOME}/packages/libfabric \
+                        --with-ucx=\${HOME}/packages/ucx
+                    make all install check
+            """
+            }
+	}
+    }
+
+    // -----------------------------------------------------------------------
+    // Collect artifacts and publish to S3.
+    // -----------------------------------------------------------------------
+    stage('Publish') {
+        dir('dist-files') {
+            def region   = params.AWS_REGION
+            def bucket   = params.S3_BUCKET
+            def basename = params.S3_BASENAME
+
+            // Build the JSON build-history record and upload each artifact.
+            def filesJson = [:]
+            for (artifact in artifactList) {
+                def md5    = fileHash('md5sum', artifact)
+                def sha1   = fileHash('sha1sum', artifact)
+                def sha256 = fileHash('sha256sum', artifact)
+                def size   = sh(script: "stat -c %s '${artifact}' 2>/dev/null || stat -f %z '${artifact}'",
+                                returnStdout: true).trim() as long
+
+                filesJson[artifact] = [md5: md5, sha1: sha1,
+                                       sha256: sha256, size: size]
+
+                def remoteKey = "${basename}${outputLocation}${artifact}"
+                s3Upload(region, bucket, remoteKey, artifact, null)
+            }
+
+            def buildData = [
+                branch: branchName,
+                valid: true,
+                revision: revision,
+                build_unix_time: buildUnixTime,
+                delete_on: 0,
+                files: filesJson,
+            ]
+            def buildDataJson = toJson(buildData)
+
+            // Build-history record name:
+            //   <output_location>build-<short>-<branch>-<time>-<rev>.json
+            def historyName = "${outputLocation}build-${PROJECT_SHORT_NAME}-" +
+                              "${branchName}-${buildTime}-${revision}.json"
+            s3PutString(region, bucket,
+                        "${basename}${historyName}",
+                        buildDataJson, 'max-age=600')
+
+            // latest_snapshot.txt pointer.
+            s3PutString(region, bucket,
+                        "${basename}${outputLocation}latest_snapshot.txt",
+                        "${versionString}\n", 'max-age=600')
+
+            echo "--> Published ${artifactList.size()} artifact(s) for " +
+                 "${branchName} revision ${revision}."
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Expire and delete old builds, and regenerate the checksum indexes.
+    // This mirrors Builder.remote_cleanup().
+    // -----------------------------------------------------------------------
+    stage('Cleanup old builds') {
+        remoteCleanup(params.AWS_REGION, params.S3_BUCKET, params.S3_BASENAME,
+                      outputLocation, branchName, PROJECT_SHORT_NAME,
+                      (params.MAX_COUNT as int))
+    }
+
+    cleanWs(notFailBuild: true)
+}
+
+// ===========================================================================
+// Helper functions
+// ===========================================================================
+
+// Format a UTC timestamp as YYYYmmddHHMM, matching Builder.generate_build_time.
+def utcStamp(long unixTime) {
+    def fmt = new java.text.SimpleDateFormat('yyyyMMddHHmm')
+    fmt.setTimeZone(java.util.TimeZone.getTimeZone('UTC'))
+    return fmt.format(new java.util.Date(unixTime * 1000L))
+}
+
+// Compute a hash of a file using the named *sum tool, returning just the hash.
+def fileHash(String tool, String file) {
+    return sh(script: "${tool} '${file}' | awk '{print \$1}'",
+              returnStdout: true).trim()
+}
+
+// Parse a JSON string into a plain (serializable) structure using the
+// sandbox-safe readJSON step from the Pipeline Utility Steps plugin.
+//
+// NB: do NOT use groovy.json.JsonSlurper(Classic) here.  Those are blocked
+// by Jenkins script security ("Scripts not permitted to use new
+// groovy.json.JsonSlurperClassic") unless an administrator approves the
+// signature; when that approval is missing the call throws, and if the
+// caller swallows the exception it silently looks like "no previous build"
+// -- which previously defeated the change-detection logic.  readJSON needs
+// no approval and returns serializable maps/lists, so it is also safe to
+// return across CPS steps.  We intentionally let malformed JSON throw
+// rather than returning null, so a corrupt record fails loudly instead of
+// being mistaken for "no build on record".
+def parseJson(String text) {
+    return readJSON(text: text)
+}
+
+// Serialize an object to a JSON string using the sandbox-safe writeJSON
+// step (Pipeline Utility Steps plugin), for the same reason parseJson uses
+// readJSON: groovy.json.JsonOutput is subject to script-security approval.
+def toJson(obj) {
+    return writeJSON(json: obj, returnText: true)
+}
+
+// Return the revision of the most recent recorded build for this branch, or
+// an empty string if there are none.  Mirrors Builder.get_build_history() plus
+// the "latest timestamp wins" logic in run_single_build().
+def lastRecordedRevision(String bucket, String basename, String region,
+                         String outputLocation, String branchName) {
+    def prefix = "${basename}${outputLocation}build-"
+    def keys = s3ListKeys(region, bucket, prefix)
+    long bestTime = -1L
+    def bestRevision = ''
+    for (key in keys) {
+        if (!key.endsWith('.json')) {
+            continue
+        }
+        def body = s3GetString(region, bucket, key)
+        if (!body) {
+            continue
+        }
+        // Let a genuine parse failure throw -- we must never silently treat
+        // a corrupt record as "no previous build" and rebuild unnecessarily.
+        def data = parseJson(body)
+        if (!(data instanceof Map)) {
+            continue
+        }
+        if (data.build_unix_time == null || data.branch == null) {
+            continue
+        }
+        if (data.branch != branchName) {
+            continue
+        }
+        long t = (data.build_unix_time as Number).longValue()
+        if (t > bestTime) {
+            bestTime = t
+            bestRevision = data.revision ? (data.revision as String) : ''
+        }
+    }
+    return bestRevision
+}
+
+// Expire builds beyond max_count and delete builds whose delete_on time has
+// passed, then regenerate md5sums.txt / sha1sums.txt.  Mirrors
+// Builder.remote_cleanup().
+def remoteCleanup(String region, String bucket, String basename,
+                  String outputLocation, String branchName,
+                  String projectShortName, int maxCount) {
+    long now = (System.currentTimeMillis() / 1000L) as long
+    def prefix = "${basename}${outputLocation}build-"
+    def keys = s3ListKeys(region, bucket, prefix)
+
+    // Load all build records for this branch, keyed by build_unix_time.
+    def records = [:]   // build_unix_time (Long) -> [key: ..., data: ...]
+    for (key in keys) {
+        if (!key.endsWith('.json')) {
+            continue
+        }
+        def body = s3GetString(region, bucket, key)
+        if (!body) {
+            continue
+        }
+        def data = parseJson(body)
+        if (!(data instanceof Map)) {
+            continue
+        }
+        if (data.build_unix_time == null || data.branch != branchName) {
+            continue
+        }
+        long t = (data.build_unix_time as Number).longValue()
+        records[t] = [key: key, data: data]
+    }
+
+    def sortedTimes = records.keySet().sort()
+
+    // Expire the oldest builds beyond max_count: mark invalid and set a
+    // delete_on 24h in the future (only if not already expired).
+    if (sortedTimes.size() > maxCount) {
+        def expireTimes = sortedTimes[0..(sortedTimes.size() - maxCount - 1)]
+        for (t in expireTimes) {
+            def rec = records[t]
+            if (!(rec.data.valid)) {
+                continue
+            }
+            rec.data.valid = false
+            rec.data.delete_on = now + (24 * 60 * 60)
+            echo "--> Expiring build ${t} (${rec.data.revision})"
+            s3PutString(region, bucket, rec.key,
+                        toJson(rec.data), 'max-age=600')
+        }
+    }
+
+    // Delete builds whose delete_on time is in the past.
+    for (t in sortedTimes) {
+        def rec = records[t]
+        def deleteOn = rec.data.delete_on ? (rec.data.delete_on as Number).longValue() : 0L
+        if (deleteOn != 0L && deleteOn < now) {
+            echo "--> Removing build ${t} (${rec.data.revision})"
+            if (rec.data.files instanceof Map) {
+                for (fname in rec.data.files.keySet()) {
+                    def fkey = "${basename}${outputLocation}${fname}"
+                    echo "--> Removing file ${fkey}"
+                    s3Delete(region, bucket, fkey)
+                }
+            }
+            echo "--> Removing data file ${rec.key}"
+            s3Delete(region, bucket, rec.key)
+            records.remove(t)
+        }
+    }
+
+    // Regenerate md5sums.txt / sha1sums.txt for all remaining valid builds.
+    def md5sum  = new StringBuilder()
+    def sha1sum = new StringBuilder()
+    for (t in records.keySet().sort()) {
+        def data = records[t].data
+        if (!(data.valid)) {
+            continue
+        }
+        if (!(data.files instanceof Map)) {
+            continue
+        }
+        for (fname in data.files.keySet()) {
+            def fdata = data.files[fname]
+            md5sum.append("${fdata.md5} ${fname}\n")
+            sha1sum.append("${fdata.sha1} ${fname}\n")
+        }
+    }
+    s3PutString(region, bucket,
+                "${basename}${outputLocation}md5sums.txt",
+                md5sum.toString(), null)
+    s3PutString(region, bucket,
+                "${basename}${outputLocation}sha1sums.txt",
+                sha1sum.toString(), null)
+}
+
+// ---------------------------------------------------------------------------
+// Thin wrappers around the AWS CLI for S3 operations.  We shell out to the AWS
+// CLI (rather than requiring the Jenkins S3 plugin) so this pipeline has no
+// plugin dependency beyond a configured AWS CLI / instance role on the node.
+// ---------------------------------------------------------------------------
+
+// List all object keys under a prefix.  Returns a list of full keys.
+def s3ListKeys(String region, String bucket, String prefix) {
+    def out = sh(
+        script: """
+            aws s3api list-objects-v2 \
+                --region '${region}' \
+                --bucket '${bucket}' \
+                --prefix '${prefix}' \
+                --query 'Contents[].Key' \
+                --output text 2>/dev/null || true
+        """,
+        returnStdout: true).trim()
+    if (!out || out == 'None') {
+        return []
+    }
+    // list-objects-v2 text output is tab/whitespace separated.
+    return out.split('\\s+') as List
+}
+
+// Download an object's body as a String, or return null if it does not exist.
+def s3GetString(String region, String bucket, String key) {
+    def tmp = "s3get-${UUID.randomUUID().toString()}.tmp"
+    def status = sh(
+        script: """
+            aws s3api get-object \
+                --region '${region}' \
+                --bucket '${bucket}' \
+                --key '${key}' \
+                '${tmp}' >/dev/null 2>&1
+        """,
+        returnStatus: true)
+    if (status != 0) {
+        sh "rm -f '${tmp}'"
+        return null
+    }
+    def body = readFile(file: tmp)
+    sh "rm -f '${tmp}'"
+    return body
+}
+
+// Upload a local file to S3.  cacheControl may be null.
+def s3Upload(String region, String bucket, String key, String localFile,
+             String cacheControl) {
+    def cc = cacheControl ? "--cache-control '${cacheControl}'" : ''
+    sh """
+        aws s3api put-object \
+            --region '${region}' \
+            --bucket '${bucket}' \
+            --key '${key}' \
+            --body '${localFile}' ${cc} >/dev/null
+    """
+}
+
+// Upload an in-memory string to S3.  cacheControl may be null.
+def s3PutString(String region, String bucket, String key, String content,
+                String cacheControl) {
+    def tmp = "s3put-${UUID.randomUUID().toString()}.tmp"
+    writeFile(file: tmp, text: content)
+    def cc = cacheControl ? "--cache-control '${cacheControl}'" : ''
+    sh """
+        aws s3api put-object \
+            --region '${region}' \
+            --bucket '${bucket}' \
+            --key '${key}' \
+            --body '${tmp}' ${cc} >/dev/null
+        rm -f '${tmp}'
+    """
+}
+
+// Delete an object from S3.
+def s3Delete(String region, String bucket, String key) {
+    sh """
+        aws s3api delete-object \
+            --region '${region}' \
+            --bucket '${bucket}' \
+            --key '${key}' >/dev/null
+    """
+}
