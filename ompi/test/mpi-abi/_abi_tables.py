@@ -1529,7 +1529,9 @@ INSTALLED_C_CALLBACK_PROBES = (
             "MPI_T_event_register_callback",
         ),
         "support_api_names": (
+            "MPI_Info_create",
             "MPI_Info_free",
+            "MPI_Info_set",
             "MPI_T_event_get_info",
             "MPI_T_event_get_num",
             "MPI_T_finalize",
