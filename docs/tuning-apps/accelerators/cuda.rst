@@ -472,10 +472,10 @@ The ``smcuda`` BTL will not start unless it has been explicitly
 requested or enabled.  The ``btl_smcuda_enable`` MCA parameter
 controls this:
 
-* ``-1`` (default): start only when ``smcuda`` is explicitly listed
+* negative (default): start only when ``smcuda`` is explicitly listed
   via ``--mca btl smcuda`` (or equivalent).
 * ``0``: always disabled.
-* ``1``: always enabled regardless of the BTL selection list.
+* positive: always enabled regardless of the BTL selection list.
 
 The typical invocation is therefore:
 

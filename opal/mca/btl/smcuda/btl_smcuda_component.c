@@ -151,11 +151,11 @@ static int smcuda_register(void)
     (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
                                            "enable",
                                            "Enable/Disable the smcuda BTL component: "
-                                           "1 = always enable, 0 = always disable, "
-                                           "-1 = enable only when explicitly requested "
+                                           "positive = always enable, 0 = always disable, "
+                                           "negative = enable only when explicitly requested "
                                            "via --mca btl smcuda (default)",
                                            MCA_BASE_VAR_TYPE_INT, NULL, 0,
-                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_9,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_1,
                                            MCA_BASE_VAR_SCOPE_ALL,
                                            &mca_btl_smcuda_component.smcuda_enable);
 

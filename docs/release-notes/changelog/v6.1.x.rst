@@ -83,10 +83,10 @@ Open MPI version v6.1.0
   ``MPI_Init`` again.  ``--mca btl ^smcuda`` restores the deferred wire-up.
 
 - The ``btl/smcuda`` component now gates its startup on a new
-  ``btl_smcuda_enable`` MCA parameter.  The default value of ``-1``
+  ``btl_smcuda_enable`` MCA parameter.  A negative value (default)
   starts the component only when ``smcuda`` is explicitly listed via
-  ``--mca btl smcuda``; ``0`` disables it unconditionally; ``1`` enables
-  it unconditionally.  When the component does not start, it no longer
+  ``--mca btl smcuda``; ``0`` disables it unconditionally; a positive
+  value enables it unconditionally.  When the component does not start, it no longer
   creates its shared-memory backing files, which previously happened
   even when ``smcuda`` was not ultimately selected.
 
