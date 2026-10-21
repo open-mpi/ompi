@@ -65,6 +65,7 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
 #include "ompi/info/info.h"
 
@@ -669,10 +670,12 @@ bcast_rportlen:
                 }
             }
 
-            /* ompi_proc_complete_init_single() initializes and optionally retrieves
-             * OPAL_PMIX_LOCALITY and OPAL_PMIX_HOSTNAME. since we can live without
-             * them, we are just fine */
-            ompi_proc_complete_init_single(proc);
+            /* PMIx_Connect() above downloaded what these procs
+             * published, so reads for them are local from here on.
+             * Said before the init below, whose architecture read
+             * would otherwise be a fetch nobody waits for. */
+            opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
+
             /* if this proc is local, then get its locality */
             for (prn = 0; prn < nprn; prn++) {
                 uint16_t u16;
@@ -699,12 +702,39 @@ bcast_rportlen:
                 PMIx_Store_internal(&pxproc, PMIX_LOCALITY, &pval);
                 break;
             }
+
+            /* After the locality above, not before: a peer known to be
+             * node-local takes our architecture without a modex read,
+             * and skips the locality read this would otherwise do and
+             * the loop above would then overwrite.
+             *
+             * What can fail here is that architecture, not the
+             * locality, which is answered inside either way. Without an
+             * architecture the proc keeps our convertor and would
+             * silently mistranslate, so it cannot be waved through.
+             * Saying AVAILABLE first rules out the "not published yet"
+             * answer, which is the one this has no way to wait for. */
+            rc = ompi_proc_complete_init_single(proc);
+            if (OMPI_SUCCESS != rc) {
+                OMPI_ERROR_LOG(rc);
+                goto exit;
+            }
         }
         free(local_ranks);
         local_ranks = NULL;
 
         /* call add_procs on the new ones */
         rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+        if (OMPI_ERR_NOT_READY == rc) {
+            /* This call is collective and blocking with nowhere to defer
+             * the work to, so wait for the exchange and ask once more; a
+             * peer still unwired then is one no btl will ever claim. */
+            (void) ompi_modex_wait_if_needed();
+            rc = MCA_PML_CALL(add_procs(new_proc_list, nnew));
+            if (OMPI_ERR_NOT_READY == rc) {
+                rc = OMPI_ERR_UNREACH;
+            }
+        }
         free(new_proc_list);
         new_proc_list = NULL;
         if (OMPI_SUCCESS != rc) {

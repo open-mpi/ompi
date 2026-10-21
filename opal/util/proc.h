@@ -12,6 +12,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/pmix/pmix-internal.h"
+#include "opal/sys/atomic.h"
 #include "opal/types.h"
 
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -87,6 +89,33 @@ opal_process_name_hton_intr(opal_process_name_t *name)
 #    define OPAL_PROCESS_NAME_HTON(guid)
 #endif
 
+/**
+ * What is known about the peer this proc stands for; a proc created
+ * from nothing but a name starts at zero and is filled in as its peer's
+ * data arrives. Independent flags, not stages: neither AVAILABLE nor
+ * INITIALIZED implies the other, since without heterogeneous support
+ * the architecture is known before any peer data is fetched, and with
+ * it the architecture comes out of that data.
+ */
+enum {
+    /** A fetch of what this peer published is in flight; set by the one
+     *  caller that starts it. */
+    OPAL_PROC_FLAG_FETCHING = 0x01,
+    /** The peer's published data is local: a Get may be issued, and a
+     *  missing key is missing for good rather than merely late. */
+    OPAL_PROC_FLAG_AVAILABLE = 0x02,
+    /** proc_arch and proc_convertor are the peer's own. Nothing may be
+     *  packed for, or unpacked from, a peer without this. */
+    OPAL_PROC_FLAG_INITIALIZED = 0x04,
+    /** The messaging layer has wired it, so it can be reached. */
+    OPAL_PROC_FLAG_WIRED = 0x08,
+    /** The fetch failed, so AVAILABLE is a decision rather than a fact:
+     *  a key missing from data never fetched is read as never published,
+     *  the only reading left. Always set with AVAILABLE, so a reader
+     *  acting on one cannot miss the other. */
+    OPAL_PROC_FLAG_FETCH_FAILED = 0x10,
+};
+
 typedef struct opal_proc_t {
     /** allow proc to be placed on a list */
     opal_list_item_t super;
@@ -94,12 +123,73 @@ typedef struct opal_proc_t {
     opal_process_name_t proc_name;
     /** architecture of this process */
     uint32_t proc_arch;
+    /** what is known about this proc -- see OPAL_PROC_FLAG_* above.
+     * Atomic because the flags share one word and are learned
+     * concurrently; a plain read-modify-write would drop an update. */
+    opal_atomic_int32_t proc_state;
     /** flags for this proc */
     opal_hwloc_locality_t proc_flags;
     /** Base convertor for the proc described by this process */
     struct opal_convertor_t *proc_convertor;
 } opal_proc_t;
 OBJ_CLASS_DECLARATION(opal_proc_t);
+
+/**
+ * Is all of this known about the proc? Relaxed load on purpose: this
+ * runs per matched receive, and a flag is ordered by whoever set it.
+ */
+static inline bool opal_proc_known(const opal_proc_t *proc, int32_t flags)
+{
+#if OPAL_USE_C11_ATOMICS
+    /* Cast: some atomic_load_explicit() predate taking a const pointer. */
+    int32_t state = atomic_load_explicit((opal_atomic_int32_t *) &proc->proc_state,
+                                         memory_order_relaxed);
+#else
+    int32_t state = proc->proc_state;
+#endif
+
+    return (flags == (state & flags));
+}
+
+/**
+ * Record that these are now known. Idempotent, and safe against
+ * concurrent learning about the same proc.
+ */
+static inline void opal_proc_learned(opal_proc_t *proc, int32_t flags)
+{
+    (void) opal_atomic_fetch_or_32(&proc->proc_state, flags);
+}
+
+/**
+ * Record it, and report whether this call is the one that did: for work
+ * that must happen exactly once, like the OPAL_PROC_FLAG_FETCHING fetch.
+ */
+static inline bool opal_proc_learned_first(opal_proc_t *proc, int32_t flag)
+{
+    return (0 == (opal_atomic_fetch_or_32(&proc->proc_state, flag) & flag));
+}
+
+/**
+ * Unlearn: mirror of opal_proc_learned(), equally safe against
+ * concurrent updates. Callers forget one thing at a time.
+ */
+static inline void opal_proc_forget(opal_proc_t *proc, int32_t flags)
+{
+    (void) opal_atomic_fetch_and_32(&proc->proc_state, ~flags);
+}
+
+/**
+ * Back to a bare proc. Overwrites the word rather than clearing bits,
+ * so only for a proc being built or rebuilt by an exclusive caller.
+ */
+static inline void opal_proc_forget_all(opal_proc_t *proc)
+{
+#if OPAL_USE_C11_ATOMICS
+    atomic_store_explicit(&proc->proc_state, 0, memory_order_relaxed);
+#else
+    proc->proc_state = 0;
+#endif
+}
 
 typedef struct {
     opal_list_item_t super;
