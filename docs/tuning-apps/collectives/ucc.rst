@@ -155,6 +155,62 @@ Other MCA Parameters
    * - ``coll_ucc_cts``
      - All supported blocking and nonblocking operations
      - Comma-separated list of UCC collective types to enable.
+   * - ``coll_ucc_derived_sharp``
+     - ``false``
+     - Allow SHARP on communicators other than ``MPI_COMM_WORLD`` that
+       do not set the ``ompi_comm_coll_ucc_sharp`` info key.  See
+       :ref:`label-coll-ucc-sharp`.
+   * - ``coll_ucc_max_domains``
+     - ``0`` (unlimited)
+     - Maximum number of live UCC contexts per process.  A communicator
+       that would need another context uses the previous collective
+       components instead.
+
+.. _label-coll-ucc-sharp:
+
+SHARP on Derived Communicators
+------------------------------
+
+When the UCC library includes the SHARP transport (``tl/sharp``), Open
+MPI uses SHARP for ``MPI_COMM_WORLD`` only.  Every UCC context that may
+use SHARP gets a second context over the same processes in which
+``tl/sharp`` is disabled, and communicators that do not ask for SHARP
+use it, so they take no SHARP resources and avoid the cost of creating
+a SHARP team.  For communicators derived from ``MPI_COMM_WORLD`` this
+is one extra UCC context per process.  Without ``tl/sharp`` in the UCC
+library nothing changes, no extra context is created and the info key
+below has no effect.
+
+To use SHARP on another communicator, create it with the info key
+``ompi_comm_coll_ucc_sharp`` set to ``true``, for example with
+``MPI_Comm_dup_with_info``, ``MPI_Comm_idup_with_info``,
+``MPI_Comm_split_type`` or ``MPI_Comm_create_from_group``.  The accepted
+values are ``true``, ``false``, ``yes``, ``no``, ``1`` and ``0``;
+``false`` keeps SHARP off, and any other value (for example
+``default``) selects the default described above.
+
+* The key is read when the communicator is created; changing it later
+  with ``MPI_Comm_set_info`` has no effect.
+* A communicator without the key whose group is identical to its
+  parent's (``MPI_Comm_dup``, ``MPI_Comm_idup``) inherits an explicit
+  value from the parent.  Splits and other derived communicators do
+  not, so to use SHARP on the result of ``MPI_Comm_split``, duplicate
+  it with ``MPI_Comm_dup_with_info``.
+* The key must be set with the same value on all processes of the
+  communicator, or on none of them; otherwise the program is erroneous.
+  With ``tl/sharp`` present, processes that all set the key but with
+  different values do not use UCC for that communicator.
+* The key has no effect on ``MPI_COMM_WORLD``, whose transports are
+  selected through the UCC environment (for example
+  ``UCC_CL_BASIC_TLS``).  A Sessions communicator created from the
+  ``mpi://WORLD`` process set counts as derived: it gets no SHARP
+  unless it sets the key.
+
+Setting ``coll_ucc_derived_sharp`` to ``true`` restores SHARP on every
+communicator that does not set the key.  With ``coll_ucc_max_domains``
+set to ``1`` there is no room for the second context, so communicators
+other than ``MPI_COMM_WORLD`` that do not ask for SHARP use the previous
+collective components.
 
 Verifying Selection
 -------------------
