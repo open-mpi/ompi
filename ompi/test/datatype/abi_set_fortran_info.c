@@ -150,7 +150,17 @@ int main(int argc, char **argv)
         check_type_size(MPI_DOUBLE_PRECISION, "MPI_DOUBLE_PRECISION",
                         FORTRAN_DOUBLE_PRECISION_SIZE);
 
+        /*
+         * COMPLEX is a pair of default REALs and DOUBLE COMPLEX a pair of
+         * DOUBLE PRECISION values, so their sizes follow the default REAL and
+         * DOUBLE PRECISION sizes supplied above.
+         */
+        check_type_size(MPI_COMPLEX, "MPI_COMPLEX", 2 * FORTRAN_REAL_SIZE);
+        check_type_size(MPI_DOUBLE_COMPLEX, "MPI_DOUBLE_COMPLEX",
+                        2 * FORTRAN_DOUBLE_PRECISION_SIZE);
+
         /* Optional fixed-size types marked supported report their size. */
+        check_type_size(MPI_LOGICAL4, "MPI_LOGICAL4", 4);
         check_type_size(MPI_INTEGER1, "MPI_INTEGER1", 1);
         check_type_size(MPI_INTEGER2, "MPI_INTEGER2", 2);
         check_type_size(MPI_INTEGER4, "MPI_INTEGER4", 4);

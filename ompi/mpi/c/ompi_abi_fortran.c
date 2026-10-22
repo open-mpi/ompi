@@ -450,18 +450,25 @@ OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info)
         { &ompi_mpi_integer.dt,   OMPI_ABI_FORTRAN_CLASS_INT,     NULL },
         { &ompi_mpi_real.dt,      OMPI_ABI_FORTRAN_CLASS_FLOAT,   NULL },
         { &ompi_mpi_dblprec.dt,   OMPI_ABI_FORTRAN_CLASS_FLOAT,   NULL },
+        { &ompi_mpi_cplex.dt,     OMPI_ABI_FORTRAN_CLASS_COMPLEX, NULL },
     };
+    /*
+     * COMPLEX is a pair of default REALs, so its size is 2 * real_size and
+     * its availability is governed by the same mpi_real_size key -- there is
+     * no mpi_complex_size key in the standard.
+     */
     int default_sizes[] = { character_size, logical_size, integer_size,
-                            real_size, dblprec_size };
+                            real_size, dblprec_size, 2 * real_size };
     /*
      * CHARACTER is a fundamental Fortran type that is always one byte, so
      * make it available whenever Fortran info is set, whether or not the
-     * (non-standard) mpi_character_size key was supplied.  The other four
-     * default types are made available only when their size key is present.
+     * (non-standard) mpi_character_size key was supplied.  The other five
+     * default types are made available only when their governing size key is
+     * present (COMPLEX follows REAL).
      */
     (void) have_character;
     bool default_present[] = { true, have_logical, have_integer,
-                               have_real, have_dblprec };
+                               have_real, have_dblprec, have_real };
 
     /*
      * Resolve each requested default-sized type to its OPAL base type.  A
@@ -497,7 +504,14 @@ OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info)
         { &ompi_mpi_complex8.dt,  OMPI_ABI_FORTRAN_CLASS_COMPLEX, "mpi_complex8_supported",  8 },
         { &ompi_mpi_complex16.dt, OMPI_ABI_FORTRAN_CLASS_COMPLEX, "mpi_complex16_supported", 16 },
         { &ompi_mpi_complex32.dt, OMPI_ABI_FORTRAN_CLASS_COMPLEX, "mpi_complex32_supported", 32 },
-        { &ompi_mpi_dblcplex.dt,  OMPI_ABI_FORTRAN_CLASS_COMPLEX, "mpi_double_complex_supported", 16 },
+        /*
+         * DOUBLE COMPLEX is a pair of DOUBLE PRECISION values, so its size
+         * tracks the application-reported mpi_double_precision_size rather
+         * than a fixed 16 bytes.  If that key was absent dblprec_size is 0,
+         * and ompi_abi_fortran_base_type() will simply find no matching base
+         * type and leave the type unavailable.
+         */
+        { &ompi_mpi_dblcplex.dt,  OMPI_ABI_FORTRAN_CLASS_COMPLEX, "mpi_double_complex_supported", 2 * dblprec_size },
     };
     const opal_datatype_t *optional_base[sizeof(optionals) / sizeof(optionals[0])];
     bool optional_set[sizeof(optionals) / sizeof(optionals[0])];

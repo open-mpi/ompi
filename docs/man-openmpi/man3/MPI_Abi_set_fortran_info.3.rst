@@ -41,8 +41,13 @@ size instead of ``MPI_UNDEFINED``:
 
 * ``mpi_logical_size``: size in bytes of Fortran default ``LOGICAL``
 * ``mpi_integer_size``: size in bytes of Fortran default ``INTEGER``
-* ``mpi_real_size``: size in bytes of Fortran default ``REAL``
-* ``mpi_double_precision_size``: size in bytes of Fortran ``DOUBLE PRECISION``
+* ``mpi_real_size``: size in bytes of Fortran default ``REAL``; this
+  also configures ``MPI_COMPLEX``, which is a pair of default ``REAL``
+  values (``2 * mpi_real_size`` bytes)
+* ``mpi_double_precision_size``: size in bytes of Fortran ``DOUBLE
+  PRECISION``; this also configures ``MPI_DOUBLE_COMPLEX``, which is a
+  pair of ``DOUBLE PRECISION`` values (``2 * mpi_double_precision_size``
+  bytes)
 * ``mpi_<type><n>_supported`` (boolean): whether the Fortran compiler
   supports the optional fixed-size type ``MPI_<TYPE><N>`` (for example
   ``mpi_integer8_supported`` for ``MPI_INTEGER8``)

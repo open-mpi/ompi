@@ -266,7 +266,8 @@ Open MPI version v6.1.0
   ``MPI_INFO_NULL`` and the application supplies them through an info
   object.  After a successful ``MPI_Abi_set_fortran_info``,
   ``MPI_Type_size`` of ``MPI_INTEGER``, ``MPI_REAL``, ``MPI_LOGICAL``,
-  ``MPI_DOUBLE_PRECISION``, ``MPI_CHARACTER`` and the optional
+  ``MPI_DOUBLE_PRECISION``, ``MPI_CHARACTER``, ``MPI_COMPLEX``,
+  ``MPI_DOUBLE_COMPLEX`` and the optional
   fixed-size Fortran datatypes (``MPI_INTEGER4``, ``MPI_REAL8``,
   ``MPI_COMPLEX16``, etc.) marked supported in the info object reports
   the requested size instead of ``MPI_UNDEFINED``.  Previously the call
