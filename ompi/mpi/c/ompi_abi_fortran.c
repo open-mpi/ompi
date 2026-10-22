@@ -546,6 +546,19 @@ OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info)
     bool optional_set[sizeof(optionals) / sizeof(optionals[0])];
 
     /*
+     * Track whether the info object carried any key this routine
+     * recognizes: one of the default size keys (including the
+     * non-standard mpi_character_size) or any optional *_supported key.
+     * An info with none of them conveys nothing, yet CHARACTER is made
+     * available unconditionally and the one-shot latch would still be
+     * consumed -- burning the application's single permitted call and
+     * leaving the real defaults unavailable forever.  Reject such an info
+     * below so a later, correct call can still succeed.
+     */
+    bool any_recognized_key = have_logical || have_integer || have_real ||
+                              have_dblprec || have_character;
+
+    /*
      * Resolve each optional type whose *_supported key is true.
      *
      * The mpi_<type><n>_supported keys describe what the *Fortran
@@ -572,11 +585,24 @@ OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info)
         if (OMPI_SUCCESS != ret) {
             return ompi_abi_fortran_mpi_err(ret);
         }
+        if (flag) {
+            any_recognized_key = true;
+        }
         if (flag && supported) {
             optional_base[i] = ompi_abi_fortran_base_type(optionals[i].cls,
                                                           optionals[i].size);
             optional_set[i] = (NULL != optional_base[i]);
         }
+    }
+
+    /*
+     * An info object with none of the keys this routine understands would
+     * otherwise silently consume the application's single permitted call.
+     * Reject it so the latch stays clear and a later, correct call can
+     * still configure the Fortran types.
+     */
+    if (!any_recognized_key) {
+        return MPI_ERR_INFO;
     }
 
     /*

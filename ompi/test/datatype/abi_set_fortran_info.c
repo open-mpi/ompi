@@ -110,6 +110,23 @@ int main(int argc, char **argv)
          * is a --disable-mpi-fortran build.  Supply them and verify that
          * the Fortran datatypes report the requested sizes.
          */
+
+        /*
+         * An info object carrying none of the recognized keys conveys no
+         * Fortran type information.  It must be rejected with MPI_ERR_INFO
+         * and must not consume the single permitted call, so the real
+         * configuration below still succeeds.
+         */
+        MPI_Info_create(&info);
+        MPI_Info_set(info, "an_unrelated_key", "value");
+        mpi_errno = MPI_Abi_set_fortran_info(info);
+        if (MPI_ERR_INFO != mpi_errno) {
+            fprintf(stderr, "MPI_Abi_set_fortran_info with no recognized keys "
+                    "returned %d, expected MPI_ERR_INFO\n", mpi_errno);
+            errors++;
+        }
+        MPI_Info_free(&info);
+
         MPI_Info_create(&info);
         info_set_int(info, "mpi_character_size", FORTRAN_CHARACTER_SIZE);
         info_set_int(info, "mpi_logical_size", FORTRAN_LOGICAL_SIZE);
