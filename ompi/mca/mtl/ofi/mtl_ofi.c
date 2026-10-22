@@ -3,6 +3,7 @@
  * Copyright (c) 2021-2022 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -15,6 +16,12 @@
 #include "mtl_ofi.h"
 
 #include "opal/sys/atomic.h"
+#include "opal/mca/threads/mutex.h"
+
+/* Serializes first-use wiring so a peer is inserted into the AV only once. One lock for the
+ * whole process, so first contact with different peers is serialized too; it is held only while
+ * a peer is wired, never on the send and receive paths. */
+static opal_mutex_t ompi_mtl_ofi_wireup_lock = OPAL_MUTEX_STATIC_INIT;
 
 OMPI_DECLSPEC extern mca_mtl_ofi_component_t mca_mtl_ofi_component;
 
@@ -234,17 +241,6 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
     mca_mtl_ofi_endpoint_t *endpoint = NULL;
     int num_peers_limit = (1 << ompi_mtl_ofi.num_bits_source_rank) - 1;
 
-    /* We cannot add more ranks than available tag bits */
-    if ((false == ompi_mtl_ofi.fi_cq_data) &&
-        OPAL_UNLIKELY(((int) (nprocs + ompi_mtl_ofi.num_peers) > num_peers_limit))) {
-        opal_output(0, "%s:%d: OFI provider: %s does not have enough bits for source rank in its tag.\n"
-                       "Adding more ranks will result in undefined behaviour. Please enable\n"
-                       "FI_REMOTE_CQ_DATA feature in the provider. For more info refer fi_cq(3).\n",
-                       __FILE__, __LINE__, ompi_mtl_ofi.provider_name);
-        fflush(stderr);
-        return OMPI_ERROR;
-    }
-
     /* Each peer is wired in one step, so giving up partway leaves no
      * address in the vector that no endpoint points at, and leaves the
      * peers done so far usable. */
@@ -277,6 +273,30 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
             return ret;
         }
 
+        /* The modex receive above must stay outside the lock: it can progress the runtime and
+         * re-enter the PML, and the lock is not recursive. */
+        OPAL_THREAD_LOCK(&ompi_mtl_ofi_wireup_lock);
+        if (NULL != procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL]) {
+            OPAL_THREAD_UNLOCK(&ompi_mtl_ofi_wireup_lock);
+            free(ep_name);
+            ep_name = NULL;
+            continue;
+        }
+
+        /* We cannot add more ranks than available tag bits. Checked here, under the lock, so
+         * that peers wired concurrently cannot together overshoot the limit. */
+        if ((false == ompi_mtl_ofi.fi_cq_data) &&
+            OPAL_UNLIKELY((int) (ompi_mtl_ofi.num_peers + 1) > num_peers_limit)) {
+            OPAL_THREAD_UNLOCK(&ompi_mtl_ofi_wireup_lock);
+            free(ep_name);
+            opal_output(0, "%s:%d: OFI provider: %s does not have enough bits for source rank in its tag.\n"
+                           "Adding more ranks will result in undefined behaviour. Please enable\n"
+                           "FI_REMOTE_CQ_DATA feature in the provider. For more info refer fi_cq(3).\n",
+                           __FILE__, __LINE__, ompi_mtl_ofi.provider_name);
+            fflush(stderr);
+            return OMPI_ERROR;
+        }
+
         /**
          * Map the EP name to fi_addr.
          */
@@ -285,6 +305,7 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
             opal_output_verbose(1, opal_common_ofi.output,
                                 "%s:%d: fi_av_insert failed for address %s: %d\n",
                                 __FILE__, __LINE__, ep_name, count);
+            OPAL_THREAD_UNLOCK(&ompi_mtl_ofi_wireup_lock);
             free(ep_name);
             return OMPI_ERROR;
         }
@@ -298,28 +319,27 @@ ompi_mtl_ofi_add_procs(struct mca_mtl_base_module_t *mtl,
                                 " structure\n",
                                 __FILE__, __LINE__);
             (void) fi_av_remove(ompi_mtl_ofi.av, &fi_addr, 1, 0);
+            OPAL_THREAD_UNLOCK(&ompi_mtl_ofi_wireup_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         endpoint->mtl_ofi_module = &ompi_mtl_ofi;
         endpoint->peer_fiaddr = fi_addr;
 
-        /* Two threads can reach an unwired peer at the same time and
-         * both get this far; only one of them may publish. Released so
-         * that the fi_addr above is in place for whoever picks the
-         * endpoint up, rather than leaving that to the dependency
-         * between their load of the pointer and their use of it. */
-        void *_tmp_ptr = NULL;
-        if (!opal_atomic_compare_exchange_strong_rel_ptr(
-                (opal_atomic_intptr_t *) &procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL],
-                (intptr_t *) &_tmp_ptr, (intptr_t) endpoint)) {
-            OBJ_RELEASE(endpoint);
-            (void) fi_av_remove(ompi_mtl_ofi.av, &fi_addr, 1, 0);
-            continue;
-        }
+        /* Two threads can reach an unwired peer at the same time, but only the one holding the
+         * wire-up lock gets this far, so the address is inserted once and nothing has to be
+         * removed again: a duplicate insert may hand both threads the same fi_addr (fi_av(3)),
+         * and removing the loser's would remove the winner's. The lock also makes this the only
+         * writer of the slot, so a plain store will do. The barrier puts the fi_addr above in
+         * place for whoever picks the endpoint up without the lock, rather than leaving that
+         * to the dependency between their load of the pointer and their use of it. */
+        assert(NULL == procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL]);
+        opal_atomic_wmb();
+        procs[i]->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_MTL] = endpoint;
 
         /* Number of ranks this rank has to be able to name in a tag */
         ompi_mtl_ofi.num_peers++;
+        OPAL_THREAD_UNLOCK(&ompi_mtl_ofi_wireup_lock);
     }
 
     return OMPI_SUCCESS;
