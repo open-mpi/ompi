@@ -53,6 +53,7 @@ EXTRA_DIST = \
 # these are compiled with the *installed* wrapper compiler.
 MPICC = mpicc
 MPIRUN = mpirun
+OMPI_INFO = ompi_info
 
 # Rule 1 above: no more than 2 ranks.
 MPIRUN_NP = 2
@@ -111,6 +112,12 @@ DIRECT_MODEX = OMPI_MCA_pmix_base_async_modex=1 \
 # where a wire-up failure shows up as a prompt "unable to reach" abort,
 # and once with the default transports, where a fallback transport turns
 # the same failure into a hang.  Both must pass.
+#
+# "Shared memory only" means self,sm, and sm is not the only BTL that
+# wires a node: smcuda carries its own node-local numbering and its own
+# synchronization, shares none of that code, and is skipped by both legs
+# above -- the default transports hand every node-local peer to sm,
+# which has the higher exclusivity.
 #
 # The rma pattern is the one a hang would not catch.  A window picks one
 # BTL for the whole window when it is created, from per-peer
@@ -174,6 +181,22 @@ check-mpirun:
 	        $(mpirun_runner) --mca btl self,sm ./any_source_oneway; \
 	    echo "=== ANY_SOURCE one-way, direct modex, default transports ==="; \
 	    run env $(DIRECT_MODEX) $(mpirun_runner) ./any_source_oneway; \
+	    if $(OMPI_INFO) --param btl smcuda --level 9 2>/dev/null \
+	            | grep -q btl_smcuda_flags; then \
+	        echo "=== async modex wire-up, smcuda only ==="; \
+	        run env $(ASYNC_MODEX) \
+	            $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda \
+	            ./async_modex_wireup; \
+	        echo "=== async modex wire-up, direct modex, smcuda only ==="; \
+	        run env $(DIRECT_MODEX) \
+	            $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda \
+	            ./async_modex_wireup; \
+	        echo "=== ANY_SOURCE one-way, smcuda only ==="; \
+	        run $(mpirun_runner) --mca pml ob1 --mca btl self,smcuda \
+	            ./any_source_oneway; \
+	    else \
+	        echo "SKIP: btl/smcuda is not built"; \
+	    fi; \
 	    echo "=== async modex wire-up, tcp only ==="; \
 	    run env $(ASYNC_MODEX) $(tcp_runner) ./async_modex_wireup; \
 	    echo "=== async modex wire-up, direct modex, tcp only ==="; \
@@ -213,6 +236,12 @@ check-mpirun:
 	    echo "=== wireup stress rma, direct modex, shared memory only ==="; \
 	    run env $(DIRECT_MODEX) \
 	        $(oversub_runner) --mca btl self,sm ./wireup_stress rma; \
+	    if $(OMPI_INFO) --param btl smcuda --level 9 2>/dev/null \
+	            | grep -q btl_smcuda_flags; then \
+	        echo "=== wireup stress rma, smcuda only ==="; \
+	        run $(oversub_runner) --mca pml ob1 --mca btl self,smcuda \
+	            ./wireup_stress rma; \
+	    fi; \
 	    $(MPICC) -g "$(srcdir)/session_first_touch.c" -o session_first_touch -lpthread; \
 	    echo "=== session first touch, direct modex, shared memory only ==="; \
 	    run env $(DIRECT_MODEX) \
