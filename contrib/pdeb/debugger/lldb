@@ -66,6 +66,11 @@ debugger_startup_commands()
 {
     emit "settings set interpreter.prompt-on-quit false\n"
     emit "settings set auto-confirm true\n"
+    # The Open MPI inspectors are a sibling Python module rather than a here
+    # document: lldb has no gdb-style inline 'python ... end' block, and a
+    # module also gets us real tracebacks on a path lldb reports.
+    emit "command script import \"%s/lldb_inspector.py\"\n" \
+        "$pdeb_debugger_dir"
 }
 
 debugger_attach_probe_command()
@@ -223,4 +228,31 @@ debugger_parse_stack()
             }
         }
     ' "$raw_file"
+}
+
+debugger_lldb_flatten_args()
+{
+    # The dump commands are handed the caller's arguments as one string.  Fold
+    # any embedded newline into a space so a single lldb command line results;
+    # the module splits the words back apart with shlex.
+    printf "%s" "$1" | tr '\n' ' '
+}
+
+debugger_btlsm_dump_command()
+{
+    emit "ompi_btlsm_dump\n"
+}
+
+debugger_req_dump_command()
+{
+    args=$(debugger_lldb_flatten_args "${1-}")
+
+    emit "ompi_req_dump %s\n" "$args"
+}
+
+debugger_pml_dump_command()
+{
+    args=$(debugger_lldb_flatten_args "${1-}")
+
+    emit "ompi_pml_dump %s\n" "$args"
 }

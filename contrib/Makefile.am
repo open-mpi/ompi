@@ -48,6 +48,7 @@ EXTRA_DIST = \
         pdeb/commands/show \
         pdeb/debugger/gdb \
         pdeb/debugger/lldb \
+        pdeb/debugger/lldb_inspector.py \
         completion/mpirun.sh \
         completion/mpirun.zsh \
         datatype/README.md \

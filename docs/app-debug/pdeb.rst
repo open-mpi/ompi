@@ -257,7 +257,12 @@ Open MPI internal state
 
 These commands decode Open MPI internal data structures.  They are only
 available when the active debugger module implements them (currently
-``gdb``), and they require debug symbols for the Open MPI libraries.
+``gdb`` and ``lldb``), and they require debug symbols for the Open MPI
+libraries; a build without ``-g`` leaves the debugger with symbol
+tables only, and the dumps then report which type they could not find
+rather than guessing at a layout.  On macOS the debug information has
+to be reachable too, so either keep the object files the libraries were
+linked from or run ``dsymutil`` on the installed libraries.
 They are also specific to particular components: ``req_dump`` and
 ``pml_dump`` require the process to be in
 ``ompi_request_default_wait_all`` unless you pass an explicit requests
@@ -531,3 +536,11 @@ new file in the debugger directory that implements the ``debugger_*``
 contract (``debugger_available``, ``debugger_start``,
 ``debugger_backtrace_command``, ``debugger_parse_stack``, and so on),
 modeled on the existing ``gdb`` and ``lldb`` modules.
+
+A debugger module may carry a companion file: ``gdb`` keeps the Open MPI
+dump logic in a gdb-python prelude it emits at startup, while ``lldb``
+keeps the same logic in ``lldb_inspector.py`` beside it, imported at
+startup with ``command script import``, because lldb has no equivalent
+of gdb's inline ``python ... end`` block.  Anything a module needs to
+ship alongside itself belongs in the same directory and in
+``EXTRA_DIST`` in ``$OMPI_SRC/contrib/Makefile.am``.
