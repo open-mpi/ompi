@@ -64,6 +64,14 @@ standard specifies, an application determines whether a given optional
 datatype is actually available by calling :ref:`MPI_Type_size` and
 checking for ``MPI_UNDEFINED``.
 
+The ``info`` object must carry at least one key this routine
+recognizes (one of the size keys above or an
+``mpi_<type><n>_supported`` key).  An ``info`` that contains none of
+them conveys no Fortran type information and is rejected with
+``MPI_ERR_INFO`` without changing any library state, so that the
+application's single permitted call is not consumed by an empty
+request.
+
 This routine may be called at most once; a subsequent call returns
 ``MPI_ERR_ABI``.  A duplicate of ``info`` is also stored for later
 retrieval via :ref:`MPI_Abi_get_fortran_info`.  Note that, consistent
