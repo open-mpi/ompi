@@ -37,6 +37,7 @@
 #include "opal/datatype/opal_datatype.h"
 #include "opal/class/opal_cstring.h"
 #include "opal/util/bit_ops.h"
+#include "opal/util/string_copy.h"
 #include "opal/include/opal_stdint.h"
 
 static ompi_info_t *abi_fortran_info_from_user = NULL;
@@ -195,9 +196,14 @@ err_cleanup:
     if (NULL != newinfo) {
         ompi_info_free(&newinfo);
     }
-    if (NULL != abi_fortran_info_from_user) {
-        ompi_info_free(&abi_fortran_info_from_user);
-    }
+
+    /*
+     * Do not free abi_fortran_info_from_user here: a failing get must not
+     * destroy the state a successful MPI_Abi_set_fortran_info established.
+     * The one-shot latch is already consumed, so the application could not
+     * restore it, and every subsequent get would wrongly return
+     * MPI_INFO_NULL as though nothing had ever been set.
+     */
 
     /*
      * The failures funneled here carry OPAL error codes (negative
@@ -349,6 +355,29 @@ static void ompi_abi_fortran_make_available(ompi_datatype_t *dst,
     dst->super.desc     = src->desc;
     dst->super.opt_desc = src->opt_desc;
     dst->super.ptypes   = src->ptypes;
+
+    /*
+     * Adopt the base type's OPAL name (e.g. "OPAL_INT4") in place of the
+     * "OPAL_UNAVAILABLE" the type carried while unavailable, matching what a
+     * static Fortran build produces.  This only affects opal_datatype_dump()
+     * diagnostics -- MPI_Type_get_name reads the separate ompi_datatype_t
+     * name -- but keeping it accurate costs nothing.
+     */
+    opal_string_copy(dst->super.name, src->name, OPAL_MAX_OBJECT_NAME);
+}
+
+/*
+ * Translate a raw OPAL/OMPI return code into an MPI error class.  The info
+ * accessors (ompi_info_get(), ompi_info_get_bool(), ompi_info_dup()) can
+ * return negative OPAL error codes, which are not valid MPI error classes
+ * and must not surface directly as the return value of a public MPI call.
+ */
+static int ompi_abi_fortran_mpi_err(int ret)
+{
+    if (ret < 0) {
+        ret = (OPAL_ERR_OUT_OF_RESOURCE == ret) ? MPI_ERR_NO_MEM : MPI_ERR_INTERN;
+    }
+    return ret;
 }
 
 /*
@@ -366,7 +395,7 @@ static int ompi_abi_fortran_get_int(ompi_info_t *info, const char *key,
     *found = false;
     ret = ompi_info_get(info, key, &value, &flag);
     if (OMPI_SUCCESS != ret) {
-        return ret;
+        return ompi_abi_fortran_mpi_err(ret);
     }
     if (!flag) {
         return MPI_SUCCESS;
@@ -541,7 +570,7 @@ OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info)
 
         ret = ompi_info_get_bool(info, optionals[i].key, &supported, &flag);
         if (OMPI_SUCCESS != ret) {
-            return ret;
+            return ompi_abi_fortran_mpi_err(ret);
         }
         if (flag && supported) {
             optional_base[i] = ompi_abi_fortran_base_type(optionals[i].cls,
@@ -579,10 +608,7 @@ OMPI_HIDDEN int ompi_abi_set_fortran_info(ompi_info_t *info)
     ret = ompi_info_dup(info, &abi_fortran_info_from_user);
     if (MPI_SUCCESS != ret) {
         ompi_info_free(&abi_fortran_info_from_user);
-        if (ret < 0) {
-            ret = (OPAL_ERR_OUT_OF_RESOURCE == ret) ? MPI_ERR_NO_MEM : MPI_ERR_INTERN;
-        }
-        return ret;
+        return ompi_abi_fortran_mpi_err(ret);
     }
 
     ompi_mpi_instance_append_finalize(ompi_abi_fortran_finalize);
