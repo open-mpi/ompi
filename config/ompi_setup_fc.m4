@@ -324,11 +324,6 @@ AC_DEFUN([OMPI_SETUP_FC],[
            [AC_FC_SRCEXT(f)
             AC_FC_SRCEXT(f90)])
 
-    # Use Autoconf 2.69 Fortran detection macros for improved portability
-    AS_IF([test $ompi_fc_happy -eq 1],
-          [# Detect preprocessor define flag (usually -D)
-           AC_FC_PP_DEFINE])
-
     # Check to see if we need additional compiler flags for
     # preprocessing .F90 files.
     AS_IF([test $ompi_fc_happy -eq 1],
