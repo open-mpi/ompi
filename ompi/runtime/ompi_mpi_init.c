@@ -279,20 +279,21 @@ MPI_Fint *MPI_F08_STATUSES_IGNORE = NULL;
    common blocks in the Fortran equivalents.  See
    ompi/mpi/fortran/base/constants.h for a more detailed explanation.
 
-   The values are *NOT* initialized.  We do not use the values of
-   these constants; only their addresses (because they're always
-   passed by reference by Fortran).
+   We do not use the values of these constants; only their addresses
+   (because they're always passed by reference by Fortran).
 
-   Initializing upon instantiation these can reveal size and/or
-   alignment differences between Fortran and C (!) which can cause
-   warnings or errors upon linking (e.g., making static libraries with
-   the intel 9.0 compilers on 64 bit platforms shows alignment
-   differences between libmpi.a and the user's application, resulting
-   in a linker warning).  FWIW, if you initialize these variables in
-   functions (i.e., not at the instantiation in the global scope), the
-   linker somehow "figures it all out" (w.r.t. different alignments
-   between fortran common blocks and the corresponding C variables) and
-   no linker warnings occur.
+   The values are nevertheless initialized, so that the variables are
+   placed in .data instead of .bss.  When GNU ld links a shared library
+   that declares one of these common blocks against libmpi, it
+   allocates a private copy of a .bss definition in that library, but
+   not of a .data definition.  Such a private copy is used when the
+   library is loaded with RTLD_DEEPBIND, and the address comparisons
+   for e.g. MPI_IN_PLACE then fail.
+
+   Initializing these variables makes the linker check that their
+   sizes and alignments match those of the Fortran common blocks.  The
+   types, dimensions, and alignments in mpif-c-constants.h are chosen
+   to match.
 
    Note that the rationale for the types of each of these variables is
    discussed in ompi/include/mpif-common.h.  Do not change the types

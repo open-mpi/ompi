@@ -152,7 +152,13 @@ def gen_c_constants(mangling_type, fortran_constants, args):
             align = f" __opal_attribute_aligned__({args.align}) " if args.align else ' '
             dim = const.get('c_dim', '')
             mangled_name = mangle(const['c_name'], mangling_type)
-            f.write(f"{const['c_type']}{align}{mangled_name}{dim};\n")
+            # Initialize the definitions so that they go into .data, not
+            # .bss.  GNU ld gives a shared library that declares a
+            # matching COMMON block its own copy of a .bss definition,
+            # which it then uses under RTLD_DEEPBIND.  Only the addresses
+            # of these variables matter, not their values.
+            init = "{1}" if dim else "1"
+            f.write(f"{const['c_type']}{align}{mangled_name}{dim} = {init};\n")
 
 def gen_f08_types(mangling_type, fortran_constants):
     # Generates the mpif-f08-types.h file
