@@ -1049,7 +1049,13 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
         for (size_t block = 1; block < (size_t) size; block++) {
             // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            int k = opal_cube_dim((int) ompi_coll_bine_get_nu(block, size) + 1) - 1;
+            uint32_t nu = 0;
+            err = ompi_coll_bine_get_nu(block, size, &nu);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            int k = opal_cube_dim((int) nu + 1) - 1;
             // Check if this must be sent
             if (k == reverse_step) {
                 // 0 would send this block

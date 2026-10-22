@@ -1892,13 +1892,6 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
     }
     reqs_s = requests;
     reqs_r = &requests[size];
-    if (NULL == reqs_s || NULL == reqs_r)
-    {
-        line = __LINE__;
-        err = MPI_ERR_NO_MEM;
-        goto err_hndl;
-    }
-    
 
     blocks_to_recv = (int *) malloc(size * sizeof(int));
     if (NULL == blocks_to_recv)
@@ -1933,7 +1926,13 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
         for (size_t block = 1; block < (size_t) size; block++) {
             // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            int k = opal_cube_dim((int) ompi_coll_bine_get_nu(block, size) + 1) - 1;
+            uint32_t nu = 0;
+            err = ompi_coll_bine_get_nu(block, size, &nu);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            int k = opal_cube_dim((int) nu + 1) - 1;
             // Check if this must be sent
             if (k == reverse_step) {
                 // 0 would send this block
@@ -2047,7 +2046,13 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
         for (size_t block = 1; block < (size_t) size; block++) {
             // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            int k = opal_cube_dim((int) ompi_coll_bine_get_nu(block, size) + 1) - 1;
+            uint32_t nu = 0;
+            err = ompi_coll_bine_get_nu(block, size, &nu);
+            if (MPI_SUCCESS != err) {
+                line = __LINE__;
+                goto err_hndl;
+            }
+            int k = opal_cube_dim((int) nu + 1) - 1;
             // int k = __builtin_ctz(get_nu(block, size));
             //  Check if this must be sent (recvd in allgather)
             if (k == step || block == 0) {

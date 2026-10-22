@@ -904,8 +904,11 @@ int ompi_coll_base_alltoall_intra_bine(const void *sbuf, size_t scount,
                 num_resident_blocks_next++;
             }
         }
-        assert(block_recvd_cnt == size / 2);
-        assert(block_send_cnt == size / 2);
+        if ((block_recvd_cnt != size / 2) || (block_send_cnt != size / 2)) {
+            err = MPI_ERR_INTERN;
+            line = __LINE__;
+            goto err_hndl;
+        }
         num_resident_blocks /= 2;
 
         // I receive data in the second half of tmpbuf (the first half contains the blocks I am

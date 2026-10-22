@@ -344,22 +344,23 @@ static inline int ompi_coll_bine_try_negabinary(int32_t bin, uint32_t nbits, uin
 }
 
 /* get the negabinary representation of a rank, selecting between two possible encodings */
-static inline uint32_t ompi_coll_bine_get_rank_negabinary_representation(uint32_t num_ranks,
-                                                                         uint32_t rank)
+static inline int
+ompi_coll_bine_get_rank_negabinary_representation(uint32_t num_ranks, uint32_t rank, uint32_t *res)
 {
     if (OPAL_UNLIKELY(num_ranks == 0 || num_ranks > INT_MAX || rank >= num_ranks)) {
-        return UINT32_MAX;
+        return MPI_ERR_ARG;
     }
 
     if (num_ranks == 1) {
-        return 0;
+        *res = 0;
+        return MPI_SUCCESS;
     }
 
     uint32_t nba = 0, nbb = 0;
     bool nba_ok = false, nbb_ok = false;
     int num_bits = opal_cube_dim(num_ranks);
     if (OPAL_UNLIKELY(num_bits < 0 || num_bits > 31)) {
-        return UINT32_MAX;
+        return MPI_ERR_ARG;
     }
 
     if (rank % 2) {
@@ -370,19 +371,23 @@ static inline uint32_t ompi_coll_bine_get_rank_negabinary_representation(uint32_
         nbb_ok = ompi_coll_bine_try_negabinary(-rank + num_ranks, (uint32_t) num_bits, &nbb);
     }
 
-    assert(nba_ok || nbb_ok);
+    if (!nba_ok && !nbb_ok) {
+        return MPI_ERR_ARG;
+    }
 
     if (nba_ok && !nbb_ok) {
-        return nba;
+        *res = nba;
     } else if (!nba_ok && nbb_ok) {
-        return nbb;
+        *res = nbb;
     } else { // Check MSB
         if (nba & (UINT32_C(0x80000000) >> (32 - num_bits))) {
-            return nba;
+            *res = nba;
         } else {
-            return nbb;
+            *res = nbb;
         }
     }
+
+    return MPI_SUCCESS;
 }
 
 /* reverse the order of all bits in a 32-bit value */
@@ -402,12 +407,27 @@ static inline uint32_t ompi_coll_bine_nb_to_nu(uint32_t nb, uint32_t size)
     return ompi_coll_bine_reverse(nb ^ (nb >> 1)) >> (32 - (uint32_t) opal_cube_dim((int) size));
 }
 
-/* get the nu (step) value for a given rank, selecting the minimal encoding */
-static inline uint32_t ompi_coll_bine_get_nu(uint32_t rank, uint32_t size)
+/* get the nu (step) value for a given rank, selecting the minimal encoding.
+ * Returns MPI_SUCCESS on success, or MPI_ERR_ARG when the arguments are out
+ * of range or the rank has no negabinary encoding of the given width.
+ */
+static inline int ompi_coll_bine_get_nu(uint32_t rank, uint32_t size, uint32_t *res)
 {
+    if (OPAL_UNLIKELY(0 == size || size > (uint32_t) INT_MAX || rank >= size)) {
+        return MPI_ERR_ARG;
+    }
+
+    if (1 == size) {
+        *res = 0;
+        return MPI_SUCCESS;
+    }
+
     uint32_t nba = 0, nbb = 0;
     bool nba_ok = false, nbb_ok = false;
     int num_bits = opal_cube_dim((int) size);
+    if (OPAL_UNLIKELY(num_bits < 1 || num_bits > 31)) {
+        return MPI_ERR_ARG;
+    }
     if (rank % 2) {
         nba_ok = ompi_coll_bine_try_negabinary(rank, (uint32_t) num_bits, &nba);
         nbb_ok = ompi_coll_bine_try_negabinary(rank - size, (uint32_t) num_bits, &nbb);
@@ -415,28 +435,32 @@ static inline uint32_t ompi_coll_bine_get_nu(uint32_t rank, uint32_t size)
         nba_ok = ompi_coll_bine_try_negabinary(-rank, (uint32_t) num_bits, &nba);
         nbb_ok = ompi_coll_bine_try_negabinary(-rank + size, (uint32_t) num_bits, &nbb);
     }
-    assert(nba_ok || nbb_ok);
+    if (!nba_ok && !nbb_ok) {
+        return MPI_ERR_ARG;
+    }
 
     if (nba_ok && !nbb_ok) {
-        return ompi_coll_bine_nb_to_nu(nba, size);
+        *res = ompi_coll_bine_nb_to_nu(nba, size);
     } else if (!nba_ok && nbb_ok) {
-        return ompi_coll_bine_nb_to_nu(nbb, size);
+        *res = ompi_coll_bine_nb_to_nu(nbb, size);
     } else { // Check MSB
         int nu_a = ompi_coll_bine_nb_to_nu(nba, size);
         int nu_b = ompi_coll_bine_nb_to_nu(nbb, size);
         if (nu_a < nu_b) {
-            return nu_a;
+            *res = nu_a;
         } else {
-            return nu_b;
+            *res = nu_b;
         }
     }
+    return MPI_SUCCESS;
 }
 
 /* remap a rank to its bine tree position; returns -1 on invalid input */
 static inline int ompi_coll_bine_remap_rank(uint32_t num_ranks, uint32_t rank)
 {
-    uint32_t remap_rank = ompi_coll_bine_get_rank_negabinary_representation(num_ranks, rank);
-    if (OPAL_UNLIKELY(remap_rank == UINT32_MAX)) {
+    uint32_t remap_rank;
+    int err = ompi_coll_bine_get_rank_negabinary_representation(num_ranks, rank, &remap_rank);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
         return -1;
     }
 
