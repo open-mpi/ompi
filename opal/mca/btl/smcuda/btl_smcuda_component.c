@@ -53,6 +53,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
+#include "opal/util/argv.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
@@ -146,6 +147,18 @@ static int mca_btl_smcuda_component_verify(void)
 
 static int smcuda_register(void)
 {
+    mca_btl_smcuda_component.smcuda_enable = -1;
+    (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version,
+                                           "enable",
+                                           "Enable/Disable the smcuda BTL component: "
+                                           "positive = always enable, 0 = always disable, "
+                                           "negative = enable only when explicitly requested "
+                                           "via --mca btl smcuda (default)",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0,
+                                           MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_1,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &mca_btl_smcuda_component.smcuda_enable);
+
     /* register SM component parameters */
     mca_btl_smcuda_component.mpool_min_size = 134217728;
     (void) mca_base_component_var_register(&mca_btl_smcuda_component.super.btl_version, "min_size",
@@ -246,6 +259,26 @@ static int smcuda_register(void)
     return mca_btl_smcuda_component_verify();
 }
 
+static bool mca_btl_smcuda_explicitly_requested(void)
+{
+    const char *selection = opal_btl_base_framework.framework_selection;
+    char **names;
+    bool requested = false;
+    /* No list at all, or an exclusion list, is not an explicit request. */
+    if (NULL == selection || 0 == strlen(selection) || '^' == selection[0]) {
+        return false;
+    }
+    names = opal_argv_split(selection, ',');
+    for (int i = 0; NULL != names && NULL != names[i]; ++i) {
+        if (0 == strcmp(names[i], "smcuda")) {
+            requested = true;
+            break;
+        }
+    }
+    opal_argv_free(names);
+    return requested;
+}
+
 /*
  *  Called by MCA framework to open the component, registers
  *  component parameters.
@@ -253,6 +286,12 @@ static int smcuda_register(void)
 
 static int mca_btl_smcuda_component_open(void)
 {
+    if (0 == mca_btl_smcuda_component.smcuda_enable
+        || (0 > mca_btl_smcuda_component.smcuda_enable
+            && !mca_btl_smcuda_explicitly_requested())) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
     if (OPAL_SUCCESS != mca_btl_smcuda_component_verify()) {
         return OPAL_ERROR;
     }
