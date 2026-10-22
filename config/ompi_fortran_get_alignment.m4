@@ -198,8 +198,6 @@ AC_DEFUN([OMPI_FORTRAN_GET_COMMON_ALIGNMENT],[
     AS_IF([test $OMPI_TRY_FORTRAN_BINDINGS -gt $OMPI_FORTRAN_NO_BINDINGS],
           [AC_CACHE_CHECK([alignment of Fortran common], ompi_cv_fortran_common_alignment,
               [AC_LANG_PUSH([Fortran])
-               # Force free-form Fortran for this test (uses F90 features)
-               AC_FC_SRCEXT([F90])
                AC_LINK_IFELSE([AC_LANG_SOURCE([[program falignment
    use iso_c_binding, only: C_LOC, C_INTPTR_T
    implicit none
