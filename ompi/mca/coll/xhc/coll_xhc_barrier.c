@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2024 Computer Architecture and VLSI Systems (CARV)
+ * Copyright (c) 2021-2026 Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * $COPYRIGHT$
  *
@@ -17,8 +17,8 @@
 
 #include "coll_xhc.h"
 
-static void xhc_barrier_leader(xhc_comm_t *comms, int comm_count,
-        xhc_peer_info_t *peer_info, int rank, int root, xf_sig_t seq) {
+static void xhc_barrier_leader(xhc_comm_t *comms, xhc_peer_info_t *peer_info,
+        int rank, int root, xf_sig_t seq) {
 
     for(xhc_comm_t *xc = comms; xc; xc = xc->up) {
         // Non-leader by default
@@ -39,14 +39,14 @@ static void xhc_barrier_leader(xhc_comm_t *comms, int comm_count,
             break;
         }
 
-        // The member with the lowest ID (ie. the owner) becomes the leader
+        // Member 0 is the defacto leader
         if(0 == xc->my_id) {
             xc->comm_ctrl->leader_seq = seq;
             xc->is_leader = true;
         }
 
         // Non-leaders exit; they can't become leaders on higher levels
-        if(false == xc->is_leader) {
+        if(!xc->is_leader) {
             break;
         }
     }
@@ -70,23 +70,16 @@ int mca_coll_xhc_barrier(ompi_communicator_t *ompi_comm,
 
     xhc_module_t *module = (xhc_module_t *) ompi_module;
 
-    if(!module->op_data[XHC_BARRIER].init) {
-        int err = xhc_init_op(module, ompi_comm, XHC_BARRIER);
-        if(OMPI_SUCCESS != err) {goto _fallback_permanent;}
-    }
-
-    xhc_peer_info_t *peer_info = module->peer_info;
-    xhc_op_data_t *data = &module->op_data[XHC_BARRIER];
+    xhc_op_data_t *data = xhc_get_op_data(module, XHC_BARRIER, 0);
+    if(!data) {goto _fallback_permanent;}
 
     xhc_comm_t *comms = data->comms;
-    int comm_count = data->comm_count;
-
-    int rank = ompi_comm_rank(ompi_comm);
+    int rank = module->rank;
 
     xf_sig_t seq = ++data->seq;
 
-    xhc_barrier_leader(comms, comm_count, peer_info, rank,
-        mca_coll_xhc_component.barrier_root, seq);
+    xhc_barrier_leader(comms, module->peer_info,
+        rank, module->barrier_root, seq);
 
     // 1. Upwards SEQ Wave
     for(xhc_comm_t *xc = comms; xc; xc = xc->up) {
