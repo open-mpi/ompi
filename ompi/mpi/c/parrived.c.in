@@ -62,15 +62,15 @@ PROTOTYPE ERROR_CLASS parrived(REQUEST request, INT partition, INT_OUT flag)
             rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
 
-        // MPI-5.0 sec 4.2.2 (p.119): "MPI_PARRIVED may be called with a
-        // null or inactive request argument.  In either case, the
-        // operation returns with flag = true."
-        if (MPI_REQUEST_NULL == request ||
-            OMPI_REQUEST_INACTIVE == request->req_state) {
-            *flag = 1;
-            return MPI_SUCCESS;
-        }
+    // MPI-5.0 sec 4.2.2 (p.119): "MPI_PARRIVED may be called with a
+    // null or inactive request argument.  In either case, the
+    // operation returns with flag = true."
+    if (MPI_REQUEST_NULL == request ||
+        OMPI_REQUEST_INACTIVE == request->req_state) {
+        *flag = 1;
+        return MPI_SUCCESS;
     }
 
     // MPI-5.0 sec 3.10 (p.110): a receive from MPI_PROC_NULL "succeeds and

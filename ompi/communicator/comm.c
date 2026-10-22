@@ -200,14 +200,6 @@ static const char * ompi_comm_split_type_to_str(int split_type) {
 */
 static int rankkeycompare(const void *, const void *);
 
-/**
- * to fill the rest of the stuff for the communicator
- */
-static int ompi_comm_fill_rest (ompi_communicator_t *comm,
-                                int num_procs,
-                                ompi_proc_t **proc_pointers,
-                                int my_rank,
-                                ompi_errhandler_t *errh );
 /*
 ** typedef for the allgather_intra required in comm_split.
 ** the reason for introducing this abstraction is, that
@@ -590,6 +582,12 @@ int ompi_comm_create_w_info (ompi_communicator_t *comm, ompi_group_t *group, opa
         free ( rranks );
     }
 
+    /* a half-built communicator is ours to drop */
+    if ( OMPI_SUCCESS != rc && NULL != newcomp && MPI_COMM_NULL != newcomp ) {
+        OBJ_RELEASE(newcomp);
+        newcomp = MPI_COMM_NULL;
+    }
+
     *newcomm = newcomp;
     return ( rc );
 }
@@ -832,13 +830,21 @@ int ompi_comm_split_with_info( ompi_communicator_t* comm, int color, int key,
     free ( lranks );
     free ( rranks );
 
-    /* Step 4: if we are not part of the comm, free the struct   */
-    /* --------------------------------------------------------- */
-    if (inter && my_rsize == 0) {
-        color = MPI_UNDEFINED;
-    }
-    if ( NULL != newcomp && MPI_UNDEFINED == color ) {
-        ompi_comm_free ( &newcomp );
+    if ( OMPI_SUCCESS != rc ) {
+        /* a half-built communicator is ours to drop */
+        if ( NULL != newcomp && MPI_COMM_NULL != newcomp ) {
+            OBJ_RELEASE(newcomp);
+        }
+        newcomp = MPI_COMM_NULL;
+    } else {
+        /* Step 4: if we are not part of the comm, free the struct   */
+        /* --------------------------------------------------------- */
+        if (inter && my_rsize == 0) {
+            color = MPI_UNDEFINED;
+        }
+        if ( NULL != newcomp && MPI_UNDEFINED == color ) {
+            ompi_comm_free ( &newcomp );
+        }
     }
 
     *newcomm = newcomp;
@@ -1849,6 +1855,7 @@ struct ompi_comm_idup_with_info_context_t {
     opal_object_t super;
     ompi_communicator_t *comm;
     ompi_communicator_t *newcomp;
+    ompi_communicator_t **newcomm_out;    /* the handle the caller was given */
     int tag;    /* pml tag of this creation's cid rounds on comm */
 };
 
@@ -1856,8 +1863,9 @@ typedef struct ompi_comm_idup_with_info_context_t ompi_comm_idup_with_info_conte
 
 static void ompi_comm_idup_with_info_context_construct (ompi_comm_idup_with_info_context_t *context)
 {
-    context->comm    = NULL;
-    context->newcomp = NULL;
+    context->comm        = NULL;
+    context->newcomp     = NULL;
+    context->newcomm_out = NULL;
 }
 
 static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_context_t *context)
@@ -1870,6 +1878,21 @@ static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_
 OBJ_CLASS_INSTANCE(ompi_comm_idup_with_info_context_t, opal_object_t,
                    ompi_comm_idup_with_info_context_construct,
                    ompi_comm_idup_with_info_context_destruct);
+
+/* Take the new communicator back from a creation that fails after
+ * MPI_Comm_idup() has already returned the handle.  The application has no
+ * other way to learn that the object it was given is gone, so clear its handle
+ * along with our reference. */
+static void ompi_comm_idup_with_info_discard (ompi_comm_idup_with_info_context_t *context)
+{
+    if (NULL != context->newcomp) {
+        OBJ_RELEASE(context->newcomp);
+        context->newcomp = NULL;
+    }
+    if (NULL != context->newcomm_out) {
+        *context->newcomm_out = MPI_COMM_NULL;
+    }
+}
 
 static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request);
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request);
@@ -1954,6 +1977,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, subreq, subreq[0] ? 1 : 0);
 
     /* assign the newcomm now */
+    context->newcomm_out = newcomm;
     *newcomm = context->newcomp;
 
     /* kick off the request */
@@ -1970,6 +1994,13 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
     ompi_request_t *subreq[1];
     int rc, mode;
 
+    /* ompi_comm_request_progress() runs this even when the construction
+     * subrequest failed, so there may be no usable communicator to go on with */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        ompi_comm_idup_with_info_discard (context);
+        return request->super.req_status.MPI_ERROR;
+    }
+
     if (OMPI_COMM_IS_INTER(context->comm)){
         mode  = OMPI_COMM_CID_INTER;
     } else {
@@ -1980,8 +2011,12 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
     rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, &context->tag,
                                NULL, false, mode, subreq);
     if (OMPI_SUCCESS != rc) {
-        ompi_comm_request_return (request);
-        OBJ_RELEASE(context->newcomp);
+        /* Returning the request here would hand it back to the free list while
+         * the progress loop still holds it and the caller still owns it, and
+         * would release the context this callback goes on to read.  Leave both
+         * alone: an error return completes the request, and the caller returns
+         * it. */
+        ompi_comm_idup_with_info_discard (context);
         return rc;
     }
 
@@ -1997,6 +2032,13 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
     ompi_request_t *subreq[1];
     int rc, mode;
 
+    /* the cid negotiation may have failed, in which case the new communicator
+     * has no context id and must not be named or activated */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        ompi_comm_idup_with_info_discard (context);
+        return request->super.req_status.MPI_ERROR;
+    }
+
     if (OMPI_COMM_IS_INTER(context->comm)){
         mode  = OMPI_COMM_CID_INTER;
     } else {
@@ -2011,7 +2053,7 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
     rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, &context->tag, NULL, false, mode,
                                 subreq);
     if ( OMPI_SUCCESS != rc ) {
-        OBJ_RELEASE(context->newcomp);
+        ompi_comm_idup_with_info_discard (context);
         return rc;
     }
 
@@ -2022,7 +2064,17 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 
 static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
 {
-    /* nothing to be done */
+    ompi_comm_idup_with_info_context_t *context =
+        (ompi_comm_idup_with_info_context_t *) request->context;
+
+    /* ompi_comm_request_progress() replaces the request status with whatever
+     * the last callback returns, so a failed activation has to be reported
+     * from here or the creation is reported as having succeeded */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        ompi_comm_idup_with_info_discard (context);
+        return request->super.req_status.MPI_ERROR;
+    }
+
     return MPI_SUCCESS;
 }
 
@@ -2112,6 +2164,7 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     rc = ompi_comm_nextcid (newcomp, NULL, NULL, (void *) tag, NULL, false,
                             OMPI_COMM_CID_GROUP_NEW);
     if ( OMPI_SUCCESS != rc ) {
+        OBJ_RELEASE(newcomp);
         return rc;
     }
 
@@ -2134,6 +2187,7 @@ int ompi_comm_create_from_group (ompi_group_t *group, const char *tag, opal_info
     rc = ompi_comm_activate (&newcomp, newcomp, NULL, &(int) {0xfeed}, NULL,
                              false, OMPI_COMM_CID_GROUP);
     if ( OMPI_SUCCESS != rc ) {
+        OBJ_RELEASE(newcomp);
         return rc;
     }
 
@@ -3131,128 +3185,6 @@ static int rankkeycompare (const void *p, const void *q)
     return ( 0 );
 }
 
-
-/***********************************************************************
- * Counterpart of MPI_Cart/Graph_create. This will be called from the
- * top level MPI. The condition for INTER communicator is already
- * checked by the time this has been invoked. This function should do
- * somewhat the same things which ompi_comm_create does. It will
- * however select a component for topology and then call the
- * cart_create on that component so that it can re-arrange the proc
- * structure as required (if the reorder flag is true). It will then
- * use this proc structure to create the communicator using
- * ompi_comm_set.
- */
-
-/**
- * Take an almost complete communicator and reserve the CID as well
- * as activate it (initialize the collective and the topologies).
- */
-int ompi_comm_enable(ompi_communicator_t *old_comm,
-                     ompi_communicator_t *new_comm,
-                     int new_rank,
-                     int num_procs,
-                     ompi_proc_t** topo_procs)
-{
-    int ret = OMPI_SUCCESS;
-
-    /* set the rank information before calling nextcid */
-    new_comm->c_local_group->grp_my_rank = new_rank;
-    new_comm->c_my_rank = new_rank;
-
-    /* Determine context id. It is identical to f_2_c_handle */
-    ret = ompi_comm_nextcid (new_comm, old_comm, NULL, NULL, NULL, false,
-                             OMPI_COMM_CID_INTRA);
-    if (OMPI_SUCCESS != ret) {
-        /* something wrong happened while setting the communicator */
-        goto complete_and_return;
-    }
-
-    /* Now, the topology module has been selected and the group
-     * which has the topology information has been created. All we
-     * need to do now is to fill the rest of the information into the
-     * communicator. The following steps are not just similar to
-     * ompi_comm_set, but are actually the same */
-
-    ret = ompi_comm_fill_rest(new_comm,                /* the communicator */
-                              num_procs,               /* local size */
-                              topo_procs,              /* process structure */
-                              new_rank,                /* rank of the process */
-                              old_comm->error_handler); /* error handler */
-
-    if (OMPI_SUCCESS != ret) {
-        /* something wrong happened while setting the communicator */
-        goto complete_and_return;
-    }
-
-    ret = ompi_comm_activate (&new_comm, old_comm, NULL, NULL, NULL, false,
-                              OMPI_COMM_CID_INTRA);
-    if (OMPI_SUCCESS != ret) {
-        /* something wrong happened while setting the communicator */
-        goto complete_and_return;
-    }
-
- complete_and_return:
-    return ret;
-}
-
-static int ompi_comm_fill_rest(ompi_communicator_t *comm,
-                               int num_procs,
-                               ompi_proc_t **proc_pointers,
-                               int my_rank,
-                               ompi_errhandler_t *errh)
-{
-    ompi_group_t *new_group;
-
-    new_group = ompi_group_allocate_plist_w_procs(comm->c_local_group, proc_pointers, num_procs);
-
-    /* properly decrement the ref counts on the groups.
-       We are doing this because this function is sort of a redo
-       of what is done in comm.c. No need to decrement the ref
-       count on the proc pointers
-       This is just a quick fix, and will be looking for a
-       better solution */
-    if (comm->c_local_group) {
-        OBJ_RELEASE( comm->c_local_group );
-    }
-
-    if (comm->c_remote_group) {
-        OBJ_RELEASE( comm->c_remote_group );
-    }
-
-    /* allocate a group structure for the new communicator */
-    comm->c_local_group = new_group;
-
-    /* set the remote group to be the same as local group */
-    comm->c_remote_group = comm->c_local_group;
-    OBJ_RETAIN( comm->c_remote_group );
-
-    /* set the rank information */
-    comm->c_local_group->grp_my_rank = my_rank;
-    comm->c_my_rank = my_rank;
-
-    if( MPI_UNDEFINED != my_rank ) {
-        /* verify whether to set the flag, that this comm
-           contains process from more than one jobid. */
-        ompi_dpm_mark_dyncomm (comm);
-    }
-
-    /* set the error handler */
-    comm->error_handler = errh;
-    OBJ_RETAIN (comm->error_handler);
-
-    /* set name for debugging purposes */
-    /* there is no cid at this stage ... make this right and make edgars
-     * code call this function and remove dupli cde
-     */
-    snprintf (comm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI_COMMUNICATOR %s",
-	      ompi_comm_print_cid (comm));
-
-    /* determine the cube dimensions */
-    comm->c_cube_dim = opal_cube_dim(comm->c_local_group->grp_proc_count);
-
-    return OMPI_SUCCESS;
-}
 
 static int ompi_comm_copy_topo(ompi_communicator_t *oldcomm,
                                ompi_communicator_t *newcomm)

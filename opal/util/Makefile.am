@@ -126,7 +126,20 @@ libopalutil_core_la_SOURCES = \
         sys_limits.c \
         uri.c
 
-show_help_content.c: convert-help-files-to-c-code.py
+# The generator slurps every help-*.txt in the tree, so the prerequisite
+# list would be the tree; run it unconditionally instead. It rewrites
+# the output only when the content differs, so an unchanged tree leaves
+# the timestamp alone and nothing recompiles. A tarball ships the
+# generated file, so only a developer tree needs to rebuild it; leaving
+# it alone also keeps it out of a VPATH build directory, which matters
+# because distclean would not remove it there.
+if OPAL_DEVEL_BUILD
+show_help_content_deps = FORCE
+else
+show_help_content_deps = convert-help-files-to-c-code.py
+endif
+
+show_help_content.c: $(show_help_content_deps)
 	$(OMPI_V_GEN) subdirs=""; \
 	for dir in $(MCA_PROJECT_SUBDIRS); do \
 	    subdirs="$(abs_top_srcdir)/$$dir $$subdirs"; \
@@ -134,6 +147,8 @@ show_help_content.c: convert-help-files-to-c-code.py
 	$(PYTHON) $(abs_srcdir)/convert-help-files-to-c-code.py \
 	    --roots $$subdirs \
 	    --out show_help_content.c
+
+FORCE:
 
 if OPAL_COMPILE_TIMING
 libopalutil_core_la_SOURCES += timings.c
@@ -153,5 +168,7 @@ opaldir = $(opalincludedir)/$(subdir)
 opal_HEADERS = $(headers)
 endif
 
-maintainer-clean-local:
-	rm -f show_help_content.c
+MAINTAINERCLEANFILES = show_help_content.c
+if OPAL_DEVEL_BUILD
+CLEANFILES += show_help_content.c
+endif
