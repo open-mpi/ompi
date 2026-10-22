@@ -43,6 +43,7 @@ TESTS = \
         ompi_datatype_bigcount \
         mpi_datatype_bigcount \
         sizedtypes \
+        abi_set_fortran_info \
         opt_desc_equiv
 
 MPI_CHECKS = to_self pack_description_sweep reduce_local
@@ -142,6 +143,10 @@ partial_LDADD = $(internal_ldadd)
 sizedtypes_SOURCES = sizedtypes.c
 sizedtypes_LDFLAGS = $(common_ldflags)
 sizedtypes_LDADD = $(mpi_ldadd)
+
+abi_set_fortran_info_SOURCES = abi_set_fortran_info.c
+abi_set_fortran_info_LDFLAGS = $(common_ldflags)
+abi_set_fortran_info_LDADD = $(mpi_ldadd)
 
 distclean-local:
 	rm -rf *.dSYM .deps .libs *.log *.o *.trs $(check_PROGRAMS) Makefile
