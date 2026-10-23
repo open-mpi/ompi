@@ -189,6 +189,15 @@ Open MPI version v6.1.0
   ``flag`` parameter of ``MPI_Parrived`` in the ``use mpi`` Fortran
   bindings.
 
+- Fixed wrong results from ``MPI_IN_PLACE``, ``MPI_BOTTOM``,
+  ``MPI_STATUS_IGNORE`` and the other Fortran sentinels in shared
+  libraries that use ``mpif.h`` or ``use mpi`` and are loaded with
+  ``RTLD_DEEPBIND`` (as Julia does for its binary packages).  When
+  such a library was linked with GNU ld, it got its own copy of each
+  sentinel, which Open MPI did not recognize.  The sentinels are now
+  initialized variables, so GNU ld no longer makes such copies.
+  Libraries linked with gold or lld still get their own copies.
+
 - Adjusted many Fortran ``use mpi`` API bindings to use the argument
   names as defined by the standard. Calling these functions using
   argument keywords will now require the standard-conformant naming
