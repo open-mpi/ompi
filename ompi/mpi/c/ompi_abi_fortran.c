@@ -269,6 +269,7 @@ OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_tr
         }
     } else {
     switch (logical_size) {
+#if OMPI_HAVE_FORTRAN_LOGICAL1
         case OMPI_SIZEOF_FORTRAN_LOGICAL1:
             switch (OMPI_DATATYPE_MPI_LOGICAL1) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -288,6 +289,8 @@ OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_tr
                 break;
              }
             break;
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL2
         case OMPI_SIZEOF_FORTRAN_LOGICAL2:
             switch (OMPI_DATATYPE_MPI_LOGICAL2) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -307,6 +310,8 @@ OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_tr
                 break;
             }
             break;
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL4
         case OMPI_SIZEOF_FORTRAN_LOGICAL4:
             switch (OMPI_DATATYPE_MPI_LOGICAL4) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -326,6 +331,8 @@ OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_tr
                 break;
             }
             break;
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL8
         case OMPI_SIZEOF_FORTRAN_LOGICAL8:
             switch (OMPI_DATATYPE_MPI_LOGICAL8) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -345,6 +352,8 @@ OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_tr
                 break;
             }
             break;
+#endif
+#if OMPI_HAVE_FORTRAN_LOGICAL16
         case OMPI_SIZEOF_FORTRAN_LOGICAL16:
             switch (OMPI_DATATYPE_MPI_LOGICAL16) {
             case OMPI_DATATYPE_MPI_INT8_T:
@@ -364,6 +373,7 @@ OMPI_HIDDEN int ompi_abi_get_fortran_booleans(int logical_size, void *logical_tr
                 break;
             }
             break;
+#endif
         default:
             unavailable = true;
         }
