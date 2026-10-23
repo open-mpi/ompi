@@ -121,7 +121,7 @@ int mca_coll_ucc_iscatterv(const void *sbuf, ompi_count_array_t scounts,
                                                      rbuf, rcount, rdtype, root,
                                                      false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -152,7 +152,7 @@ int mca_coll_ucc_scatterv_init(const void *sbuf, ompi_count_array_t scounts,
     COLL_UCC_CHECK(mca_coll_ucc_scatterv_init_common(sbuf, scounts, disps, sdtype,
                                                      rbuf, rcount, rdtype, root,
                                                      true, ucc_module, &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback scatterv_init");

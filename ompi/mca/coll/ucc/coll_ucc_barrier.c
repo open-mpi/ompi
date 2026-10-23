@@ -61,7 +61,7 @@ int mca_coll_ucc_ibarrier(struct ompi_communicator_t *comm,
     COLL_UCC_GET_REQ(coll_req, comm);
     COLL_UCC_CHECK(mca_coll_ucc_barrier_init_common(false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -86,7 +86,7 @@ int mca_coll_ucc_barrier_init(struct ompi_communicator_t *comm, struct ompi_info
     COLL_UCC_GET_REQ_PERSISTENT(coll_req, comm);
     UCC_VERBOSE(3, "barrier_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_barrier_init_common(true, ucc_module, &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback barrier_init");

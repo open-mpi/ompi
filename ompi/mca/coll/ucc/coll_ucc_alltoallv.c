@@ -115,7 +115,7 @@ int mca_coll_ucc_ialltoallv(const void *sbuf, ompi_count_array_t scounts,
                                                       rbuf, rcounts, rdisps, rdtype,
                                                       false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -147,7 +147,7 @@ int mca_coll_ucc_alltoallv_init(const void *sbuf, ompi_count_array_t scounts,
     COLL_UCC_CHECK(mca_coll_ucc_alltoallv_init_common(sbuf, scounts, sdisps, sdtype,
                                                       rbuf, rcounts, rdisps, rdtype,
                                                       true, ucc_module, &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback alltoallv_init");

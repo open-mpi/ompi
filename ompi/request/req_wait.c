@@ -18,7 +18,7 @@
  * Copyright (c) 2016      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2016      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,6 +63,9 @@ int ompi_request_default_wait(
     if( MPI_STATUS_IGNORE != status ) {
         OMPI_COPY_STATUS(status, req->req_status, false);
     }
+    /* Before the error check below: an operation that completed with an
+     * error may still have produced an outcome the binding must convert. */
+    ompi_request_lang_complete(req);
     if( req->req_persistent ) {
         if( req->req_state == OMPI_REQUEST_INACTIVE ) {
             if (MPI_STATUS_IGNORE != status) {
@@ -208,6 +211,7 @@ recheck:
         opal_atomic_rmb();
         OMPI_COPY_STATUS(status, request->req_status, false);
     }
+    ompi_request_lang_complete(request);
     rc = request->req_status.MPI_ERROR;
     if( request->req_persistent ) {
         request->req_state = OMPI_REQUEST_INACTIVE;
@@ -358,6 +362,8 @@ recheck:
 
             OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
 
+            ompi_request_lang_complete(request);
+
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
             } else if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
@@ -420,6 +426,8 @@ recheck:
             if (OMPI_REQUEST_GEN == request->req_type) {
                 rc = ompi_grequest_invoke_query(request, &request->req_status);
             }
+
+            ompi_request_lang_complete(request);
 
             if (request->req_persistent) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -612,6 +620,8 @@ int ompi_request_default_wait_some(size_t count,
         if (MPI_STATUSES_IGNORE != statuses) {
             OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
         }
+
+        ompi_request_lang_complete(request);
 
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
             rc = MPI_ERR_IN_STATUS;

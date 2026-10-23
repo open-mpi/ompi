@@ -113,7 +113,7 @@ int mca_coll_ucc_iallgatherv(const void *sbuf, size_t scount,
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -144,7 +144,7 @@ int mca_coll_ucc_allgatherv_init(const void *sbuf, size_t scount, struct ompi_da
     COLL_UCC_CHECK(mca_coll_ucc_allgatherv_init_common(sbuf, scount, sdtype,
                                                        rbuf, rcounts, rdisps, rdtype,
                                                        true, ucc_module, &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback allgatherv_init");
