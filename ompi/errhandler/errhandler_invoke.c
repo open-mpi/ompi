@@ -130,7 +130,10 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             if (NULL != errhandler->eh_converter_fn) {
                 errhandler->eh_converter_fn((void *)&comm, object_type, &err_code);
             }
-            if (NULL != errhandler->eh_comm_fn) {
+            if (NULL != errhandler->eh_comm_fn_x) {
+                /* Extended callback variant - pass extra_state instead of message */
+                errhandler->eh_comm_fn_x(comm, err_code, errhandler->extra_state);
+            } else if (NULL != errhandler->eh_comm_fn) {
                 errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
             }
             break;
@@ -152,7 +155,10 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             if (NULL != errhandler->eh_converter_fn) {
                 errhandler->eh_converter_fn((void *)&win, object_type, &err_code);
             }
-            if (NULL != errhandler->eh_win_fn) {
+            if (NULL != errhandler->eh_win_fn_x) {
+                /* Extended callback variant - pass extra_state instead of message */
+                errhandler->eh_win_fn_x(win, err_code, errhandler->extra_state);
+            } else if (NULL != errhandler->eh_win_fn) {
                 errhandler->eh_win_fn(&win, &err_code, message, NULL);
             }
             break;
@@ -174,7 +180,10 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             if (NULL != errhandler->eh_converter_fn) {
                 errhandler->eh_converter_fn((void *)&file, object_type, &err_code);
             }
-            if (NULL != errhandler->eh_file_fn) {
+            if (NULL != errhandler->eh_file_fn_x) {
+                /* Extended callback variant - pass extra_state instead of message */
+                errhandler->eh_file_fn_x(file, err_code, errhandler->extra_state);
+            } else if (NULL != errhandler->eh_file_fn) {
                 errhandler->eh_file_fn(&file, &err_code, message, NULL);
             }
             break;
@@ -196,7 +205,10 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
             if (NULL != errhandler->eh_converter_fn) {
                 errhandler->eh_converter_fn((void *)&instance, object_type, &err_code);
             }
-            if (NULL != errhandler->eh_instance_fn) {
+            if (NULL != errhandler->eh_instance_fn_x) {
+                /* Extended callback variant - pass extra_state instead of message */
+                errhandler->eh_instance_fn_x(instance, err_code, errhandler->extra_state);
+            } else if (NULL != errhandler->eh_instance_fn) {
                 errhandler->eh_instance_fn(&instance, &err_code, message, NULL);
             }
             break;

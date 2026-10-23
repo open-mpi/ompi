@@ -46,6 +46,20 @@ Open MPI version v6.1.0
   per-operation resources. This feature is built into both ``libmpi``
   (Open MPI ABI) and ``libmpi_abi`` (MPI Forum standard ABI).
 
+- Added ``MPIX_Comm_create_errhandler_x``,
+  ``MPIX_Win_create_errhandler_x``, ``MPIX_File_create_errhandler_x``,
+  and ``MPIX_Session_create_errhandler_x``, C-only MPI extensions that
+  create error handlers with extra state and a destructor callback. These
+  are part of the ``xcallbacks`` extension, compatible with MPICH's
+  extended callback support. The ``extra_state`` pointer is passed to the
+  error handler on every invocation, and the destructor is called when
+  the error handler is freed with ``MPI_Errhandler_free``. The extended
+  error handler callbacks receive the MPI object (communicator, window,
+  file, or session) by value rather than as a pointer, and receive
+  ``extra_state`` instead of a message string. This feature is built into
+  both ``libmpi`` (Open MPI ABI) and ``libmpi_abi`` (MPI Forum standard
+  ABI).
+
 - Updated the embedded hwloc to v2.15.0.
 
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
