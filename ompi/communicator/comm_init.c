@@ -405,26 +405,19 @@ static int ompi_comm_finalize (void)
     for ( i=3; i<max; i++ ) {
         comm = ompi_comm_lookup(i);
         if ( NULL != comm ) {
+            /* Report before releasing: the release destroys the
+             * communicator, like the win/info/file paths. */
+            if ( ompi_debug_show_handle_leaks ) {
+                opal_output(0, "WARNING: MPI_Comm still allocated in MPI_Finalize (cid %u, name \"%s\")",
+                            ompi_comm_get_local_cid(comm), comm->c_name);
+                ompi_comm_dump ( comm);
+            }
             /* Release the communicator. Sub-communicators retained by
              * their parent (e.g., c_local_comm of inter-communicators)
              * will be properly released by the parent's destructor. */
             OBJ_RELEASE(comm);
         }
     }
-
-#if OPAL_ENABLE_DEBUG
-    if ( ompi_debug_show_handle_leaks ) {
-        max = ompi_comm_get_num_communicators();
-        for ( i=3; i<max; i++ ) {
-            comm = ompi_comm_lookup(i);
-            if (NULL == comm) continue;
-            opal_output(0, "WARNING: %u(%s) unnamed MPI_Comm handles still allocated at MPI_FINALIZE",
-                        ompi_comm_get_local_cid(comm), comm->c_name);
-            ompi_comm_dump ( comm);
-            OBJ_RELEASE(comm);
-        }
-    }
-#endif  /* OPAL_ENABLE_DEBUG */
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
     OBJ_DESTRUCT (&ompi_comm_hash);
