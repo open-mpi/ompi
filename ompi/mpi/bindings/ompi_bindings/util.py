@@ -206,6 +206,7 @@ BIGCOUNT_TYPE_NAMES = [
     'INT_AINT_OUT',
     'USER_FUNCTION',
     'DATAREP_CONVERSION_FUNCTION',
+    'USER_FUNCTION_X',
 ]
 
 def prototype_has_bigcount(prototype):

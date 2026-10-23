@@ -402,6 +402,29 @@ error:
     return new_op;
 }
 
+/*
+ * Create a new MPI_Op with extra state and destructor
+ */
+ompi_op_t *ompi_op_create_user_x(bool commute,
+                                 bool bigcount,
+                                 ompi_op_fortran_handler_fn_t func,
+                                 ompi_user_destructor_fn_t destructor,
+                                 void *extra_state)
+{
+    ompi_op_t *new_op = NULL;
+
+    new_op = ompi_op_create_user(commute, bigcount, func);
+    if (NULL == new_op) {
+        return NULL;
+    }
+
+    new_op->o_flags |= OMPI_OP_FLAGS_EXTRA_STATE;
+    new_op->destructor = destructor;
+    new_op->extra_state = extra_state;
+
+    return new_op;
+}
+
 
 /**************************************************************************
  *
@@ -448,6 +471,8 @@ static void ompi_op_construct(ompi_op_t *new_op)
     new_op->o_flags = 0;
     new_op->o_name[0] = '\0';
     new_op->o_datatype_converter = NULL;
+    new_op->extra_state = NULL;
+    new_op->destructor = NULL;
 
     /* assign entry in fortran <-> c translation array */
 
@@ -492,5 +517,13 @@ static void ompi_op_destruct(ompi_op_t *op)
             OBJ_RELEASE(op->o_3buff_intrinsic.modules[i]);
             op->o_3buff_intrinsic.modules[i] = NULL;
         }
+    }
+
+    /*
+     * call optional user destructor
+     */
+
+    if (NULL != op->destructor) {
+        op->destructor(op->extra_state);
     }
 }

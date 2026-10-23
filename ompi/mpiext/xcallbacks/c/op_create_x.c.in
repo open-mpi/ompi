@@ -1,0 +1,72 @@
+/*
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+ */
+#include "ompi_config.h"
+#include <stdio.h>
+
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/op/op.h"
+#include "ompi/mpiext/xcallbacks/c/mpiext_xcallbacks_c.h"
+#if OMPI_ABI_SRC
+#include "ompi/mpi/c/abi.h"
+#include "ompi/mpi/c/abi_converters.h"
+#include "ompi/mpiext/xcallbacks/c/abi_xcallbacks_c.h"
+#endif
+
+PROTOTYPE ERROR_CLASS op_create_x(USER_FUNCTION_X function, USER_DESTRUCTOR_X destructor, INT commute, VOID extra_state, OP_OUT op)
+{
+    int err = MPI_SUCCESS;
+    bool bc_op = true; /* MPI Forum proposal for extended callbacks on supports big count USER_FUNCTION_X currently */
+
+    /* Error checking */
+
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == op) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_OP,
+                                          FUNC_NAME);
+        } else if (NULL == function) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                          FUNC_NAME);
+        }
+    }
+
+    *op = ompi_op_create_user_x(OPAL_INT_TO_BOOL(commute),
+                               bc_op,
+                               (ompi_op_fortran_handler_fn_t *) function,
+                               destructor,
+                               extra_state);
+    if (NULL == *op) {
+        err = MPI_ERR_INTERN;
+    }
+#if OMPI_ABI_SRC
+    else {
+        (*op)->o_datatype_converter = (ompi_op_type_convert_to_abi_fn_t)ompi_convert_datatype_ompi_to_standard;
+    }
+#endif
+
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(err, MPI_ERR_INTERN, FUNC_NAME);
+}
