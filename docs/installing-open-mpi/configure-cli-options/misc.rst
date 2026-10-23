@@ -34,6 +34,19 @@ above categories that can be used with ``configure``:
   .. danger:: The heterogeneous functionality is currently broken |mdash|
               do not use.
 
+* ``--enable-progress-threads``
+* ``--disable-progress-threads``:
+  Enable or disable (default = ``enabled``) support of software-based progress
+  thread for each MPI process to execute the internal communication progression
+  engine. Note that even when the support is built, the progress thread is not
+  spawned by default at runtime. This behavior is controlled by the associated
+  runtime MCA variable ``opal_async_progress`` or ``mpi_async_progress``
+  (default = false).
+
+  .. warning:: Be aware of performance degradation. Please read
+               :ref:`this section <async-progress-thread-label>` for
+               more documentation.
+
 .. _install-wrapper-flags-label:
 
 * ``--with-wrapper-cflags=CFLAGS``
