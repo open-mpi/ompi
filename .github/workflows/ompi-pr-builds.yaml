@@ -39,6 +39,21 @@ jobs:
               --enable-mpi-fortran
               --disable-silent-rules
               --enable-mca-dso
+          - os: ubuntu-latest
+            config_name: hwpc-cxi
+            configure_options: >-
+              --enable-sphinx
+              --enable-mpi-fortran
+              --disable-silent-rules
+              --enable-hwpc-cxi
+          - os: ubuntu-latest
+            config_name: hwpc-cxi-dso
+            configure_options: >-
+              --enable-sphinx
+              --enable-mpi-fortran
+              --disable-silent-rules
+              --enable-hwpc-cxi
+              --enable-mca-dso
           - os: macos-latest
             config_name: default
             configure_options: >-
@@ -95,6 +110,9 @@ jobs:
         NCPU=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)
         # Parallelize automake's Makefile.in generation during autogen.pl.
         export AUTOMAKE_JOBS=$NCPU
+        if [[ "${{ matrix.config_name }}" == hwpc-cxi* ]]; then
+          export CFLAGS="${CFLAGS:--g -O2} -Werror=implicit-function-declaration -Werror=return-type"
+        fi
         ./autogen.pl
         ./configure --prefix=${PWD}/install ${{ matrix.configure_options }}
         make -j $NCPU
@@ -103,6 +121,18 @@ jobs:
       # Deliberately run "make check" BEFORE "make install".
       # VERBOSE=1 causes logs to be cat'ed if a test fails.
       run: make check VERBOSE=1
+
+    - name: Compile the manual HWPC-CXI workload
+      if: startsWith(matrix.config_name, 'hwpc-cxi')
+      run: make -C ompi/mca/hook/hwpc_cxi/test-multi hwpc_cxi_sendrecv_test
+
+    - name: Run distcheck with HWPC-CXI enabled
+      if: matrix.config_name == 'hwpc-cxi'
+      timeout-minutes: 60
+      run: |
+        make distcheck VERBOSE=1 \
+            AM_DISTCHECK_MAKEFLAGS="-j$(nproc)" \
+            DISTCHECK_CONFIGURE_FLAGS="${{ matrix.configure_options }}"
 
     - name: Install Open MPI
       run: make install
