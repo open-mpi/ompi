@@ -71,9 +71,17 @@ The :ref:`shmem_malloc`, :ref:`shmem_free`, and :ref:`shmem_realloc` functions a
 so that multiple PEs in an application can allocate symmetric, remotely
 accessible memory blocks. These memory blocks can then be used with
 (shmem) communication routines. Each of these functions call the
-:ref:`shmem_barrier_all`\ (3) function before returning; this ensures that
-all PEs participate in the memory allocation, and that the memory on
-other PEs can be used as soon as the local PE returns.
+:ref:`shmem_barrier_all`\ (3) function before returning, unless the
+requested size is zero (see below); this ensures that all PEs
+participate in the memory allocation, and that the memory on other PEs
+can be used as soon as the local PE returns.
+
+As required by OpenSHMEM 1.5, when the size argument of
+:ref:`shmem_malloc` or :ref:`shmem_align` is zero, the function performs
+no action, returns a null pointer, and does not call a barrier. The same
+holds for *shmalloc*\ (3) and *shmemalign*\ (3). The user is responsible
+for passing the same size on all PEs, so either all PEs skip the barrier
+or none of them do.
 
 The user is responsible for calling these functions with identical
 argument(s) on all PEs; if differing size arguments are used, subsequent
