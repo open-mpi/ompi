@@ -141,6 +141,10 @@ struct mca_btl_tcp_component_t {
      */
     int tcp_recv_timeout;
     int tcp_handshake_timeout;
+    /**< How often, and for how long, to look again for the modex info of
+         a peer whose inbound connection arrived before it. */
+    int tcp_accept_retry_interval;
+    int tcp_accept_retry_timeout;
     int tcp_connect_mode; /* MCA_BTL_TCP_CONNECT_* */
 
     /* free list of fragment descriptors */

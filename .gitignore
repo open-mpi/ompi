@@ -392,6 +392,7 @@ ompi/test/mpirun/any_source_oneway
 ompi/test/mpirun/comm_idup_overlap
 ompi/test/mpirun/late_first_contact
 ompi/test/mpirun/session_first_touch
+ompi/test/mpirun/session_partial_batch
 ompi/test/mpirun/spawn_first_touch
 ompi/test/mpirun/tcp_stranger_connect
 ompi/test/mpirun/wireup_stress

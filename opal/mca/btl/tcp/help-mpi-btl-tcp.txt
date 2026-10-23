@@ -124,6 +124,19 @@ continue properly.
   Local host: %s
   PID:        %d
 #
+[server accept modex timeout]
+WARNING: Open MPI accepted a TCP connection from a peer in this job but
+never received that peer's modex information, so the connection could
+not be matched to a network interface and has been dropped.
+
+The peer may have failed, or may not be a real process in this job.  If
+it is simply slow to reach, raise btl_tcp_accept_retry_timeout.
+
+  Local host: %s
+  PID:        %d
+  Peer:       %s
+  Waited:     %d usec
+#
 [server getpeername failed]
 WARNING: Open MPI failed to look up the peer IP address information of
 a TCP connection that it just accepted.  This should not happen.
