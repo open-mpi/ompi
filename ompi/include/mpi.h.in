@@ -42,6 +42,13 @@
 #ifndef OMPI_MPI_H
 #define OMPI_MPI_H
 
+/*
+ * short circuit to use the MPI ABI
+ */
+#ifdef MPI_ABI
+#include "standard_abi/mpi.h"
+#else
+
 /* The comment below (and the ending partner) are for building fat
    distributions on platforms that support it.  Please do not remove */
 
@@ -4219,4 +4226,5 @@ OMPI_DECLSPEC  int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
 }
 #endif
 
+#endif
 #endif /* OMPI_MPI_H */

@@ -1276,12 +1276,16 @@ def _installed_standard_abi_header(tools, dirs, env):
     include_override = tools["paths"]["include"]
     candidates = []
     if include_override:
+        # Check standard_abi subdirectory first, then fallback to main include
+        candidates.append(Path(include_override) / "standard_abi" / "mpi.h")
         candidates.append(Path(include_override) / "mpi.h")
 
     mpicc_abi = tools["open_mpi"]["mpicc_abi"]
     _, incdirs = _showme_words(
         mpicc_abi, "--showme:incdirs", dirs, env, "mpicc_abi_showme_incdirs")
     for incdir in incdirs:
+        # Check standard_abi subdirectory first, then fallback to main include
+        candidates.append(Path(incdir) / "standard_abi" / "mpi.h")
         candidates.append(Path(incdir) / "mpi.h")
 
     for candidate in candidates:
@@ -1980,10 +1984,10 @@ def _installed_wrapper_checks(tools, dirs, progress=None):
             command=compile_result["command"],
             returncode=compile_result["returncode"],
             log=compile_result["log"]), progress)
-    elif "standard_abi" not in compile_result["stdout"]:
+    elif "-DMPI_ABI" not in compile_result["stdout"] and "standard_abi" not in compile_result["stdout"]:
         _append_check(checks, _fail(
             "installed_standard_abi_wrapper_flags",
-            "mpicc_abi does not advertise standard ABI include path",
+            "mpicc_abi does not advertise standard ABI (missing -DMPI_ABI or standard_abi path)",
             command=compile_result["command"],
             stdout=compile_result["stdout"],
             log=compile_result["log"]), progress)

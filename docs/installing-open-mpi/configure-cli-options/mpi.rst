@@ -52,17 +52,42 @@ MPI API behaviors that can be used with ``configure``:
   Fortran bindings modulefiles.  By default, Open MPI will install
   Fortran modulefiles into ``$libdir``.
 
-* ``--enable-standard-abi``:
-  Enable building the MPI standard ABI support library.  This option is
-  enabled by default.
+* ``--enable-mpi-abi[=MODE]``:
+  Select which MPI ABIs Open MPI builds.  ``MODE`` is one of:
 
-  When enabled, Open MPI builds and installs ``libmpi_abi`` and the
-  standard ABI C compiler wrapper ``mpicc_abi``.  The wrapper uses the
-  standard ABI ``mpi.h`` installed under
-  ``$prefix/include/standard_abi`` and links applications against
-  ``libmpi_abi``.
+  * ``both`` (the default): build both the traditional Open MPI ABI
+    (``libmpi``) and the MPI Forum standard ABI (``libmpi_abi``),
+    allowing applications to use either.  A bare ``--enable-mpi-abi``
+    (with no ``=MODE``) also selects ``both``.
+  * ``standard`` (or ``forum``): build **only** the MPI Forum standard
+    ABI.  This is "ABI-only" mode (see the limitations below).
+  * ``ompi``: build **only** the traditional Open MPI ABI; no
+    ``libmpi_abi`` is produced.
 
-  Use ``--disable-standard-abi`` to disable this support.
+  When the MPI Forum standard ABI is built, Open MPI installs
+  ``libmpi_abi``, the ``mpicc_abi`` convenience wrapper, and
+  ``ompi-forum-abi*`` pkg-config files.
+
+  .. warning:: **Limitations of ABI-only mode**
+               (``--enable-mpi-abi=standard``):
+
+               * **No Fortran bindings**: The MPI Forum standard
+                 currently only defines a C ABI. No Fortran compiler
+                 wrappers (``mpifort``, ``mpif77``, ``mpif90``) or
+                 bindings are available.
+               * **No OpenSHMEM support**: OpenSHMEM requires the
+                 traditional Open MPI ABI and is disabled in
+                 ABI-only mode.
+
+  .. note:: **Deprecated synonyms.**  The older boolean options are
+            still accepted (with a deprecation warning) but should be
+            replaced with ``--enable-mpi-abi=MODE``:
+
+            * ``--enable-standard-abi`` / ``--disable-standard-abi`` ---
+              formerly toggled the MPI Forum standard ABI.
+            * ``--disable-ompi-abi`` --- equivalent to
+              ``--enable-mpi-abi=standard``; required the standard ABI
+              to be enabled.
 
 * ``--enable-mpi-ext[=LIST]``:
   Enable Open MPI's non-portable API extensions.  ``LIST`` is a

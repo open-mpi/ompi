@@ -4,7 +4,21 @@
 # multilib page at:
 #    https://github.com/open-mpi/ompi/wiki/compilerwrapper3264
 # for more information.
+#
+# Open MPI supports two ABIs:
+#  - Traditional Open MPI ABI (libmpi)
+#  - MPI Forum standard ABI (libmpi_abi)
+#
+# Users can select which ABI to use with:
+#  -ompi-abi       : Traditional Open MPI ABI
+#  -standard-abi   : MPI Forum standard ABI (alias: -mpi-abi)
+#
+# Convenience shortcuts:
+#  mpicxx_ompi     : Equivalent to mpicxx -ompi-abi
+#  mpicxx_abi      : Equivalent to mpicxx -standard-abi
 
+# Default block - uses traditional Open MPI ABI when both ABIs are built,
+# or whichever single ABI is available
 project=Open MPI
 project_short=OMPI
 version=@OMPI_VERSION@
@@ -21,6 +35,50 @@ libs=@OMPI_WRAPPER_LIBS@
 libs_static=@OMPI_WRAPPER_LIBS_STATIC@
 dyn_lib_file=lib@OMPI_LIBMPI_NAME@.@OPAL_DYN_LIB_SUFFIX@
 static_lib_file=lib@OMPI_LIBMPI_NAME@.a
+required_file=@OMPI_WRAPPER_CXX_REQUIRED_FILE@
+includedir=${includedir}
+libdir=${libdir}
+
+# Block for explicit traditional Open MPI ABI selection
+compiler_args=-ompi-abi
+project=Open MPI
+project_short=OMPI
+version=@OMPI_VERSION@
+language=C++
+compiler_env=CXX
+compiler_flags_env=CXXFLAGS
+compiler=@CXX@
+preprocessor_flags=@OMPI_WRAPPER_CPPFLAGS@
+compiler_flags_prefix=@OMPI_WRAPPER_CXXFLAGS_PREFIX@
+compiler_flags=@OMPI_WRAPPER_CXXFLAGS@
+linker_flags=@OMPI_WRAPPER_LDFLAGS@
+linker_flags_static=@OMPI_WRAPPER_LDFLAGS_STATIC@
+libs=@OMPI_WRAPPER_LIBS@
+libs_static=@OMPI_WRAPPER_LIBS_STATIC@
+dyn_lib_file=lib@OMPI_LIBMPI_NAME@.@OPAL_DYN_LIB_SUFFIX@
+static_lib_file=lib@OMPI_LIBMPI_NAME@.a
+required_file=@OMPI_WRAPPER_CXX_REQUIRED_FILE@
+includedir=${includedir}
+libdir=${libdir}
+
+# Block for MPI Forum standard ABI selection
+compiler_args=-standard-abi;-mpi-abi
+project=Open MPI
+project_short=OMPI
+version=@OMPI_VERSION@
+language=C++
+compiler_env=CXX
+compiler_flags_env=CXXFLAGS
+compiler=@CXX@
+preprocessor_flags=-DMPI_ABI @OMPI_WRAPPER_CPPFLAGS@
+compiler_flags_prefix=@OMPI_WRAPPER_CXXFLAGS_PREFIX@
+compiler_flags=@OMPI_WRAPPER_CXXFLAGS@
+linker_flags=@OMPI_WRAPPER_LDFLAGS@
+linker_flags_static=@OMPI_WRAPPER_LDFLAGS_STATIC@
+libs=@OMPI_WRAPPER_ABI_LIBS@
+libs_static=@OMPI_WRAPPER_ABI_LIBS_STATIC@
+dyn_lib_file=libmpi_abi.@OPAL_DYN_LIB_SUFFIX@
+static_lib_file=libmpi_abi.a
 required_file=@OMPI_WRAPPER_CXX_REQUIRED_FILE@
 includedir=${includedir}
 libdir=${libdir}
