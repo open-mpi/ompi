@@ -290,7 +290,7 @@ do { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
         MPI_Fint attr_##type##_f;                \
-        attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)keyval_obj)->attr_##type##_f); \
+        attr_##type##_f = OMPI_INT_2_FINT(((ompi_##type##_t *)object)->attr_##type##_f); \
         /* MPI-1 Fortran-style */ \
         if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_INT)) { \
             MPI_Fint attr_val = translate_to_fint(attribute); \
