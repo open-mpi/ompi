@@ -288,12 +288,20 @@ MPI_Fint *MPI_F08_STATUSES_IGNORE = NULL;
    allocates a private copy of a .bss definition in that library, but
    not of a .data definition.  Such a private copy is used when the
    library is loaded with RTLD_DEEPBIND, and the address comparisons
-   for e.g. MPI_IN_PLACE then fail.
+   for e.g. MPI_IN_PLACE then fail.  This only helps consumers linked
+   with GNU ld (bfd): gold and lld allocate a private copy even of a
+   .data definition, so the RTLD_DEEPBIND problem remains for libraries
+   linked with those.
 
-   Initializing these variables makes the linker check that their
-   sizes and alignments match those of the Fortran common blocks.  The
-   types, dimensions, and alignments in mpif-c-constants.h are chosen
-   to match.
+   Initializing these variables also makes the linker check that their
+   sizes and alignments match those of the Fortran common blocks, and
+   warn on every link of a library that uses the common blocks if they
+   do not (with a .bss definition, a mismatch was silently absorbed
+   into the private copy).  The types and dimensions in
+   mpif-c-constants.h are chosen to match, and the alignment comes from
+   OMPI_FORTRAN_COMMON_ALIGNMENT.  When cross-compiling, that value
+   must be supplied in ompi_cv_fortran_common_alignment and must be
+   correct for the target.
 
    Note that the rationale for the types of each of these variables is
    discussed in ompi/include/mpif-common.h.  Do not change the types

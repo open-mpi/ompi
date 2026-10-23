@@ -145,7 +145,8 @@ def gen_c_constants(mangling_type, fortran_constants, args):
     with open(file_c_constants, "w") as f:
         f.write("/* WARNING: This is a generated file!  Edits will be lost! */\n")
         f.write(header_comment)
-        f.write("\n")
+        f.write("\n/* Initialized so that these go into .data, not .bss; see the comment\n")
+        f.write("   above the #include of this file in ompi/runtime/ompi_mpi_init.c. */\n\n")
 
         for key in sorted(fortran_constants.keys()):
             const = fortran_constants[key]
