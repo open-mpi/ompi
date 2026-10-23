@@ -974,6 +974,38 @@ static int get_parent_distance(hwloc_obj_t parent, hwloc_obj_t child, int *dista
 
 #if OPAL_OFI_PCI_DATA_AVAILABLE
 /**
+ * @brief Find the lowest common ancestor of two objects in the topology
+ *
+ * hwloc_get_common_ancestor_obj() navigates by comparing hwloc_obj_t::depth, but
+ * every I/O object is given a fixed virtual depth -- HWLOC_TYPE_DEPTH_PCI_DEVICE for
+ * every PCI device, HWLOC_TYPE_DEPTH_BRIDGE for every bridge -- that says nothing
+ * about where the object sits in the tree. Two PCI devices at different nesting
+ * depths, a device behind a switch and one directly on a root port for example,
+ * therefore make that helper walk one side up past the root and dereference NULL.
+ *
+ * Walk the parent links instead, which is what get_parent_distance() already
+ * assumes. The trees involved are only a few levels deep, so comparing every pair
+ * costs nothing measurable and it runs once per process at selection time.
+ *
+ * @param[in]   obj1    first object
+ * @param[in]   obj2    second object
+ * @return      the lowest object that is an ancestor of, or equal to, both obj1 and
+ *              obj2, or NULL if they share no ancestor
+ */
+static hwloc_obj_t get_common_ancestor(hwloc_obj_t obj1, hwloc_obj_t obj2)
+{
+    for (hwloc_obj_t ancestor = obj1; NULL != ancestor; ancestor = ancestor->parent) {
+        for (hwloc_obj_t child = obj2; NULL != child; child = child->parent) {
+            if (ancestor == child) {
+                return ancestor;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+/**
  * @brief Attempt to find a nearest provider from the accelerator.
  * Check if opal_accelerator is initialized with a valid PCI device, and find a provider from the
  * shortest distance.
@@ -1043,8 +1075,7 @@ static int find_nearest_provider_from_accelerator(struct fi_info *provider_list,
                 return OPAL_ERROR;
             }
 
-            common_ancestor = hwloc_get_common_ancestor_obj(opal_hwloc_topology, accl_dev,
-                                                            prov_dev);
+            common_ancestor = get_common_ancestor(accl_dev, prov_dev);
             if (!common_ancestor) {
                 opal_output_verbose(
                     1, opal_common_ofi.output,
@@ -1121,6 +1152,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     int ret, num_providers = 0, accel_id = -1;
     struct fi_info *provider = NULL;
     uint32_t package_rank;
+    uint32_t device_rank = 0;
 
     /* Current process' local rank on the same package(socket) */
     package_rank = process_info->proc_is_bound ? get_package_rank(process_info)
@@ -1128,7 +1160,19 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
     num_providers = count_providers(provider_list);
 
 #if OPAL_OFI_PCI_DATA_AVAILABLE
-    if (-1 < opal_common_ofi_accelerator_rank) {
+    /* Look for a device near this process' accelerator whenever there is one.
+     * The accelerator_rank parameter only breaks ties between devices that are
+     * equally close, so leaving it unset is not a reason to ignore the
+     * accelerator: fall back to this process' local rank, which spreads local
+     * ranks sharing a set of equally close devices across that set.
+     *
+     * This matters on nodes with more than one PCIe root complex. Distance from
+     * the process' package alone can hand a rank a device in a different complex
+     * from the accelerator it is reading from and writing to. */
+    device_rank = (0 <= opal_common_ofi_accelerator_rank)
+                      ? (uint32_t) opal_common_ofi_accelerator_rank
+                      : process_info->my_local_rank;
+    if (NULL != opal_accelerator.get_device) {
         ret = opal_accelerator.get_device(&accel_id);
         if (OPAL_SUCCESS != ret) {
             opal_output_verbose(1, opal_common_ofi.output, "%s:%d:Accelerator is not available",
@@ -1153,7 +1197,7 @@ struct fi_info *opal_common_ofi_select_provider(struct fi_info *provider_list,
 
     if (0 <= accel_id) {
         ret = find_nearest_provider_from_accelerator(provider_list, num_providers, accel_id,
-                                                     opal_common_ofi_accelerator_rank, &provider);
+                                                     device_rank, &provider);
         if (OPAL_SUCCESS == ret) {
             goto out;
         }
