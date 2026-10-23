@@ -225,6 +225,24 @@ Open MPI version v6.1.0
   compiler for building C applications against the MPI-5 ABI. Note that
   Fortran ABI support is not yet included.
 
+- ``MPI_Abi_set_fortran_info`` now configures the sizes of the Fortran
+  datatypes when Open MPI is built with ``--disable-mpi-fortran``.  In
+  such a build the implementation does not know the Fortran compiler's
+  type properties, so ``MPI_Abi_get_fortran_info`` returns
+  ``MPI_INFO_NULL`` and the application supplies them through an info
+  object.  After a successful ``MPI_Abi_set_fortran_info``,
+  ``MPI_Type_size`` of ``MPI_INTEGER``, ``MPI_REAL``, ``MPI_LOGICAL``,
+  ``MPI_DOUBLE_PRECISION``, ``MPI_CHARACTER``, ``MPI_COMPLEX``,
+  ``MPI_DOUBLE_COMPLEX`` and the optional
+  fixed-size Fortran datatypes (``MPI_INTEGER4``, ``MPI_REAL8``,
+  ``MPI_COMPLEX16``, etc.) marked supported in the info object reports
+  the requested size instead of ``MPI_UNDEFINED``.  Previously the call
+  recorded the info object but left every Fortran datatype unavailable.
+  The composite Fortran types (``MPI_2INTEGER``, ``MPI_2REAL``,
+  ``MPI_2DOUBLE_PRECISION``, ``MPI_2COMPLEX``, ``MPI_2DOUBLE_COMPLEX``)
+  are not covered by the standard info keys and remain unavailable in a
+  ``--disable-mpi-fortran`` build.
+
 - Fixed ``MPI_Comm_idup`` hanging, or completing other nonblocking
   collectives with wrong results, when the application posted further
   nonblocking collectives or created another communicator on the parent
