@@ -19,7 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015-2017 Mellanox Technologies. All rights reserved.
  *
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting.  All rights reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -813,6 +813,13 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
     }
     opal_mutex_unlock (&ompi_proc_lock);
     return OMPI_SUCCESS;
+}
+
+void ompi_proc_introduce_job(ompi_jobid_t jobid)
+{
+    opal_mutex_lock (&ompi_proc_lock);
+    ompi_proc_jobid_learn_nolock (jobid);
+    opal_mutex_unlock (&ompi_proc_lock);
 }
 
 ompi_proc_t *

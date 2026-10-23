@@ -16,7 +16,7 @@
  * Copyright (c) 2013-2019 Intel, Inc.  All rights reserved.
  * Copyright (c) 2015-2016 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
- * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
+ * Copyright (c) 2021-2026 Nanook Consulting.  All rights reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -314,6 +314,17 @@ static inline ompi_proc_t* ompi_proc_local(void)
 OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
 
 OMPI_DECLSPEC ompi_proc_t * ompi_proc_find_and_add(const ompi_process_name_t * name, bool* isnew);
+
+/**
+ * Introduce a job without building any of its procs
+ *
+ * Records the jobid as one whose names ompi_proc_for_name() will honour,
+ * as ompi_proc_find_and_add() does, for a caller that learns which jobs
+ * it is about to be reached from before it is ready to build their procs.
+ *
+ * @param[in] jobid    The job to introduce
+ */
+OMPI_DECLSPEC void ompi_proc_introduce_job(ompi_jobid_t jobid);
 
 /**
  * Pack proc list into portable buffer
