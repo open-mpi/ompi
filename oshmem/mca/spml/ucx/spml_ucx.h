@@ -149,6 +149,8 @@ struct mca_spml_ucx {
     char                     ***remote_addrs_tbl;
     mca_spml_ucx_ctx_array_t active_array;
     mca_spml_ucx_ctx_array_t idle_array;
+    mca_spml_ucx_ctx_array_t private_array; /* live private contexts, only
+                                               walked at finalize */
     int                      priority; /* component priority */
     shmem_internal_mutex_t   internal_mutex;
     pthread_mutex_t          ctx_create_mutex;
