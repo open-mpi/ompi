@@ -44,7 +44,7 @@ static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
     datatype->id                 = -1;
     datatype->d_keyhash          = NULL;
     /* The externally visible name is a heap buffer sized to the MPI Forum ABI
-     * maximum so the standard-ABI entry points can store a full-length name. */
+     * maximum so the ABI entry points can store a full-length name. */
     datatype->name               = (char *) malloc(OMPI_MPI_MAX_OBJECT_NAME_ABI);
     if (NULL != datatype->name) {
         datatype->name[0]        = '\0';

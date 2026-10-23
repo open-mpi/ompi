@@ -385,7 +385,7 @@ def _mpi_h_candidates(prefix, include_dirs):
         if path not in candidates:
             candidates.append(path)
     if prefix:
-        for relative in ("include/standard_abi/mpi.h", "include/mpi.h"):
+        for relative in ("include/forum_abi/mpi.h", "include/mpi.h"):
             path = str((Path(prefix) / relative).resolve())
             if path not in candidates:
                 candidates.append(path)
@@ -513,7 +513,7 @@ def _open_mpi_candidate(mpicc_abi, mpirun=None, mpirun_override=False,
     for directory in _flag_dirs_from_words(compile_words, "-I"):
         _add_unique_path(include_dirs, directory)
     if prefix:
-        for directory in (str(Path(prefix) / "include" / "standard_abi"),
+        for directory in (str(Path(prefix) / "include" / "forum_abi"),
                           str(Path(prefix) / "include")):
             _add_unique_path(include_dirs, directory)
 
