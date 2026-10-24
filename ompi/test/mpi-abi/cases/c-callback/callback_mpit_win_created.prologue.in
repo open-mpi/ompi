@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Verify that the ompi.mpi.win_created MPI_T event publishes the
+ *   Standard-ABI MPI_Win handle when running under the Standard ABI
+ *   (open-mpi/ompi#13280). This exercises the MPI_T_BIND_MPI_WIN arm of
+ *   ompi_mpit_abi_handle_convert_impl().
+ */
+struct mpit_win_created_state {
+    MPI_T_event_registration registration;
+    int calls;
+    int failure_code;
+    uint64_t handle;
+};
+
+static struct mpit_win_created_state mpit_win_created_state;
+
+static void mpit_win_created_callback(MPI_T_event_instance event_instance,
+                                      MPI_T_event_registration event_registration,
+                                      MPI_T_cb_safety cb_safety,
+                                      void *user_data)
+{
+    struct mpit_win_created_state *state =
+        (struct mpit_win_created_state *) user_data;
+    if (&mpit_win_created_state != state) {
+        mpit_win_created_state.failure_code = 401;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 402;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 403;
+    } else {
+        ++state->calls;
+        /* Element 3 of the win_created payload is the MPI_Win handle. */
+        (void) MPI_T_event_read(event_instance, 3, &state->handle);
+    }
+}

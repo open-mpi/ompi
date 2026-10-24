@@ -1,0 +1,173 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Drive the ompi.mpi.errhandler_invoked MPI_T event with an MPI_Session object
+ *   under the MPI Standard ABI and verify the payload carries Standard-ABI
+ *   values for the session handle and MPI_T_BIND_MPI_SESSION object_type
+ *   (open-mpi/ompi#13280). Skips stably (77) when the event APIs are
+ *   unavailable, the event is not registered, or no registration can be allocated.
+ */
+
+/* Initialize MPI_T first so we can register the callback before creating the session. */
+int provided = 0;
+int ret = MPI_T_init_thread(MPI_THREAD_SINGLE, &provided);
+if (MPI_T_ERR_NOT_SUPPORTED == ret) {
+    return 77;
+}
+if (MPI_SUCCESS != ret) {
+    return 1;
+}
+
+/* Locate the errhandler_invoked event by name. */
+int num_events = 0;
+ret = MPI_T_event_get_num(&num_events);
+if (MPI_SUCCESS != ret || num_events < 1) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+int errhandler_index = -1;
+for (int event_index = 0; event_index < num_events; ++event_index) {
+    char name[MPI_MAX_OBJECT_NAME];
+    int name_len = (int) sizeof(name);
+    int verbosity = 0;
+    MPI_Datatype datatypes[4];
+    MPI_Aint displacements[4];
+    int num_elements = 4;
+    MPI_T_enum enumtype = MPI_T_ENUM_NULL;
+    MPI_Info info = MPI_INFO_NULL;
+    char desc[MPI_MAX_INFO_VAL];
+    int desc_len = (int) sizeof(desc);
+    int bind = MPI_T_BIND_NO_OBJECT;
+
+    ret = MPI_T_event_get_info(event_index, name, &name_len, &verbosity,
+                               datatypes, displacements, &num_elements,
+                               &enumtype, &info, desc, &desc_len, &bind);
+    if (MPI_SUCCESS != ret) {
+        continue;
+    }
+    if (MPI_INFO_NULL != info) {
+        (void) MPI_Info_free(&info);
+    }
+    if (NULL != strstr(name, "errhandler_invoked")) {
+        errhandler_index = event_index;
+        break;
+    }
+}
+
+if (errhandler_index < 0) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+/* Set up the errhandler_invoked event registration. */
+mpit_session_errhandler_state.registration = (MPI_T_event_registration) 0;
+mpit_session_errhandler_state.calls = 0;
+mpit_session_errhandler_state.failure_code = 0;
+mpit_session_errhandler_state.err_code = 0;
+mpit_session_errhandler_state.object_type = 0;
+mpit_session_errhandler_state.object_handle = 0;
+
+ret = MPI_T_event_handle_alloc(errhandler_index, NULL, MPI_INFO_NULL,
+                               &mpit_session_errhandler_state.registration);
+if (MPI_SUCCESS != ret ||
+    (MPI_T_event_registration) 0 == mpit_session_errhandler_state.registration) {
+    (void) MPI_T_finalize();
+    return 77;
+}
+
+ret = MPI_T_event_register_callback(mpit_session_errhandler_state.registration,
+                                    MPI_T_CB_REQUIRE_NONE, MPI_INFO_NULL,
+                                    &mpit_session_errhandler_state,
+                                    mpit_session_errhandler_callback);
+if (MPI_SUCCESS != ret) {
+    (void) MPI_T_event_handle_free(mpit_session_errhandler_state.registration,
+                                   NULL, NULL);
+    (void) MPI_T_finalize();
+    return 2;
+}
+
+/* Create a session, set a custom errhandler, and invoke it. */
+MPI_Errhandler session_errhandler = MPI_ERRHANDLER_NULL;
+ret = MPI_Session_create_errhandler(dummy_session_errhandler_callback,
+                                    &session_errhandler);
+if (MPI_SUCCESS != ret || MPI_ERRHANDLER_NULL == session_errhandler) {
+    (void) MPI_T_event_handle_free(mpit_session_errhandler_state.registration,
+                                   NULL, NULL);
+    (void) MPI_T_finalize();
+    return 3;
+}
+
+MPI_Session session = MPI_SESSION_NULL;
+ret = MPI_Session_init(MPI_INFO_NULL, session_errhandler, &session);
+if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
+    (void) MPI_Errhandler_free(&session_errhandler);
+    (void) MPI_T_event_handle_free(mpit_session_errhandler_state.registration,
+                                   NULL, NULL);
+    (void) MPI_T_finalize();
+    return 4;
+}
+
+int local_failure = 0;
+ret = MPI_Session_call_errhandler(session, MPI_ERR_OTHER);
+if (MPI_SUCCESS != ret) {
+    local_failure = 5;
+} else if (0 != mpit_session_errhandler_state.failure_code) {
+    local_failure = 6;
+} else if (mpit_session_errhandler_state.calls < 1) {
+    local_failure = 7;
+} else if (mpit_session_errhandler_state.object_handle !=
+           (uint64_t) (uintptr_t) session) {
+    /* The object_handle must be the Standard-ABI MPI_Session handle. */
+    fprintf(stderr, "ABI_FAIL:mpit:session_errhandler_object_handle:%llu:%llu\n",
+            (unsigned long long) mpit_session_errhandler_state.object_handle,
+            (unsigned long long) (uintptr_t) session);
+    local_failure = 8;
+} else if (mpit_session_errhandler_state.err_code !=
+           (int32_t) (uintptr_t) MPI_ERR_OTHER) {
+    /* The err_code must be the Standard-ABI error code. */
+    fprintf(stderr, "ABI_FAIL:mpit:session_errhandler_err_code:%d:%d\n",
+            (int) mpit_session_errhandler_state.err_code,
+            (int) (uintptr_t) MPI_ERR_OTHER);
+    local_failure = 9;
+} else if (mpit_session_errhandler_state.object_type !=
+           (int32_t) (uintptr_t) MPI_T_BIND_MPI_SESSION) {
+    /* The object_type must be the Standard-ABI MPI_T_BIND_MPI_SESSION value. */
+    fprintf(stderr, "ABI_FAIL:mpit:session_errhandler_object_type:%d:%d\n",
+            (int) mpit_session_errhandler_state.object_type,
+            (int) (uintptr_t) MPI_T_BIND_MPI_SESSION);
+    local_failure = 10;
+}
+
+ret = MPI_Session_finalize(&session);
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 11;
+}
+
+ret = MPI_Errhandler_free(&session_errhandler);
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 12;
+}
+
+ret = MPI_T_event_handle_free(mpit_session_errhandler_state.registration, NULL, NULL);
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 13;
+}
+
+ret = MPI_T_finalize();
+if (MPI_SUCCESS != ret && 0 == local_failure) {
+    local_failure = 14;
+}
+
+if (0 != local_failure) {
+    return local_failure;
+}
