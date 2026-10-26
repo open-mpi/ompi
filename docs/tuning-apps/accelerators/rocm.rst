@@ -92,7 +92,10 @@ in a single node scenario:
   support single-copy data transfers for host-memory through
   e.g. ``xpmem`` or ``cma``.  Hence, the performance of host-memory
   based data transfers might be lower than with the default ``btl/sm``
-  component. Example:
+  component.  The ``btl/smcuda`` component will not start unless it is
+  explicitly listed in the BTL selection (``--mca btl smcuda,...``), which
+  is already the case in the example below, so no extra parameter is needed.
+  Example:
 
 .. code-block:: sh
 
