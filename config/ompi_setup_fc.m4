@@ -331,11 +331,25 @@ AC_DEFUN([OMPI_SETUP_FC],[
 
     # Use Autoconf 2.69 macro to detect .F90 preprocessing support
     # This tests if the compiler can preprocess .F90 files and sets
-    # FCFLAGS appropriately if special flags are needed.
+    # FCFLAGS_F90 with the required flag. We also copy the flag to FCFLAGS
+    # to ensure it's always available and not overwritten by later calls.
+    # Save and restore ac_fc_srcext/ac_fcflags_srcext to prevent this check
+    # from affecting later Fortran tests (which should use non-preprocessed .f90).
     AS_IF([test $ompi_fc_happy -eq 1],
-          [AC_FC_PP_SRCEXT([F90])
+          [ompi_ac_fc_srcext_save=$ac_fc_srcext
+           ompi_ac_fcflags_srcext_save=$ac_fcflags_srcext
+           AC_FC_PP_SRCEXT([F90])
            AS_IF([test "$ac_cv_fc_pp_srcext_F90" = "unknown"],
-                 [AC_MSG_ERROR([Fortran compiler cannot preprocess .F90 files])])])
+                 [AC_MSG_ERROR([Fortran compiler cannot preprocess .F90 files])],
+                 [# Copy preprocessing flag to FCFLAGS to ensure it's always available
+                  # and not overwritten by later AC_FC_SRCEXT calls (similar to old
+                  # OMPI_FORTRAN_CHECK_PREPROCESS_F90 behavior)
+                  AS_IF([test "$ac_cv_fc_pp_srcext_F90" != "none"],
+                        [FCFLAGS="$FCFLAGS $ac_cv_fc_pp_srcext_F90"])])
+           # Restore to non-preprocessed .f90 extension for later Fortran tests,
+           # not to the saved value which may have been .F (preprocessed) from AC_FC_PP_DEFINE
+           ac_fc_srcext=f90
+           ac_fcflags_srcext=])
 
     # Per trac #1982, on OS X, we may need some esoteric linker flags
     # in the wrapper compilers.  However, per
