@@ -9,13 +9,28 @@ Open MPI user documentation in `docs/features/hwpc-cxi.rst` (or at
 
 ## Build And Component Registration
 
-This module is controlled by Open MPI configure-time enablement and is compiled
-as a static MCA component.
+This module is built by default as a static MCA component. Counter collection
+is only active when configure finds libcxi (via pkg-config, the default search
+paths, or `/usr/local`); otherwise the component is built as a no-op. See the
+configure summary's "HWPC-CXI support" line.
 
-Enable during configure:
+Require libcxi (configure aborts if it is not found):
 
 ```bash
 ./configure --enable-hwpc-cxi
+./configure --with-libcxi=/path/to/libcxi/prefix
+```
+
+Do not build the component:
+
+```bash
+./configure --disable-hwpc-cxi
+```
+
+Do not build the component:
+
+```bash
+./configure --disable-hwpc-cxi
 ```
 
 Component identity:

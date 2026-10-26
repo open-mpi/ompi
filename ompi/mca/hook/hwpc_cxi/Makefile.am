@@ -19,6 +19,8 @@ sources = \
 
 # This component will only ever be built statically -- never as a DSO.
 
+AM_CPPFLAGS = $(hook_hwpc_cxi_CPPFLAGS)
+
 noinst_LTLIBRARIES = libmca_hook_hwpc_cxi.la
 
 libmca_hook_hwpc_cxi_la_SOURCES = $(sources)

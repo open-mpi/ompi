@@ -299,10 +299,12 @@ Open MPI version v6.1.0
   called, instead of sharing the parent's nonblocking-collective stream
   with the application.
 
-- Added an optional ``hook:hwpc_cxi`` component, enabled via the new
-  ``--enable-hwpc-cxi`` configure option (default: disabled), that
+- Added a ``hook:hwpc_cxi`` component, controlled by the new
+  ``--enable-hwpc-cxi`` and ``--with-libcxi[=DIR]`` configure options
+  (default: enabled; built as a no-op when libcxi is not found), that
   collects and reports HPE Cassini (CXI) hardware performance counters
-  for Slingshot 11 (or newer) environments. See the "HPE Cassini (CXI)
+  for Slingshot 11 (or newer) environments.  Collection is opt-in: the
+  ``hook_hwpc_cxi_counter_report`` MCA parameter defaults to ``0``. See the "HPE Cassini (CXI)
   Hardware Performance Counters (HWPC)" page in the features
   documentation for the new ``hook_hwpc_cxi_counter_*`` MCA parameters,
   including an option to enable registration of CXI counters as MPI_T

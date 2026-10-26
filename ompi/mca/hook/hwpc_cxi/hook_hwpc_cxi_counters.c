@@ -26,10 +26,7 @@
 #include <limits.h>
 #include <inttypes.h>
 
-#include <pmix.h>
-
 #include "ompi/communicator/communicator.h"
-#include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -40,8 +37,8 @@
  * This is a basic enumeration of the different verbosity levels for CXI counter reporting
  */
 typedef enum cxi_counter_report_verbosity_level_t {
-    CXI_REPORT_QUIET = 0,           /* 0 - no Cassini counters collected; feature is disabled */
-    CXI_REPORT_DEFAULT = 1,         /* 1 - (Default) network timeout counters collected, one-line display */
+    CXI_REPORT_QUIET = 0,           /* 0 - (Default) no Cassini counters collected; feature is disabled */
+    CXI_REPORT_DEFAULT = 1,         /* 1 - network timeout counters collected, one-line display */
     CXI_REPORT_SUMMARY = 2,         /* 2 - option 1 + CXI counters summary report displayed */
     CXI_REPORT_ON_ERROR = 3,        /* 3 - option 2 + display counter data for any NIC that hit a network timeout */
     CXI_REPORT_ALL_ON_ERROR = 4,    /* 4 - option 2 + display counter data for all NICs, if any network timeout occurred */
@@ -65,7 +62,6 @@ typedef struct {
  * Fields:
  *   world_rank             - MPI world rank of the process
  *   world_size             - Total number of MPI processes
- *   num_nodes              - Number of nodes in the job
  *   local_size             - Number of processes on the local node; can vary between nodes
  *   local_rank             - Local rank on the node
  *   hostname               - Hostname of the node
@@ -79,7 +75,6 @@ typedef struct {
 typedef struct {
     int world_rank;
     int world_size;
-    int num_nodes;
     int local_rank;
     int local_size;                 /* Can vary between nodes in a job */
     char *hostname;
@@ -132,6 +127,8 @@ typedef struct {
     int samples;
     long timeouts;
     long nonzero;
+    long *summary_longs;                               /* 8 * num_counter_data; allocated at init so finalize never allocates between fcomm reductions */
+    double *summary_doubles;                           /* 6 * num_counter_data */
 } cxi_counter_collection_t;
 
 /* Stores all of the job-related data needed for CXI counter collection and reporting flow */
@@ -156,8 +153,9 @@ static cxi_job_data_t* cxi_global_job_data_init(void);
 static cxi_job_data_t* cxi_global_job_data_topology_init(cxi_job_data_t *job_data);
 static cxi_job_data_t* cxi_global_job_data_comm_init(cxi_job_data_t *job_data);
 static cxi_counter_collection_t* cxi_global_counter_collection_init(cxi_job_data_t *job_data);
-static bool cxi_world_initialization_agree(bool local_success);
-static bool cxi_world_reporting_level_agree(cxi_job_data_t *job_data);
+static bool cxi_job_is_singleton(const cxi_job_data_t *job_data);
+static bool cxi_world_initialization_agree(const cxi_job_data_t *job_data, bool local_success);
+static bool cxi_world_reporting_level_agree(const cxi_job_data_t *job_data);
 static bool cxi_counter_schema_agree(cxi_job_data_t *job_data, cxi_counter_collection_t *counter_collection);
 
 static int  cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counter_collection, const char *user_inputfile_name);
@@ -179,12 +177,17 @@ static int  cxi_initialize_token_metadatas_list(cxi_counter_token_metadata_t **t
 static void cxi_counter_sample(cxi_counter_collection_t *counters);
 
 /* Counter Reporting */
-static void cxi_output(int output_id, const char *format, ...)
-    __opal_attribute_format__(__printf__, 2, 3);
+typedef enum {
+    CXI_OUTPUT_INFO,                /* Shown only when verbose (or in debug builds) */
+    CXI_OUTPUT_WARNING,             /* Always shown */
+    CXI_OUTPUT_ERROR                /* Always shown */
+} cxi_output_severity_t;
+static void cxi_output(int output_id, cxi_output_severity_t severity, const char *format, ...)
+    __opal_attribute_format__(__printf__, 3, 4);
 static void cxi_global_counter_report(cxi_counter_collection_t *counter_collection);
 static bool cxi_device_has_timeout(const cxi_counter_collection_t *counter_collection, int dev);
 static int  cxi_counter_report(FILE *ofp, cxi_counter_collection_t *counters);
-static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collection);
+static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collection, bool reductions_ok);
 
 /* Helper Functions - For deallocation */
 static void cxi_single_counter_data_free(cxi_counter_data_t **counter);
@@ -282,12 +285,11 @@ static bool cxi_counter_name_is_present(const char *counter_name)
 
 
 /* Helper function to output formatted messages to filestream via OPAL */
-static void cxi_output(int output_id, const char *format, ...)
+static void cxi_output(int output_id, cxi_output_severity_t severity, const char *format, ...)
 {
     va_list ap;
     va_list ap_copy;
-    bool production_message = NULL != strstr(format, "ERROR:")
-                              || NULL != strstr(format, "WARNING:");
+    bool production_message = CXI_OUTPUT_INFO != severity;
     int needed;
     char *msg;
     char *full_msg;
@@ -391,7 +393,7 @@ static int cxi_sanitize_counter_token_list(char **sanitized_token_list[], size_t
         }
         temp_token = strndup(token_list[i], HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
         if (NULL == temp_token) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for temporary token\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for temporary token\n", __func__);
             rc = HWPC_CXI_ERROR;
             goto cleanup;
         }
@@ -402,7 +404,7 @@ static int cxi_sanitize_counter_token_list(char **sanitized_token_list[], size_t
             temp_token = NULL; /* Set temp_token to NULL so we don't free it in cleanup */
             temp_sanitized_tokens_list_count++;
         } else {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: WARNING: Sanitization failed for token '%s' Skipping... \n", __func__, temp_token);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI %s: WARNING: Sanitization failed for token '%s' Skipping... \n", __func__, temp_token);
             free(temp_token);
             temp_token = NULL;
         }
@@ -458,7 +460,7 @@ static int cxi_initialize_token_metadatas_list(cxi_counter_token_metadata_t ***t
     size_t temp_token_metadatas_list_size = sanitized_token_list_size;
     cxi_counter_token_metadata_t **temp_token_metadatas_list = (cxi_counter_token_metadata_t **)calloc(temp_token_metadatas_list_size, sizeof(cxi_counter_token_metadata_t *));
     if (NULL == temp_token_metadatas_list) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for token metadatas list\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for token metadatas list\n", __func__);
         goto cleanup;
     }
 
@@ -479,7 +481,7 @@ static int cxi_initialize_token_metadatas_list(cxi_counter_token_metadata_t ***t
         matched_mnemonic = NULL;
 
         /* Check if the token is a case-insensitive match for any of the predefined counter group names */
-        rc = hwpc_cxi_get_counter_group_obj_by_name(&matched_group, token);
+        rc = ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&matched_group, token);
         if (HWPC_CXI_SUCCESS == rc && NULL != matched_group) {
             /* Token matches a predefined counter group name */
             token_matched_counter_group = true;
@@ -488,7 +490,7 @@ static int cxi_initialize_token_metadatas_list(cxi_counter_token_metadata_t ***t
 
         /* If the token did not match a predefined counter group, then check if the token is a case-insensitive match for any of the predefined counter mnemonics */
         if (!token_matched_counter_group) {
-            rc = hwpc_cxi_get_counter_mnemonic_obj_by_name(&matched_mnemonic, token);
+            rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&matched_mnemonic, token);
             if (HWPC_CXI_SUCCESS == rc && NULL != matched_mnemonic) {
                 /* Token matches a predefined counter mnemonic name */
                 /* Note that a token can match both a counter mnemonic name as well as a low-level counter name if the counter mnemonic is a standalone type
@@ -509,21 +511,21 @@ static int cxi_initialize_token_metadatas_list(cxi_counter_token_metadata_t ***t
         }
 
         if (!token_matched_counter_group && !token_matched_counter_mnemonic && !token_matched_lowlevel_counter) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Skipping: Token %.*s is not recognized as any known counter group, mnemonic, or low-level counter\n", HWPC_CXI_MAX_COUNTER_NAME_LENGTH, token);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Skipping: Token %.*s is not recognized as any known counter group, mnemonic, or low-level counter\n", HWPC_CXI_MAX_COUNTER_NAME_LENGTH, token);
             continue; /* Skip this token as it did not match any known counter type */
         }
 
         /* Now for every sanitized token that has been validated, allocate a token metadata to insert into the list */
         token_metadata = (cxi_counter_token_metadata_t *)calloc(1, sizeof(cxi_counter_token_metadata_t));
         if (NULL == token_metadata) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for token metadata\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for token metadata\n", __func__);
             rc = HWPC_CXI_ERROR;
             goto cleanup;
         }
 
         token_metadata->token_name = strndup(token, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
         if (NULL == token_metadata->token_name) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for token metadata name\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for token metadata name\n", __func__);
             rc = HWPC_CXI_ERROR;
             goto cleanup;
         }
@@ -537,25 +539,25 @@ static int cxi_initialize_token_metadatas_list(cxi_counter_token_metadata_t ***t
 
         if (token_matched_counter_group) {
             /* Given the counter group associated with this token, store the counter group object ID for faster lookup later */
-            rc = hwpc_cxi_get_counter_group_id_by_obj(&token_metadata->counter_group_id, matched_group);
+            rc = ompi_hook_hwpc_cxi_get_counter_group_id_by_obj(&token_metadata->counter_group_id, matched_group);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: WARNING: Failed to get counter group ID for counter group '%s'\n", __func__, token);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI %s: WARNING: Failed to get counter group ID for counter group '%s'\n", __func__, token);
             }
         } else if (token_matched_counter_mnemonic) {
             /* Given the counter mnemonic associated with this token, store the counter mnemonic object ID for faster lookup later */
-            rc = hwpc_cxi_get_counter_mnemonic_id_by_obj(&token_metadata->counter_mnemonic_id, matched_mnemonic);
+            rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_id_by_obj(&token_metadata->counter_mnemonic_id, matched_mnemonic);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: WARNING: Failed to get counter mnemonic ID for counter mnemonic '%s'\n", __func__, token);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI %s: WARNING: Failed to get counter mnemonic ID for counter mnemonic '%s'\n", __func__, token);
             }
         } else if (token_matched_lowlevel_counter) {
             /* Determine if there is a predefined counter mnemonic that this low-level counter can be associated with */
-            rc = hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&matched_mnemonic, token);
+            rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&matched_mnemonic, token);
             if (HWPC_CXI_SUCCESS == rc && NULL != matched_mnemonic) {
                 /* Found a predefined counter mnemonic associated with this low-level counter */
                 /* Given the counter mnemonic associated with this low-level counter, get the counter mnemonic object ID */
-                rc = hwpc_cxi_get_counter_mnemonic_id_by_obj(&token_metadata->counter_mnemonic_id, matched_mnemonic);
+                rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_id_by_obj(&token_metadata->counter_mnemonic_id, matched_mnemonic);
                 if (HWPC_CXI_SUCCESS != rc) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: WARNING: Failed to get counter mnemonic ID for low-level counter '%s'\n", __func__, token);
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI %s: WARNING: Failed to get counter mnemonic ID for low-level counter '%s'\n", __func__, token);
                 }
             } else {
                 /* No predefined counter mnemonic associated with this low-level counter */
@@ -570,29 +572,29 @@ static int cxi_initialize_token_metadatas_list(cxi_counter_token_metadata_t ***t
 
     num_valid_tokens_detected = num_valid_counter_group_tokens_detected + num_valid_counter_mnemonic_tokens_detected + num_valid_lowlevel_counter_tokens_detected;
     if (num_valid_tokens_detected != temp_token_metadatas_list_count) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Mismatch between number of valid tokens detected (%zu) and number of token metadatas created (%zu)\n", num_valid_tokens_detected, temp_token_metadatas_list_count);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Mismatch between number of valid tokens detected (%zu) and number of token metadatas created (%zu)\n", num_valid_tokens_detected, temp_token_metadatas_list_count);
     }
 
     /* Print a summary of the valid tokens that were processed*/
     if (global_job_data->is_world_root_rank) {
         if (global_job_data->using_inputfile_specified_counters) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Summary of valid counters detected from CXI counter file %s:\n", global_job_data->counter_inputfile_name);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Summary of valid counters detected from CXI counter file %s:\n", global_job_data->counter_inputfile_name);
         } else if (global_job_data->using_default_timeout_counters) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Summary of valid counters detected from the default CXI timeout counters\n");
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Summary of valid counters detected from the default CXI timeout counters\n");
         } else if (global_job_data->using_default_counters) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Summary of valid counters detected from the default CXI counters\n");
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Summary of valid counters detected from the default CXI counters\n");
         }
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Total tokens detected: %zu\n", num_clean_tokens_detected);
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Valid tokens detected: %zu\n", num_valid_tokens_detected);
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Counter groups detected: %zu\n", num_valid_counter_group_tokens_detected);
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Counter mnemonics detected: %zu\n", num_valid_counter_mnemonic_tokens_detected);
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Low-level counters detected: %zu\n", num_valid_lowlevel_counter_tokens_detected);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Total tokens detected: %zu\n", num_clean_tokens_detected);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Valid tokens detected: %zu\n", num_valid_tokens_detected);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Counter groups detected: %zu\n", num_valid_counter_group_tokens_detected);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Counter mnemonics detected: %zu\n", num_valid_counter_mnemonic_tokens_detected);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Low-level counters detected: %zu\n", num_valid_lowlevel_counter_tokens_detected);
         if (global_job_data->verbose) {
             for (size_t i = 0; i < temp_token_metadatas_list_count; ++i) {
                 token_metadata = temp_token_metadatas_list[i];
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: (%s, %s)\n",
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: (%s, %s)\n",
                             token_metadata->token_name,
-                            hwpc_cxi_counter_type_to_string(token_metadata->type));
+                            ompi_hook_hwpc_cxi_counter_type_to_string(token_metadata->type));
             }
         }
     }
@@ -631,10 +633,17 @@ cleanup:
  */
 void ompi_hook_hwpc_cxi_init(void)
 {
+    opal_output_stream_t output_lds = {0};
+    opal_output_stream_t error_lds = {0};
     bool stdout_stream_constructed = false;
     bool stderr_stream_constructed = false;
     bool stdout_opened_here = false;
     bool stderr_opened_here = false;
+    bool job_data_topology_initialized;
+    bool world_comm_initialized = true;
+    bool comm_initialized;
+    bool counter_collection_initialized;
+    bool schema_agreed;
 
     if (NULL != global_job_data) {
         return; /* Already initialized */
@@ -642,33 +651,15 @@ void ompi_hook_hwpc_cxi_init(void)
 
     /* Establish and store the job's metadata needed for CXI counter collection and reporting */
     global_job_data = cxi_global_job_data_init();
+    bool is_singleton = cxi_job_is_singleton(NULL);
+    if (NULL != global_job_data) {
+        global_job_data->is_singleton = is_singleton;
+    }
 
-    if (NULL == global_job_data) {
-        /* Initialization failed, but uniformly across ranks; nothing more to do */
+    /* Without peers there is no agreement to join, so a singleton can stop here. */
+    if (is_singleton && (NULL == global_job_data || CXI_REPORT_QUIET == mca_hook_hwpc_cxi_counter_report)) {
         goto cleanup;
     }
-
-    /* If MPI is not initialized, assume it is a singleton situation */
-    global_job_data->is_singleton = false;
-    if (ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED) {
-        global_job_data->is_singleton = true;
-    } else if (opal_process_info.is_singleton) {
-        /*
-         * Conflict: During singleton execution when calling the hwpc_cxi hook module's API without first going through MPI_Init(),
-         * opal_process_info's is_singleton member value starts as false while OpenMPI's ompi_mpi_comm_world starts zero-filled.
-         */
-        global_job_data->is_singleton = true;
-    } else {
-        global_job_data->is_singleton = false;
-    }
-
-    if (global_job_data->is_singleton && CXI_REPORT_QUIET == mca_hook_hwpc_cxi_counter_report) {
-        /* CXI hardware counter reporting explicitly disabled. Collect no data. */
-        goto cleanup;
-    }
-
-    opal_output_stream_t output_lds = {0};
-    opal_output_stream_t error_lds = {0};
 
     /* Initialize the output channel for CXI counter summary */
     if (ompi_hwpc_cxi_stdout_id < 0) {
@@ -701,7 +692,7 @@ void ompi_hook_hwpc_cxi_init(void)
     }
 
     /* Sanity check for world reporting agreement on a fundamental level */
-    if (!cxi_world_reporting_level_agree(NULL)) {
+    if (!cxi_world_reporting_level_agree(global_job_data)) {
         goto cleanup;
     }
 
@@ -710,36 +701,38 @@ void ompi_hook_hwpc_cxi_init(void)
     }
 
     /* Establish and store the job's metadata needed for CXI counter collection and reporting */
-    if (!cxi_world_initialization_agree(NULL != global_job_data)) {
+    if (!cxi_world_initialization_agree(global_job_data, NULL != global_job_data)) {
         goto cleanup;
     }
 
-    global_job_data = cxi_global_job_data_topology_init(global_job_data);
-    bool job_data_topology_initialized = (NULL != global_job_data);
-    if (!cxi_world_initialization_agree(job_data_topology_initialized)) {
+    job_data_topology_initialized = (NULL != cxi_global_job_data_topology_init(global_job_data));
+    if (!cxi_world_initialization_agree(global_job_data, job_data_topology_initialized)) {
         goto cleanup;
     }
 
-    bool world_comm_initialized = true;
     if (!global_job_data->is_singleton) {
         int rc = ompi_comm_dup(&ompi_mpi_comm_world.comm, &ompi_hwpc_cxi_comm);
         if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to duplicate MPI_COMM_WORLD. Error code: %d\n", __func__, rc);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to duplicate MPI_COMM_WORLD. Error code: %d\n", __func__, rc);
         } else {
             rc = ompi_comm_set_name(ompi_hwpc_cxi_comm, "HWPC_CXI");
             if (OMPI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to set name for duplicated MPI_COMM_WORLD. Error code: %d\n", __func__, rc);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to set name for duplicated MPI_COMM_WORLD. Error code: %d\n", __func__, rc);
             }
         }
         world_comm_initialized = (OMPI_SUCCESS == rc);
     }
-    if (!cxi_world_initialization_agree(world_comm_initialized)) {
+    if (!cxi_world_initialization_agree(global_job_data, world_comm_initialized)) {
+        /* Some rank may lack the dup, so the collective ompi_comm_free() could hang; leave it to MPI_Finalize. */
+        ompi_hwpc_cxi_comm = NULL;
         goto cleanup;
     }
 
     /* Initialize the CXI hardware performance counter feature's local rank communicator */
-    bool comm_initialized = (NULL != cxi_global_job_data_comm_init(global_job_data));
-    if (!cxi_world_initialization_agree(comm_initialized)) {
+    comm_initialized = (NULL != cxi_global_job_data_comm_init(global_job_data));
+    if (!cxi_world_initialization_agree(global_job_data, comm_initialized)) {
+        /* Likewise, ompi_comm_split() may have produced fcomm on only some leaders. */
+        global_job_data->fcomm = NULL;
         goto cleanup;
     }
     if (!comm_initialized) {
@@ -749,13 +742,13 @@ void ompi_hook_hwpc_cxi_init(void)
 
     /* Initialize the CXI hardware performance counter data structures */
     global_cxi_counters = cxi_global_counter_collection_init(global_job_data);
-    bool counter_collection_initialized = NULL != global_cxi_counters;
-    if (!cxi_world_initialization_agree(counter_collection_initialized)) {
+    counter_collection_initialized = NULL != global_cxi_counters;
+    if (!cxi_world_initialization_agree(global_job_data, counter_collection_initialized)) {
         goto cleanup;
     }
 
-    bool schema_agreed = cxi_counter_schema_agree(global_job_data, global_cxi_counters);
-    if (!cxi_world_initialization_agree(schema_agreed)) {
+    schema_agreed = cxi_counter_schema_agree(global_job_data, global_cxi_counters);
+    if (!cxi_world_initialization_agree(global_job_data, schema_agreed)) {
         goto cleanup;
     }
 
@@ -855,7 +848,7 @@ static cxi_job_data_t* cxi_global_job_data_init(void)
 
     cxi_job_data_t* job_data = (cxi_job_data_t *)calloc(1, sizeof(cxi_job_data_t));
     if (NULL == job_data) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for job data\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for job data\n", __func__);
         goto cleanup;
     }
 
@@ -869,7 +862,7 @@ static cxi_job_data_t* cxi_global_job_data_init(void)
     if (NULL != mca_hook_hwpc_cxi_counter_file) {
         dup_name = strndup(mca_hook_hwpc_cxi_counter_file, HWPC_CXI_MAX_FULLPATH_LENGTH);
         if (NULL == dup_name) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter file name\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter file name\n", __func__);
             goto cleanup;
         }
         job_data->counter_inputfile_name = dup_name;
@@ -883,13 +876,13 @@ static cxi_job_data_t* cxi_global_job_data_init(void)
 
         if (strlen(filename_prefix) >= HWPC_CXI_MAX_OUTPUT_REPORT_PREFIX_LENGTH ||
             strlen(report_prefix) >= HWPC_CXI_MAX_FULLPATH_LENGTH) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Report file prefix exceeds the supported length\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Report file prefix exceeds the supported length\n", __func__);
             goto cleanup;
         }
 
         dup_name = strndup(mca_hook_hwpc_cxi_counter_report_file, HWPC_CXI_MAX_FULLPATH_LENGTH);
         if (NULL == dup_name) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for report file prefix\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for report file prefix\n", __func__);
             goto cleanup;
         }
         /* Preserve path separators while replacing unsafe filename characters. */
@@ -913,7 +906,7 @@ static cxi_job_data_t* cxi_global_job_data_init(void)
             free(dup_name);
             dup_name = strdup("cxi_counter_report");
             if (NULL == dup_name) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for default report file prefix\n", __func__);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for default report file prefix\n", __func__);
                 goto cleanup;
             }
         }
@@ -938,90 +931,32 @@ cleanup:
 
 /*
  * Processes the job configuration and rank/node topology data.
- * Returns NULL on failure.
+ * Returns NULL on failure; job_data remains owned (and freed) by the caller.
  */
 static cxi_job_data_t* cxi_global_job_data_topology_init(cxi_job_data_t *job_data)
 {
-    int rc;
     char *dup_name = NULL;
-    uint32_t world_size, num_nodes, local_size;
-    uint16_t local_rank;
-    uint32_t *world_size_ptr = &world_size;
-    uint32_t *num_nodes_ptr  = &num_nodes;
-    uint32_t *local_size_ptr = &local_size;
-    uint16_t *local_rank_ptr = &local_rank;
 
-    opal_process_name_t pname;
-
-    pname.jobid = OPAL_PROC_MY_NAME.jobid;
+    job_data->world_rank = 0;
     job_data->world_size = 1;
-    job_data->num_nodes = 1;
     job_data->local_size = 1;
     job_data->local_rank = 0;
-    job_data->world_rank = job_data->is_singleton ? 0 : OPAL_PROC_MY_NAME.vpid;
-
     if (!job_data->is_singleton) {
-        pname.vpid = OPAL_VPID_WILDCARD; /* wildcard to get job-level attribute */
-
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_JOB_SIZE,
-                                       &pname, &world_size_ptr, PMIX_UINT32);
-        if (PMIX_SUCCESS == rc) {
-            job_data->world_size = (int) world_size;
-        } else {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Failed to retrieve PMIX_JOB_SIZE. Error code: %d Error: %s\n",
-                    rc, PMIx_Error_string(rc));
-        }
-
-        /* PMIX_NUM_NODES is a job-level attribute stored under PMIX_RANK_WILDCARD.
-         * Use opal_process_name_wildcard so the modex recv targets the
-         * namespace wildcard entry rather than a specific process rank. */
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_NUM_NODES,
-                                       &pname, &num_nodes_ptr, PMIX_UINT32);
-        if (PMIX_SUCCESS == rc) {
-            job_data->num_nodes = (int) num_nodes;
-        } else {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Failed to retrieve PMIX_NUM_NODES. Error code: %d Error: %s\n",
-                    rc, PMIx_Error_string(rc));
-        }
-
-        pname.vpid = OPAL_PROC_MY_NAME.vpid; /* specific rank to get local_size and local_rank */
-
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_SIZE,
-                                       &pname, &local_size_ptr, PMIX_UINT32);
-        if (PMIX_SUCCESS == rc) {
-            job_data->local_size = (int) local_size;
-        } else {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Failed to retrieve PMIX_LOCAL_SIZE. Error code: %d Error: %s\n",
-                    rc, PMIx_Error_string(rc));
-        }
-
-        OPAL_MODEX_RECV_VALUE_OPTIONAL(rc, PMIX_LOCAL_RANK,
-                                       &pname, &local_rank_ptr, PMIX_UINT16);
-        if (PMIX_SUCCESS == rc) {
-            job_data->local_rank = (int) local_rank;
-        } else {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Failed to retrieve PMIX_LOCAL_RANK. Error code: %d Error: %s\n",
-                    rc, PMIx_Error_string(rc));
-            goto cleanup;
-        }
-
-        pname.vpid = OPAL_VPID_WILDCARD; /* wildcard to get job-level attribute */
+        /* ompi_rte_init() cached these, and fails MPI_Init if the local rank or job size is unavailable. */
+        job_data->world_rank = (int) OPAL_PROC_MY_NAME.vpid;
+        job_data->world_size = (int) opal_process_info.num_procs;
+        job_data->local_size = (int) opal_process_info.num_local_peers + 1;
+        job_data->local_rank = (int) opal_process_info.my_local_rank;
     }
 
     job_data->is_world_root_rank = (0 == job_data->world_rank);
     job_data->is_local_root_rank = (0 == job_data->local_rank);
     job_data->is_mpi_finalize = false;
 
-    /* Get and sanitize hostname so it is safe to use in output file paths. */
-    char env_hostname[HWPC_CXI_MAX_HOSTNAME_LENGTH];
+    /* Sanitize the hostname so it is safe to use in output file paths. */
+    const char *env_hostname = (NULL != opal_process_info.nodename) ? opal_process_info.nodename : "";
     char tmp_hostname[HWPC_CXI_MAX_HOSTNAME_LENGTH];
     size_t tmp_idx = 0;
-
-    if (gethostname(env_hostname, HWPC_CXI_MAX_HOSTNAME_LENGTH) != 0) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: WARNING: gethostname failed. Setting to \"unknown_hostname\"\n", __func__);
-        strncpy(env_hostname, "unknown_hostname", HWPC_CXI_MAX_HOSTNAME_LENGTH);
-    }
-    env_hostname[HWPC_CXI_MAX_HOSTNAME_LENGTH - 1] = '\0';
 
     for (size_t i = 0; env_hostname[i] != '\0' && tmp_idx < (HWPC_CXI_MAX_HOSTNAME_LENGTH - 1); ++i) {
         unsigned char ch = (unsigned char) env_hostname[i];
@@ -1040,33 +975,23 @@ static cxi_job_data_t* cxi_global_job_data_topology_init(cxi_job_data_t *job_dat
 
     dup_name = strndup(tmp_hostname, HWPC_CXI_MAX_HOSTNAME_LENGTH);
     if (NULL == dup_name) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for hostname\n", __func__);
-        goto cleanup;
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for hostname\n", __func__);
+        return NULL;
     }
     job_data->hostname = dup_name;
 
     return(job_data);
-
-cleanup:
-
-    cxi_job_data_free(&job_data);
-
-    if (dup_name != NULL) {
-        free(dup_name);
-        dup_name = NULL;
-    }
-
-    return NULL;
 }
 
 
 /*
  * Finishes initializing job_data by building a MPI communicator over the first process on each node.
- * Returns NULL on failure.
+ * Non-leaders get MPI_COMM_NULL. Returns NULL on failure.
  */
 static cxi_job_data_t* cxi_global_job_data_comm_init(cxi_job_data_t *job_data)
 {
     int rc;
+    bool local_success = true;
 
     if (NULL == job_data) {
         return NULL;
@@ -1078,114 +1003,60 @@ static cxi_job_data_t* cxi_global_job_data_comm_init(cxi_job_data_t *job_data)
         return job_data;
     }
 
-    /* Communicator over the first process ("local root rank") on each node */
-    int *local_root_world_ranks = NULL;
-    int *node_root_only_world_ranks = NULL;
-    ompi_group_t *allgrp = NULL;
-    ompi_group_t *fgrp = NULL;
-
-    local_root_world_ranks = (int *)malloc(job_data->world_size * sizeof(int));
-    if (NULL == local_root_world_ranks) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for local_root_world_ranks array\n", __func__);
-        goto cleanup;
-    }
-
-    node_root_only_world_ranks = (int *)malloc(job_data->num_nodes * sizeof(int));
-    if (NULL == node_root_only_world_ranks) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for node_root_only_world_ranks array\n", __func__);
-        goto cleanup;
-    }
-
-    /* Store the world ranks of the local root processes in the entire job */
-    int local_root_world_rank = job_data->is_local_root_rank ? job_data->world_rank : -1;
-
-    rc = ompi_hwpc_cxi_comm->c_coll->coll_allgather(&local_root_world_rank, 1, MPI_INT,
-                                                     local_root_world_ranks, 1, MPI_INT,
-                                                     ompi_hwpc_cxi_comm,
-                                                     ompi_hwpc_cxi_comm->c_coll->coll_allgather_module);
+    rc = ompi_comm_split(ompi_hwpc_cxi_comm, job_data->is_local_root_rank ? 0 : MPI_UNDEFINED,
+                         job_data->world_rank, &job_data->fcomm, false);
     if (OMPI_SUCCESS != rc) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: coll_allgather failed while collecting local root world ranks. Error code: %d \n", __func__, rc);
-        goto cleanup;
-    }
-
-    size_t fcount = 0;
-    for (size_t i = 0; i < (size_t)(job_data->world_size); i++) {
-        if (local_root_world_ranks[i] >= 0) {
-            if (fcount >= (size_t)(job_data->num_nodes)) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Number of discovered local roots exceeds number of nodes (%zu)\n", __func__, (size_t)(job_data->num_nodes));
-                goto cleanup;
-            }
-            node_root_only_world_ranks[fcount++] = local_root_world_ranks[i];
-        }
-    }
-
-    if (fcount != (size_t)(job_data->num_nodes)) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Number of root-rank processes found (%zu) does not match number of nodes (%zu)\n", __func__, fcount, (size_t)(job_data->num_nodes));
-        goto cleanup;
-    }
-
-    ompi_comm_group(ompi_hwpc_cxi_comm, &allgrp);
-
-    if (job_data->is_local_root_rank) {
-        if (ompi_group_incl(allgrp, fcount, node_root_only_world_ranks, &fgrp) != 0) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: ompi_group_incl() call failed\n", __func__);
-            goto cleanup;
-        }
-    } else {
-        fgrp = &ompi_mpi_group_empty.group;
-    }
-
-    if (ompi_comm_create(ompi_hwpc_cxi_comm, fgrp, &job_data->fcomm) != 0) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: ompi_comm_create failed\n", __func__);
-        goto cleanup;
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: ompi_comm_split failed. Error code: %d\n", __func__, rc);
+        return NULL;
     }
 
     if (job_data->verbose && job_data->is_local_root_rank) {
         long fr  = ompi_comm_rank(job_data->fcomm);
         long frs = ompi_comm_size(job_data->fcomm);
 
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Process %d is %ld of %ld leaders\n", job_data->world_rank, fr, frs);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Process %d is %ld of %ld leaders\n", job_data->world_rank, fr, frs);
     }
-
-    if (fgrp != NULL && fgrp != &ompi_mpi_group_empty.group) {
-        OBJ_RELEASE(fgrp);
-    }
-    if (allgrp != NULL && allgrp != &ompi_mpi_group_empty.group) {
-        OBJ_RELEASE(allgrp);
-    }
-    free(local_root_world_ranks);
-    local_root_world_ranks = NULL;
-    free(node_root_only_world_ranks);
-    node_root_only_world_ranks = NULL;
 
     return job_data;
+}
 
-cleanup:
-
-    if (fgrp != NULL && fgrp != &ompi_mpi_group_empty.group) {
-        OBJ_RELEASE(fgrp);
+/* Uses the recorded topology when available; otherwise derives it from MPI state. */
+static bool cxi_job_is_singleton(const cxi_job_data_t *job_data)
+{
+    if (NULL != job_data) {
+        return job_data->is_singleton;
     }
-    if (allgrp != NULL && allgrp != &ompi_mpi_group_empty.group) {
-        OBJ_RELEASE(allgrp);
+
+    /*
+     * Conflict: During singleton execution when calling the hwpc_cxi hook module's API without first going through MPI_Init(),
+     * opal_process_info's is_singleton member value starts as false while Open MPI's ompi_mpi_comm_world starts zero-filled.
+     */
+    return ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED || opal_process_info.is_singleton;
+}
+
+/* Uses the recorded topology when available; otherwise derives it from MPI state. */
+static bool cxi_job_is_singleton(const cxi_job_data_t *job_data)
+{
+    if (NULL != job_data) {
+        return job_data->is_singleton;
     }
-    free(local_root_world_ranks);
-    local_root_world_ranks = NULL;
 
-    free(node_root_only_world_ranks);
-    node_root_only_world_ranks = NULL;
-
-    return NULL;
+    /*
+     * Conflict: During singleton execution when calling the hwpc_cxi hook module's API without first going through MPI_Init(),
+     * opal_process_info's is_singleton member value starts as false while OpenMPI's ompi_mpi_comm_world starts zero-filled.
+     */
+    return ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED || opal_process_info.is_singleton;
 }
 
 /* Ensure every rank follows the same initialization path before later collectives. */
-static bool cxi_world_initialization_agree(bool local_success)
+static bool cxi_world_initialization_agree(const cxi_job_data_t *job_data, bool local_success)
 {
     ompi_communicator_t *world_comm = &ompi_mpi_comm_world.comm;
     int local_status = local_success ? 1 : 0;
     int global_status = 0;
     int rc;
 
-    if (global_job_data->is_singleton) {
+    if (cxi_job_is_singleton(job_data)) {
         return local_success;
     }
 
@@ -1193,13 +1064,13 @@ static bool cxi_world_initialization_agree(bool local_success)
                                            world_comm,
                                            world_comm->c_coll->coll_allreduce_module);
     if (OMPI_SUCCESS != rc) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Initialization agreement allreduce failed with error code %d\n", __func__, rc);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Initialization agreement allreduce failed with error code %d\n", __func__, rc);
         return false;
     }
 
     if (0 == global_status) {
         if (0 == OPAL_PROC_MY_NAME.vpid) {
-            cxi_output(ompi_hwpc_cxi_stderr_id,
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING,
                        "HWPC_CXI: WARNING: Initialization disabled because at least one rank failed setup\n");
         }
         return false;
@@ -1209,7 +1080,7 @@ static bool cxi_world_initialization_agree(bool local_success)
 }
 
 /* Check the reporting level once, before initialization reaches later collectives. */
-static bool cxi_world_reporting_level_agree(cxi_job_data_t *job_data)
+static bool cxi_world_reporting_level_agree(const cxi_job_data_t *job_data)
 {
     ompi_communicator_t *world_comm = &ompi_mpi_comm_world.comm;
     int local_level = (NULL != job_data) ? (int)job_data->reporting_level : (int)mca_hook_hwpc_cxi_counter_report;
@@ -1217,7 +1088,7 @@ static bool cxi_world_reporting_level_agree(cxi_job_data_t *job_data)
     int maximum_level = 0;
     int rc;
 
-    if (global_job_data->is_singleton) {
+    if (cxi_job_is_singleton(job_data)) {
         return true;
     }
 
@@ -1225,7 +1096,7 @@ static bool cxi_world_reporting_level_agree(cxi_job_data_t *job_data)
                                            world_comm,
                                            world_comm->c_coll->coll_allreduce_module);
     if (OMPI_SUCCESS != rc) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Reporting-level agreement allreduce failed with error code %d\n", __func__, rc);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Reporting-level agreement allreduce failed with error code %d\n", __func__, rc);
         return false;
     }
 
@@ -1233,13 +1104,13 @@ static bool cxi_world_reporting_level_agree(cxi_job_data_t *job_data)
                                            world_comm,
                                            world_comm->c_coll->coll_allreduce_module);
     if (OMPI_SUCCESS != rc) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Reporting-level agreement allreduce failed with error code %d\n", __func__, rc);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Reporting-level agreement allreduce failed with error code %d\n", __func__, rc);
         return false;
     }
 
     if (minimum_level != maximum_level) {
         if (0 == OPAL_PROC_MY_NAME.vpid) {
-            cxi_output(ompi_hwpc_cxi_stderr_id,
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING,
                        "HWPC_CXI: WARNING: Initialization disabled because ranks disagreed on reporting level\n");
         }
         return false;
@@ -1248,86 +1119,102 @@ static bool cxi_world_reporting_level_agree(cxi_job_data_t *job_data)
     return true;
 }
 
-/* Node leaders must use the same ordered counter list for every fcomm reduction. */
+/*
+ * Node leaders must use the same ordered counter lists for every fcomm reduction. Every non-singleton rank
+ * must call this: all ranks vote on the leaders' fcomm allreduce before any leader enters the allgathers.
+ */
 static bool cxi_counter_schema_agree(cxi_job_data_t *job_data, cxi_counter_collection_t *counter_collection)
 {
-    int local_count = 0;
-    int local_count_valid;
-    int all_counts_valid = 0;
-    int minimum_count = 0;
-    int maximum_count = 0;
-    int rc;
+    bool is_leader = NULL != job_data && NULL != counter_collection && job_data->is_local_root_rank &&
+                     NULL != job_data->fcomm && MPI_COMM_NULL != job_data->fcomm;
+    /* {usable, n_req, -n_req, n_data, -n_data} reduced with MPI_MIN yields each minimum and negated maximum. */
+    int local_schema[5] = {0};
+    int global_schema[5] = {0};
+    size_t num_requested = 0;
+    size_t num_names = 0;
+    size_t leader_count = 0;
+    char *all_names = NULL;
+    int rc = OMPI_SUCCESS;
     bool schema_matches = true;
+    bool schema_disagreed = false;
 
-    if (NULL == job_data || NULL == counter_collection || !job_data->is_local_root_rank ||
-        NULL == job_data->fcomm || MPI_COMM_NULL == job_data->fcomm) {
+    if (cxi_job_is_singleton(job_data)) {
         return true;
     }
 
-    local_count_valid = counter_collection->num_counters_to_track <= (size_t)INT_MAX ? 1 : 0;
-    rc = job_data->fcomm->c_coll->coll_allreduce(&local_count_valid, &all_counts_valid, 1, MPI_INT, MPI_MIN,
-                                                  job_data->fcomm,
-                                                  job_data->fcomm->c_coll->coll_allreduce_module);
-    if (OMPI_SUCCESS != rc || 0 == all_counts_valid) {
-        return false;
-    }
-    local_count = (int)counter_collection->num_counters_to_track;
-    rc = job_data->fcomm->c_coll->coll_allreduce(&local_count, &minimum_count, 1, MPI_INT, MPI_MIN,
-                                                  job_data->fcomm,
-                                                  job_data->fcomm->c_coll->coll_allreduce_module);
-    if (OMPI_SUCCESS != rc) {
-        return false;
-    }
-    rc = job_data->fcomm->c_coll->coll_allreduce(&local_count, &maximum_count, 1, MPI_INT, MPI_MAX,
-                                                  job_data->fcomm,
-                                                  job_data->fcomm->c_coll->coll_allreduce_module);
-    if (OMPI_SUCCESS != rc) {
-        return false;
-    }
-    if (minimum_count != maximum_count) {
-        schema_matches = false;
+    if (is_leader) {
+        num_requested = counter_collection->num_counters_to_track;
+        num_names = num_requested + counter_collection->num_counter_data;
+        leader_count = (size_t)ompi_comm_size(job_data->fcomm);
+        bool counts_valid = num_names >= num_requested && num_names <= (size_t)INT_MAX;
+        if (counts_valid && num_names > 0) {
+            all_names = (char *)calloc(leader_count, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
+            if (NULL == all_names) {
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate counter schema buffer\n", __func__);
+            }
+        }
+        if (counts_valid) {
+            local_schema[0] = (0 == num_names || NULL != all_names) ? 1 : 0;
+            local_schema[1] = (int)num_requested;
+            local_schema[2] = -(int)num_requested;
+            local_schema[3] = (int)counter_collection->num_counter_data;
+            local_schema[4] = -(int)counter_collection->num_counter_data;
+        }
+
+        rc = job_data->fcomm->c_coll->coll_allreduce(local_schema, global_schema, 5, MPI_INT, MPI_MIN,
+                                                      job_data->fcomm,
+                                                      job_data->fcomm->c_coll->coll_allreduce_module);
+        if (OMPI_SUCCESS != rc) {
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Counter schema allreduce failed with error code %d\n", __func__, rc);
+        }
     }
 
-    if (schema_matches) {
-        size_t leader_count = (size_t)ompi_comm_size(job_data->fcomm);
-        char *all_names = local_count > 0
-                              ? (char *)calloc(leader_count, HWPC_CXI_MAX_COUNTER_NAME_LENGTH)
-                              : NULL;
-        int local_allocation_success = (local_count == 0 || NULL != all_names) ? 1 : 0;
-        int all_allocations_succeeded = 0;
-        rc = job_data->fcomm->c_coll->coll_allreduce(&local_allocation_success, &all_allocations_succeeded, 1,
-                                                      MPI_INT, MPI_MIN, job_data->fcomm,
-                                                      job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc || 0 == all_allocations_succeeded) {
-            schema_matches = false;
-        } else {
-            for (int i = 0; i < local_count; ++i) {
-                char send_name[HWPC_CXI_MAX_COUNTER_NAME_LENGTH] = {0};
-                const char *counter_name = counter_collection->counters_to_track[i];
-                size_t counter_name_length = strnlen(counter_name, sizeof(send_name));
-                memcpy(send_name, counter_name, counter_name_length);
-                rc = job_data->fcomm->c_coll->coll_allgather(
-                    send_name, sizeof(send_name), MPI_CHAR,
-                    all_names, HWPC_CXI_MAX_COUNTER_NAME_LENGTH, MPI_CHAR, job_data->fcomm,
-                    job_data->fcomm->c_coll->coll_allgather_module);
-                if (OMPI_SUCCESS != rc) {
+    if (!cxi_world_initialization_agree(job_data, OMPI_SUCCESS == rc)) {
+        free(all_names);
+        return false;
+    }
+    if (!is_leader) {
+        return true;
+    }
+
+    /* The allreduce succeeded on every leader, so these verdicts are identical across leaders. */
+    if (0 == global_schema[0]) {
+        schema_matches = false;
+    } else if (global_schema[1] != -global_schema[2] || global_schema[3] != -global_schema[4]) {
+        schema_matches = false;
+        schema_disagreed = true;
+    } else {
+        /* num_names is now identical on every leader, so every leader issues the same number of allgathers. */
+        for (size_t i = 0; i < num_names; ++i) {
+            char send_name[HWPC_CXI_MAX_COUNTER_NAME_LENGTH] = {0};
+            const char *counter_name = (i < num_requested)
+                                           ? counter_collection->counters_to_track[i]
+                                           : counter_collection->data[i - num_requested]->name;
+            size_t counter_name_length = strnlen(counter_name, sizeof(send_name));
+            memcpy(send_name, counter_name, counter_name_length);
+            rc = job_data->fcomm->c_coll->coll_allgather(
+                send_name, sizeof(send_name), MPI_CHAR,
+                all_names, HWPC_CXI_MAX_COUNTER_NAME_LENGTH, MPI_CHAR, job_data->fcomm,
+                job_data->fcomm->c_coll->coll_allgather_module);
+            if (OMPI_SUCCESS != rc) {
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Counter schema allgather failed with error code %d\n", __func__, rc);
+                schema_matches = false;
+                continue;
+            }
+            for (size_t leader = 0; leader < leader_count; ++leader) {
+                if (0 != memcmp(send_name,
+                                all_names + leader * HWPC_CXI_MAX_COUNTER_NAME_LENGTH,
+                                sizeof(send_name))) {
                     schema_matches = false;
-                    continue;
-                }
-                for (size_t leader = 0; leader < leader_count; ++leader) {
-                    if (0 != memcmp(send_name,
-                                    all_names + leader * HWPC_CXI_MAX_COUNTER_NAME_LENGTH,
-                                    sizeof(send_name))) {
-                        schema_matches = false;
-                    }
+                    schema_disagreed = true;
                 }
             }
         }
-        free(all_names);
     }
+    free(all_names);
 
-    if (!schema_matches && job_data->is_world_root_rank) {
-        cxi_output(ompi_hwpc_cxi_stderr_id,
+    if (schema_disagreed && job_data->is_world_root_rank) {
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING,
                    "HWPC_CXI: WARNING: Initialization disabled because node leaders disagreed on counter schema\n");
     }
     return schema_matches;
@@ -1407,7 +1294,7 @@ static const char *cxi_counter_pvar_description(const char *counter_name)
     for (int id = 0; id < HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS; ++id) {
         size_t mnemonic_name_length;
 
-        rc = hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic, (hwpc_cxi_predefined_counter_mnemonic_id_t) id);
+        rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic, (hwpc_cxi_predefined_counter_mnemonic_id_t) id);
 
         if (HWPC_CXI_SUCCESS != rc) {
             continue;
@@ -1503,7 +1390,7 @@ static cxi_counter_collection_t* cxi_global_counter_collection_init(cxi_job_data
 
     counter_collection = (cxi_counter_collection_t *)calloc(1, sizeof(cxi_counter_collection_t));
     if (NULL == counter_collection) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for hardware counter sampling data storage\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for hardware counter sampling data storage\n", __func__);
         goto cleanup;
     }
 
@@ -1523,35 +1410,45 @@ static cxi_counter_collection_t* cxi_global_counter_collection_init(cxi_job_data
         /* Initialize the hierarchy of counters to track */
         rc = cxi_counter_token_metadata_list_init(counter_collection, job_data->counter_inputfile_name);
         if (HWPC_CXI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to initialize counter token metadata\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to initialize counter token metadata\n", __func__);
             goto cleanup;
         }
 
         /* Initialize the list of counters to track including expansion from predefined CXI counter groups in token_metadatas_list */
         rc = cxi_counter_tracking_list_init(counter_collection);
         if (rc != HWPC_CXI_SUCCESS) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to initialize CXI counter tracking list\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to initialize CXI counter tracking list\n", __func__);
             goto cleanup;
         }
 
         /* Initialize the counter collection data for storing counter data */
         rc = cxi_counter_collection_data_init(counter_collection);
         if (rc != HWPC_CXI_SUCCESS) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to initialize CXI counter collection data\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to initialize CXI counter collection data\n", __func__);
             goto cleanup;
+        }
+
+        size_t num_counter_data = counter_collection->num_counter_data;
+        if (num_counter_data > 0 && num_counter_data <= (size_t)INT_MAX) {
+            counter_collection->summary_longs = (long *)calloc(8 * num_counter_data, sizeof(long));
+            counter_collection->summary_doubles = (double *)calloc(6 * num_counter_data, sizeof(double));
+            if (NULL == counter_collection->summary_longs || NULL == counter_collection->summary_doubles) {
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate counter summary buffers\n", __func__);
+                goto cleanup;
+            }
         }
 
         if (mca_hook_hwpc_cxi_counter_mpi_t_enable) {
             /* Register all of the counters as PVARs in the MPI_T interface */
             rc = cxi_register_counters_as_pvars(counter_collection);
             if (rc != HWPC_CXI_SUCCESS) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to register CXI counters as PVARs\n", __func__);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to register CXI counters as PVARs\n", __func__);
                 goto cleanup;
             }
         }
 
         if (job_data->is_world_root_rank) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: OpenMPI OFI CXI counters initialized\n");
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Open MPI OFI CXI counters initialized\n");
         }
 
     }
@@ -1575,7 +1472,7 @@ cleanup:
 static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counter_collection, const char *user_inputfile_name)
 {
     if (NULL == counter_collection) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: cxi_counter_token_metadata_list_init() called with invalid counter_collection pointer (NULL)\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: cxi_counter_token_metadata_list_init() called with invalid counter_collection pointer (NULL)\n", __func__);
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
 
@@ -1617,7 +1514,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
     sanitized_token_list_size = HWPC_CXI_COUNTER_TRACKING_LIST_ALLOC_SIZE;
     sanitized_token_list = (char **)calloc(sanitized_token_list_size, sizeof(char *));
     if (NULL == sanitized_token_list) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for sanitized_token_list\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for sanitized_token_list\n", __func__);
         goto cleanup;   /* Not off to a good start... */
     }
 
@@ -1626,7 +1523,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
         rc = cxi_sanitize_counter_token_list(&sanitized_token_list, &sanitized_token_list_size, &sanitized_token_list_count,
                                              default_cxi_timeout_counters_to_track, default_cxi_timeout_counters_to_track_list_size);
         if (HWPC_CXI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to sanitize default timeout counter token list\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to sanitize default timeout counter token list\n", __func__);
             goto cleanup;
         }
         for (size_t i = 0; i < sanitized_token_list_count; i++) {
@@ -1646,7 +1543,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
         /* If we only need to output the timeout counters, then we only need to track the timeout counters, and thus can skip reading the user input file */
         if (global_job_data->using_default_timeout_counters) {
             if (global_job_data->is_world_root_rank) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Only tracking default timeout counters\n");
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Only tracking default timeout counters\n");
             }
         }
     }
@@ -1655,11 +1552,11 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
     if (!global_job_data->using_default_timeout_counters && NULL != user_inputfile_name) {
 
         if (global_job_data->is_world_root_rank) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Opening CXI counter file: %s\n", (user_inputfile_name ? user_inputfile_name : "default CXI counters"));
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Opening CXI counter file: %s\n", (user_inputfile_name ? user_inputfile_name : "default CXI counters"));
         }
 
         if (HWPC_CXI_MAX_FULLPATH_LENGTH <= strlen(user_inputfile_name)) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: user_inputfile_name is too long compared to the limit of %d\n", __func__, HWPC_CXI_MAX_FULLPATH_LENGTH);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: user_inputfile_name is too long compared to the limit of %d\n", __func__, HWPC_CXI_MAX_FULLPATH_LENGTH);
             rc = HWPC_CXI_ERROR_INVALID_ARGUMENTS;
             goto cleanup;
         }
@@ -1667,8 +1564,8 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
         user_inputfile_ptr = fopen(user_inputfile_name, "r");
         if (NULL == user_inputfile_ptr) {
             if (global_job_data->is_world_root_rank) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Cannot open CXI counter input file: %s\n", user_inputfile_name);
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Falling back to default counter tracking list\n");
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Cannot open CXI counter input file: %s\n", user_inputfile_name);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Falling back to default counter tracking list\n");
             }
             /* Fall back to default counter tracking list */
             user_inputfile_name = NULL;
@@ -1684,7 +1581,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
             file_tokens_list_size = HWPC_CXI_COUNTER_TRACKING_LIST_ALLOC_SIZE;
             file_tokens_list = calloc(file_tokens_list_size, sizeof(char*));
             if (NULL == file_tokens_list) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for file tokens list\n", __func__);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for file tokens list\n", __func__);
                 goto cleanup;
             }
 
@@ -1712,14 +1609,14 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
                         int requested_size = (2 * file_tokens_list_size) + 1;  /* +1 for NULL terminator */
                         rc = cxi_realloc_string_list(&file_tokens_list, requested_size, file_tokens_list_size, file_tokens_list_count);
                         if (HWPC_CXI_SUCCESS != rc) {
-                            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to reallocate memory for file tokens list\n", __func__);
+                            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to reallocate memory for file tokens list\n", __func__);
                             goto cleanup;
                         }
                         file_tokens_list_size = requested_size;
                     }
                     file_tokens_list[file_tokens_list_count] = strndup(token, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
                     if (NULL == file_tokens_list[file_tokens_list_count]) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for token string\n", __func__);
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for token string\n", __func__);
                         goto cleanup;
                     }
                     file_tokens_list_count++;
@@ -1732,7 +1629,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
             if (file_tokens_list_count + 1 > sanitized_token_list_size) {
                 rc = cxi_realloc_string_list(&sanitized_token_list, file_tokens_list_count + 1, sanitized_token_list_size, sanitized_token_list_count); /* +1 for NULL terminator */
                 if (HWPC_CXI_SUCCESS != rc) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to reallocate memory for sanitized token list\n", __func__);
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to reallocate memory for sanitized token list\n", __func__);
                     goto cleanup;
                 }
                 sanitized_token_list_size = file_tokens_list_count + 1; /* +1 for NULL terminator */
@@ -1744,7 +1641,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
              */
             rc = cxi_sanitize_counter_token_list(&sanitized_token_list, &sanitized_token_list_size, &sanitized_token_list_count, file_tokens_list, file_tokens_list_size);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to sanitize counter token list. Error code: %d Error msg: %s\n", __func__, rc, hwpc_cxi_error_to_string(rc));
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to sanitize counter token list. Error code: %d Error msg: %s\n", __func__, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                 goto cleanup;
             }
 
@@ -1752,13 +1649,13 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
                                                     &token_metadatas_list_count, sanitized_token_list,
                                                     sanitized_token_list_size);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to initialize input-file token metadatas list. Error code: %d Error msg: %s\n", __func__, rc, hwpc_cxi_error_to_string(rc));
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to initialize input-file token metadatas list. Error code: %d Error msg: %s\n", __func__, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                 goto cleanup;
             }
 
             if (0 == token_metadatas_list_count) {
                 if (global_job_data->is_world_root_rank) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: No valid Counter Group name, Counter Mnemonic, or low-level Counter was found in the user's CXI counter input file: %s\n", user_inputfile_name);
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: No valid Counter Group name, Counter Mnemonic, or low-level Counter was found in the user's CXI counter input file: %s\n", user_inputfile_name);
                 }
                 global_job_data->using_inputfile_specified_counters = false;
             } else {
@@ -1777,11 +1674,11 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
     if (!global_job_data->using_default_timeout_counters && !global_job_data->using_inputfile_specified_counters) {
         rc = cxi_sanitize_counter_token_list(&sanitized_token_list, &sanitized_token_list_size, &sanitized_token_list_count, default_cxi_counters_to_track, default_cxi_counters_to_track_list_size);
         if (HWPC_CXI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to sanitize counter token list. Error code: %d Error msg: %s\n", __func__, rc, hwpc_cxi_error_to_string(rc));
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to sanitize counter token list. Error code: %d Error msg: %s\n", __func__, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
             goto cleanup;
         } else if (0 == sanitized_token_list_count) {
             if (global_job_data->is_world_root_rank) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: No valid Counter Group name, Counter Mnemonic, or low-level Counter was found in the default CXI counter tracking list\n");
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: No valid Counter Group name, Counter Mnemonic, or low-level Counter was found in the default CXI counter tracking list\n");
             }
             goto cleanup;
         }
@@ -1798,7 +1695,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
         sanitized_default_timeout_counter_tokens_list_size = HWPC_CXI_COUNTER_TRACKING_LIST_ALLOC_SIZE;
         sanitized_default_timeout_counter_token_list = (char **)calloc(sanitized_default_timeout_counter_tokens_list_size, sizeof(char *));
         if (NULL == sanitized_default_timeout_counter_token_list) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for sanitized_default_timeout_counter_token_list\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for sanitized_default_timeout_counter_token_list\n", __func__);
             goto cleanup;   /* Not off to a good start... */
         }
         rc = cxi_sanitize_counter_token_list(&sanitized_default_timeout_counter_token_list,
@@ -1807,7 +1704,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
                                             default_cxi_timeout_counters_to_track,
                                             default_cxi_timeout_counters_to_track_list_size);
         if (HWPC_CXI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to sanitize default timeout counter token list\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to sanitize default timeout counter token list\n", __func__);
             goto cleanup;
         }
 
@@ -1820,7 +1717,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
                                          sanitized_token_list_size,
                                          sanitized_token_list_count);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to resize sanitized counter token list\n", __func__);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to resize sanitized counter token list\n", __func__);
                 goto cleanup;
             }
             sanitized_token_list_size = required_token_list_size;
@@ -1857,7 +1754,7 @@ static int cxi_counter_token_metadata_list_init(cxi_counter_collection_t* counte
                                                 &token_metadatas_list_count, sanitized_token_list,
                                                 sanitized_token_list_size);
     if (HWPC_CXI_SUCCESS != rc || 0 == token_metadatas_list_count) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to initialize token metadatas list. Error code: %d Error msg: %s\n", __func__, rc, hwpc_cxi_error_to_string(rc));
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to initialize token metadatas list. Error code: %d Error msg: %s\n", __func__, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
         goto cleanup;
     }
 
@@ -1935,23 +1832,23 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
             continue;   /* Skip NULL entries */
         }
         if (NULL == token_metadatas_list[i]->token_name) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Token metadata at index %zu has NULL token name\n", __func__, i);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Token metadata at index %zu has NULL token name\n", __func__, i);
             rc = HWPC_CXI_ERROR;
             goto cleanup;
         }
         if (HWPC_CXI_COUNTER_GROUP_TYPE == token_metadatas_list[i]->type) {
             /* Token matches a predefined counter group name; add all categories of all the counter mnemonics contained within this counter group */
-            rc = hwpc_cxi_get_num_counters_in_counter_group_by_name(&num_of_counters, token_metadatas_list[i]->token_name);
+            rc = ompi_hook_hwpc_cxi_get_num_counters_in_counter_group_by_name(&num_of_counters, token_metadatas_list[i]->token_name);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get number of counters in counter group %s. Error code: %d Error msg: %s\n", __func__, token_metadatas_list[i]->token_name, rc, hwpc_cxi_error_to_string(rc));
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get number of counters in counter group %s. Error code: %d Error msg: %s\n", __func__, token_metadatas_list[i]->token_name, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                 goto cleanup;
             }
             total_num_counters_to_track += num_of_counters;
         } else if (HWPC_CXI_COUNTER_MNEMONIC_TYPE == token_metadatas_list[i]->type) {
             /* Token matches a predefined counter mnemonic name; add all categories of this counter mnemonic */
-            rc = hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&num_of_counters, token_metadatas_list[i]->token_name);
+            rc = ompi_hook_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&num_of_counters, token_metadatas_list[i]->token_name);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get number of counters in counter mnemonic %s. Error code: %d Error msg: %s\n", __func__, token_metadatas_list[i]->token_name, rc, hwpc_cxi_error_to_string(rc));
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get number of counters in counter mnemonic %s. Error code: %d Error msg: %s\n", __func__, token_metadatas_list[i]->token_name, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                 goto cleanup;
             }
             total_num_counters_to_track += num_of_counters;
@@ -1959,7 +1856,7 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
             /* Token matches a valid low-level counter name; add this low-level counter to the list */
             total_num_counters_to_track += 1;
         } else {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Unknown token metadata: %s\n", __func__, hwpc_cxi_counter_type_to_string(token_metadatas_list[i]->type));
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Unknown token metadata: %s\n", __func__, ompi_hook_hwpc_cxi_counter_type_to_string(token_metadatas_list[i]->type));
             rc = HWPC_CXI_ERROR;
             goto cleanup;
         }
@@ -1970,7 +1867,7 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
     counters_to_track_list_size = total_num_counters_to_track + 1;  /* NULL terminator */
     counters_to_track_list = (char **)calloc(counters_to_track_list_size, sizeof(char *));
     if (NULL == counters_to_track_list) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counters_to_track_list\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for counters_to_track_list\n", __func__);
         rc = HWPC_CXI_ERROR;
         goto cleanup;
     }
@@ -2006,22 +1903,22 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
         if (HWPC_CXI_COUNTER_GROUP_TYPE == token_metadata->type) {
 
             if (global_job_data->is_world_root_rank) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Reading %s: #%zu %s (Counter Group)\n", counter_source, num_token_metadatas_processed, token_metadata->token_name);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Reading %s: #%zu %s (Counter Group)\n", counter_source, num_token_metadatas_processed, token_metadata->token_name);
             }
-            rc = hwpc_cxi_get_counter_group_obj_by_name(&cxi_counter_group_obj, token_metadata->token_name);
+            rc = ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&cxi_counter_group_obj, token_metadata->token_name);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get counter group object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, hwpc_cxi_error_to_string(rc));
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get counter group object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                 goto cleanup;
             }
             /* Cycle over all counter mnemonics in the group */
             for (size_t j = 0; j < cxi_counter_group_obj->counter_mnemonic_list_size; j++) {
-                if (!hwpc_cxi_counter_mnemonic_id_is_valid(cxi_counter_group_obj->counter_mnemonic_list[j])) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic id for %s\n", __func__, token_metadata->token_name);
+                if (!ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid(cxi_counter_group_obj->counter_mnemonic_list[j])) {
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic id for %s\n", __func__, token_metadata->token_name);
                     goto cleanup;
                 }
-                rc = hwpc_cxi_get_counter_mnemonic_obj_by_id(&cxi_counter_mnemonic_obj, cxi_counter_group_obj->counter_mnemonic_list[j]);
+                rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(&cxi_counter_mnemonic_obj, cxi_counter_group_obj->counter_mnemonic_list[j]);
                 if (HWPC_CXI_SUCCESS != rc) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, hwpc_cxi_error_to_string(rc));
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                     goto cleanup;
                 }
                 /* Cycle over the number of categories for this counter mnemonic, form the full filename, and add each filename to the list of counters to track */
@@ -2031,14 +1928,14 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
                     } else {
                         snprintf(full_counter_name, HWPC_CXI_MAX_COUNTER_NAME_LENGTH, "%s", cxi_counter_mnemonic_obj->counter_name);
                     }
-                    if (counters_to_track_list_count >= counters_to_track_list_size) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: counters_to_track_list_count (%zu) exceeds counters_to_track_list_size (%zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_size);
+                    if (counters_to_track_list_count + 1 >= counters_to_track_list_size) {
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: counters_to_track_list_count (%zu) exceeds counters_to_track_list_size (%zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_size);
                         rc = HWPC_CXI_ERROR;
                         goto cleanup;
                     }
                     counters_to_track_list[counters_to_track_list_count] = strndup(full_counter_name, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
                     if (NULL == counters_to_track_list[counters_to_track_list_count]) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name string\n", __func__);
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name string\n", __func__);
                         rc = HWPC_CXI_ERROR;
                         goto cleanup;
                     }
@@ -2049,11 +1946,11 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
         } else if (HWPC_CXI_COUNTER_MNEMONIC_TYPE == token_metadata->type) {
 
             if (global_job_data->is_world_root_rank) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Reading %s: #%zu %s (Counter Mnemonic)\n", counter_source, num_token_metadatas_processed, token_metadata->token_name);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Reading %s: #%zu %s (Counter Mnemonic)\n", counter_source, num_token_metadatas_processed, token_metadata->token_name);
             }
-            rc = hwpc_cxi_get_counter_mnemonic_obj_by_name(&cxi_counter_mnemonic_obj, token_metadata->token_name);
+            rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&cxi_counter_mnemonic_obj, token_metadata->token_name);
             if (HWPC_CXI_SUCCESS != rc) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, hwpc_cxi_error_to_string(rc));
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                 goto cleanup;
             }
             /* Cycle over the number of categories for this counter mnemonic, form the full filename, and add each filename to the list of counters to track */
@@ -2063,14 +1960,14 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
                 } else {
                     snprintf(full_counter_name, HWPC_CXI_MAX_COUNTER_NAME_LENGTH, "%s", cxi_counter_mnemonic_obj->counter_name);
                 }
-                if (counters_to_track_list_count >= counters_to_track_list_size) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: counters_to_track_list_count (%zu) exceeds counters_to_track_list_size (%zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_size);
+                if (counters_to_track_list_count + 1 >= counters_to_track_list_size) {
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: counters_to_track_list_count (%zu) exceeds counters_to_track_list_size (%zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_size);
                     rc = HWPC_CXI_ERROR;
                     goto cleanup;
                 }
                 counters_to_track_list[counters_to_track_list_count] = strndup(full_counter_name, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
                 if (NULL == counters_to_track_list[counters_to_track_list_count]) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name string\n", __func__);
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name string\n", __func__);
                     rc = HWPC_CXI_ERROR;
                     goto cleanup;
                 }
@@ -2080,11 +1977,16 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
         } else if (HWPC_CXI_COUNTER_LOWLEVEL_TYPE == token_metadata->type) {
 
             if (global_job_data->is_world_root_rank) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Reading %s: #%zu %s (Low-level Counter)\n", counter_source, num_token_metadatas_processed, token_metadata->token_name);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Reading %s: #%zu %s (Low-level Counter)\n", counter_source, num_token_metadatas_processed, token_metadata->token_name);
+            }
+            if (counters_to_track_list_count + 1 >= counters_to_track_list_size) {
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: counters_to_track_list_count (%zu) exceeds counters_to_track_list_size (%zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_size);
+                rc = HWPC_CXI_ERROR;
+                goto cleanup;
             }
             counters_to_track_list[counters_to_track_list_count] = strndup(token_metadata->token_name, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
             if (NULL == counters_to_track_list[counters_to_track_list_count]) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name string\n", __func__);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name string\n", __func__);
                 rc = HWPC_CXI_ERROR;
                 goto cleanup;
             }
@@ -2092,26 +1994,20 @@ static int cxi_counter_tracking_list_init(cxi_counter_collection_t* counter_coll
 
         } else {
             if (global_job_data->is_world_root_rank) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Token not recognized as a valid counter group name, counter mnemonic, or counter name: #%zu %s\n", num_token_metadatas_processed, token_metadata->token_name);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Token not recognized as a valid counter group name, counter mnemonic, or counter name: #%zu %s\n", num_token_metadatas_processed, token_metadata->token_name);
             }
         }
     } /* for (size_t i = 0; i < token_metadatas_list_count; i++) */
 
-    /* Regardless of how the counters_to_track list was populated, ensure the last entry is NULL */
-    counters_to_track_list[counters_to_track_list_count] = NULL;
-
     /* Double-check that the counters_to_track_list_count is within bounds and that the number of counters to track is correct */
     if (counters_to_track_list_count >= counters_to_track_list_size) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Sanity check failed: num_counters_to_track (%zu) exceeds counters_to_track_list_size (%zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_size);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Sanity check failed: num_counters_to_track (%zu) exceeds counters_to_track_list_size (%zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_size);
         rc = HWPC_CXI_ERROR;
         goto cleanup;
     }
 
-    if (counters_to_track_list[counters_to_track_list_count]) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Sanity check failed: Last entry in counters_to_track is not NULL (counters_to_track_list_count: %zu, num_counters_to_track: %zu)\n", __func__, counters_to_track_list_count, counters_to_track_list_count);
-        rc = HWPC_CXI_ERROR;
-        goto cleanup;
-    }
+    /* Regardless of how the counters_to_track list was populated, ensure the last entry is NULL */
+    counters_to_track_list[counters_to_track_list_count] = NULL;
 
     /* Change all the counter name strings to lowercase */
     for (size_t i = 0; i < counters_to_track_list_count; i++) {
@@ -2176,7 +2072,7 @@ static int cxi_counter_collection_data_init(cxi_counter_collection_t *counter_co
     counter_collection->data = calloc(counter_collection->counters_to_track_list_size,
                                       sizeof(cxi_counter_data_t*));
     if (NULL == counter_collection->data) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for CXI counter data structures\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for CXI counter data structures\n", __func__);
         goto cleanup;
     }
     counter_collection->data_size = counter_collection->counters_to_track_list_size;
@@ -2187,7 +2083,7 @@ static int cxi_counter_collection_data_init(cxi_counter_collection_t *counter_co
         counter_data = NULL;
         cxi_single_counter_init(&counter_data, counter_collection->counters_to_track[i]);
         if (NULL == counter_data) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Failed to initialize CXI counter: #%zu %s\n", i, counter_collection->counters_to_track[i]);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Failed to initialize CXI counter: #%zu %s\n", i, counter_collection->counters_to_track[i]);
             continue;
         }
 
@@ -2196,9 +2092,9 @@ static int cxi_counter_collection_data_init(cxi_counter_collection_t *counter_co
 
         if (global_job_data->is_world_root_rank) {
             if (counter_data->timeout_counter) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Initializing CXI timeout counter: #%zu %s\n", i, counter_collection->counters_to_track[i]);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Initializing CXI timeout counter: #%zu %s\n", i, counter_collection->counters_to_track[i]);
             } else {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Initializing CXI standard counter: #%zu %s\n", i, counter_collection->counters_to_track[i]);
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Initializing CXI standard counter: #%zu %s\n", i, counter_collection->counters_to_track[i]);
             }
         }
     }
@@ -2206,12 +2102,12 @@ static int cxi_counter_collection_data_init(cxi_counter_collection_t *counter_co
 
     /* Confirm that the actual count matches the expected count */
     if (counter_collection->num_counter_data != counter_collection->num_counters_to_track) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Sanity check failed: Actual number of initialized counters (%zu) does not match expected count (%zu)\n",
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Sanity check failed: Actual number of initialized counters (%zu) does not match expected count (%zu)\n",
                      counter_collection->num_counter_data, counter_collection->num_counters_to_track);
     }
 
     if (global_job_data->is_world_root_rank) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Collecting samples for %zu Cassini hardware performance counters\n", counter_collection->num_counter_data);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Collecting samples for %zu Cassini hardware performance counters\n", counter_collection->num_counter_data);
     }
 
     return HWPC_CXI_SUCCESS;
@@ -2228,12 +2124,12 @@ cleanup:
 static int cxi_single_counter_init(cxi_counter_data_t **counter_data, const char *counter_name)
 {
     if (NULL == counter_data || NULL == counter_name || strlen(counter_name) == 0 || strlen(counter_name) >= HWPC_CXI_MAX_COUNTER_NAME_LENGTH) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Invalid arguments provided to initialize a single counter data structure\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Invalid arguments provided to initialize a single counter data structure\n", __func__);
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
 
     if (!cxi_counter_name_is_present(counter_name)) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Counter filename is not present: %s\n", __func__, counter_name);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Counter filename is not present: %s\n", __func__, counter_name);
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
     /* Initialize for any error path */
@@ -2247,7 +2143,7 @@ static int cxi_single_counter_init(cxi_counter_data_t **counter_data, const char
 
     cxi_counter_data_t *counter = (cxi_counter_data_t *)calloc(1, sizeof(cxi_counter_data_t));
     if (NULL == counter) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for a counter data structure: %s\n", __func__, counter_name);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for a counter data structure: %s\n", __func__, counter_name);
         rc = HWPC_CXI_ERROR;
         goto cleanup;
     }
@@ -2260,13 +2156,13 @@ static int cxi_single_counter_init(cxi_counter_data_t **counter_data, const char
             fclose(fp);
         }
         if (device_number >= HWPC_CXI_MAX_DEVS_PER_NODE) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: WARNING: Reached maximum number of CXI devices (%d) while searching for counter: %s\n", __func__, HWPC_CXI_MAX_DEVS_PER_NODE, counter_name);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI %s: WARNING: Reached maximum number of CXI devices (%d) while searching for counter: %s\n", __func__, HWPC_CXI_MAX_DEVS_PER_NODE, counter_name);
             break;
         }
     } while (fp);
 
     if (device_number == 0) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: No NIC devices found for counter: %s\n", __func__, counter_name);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: No NIC devices found for counter: %s\n", __func__, counter_name);
         rc = HWPC_CXI_ERROR;
         goto cleanup;
     }
@@ -2274,7 +2170,7 @@ static int cxi_single_counter_init(cxi_counter_data_t **counter_data, const char
     counter->num_devs = device_number;
     dup_name = strndup(counter_name, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
     if (NULL == dup_name) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name: %s\n", __func__, counter_name);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter name: %s\n", __func__, counter_name);
         rc = HWPC_CXI_ERROR;
         goto cleanup;
     }
@@ -2301,7 +2197,7 @@ static int cxi_single_counter_init(cxi_counter_data_t **counter_data, const char
         (NULL == counter->values || NULL == counter->deltas ||
          NULL == counter->timestamps_usec || NULL == counter->delta_timestamps_usec ||
          NULL == counter->baseline_valid)) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter data arrays: %s\n", __func__, counter_name);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for counter data arrays: %s\n", __func__, counter_name);
         rc = HWPC_CXI_ERROR;
         goto cleanup;
     }
@@ -2332,23 +2228,23 @@ static int cxi_realloc_string_list(char **string_list[], const size_t string_lis
     int rc = HWPC_CXI_SUCCESS;
     if (NULL == string_list) {
         rc = HWPC_CXI_ERROR_INVALID_ARGUMENTS;
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: %s\n", __func__, hwpc_cxi_error_to_string(rc));
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: %s\n", __func__, ompi_hook_hwpc_cxi_error_to_string(rc));
         return rc;
     }
     if (string_list_new_size < string_list_count) {
         rc = HWPC_CXI_ERROR_INVALID_ARGUMENTS;
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: %s\n", __func__, hwpc_cxi_error_to_string(rc));
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: %s\n", __func__, ompi_hook_hwpc_cxi_error_to_string(rc));
         return rc;
     }
     if (string_list_old_size < string_list_count) {
         rc = HWPC_CXI_ERROR_INVALID_ARGUMENTS;
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: %s\n", __func__, hwpc_cxi_error_to_string(rc));
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: %s\n", __func__, ompi_hook_hwpc_cxi_error_to_string(rc));
         return rc;
     }
 
     if (NULL == *string_list && string_list_old_size > 0) {
         rc = HWPC_CXI_ERROR_INVALID_ARGUMENTS;
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: %s\n", __func__, hwpc_cxi_error_to_string(rc));
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: %s\n", __func__, ompi_hook_hwpc_cxi_error_to_string(rc));
         return rc;
     }
 
@@ -2360,7 +2256,7 @@ static int cxi_realloc_string_list(char **string_list[], const size_t string_lis
         char **resized_string_list = realloc(*string_list, (new_allocation_size * sizeof(char *)));
         if (NULL == resized_string_list) {
             /* Handle memory allocation failure */
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate memory for string_list\n", __func__);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to allocate memory for string_list\n", __func__);
             return HWPC_CXI_ERROR;
         }
 
@@ -2446,7 +2342,7 @@ static void cxi_counter_sample(cxi_counter_collection_t *counter_collection)
                  * overflow events and report it to the user.
                  */
                 if (new_value < counter_data->values[dev]) {
-                    cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: WARNING: Counter overflow detected for counter %s on device %d. Previous value: %ld, New value: %ld\n",
+                    cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Counter overflow detected for counter %s on device %d. Previous value: %ld, New value: %ld\n",
                                 counter_data->name, dev, counter_data->values[dev], new_value);
                     new_value = -1; /* Set to -1 to indicate an error for this sample */
                     sample_successful = false;
@@ -2473,7 +2369,7 @@ static void cxi_counter_sample(cxi_counter_collection_t *counter_collection)
     } /* Cycle over the counter collection's number of valid and initialized counter objects */
 
     if (global_job_data->is_local_root_rank && global_job_data->is_mpi_finalize) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Timeouts %ld non-zero deltas %ld\n", counter_collection->timeouts, counter_collection->nonzero);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Timeouts %ld non-zero deltas %ld\n", counter_collection->timeouts, counter_collection->nonzero);
     }
     counter_collection->samples++;
 
@@ -2489,6 +2385,7 @@ static void cxi_global_counter_report(cxi_counter_collection_t *counter_collecti
     int rc;
     char host_report_filename[HWPC_CXI_MAX_FULLPATH_LENGTH];
     long global_timeouts;
+    bool reductions_ok = true;
     FILE *ofp = stdout;
 
     if (CXI_REPORT_QUIET == global_job_data->reporting_level || !global_job_data->is_local_root_rank) {
@@ -2499,19 +2396,21 @@ static void cxi_global_counter_report(cxi_counter_collection_t *counter_collecti
         rc = global_job_data->fcomm->c_coll->coll_allreduce(&counter_collection->timeouts, &global_timeouts, 1, MPI_LONG, MPI_SUM, global_job_data->fcomm,
                                                                                 global_job_data->fcomm->c_coll->coll_allreduce_module);
         if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
-            return;
+            /* Keep going: peers still enter the summary reductions on fcomm. */
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
+            global_timeouts = counter_collection->timeouts;
+            reductions_ok = false;
         }
     } else {
         global_timeouts = counter_collection->timeouts;
     }
 
-    if (global_job_data->is_world_root_rank) {
+    if (global_job_data->is_world_root_rank && reductions_ok) {
         if (CXI_REPORT_SUMMARY <= global_job_data->reporting_level) {
-            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpenMPI Slingshot Network Summary: %ld network timeouts\n", global_timeouts);
+            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpen MPI Slingshot Network Summary: %ld network timeouts\n", global_timeouts);
         } else if (CXI_REPORT_DEFAULT == global_job_data->reporting_level &&
                (global_timeouts > 0 || global_job_data->verbose)) {
-            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpenMPI Slingshot Network Summary: %ld network timeouts\n", global_timeouts);
+            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpen MPI Slingshot Network Summary: %ld network timeouts\n", global_timeouts);
         }
     }
 
@@ -2524,7 +2423,7 @@ static void cxi_global_counter_report(cxi_counter_collection_t *counter_collecti
      * So everything beyond this point is for report verbosity of CXI_REPORT_SUMMARY or greater.
      */
 
-    cxi_global_counter_summary(counter_collection);
+    cxi_global_counter_summary(counter_collection, reductions_ok);
 
     if (CXI_REPORT_SUMMARY == global_job_data->reporting_level) {
         return;
@@ -2536,12 +2435,12 @@ static void cxi_global_counter_report(cxi_counter_collection_t *counter_collecti
         int size = snprintf(host_report_filename, sizeof(host_report_filename), "%s.%s",
                             global_job_data->report_file_prefix, global_job_data->hostname);
         if (size < 0 || size >= (int)sizeof(host_report_filename)) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Host report filename is too long: %s.%s\n",
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Host report filename is too long: %s.%s\n",
                        __func__, global_job_data->report_file_prefix, global_job_data->hostname);
         } else {
             ofp = fopen(host_report_filename , "w");
             if (NULL == ofp) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to open report file '%s'\nMake sure you have local write permissions.\n",
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to open report file '%s'\nMake sure you have local write permissions.\n",
                            __func__, host_report_filename);
                 /* We intentionally tolerate a per-nid failure to write this file */
             } else {
@@ -2550,8 +2449,8 @@ static void cxi_global_counter_report(cxi_counter_collection_t *counter_collecti
                     (CXI_REPORT_ALL          == global_job_data->reporting_level)) {
                     rc = cxi_counter_report(ofp, counter_collection);
                     if (HWPC_CXI_SUCCESS != rc) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to write counter report to file '%s'. Error code: %d Error msg: %s\n",
-                                   __func__, host_report_filename, rc, hwpc_cxi_error_to_string(rc));
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to write counter report to file '%s'. Error code: %d Error msg: %s\n",
+                                   __func__, host_report_filename, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                         /* We intentionally tolerate a per-nid failure to write this file */
                     }
                 }
@@ -2571,18 +2470,18 @@ static void cxi_global_counter_report(cxi_counter_collection_t *counter_collecti
             char counter_descriptions_filename[HWPC_CXI_MAX_FULLPATH_LENGTH];
             int size = snprintf(counter_descriptions_filename, sizeof(counter_descriptions_filename), "%s.%s", global_job_data->report_file_prefix, "counter_descriptions");
             if (size < 0 || size >= (int)sizeof(counter_descriptions_filename)) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Counter descriptions filename is too long: %s.%s\n", __func__, global_job_data->report_file_prefix, "counter_descriptions");
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Counter descriptions filename is too long: %s.%s\n", __func__, global_job_data->report_file_prefix, "counter_descriptions");
                 goto exit;
             }
             ofp = fopen(counter_descriptions_filename , "w");
             if (!ofp) {
-                cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to open counter descriptions file '%s'\n",
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to open counter descriptions file '%s'\n",
                            __func__, counter_descriptions_filename);
                 ofp = NULL;
                 goto exit;
             }
 
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI: INFO: Writing counter group and counter mnemonic descriptions to helper file: %s\n", counter_descriptions_filename);
+            cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_INFO, "HWPC_CXI: INFO: Writing counter group and counter mnemonic descriptions to helper file: %s\n", counter_descriptions_filename);
 
             cxi_counter_token_metadata_t *token_metadata = NULL;
             const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj = NULL;
@@ -2594,27 +2493,27 @@ static void cxi_global_counter_report(cxi_counter_collection_t *counter_collecti
                     continue;
                 }
                 if (token_metadata->type == HWPC_CXI_COUNTER_GROUP_TYPE) {
-                    rc = hwpc_cxi_get_counter_group_obj_by_name(&counter_group_obj, token_metadata->token_name);
+                    rc = ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&counter_group_obj, token_metadata->token_name);
                     if (HWPC_CXI_SUCCESS != rc) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get counter group object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, hwpc_cxi_error_to_string(rc));
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get counter group object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                         goto exit;
                     }
-                    rc = hwpc_cxi_print_full_counter_group_description(ofp, counter_group_obj);
+                    rc = ompi_hook_hwpc_cxi_print_full_counter_group_description(ofp, counter_group_obj);
                     if (HWPC_CXI_SUCCESS != rc) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to write full counter group description to file '%s'. Error code: %d Error msg: %s\n",
-                                __func__, counter_descriptions_filename, rc, hwpc_cxi_error_to_string(rc));
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to write full counter group description to file '%s'. Error code: %d Error msg: %s\n",
+                                __func__, counter_descriptions_filename, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                         goto exit;
                     }
                 } else if (token_metadata->type == HWPC_CXI_COUNTER_MNEMONIC_TYPE) {
-                    rc = hwpc_cxi_get_counter_mnemonic_obj_by_name(&counter_mnemonic_obj, token_metadata->token_name);
+                    rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&counter_mnemonic_obj, token_metadata->token_name);
                     if (HWPC_CXI_SUCCESS != rc) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, hwpc_cxi_error_to_string(rc));
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to get counter mnemonic object for %s. Error code: %d Error msg: %s\n", __func__, token_metadata->token_name, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                         goto exit;
                     }
-                    rc = hwpc_cxi_print_counter_mnemonic_description(ofp, counter_mnemonic_obj);
+                    rc = ompi_hook_hwpc_cxi_print_counter_mnemonic_description(ofp, counter_mnemonic_obj);
                     if (HWPC_CXI_SUCCESS != rc) {
-                        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to write full counter mnemonic description to file '%s'. Error code: %d Error msg: %s\n",
-                                __func__, counter_descriptions_filename, rc, hwpc_cxi_error_to_string(rc));
+                        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Failed to write full counter mnemonic description to file '%s'. Error code: %d Error msg: %s\n",
+                                __func__, counter_descriptions_filename, rc, ompi_hook_hwpc_cxi_error_to_string(rc));
                         goto exit;
                     }
                 }
@@ -2633,7 +2532,7 @@ exit:
 /*
  * Prints the global summary of all counters to the given output file. Is called internally by cxi_global_counter_report.
  */
-static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collection)
+static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collection, bool reductions_ok)
 {
     cxi_counter_data_t *counter_data;
     int max_width = 10;
@@ -2642,63 +2541,34 @@ static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collect
     size_t num_counter_data;
     int reduce_count;
 
-    long *local_samples_arr = NULL;
-    long *global_samples_arr = NULL;
-    long *local_min_arr = NULL;
-    long *global_min_arr = NULL;
-    long *local_sum_arr = NULL;
-    long *global_sum_arr = NULL;
-    long *local_max_arr = NULL;
-    long *global_max_arr = NULL;
-
-    double *local_min_rate_arr = NULL;
-    double *global_min_rate_arr = NULL;
-    double *local_sum_rate_arr = NULL;
-    double *global_sum_rate_arr = NULL;
-    double *local_max_rate_arr = NULL;
-    double *global_max_rate_arr = NULL;
-
     /* Should only be called by the first process per node */
     if (!global_job_data->is_local_root_rank) {
         return;
     }
 
+    /* These conditions were settled uniformly across leaders by the init-time schema agreement. */
     num_counter_data = counter_collection->num_counter_data;
-    if (0 == num_counter_data) {
-        return;
-    }
-    if (num_counter_data > (size_t) INT_MAX) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Counter data size %zu exceeds MPI allreduce count limit\n", __func__, num_counter_data);
+    if (0 == num_counter_data || num_counter_data > (size_t) INT_MAX ||
+        NULL == counter_collection->summary_longs || NULL == counter_collection->summary_doubles) {
         return;
     }
     reduce_count = (int) num_counter_data;
 
-    local_samples_arr = (long *) calloc(num_counter_data, sizeof(long));
-    global_samples_arr = (long *) calloc(num_counter_data, sizeof(long));
-    local_min_arr = (long *) calloc(num_counter_data, sizeof(long));
-    global_min_arr = (long *) calloc(num_counter_data, sizeof(long));
-    local_sum_arr = (long *) calloc(num_counter_data, sizeof(long));
-    global_sum_arr = (long *) calloc(num_counter_data, sizeof(long));
-    local_max_arr = (long *) calloc(num_counter_data, sizeof(long));
-    global_max_arr = (long *) calloc(num_counter_data, sizeof(long));
+    long *local_samples_arr  = counter_collection->summary_longs;
+    long *global_samples_arr = local_samples_arr + num_counter_data;
+    long *local_min_arr      = global_samples_arr + num_counter_data;
+    long *global_min_arr     = local_min_arr + num_counter_data;
+    long *local_sum_arr      = global_min_arr + num_counter_data;
+    long *global_sum_arr     = local_sum_arr + num_counter_data;
+    long *local_max_arr      = global_sum_arr + num_counter_data;
+    long *global_max_arr     = local_max_arr + num_counter_data;
 
-    local_min_rate_arr = (double *) calloc(num_counter_data, sizeof(double));
-    global_min_rate_arr = (double *) calloc(num_counter_data, sizeof(double));
-    local_sum_rate_arr = (double *) calloc(num_counter_data, sizeof(double));
-    global_sum_rate_arr = (double *) calloc(num_counter_data, sizeof(double));
-    local_max_rate_arr = (double *) calloc(num_counter_data, sizeof(double));
-    global_max_rate_arr = (double *) calloc(num_counter_data, sizeof(double));
-
-    if (NULL == local_samples_arr || NULL == global_samples_arr ||
-        NULL == local_min_arr || NULL == global_min_arr ||
-        NULL == local_sum_arr || NULL == global_sum_arr ||
-        NULL == local_max_arr || NULL == global_max_arr ||
-        NULL == local_min_rate_arr || NULL == global_min_rate_arr ||
-        NULL == local_sum_rate_arr || NULL == global_sum_rate_arr ||
-        NULL == local_max_rate_arr || NULL == global_max_rate_arr) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Failed to allocate local/global summary arrays\n", __func__);
-        goto cleanup;
-    }
+    double *local_min_rate_arr  = counter_collection->summary_doubles;
+    double *global_min_rate_arr = local_min_rate_arr + num_counter_data;
+    double *local_sum_rate_arr  = global_min_rate_arr + num_counter_data;
+    double *global_sum_rate_arr = local_sum_rate_arr + num_counter_data;
+    double *local_max_rate_arr  = global_sum_rate_arr + num_counter_data;
+    double *global_max_rate_arr = local_max_rate_arr + num_counter_data;
 
     for (size_t i = 0; i < num_counter_data; i++) {
         counter_data = counter_collection->data[i];
@@ -2746,55 +2616,42 @@ static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collect
     }
 
     if (NULL != global_job_data->fcomm && MPI_COMM_NULL != global_job_data->fcomm) {
-        rc = global_job_data->fcomm->c_coll->coll_allreduce(local_samples_arr, global_samples_arr, reduce_count, MPI_LONG, MPI_SUM, global_job_data->fcomm,
-                                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
-            goto cleanup;
+        const struct {
+            const void *local;
+            void *global;
+            MPI_Datatype type;
+            MPI_Op op;
+        } reductions[] = {
+            {local_samples_arr,  global_samples_arr,  MPI_LONG,   MPI_SUM},
+            {local_min_arr,      global_min_arr,      MPI_LONG,   MPI_MIN},
+            {local_sum_arr,      global_sum_arr,      MPI_LONG,   MPI_SUM},
+            {local_max_arr,      global_max_arr,      MPI_LONG,   MPI_MAX},
+            {local_min_rate_arr, global_min_rate_arr, MPI_DOUBLE, MPI_MIN},
+            {local_sum_rate_arr, global_sum_rate_arr, MPI_DOUBLE, MPI_SUM},
+            {local_max_rate_arr, global_max_rate_arr, MPI_DOUBLE, MPI_MAX},
+        };
+
+        /* Every leader issues every reduction, even after a local failure, so no peer is left blocked on fcomm. */
+        for (size_t r = 0; r < sizeof(reductions) / sizeof(reductions[0]); ++r) {
+            rc = global_job_data->fcomm->c_coll->coll_allreduce(reductions[r].local, reductions[r].global, reduce_count,
+                                                                reductions[r].type, reductions[r].op, global_job_data->fcomm,
+                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
+            if (OMPI_SUCCESS != rc) {
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
+                reductions_ok = false;
+            }
         }
 
-        rc = global_job_data->fcomm->c_coll->coll_allreduce(local_min_arr, global_min_arr, reduce_count, MPI_LONG, MPI_MIN, global_job_data->fcomm,
-                                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
+        int local_ok = reductions_ok ? 1 : 0;
+        int all_ok = 0;
+        rc = global_job_data->fcomm->c_coll->coll_allreduce(&local_ok, &all_ok, 1, MPI_INT, MPI_MIN, global_job_data->fcomm,
+                                                            global_job_data->fcomm->c_coll->coll_allreduce_module);
+        if (OMPI_SUCCESS != rc || 0 == all_ok) {
+            if (global_job_data->is_world_root_rank) {
+                cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING, "HWPC_CXI: WARNING: Counter summary skipped because a node leader failed a reduction\n");
+            }
             goto cleanup;
         }
-
-        rc = global_job_data->fcomm->c_coll->coll_allreduce(local_sum_arr, global_sum_arr, reduce_count, MPI_LONG, MPI_SUM, global_job_data->fcomm,
-                                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
-            goto cleanup;
-        }
-
-        rc = global_job_data->fcomm->c_coll->coll_allreduce(local_max_arr, global_max_arr, reduce_count, MPI_LONG, MPI_MAX, global_job_data->fcomm,
-                                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
-            goto cleanup;
-        }
-
-        rc = global_job_data->fcomm->c_coll->coll_allreduce(local_min_rate_arr, global_min_rate_arr, reduce_count, MPI_DOUBLE, MPI_MIN, global_job_data->fcomm,
-                                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
-            goto cleanup;
-        }
-
-        rc = global_job_data->fcomm->c_coll->coll_allreduce(local_sum_rate_arr, global_sum_rate_arr, reduce_count, MPI_DOUBLE, MPI_SUM, global_job_data->fcomm,
-                                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
-            goto cleanup;
-        }
-
-        rc = global_job_data->fcomm->c_coll->coll_allreduce(local_max_rate_arr, global_max_rate_arr, reduce_count, MPI_DOUBLE, MPI_MAX, global_job_data->fcomm,
-                                                                                global_job_data->fcomm->c_coll->coll_allreduce_module);
-        if (OMPI_SUCCESS != rc) {
-            cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: MPI_Allreduce failed with error code %d\n", __func__, rc);
-            goto cleanup;
-        }
-
     } else {
         memcpy(global_samples_arr, local_samples_arr, num_counter_data * sizeof(long));
         memcpy(global_min_arr, local_min_arr, num_counter_data * sizeof(long));
@@ -2815,7 +2672,7 @@ static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collect
 
     if (nonzero_sample_count == 0) {
         if (global_job_data->is_world_root_rank) {
-            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpenMPI Slingshot CXI Counter Summary:\n");
+            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpen MPI Slingshot CXI Counter Summary:\n");
             opal_output(ompi_hwpc_cxi_stdout_id, "No non-zero counter samples were detected for any of the %zu counters being tracked.\n", num_counter_data);
         }
         goto cleanup;
@@ -2827,7 +2684,7 @@ static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collect
                     max_width = (int)strnlen(counter_data->name, HWPC_CXI_MAX_COUNTER_NAME_LENGTH);
                 }
             }
-            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpenMPI Slingshot CXI Counter Summary:\n");
+            opal_output(ompi_hwpc_cxi_stdout_id, "\nOpen MPI Slingshot CXI Counter Summary:\n");
             opal_output(ompi_hwpc_cxi_stdout_id, "%-*s %8s %12s %12s %12s %12s %12s %12s\n", max_width, "Counter", "Samples", "Min", "(/s)", "Mean", "(/s)", "Max", "(/s)");
         }
 
@@ -2862,20 +2719,7 @@ static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collect
     }
 
 cleanup:
-    free(local_samples_arr);
-    free(global_samples_arr);
-    free(local_min_arr);
-    free(global_min_arr);
-    free(local_sum_arr);
-    free(global_sum_arr);
-    free(local_max_arr);
-    free(global_max_arr);
-    free(local_min_rate_arr);
-    free(global_min_rate_arr);
-    free(local_sum_rate_arr);
-    free(global_sum_rate_arr);
-    free(local_max_rate_arr);
-    free(global_max_rate_arr);
+    return;
 }
 
 /*
@@ -2903,11 +2747,11 @@ static bool cxi_device_has_timeout(const cxi_counter_collection_t *counter_colle
 static int cxi_counter_report(FILE *ofp, cxi_counter_collection_t *counter_collection)
 {
     if (NULL == ofp) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Invalid output file pointer provided for counter report\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Invalid output file pointer provided for counter report\n", __func__);
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
     if (NULL == counter_collection) {
-        cxi_output(ompi_hwpc_cxi_stderr_id, "HWPC_CXI %s: ERROR: Invalid counter collection provided for counter report\n", __func__);
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_ERROR, "HWPC_CXI %s: ERROR: Invalid counter collection provided for counter report\n", __func__);
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
     if (!global_job_data->is_local_root_rank) {
@@ -3000,6 +2844,9 @@ static void cxi_counter_collection_free(cxi_counter_collection_t **counter_colle
     cxi_counter_pvars_invalidate(*counter_collection);
     cxi_counter_collection_data_free(&(*counter_collection)->data, &(*counter_collection)->data_size);
     (*counter_collection)->num_counter_data = 0;
+
+    free((*counter_collection)->summary_longs);
+    free((*counter_collection)->summary_doubles);
 
     free(*counter_collection);
     *counter_collection = NULL;

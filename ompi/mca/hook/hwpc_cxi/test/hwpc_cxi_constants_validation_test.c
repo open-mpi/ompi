@@ -47,77 +47,77 @@ static void test_argument_validation(void)
     const hwpc_cxi_predefined_counter_mnemonic_obj_t *mnemonic_obj = NULL;
     int counter_count = 0;
 
-    EXPECT_TRUE(hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t) 0),
+    EXPECT_TRUE(ompi_hook_hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t) 0),
                 "first group id should be valid");
-    EXPECT_TRUE(hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t)
+    EXPECT_TRUE(ompi_hook_hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t)
                                                  (HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS - 1)),
                 "last group id should be valid");
-    EXPECT_TRUE(!hwpc_cxi_counter_group_id_is_valid(HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS),
+    EXPECT_TRUE(!ompi_hook_hwpc_cxi_counter_group_id_is_valid(HWPC_CXI_NUM_PREDEFINED_COUNTER_GROUPS),
                 "group sentinel should be invalid");
-    EXPECT_TRUE(!hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t) -1),
+    EXPECT_TRUE(!ompi_hook_hwpc_cxi_counter_group_id_is_valid((hwpc_cxi_predefined_counter_group_id_t) -1),
                 "negative group id should be invalid");
 
-    EXPECT_TRUE(hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t) 0),
+    EXPECT_TRUE(ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t) 0),
                 "first mnemonic id should be valid");
-    EXPECT_TRUE(hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t)
+    EXPECT_TRUE(ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t)
                                                     (HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS - 1)),
                 "last mnemonic id should be valid");
-    EXPECT_TRUE(!hwpc_cxi_counter_mnemonic_id_is_valid(HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS),
+    EXPECT_TRUE(!ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid(HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS),
                 "mnemonic sentinel should be invalid");
-    EXPECT_TRUE(!hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t) -1),
+    EXPECT_TRUE(!ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid((hwpc_cxi_predefined_counter_mnemonic_id_t) -1),
                 "negative mnemonic id should be invalid");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(NULL, "CxiPerfStats"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(NULL, "CxiPerfStats"),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "group lookup should reject NULL output pointer");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(&group_obj, NULL),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&group_obj, NULL),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "group lookup should reject NULL name");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_group_by_name(NULL, "CxiPerfStats"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_group_by_name(NULL, "CxiPerfStats"),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "group count should reject NULL output pointer");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_group_by_name(&counter_count, NULL),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_group_by_name(&counter_count, NULL),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "group count should reject NULL name");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(NULL, HWPC_CXI_ATU_CACHE_MISS),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(NULL, HWPC_CXI_ATU_CACHE_MISS),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic-by-id lookup should reject NULL output pointer");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic-by-id lookup should reject invalid id");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_name(NULL, "ATU_CACHE_MISS"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(NULL, "ATU_CACHE_MISS"),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic-by-name lookup should reject NULL output pointer");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, NULL),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, NULL),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic-by-name lookup should reject NULL name");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(NULL, "ATU_CACHE_MISS"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(NULL, "ATU_CACHE_MISS"),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic count should reject NULL output pointer");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&counter_count, NULL),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&counter_count, NULL),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic count should reject NULL name");
 }
 
 static void test_string_helpers(void)
 {
-    EXPECT_TRUE(0 == strcmp(hwpc_cxi_error_to_string(HWPC_CXI_SUCCESS), "Success"),
+    EXPECT_TRUE(0 == strcmp(ompi_hook_hwpc_cxi_error_to_string(HWPC_CXI_SUCCESS), "Success"),
                 "error_to_string should map success");
-    EXPECT_TRUE(0 == strcmp(hwpc_cxi_error_to_string(9999), "Unknown error code"),
+    EXPECT_TRUE(0 == strcmp(ompi_hook_hwpc_cxi_error_to_string(9999), "Unknown error code"),
                 "error_to_string should map unknown values");
 
-    EXPECT_TRUE(0 == strcmp(hwpc_cxi_counter_type_to_string(HWPC_CXI_COUNTER_GROUP_TYPE), "Counter Group"),
+    EXPECT_TRUE(0 == strcmp(ompi_hook_hwpc_cxi_counter_type_to_string(HWPC_CXI_COUNTER_GROUP_TYPE), "Counter Group"),
                 "counter_type_to_string should map group type");
-    EXPECT_TRUE(0 == strcmp(hwpc_cxi_counter_type_to_string((hwpc_cxi_counter_type_t) 9999), "Unknown counter type"),
+    EXPECT_TRUE(0 == strcmp(ompi_hook_hwpc_cxi_counter_type_to_string((hwpc_cxi_counter_type_t) 9999), "Unknown counter type"),
                 "counter_type_to_string should map unknown values");
 }
 
@@ -127,10 +127,10 @@ static void test_print_helpers(void)
     const hwpc_cxi_predefined_counter_mnemonic_obj_t *mnemonic_obj = NULL;
     FILE *tmp = NULL;
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "CxiPerfStats"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "CxiPerfStats"),
                   HWPC_CXI_SUCCESS,
                   "group lookup for print helpers should succeed");
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, "ATU_CACHE_MISS"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, "ATU_CACHE_MISS"),
                   HWPC_CXI_SUCCESS,
                   "mnemonic lookup for print helpers should succeed");
 
@@ -140,25 +140,25 @@ static void test_print_helpers(void)
         return;
     }
 
-    EXPECT_EQ_INT(hwpc_cxi_print_counter_group_description(tmp, group_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_print_counter_group_description(tmp, group_obj),
                   HWPC_CXI_SUCCESS,
                   "group print helper should succeed");
-    EXPECT_EQ_INT(hwpc_cxi_print_counter_mnemonic_description(tmp, mnemonic_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_print_counter_mnemonic_description(tmp, mnemonic_obj),
                   HWPC_CXI_SUCCESS,
                   "mnemonic print helper should succeed");
-    EXPECT_EQ_INT(hwpc_cxi_print_full_counter_group_description(tmp, group_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_print_full_counter_group_description(tmp, group_obj),
                   HWPC_CXI_SUCCESS,
                   "full group print helper should succeed");
 
     fclose(tmp);
 
-    EXPECT_EQ_INT(hwpc_cxi_print_counter_group_description(NULL, group_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_print_counter_group_description(NULL, group_obj),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "group print helper should reject NULL file");
-    EXPECT_EQ_INT(hwpc_cxi_print_counter_mnemonic_description(NULL, mnemonic_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_print_counter_mnemonic_description(NULL, mnemonic_obj),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "mnemonic print helper should reject NULL file");
-    EXPECT_EQ_INT(hwpc_cxi_print_full_counter_group_description(NULL, group_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_print_full_counter_group_description(NULL, group_obj),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "full group print helper should reject NULL file");
 }

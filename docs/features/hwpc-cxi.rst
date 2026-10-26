@@ -30,6 +30,27 @@ At report level 1, the one-line timeout summary is suppressed when no timeouts
 are detected and verbose output is disabled. It is emitted when timeouts are
 detected, verbose output is enabled, or a higher report level is selected.
 
+Building
+--------
+
+The ``hwpc_cxi`` component is built by default.  ``configure`` looks for
+libcxi (``libcxi/libcxi.h`` and ``libcxi``) via ``pkg-config``, then the
+default search paths, then ``/usr/local``.  Use ``--with-libcxi=DIR`` to
+search ``DIR/include``, ``DIR/lib``, and ``DIR/lib64`` instead:
+
+* If libcxi is found, counter collection and reporting are active.
+* If libcxi is not found, the component is built as a no-op: its MCA
+  parameters are still registered, but no counters are collected or
+  reported.  If any ``hwpc_cxi`` MCA parameter is set (and the report level
+  is not ``0``), rank 0 prints a one-time warning at ``MPI_Init()``.
+* ``--enable-hwpc-cxi`` or ``--with-libcxi[=DIR]`` makes ``configure``
+  abort if libcxi is not found.
+* ``--disable-hwpc-cxi`` skips building the component.
+
+The ``Miscellaneous`` section of the ``configure`` output summary reports
+``HWPC-CXI support`` as ``yes``, ``no-op (Cassini headers not found)``, or
+``no (disabled)``.
+
 Runtime Configuration
 ---------------------
 
@@ -60,6 +81,8 @@ MCA Options
 
 Controls whether Cassini counters are collected and the verbosity of reporting.
 
+* Default: ``0`` (collection is opt-in)
+
 * ``0``: no Cassini counters collected; feature disabled completely 
 * ``1``: network timeout counters collected; one-line display when timeouts are detected or verbose output is enabled
 * ``2``: option 1 + CXI counter summary report
@@ -70,6 +93,14 @@ Controls whether Cassini counters are collected and the verbosity of reporting.
 Operational notes:
 
 * Valid range is ``0`` to ``5``.
+* At level ``0`` the component adds no work to ``MPI_Init()`` or
+  ``MPI_Finalize()``.
+* At level ``1`` and above, ``MPI_Init()`` duplicates ``MPI_COMM_WORLD``
+  (held until ``MPI_Finalize()``), splits a communicator of one leader per
+  node, runs several small agreement collectives, and has each node leader
+  read the selected counters from sysfs; ``MPI_Finalize()`` samples again
+  and runs reduction collectives across the node leaders.  Expect added
+  startup and shutdown time that grows with job size.
 * Extra counter summaries are available from level ``2`` and above.
 * NIC-level details are enabled from level ``3`` and above.
 * To obtain meaningful delta reports, runtimes should be at least a few

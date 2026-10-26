@@ -34,8 +34,9 @@ Helper files in this directory:
 
 ## Build Open MPI
 
-Configure Open MPI with `--enable-hwpc-cxi` and complete the main build before
-building this test. The source and build roots are the same for an in-tree
+Configure Open MPI on a system with libcxi installed (pass `--enable-hwpc-cxi`,
+or `--with-libcxi=DIR` for a non-default prefix, to make configure fail if it is
+missing) and complete the main build before building this test. The source and build roots are the same for an in-tree
 build; for a VPATH build, they are different directories.
 
 ## Build The Tests

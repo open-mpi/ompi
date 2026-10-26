@@ -33,5 +33,5 @@ if HWPC_CXI_ENABLE
 
 endif # HWPC_CXI_ENABLE
 
-distclean-local:
-	rm -rf *.dSYM .deps .libs *.la *.lo hwpc_cxi_sendrecv_test prof *.log *.o *.trs Makefile
+# Automake does not clean EXTRA_PROGRAMS.
+CLEANFILES = hwpc_cxi_sendrecv_test$(EXEEXT)

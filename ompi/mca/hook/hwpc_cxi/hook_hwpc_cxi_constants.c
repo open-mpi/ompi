@@ -28,118 +28,13 @@
 
 /* Internal Prototypes */
 static bool cxi_counter_name_string_is_valid(const char *counter_name);
-static bool cxi_counter_mnemonic_id_is_valid(const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id);
 static bool cxi_counter_mnemonic_obj_is_valid(const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
-static bool cxi_counter_group_id_is_valid(const hwpc_cxi_predefined_counter_group_id_t counter_group_id);
 static bool cxi_counter_group_obj_is_valid(const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
-
-static hwpc_cxi_error_code_t cxi_get_counter_group_obj_by_id(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, hwpc_cxi_predefined_counter_group_id_t counter_group_id);
-static hwpc_cxi_error_code_t cxi_get_counter_group_id_by_obj(hwpc_cxi_predefined_counter_group_id_t *counter_group_id, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
-static hwpc_cxi_error_code_t cxi_get_counter_group_obj_by_name(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const char *counter_group_name);
 static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_group_obj(int *total_num_counters, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
-static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_group_by_name(int *total_num_counters, const char *counter_group_name);
-
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_by_id(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, hwpc_cxi_predefined_counter_mnemonic_id_t mnemonic_id);
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_id_by_obj(hwpc_cxi_predefined_counter_mnemonic_id_t *counter_mnemonic_id, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_by_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *mnemonic_name);
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_name);
 static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_mnemonic_obj(int *total_num_counters, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
-static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_mnemonic_by_name(int *total_num_counters, const char *counter_mnemonic_name);
-
-static hwpc_cxi_error_code_t cxi_print_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
-static hwpc_cxi_error_code_t cxi_print_counter_mnemonic_description(FILE *ofp, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj);
-static hwpc_cxi_error_code_t cxi_print_full_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj);
-
-/* External API */
-
-bool hwpc_cxi_counter_group_id_is_valid(const hwpc_cxi_predefined_counter_group_id_t counter_group_id)
-{
-    return cxi_counter_group_id_is_valid(counter_group_id);
-}
-
-/* Function that, given a counter group id, returns the corresponding counter group object */
-hwpc_cxi_error_code_t hwpc_cxi_get_counter_group_obj_by_id(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, hwpc_cxi_predefined_counter_group_id_t counter_group_id)
-{
-    return cxi_get_counter_group_obj_by_id(counter_group_obj, counter_group_id);
-}
-
-/* Function that, given a counter group name, returns the corresponding counter group object */
-hwpc_cxi_error_code_t hwpc_cxi_get_counter_group_obj_by_name(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const char *counter_group_name)
-{
-    return cxi_get_counter_group_obj_by_name(counter_group_obj, counter_group_name);
-}
-
-/* Function that, given a counter group object, returns the corresponding counter group id */
-hwpc_cxi_error_code_t hwpc_cxi_get_counter_group_id_by_obj(hwpc_cxi_predefined_counter_group_id_t *counter_group_id, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
-{
-    return cxi_get_counter_group_id_by_obj(counter_group_id, counter_group_obj);
-}
-
-/* Function that, given a counter group name, returns the number of counters in the group */
-hwpc_cxi_error_code_t hwpc_cxi_get_num_counters_in_counter_group_by_name(int *total_num_counters, const char *counter_group_name)
-{
-    return cxi_get_num_counters_in_counter_group_by_name(total_num_counters, counter_group_name);
-}
-
-
-bool hwpc_cxi_counter_mnemonic_id_is_valid(const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id)
-{
-    return cxi_counter_mnemonic_id_is_valid(counter_mnemonic_id);
-}
-
-/* Function that, given a counter mnemonic id, returns the corresponding counter mnemonic object */
-hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_obj_by_id(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const hwpc_cxi_predefined_counter_mnemonic_id_t mnemonic_id)
-{
-    return cxi_get_counter_mnemonic_obj_by_id(counter_mnemonic_obj, mnemonic_id);
-}
-
-/* Function that, given a counter mnemonic name, returns the corresponding counter mnemonic object */
-hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_obj_by_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *mnemonic_name)
-{
-    return cxi_get_counter_mnemonic_obj_by_name(counter_mnemonic_obj, mnemonic_name);
-}
-
-/* Function that, given a counter mnemonic object, returns the corresponding counter mnemonic id */
-hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_id_by_obj(hwpc_cxi_predefined_counter_mnemonic_id_t *counter_mnemonic_id, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj)
-{
-    return cxi_get_counter_mnemonic_id_by_obj(counter_mnemonic_id, counter_mnemonic_obj);
-}
-
-hwpc_cxi_error_code_t hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_name)
-{
-    return cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(counter_mnemonic_obj, counter_name);
-}
-
-/* Function that, given a counter mnemonic name, returns the number of counters in the mnemonic */
-hwpc_cxi_error_code_t hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(int *total_num_counters, const char *counter_mnemonic_name)
-{
-    return cxi_get_num_counters_in_counter_mnemonic_by_name(total_num_counters, counter_mnemonic_name);
-}
-
-/*
- * Prints out a description of a counter group, but only the top-level information.
- * Call hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group
- * including all of its nested counter mnemonics.
- */
-hwpc_cxi_error_code_t hwpc_cxi_print_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
-{
-    return cxi_print_counter_group_description(ofp, counter_group_obj);
-}
-
-/* Prints out a detailed description of a counter mnemonic */
-hwpc_cxi_error_code_t hwpc_cxi_print_counter_mnemonic_description(FILE *ofp, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj)
-{
-    return cxi_print_counter_mnemonic_description(ofp, counter_mnemonic_obj);
-}
-
-/* Prints out a detailed description of a counter group plus all of its nested counter mnemonics */
-hwpc_cxi_error_code_t hwpc_cxi_print_full_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
-{
-    return cxi_print_full_counter_group_description(ofp, counter_group_obj);
-}
 
 /* Returns a string representation of the given error code */
-const char* hwpc_cxi_error_to_string(hwpc_cxi_error_code_t error_code)
+const char* ompi_hook_hwpc_cxi_error_to_string(hwpc_cxi_error_code_t error_code)
 {
     switch (error_code) {
         case HWPC_CXI_SUCCESS:                          return "Success";
@@ -153,7 +48,7 @@ const char* hwpc_cxi_error_to_string(hwpc_cxi_error_code_t error_code)
 }
 
 /* Returns a string representation of the given counter type*/
-const char* hwpc_cxi_counter_type_to_string(hwpc_cxi_counter_type_t counter_type)
+const char* ompi_hook_hwpc_cxi_counter_type_to_string(hwpc_cxi_counter_type_t counter_type)
 {
     switch (counter_type) {
         case HWPC_CXI_COUNTER_LOWLEVEL_TYPE:            return "Low-Level Counter";
@@ -583,7 +478,7 @@ static const size_t HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST_SIZE = sizeof(HWPC_C
 /* Function that given a hwpc_cxi_predefined_counter_mnemonic_id_t determines if the mnemonic id is valid and within range of possible values.
  * Returns true if valid, otherwise returns false
  */
-static bool cxi_counter_mnemonic_id_is_valid(const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id)
+bool ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid(const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id)
 {
     return (size_t) counter_mnemonic_id < HWPC_CXI_PREDEFINED_COUNTER_MNEMONICS_LIST_SIZE;
 }
@@ -600,7 +495,7 @@ static bool cxi_counter_mnemonic_obj_is_valid(const hwpc_cxi_predefined_counter_
 /* Function that given a hwpc_cxi_predefined_counter_group_id_t determines if the group id is valid and within range of possible values.
  * Returns true if valid, otherwise returns false
  */
-static bool cxi_counter_group_id_is_valid(const hwpc_cxi_predefined_counter_group_id_t counter_group_id)
+bool ompi_hook_hwpc_cxi_counter_group_id_is_valid(const hwpc_cxi_predefined_counter_group_id_t counter_group_id)
 {
     return (size_t) counter_group_id < HWPC_CXI_PREDEFINED_COUNTER_GROUPS_LIST_SIZE;
 }
@@ -630,14 +525,14 @@ static bool cxi_counter_name_string_is_valid(const char *counter_name)
 }
 
 /* Function that given a counter group id, returns the corresponding counter group object */
-static hwpc_cxi_error_code_t cxi_get_counter_group_obj_by_id(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, hwpc_cxi_predefined_counter_group_id_t counter_group_id)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_counter_group_obj_by_id(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, hwpc_cxi_predefined_counter_group_id_t counter_group_id)
 {
     if (NULL == counter_group_obj) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
     *counter_group_obj = NULL;
 
-    if (!cxi_counter_group_id_is_valid(counter_group_id)) {
+    if (!ompi_hook_hwpc_cxi_counter_group_id_is_valid(counter_group_id)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
 
@@ -651,7 +546,7 @@ static hwpc_cxi_error_code_t cxi_get_counter_group_obj_by_id(const hwpc_cxi_pred
 }
 
 /* Function that given a counter group object, returns the corresponding counter group id */
-static hwpc_cxi_error_code_t cxi_get_counter_group_id_by_obj(hwpc_cxi_predefined_counter_group_id_t *counter_group_id, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_counter_group_id_by_obj(hwpc_cxi_predefined_counter_group_id_t *counter_group_id, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
 {
     if (NULL == counter_group_id || NULL == counter_group_obj) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
@@ -700,7 +595,7 @@ static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_group_obj(int *tota
 
     for (size_t i = 0; i < counter_group_obj->counter_mnemonic_list_size; i++) {
         counter_mnemonic_id = counter_group_obj->counter_mnemonic_list[i];
-        if (!cxi_counter_mnemonic_id_is_valid(counter_mnemonic_id)) {
+        if (!ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid(counter_mnemonic_id)) {
             continue; /* Skip if mnemonic id is out of range */
         }
 
@@ -728,7 +623,7 @@ static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_group_obj(int *tota
 }
 
 /* Function that given a counter group name, returns the corresponding counter group's counter_group_obj */
-static hwpc_cxi_error_code_t cxi_get_counter_group_obj_by_name(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const char *counter_group_name)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(const hwpc_cxi_predefined_counter_group_obj_t **counter_group_obj, const char *counter_group_name)
 {
     if (NULL == counter_group_obj || !cxi_counter_name_string_is_valid(counter_group_name)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
@@ -775,7 +670,7 @@ static hwpc_cxi_error_code_t cxi_get_counter_group_obj_by_name(const hwpc_cxi_pr
 }
 
 /* Function that given a counter group name, returns the number of (per-NIC) low-level cxi counters that the counter group represents */
-static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_group_by_name(int *total_num_counters, const char *counter_group_name)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_num_counters_in_counter_group_by_name(int *total_num_counters, const char *counter_group_name)
 {
     if (NULL == total_num_counters || !cxi_counter_name_string_is_valid(counter_group_name)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
@@ -786,7 +681,7 @@ static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_group_by_name(int *
     hwpc_cxi_error_code_t rc = HWPC_CXI_ERROR;
 
     const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj;
-    rc = cxi_get_counter_group_obj_by_name(&counter_group_obj, counter_group_name);
+    rc = ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&counter_group_obj, counter_group_name);
     if (HWPC_CXI_SUCCESS != rc) {
         return rc;
     }
@@ -797,14 +692,14 @@ static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_group_by_name(int *
 
 
 /* Function that given a counter mnemonic id, returns the corresponding counter mnemonic object */
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_by_id(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const hwpc_cxi_predefined_counter_mnemonic_id_t counter_mnemonic_id)
 {
     if (NULL == counter_mnemonic_obj) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
     /* Initialize for any error path */
     *counter_mnemonic_obj = NULL;
-    if (!cxi_counter_mnemonic_id_is_valid(counter_mnemonic_id)) {
+    if (!ompi_hook_hwpc_cxi_counter_mnemonic_id_is_valid(counter_mnemonic_id)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
     }
 
@@ -818,7 +713,7 @@ static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_by_id(const hwpc_cxi_p
 }
 
 /* Function that given a counter mnemonic object, returns the corresponding counter mnemonic id */
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_id_by_obj(hwpc_cxi_predefined_counter_mnemonic_id_t *counter_mnemonic_id, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_counter_mnemonic_id_by_obj(hwpc_cxi_predefined_counter_mnemonic_id_t *counter_mnemonic_id, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj)
 {
     if (NULL == counter_mnemonic_id || NULL == counter_mnemonic_obj) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS;
@@ -836,7 +731,7 @@ static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_id_by_obj(hwpc_cxi_predefi
 }
 
 /* Function that given a counter mnemonic name, returns the corresponding counter mnemonic object */
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_by_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_mnemonic_name)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_mnemonic_name)
 {
     if (NULL == counter_mnemonic_obj || !cxi_counter_name_string_is_valid(counter_mnemonic_name)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS; /* Invalid arguments */
@@ -868,7 +763,7 @@ static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_by_name(const hwpc_cxi
     return HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND; /* Mnemonic not found */
 }
 
-static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_name)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(const hwpc_cxi_predefined_counter_mnemonic_obj_t **counter_mnemonic_obj, const char *counter_name)
 {
     const char *lowlevel_name = counter_name;
     bool is_retry_handler_name = false;
@@ -935,7 +830,7 @@ static hwpc_cxi_error_code_t cxi_get_counter_mnemonic_obj_for_lowlevel_counter_n
 }
 
 /* Function that, given a counter mnemonic name, returns the number of counters in the mnemonic */
-static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_mnemonic_by_name(int *total_num_counters, const char *counter_mnemonic_name)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(int *total_num_counters, const char *counter_mnemonic_name)
 {
     if (NULL == total_num_counters || !cxi_counter_name_string_is_valid(counter_mnemonic_name)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS; /* Invalid arguments */
@@ -946,7 +841,7 @@ static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_mnemonic_by_name(in
     hwpc_cxi_error_code_t rc = HWPC_CXI_ERROR;
 
     const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj;
-    rc = cxi_get_counter_mnemonic_obj_by_name(&counter_mnemonic_obj, counter_mnemonic_name);
+    rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&counter_mnemonic_obj, counter_mnemonic_name);
     if (HWPC_CXI_SUCCESS != rc) {
         return rc;
     }
@@ -956,10 +851,10 @@ static hwpc_cxi_error_code_t cxi_get_num_counters_in_counter_mnemonic_by_name(in
 
 /* 
  * Prints out a helpful description of a counter group, but only the top-level information.
- * Call hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group,
+ * Call ompi_hook_hwpc_cxi_print_full_counter_group_description() to print out the full description of a counter group,
  * including all of its nested counter mnemonics.
  */
-hwpc_cxi_error_code_t cxi_print_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_print_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
 {
     if (NULL == ofp || !cxi_counter_group_obj_is_valid(counter_group_obj)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS; /* Invalid arguments */
@@ -980,7 +875,7 @@ hwpc_cxi_error_code_t cxi_print_counter_group_description(FILE *ofp, const hwpc_
 }
 
 /* Prints out a helpful, detailed description of a counter mnemonic */
-hwpc_cxi_error_code_t cxi_print_counter_mnemonic_description(FILE *ofp, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_print_counter_mnemonic_description(FILE *ofp, const hwpc_cxi_predefined_counter_mnemonic_obj_t *counter_mnemonic_obj)
 {
     if (NULL == ofp || !cxi_counter_mnemonic_obj_is_valid(counter_mnemonic_obj)) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS; /* Invalid arguments */
@@ -1008,7 +903,7 @@ hwpc_cxi_error_code_t cxi_print_counter_mnemonic_description(FILE *ofp, const hw
 }
 
 /* Prints out a helpful, detailed description of a counter group plus all of its nested counter mnemonics */
-hwpc_cxi_error_code_t cxi_print_full_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
+hwpc_cxi_error_code_t ompi_hook_hwpc_cxi_print_full_counter_group_description(FILE *ofp, const hwpc_cxi_predefined_counter_group_obj_t *counter_group_obj)
 {
     if (NULL == ofp || NULL == counter_group_obj) {
         return HWPC_CXI_ERROR_INVALID_ARGUMENTS; /* Invalid arguments */
@@ -1016,7 +911,7 @@ hwpc_cxi_error_code_t cxi_print_full_counter_group_description(FILE *ofp, const 
     /* Initialize for any error path */
     hwpc_cxi_error_code_t rc = HWPC_CXI_ERROR;
 
-    rc = cxi_print_counter_group_description(ofp, counter_group_obj);
+    rc = ompi_hook_hwpc_cxi_print_counter_group_description(ofp, counter_group_obj);
     if (HWPC_CXI_SUCCESS != rc) {
         return rc; /* Error printing group description */
     }
@@ -1026,11 +921,11 @@ hwpc_cxi_error_code_t cxi_print_full_counter_group_description(FILE *ofp, const 
     hwpc_cxi_predefined_counter_mnemonic_id_t cxi_counter_mnemonic_id;
     for (size_t i = 0; i < counter_group_obj->counter_mnemonic_list_size; i++) {
         cxi_counter_mnemonic_id = counter_group_obj->counter_mnemonic_list[i];
-        rc = cxi_get_counter_mnemonic_obj_by_id(&cxi_counter_mnemonic_obj, cxi_counter_mnemonic_id);
+        rc = ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(&cxi_counter_mnemonic_obj, cxi_counter_mnemonic_id);
         if (HWPC_CXI_SUCCESS != rc) {
             return rc;
         }
-        rc = cxi_print_counter_mnemonic_description(ofp, cxi_counter_mnemonic_obj);
+        rc = ompi_hook_hwpc_cxi_print_counter_mnemonic_description(ofp, cxi_counter_mnemonic_obj);
         if (HWPC_CXI_SUCCESS != rc) {
             return rc; /* Error printing counter description */
         }

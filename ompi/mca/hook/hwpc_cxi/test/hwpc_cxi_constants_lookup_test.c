@@ -47,7 +47,7 @@ static void test_group_lookup(void)
     hwpc_cxi_predefined_counter_group_id_t group_id;
     int counter_count = 0;
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "CxiPerfStats"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "CxiPerfStats"),
                   HWPC_CXI_SUCCESS,
                   "lookup by pretty group name should succeed");
     EXPECT_TRUE(NULL != group_obj, "group object should be returned");
@@ -55,17 +55,17 @@ static void test_group_lookup(void)
     EXPECT_EQ_INT(strcmp(group_obj->counter_group_name, "CXI_PERFSTATS"), 0,
                   "group name should not contain the enum prefix");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_group_id_by_obj(&group_id, group_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_group_id_by_obj(&group_id, group_obj),
                   HWPC_CXI_SUCCESS,
                   "lookup by group object should succeed");
     EXPECT_EQ_INT(group_id, HWPC_CXI_PERFSTATS,
                   "group object should map back to its id");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "cxi_perfstats"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "cxi_perfstats"),
                   HWPC_CXI_SUCCESS,
                   "lookup by enum-like group name should be case-insensitive");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_group_by_name(&counter_count, "CxiPerfStats"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_group_by_name(&counter_count, "CxiPerfStats"),
                   HWPC_CXI_SUCCESS,
                   "counter count by group should succeed");
     EXPECT_TRUE(counter_count > 0, "group should contain at least one counter");
@@ -77,7 +77,7 @@ static void test_mnemonic_lookup(void)
     hwpc_cxi_predefined_counter_mnemonic_id_t mnemonic_id;
     int counter_count = 0;
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_ATU_CACHE_MISS),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_ATU_CACHE_MISS),
                   HWPC_CXI_SUCCESS,
                   "lookup by mnemonic id should succeed");
     EXPECT_TRUE(NULL != mnemonic_obj, "mnemonic object should be returned");
@@ -87,17 +87,17 @@ static void test_mnemonic_lookup(void)
                   0,
                   "mnemonic name should not contain the enum prefix");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_id_by_obj(&mnemonic_id, mnemonic_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_id_by_obj(&mnemonic_id, mnemonic_obj),
                   HWPC_CXI_SUCCESS,
                   "lookup by mnemonic object should succeed");
     EXPECT_EQ_INT(mnemonic_id, HWPC_CXI_ATU_CACHE_MISS,
                   "mnemonic object should map back to its id");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, "atu_cache_miss"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, "atu_cache_miss"),
                   HWPC_CXI_SUCCESS,
                   "lookup by mnemonic name should be case-insensitive");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&counter_count, "ATU_CACHE_MISS"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&counter_count, "ATU_CACHE_MISS"),
                   HWPC_CXI_SUCCESS,
                   "counter count by mnemonic should succeed");
     EXPECT_EQ_INT(counter_count, 4, "ATU_CACHE_MISS should expose 4 categories");
@@ -109,18 +109,18 @@ static void test_mnemonic_object_lookup_errors(void)
     hwpc_cxi_predefined_counter_mnemonic_id_t mnemonic_id = HWPC_CXI_ATU_CACHE_MISS;
     hwpc_cxi_predefined_counter_mnemonic_obj_t mnemonic_copy;
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_id_by_obj(NULL, mnemonic_obj),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_id_by_obj(NULL, mnemonic_obj),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "NULL mnemonic id output should be rejected");
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_id_by_obj(&mnemonic_id, NULL),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_id_by_obj(&mnemonic_id, NULL),
                   HWPC_CXI_ERROR_INVALID_ARGUMENTS,
                   "NULL mnemonic object should be rejected");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_ATU_CACHE_MISS),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_id(&mnemonic_obj, HWPC_CXI_ATU_CACHE_MISS),
                   HWPC_CXI_SUCCESS,
                   "mnemonic object setup should succeed");
     memcpy(&mnemonic_copy, mnemonic_obj, sizeof(mnemonic_copy));
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_id_by_obj(&mnemonic_id, &mnemonic_copy),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_id_by_obj(&mnemonic_id, &mnemonic_copy),
                   HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND,
                   "a copy is not a predefined mnemonic object");
     EXPECT_EQ_INT(mnemonic_id, HWPC_CXI_NUM_PREDEFINED_COUNTER_MNEMONICS,
@@ -131,7 +131,7 @@ static void test_lowlevel_counter_lookup(void)
 {
     const hwpc_cxi_predefined_counter_mnemonic_obj_t *mnemonic_obj = NULL;
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
                                                                     "atu_cache_evictions"),
                   HWPC_CXI_SUCCESS,
                   "standalone low-level counter should resolve");
@@ -139,31 +139,31 @@ static void test_lowlevel_counter_lookup(void)
     EXPECT_EQ_INT(strcmp(mnemonic_obj->counter_name, "ATU_CACHE_EVICTIONS"), 0,
                   "standalone counter should resolve to the expected mnemonic");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
                                                                     "atu_cache_miss_3"),
                   HWPC_CXI_SUCCESS,
                   "categorized low-level counter should resolve");
     EXPECT_EQ_INT(strcmp(mnemonic_obj->counter_name, "ATU_CACHE_MISS"), 0,
                   "categorized counter should resolve to its base mnemonic");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
                                                                     "rh:sct_timeouts"),
                   HWPC_CXI_SUCCESS,
                   "retry-handler low-level counter should resolve");
     EXPECT_EQ_INT(strcmp(mnemonic_obj->counter_name, "SCT_TIMEOUTS"), 0,
                   "retry-handler counter should resolve to its mnemonic");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
                                                                     "atu_cache_miss_4"),
                   HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND,
                   "out-of-range category should not resolve");
     EXPECT_TRUE(NULL == mnemonic_obj, "failed lookup should clear the mnemonic output");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
                                                                     "atu_cache_miss_bad"),
                   HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND,
                   "non-numeric category should not resolve");
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_for_lowlevel_counter_name(&mnemonic_obj,
                                                                     "sct_timeouts"),
                   HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND,
                   "retry-handler counter without rh prefix should not resolve");
@@ -175,21 +175,21 @@ static void test_missing_entries(void)
     const hwpc_cxi_predefined_counter_mnemonic_obj_t *mnemonic_obj = NULL;
     int counter_count = 123;
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "NOT_A_GROUP"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_group_obj_by_name(&group_obj, "NOT_A_GROUP"),
                   HWPC_CXI_COUNTER_GROUP_NOT_FOUND,
                   "unknown group should return not-found");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, "NOT_A_MNEMONIC"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_counter_mnemonic_obj_by_name(&mnemonic_obj, "NOT_A_MNEMONIC"),
                   HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND,
                   "unknown mnemonic should return not-found");
 
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_group_by_name(&counter_count, "NOT_A_GROUP"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_group_by_name(&counter_count, "NOT_A_GROUP"),
                   HWPC_CXI_COUNTER_GROUP_NOT_FOUND,
                   "unknown group count should return not-found");
     EXPECT_EQ_INT(counter_count, 0, "unknown group count should be reset to 0");
 
     counter_count = 123;
-    EXPECT_EQ_INT(hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&counter_count, "NOT_A_MNEMONIC"),
+    EXPECT_EQ_INT(ompi_hook_hwpc_cxi_get_num_counters_in_counter_mnemonic_by_name(&counter_count, "NOT_A_MNEMONIC"),
                   HWPC_CXI_COUNTER_MNEMONIC_NOT_FOUND,
                   "unknown mnemonic count should return not-found");
     EXPECT_EQ_INT(counter_count, 0, "unknown mnemonic count should be reset to 0");

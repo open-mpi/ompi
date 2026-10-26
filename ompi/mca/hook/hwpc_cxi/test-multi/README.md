@@ -83,22 +83,15 @@ Optional baseline workflow:
 
 The hardware-independent `../test` suite exercises the complete singleton hook
 lifecycle with fixture counter files, repeated initialization/finalization,
-allocation cleanup, sampling validity, MPI_T callbacks, and report parsing.
-`check_hwpc_cxi_driver.sh` runs the real validation driver with a mock `srun`.
-It checks launch status propagation, timeout status, missing/malformed reports,
-cross-node placement verification, changed hostnames, and preservation of every
-baseline file after validation failure. These shell regressions need no MPI or
-CXI installation:
-
-```bash
-bash ../test/check_hwpc_cxi_compare.sh
-bash ../test/check_hwpc_cxi_driver.sh
-```
+allocation cleanup, sampling validity, MPI_T callbacks, token sanitization,
+counter group/mnemonic expansion and deduplication, and summary/detail report
+formatting.
 
 On a freshly configured HWPC-CXI build, build and run the unit tests before
-installing. Do not reuse Makefiles copied from another system. CI exercises
-both HWPC-CXI and HWPC-CXI with MCA DSOs, treats missing declarations/returns as
-errors, and compiles the manual workload without launching it on CI runners.
+installing. Do not reuse Makefiles copied from another system. CI builds the
+component (as a no-op, since runners lack libcxi) in its default and MCA DSO
+configurations, runs these unit tests, and compiles the manual workload without
+launching it on CI runners.
 
 ```bash
 make -C ../test check VERBOSE=1

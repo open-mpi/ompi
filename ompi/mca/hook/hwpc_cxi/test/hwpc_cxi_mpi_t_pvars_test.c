@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "mpi.h"
 
@@ -67,6 +68,11 @@ int main(int argc, char **argv)
     int rc;
 
 #if HWPC_CXI_MPI_T_PVARS_ENABLED_TEST
+    /* Pvars are only registered for counters that exist, which needs libcxi support and a Cassini NIC. */
+    if (!OMPI_HOOK_HWPC_CXI_HAVE_LIBCXI || 0 != access("/sys/class/cxi/cxi0", F_OK)) {
+        printf("SKIP: no Cassini (CXI) device available\n");
+        return 77;
+    }
     if (0 != setenv("OMPI_MCA_ompi_hook_hwpc_cxi_counter_mpi_t_enable", "true", 1)) {
         return EXIT_FAILURE;
     }

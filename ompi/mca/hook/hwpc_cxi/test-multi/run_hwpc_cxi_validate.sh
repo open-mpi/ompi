@@ -397,7 +397,7 @@ if [[ "${_report1_rc}" -ne 0 ]]; then
     echo "REPORT_LEVEL=1:        ${FAIL_LABEL} (exit code ${_report1_rc})"
     rc=1
 else
-    if grep -qE 'OpenMPI Slingshot Network Summary: 0 network timeouts' "${REPORT1_STDOUT_LOG}"; then
+    if grep -qE 'Open MPI Slingshot Network Summary: 0 network timeouts' "${REPORT1_STDOUT_LOG}"; then
         echo "REPORT_LEVEL=1 stdout: ${FAIL_LABEL} (zero-timeout summary is present)"
         echo "  Inspect: ${REPORT1_STDOUT_LOG}"
         rc=1
@@ -406,7 +406,7 @@ else
     fi
 
     # REPORT_LEVEL=1 must not emit the detailed CXI counter summary table/header.
-    if grep -q "OpenMPI Slingshot CXI Counter Summary:" "${REPORT1_STDOUT_LOG}"; then
+    if grep -q "Open MPI Slingshot CXI Counter Summary:" "${REPORT1_STDOUT_LOG}"; then
         echo "REPORT_LEVEL=1:        ${FAIL_LABEL} (stdout contains CXI Counter Summary table)"
         echo "  Inspect: ${REPORT1_STDOUT_LOG}"
         rc=1
@@ -466,7 +466,7 @@ if [[ "${_report0_rc}" -ne 0 ]]; then
 else
     # For REPORT=0, stdout may be empty or contain only the sendrecv completion
     # line. No HWPC_CXI summary/counter output should appear.
-    if grep -qE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT0_STDOUT_LOG}"; then
+    if grep -qE 'HWPC_CXI|Open MPI Slingshot' "${REPORT0_STDOUT_LOG}"; then
         echo "REPORT_LEVEL=0 stdout: ${FAIL_LABEL} (found HWPC_CXI output)"
         echo "  Inspect: ${REPORT0_STDOUT_LOG}"
         rc=1
@@ -487,7 +487,7 @@ else
         fi
     fi
 
-    if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT0_STDERR_LOG}"; then
+    if grep -qiE 'HWPC_CXI|Open MPI Slingshot' "${REPORT0_STDERR_LOG}"; then
         echo "REPORT_LEVEL=0 stderr: ${FAIL_LABEL} (found HWPC_CXI output)"
         echo "  Inspect: ${REPORT0_STDERR_LOG}"
         rc=1
@@ -538,7 +538,7 @@ if [[ "${_report2_rc}" -ne 0 ]]; then
     echo "REPORT_LEVEL=2+VERBOSE=false: ${FAIL_LABEL} (exit code ${_report2_rc})"
     rc=1
 else
-    if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT2_STDERR_LOG}"; then
+    if grep -qiE 'HWPC_CXI|Open MPI Slingshot' "${REPORT2_STDERR_LOG}"; then
         echo "REPORT_LEVEL=2+VERBOSE=false stderr: ${FAIL_LABEL} (found HWPC_CXI output)"
         echo "  Inspect: ${REPORT2_STDERR_LOG}"
         rc=1
@@ -592,7 +592,7 @@ if [[ "${_report2_rc}" -ne 0 ]]; then
     echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true: ${FAIL_LABEL} (exit code ${_report2_rc})"
     rc=1
 else
-    if grep -qiE 'HWPC_CXI|OpenMPI Slingshot' "${REPORT2_STDERR_LOG}"; then
+    if grep -qiE 'HWPC_CXI|Open MPI Slingshot' "${REPORT2_STDERR_LOG}"; then
         echo "REPORT_LEVEL=2+VERBOSE=false+FILTER_ZEROS=true stderr: ${FAIL_LABEL} (found HWPC_CXI output)"
         echo "  Inspect: ${REPORT2_STDERR_LOG}"
         rc=1
@@ -803,7 +803,7 @@ for _agreement_case in reporting schema schema_names schema_order; do
     if (( _agreement_rc == 0 )) && \
         grep -q "${_agreement_warning}" "${_agreement_dir}/stderr.log" && \
         grep -q '^hwpc_cxi_sendrecv_test complete ' "${_agreement_dir}/stdout.log" && \
-        ! grep -q 'OpenMPI Slingshot' "${_agreement_dir}/stdout.log"; then
+        ! grep -q 'Open MPI Slingshot' "${_agreement_dir}/stdout.log"; then
         echo "AGREEMENT ${_agreement_case}: ${PASS_LABEL} (uniform shutdown without hanging)"
     else
         echo "AGREEMENT ${_agreement_case}: ${FAIL_LABEL} (exit ${_agreement_rc}; inspect ${_agreement_dir})"

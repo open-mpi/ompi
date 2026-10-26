@@ -15,7 +15,7 @@
 # These tests are hardware-independent and should run during make check.
 include $(top_srcdir)/Makefile.mca-dso-check
 
-EXTRA_DIST = check_hwpc_cxi_dynamic_symbols.sh check_hwpc_cxi_quiet.sh check_hwpc_cxi_compare.sh check_hwpc_cxi_driver.sh
+EXTRA_DIST = check_hwpc_cxi_dynamic_symbols.sh check_hwpc_cxi_quiet.sh
 
 TEST_EXTENSIONS = .sh
 SH_LOG_COMPILER = $(SHELL)
@@ -36,8 +36,6 @@ if HWPC_CXI_ENABLE
 
     TESTS = \
         hwpc_cxi_counters_test \
-        check_hwpc_cxi_compare.sh \
-        check_hwpc_cxi_driver.sh \
         hwpc_cxi_constants_lookup_test \
         hwpc_cxi_constants_validation_test \
         check_hwpc_cxi_quiet.sh \
@@ -45,7 +43,8 @@ if HWPC_CXI_ENABLE
         hwpc_cxi_mpi_init_finalize_level_1_test \
         hwpc_cxi_mpi_init_finalize_level_2_test \
         hwpc_cxi_mpi_init_finalize_level_5_test \
-        hwpc_cxi_mpi_t_pvars_test
+        hwpc_cxi_mpi_t_pvars_test \
+        hwpc_cxi_mpi_t_pvars_enabled_test
 
     check-local: check-hwpc-cxi-dynamic-symbols
     .PHONY: check-hwpc-cxi-dynamic-symbols
@@ -142,6 +141,3 @@ if HWPC_CXI_ENABLE
         $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
 
 endif # HWPC_CXI_ENABLE
-
-distclean-local:
-	rm -rf *.dSYM .deps .libs *.la *.lo hwpc_cxi_*_test prof *.log *.o *.trs Makefile
