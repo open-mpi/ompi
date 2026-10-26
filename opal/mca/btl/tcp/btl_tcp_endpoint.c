@@ -786,6 +786,14 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
     /* By default consider a IPv4 connection */
     uint16_t af_family = AF_INET;
     opal_socklen_t addrlen = sizeof(struct sockaddr_in);
+    /* The source address bind() pins below.  opal_net_get_hostname() hands
+     * back a shared buffer, so it cannot render this and the destination in
+     * the same call; keep this one here. */
+#if OPAL_ENABLE_IPV6
+    char local_ip[INET6_ADDRSTRLEN] = "unknown";
+#else
+    char local_ip[INET_ADDRSTRLEN] = "unknown";
+#endif
 
 #if OPAL_ENABLE_IPV6
     if (AF_INET6 == btl_endpoint->endpoint_addr->addr_family) {
@@ -873,12 +881,15 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
             BTL_ERROR(
                 ("bind on local address (%s:%d) failed: %s (%d)",
                  opal_net_get_hostname((struct sockaddr *) &btl_endpoint->endpoint_btl->tcp_ifaddr),
-                 htons(((struct sockaddr_in *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port),
+                 ntohs(((struct sockaddr_in *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port),
                  strerror(opal_socket_errno), opal_socket_errno));
 
             CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
             return OPAL_ERROR;
         }
+        inet_ntop(AF_INET,
+                  &((struct sockaddr_in *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_addr,
+                  local_ip, sizeof(local_ip));
     }
 #if OPAL_ENABLE_IPV6
     if (endpoint_addr.ss_family == AF_INET6) {
@@ -890,20 +901,27 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
             BTL_ERROR(
                 ("bind on local address (%s:%d) failed: %s (%d)",
                  opal_net_get_hostname((struct sockaddr *) &btl_endpoint->endpoint_btl->tcp_ifaddr),
-                 htons(
+                 ntohs(
                      ((struct sockaddr_in6 *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin6_port),
                  strerror(opal_socket_errno), opal_socket_errno));
 
             CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
             return OPAL_ERROR;
         }
+        inet_ntop(AF_INET6,
+                  &((struct sockaddr_in6 *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin6_addr,
+                  local_ip, sizeof(local_ip));
     }
 #endif
+    /* Name the source address as well: bind() above pins it so the peer can
+     * pair btl modules, and an interface can be disqualified as a source
+     * without being disqualified as a destination, so which one we are
+     * leaving from is not evident from the destination alone. */
     opal_output_verbose(10, opal_btl_base_framework.framework_output,
-                        "btl: tcp: attempting to connect() to %s address %s on port %d",
+                        "btl: tcp: attempting to connect() to %s address %s on port %d from %s",
                         OPAL_NAME_PRINT(btl_endpoint->endpoint_proc->proc_opal->proc_name),
                         opal_net_get_hostname((struct sockaddr *) &endpoint_addr),
-                        ntohs(btl_endpoint->endpoint_addr->addr_port));
+                        ntohs(btl_endpoint->endpoint_addr->addr_port), local_ip);
 
     if (0 == connect(btl_endpoint->endpoint_sd, (struct sockaddr *) &endpoint_addr, addrlen)) {
         opal_output_verbose(10, opal_btl_base_framework.framework_output,
