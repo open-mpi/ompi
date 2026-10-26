@@ -176,6 +176,12 @@ during ``MPI_INIT`` |mdash| see :ref:`this FAQ entry
 not use specific IP networks |mdash| or not use any IP networks at all
 |mdash| then you need to tell Open MPI.
 
+An interface that is administratively "up" but has no carrier |mdash| a
+container bridge with nothing attached, for example |mdash| is skipped,
+because such an interface cannot be used as the source of a connection.
+Set ``btl_tcp_if_require_carrier`` to 0 if you need Open MPI to use one
+anyway.
+
 .. warning:: Aggressively using all "up" interfaces can cause problems
              in some cases.  For example, if you have a machine with a
              local-only interface (e.g., the loopback device, or a
