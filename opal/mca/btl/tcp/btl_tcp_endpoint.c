@@ -881,7 +881,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
             BTL_ERROR(
                 ("bind on local address (%s:%d) failed: %s (%d)",
                  opal_net_get_hostname((struct sockaddr *) &btl_endpoint->endpoint_btl->tcp_ifaddr),
-                 htons(((struct sockaddr_in *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port),
+                 ntohs(((struct sockaddr_in *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin_port),
                  strerror(opal_socket_errno), opal_socket_errno));
 
             CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
@@ -901,7 +901,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t *btl_endpo
             BTL_ERROR(
                 ("bind on local address (%s:%d) failed: %s (%d)",
                  opal_net_get_hostname((struct sockaddr *) &btl_endpoint->endpoint_btl->tcp_ifaddr),
-                 htons(
+                 ntohs(
                      ((struct sockaddr_in6 *) &btl_endpoint->endpoint_btl->tcp_ifaddr)->sin6_port),
                  strerror(opal_socket_errno), opal_socket_errno));
 
