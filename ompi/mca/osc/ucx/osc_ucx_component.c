@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2025      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -710,6 +711,7 @@ select_unlock:
     if (ret != OMPI_SUCCESS) {
         goto error;
     }
+    ompi_comm_mark_communicator_as_internal(module->comm);
 
     *model = MPI_WIN_UNIFIED;
     opal_asprintf(&name, "ucx window %s", ompi_comm_print_cid(module->comm));

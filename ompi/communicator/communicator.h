@@ -72,6 +72,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_PML_ADDED    0x00001000 /**< set only after pml add_comm() */
 #define OMPI_COMM_MAPBY_NODE   0x00008000
 #define OMPI_COMM_GLOBAL_INDEX 0x00010000
+#define OMPI_COMM_INTERNAL     0x00020000 /**< never handed out to the user */
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -91,6 +92,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
                                  OMPI_COMM_IS_DIST_GRAPH((comm)))
 #define OMPI_COMM_IS_MAPBY_NODE(comm) ((comm)->c_flags & OMPI_COMM_MAPBY_NODE)
 #define OMPI_COMM_IS_GLOBAL_INDEX(comm) ((comm)->c_flags & OMPI_COMM_GLOBAL_INDEX)
+#define OMPI_COMM_IS_INTERNAL(comm) ((comm)->c_flags & OMPI_COMM_INTERNAL)
 
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
@@ -1210,6 +1212,17 @@ OMPI_DECLSPEC int ompi_comm_activate (ompi_communicator_t **newcomm, ompi_commun
 OMPI_DECLSPEC int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                                          ompi_communicator_t *bridgecomm, const void *arg0,
                                          const void *arg1, bool send_first, int mode, ompi_request_t **req);
+
+/**
+ * Mark a communicator as one Open MPI never hands out to the application. It
+ * then has no Fortran handle and is not reported as a leak by MPI_Finalize.
+ *
+ * NULL, MPI_COMM_NULL and the predefined communicators are ignored, so a
+ * caller need not check what a non-participating split handed it.
+ *
+ * @param comm: the communicator to mark
+ */
+OMPI_DECLSPEC void ompi_comm_mark_communicator_as_internal (ompi_communicator_t *comm);
 
 /**
  * a simple function to dump the structure
