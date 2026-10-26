@@ -97,9 +97,13 @@ int mca_coll_base_find_available(bool enable_progress_threads,
  * this function, new communicators may be created, and therefore
  * communicator creation functions may be re-entered (albeit with
  * different arguments).
+ *
+ * nonblocking: the creation call does not block its callers (see
+ * mca_coll_base_comm_select_nonblocking()).
  */
 int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
-                              struct ompi_communicator_t *parent);
+                              struct ompi_communicator_t *parent,
+                              bool nonblocking);
 
 /**
  * Return the communicator @c comm was derived from, while @c comm is
@@ -123,6 +127,18 @@ int mca_coll_base_comm_select(struct ompi_communicator_t *comm,
  */
 OMPI_DECLSPEC struct ompi_communicator_t *
 mca_coll_base_comm_select_parent(struct ompi_communicator_t *comm);
+
+/**
+ * Return whether @c comm is being created by a nonblocking call, while
+ * @c comm is being selected.
+ *
+ * True means no caller is blocked in this creation (MPI_Comm_idup and
+ * the other nonblocking creation calls): every rank completes it from
+ * its own progress loop at a time of its own, so module_enable must not
+ * wait on peers.  False otherwise, or when @c comm is not being selected.
+ */
+OMPI_DECLSPEC bool
+mca_coll_base_comm_select_nonblocking(struct ompi_communicator_t *comm);
 
 /**
  * Finalize a coll component on a specific communicator.

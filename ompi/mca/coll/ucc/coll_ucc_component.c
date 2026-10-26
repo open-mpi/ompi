@@ -15,6 +15,7 @@
 #include "coll_ucc.h"
 #include "coll_ucc_dtypes.h"
 #include "opal/util/argv.h"
+#include <limits.h>
 
 static int mca_coll_ucc_open(void);
 static int mca_coll_ucc_close(void);
@@ -82,6 +83,109 @@ static int mca_coll_ucc_register(void)
                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_9,
                                     MCA_BASE_VAR_SCOPE_ALL, &cm->ucc_np);
+
+#if OPAL_ENABLE_DEBUG
+    cm->fail_domain_index = -1;
+    mca_base_component_var_register(c, "fail_domain_index",
+                                    "Testing only: make the N-th UCC context creation in this process fail (-1 = never)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->fail_domain_index);
+#endif
+
+    cm->domain_reuse = true;
+    mca_base_component_var_register(c, "domain_reuse",
+                                    "Reuse an existing UCC context whose bootstrap group covers a new communicator instead of creating one per communicator family",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->domain_reuse);
+
+    cm->sessions_teardown = false;
+    mca_base_component_var_register(c, "sessions_teardown",
+                                    "Destroy UCC contexts when the last session finalizes without an MPI_Finalize fence; "
+                                    "waits on peers that may be in unrelated sessions, so off by default (contexts are leaked)",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->sessions_teardown);
+    cm->team_post_agreement = true;
+    mca_base_component_var_register(c, "team_post_agreement",
+                                    "Agree across the communicator that every rank posted its UCC team before waiting on it; needed where a TL's team creation blocks (tl/sharp), costs one allreduce per communicator when it is enabled",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->team_post_agreement);
+
+    cm->team_create_timeout = 60;
+    mca_base_component_var_register(c, "team_create_timeout",
+                                    "Seconds to wait for a UCC team creation to complete before giving up on UCC for that communicator (<= 0: wait forever)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->team_create_timeout);
+
+    cm->team_destroy_timeout = 60;
+    mca_base_component_var_register(c, "team_destroy_timeout",
+                                    "Seconds to wait for a UCC team destroy at communicator release before leaving the team to finalize (<= 0: wait forever)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->team_destroy_timeout);
+
+    cm->max_domains = 0;
+    mca_base_component_var_register(c, "max_domains",
+                                    "Maximum number of live UCC contexts per process; a communicator that would need another one falls back to the previous coll modules (<= 0: unlimited)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->max_domains);
+
+    cm->derived_sharp = false;
+    mca_base_component_var_register(c, "derived_sharp",
+                                    "Allow SHARP on communicators other than MPI_COMM_WORLD that do not set the ompi_comm_coll_ucc_sharp info key; "
+                                    "when false they use a UCC context with tl/sharp disabled, which costs one extra UCC context per process when tl/sharp is configured",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_5,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->derived_sharp);
+
+#if OPAL_ENABLE_DEBUG
+    cm->sharp_flavor_force = false;
+    mca_base_component_var_register(c, "sharp_flavor_force",
+                                    "Testing only: create SHARP-free UCC contexts even when tl/sharp is not in the UCC library",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->sharp_flavor_force);
+#endif
+
+#if OPAL_ENABLE_DEBUG
+    cm->fail_domain_no_resource = false;
+    mca_base_component_var_register(c, "fail_domain_no_resource",
+                                    "Testing only: treat the fail_domain_index failure as a SHARP resource refusal",
+                                    MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->fail_domain_no_resource);
+#endif
+
+#if OPAL_ENABLE_DEBUG
+    cm->fail_team_index = -1;
+    mca_base_component_var_register(c, "fail_team_index",
+                                    "Testing only: make the N-th UCC team create post in this process fail (-1 = never)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->fail_team_index);
+#endif
+
+#if OPAL_ENABLE_DEBUG
+    cm->fail_team_rank = -1;
+    mca_base_component_var_register(c, "fail_team_rank",
+                                    "Testing only: restrict fail_team_index to this MPI_COMM_WORLD rank (-1 = every rank)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->fail_team_rank);
+#endif
+#if OPAL_ENABLE_DEBUG
+    cm->team_id_force = -1;
+    mca_base_component_var_register(c, "team_id_force",
+                                    "Testing only: use this UCC team id for every communicator without a global index (-1 = hashed)",
+                                    MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
+                                    OPAL_INFO_LVL_9,
+                                    MCA_BASE_VAR_SCOPE_ALL, &cm->team_id_force);
+#endif
 
     mca_base_component_var_register(c, MCA_COMPILETIME_VER,
                                     "Version of the libucc library with which Open MPI was compiled",
@@ -250,9 +354,27 @@ static int mca_coll_ucc_open(void)
     mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
     mca_coll_ucc_output          = opal_output_open(NULL);
     cm->domain_count             = 0;
-    cm->keyval_created           = false;
+    cm->progress_ctx             = NULL;     /* a reopened component (Sessions) must not trust BSS */
+    cm->progress_ctx_cap         = 0;
+    cm->progressing              = 0;
+    cm->progress_registered      = false;
+    cm->ucc_lib                  = NULL;
+    cm->teams_posted             = 0;
+    cm->refused_at_count         = 0;
     cm->requests_initialized     = false;
+    cm->finalize_hook_registered = false;
+    cm->finalizing               = false;
+    cm->lib_failed               = false;
+    cm->orphans                  = 0;
+    cm->domains_created          = 0;
+    cm->sharp_in_lib             = false;
+    cm->sharp_domain_count       = 0;
+    cm->sharp_flavor_force       = false;    /* registered only in debug builds, read unconditionally */
     OBJ_CONSTRUCT(&cm->domains, opal_list_t);
+    OBJ_CONSTRUCT(&cm->lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&cm->modules, opal_pointer_array_t);
+    OBJ_CONSTRUCT(&cm->abandoned, opal_list_t);
+    opal_pointer_array_init(&cm->modules, 8, INT_MAX, 8);
     opal_output_set_verbosity(mca_coll_ucc_output, cm->ucc_verbose);
     mca_coll_ucc_init_default_cts();
     return OMPI_SUCCESS;
@@ -269,6 +391,25 @@ static int mca_coll_ucc_close(void)
         OBJ_DESTRUCT(&cm->requests);
         cm->requests_initialized = false;
     }
+    if (!opal_list_is_empty(&cm->domains)) {
+        UCC_VERBOSE(1, "%d ucc oob domain(s) still alive at component close",
+                    (int)opal_list_get_size(&cm->domains));
+    }
+    if (NULL != cm->ucc_lib) {
+        UCC_VERBOSE(1, "ucc library still initialized at component close");
+    }
+    if (!opal_list_is_empty(&cm->abandoned)) {
+        UCC_VERBOSE(1, "%d quarantined ucc team(s) leaked at component close",
+                    (int)opal_list_get_size(&cm->abandoned));
+        OPAL_LIST_DESTRUCT(&cm->abandoned);
+    } else {
+        OBJ_DESTRUCT(&cm->abandoned);
+    }
+    OBJ_DESTRUCT(&cm->modules);
+    free(cm->progress_ctx);
+    cm->progress_ctx     = NULL;
+    cm->progress_ctx_cap = 0;
+    OBJ_DESTRUCT(&cm->lock);
     OBJ_DESTRUCT(&cm->domains);
     return OMPI_SUCCESS;
 }
