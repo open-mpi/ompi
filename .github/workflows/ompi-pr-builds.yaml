@@ -123,7 +123,16 @@ jobs:
         # filled").  Let prte oversubscribe so it can place the spawned
         # children.
         PRTE_MCA_rmaps_default_mapping_policy: ":OVERSUBSCRIBE"
-      run: make -C ompi/test/mpi-abi check-abi VERBOSE=1
+      run: |
+        #
+        # Recent versions of OpenPMIx started emitting warnings about use of deprecated
+        # MCA parameters its emission to stderr that causes some make check/check-abi
+        # tests to fail. Suppress generation of these warnings.
+        #
+        mca_params="$HOME/.pmix/mca-params.conf"
+        mkdir -p "$(dirname "$mca_params")"
+        echo mca_base_suppress_deprecated_warning = true >> "$mca_params"
+        make -C ompi/test/mpi-abi check-abi VERBOSE=1
 
     - name: Run the tests that need mpirun
       # Like check-abi above, this runs after "make install": "make check"
