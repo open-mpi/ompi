@@ -16,7 +16,6 @@
  * Copyright (c) 2011-2015 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2020 Intel, Inc.  All rights reserved.
- * Copyright (c) 2013-2017 Intel, Inc. All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
@@ -25,7 +24,7 @@
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2023-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -881,15 +880,20 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
        ompi/runtime/ompi_mpi_finalize.c for a much more detailed
        rationale. */
 
-    /* RHC: assuming for now that this must flow across all
-     * local and remote group members */
-    nprocs = comm->c_local_group->grp_proc_count + comm->c_remote_group->grp_proc_count;
+    /* This must flow across all local and remote group members.  An
+     * intracomm has only the local group (the remote group points by
+     * design to the same group), so walking both would name every peer
+     * twice. */
+    nprocs = comm->c_local_group->grp_proc_count;
+    if (OMPI_COMM_IS_INTER(comm)) {
+        nprocs += comm->c_remote_group->grp_proc_count;
+    }
     names = (opal_process_name_t *) malloc(nprocs * sizeof(opal_process_name_t));
     if (NULL == names) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     ret = ompi_dpm_collect_names(comm->c_local_group, names, &n);
-    if (OMPI_SUCCESS == ret) {
+    if (OMPI_SUCCESS == ret && OMPI_COMM_IS_INTER(comm)) {
         /* do the same for the remote group */
         ret = ompi_dpm_collect_names(comm->c_remote_group, names, &n);
     }
