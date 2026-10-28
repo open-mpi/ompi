@@ -625,8 +625,7 @@ static int mca_btl_tcp_component_close(void)
         OBJ_RELEASE(event);
     }
 
-    opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs,
-                                 opal_proc_local_get()->proc_name);
+    mca_btl_tcp_proc_remove_all();
 
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_procs);
