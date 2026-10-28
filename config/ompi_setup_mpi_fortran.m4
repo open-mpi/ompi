@@ -419,10 +419,26 @@ end program]])],
 
     AS_IF([test $ompi_fortran_happy -eq 1 && \
            test $OMPI_TRY_FORTRAN_BINDINGS -ge $OMPI_FORTRAN_USEMPI_BINDINGS],
-          [ # Look for the fortran module compiler flag
-           OMPI_FORTRAN_FIND_MODULE_INCLUDE_FLAG([],
-               [AC_MSG_WARN([*** Could not determine the fortran compiler flag to indicate where modules reside])
-                AC_MSG_ERROR([*** Cannot continue])])
+          [ # Use Autoconf 2.69 standard macro to detect module include flag
+           AC_FC_MODULE_FLAG
+
+           AS_IF([test -z "$FC_MODINC"],
+                 [AC_MSG_WARN([*** Could not determine the fortran compiler flag to indicate where modules reside])
+                  AC_MSG_ERROR([*** Cannot continue])])
+
+           # For backward compatibility during transition, maintain OMPI_FC_MODULE_FLAG
+           # as an alias to FC_MODINC. This will be removed in a future phase.
+           OMPI_FC_MODULE_FLAG="$FC_MODINC"
+           AC_SUBST([OMPI_FC_MODULE_FLAG])
+
+           # Protect OMPI_FC_MODULE_FLAG from losing significant trailing whitespace,
+           # same as Autoconf does for FC_MODINC. Some compilers (Intel, PGI) need
+           # flags like '-module ' or '-mod ' with a trailing space separator.
+           AC_CONFIG_COMMANDS_PRE([
+             case $OMPI_FC_MODULE_FLAG in #(
+               *\ ) OMPI_FC_MODULE_FLAG=$OMPI_FC_MODULE_FLAG'${ac_empty}' ;;
+             esac
+           ])
 
            # Look for ignore TKR syntax
            OMPI_FORTRAN_CHECK_IGNORE_TKR([OMPI_FORTRAN_HAVE_IGNORE_TKR=1])
