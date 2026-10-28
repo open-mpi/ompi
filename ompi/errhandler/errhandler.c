@@ -559,15 +559,30 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     }
 #endif /* OPAL_ENABLE_FT_MPI */
 
+    /* The two cases below are what is left to decide once the fault-tolerant
+     * code is not built or not enabled; when it is, it has already handled
+     * these three statuses above and returned. */
+    bool proc_terminated = (PMIX_ERR_PROC_TERM_WO_SYNC == status
+                            || PMIX_ERR_PROC_ABORTED_BY_SIG == status
+                            || PMIX_ERR_PROC_ABORTED == status);
+
+    /* Nothing is waiting to hear that a peer died once this process has
+     * started finalizing: the application will make no further MPI call that
+     * could observe it. */
+    if (proc_terminated && OMPI_MPI_STATE_FINALIZE_STARTED <= ompi_mpi_state) {
+        opal_output_verbose(1, 0,
+                            "%s ompi: ignoring the %s event reported by PMIx: "
+                            "this process is finalizing",
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME), PMIx_Error_string(status));
+        opal_event_del(&event->super);
+        free(event);
+        return NULL;
+    }
+
     /* A process that terminated while in none of our communicators is one we
      * can no longer name, so there is nothing to report and nobody to report
-     * it to.  When the fault-tolerant code is built it has already decided
-     * these three cases above and returned; this is what is left to do when
-     * it is not. */
-    if ((PMIX_ERR_PROC_TERM_WO_SYNC == status
-         || PMIX_ERR_PROC_ABORTED_BY_SIG == status
-         || PMIX_ERR_PROC_ABORTED == status)
-        && ompi_errhandler_event_is_ignorable(event, &unreachable)) {
+     * it to. */
+    if (proc_terminated && ompi_errhandler_event_is_ignorable(event, &unreachable)) {
         opal_output_verbose(1, 0,
                             "%s ompi: ignoring the %s event reported by PMIx for proc %s: "
                             "it belongs to no communicator",

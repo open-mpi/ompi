@@ -1160,6 +1160,24 @@ void mca_pml_ob1_error_handler(
     }
 #endif /* OPAL_ENABLE_FT_MPI */
 
+    /* Past this point the fault-tolerant code is either not built or not
+     * enabled, so nothing is waiting to hear about a failure once this
+     * process has started finalizing: the application will make no further
+     * MPI call that could observe one.  The check at the top of this
+     * function cannot be lowered to this state in its place, because ULFM
+     * does need failures between MPI_Finalize() entry and
+     * OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT -- that is where it
+     * drains the ones already pending. */
+    if (OMPI_MPI_STATE_FINALIZE_STARTED <= ompi_mpi_state) {
+        opal_output_verbose(1, mca_pml_ob1_output,
+                            "PML:OB1: ignoring the error reported by the %s BTL for proc %s "
+                            "with info %s: this process is finalizing",
+                            btl->btl_component->btl_version.mca_component_name,
+                            (NULL == errproc ? "null" : OMPI_NAME_PRINT(&errproc->proc_name)),
+                            btlinfo);
+        return;
+    }
+
     /* Losing a peer only matters if the application can still name it, and
      * naming it requires a communicator that contains it.  Once
      * MPI_Comm_disconnect() has freed the last communicator to a
