@@ -33,7 +33,7 @@ end interface
 
 contains
 
-subroutine  mysub(fn)
+subroutine  mysub(comm_errhandler_fn)
     use, intrinsic :: iso_c_binding, only : c_funloc, c_funptr
     procedure(MPI_Comm_errhandler_function) :: comm_errhandler_fn
     type(c_funptr) :: comm_errhandler_fn_c
