@@ -362,12 +362,7 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
         }
 
         /* Look in both the local and remote group for this process */
-        proc_rank = ompi_group_proc_lookup_rank(comm->c_local_group, ompi_proc);
-        remote = false;
-        if( (proc_rank < 0) && (comm->c_local_group != comm->c_remote_group) ) {
-            proc_rank = ompi_group_proc_lookup_rank(comm->c_remote_group, ompi_proc);
-            remote = true;
-        }
+        proc_rank = ompi_comm_proc_lookup_rank(comm, ompi_proc, &remote);
         if( proc_rank < 0 ) {
             continue;  /* Not in this communicator, continue */
         }
