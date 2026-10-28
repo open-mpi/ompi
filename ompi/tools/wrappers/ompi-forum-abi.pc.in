@@ -32,7 +32,7 @@ URL: https://www.open-mpi.org/
 #
 prefix=@prefix@
 exec_prefix=@exec_prefix@
-includedir=@includedir@/standard_abi
+includedir=@includedir@
 libdir=@libdir@
 #
 # Note that -lopen-pal is NOT included in the libraries list because
@@ -41,5 +41,5 @@ libdir=@libdir@
 Libs: @OMPI_FORUM_ABI_PC_LIBS@
 Libs.private: @OMPI_FORUM_ABI_PC_LIBS_PRIVATE@
 #
-Cflags: -I${includedir} @OMPI_FORUM_ABI_PC_CFLAGS@
+Cflags: -I${includedir} -DMPI_ABI @OMPI_FORUM_ABI_PC_CFLAGS@
 
