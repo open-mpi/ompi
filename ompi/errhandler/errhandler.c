@@ -454,13 +454,61 @@ typedef struct ompi_errhandler_event_s {
     pmix_info_t info[];
 } ompi_errhandler_event_t;
 
+/* Does this event name processes, none of which we can still name ourselves?
+ *
+ * Losing a peer only matters if the application can still reach it, and
+ * reaching it requires a communicator that contains it.  Once
+ * MPI_Comm_disconnect() has freed the last communicator to a dynamically
+ * connected job, that job's processes are in none of ours, and we have no way
+ * to report anything about them: there is no communicator to raise the error
+ * on, which is why the fatal handler below is reduced to passing NULL.  Such
+ * a report is noise, and acting on it is worse than noise -- a peer that
+ * merely exits after being disconnected would abort us for it.
+ *
+ * An event that names no process at all rules nothing out, so it is not
+ * ignorable. */
+static bool ompi_errhandler_event_is_ignorable(ompi_errhandler_event_t *event,
+                                               opal_process_name_t *unreachable)
+{
+    bool named_a_proc = false;
+
+    for (int i = 0; i < event->nvalue; i++) {
+        opal_process_name_t name;
+        ompi_proc_t *proc;
+        int rc;
+
+        if (0 != strcmp(PMIX_EVENT_AFFECTED_PROC, event->info[i].key)
+            || PMIX_PROC != event->info[i].value.type) {
+            continue;
+        }
+        OPAL_PMIX_CONVERT_PROCT(rc, &name, event->info[i].value.data.proc);
+        if (OPAL_SUCCESS != rc) {
+            return false;
+        }
+        named_a_proc = true;
+
+        /* ompi_proc_for_name() answers NULL for a job we were never
+         * introduced to, and a job we do not know cannot be in one of our
+         * communicators. */
+        proc = (ompi_proc_t *) ompi_proc_for_name(name);
+        if (NULL != proc && ompi_comm_proc_in_any_comm(proc)) {
+            return false;
+        }
+        *unreachable = name;
+    }
+
+    return named_a_proc;
+}
+
 static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     ompi_errhandler_event_t *event = (ompi_errhandler_event_t*) context;
     int status = event->status;
+    opal_process_name_t unreachable;
+#if OPAL_ENABLE_FT_MPI
     opal_process_name_t source = event->source;
     opal_process_name_t prc;
     int rc;
-#if OPAL_ENABLE_FT_MPI
+
     switch( status ) {
     case PMIX_ERR_PROC_TERM_WO_SYNC:
     case PMIX_ERR_PROC_ABORTED_BY_SIG:
@@ -510,6 +558,26 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
             PMIx_Error_string(status));
     }
 #endif /* OPAL_ENABLE_FT_MPI */
+
+    /* A process that terminated while in none of our communicators is one we
+     * can no longer name, so there is nothing to report and nobody to report
+     * it to.  When the fault-tolerant code is built it has already decided
+     * these three cases above and returned; this is what is left to do when
+     * it is not. */
+    if ((PMIX_ERR_PROC_TERM_WO_SYNC == status
+         || PMIX_ERR_PROC_ABORTED_BY_SIG == status
+         || PMIX_ERR_PROC_ABORTED == status)
+        && ompi_errhandler_event_is_ignorable(event, &unreachable)) {
+        opal_output_verbose(1, 0,
+                            "%s ompi: ignoring the %s event reported by PMIx for proc %s: "
+                            "it belongs to no communicator",
+                            OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+                            PMIx_Error_string(status), OPAL_NAME_PRINT(unreachable));
+        opal_event_del(&event->super);
+        free(event);
+        return NULL;
+    }
+
     opal_event_del(&event->super);
     free(event);
     /* our default action is to abort */
