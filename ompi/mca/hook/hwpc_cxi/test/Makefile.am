@@ -34,11 +34,11 @@ if HWPC_CXI_ENABLE
         hwpc_cxi_mpi_t_pvars_test \
         hwpc_cxi_mpi_t_pvars_enabled_test
 
+    # check_hwpc_cxi_quiet.sh is disabled: other components built in CI print during MPI_Init.
     TESTS = \
         hwpc_cxi_counters_test \
         hwpc_cxi_constants_lookup_test \
         hwpc_cxi_constants_validation_test \
-        check_hwpc_cxi_quiet.sh \
         hwpc_cxi_mpi_init_test \
         hwpc_cxi_mpi_init_finalize_level_1_test \
         hwpc_cxi_mpi_init_finalize_level_2_test \
