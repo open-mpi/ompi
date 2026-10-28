@@ -27,7 +27,8 @@ if OMPI_BUILD_FORTRAN_USEMPI_OR_USEMPIF08_EXT
 
 # Setup
 
-AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
+AM_FCFLAGS = $(FC_MODOUT_CURDIR) \
+             -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/base \
              $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi \
              $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
