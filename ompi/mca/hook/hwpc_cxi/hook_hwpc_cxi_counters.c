@@ -991,7 +991,6 @@ static cxi_job_data_t* cxi_global_job_data_topology_init(cxi_job_data_t *job_dat
 static cxi_job_data_t* cxi_global_job_data_comm_init(cxi_job_data_t *job_data)
 {
     int rc;
-    bool local_success = true;
 
     if (NULL == job_data) {
         return NULL;
@@ -1030,20 +1029,6 @@ static bool cxi_job_is_singleton(const cxi_job_data_t *job_data)
     /*
      * Conflict: During singleton execution when calling the hwpc_cxi hook module's API without first going through MPI_Init(),
      * opal_process_info's is_singleton member value starts as false while Open MPI's ompi_mpi_comm_world starts zero-filled.
-     */
-    return ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED || opal_process_info.is_singleton;
-}
-
-/* Uses the recorded topology when available; otherwise derives it from MPI state. */
-static bool cxi_job_is_singleton(const cxi_job_data_t *job_data)
-{
-    if (NULL != job_data) {
-        return job_data->is_singleton;
-    }
-
-    /*
-     * Conflict: During singleton execution when calling the hwpc_cxi hook module's API without first going through MPI_Init(),
-     * opal_process_info's is_singleton member value starts as false while OpenMPI's ompi_mpi_comm_world starts zero-filled.
      */
     return ompi_mpi_state < OMPI_MPI_STATE_INIT_COMPLETED || opal_process_info.is_singleton;
 }
