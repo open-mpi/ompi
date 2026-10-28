@@ -25,11 +25,13 @@ to the Open MPI `configure` script.
 NOTE: The Clang 6.0.x and 7.0.x compilers support the `_Float16` type
 (via software emulation), but require an additional linker flag to
 function properly.  If you wish to enable Clang 6.0.x or 7.0.x's
-software emulation of `_Float16`, use the following CLI options to Open
-MPI configure script:
+software emulation of `_Float16`, or recent Clang, use the
+following CLI options to Open MPI configure script:
 
 ```
 ./configure \
         LDFLAGS=--rtlib=compiler-rt \
         --with-wrapper-ldflags=--rtlib=compiler-rt ...
 ```
+Depending on your `clang++` version/configuration, you might also have to add
+`--stdlib=libc++` and/or `-lunwind`.
