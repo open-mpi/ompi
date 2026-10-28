@@ -44,6 +44,11 @@ static inline void* _shmemalign(size_t align, size_t size)
 
     RUNTIME_CHECK_INIT();
 
+    /* Zero size performs no action: no allocation and no barrier. */
+    if (0 == size) {
+        return NULL;
+    }
+
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
 
     rc = MCA_MEMHEAP_CALL(memalign(align, size, &pBuff));
