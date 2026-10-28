@@ -333,6 +333,8 @@ ompi/mpiext/xcallbacks/c/abi_xcallbacks_c.h
 ompi/mpiext/xcallbacks/c/*generated.c
 ompi/mpiext/xcallbacks/tests/op_create_x
 ompi/mpiext/xcallbacks/tests/op_create_x_abi
+ompi/mpiext/xcallbacks/tests/errhandler_x
+ompi/mpiext/xcallbacks/tests/errhandler_x_abi
 
 
 ompi/tools/mpisync/mpisync
