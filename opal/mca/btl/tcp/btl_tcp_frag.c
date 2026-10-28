@@ -119,7 +119,10 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t *frag, int sd)
          */
         cnt = sendmsg(sd, &msg, msg_flags);
         if (cnt < 0) {
-            switch (opal_socket_errno) {
+            /* Save the reason now: reporting it below may clobber errno. */
+            int sock_err = opal_socket_errno;
+
+            switch (sock_err) {
             case EINTR:
                 continue;
             case EWOULDBLOCK:
@@ -127,16 +130,18 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t *frag, int sd)
             case EFAULT:
                 BTL_ERROR(("mca_btl_tcp_frag_send: sendmsg error (%p, %lu)\n\t%s(%lu)\n",
                            frag->iov_ptr[0].iov_base, (unsigned long) frag->iov_ptr[0].iov_len,
-                           strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));
+                           strerror(sock_err), (unsigned long) frag->iov_cnt));
                 /* send_lock held by caller */
+                frag->endpoint->endpoint_err_code = sock_err;
                 frag->endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
             default:
                 BTL_PEER_ERROR(frag->endpoint->endpoint_proc->proc_opal,
                                ("mca_btl_tcp_frag_send: sendmsg failed: %s (%d)",
-                                strerror(opal_socket_errno), opal_socket_errno));
+                                strerror(sock_err), sock_err));
                 /* send_lock held by caller */
+                frag->endpoint->endpoint_err_code = sock_err;
                 frag->endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
@@ -170,6 +175,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t *frag, int sd)
     mca_btl_base_endpoint_t *btl_endpoint = frag->endpoint;
     ssize_t cnt;
     int32_t i, num_vecs, dont_copy_data = 0;
+    int sock_err;
     char *errhost;
 
 repeat:
@@ -226,7 +232,9 @@ repeat:
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);
             return false;
         }
-        switch (opal_socket_errno) {
+        /* Save the reason now: reporting it below may clobber errno. */
+        sock_err = opal_socket_errno;
+        switch (sock_err) {
         case EINTR:
             continue;
         case EWOULDBLOCK:
@@ -234,7 +242,7 @@ repeat:
         case EFAULT:
             BTL_ERROR(("mca_btl_tcp_frag_recv: readv error (%p, %lu)\n\t%s(%lu)\n",
                        frag->iov_ptr[0].iov_base, (unsigned long) frag->iov_ptr[0].iov_len,
-                       strerror(opal_socket_errno), (unsigned long) frag->iov_cnt));
+                       strerror(sock_err), (unsigned long) frag->iov_cnt));
             break;
         case ECONNRESET:
             if (mca_btl_base_warn_peer_error || mca_btl_base_verbose > 0) {
@@ -246,11 +254,12 @@ repeat:
             break;
         default:
             BTL_PEER_ERROR(frag->endpoint->endpoint_proc->proc_opal,
-                           ("mca_btl_tcp_frag_recv: readv failed: %s (%d)",
-                            strerror(opal_socket_errno), opal_socket_errno));
+                           ("mca_btl_tcp_frag_recv: readv failed: %s (%d)", strerror(sock_err),
+                            sock_err));
             break;
         }
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
+        btl_endpoint->endpoint_err_code = sock_err;
         btl_endpoint->endpoint_state = MCA_BTL_TCP_FAILED;
         mca_btl_tcp_endpoint_close(btl_endpoint);
         OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_send_lock);

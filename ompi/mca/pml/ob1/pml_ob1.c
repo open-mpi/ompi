@@ -53,6 +53,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/runtime/ompi_spc.h"
@@ -1158,6 +1159,50 @@ void mca_pml_ob1_error_handler(
         return;
     }
 #endif /* OPAL_ENABLE_FT_MPI */
+
+    /* Past this point the fault-tolerant code is either not built or not
+     * enabled, so nothing is waiting to hear about a failure once this
+     * process has started finalizing: the application will make no further
+     * MPI call that could observe one.  The check at the top of this
+     * function cannot be lowered to this state in its place, because ULFM
+     * does need failures between MPI_Finalize() entry and
+     * OMPI_MPI_STATE_FINALIZE_PAST_COMM_SELF_DESTRUCT -- that is where it
+     * drains the ones already pending. */
+    if (OMPI_MPI_STATE_FINALIZE_STARTED <= ompi_mpi_state) {
+        opal_output_verbose(1, mca_pml_ob1_output,
+                            "PML:OB1: ignoring the error reported by the %s BTL for proc %s "
+                            "with info %s: this process is finalizing",
+                            btl->btl_component->btl_version.mca_component_name,
+                            (NULL == errproc ? "null" : OMPI_NAME_PRINT(&errproc->proc_name)),
+                            btlinfo);
+        return;
+    }
+
+    /* Losing a peer only matters if the application can still name it, and
+     * naming it requires a communicator that contains it.  Once
+     * MPI_Comm_disconnect() has freed the last communicator to a
+     * dynamically connected job, that job's processes are in none of ours,
+     * and we have no way to report anything about them: there is no
+     * communicator to raise the error on, which is why the fatal handler
+     * below is reduced to passing NULL.  Such a report is noise, and acting
+     * on it is worse than noise -- a peer that merely exits after being
+     * disconnected looks like a failure to any BTL that reads an
+     * unannounced close as one, and would abort us for it.
+     *
+     * The fault-tolerant path above already draws this line:
+     * ompi_errhandler_proc_failed_internal() walks the same communicators
+     * and reports nothing when the failed process is in none of them.
+     *
+     * A report that names no process (some BTLs raise a module-wide error)
+     * rules nothing out, so it stays fatal. */
+    if (NULL != errproc && !ompi_comm_proc_in_any_comm((ompi_proc_t *) errproc)) {
+        opal_output_verbose(1, mca_pml_ob1_output,
+                            "PML:OB1: ignoring the error reported by the %s BTL for proc %s "
+                            "with info %s: it belongs to no communicator",
+                            btl->btl_component->btl_version.mca_component_name,
+                            OMPI_NAME_PRINT(&errproc->proc_name), btlinfo);
+        return;
+    }
 
     /* TODO: this error should return to the caller and invoke an error
      * handler from the MPI API call.

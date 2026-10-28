@@ -20,6 +20,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2022 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -454,7 +455,6 @@ static inline struct ompi_proc_t *ompi_group_peer_lookup_existing (ompi_group_t 
     return ompi_group_get_proc_ptr (group, peer_id, false);
 }
 
-#if OPAL_ENABLE_FT_MPI
 /* This function is for finding the rank of a proc in a group
  * return MPI_PROC_NULL if the proc is not in the group, the rank otherwise.
  */
@@ -484,7 +484,6 @@ static inline int ompi_group_proc_lookup_rank (ompi_group_t* group, ompi_proc_t*
     }
     return MPI_PROC_NULL;
 }
-#endif /* OPAL_ENABLE_FT_MPI */
 
 /**
  * Return true if all processes in the group are not on the local node.
