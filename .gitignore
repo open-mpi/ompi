@@ -335,6 +335,12 @@ ompi/mpiext/xcallbacks/tests/op_create_x
 ompi/mpiext/xcallbacks/tests/op_create_x_abi
 ompi/mpiext/xcallbacks/tests/errhandler_x
 ompi/mpiext/xcallbacks/tests/errhandler_x_abi
+ompi/mpiext/xcallbacks/tests/comm_create_keyval_x
+ompi/mpiext/xcallbacks/tests/comm_create_keyval_x_abi
+ompi/mpiext/xcallbacks/tests/type_create_keyval_x
+ompi/mpiext/xcallbacks/tests/type_create_keyval_x_abi
+ompi/mpiext/xcallbacks/tests/win_create_keyval_x
+ompi/mpiext/xcallbacks/tests/win_create_keyval_x_abi
 
 
 ompi/tools/mpisync/mpisync

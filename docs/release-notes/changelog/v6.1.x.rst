@@ -60,6 +60,19 @@ Open MPI version v6.1.0
   both ``libmpi`` (Open MPI ABI) and ``libmpi_abi`` (MPI Forum standard
   ABI).
 
+- Added ``MPIX_Comm_create_keyval_x``, ``MPIX_Type_create_keyval_x``, and
+  ``MPIX_Win_create_keyval_x``, C-only MPI extensions that create attribute
+  keyvals with extra state and a destructor callback. These are part of the
+  ``xcallbacks`` extension, compatible with MPICH's extended callback
+  support. The ``extra_state`` pointer is passed to the copy and delete
+  attribute callbacks through the standard MPI attribute callback mechanism,
+  and the destructor is called when the keyval is freed (e.g., with
+  ``MPI_Comm_free_keyval``). The destructor is invoked exactly once when the
+  keyval's reference count drops to zero, enabling external bindings to
+  attach per-keyval state and clean it up deterministically. This feature is
+  built into both ``libmpi`` (Open MPI ABI) and ``libmpi_abi`` (MPI Forum
+  standard ABI).
+
 - Updated the embedded hwloc to v2.15.0.
 
 - **Build System**: Open MPI now requires Autoconf 2.69 or later for

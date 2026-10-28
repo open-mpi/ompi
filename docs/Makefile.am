@@ -645,14 +645,22 @@ OMPI_MAN3 = \
         MPI_Wtime.3 \
         MPIX_Comm_ack_failed.3 \
         MPIX_Comm_agree.3 \
+        MPIX_Comm_create_errhandler_x.3 \
+        MPIX_Comm_create_keyval_x.3 \
         MPIX_Comm_get_failed.3 \
         MPIX_Comm_iagree.3 \
         MPIX_Comm_ishrink.3 \
         MPIX_Comm_is_revoked.3 \
         MPIX_Comm_revoke.3 \
         MPIX_Comm_shrink.3 \
+        MPIX_File_create_errhandler_x.3 \
+        MPIX_Op_create_x.3 \
         MPIX_Query_cuda_support.3 \
         MPIX_Query_rocm_support.3 \
+        MPIX_Session_create_errhandler_x.3 \
+        MPIX_Type_create_keyval_x.3 \
+        MPIX_Win_create_errhandler_x.3 \
+        MPIX_Win_create_keyval_x.3 \
         OMPI_Affinity_str.3
 
 OMPI_MAN7 = \
