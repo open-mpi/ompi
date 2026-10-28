@@ -45,5 +45,12 @@ mpisync_SOURCES = \
         mpigclock.c \
         sync.c
 
+# Link against whichever MPI library is available
+# In dual-ABI mode: use traditional Open MPI ABI
+# In ABI-only mode: use the standard ABI library
+if OMPI_BUILD_OMPI_ABI
 mpisync_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+else
+mpisync_LDADD = $(top_builddir)/ompi/libmpi_abi.la
+endif
 mpisync_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la

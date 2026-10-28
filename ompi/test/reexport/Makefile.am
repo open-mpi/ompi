@@ -17,9 +17,9 @@ check_PROGRAMS = \
 
 # Test for symbol resolution between libmpi and libopen_mpi
 TESTS_ENVIRONMENT = \
-        OMPI_REEXPORT_TEST_LIBMPI="$(top_builddir)/ompi/.libs/lib@OMPI_LIBMPI_NAME@.@OPAL_DYN_LIB_SUFFIX@"
+        OMPI_REEXPORT_TEST_LIBMPI="$(top_builddir)/ompi/.libs/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.@OPAL_DYN_LIB_SUFFIX@"
 
 test_symbol_resolution_SOURCES = test_symbol_resolution.c
 test_symbol_resolution_LDADD = \
-        $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+        $(top_builddir)/ompi/lib@OMPI_MAKE_CHECK_LIBMPI_NAME@.la \
         $(opal_dl_dlopen_LIBS)

@@ -289,6 +289,7 @@ ompi/test/general/datatype
 ompi/test/general/errhandler
 ompi/test/general/file
 ompi/test/general/group
+ompi/test/general/hw_resource_info
 ompi/test/general/info_mpi
 ompi/test/general/info_t
 ompi/test/general/instance
@@ -351,6 +352,8 @@ ompi/tools/wrappers/ompi-forum-abi.pc
 ompi/tools/wrappers/mpicxx-wrapper-data.txt
 ompi/tools/wrappers/mpif77-wrapper-data.txt
 ompi/tools/wrappers/mpif90-wrapper-data.txt
+ompi/tools/wrappers/mpicc_abi_only-wrapper-data.txt
+ompi/tools/wrappers/mpic++_abi_only-wrapper-data.txt
 
 opal/asm/atomic-asm.S
 opal/asm/atomic-test

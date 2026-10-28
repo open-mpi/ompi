@@ -271,22 +271,100 @@ AS_IF([test "$PYTHON" = ":"],
              [AC_MSG_ERROR([Open MPI requires Python >=3.6 for generating the bindings. Aborting])])])
 AM_CONDITIONAL(OMPI_GENERATE_BINDINGS,[test "$PYTHON" != ":"])
 
-AC_MSG_CHECKING([if want to enable MPI Forum ABI library])
+#
+# Which MPI ABIs do we build?  The primary control is the enumerated
+# option --enable-mpi-abi=MODE (following MPICH, pmodels/mpich#7949):
+#
+#   ompi | no          Open MPI ABI only (no libmpi_abi)
+#   standard | forum   MPI Forum standard ABI only (no libmpi) -- ABI-only
+#   both | dual | yes  both ABIs (the default); bare --enable-mpi-abi
+#                      preserves the historical synonym behavior
+#
+# The older boolean options --enable-standard-abi and
+# --enable-ompi-abi/--disable-ompi-abi are kept as deprecated synonyms.
+# All of these resolve down to the two booleans ompi_build_standard_abi
+# and ompi_build_ompi_abi that the rest of the tree consumes.
+#
+AC_MSG_CHECKING([which MPI ABIs to build])
+AC_ARG_ENABLE([mpi-abi],
+    [AS_HELP_STRING([--enable-mpi-abi@<:@=MODE@:>@],
+                    [Which MPI ABIs to build: "ompi" (Open MPI ABI only),
+                     "standard"/"forum" (MPI Forum standard ABI only), or
+                     "both" (default).  Bare --enable-mpi-abi means
+                     "both".])])
 AC_ARG_ENABLE([standard-abi],
     [AS_HELP_STRING([--enable-standard-abi],
-                    [Enable building the MPI Forum ABI library (default: enabled)])])
-if test "$enable_standard_abi" = "no"; then
-    AC_MSG_RESULT([no])
-    ompi_standard_abi=0
-else
-    AC_MSG_RESULT([yes])
-    ompi_standard_abi=1
-fi
-AC_DEFINE_UNQUOTED([OMPI_STANDARD_ABI],[$ompi_standard_abi],
+                    [Deprecated synonym for --enable-mpi-abi=both; use
+                     --disable-standard-abi for --enable-mpi-abi=ompi])])
+AC_ARG_ENABLE([ompi-abi],
+    [AS_HELP_STRING([--disable-ompi-abi],
+                    [Deprecated synonym for --enable-mpi-abi=standard
+                     (build only the MPI Forum standard ABI)])])
+
+# Start undecided; each input source below sets these to 0/1.
+ompi_build_standard_abi=
+ompi_build_ompi_abi=
+
+# (a) The enumerated --enable-mpi-abi=MODE option takes precedence.
+AS_IF([test -n "${enable_mpi_abi}"],
+    [AS_CASE([${enable_mpi_abi}],
+        [ompi|no],
+            [ompi_build_standard_abi=0
+             ompi_build_ompi_abi=1],
+        [standard|forum],
+            [ompi_build_standard_abi=1
+             ompi_build_ompi_abi=0],
+        [both|dual|yes],
+            [ompi_build_standard_abi=1
+             ompi_build_ompi_abi=1],
+        [AC_MSG_ERROR([invalid --enable-mpi-abi value "${enable_mpi_abi}"; use ompi, standard, forum, or both])])])
+
+# (b) Otherwise honor the deprecated boolean options, preserving their
+# historical semantics, and warn.
+AS_IF([test -z "${ompi_build_standard_abi}"],
+    [AS_IF([test -n "${enable_standard_abi}" || test -n "${enable_ompi_abi}"],
+        [AC_MSG_WARN([--enable-standard-abi and --disable-ompi-abi are deprecated; use --enable-mpi-abi=MODE])])
+
+     AS_IF([test "${enable_standard_abi}" = "no"],
+         [ompi_build_standard_abi=0],
+         [ompi_build_standard_abi=1])
+
+     AS_IF([test "${enable_ompi_abi}" = "no"],
+         [ompi_build_ompi_abi=0],
+         [ompi_build_ompi_abi=1])])
+
+# (c) Final validation: at least one ABI must be built.
+AS_IF([test "${ompi_build_standard_abi}" = "0" && test "${ompi_build_ompi_abi}" = "0"],
+    [AC_MSG_ERROR([cannot disable both ABIs; at least one of the Open MPI ABI and the MPI Forum standard ABI must be built])])
+
+AS_IF([test "${ompi_build_ompi_abi}" = "1" && test "${ompi_build_standard_abi}" = "1"],
+          [ompi_mpi_abi_mode="both"],
+      [test "${ompi_build_standard_abi}" = "1"],
+          [ompi_mpi_abi_mode="standard"],
+      [ompi_mpi_abi_mode="ompi"])
+AC_MSG_RESULT([${ompi_mpi_abi_mode}])
+
+AC_DEFINE_UNQUOTED([OMPI_BUILD_STANDARD_ABI],[$ompi_build_standard_abi],
                    [Whether we want to build the MPI Forum ABI library])
-AM_CONDITIONAL(OMPI_STANDARD_ABI,[test $ompi_standard_abi = 1])
-AS_IF([test $ompi_standard_abi -eq 1],
+AM_CONDITIONAL(OMPI_BUILD_STANDARD_ABI,[test $ompi_build_standard_abi = 1])
+AS_IF([test $ompi_build_standard_abi -eq 1],
       [gen_abi="yes"],
       [gen_abi="no"])
 OPAL_SUMMARY_ADD([Miscellaneous], [MPI Forum ABI support], [], [$gen_abi])
+
+# Warn about the limitations of ABI-only mode.
+AS_IF([test "${ompi_build_ompi_abi}" = "0"],
+    [AC_MSG_WARN([************************************************************])
+     AC_MSG_WARN([Building in ABI-only mode (--enable-mpi-abi=standard)])
+     AC_MSG_WARN([Limitations:])
+     AC_MSG_WARN([  * No Fortran bindings (mpifort, mpif77, mpif90)])
+     AC_MSG_WARN([  * No OpenSHMEM support])
+     AC_MSG_WARN([  * Only C MPI applications are supported])
+     AC_MSG_WARN([************************************************************])])
+
+AC_DEFINE_UNQUOTED([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi],
+                   [Whether we are building the traditional Open MPI ABI library])
+AC_SUBST([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi])
+AM_CONDITIONAL([OMPI_BUILD_OMPI_ABI], [test $ompi_build_ompi_abi = 1])
+AM_CONDITIONAL([OMPI_STANDARD_ABI_ONLY], [test $ompi_build_ompi_abi = 0 && test $ompi_build_standard_abi = 1])
 ])dnl
