@@ -19,7 +19,7 @@
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -419,6 +419,137 @@ static inline int ompi_request_cancel(ompi_request_t* request)
 static inline int ompi_request_free(ompi_request_t** request)
 {
     return (*request)->req_free(request);
+}
+
+struct ompi_api_request_t;
+
+/**
+ * A hook a language binding installs on an ompi_api_request_t.
+ */
+typedef void (*ompi_api_request_hook_fn_t) (struct ompi_api_request_t *request);
+
+/**
+ * A request that a language binding can decorate.
+ *
+ * A binding for a nonblocking operation often cannot finish its job before
+ * it returns.  It may have converted arrays that have to outlive the call,
+ * or it may owe the user a result the operation has not produced yet -- the
+ * agreed flag of MPIX_Comm_iagree, the communicator handle of
+ * MPIX_Comm_ishrink.  Either way it needs somewhere to hang the rest of the
+ * work, and two moments at which to run it:
+ *
+ *   - lang_complete runs from MPI_Wait/MPI_Test, once per activation, where
+ *     the user observes completion.  That is the first moment a result may
+ *     become visible in user memory, and it runs in the user's own thread
+ *     rather than wherever the operation happened to finish.
+ *   - lang_cleanup runs when the request is disposed of, after the request
+ *     has dropped its own internal references and before the component
+ *     tears the request down.  It releases whatever the binding allocated,
+ *     whether or not the user ever waited.
+ *
+ * Only requests a binding can hand to the user derive from this, so
+ * point-to-point requests carry none of it; see OMPI_REQUEST_API_TYPES.
+ *
+ * Payload stays in the derived request, and deliberately not in the same
+ * shape in each.  A collective request already carries a union for its own
+ * bookkeeping -- the datatype and op references its release hook drops, the
+ * converted vectors it frees -- which is sized by that plumbing, so a
+ * language payload rides in it for free.  A communicator request has no such
+ * union and keeps a single pointer instead.  Hoisting either arrangement up
+ * here would charge every request of the other family for something it has
+ * no use for, so the asymmetry is the cheaper of the two.
+ */
+struct ompi_api_request_t {
+    ompi_request_t super;
+
+    ompi_api_request_hook_fn_t lang_complete;
+    ompi_api_request_hook_fn_t lang_cleanup;
+};
+typedef struct ompi_api_request_t ompi_api_request_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_api_request_t);
+
+/**
+ * Install the hooks.  Both go on at once, and either may be NULL: a caller
+ * with something to free but nothing to report passes a cleanup and no
+ * completion.  A second call replaces both.
+ *
+ * Park whatever payload the hooks need before calling this: the request may
+ * already be running, and publishing lang_complete is what exposes the
+ * payload to the thread that observes completion.
+ *
+ * Fails with MPI_ERR_REQUEST if the request is not an ompi_api_request_t,
+ * so a caller that has not already checked ompi_api_request_is() can simply
+ * check the return.  A collective request wants
+ * ompi_coll_base_nbc_set_lang_hooks() instead, which also arranges for the
+ * component's disposal to reach the cleanup hook.
+ */
+OMPI_DECLSPEC int ompi_api_request_set_lang_hooks(ompi_request_t *request,
+                                                  ompi_api_request_hook_fn_t complete,
+                                                  ompi_api_request_hook_fn_t cleanup);
+
+/**
+ * Run the completion hook if one is installed and this is the first
+ * observation of this activation.  The wait and test paths come in through
+ * ompi_request_lang_complete() rather than calling this directly.
+ */
+OMPI_DECLSPEC void ompi_api_request_complete(ompi_api_request_t *request);
+
+/**
+ * Run the cleanup hook and forget both hooks.
+ *
+ * Call this from wherever the derived request is disposed of, after it has
+ * released its own internal references and before it is torn down.  The
+ * forgetting matters: these requests come from free lists, which recycle
+ * them without running a destructor, so a hook left behind here would fire
+ * on whoever gets the object next.
+ */
+OMPI_DECLSPEC void ompi_api_request_dispose(ompi_api_request_t *request);
+
+/**
+ * Request types built on ompi_api_request_t.
+ *
+ * Kept as a mask over req_type so that the wait and test paths can tell an
+ * ompi_api_request_t from any other request with one test on a field they
+ * have already loaded.  Add a type here when you derive it from
+ * ompi_api_request_t, and nowhere else.
+ */
+#define OMPI_REQUEST_API_TYPES \
+    ((1u << OMPI_REQUEST_COLL) | (1u << OMPI_REQUEST_COMM))
+
+/**
+ * Is this request an ompi_api_request_t, and therefore safe to cast and to
+ * install hooks on?
+ *
+ * A request a language binding gets back is not always one: a collective
+ * with nothing to do at all -- a single-process communicator, a neighbor
+ * collective with no neighbors -- short-circuits to ompi_request_empty or
+ * to a persistent no-op, which are plain ompi_request_t.  ompi_request_empty
+ * in particular is one process-wide object shared by every such call, so
+ * hooking it would not merely overrun the object but corrupt a global.
+ * Such a request is always already complete, so a binding that finds one
+ * can simply do the work itself rather than defer it.
+ */
+static inline bool ompi_api_request_is(ompi_request_t* request)
+{
+    return 0 != ((1u << request->req_type) & OMPI_REQUEST_API_TYPES);
+}
+
+/**
+ * Run the language-level completion hook, if this request carries one and
+ * this is the first observation of this activation.
+ *
+ * Call it once per observed completion, after the status has been copied
+ * out and before the error check, so that an operation completing with an
+ * error still reports its outcome.
+ *
+ * A point-to-point wait pays a single test on req_type, which it has
+ * already loaded, and no call.
+ */
+static inline void ompi_request_lang_complete(ompi_request_t* request)
+{
+    if (OPAL_UNLIKELY(ompi_api_request_is(request))) {
+        ompi_api_request_complete((ompi_api_request_t *) request);
+    }
 }
 
 #define ompi_request_test       (ompi_request_functions.req_test)

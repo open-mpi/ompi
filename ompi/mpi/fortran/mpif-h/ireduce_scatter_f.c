@@ -104,8 +104,10 @@ void ompi_ireduce_scatter_f(char *sendbuf, char *recvbuf,
         OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
     } else {
         if((void *)recvcounts != (void *)OMPI_ARRAY_NAME_CONVERT(recvcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, recvcounts);
-            ompi_coll_base_add_release_arrays_cb(c_request);
+            ompi_coll_base_nbc_set_cleanup_v(c_request, NULL,
+                                             NULL,
+                                             OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                                             NULL);
         }
     }
 }

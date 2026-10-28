@@ -4,6 +4,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -286,7 +287,7 @@ ompi_coll_portals4_ibarrier_intra(struct ompi_communicator_t *comm,
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
-    *ompi_req = &request->super;
+    *ompi_req = &request->super.super.super;
     request->is_sync = false;
 
     ret = barrier_hypercube_top(comm, request, portals4_module);
@@ -314,7 +315,7 @@ ompi_coll_portals4_ibarrier_intra_fini(ompi_coll_portals4_request_t *request)
         return OMPI_ERROR;
     }
 
-    ompi_request_complete(&request->super, true);
+    ompi_request_complete(&request->super.super.super, true);
 
     return OMPI_SUCCESS;
 }
