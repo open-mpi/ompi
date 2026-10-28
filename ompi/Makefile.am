@@ -269,7 +269,6 @@ include info/Makefile.am
 include interlib/Makefile.am
 include message/Makefile.am
 include op/Makefile.am
-include peruse/Makefile.am
 include proc/Makefile.am
 include request/Makefile.am
 include runtime/Makefile.am

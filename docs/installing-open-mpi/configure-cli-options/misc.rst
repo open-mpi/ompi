@@ -23,9 +23,6 @@ above categories that can be used with ``configure``:
   values are ``ulfm`` and ``no`` (the default value is ``no``).  See
   :ref:`the ULFM section <ulfm-label>` for more details.
 
-* ``--enable-peruse``:
-  Enable the PERUSE MPI data analysis interface.
-
 * ``--enable-heterogeneous``:
   Enable support for running on heterogeneous clusters (e.g., machines
   with different endian representations).  Heterogeneous support is
