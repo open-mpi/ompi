@@ -14,6 +14,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,7 +49,7 @@ int MPI_Comm_toint(MPI_Comm comm)
        }
     }
 
-    o_index = comm->c_f_to_c_index;
+    o_index = ompi_comm_assign_f_index(comm);
 
     return o_index;
 

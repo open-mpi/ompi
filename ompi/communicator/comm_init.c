@@ -442,6 +442,25 @@ static int ompi_comm_finalize (void)
     return ompi_attr_put_ref();
 }
 
+int ompi_comm_assign_f_index (ompi_communicator_t *comm)
+{
+    /* The index transitions only once, so an unsynchronized read suffices to
+     * detect a communicator that already has one. The lock keeps two threads
+     * converting the same communicator from each claiming a slot. */
+    if (MPI_UNDEFINED != comm->c_f_to_c_index) {
+        return comm->c_f_to_c_index;
+    }
+
+    OPAL_THREAD_LOCK(&comm->c_lock);
+    if (MPI_UNDEFINED == comm->c_f_to_c_index) {
+        comm->c_f_to_c_index = opal_pointer_array_add (&ompi_comm_f_to_c_table,
+                                                       comm);
+    }
+    OPAL_THREAD_UNLOCK(&comm->c_lock);
+
+    return comm->c_f_to_c_index;
+}
+
 /********************************************************************************/
 /********************************************************************************/
 /********************************************************************************/
@@ -468,13 +487,16 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
 
     /*
      * magic numerology - see TOPDIR/ompi/include/mpif-values.py
+     *
+     * Only the predefined communicators need their mandated slot up front.
+     * Everything else waits until something asks for a Fortran handle; see
+     * ompi_comm_assign_f_index().
      */
     idx = (comm == (ompi_communicator_t*)ompi_mpi_comm_world_addr) ? 0 :
               (comm == (ompi_communicator_t*)ompi_mpi_comm_self_addr) ? 1 :
                   (comm == (ompi_communicator_t*)ompi_mpi_comm_null_addr) ? 2 : -1;
     if (-1 == idx) {
-        comm->c_f_to_c_index = opal_pointer_array_add(&ompi_comm_f_to_c_table,
-                                                      comm);
+        comm->c_f_to_c_index = MPI_UNDEFINED;
     } else {
         opal_pointer_array_set_item(&ompi_comm_f_to_c_table, idx, comm);
         comm->c_f_to_c_index = idx;
