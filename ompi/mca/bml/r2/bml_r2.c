@@ -155,7 +155,9 @@ static int mca_bml_r2_add_btls( void )
         btl_names = strdup("no devices available");
     }
 
-    /* sort r2 list by exclusivity */
+    /* Sort r2 list by exclusivity. Descending order is what makes
+     * mca_bml_r2_endpoint_add_btl() enforce exclusivity, so add_procs()
+     * below may walk the modules in no other order. */
     qsort(mca_bml_r2.btl_modules,
           mca_bml_r2.num_btl_modules,
           sizeof(struct mca_btl_base_module_t*),
@@ -423,59 +425,8 @@ static void mca_bml_r2_compute_endpoint_metrics (mca_bml_base_endpoint_t *bml_en
 static int mca_bml_r2_add_procs(size_t nprocs,
                                 struct ompi_proc_t **procs);
 
-/*
- * SM indexes endpoints by local rank and polls one FIFO: a single-proc
- * add_proc leaves the other slots empty and the next fifo_read faults.
- * For a node-local target, wire every local proc, self included.
- */
-static int mca_bml_r2_add_local_procs(void)
-{
-    ompi_proc_t **locals;
-    size_t nalloc = 0, nlocals = 0;
-    int rc;
-
-    /* Compacted in place: the array is ours. */
-    locals = ompi_proc_get_allocated(&nalloc);
-    if (NULL == locals) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    for (size_t i = 0; i < nalloc; ++i) {
-        ompi_proc_t *p = locals[i];
-        if (p != ompi_proc_local_proc &&
-            !OPAL_PROC_ON_LOCAL_NODE(p->super.proc_flags)) {
-            continue;
-        }
-        if (NULL != p->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-            continue;
-        }
-        /* Skip a local peer whose connection blob is not local yet; its
-         * own add_proc falls through to a single-proc NOT_READY. */
-        if (p != ompi_proc_local_proc && !ompi_modex_proc_ready(p)) {
-            continue;
-        }
-        /* Never wire a peer whose architecture could not be read: its
-         * convertor would still be the local one. */
-        if (OMPI_SUCCESS != ompi_proc_complete_init_single(p)) {
-            continue;
-        }
-        locals[nlocals++] = p;
-    }
-
-    if (0 == nlocals) {
-        free(locals);
-        return OMPI_SUCCESS;
-    }
-
-    rc = mca_bml_r2_add_procs(nlocals, locals);
-    free(locals);
-    return rc;
-}
-
 static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
 {
-    int rc;
-
     if (OPAL_UNLIKELY(NULL == proc)) {
         return OMPI_ERR_BAD_PARAM;
     }
@@ -483,20 +434,6 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     /* Already wired: the published endpoint owns the reference. */
     if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
         return OMPI_SUCCESS;
-    }
-
-    /* This call is retried from every progress tick until the peer's
-     * blob lands; the whole-list walk below cannot help until then. */
-    if (proc == ompi_proc_local_proc ||
-        (OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags) && ompi_modex_proc_ready(proc))) {
-        rc = mca_bml_r2_add_local_procs();
-        if (NULL != proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML]) {
-            return OMPI_SUCCESS;
-        }
-        if (OMPI_SUCCESS != rc && OMPI_ERR_NOT_READY != rc) {
-            return rc;
-        }
-        /* Not in the ready batch: try it alone for a per-proc status. */
     }
 
     return mca_bml_r2_add_procs (1, &proc);
@@ -508,8 +445,6 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
  *
  */
 
-/* Keeps the single-peer lazy wire-up off the heap. */
-#define MCA_BML_R2_ADD_PROCS_STATIC 8
 /* new_procs, btl_endpoints, bml_endpoints */
 #define MCA_BML_R2_ADD_PROCS_ARRAYS 3
 /* One block holds the three pointer arrays and one walk-state byte per
@@ -518,40 +453,17 @@ static int mca_bml_r2_add_proc (struct ompi_proc_t *proc)
     (MCA_BML_R2_ADD_PROCS_ARRAYS * (nprocs)                                             \
      + ((nprocs) + sizeof(void *) - 1) / sizeof(void *))
 
-/** A btl of the tier this proc stopped at claimed it; sticky, and what
- *  keeps the proc from descending to the tiers below. */
-#define MCA_BML_R2_PROC_CLAIMED 0x1
-/** Some btl answered NO_INFO or CONNECTING: this proc's set of btls is
- *  not final yet. */
-#define MCA_BML_R2_PROC_DEFERRED 0x2
-
-static inline void mca_bml_r2_swap_procs (struct ompi_proc_t **procs,
-                                          mca_bml_base_endpoint_t **endpoints,
-                                          uint8_t *state, size_t a, size_t b)
-{
-    struct ompi_proc_t *proc = procs[a];
-    mca_bml_base_endpoint_t *endpoint = endpoints[a];
-    uint8_t proc_state = state[a];
-
-    procs[a] = procs[b];
-    endpoints[a] = endpoints[b];
-    state[a] = state[b];
-
-    procs[b] = proc;
-    endpoints[b] = endpoint;
-    state[b] = proc_state;
-}
-
 static int mca_bml_r2_add_procs( size_t nprocs,
                                  struct ompi_proc_t** procs )
 {
-    void *static_scratch[MCA_BML_R2_ADD_PROCS_WORDS(MCA_BML_R2_ADD_PROCS_STATIC)];
-    void **scratch = static_scratch;
-    struct ompi_proc_t **new_procs;
-    struct mca_btl_base_endpoint_t **btl_endpoints;
-    mca_bml_base_endpoint_t **bml_endpoints;
-    uint8_t *proc_state;
-    size_t n_new_procs = 0, n_walking, n_settled;
+    void **scratch = NULL;
+    struct ompi_proc_t **new_procs = NULL;
+    struct mca_btl_base_endpoint_t **btl_endpoints = NULL;
+    mca_bml_base_endpoint_t **bml_endpoints = NULL;
+    /* Set for a proc whose set of btls is not final yet, because some
+     * btl answered NO_INFO or CONNECTING. */
+    bool *proc_deferred = NULL;
+    size_t n_new_procs = 0;
     opal_bitmap_t proc_status;
     bool saw_deferred = false, saw_unreach = false;
     int rc, ret = OMPI_SUCCESS;
@@ -569,15 +481,13 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         goto release_arrays;
     }
 
-    if (nprocs > MCA_BML_R2_ADD_PROCS_STATIC) {
-        scratch = (void **) malloc(MCA_BML_R2_ADD_PROCS_WORDS(nprocs) * sizeof(*scratch));
-        if (NULL == scratch) {
-            scratch = static_scratch;
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-            goto release_arrays;
-        }
+    /* One block for the whole walk, zeroed, so the arrays sliced out of
+     * it below need no further initialization. */
+    scratch = (void **) calloc(MCA_BML_R2_ADD_PROCS_WORDS(nprocs), sizeof(*scratch));
+    if (NULL == scratch) {
+        ret = OMPI_ERR_OUT_OF_RESOURCE;
+        goto release_arrays;
     }
-
     new_procs = (struct ompi_proc_t **) scratch;
 
     /* Select only the procs that don't yet have the BML proc struct. This prevent
@@ -604,9 +514,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
      * array is exactly as long as the range just initialized. */
     btl_endpoints = (struct mca_btl_base_endpoint_t **) (scratch + n_new_procs);
     bml_endpoints = (mca_bml_base_endpoint_t **) (scratch + 2 * n_new_procs);
-    proc_state = (uint8_t *) (scratch + MCA_BML_R2_ADD_PROCS_ARRAYS * n_new_procs);
-    memset(bml_endpoints, 0, n_new_procs * sizeof(*bml_endpoints));
-    memset(proc_state, 0, n_new_procs * sizeof(*proc_state));
+    proc_deferred = (bool *) (scratch + MCA_BML_R2_ADD_PROCS_ARRAYS * n_new_procs);
 
     /* What each btl says about each proc it was asked about: not the
      * same as a non-NULL btl_endpoints[i], since a btl can hand back an
@@ -621,138 +529,88 @@ static int mca_bml_r2_add_procs( size_t nprocs,
         goto release_arrays;
     }
 
-    /* new_procs is kept partitioned in three, so that every btl_add_procs()
-     * call is one leading range of it and no gather is needed:
+    /* Every module is offered every proc of the batch, in the order they
+     * came in. That is what MCA_BTL_FLAGS_SINGLE_ADD_PROCS needs of this
+     * walk, but it is not the whole promise: the batch is the procs this
+     * rank has not wired yet, which differs from rank to rank. What
+     * makes it the whole job is the PML raising
+     * MCA_PML_BASE_FLAG_REQUIRE_WORLD for such a module, so that the
+     * eager add_procs collects ompi_proc_world() before anything can be
+     * wired lazily -- and then a later instance filters the batch to
+     * nothing rather than to a subset.
      *
-     *   [0, n_walking)                       still descending the tiers
-     *   [n_walking, n_walking + n_settled)   a tier took them
-     *   the rest                             withheld, nobody sees them again
+     * Exclusivity is left to mca_bml_r2_endpoint_add_btl(): walked in
+     * descending order, it keeps the first module to answer for a proc
+     * plus every later one of equal exclusivity, and turns the rest
+     * away. A module that loses a proc that way is asked again on the
+     * next call, so btl_add_procs() has to be idempotent -- which the
+     * retry of a deferred proc already requires of it.
      *
-     * TODO: this still walks every module for every peer, including
-     * intra-node BTLs for off-node ranks. A BTL-advertised LOCAL scope
-     * would let those be skipped. */
-    n_walking = n_new_procs;
-    n_settled = 0;
+     * TODO: this walks every module for every peer, including intra-node
+     * BTLs for off-node ranks. A BTL-advertised LOCAL scope would let
+     * those be skipped. */
+    for (size_t p_index = 0 ; p_index < mca_bml_r2.num_btl_modules ; ++p_index) {
+        mca_btl_base_module_t *btl = mca_bml_r2.btl_modules[p_index];
+        int btl_inuse = 0;
 
-    for (size_t p_index = 0 ; p_index < mca_bml_r2.num_btl_modules ; ) {
-        uint32_t exclusivity = mca_bml_r2.btl_modules[p_index]->btl_exclusivity;
-        size_t lo = 0, mid = 0, hi;
-        size_t tier_end = p_index;
+        opal_bitmap_clear_all_bits(&proc_status);
+        memset(btl_endpoints, 0, n_new_procs * sizeof(*btl_endpoints));
 
-        /* Modules are sorted by descending exclusivity, so a tier is one
-         * contiguous run. A tier stripes together, so a claim closes the
-         * selection only once every module in it has seen the proc. */
-        while (tier_end < mca_bml_r2.num_btl_modules
-               && mca_bml_r2.btl_modules[tier_end]->btl_exclusivity == exclusivity) {
-            ++tier_end;
+        rc = btl->btl_add_procs(btl, n_new_procs, (opal_proc_t**)new_procs, btl_endpoints,
+                                &proc_status);
+        if (OMPI_SUCCESS != rc) {
+            /* Failed as a whole, so there is no per-proc status to
+             * read; another btl may still reach these procs. */
+            continue;
         }
 
-        for ( ; p_index < tier_end ; ++p_index) {
-            mca_btl_base_module_t *btl = mca_bml_r2.btl_modules[p_index];
-            size_t n_try = n_walking;
-            int btl_inuse = 0;
+        for (size_t i = 0 ; i < n_new_procs ; ++i) {
+            int status = MCA_BTL_PROC_STATUS_GET(&proc_status, i);
+            ompi_proc_t *proc = new_procs[i];
 
-            /* A module offering rdma with fetching atomics belongs in
-             * btl_rdma whichever tier won btl_send, so it is still
-             * offered the procs a higher tier settled. */
-            if ((btl->btl_flags & (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS))
-                == (MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_ATOMIC_FOPS)) {
-                n_try += n_settled;
+            if (!MCA_BTL_PROC_DECIDED(status)
+                || (MCA_BTL_PROC_CLAIMED(status) && !MCA_BTL_PROC_USABLE(status))) {
+                /* This btl belongs in the proc's set and is not in it
+                 * yet: publishing without it commits us to a set the
+                 * peer, walking the same modules in the same order, may
+                 * not have committed to. */
+                proc_deferred[i] = true;
             }
 
-            if (0 == n_try) {
+            if (!MCA_BTL_PROC_USABLE(status)) {
                 continue;
             }
 
-            opal_bitmap_clear_all_bits(&proc_status);
-            memset(btl_endpoints, 0, n_try * sizeof(*btl_endpoints));
-
-            rc = btl->btl_add_procs(btl, n_try, (opal_proc_t**)new_procs, btl_endpoints,
-                                    &proc_status);
-            if (OMPI_SUCCESS != rc) {
-                /* Failed as a whole, so there is no per-proc status to
-                 * read; another btl may still reach these procs. */
-                continue;
-            }
-
-            for (size_t i = 0 ; i < n_try ; ++i) {
-                int status = MCA_BTL_PROC_STATUS_GET(&proc_status, i);
-                ompi_proc_t *proc = new_procs[i];
-
-                if (!MCA_BTL_PROC_DECIDED(status)
-                    || (MCA_BTL_PROC_CLAIMED(status) && !MCA_BTL_PROC_USABLE(status))) {
-                    /* This btl belongs in the proc's set and is not in
-                     * it yet: publishing without it commits us to a set
-                     * the peer, walking the same modules in the same
-                     * order, may not have committed to. */
-                    proc_state[i] |= MCA_BML_R2_PROC_DEFERRED;
-                }
-
-                if (MCA_BTL_PROC_CLAIMED(status)) {
-                    proc_state[i] |= MCA_BML_R2_PROC_CLAIMED;
-                }
-
-                if (!MCA_BTL_PROC_USABLE(status)) {
-                    continue;
-                }
-
+            if (NULL == bml_endpoints[i]) {
+                bml_endpoints[i] = mca_bml_r2_allocate_endpoint (proc);
                 if (NULL == bml_endpoints[i]) {
-                    bml_endpoints[i] = mca_bml_r2_allocate_endpoint (proc);
-                    if (NULL == bml_endpoints[i]) {
-                        /* Reported as not ready rather than as the
-                         * allocation failure it is, because the whole
-                         * batch is put back below and asking again is
-                         * the thing to do: nothing here says anything
-                         * is wrong with these peers, and memory that is
-                         * short now may not be short on the next tick.
-                         * Anything but NOT_READY is final to the caller
-                         * and would fail the peers for good. */
-                        ret = OMPI_ERR_NOT_READY;
-                        goto publish;
-                    }
+                    /* Reported as not ready rather than as the
+                     * allocation failure it is, because the whole
+                     * batch is put back below and asking again is
+                     * the thing to do: nothing here says anything
+                     * is wrong with these peers, and memory that is
+                     * short now may not be short on the next tick.
+                     * Anything but NOT_READY is final to the caller
+                     * and would fail the peers for good. */
+                    ret = OMPI_ERR_NOT_READY;
+                    goto publish;
                 }
-
-                rc = mca_bml_r2_endpoint_add_btl (proc, bml_endpoints[i], btl, btl_endpoints[i]);
-                if (OMPI_SUCCESS != rc) {
-                    /* Usable for this peer, so it belongs in the set,
-                     * and it cannot be put there. That leaves the peer
-                     * exactly where a btl that has not made up its mind
-                     * leaves it: waiting, rather than published short of
-                     * a module the peer's own walk will have kept. */
-                    proc_state[i] |= MCA_BML_R2_PROC_DEFERRED;
-                    btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &btl_endpoints[i]);
-                    continue;
-                }
-
-                /* This BTL is in use, allow the progress registration */
-                btl_inuse++;
             }
 
-            mca_bml_r2_register_progress (btl, !!(btl_inuse));
-        }
-
-        /* End of the tier: deferred procs go to the tail, where no
-         * module will see them again; claimed ones follow those still
-         * walking. Deferred wins over claimed, since an incomplete claim
-         * is exactly what has to be settled before publishing. */
-        hi = n_walking + n_settled;
-        while (mid < hi) {
-            if (proc_state[mid] & MCA_BML_R2_PROC_DEFERRED) {
-                mca_bml_r2_swap_procs (new_procs, bml_endpoints, proc_state, mid, --hi);
-            } else if (proc_state[mid] & MCA_BML_R2_PROC_CLAIMED) {
-                ++mid;
-            } else {
-                mca_bml_r2_swap_procs (new_procs, bml_endpoints, proc_state, lo++, mid++);
+            rc = mca_bml_r2_endpoint_add_btl (proc, bml_endpoints[i], btl, btl_endpoints[i]);
+            if (OMPI_SUCCESS != rc) {
+                /* Turned away, so this module is not in the proc's set:
+                 * hand the endpoint back rather than leave it holding
+                 * state for a peer it will not carry anything to. */
+                btl->btl_del_procs(btl, 1, (opal_proc_t**)&proc, &btl_endpoints[i]);
+                continue;
             }
+
+            /* This BTL is in use, allow the progress registration */
+            btl_inuse++;
         }
 
-        n_walking = lo;
-        n_settled = hi - lo;
-
-        if (0 == hi) {
-            /* Nothing left for a lower tier to be offered. */
-            break;
-        }
+        mca_bml_r2_register_progress (btl, !!(btl_inuse));
     }
 
 publish:
@@ -768,7 +626,7 @@ publish:
      * to -- and a published peer is one add_procs() never revisits. */
     if (OMPI_SUCCESS != ret) {
         for (size_t p = 0; p < n_new_procs ; ++p) {
-            proc_state[p] |= MCA_BML_R2_PROC_DEFERRED;
+            proc_deferred[p] = true;
         }
     }
 
@@ -778,7 +636,7 @@ publish:
             continue;
         }
 
-        if (proc_state[p] & MCA_BML_R2_PROC_DEFERRED) {
+        if (proc_deferred[p]) {
             /* Drop the half-built endpoint so the proc is never seen
              * with a btl missing from its set. The btl endpoints inside
              * it stay with the btls, which hand them back next call. */
@@ -787,11 +645,22 @@ publish:
             continue;
         }
 
+        if (0 == mca_bml_base_btl_array_get_size(&bml_endpoints[p]->btl_send)) {
+            /* Every module that answered for this proc was turned away,
+             * so nothing can carry a message to it: unreachable, not
+             * published with an empty set. */
+            OBJ_RELEASE(bml_endpoints[p]);
+            bml_endpoints[p] = NULL;
+            continue;
+        }
+
         mca_bml_r2_compute_endpoint_metrics (bml_endpoints[p]);
     }
 
-    /* One barrier covers every endpoint published below: a reader that
-     * sees the pointer sees a complete endpoint. */
+    /* One barrier covers every endpoint published below: readers reach
+     * an endpoint through a plain load of proc_endpoints[] and never
+     * take mca_bml_lock, so unlocking is not what makes a complete
+     * endpoint visible to them. */
     opal_atomic_wmb();
 
     for (size_t p = 0; p < n_new_procs ; ++p) {
@@ -806,7 +675,7 @@ publish:
              * turned down while its info is still in flight: a btl
              * reporting NOT_FOUND as "not mine" rather than NO_INFO
              * would otherwise make it permanently unreachable. */
-            if ((proc_state[p] & MCA_BML_R2_PROC_DEFERRED) || !ompi_modex_proc_ready(proc)) {
+            if (proc_deferred[p] || !ompi_modex_proc_ready(proc)) {
                 saw_deferred = true;
             } else {
                 saw_unreach = true;
@@ -826,17 +695,10 @@ publish:
         }
 
         proc->proc_endpoints[OMPI_PROC_ENDPOINT_TAG_BML] = bml_endpoints[p];
-    }
 
-    /* And a second one covers every flag set below: unlike the endpoint,
-     * which a reader reaches through the pointer it just loaded, nothing
-     * a reader does after testing the flag depends on it. */
-    opal_atomic_wmb();
-
-    for (size_t p = 0; p < n_new_procs ; ++p) {
-        if (NULL != bml_endpoints[p]) {
-            opal_proc_learned(&new_procs[p]->super, OPAL_PROC_FLAG_WIRED);
-        }
+        /* Needs no barrier of its own: nothing reads this flag to reach
+         * the endpoint, or to reach anything else. */
+        opal_proc_learned(&proc->super, OPAL_PROC_FLAG_WIRED);
     }
 
     /* NOT_READY wins over UNREACH in a batch with both: a caller that
@@ -852,9 +714,7 @@ publish:
 release_arrays:
     OPAL_THREAD_UNLOCK(&mca_bml_lock);
 
-    if (scratch != static_scratch) {
-        free(scratch);
-    }
+    free(scratch);
 
     return ret;
 }

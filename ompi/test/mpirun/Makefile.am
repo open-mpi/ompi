@@ -46,6 +46,7 @@ EXTRA_DIST = \
         comm_idup_overlap.c \
         late_first_contact.c \
         session_first_touch.c \
+        session_partial_batch.c \
         spawn_first_touch.c \
         tcp_stranger_connect.c \
         wireup_stress.c
@@ -72,6 +73,13 @@ mpirun_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) \
 OVERSUB_NP = 4
 oversub_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) --oversubscribe \
         -n $(OVERSUB_NP) --map-by ppr:$(OVERSUB_NP):node
+
+# Three processes, oversubscribed.  A test whose point is that one rank
+# is left out of an early communicator needs a rank to leave out, and
+# three is the fewest that gives the pair something to exclude.
+TRIO_NP = 3
+trio_runner = $(MPIRUN) --timeout $(MPIRUN_TIMEOUT) --oversubscribe \
+        -n $(TRIO_NP) --map-by ppr:$(TRIO_NP):node
 
 # Same four processes as oversub_runner, but two of them arrive by
 # MPI_Comm_spawn, so the slots have to be free for the child job.
@@ -209,6 +217,8 @@ check-mpirun:
 	    run $(tcp_runner) ./tcp_stranger_connect; \
 	    echo "=== tcp stranger connect, several links per interface ==="; \
 	    run $(tcp_runner) --mca btl_tcp_links 2 ./tcp_stranger_connect; \
+	    echo "=== tcp stranger connect, direct modex ==="; \
+	    run env $(DIRECT_MODEX) $(tcp_runner) ./tcp_stranger_connect; \
 	    echo "=== late first contact, full modex ==="; \
 	    run $(oversub_runner) ./late_first_contact; \
 	    echo "=== late first contact, direct modex, shared memory only ==="; \
@@ -254,6 +264,29 @@ check-mpirun:
 	        $(oversub_runner) --mca btl self,sm ./session_first_touch; \
 	    echo "=== session first touch, direct modex, default transports ==="; \
 	    run env $(DIRECT_MODEX) $(oversub_runner) ./session_first_touch; \
+	    $(MPICC) -g "$(srcdir)/session_partial_batch.c" -o session_partial_batch; \
+	    echo "=== session partial batch, shared memory only ==="; \
+	    run $(trio_runner) --mca pml ob1 --mca btl self,sm \
+	        ./session_partial_batch; \
+	    echo "=== session partial batch, tcp only ==="; \
+	    run $(trio_runner) --mca pml ob1 --mca btl self,tcp \
+	        ./session_partial_batch; \
+	    echo "=== session partial batch, direct modex, tcp only ==="; \
+	    run env $(DIRECT_MODEX) $(trio_runner) --mca pml ob1 --mca btl self,tcp \
+	        ./session_partial_batch; \
+	    echo "=== session partial batch, tcp connecting the full job ==="; \
+	    run $(trio_runner) --mca pml ob1 --mca btl self,tcp \
+	        --mca btl_tcp_connect_mode full ./session_partial_batch; \
+	    echo "=== session partial batch, default transports ==="; \
+	    run $(trio_runner) ./session_partial_batch; \
+	    echo "=== session partial batch, direct modex, default transports ==="; \
+	    run env $(DIRECT_MODEX) $(trio_runner) ./session_partial_batch; \
+	    if $(OMPI_INFO) --param btl smcuda --level 9 2>/dev/null \
+	            | grep -q btl_smcuda_flags; then \
+	        echo "=== session partial batch, smcuda only ==="; \
+	        run $(trio_runner) --mca pml ob1 --mca btl self,smcuda \
+	            ./session_partial_batch; \
+	    fi; \
 	    $(MPICC) -g "$(srcdir)/spawn_first_touch.c" -o spawn_first_touch; \
 	    echo "=== spawn first touch, direct modex ==="; \
 	    run env $(DIRECT_MODEX) $(spawn_runner) ./spawn_first_touch; \
@@ -265,6 +298,7 @@ clean-local:
 	    comm_idup_overlap comm_idup_overlap.dSYM \
 	    late_first_contact late_first_contact.dSYM \
 	    session_first_touch session_first_touch.dSYM \
+	    session_partial_batch session_partial_batch.dSYM \
 	    spawn_first_touch spawn_first_touch.dSYM \
 	    tcp_stranger_connect tcp_stranger_connect.dSYM \
 	    wireup_stress wireup_stress.dSYM
