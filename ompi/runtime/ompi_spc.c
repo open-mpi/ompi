@@ -10,6 +10,7 @@
  *                         All rights reserved.
  * Copyright (c) 2020      IBM Corporation. All rights reserved.
  * Copyright (c) 2022      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -270,6 +271,7 @@ static void ompi_spc_events_init(void)
 
     if (ompi_mpi_spc_dump_enabled) {
         ompi_comm_dup(&ompi_mpi_comm_world.comm, &ompi_spc_comm);
+        ompi_comm_mark_communicator_as_internal(ompi_spc_comm);
     }
 }
 
