@@ -66,6 +66,10 @@ static void ompi_modex_fence_cb(pmix_status_t status, void *cbdata)
     }
     ompi_modex_fence_active = false;
     OPAL_POST_OBJECT(&ompi_modex_fence_active);
+
+    /* A failed fence is still the last answer there will be, so release
+     * the waiters either way. */
+    ompi_modex_epoch_advance();
 }
 
 static void ompi_modex_get_cb(pmix_status_t status, pmix_value_t *kv, void *cbdata)
@@ -78,11 +82,31 @@ static void ompi_modex_get_cb(pmix_status_t status, pmix_value_t *kv, void *cbda
         PMIX_VALUE_RELEASE(kv);
     }
 
-    /* Available even if the fetch failed, and a failure here is final: the
-     * Get carries no PMIX_IMMEDIATE, so a key not yet published arrives
-     * later as a success, while a failure means an unknown namespace or
-     * rank, a dead peer, or no server connection -- nothing a retry would
-     * change. Both flags in one write: nobody may see the keys as
+    /* A timeout means the peer has not published its modex yet. Re-ask on
+     * the next progress iteration -- a fresh ask, because the timeout is
+     * terminal at the server: it drops the request, so no later commit
+     * will reach us.
+     *
+     * Never give up. Marking the peer AVAILABLE lets a btl read a key we
+     * never fetched as a key the peer never published, and btl/sm rules
+     * out the whole node on that. A dead peer needs no bound: it arrives
+     * as one of the final statuses below, once the daemon fails what is
+     * parked on it. */
+    if (PMIX_ERR_TIMEOUT == status) {
+        /* Clearing the claim lets a later ask re-issue; bumping the epoch
+         * is what makes somebody ask. The Get is left to that next pass
+         * to keep re-asking out of the callback, and if nobody asks then
+         * nobody wants this peer. The release drops this fetch's
+         * reference, not the proc -- the proc table holds its own. */
+        opal_proc_forget(&proc->super, OPAL_PROC_FLAG_FETCHING);
+        ompi_modex_epoch_advance();
+        OBJ_RELEASE(proc);
+        return;
+    }
+
+    /* Available even if the fetch failed: a key missing from data never
+     * fetched is read as never published, the only reading left. Both
+     * flags in one write, so nobody may see the keys as
      * published-or-absent without also seeing they were never fetched. */
     if (PMIX_SUCCESS != status) {
         OPAL_OUTPUT_VERBOSE((1, opal_pmix_verbose_output,
@@ -97,14 +121,33 @@ static void ompi_modex_get_cb(pmix_status_t status, pmix_value_t *kv, void *cbda
         opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
     }
 
+    /* After the flags, and on either status: a failure is as final as a
+     * success, so a waiting caller has to be woken by both. */
+    ompi_modex_epoch_advance();
+
     OBJ_RELEASE(proc);
 }
 
-/* Ask the peer for something it publishes unconditionally and take any
- * answer as the end of the wait: success means it has committed, so the
- * per-BTL Gets that follow are cache hits and an empty one means that BTL
- * is unused rather than late. Caller has claimed OPAL_PROC_FLAG_FETCHING
- * and holds the reference this drops, which keeps the proc alive. */
+/* Ask whether this peer has committed; the answer also warms the cache.
+ *
+ * A Get naming a non-reserved key makes the server return every
+ * non-reserved key the proc has. So the status answers the question, and
+ * the payload spares the per-BTL Gets that follow a round trip. The
+ * payload itself is of no interest here, which is why the callback drops
+ * it.
+ *
+ * The key has to be named and non-reserved. A null or reserved key is
+ * answerable from the job-level data the server holds before any commit,
+ * so it would succeed whether the peer has published or not and latch the
+ * peer as available far too early. OMPI_MODEX_KEY_PML is the one
+ * non-reserved key every rank publishes whenever this path can run.
+ *
+ * No directives. The only candidate is PMIX_TIMEOUT, which would set the
+ * re-ask interval and nothing else, and naming none keeps the info array
+ * off the heap -- PMIx_Get_nb keeps it by pointer and reads it after this
+ * has returned.
+ *
+ * Caller holds OPAL_PROC_FLAG_FETCHING and the reference this drops. */
 static void ompi_modex_proc_fetch(ompi_proc_t *proc)
 {
     pmix_proc_t pmix_proc;

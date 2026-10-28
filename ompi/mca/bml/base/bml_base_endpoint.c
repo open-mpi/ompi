@@ -26,6 +26,7 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/proc/proc.h"
+#include "ompi/runtime/ompi_modex.h"
 
 
 
@@ -67,6 +68,14 @@ mca_bml_base_endpoint_t *mca_bml_base_endpoint_create (ompi_proc_t *proc, int *s
     if (NULL != endpoint) {
         *status = OMPI_SUCCESS;
         return endpoint;
+    }
+
+    /* Nothing below can wire a peer whose information has not arrived,
+     * and asking is what fetches it. First because it is the cheapest
+     * check and the usual reason a first touch cannot be served. */
+    if (!ompi_modex_proc_ready (proc)) {
+        *status = OMPI_ERR_NOT_READY;
+        return NULL;
     }
 
     /* Must precede add_proc: it selects BTLs from the peer's locality,

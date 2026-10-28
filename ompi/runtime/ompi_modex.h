@@ -42,9 +42,26 @@
 
 #include "ompi_config.h"
 
+#include "opal/runtime/opal.h"
+#include "opal/sys/atomic.h"
+
 BEGIN_C_DECLS
 
 struct ompi_proc_t;
+
+/**
+ * Announce that something has been learned about a peer, or that readers
+ * should look again anyway. Writing is OMPI's alone; OPAL only reads.
+ *
+ * Call it after writing whatever the answer made true: the barrier is
+ * what stops a reader acting on the new count and then reading state
+ * from before it.
+ */
+static inline void ompi_modex_epoch_advance(void)
+{
+    opal_atomic_wmb();
+    (void) opal_atomic_add_fetch_64(&opal_modex_knowledge_epoch, 1);
+}
 
 /**
  * Start the connection-info exchange (background collect fence, or skip it
