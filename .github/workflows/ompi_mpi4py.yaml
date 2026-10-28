@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     strategy:
-      # Run both the OMPI-native and the MPI Standard ABI legs to
+      # Run both the OMPI-native and the MPI Forum ABI legs to
       # completion even if one fails.
       fail-fast: false
       matrix:
@@ -26,7 +26,7 @@ jobs:
           # (so the optional Fortran datatypes are exercised) and build
           # mpi4py against the ABI wrapper compiler so it links libmpi_abi.
           - name: standard
-            extra_configure: --enable-standard-abi
+            extra_configure: --enable-forum-abi
             mpicc: mpicc_abi
     env:
       MPI4PY_TEST_SPAWN: true
