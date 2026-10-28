@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,6 +66,8 @@ struct mca_btl_base_endpoint_t {
     struct mca_btl_tcp_frag_t *endpoint_send_frag; /**< current send frag being processed */
     struct mca_btl_tcp_frag_t *endpoint_recv_frag; /**< current recv frag being processed */
     mca_btl_tcp_state_t endpoint_state;            /**< current state of the connection */
+    int endpoint_err_code; /**< errno that made the connection fail, or 0 if the failure did not
+                              come from a socket operation */
     uint32_t endpoint_retries;                     /**< number of connection retries attempted */
     opal_list_t endpoint_frags;                    /**< list of pending frags to send */
     opal_mutex_t endpoint_send_lock;    /**< lock for concurrent access to endpoint state */
