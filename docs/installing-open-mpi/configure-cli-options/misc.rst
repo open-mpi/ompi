@@ -28,16 +28,10 @@ above categories that can be used with ``configure``:
 
 * ``--enable-hwpc-cxi`` / ``--disable-hwpc-cxi``:
   The HPE Cassini (CXI) hardware performance counter component
-  (``hook:hwpc_cxi``) is built by default.  Counter collection is only
-  active if libcxi is found (via ``pkg-config``, the default search
-  paths, or ``/usr/local``); otherwise the component is built as a
-  no-op.  ``--enable-hwpc-cxi`` makes ``configure`` abort if libcxi is
-  not found; ``--disable-hwpc-cxi`` skips building the component.  See
+  (``hook:hwpc_cxi``) is built by default.  Counters are collected at run
+  time only when every node in the job has a Cassini device;
+  ``--disable-hwpc-cxi`` skips building the component.  See
   :doc:`/features/hwpc-cxi`.
-
-* ``--with-libcxi(=DIR)``:
-  Look for libcxi in ``DIR/include``, ``DIR/lib``, and ``DIR/lib64``
-  for the HWPC-CXI component; ``configure`` aborts if it is not found.
 
 * ``--enable-heterogeneous``:
   Enable support for running on heterogeneous clusters (e.g., machines

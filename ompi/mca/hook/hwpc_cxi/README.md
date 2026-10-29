@@ -9,23 +9,9 @@ Open MPI user documentation in `docs/features/hwpc-cxi.rst` (or at
 
 ## Build And Component Registration
 
-This module is built by default as a static MCA component. Counter collection
-is only active when configure finds libcxi (via pkg-config, the default search
-paths, or `/usr/local`); otherwise the component is built as a no-op. See the
-configure summary's "HWPC-CXI support" line.
-
-Require libcxi (configure aborts if it is not found):
-
-```bash
-./configure --enable-hwpc-cxi
-./configure --with-libcxi=/path/to/libcxi/prefix
-```
-
-Do not build the component:
-
-```bash
-./configure --disable-hwpc-cxi
-```
+This module is built by default as a static MCA component and has no build-time
+dependencies. At `MPI_Init()`, counter collection is disabled for the job if any
+node lacks a Cassini device (`/sys/class/cxi/cxi0`).
 
 Do not build the component:
 
@@ -51,13 +37,4 @@ Component identity:
 
 ## Validation
 
-Hardware validation assets are under `test-multi/`; hardware-independent
-unit tests are under `test/` and run with `make check`.
-
-Quick start:
-
-```bash
-cd ompi/mca/hook/hwpc_cxi/test-multi
-make hwpc_cxi_sendrecv_test
-./run_hwpc_cxi_validate.sh
-```
+Hardware-independent unit tests are under `test/` and run with `make check`.

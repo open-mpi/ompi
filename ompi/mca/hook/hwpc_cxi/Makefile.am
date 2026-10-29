@@ -19,8 +19,6 @@ sources = \
 
 # This component will only ever be built statically -- never as a DSO.
 
-AM_CPPFLAGS = $(hook_hwpc_cxi_CPPFLAGS)
-
 noinst_LTLIBRARIES = libmca_hook_hwpc_cxi.la
 
 libmca_hook_hwpc_cxi_la_SOURCES = $(sources)
@@ -30,4 +28,4 @@ if HWPC_CXI_ENABLE
 SUBDIRS = test
 endif
 
-DIST_SUBDIRS = test test-multi
+DIST_SUBDIRS = test

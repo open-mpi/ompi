@@ -15,10 +15,7 @@
 # These tests are hardware-independent and should run during make check.
 include $(top_srcdir)/Makefile.mca-dso-check
 
-EXTRA_DIST = check_hwpc_cxi_dynamic_symbols.sh check_hwpc_cxi_quiet.sh
-
-TEST_EXTENSIONS = .sh
-SH_LOG_COMPILER = $(SHELL)
+EXTRA_DIST = check_hwpc_cxi_dynamic_symbols.sh
 
 if HWPC_CXI_ENABLE
     check_PROGRAMS = \
@@ -34,7 +31,6 @@ if HWPC_CXI_ENABLE
         hwpc_cxi_mpi_t_pvars_test \
         hwpc_cxi_mpi_t_pvars_enabled_test
 
-    # check_hwpc_cxi_quiet.sh is disabled: other components built in CI print during MPI_Init.
     TESTS = \
         hwpc_cxi_counters_test \
         hwpc_cxi_constants_lookup_test \

@@ -639,6 +639,8 @@ void ompi_hook_hwpc_cxi_init(void)
     bool stderr_stream_constructed = false;
     bool stdout_opened_here = false;
     bool stderr_opened_here = false;
+    bool output_streams_opened = true;
+    bool cxi_device_present;
     bool job_data_topology_initialized;
     bool world_comm_initialized = true;
     bool comm_initialized;
@@ -668,12 +670,12 @@ void ompi_hook_hwpc_cxi_init(void)
         output_lds.lds_want_stderr = false;
         output_lds.lds_want_stdout = true;
         ompi_hwpc_cxi_stdout_id = opal_output_open(&output_lds);
-        /* Verify that the output channel was successfully opened */
         if (ompi_hwpc_cxi_stdout_id < 0) {
-            goto cleanup;
+            output_streams_opened = false;
+        } else {
+            stdout_opened_here = true;
+            fflush(stdout); /* We do this to flush any text from the user application that is pending in libc's buffer */
         }
-        stdout_opened_here = true;
-        fflush(stdout); /* We do this to flush any text from the user application that is pending in libc's buffer */
     }
 
     /* Initialize the error channel for CXI counter debugging */
@@ -683,12 +685,12 @@ void ompi_hook_hwpc_cxi_init(void)
         error_lds.lds_want_stderr = true;
         error_lds.lds_want_stdout = false;
         ompi_hwpc_cxi_stderr_id = opal_output_open(&error_lds);
-        /* Verify that the error channel was successfully opened */
         if (ompi_hwpc_cxi_stderr_id < 0) {
-            goto cleanup;
+            output_streams_opened = false;
+        } else {
+            stderr_opened_here = true;
+            fflush(stderr); /* We do this to flush any text from the user application that is pending in libc's buffer */
         }
-        stderr_opened_here = true;
-        fflush(stderr); /* We do this to flush any text from the user application that is pending in libc's buffer */
     }
 
     /* Sanity check for world reporting agreement on a fundamental level */
@@ -700,8 +702,15 @@ void ompi_hook_hwpc_cxi_init(void)
         goto cleanup;
     }
 
+    cxi_device_present = (0 == access("/sys/class/cxi/cxi0", F_OK));
+    if (!cxi_device_present && 0 == opal_process_info.my_local_rank) {
+        cxi_output(ompi_hwpc_cxi_stderr_id, CXI_OUTPUT_WARNING,
+                   "HWPC_CXI: WARNING: No Cassini (CXI) device found on %s; counter collection disabled\n",
+                   NULL != opal_process_info.nodename ? opal_process_info.nodename : "unknown host");
+    }
+
     /* Establish and store the job's metadata needed for CXI counter collection and reporting */
-    if (!cxi_world_initialization_agree(global_job_data, NULL != global_job_data)) {
+    if (!cxi_world_initialization_agree(global_job_data, NULL != global_job_data && output_streams_opened && cxi_device_present)) {
         goto cleanup;
     }
 
@@ -2516,6 +2525,7 @@ exit:
 
 /*
  * Prints the global summary of all counters to the given output file. Is called internally by cxi_global_counter_report.
+ * Statistics cover only NIC deltas greater than zero; the Min and Max rates belong to the NIC holding the Min and Max delta.
  */
 static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collection, bool reductions_ok)
 {
@@ -2611,13 +2621,26 @@ static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collect
             {local_min_arr,      global_min_arr,      MPI_LONG,   MPI_MIN},
             {local_sum_arr,      global_sum_arr,      MPI_LONG,   MPI_SUM},
             {local_max_arr,      global_max_arr,      MPI_LONG,   MPI_MAX},
-            {local_min_rate_arr, global_min_rate_arr, MPI_DOUBLE, MPI_MIN},
             {local_sum_rate_arr, global_sum_rate_arr, MPI_DOUBLE, MPI_SUM},
+            {local_min_rate_arr, global_min_rate_arr, MPI_DOUBLE, MPI_MIN},
             {local_max_rate_arr, global_max_rate_arr, MPI_DOUBLE, MPI_MAX},
         };
+        const size_t num_reductions = sizeof(reductions) / sizeof(reductions[0]);
+        const size_t first_paired_rate_reduction = num_reductions - 2;
 
         /* Every leader issues every reduction, even after a local failure, so no peer is left blocked on fcomm. */
-        for (size_t r = 0; r < sizeof(reductions) / sizeof(reductions[0]); ++r) {
+        for (size_t r = 0; r < num_reductions; ++r) {
+            if (first_paired_rate_reduction == r) {
+                /* Only leaders holding the global Min/Max delta offer a rate, so each rate stays paired with its delta. */
+                for (size_t i = 0; i < num_counter_data; i++) {
+                    if (local_min_arr[i] != global_min_arr[i]) {
+                        local_min_rate_arr[i] = DBL_MAX;
+                    }
+                    if (local_max_arr[i] != global_max_arr[i]) {
+                        local_max_rate_arr[i] = 0.0;
+                    }
+                }
+            }
             rc = global_job_data->fcomm->c_coll->coll_allreduce(reductions[r].local, reductions[r].global, reduce_count,
                                                                 reductions[r].type, reductions[r].op, global_job_data->fcomm,
                                                                 global_job_data->fcomm->c_coll->coll_allreduce_module);
@@ -2670,7 +2693,7 @@ static void cxi_global_counter_summary(cxi_counter_collection_t *counter_collect
                 }
             }
             opal_output(ompi_hwpc_cxi_stdout_id, "\nOpen MPI Slingshot CXI Counter Summary:\n");
-            opal_output(ompi_hwpc_cxi_stdout_id, "%-*s %8s %12s %12s %12s %12s %12s %12s\n", max_width, "Counter", "Samples", "Min", "(/s)", "Mean", "(/s)", "Max", "(/s)");
+            opal_output(ompi_hwpc_cxi_stdout_id, "%-*s %8s %12s %12s %12s %12s %12s %12s\n", max_width, "Counter", "Nonzero", "Min", "(/s)", "Mean", "(/s)", "Max", "(/s)");
         }
 
         for (size_t i = 0; i < num_counter_data; i++) {

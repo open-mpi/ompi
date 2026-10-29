@@ -104,10 +104,6 @@ jobs:
       # VERBOSE=1 causes logs to be cat'ed if a test fails.
       run: make check VERBOSE=1
 
-    - name: Compile the manual HWPC-CXI workload
-      if: runner.os == 'Linux'
-      run: make -C ompi/mca/hook/hwpc_cxi/test-multi hwpc_cxi_sendrecv_test
-
     - name: Install Open MPI
       run: make install
 

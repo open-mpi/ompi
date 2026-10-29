@@ -388,7 +388,7 @@ int ompi_mpi_register_params(void)
 #if SPC_ENABLE == 1
     ompi_mpi_spc_attach_string = NULL;
     (void) mca_base_var_register("ompi", "mpi", NULL, "spc_attach",
-                                 "A comma-delimited list of software-based performance counters (SPCs) to enable (\"all\" enables all counters).",
+                                 "A comma-delimeted list of software-based performance counters (SPCs) to enable (\"all\" enables all counters).",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,

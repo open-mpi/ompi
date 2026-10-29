@@ -16,14 +16,10 @@
 #include "hook_hwpc_cxi.h"
 
 #include "opal/mca/base/mca_base_var.h"
-#include "ompi/runtime/ompi_rte.h"
 
 static int ompi_hook_hwpc_cxi_component_open(void);
 static int ompi_hook_hwpc_cxi_component_close(void);
 static int ompi_hook_hwpc_cxi_component_register(void);
-#if !OMPI_HOOK_HWPC_CXI_HAVE_LIBCXI
-static void ompi_hook_hwpc_cxi_mpi_init_bottom_noop(int argc, char **argv, int requested, int *provided);
-#endif
 
 OMPI_HIDDEN const char *mca_hook_hwpc_cxi_component_version_string =
     "Open MPI 'hwpc_cxi' hook MCA component version " OMPI_VERSION;
@@ -53,18 +49,10 @@ OMPI_HIDDEN const ompi_hook_base_component_1_0_0_t mca_hook_hwpc_cxi_component =
 
     .hookm_mpi_init_top = NULL,
     .hookm_mpi_init_top_post_opal = NULL,
-#if OMPI_HOOK_HWPC_CXI_HAVE_LIBCXI
     .hookm_mpi_init_bottom = ompi_hook_hwpc_cxi_mpi_init_bottom,
-#else
-    .hookm_mpi_init_bottom = ompi_hook_hwpc_cxi_mpi_init_bottom_noop,
-#endif
     .hookm_mpi_init_error = NULL,
 
-#if OMPI_HOOK_HWPC_CXI_HAVE_LIBCXI
     .hookm_mpi_finalize_top = ompi_hook_hwpc_cxi_mpi_finalize_top,
-#else
-    .hookm_mpi_finalize_top = NULL,
-#endif
     .hookm_mpi_finalize_bottom = NULL,
 };
 OMPI_HIDDEN const mca_base_component_t *mca_hook_hwpc_cxi_component_ptr =
@@ -77,9 +65,6 @@ char *mca_hook_hwpc_cxi_counter_report_file = NULL;
 bool mca_hook_hwpc_cxi_counter_verbose = false;
 bool mca_hook_hwpc_cxi_counter_summary_filter_zeros = true;
 bool mca_hook_hwpc_cxi_counter_mpi_t_enable = false;
-
-static int ompi_hook_hwpc_cxi_var_indices[6];
-static size_t ompi_hook_hwpc_cxi_num_vars = 0;
 
 static const mca_base_var_enum_value_t ompi_hook_hwpc_cxi_counter_report_levels[] = {
     {.value = 0, .string = "quiet"},
@@ -108,8 +93,6 @@ static int ompi_hook_hwpc_cxi_component_register(void)
     mca_base_var_enum_t *counter_report_enum;
     int ret;
 
-    ompi_hook_hwpc_cxi_num_vars = 0;
-    ompi_hook_hwpc_cxi_var_indices[ompi_hook_hwpc_cxi_num_vars++] =
     mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_file",
                                  "Specifies an absolute filepath to a file containing a comma-delimited list of hardware-based performance counters (HWPCs) and counter groups to enable for HPE's Cassini devices.",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -133,9 +116,7 @@ static int ompi_hook_hwpc_cxi_component_register(void)
     if (0 > ret) {
         return ret;
     }
-    ompi_hook_hwpc_cxi_var_indices[ompi_hook_hwpc_cxi_num_vars++] = ret;
 
-    ompi_hook_hwpc_cxi_var_indices[ompi_hook_hwpc_cxi_num_vars++] =
     mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_report_file",
                                  "Specifies an optional output filename prefix for the HWPC counter reports for HPE's Cassini devices to be written.",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
@@ -143,7 +124,6 @@ static int ompi_hook_hwpc_cxi_component_register(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_hwpc_cxi_counter_report_file);
 
-    ompi_hook_hwpc_cxi_var_indices[ompi_hook_hwpc_cxi_num_vars++] =
     mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_verbose",
                                  "A boolean value indicates the verbosity output setting about the HWPC counters for HPE's Cassini devices that are being collected.",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
@@ -151,7 +131,6 @@ static int ompi_hook_hwpc_cxi_component_register(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_hwpc_cxi_counter_verbose);
 
-    ompi_hook_hwpc_cxi_var_indices[ompi_hook_hwpc_cxi_num_vars++] =
     mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_summary_filter_zeros",
                                  "A boolean value for whether (true) or not (false) to filter out zero-valued deltas for HWPC counter summary reports for HPE's Cassini devices.",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
@@ -159,7 +138,6 @@ static int ompi_hook_hwpc_cxi_component_register(void)
                                  MCA_BASE_VAR_SCOPE_READONLY,
                                  &mca_hook_hwpc_cxi_counter_summary_filter_zeros);
 
-    ompi_hook_hwpc_cxi_var_indices[ompi_hook_hwpc_cxi_num_vars++] =
     mca_base_component_var_register(&mca_hook_hwpc_cxi_component.hookm_version, "counter_mpi_t_enable",
                                  "A boolean value for whether to register HWPC counters for HPE's Cassini devices as MPI_T performance variables (default: false).",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
@@ -169,26 +147,3 @@ static int ompi_hook_hwpc_cxi_component_register(void)
 
     return OMPI_SUCCESS;
 }
-
-#if !OMPI_HOOK_HWPC_CXI_HAVE_LIBCXI
-static void ompi_hook_hwpc_cxi_mpi_init_bottom_noop(int argc, char **argv, int requested, int *provided)
-{
-    static bool warned = false;
-    mca_base_var_source_t source;
-
-    if (warned || 0 == mca_hook_hwpc_cxi_counter_report || 0 != OMPI_PROC_MY_NAME->vpid) {
-        return;
-    }
-
-    for (size_t i = 0; i < ompi_hook_hwpc_cxi_num_vars; ++i) {
-        if (0 <= ompi_hook_hwpc_cxi_var_indices[i]
-            && OPAL_SUCCESS == mca_base_var_get_value(ompi_hook_hwpc_cxi_var_indices[i], NULL, &source, NULL)
-            && MCA_BASE_VAR_SOURCE_DEFAULT != source) {
-            warned = true;
-            opal_output(0, "HWPC_CXI: WARNING: Open MPI was built without libcxi/libcxi.h; "
-                           "hwpc_cxi MCA parameters are ignored and no Cassini counters will be collected");
-            return;
-        }
-    }
-}
-#endif

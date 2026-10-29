@@ -300,8 +300,8 @@ Open MPI version v6.1.0
   with the application.
 
 - Added a ``hook:hwpc_cxi`` component, controlled by the new
-  ``--enable-hwpc-cxi`` and ``--with-libcxi[=DIR]`` configure options
-  (default: enabled; built as a no-op when libcxi is not found), that
+  ``--enable-hwpc-cxi`` configure option (default: enabled; counters are
+  only collected on nodes with a Cassini device), that
   collects and reports HPE Cassini (CXI) hardware performance counters
   for Slingshot 11 (or newer) environments.  Collection is opt-in: the
   ``hook_hwpc_cxi_counter_report`` MCA parameter defaults to ``0``. See the "HPE Cassini (CXI)

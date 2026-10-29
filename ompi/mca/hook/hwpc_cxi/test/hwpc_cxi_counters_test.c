@@ -11,6 +11,7 @@
 #include "ompi/communicator/communicator.h"
 
 static FILE *fixture_fopen(const char *path, const char *mode);
+static int fixture_access(const char *path, int mode);
 static int fixture_comm_free(ompi_communicator_t **comm);
 static int fixture_comm_split(ompi_communicator_t *comm, int color, int key,
                               ompi_communicator_t **newcomm, bool pass_on_topo);
@@ -18,6 +19,7 @@ static void *fixture_calloc(size_t count, size_t size);
 static char *fixture_strndup(const char *text, size_t size);
 
 #define fopen fixture_fopen
+#define access fixture_access
 #define calloc fixture_calloc
 #define strndup fixture_strndup
 #define ompi_comm_free fixture_comm_free
@@ -37,6 +39,7 @@ static char *fixture_strndup(const char *text, size_t size);
 #include "../hook_hwpc_cxi_counters.c"
 
 #undef fopen
+#undef access
 #undef calloc
 #undef strndup
 #undef ompi_comm_free
@@ -158,6 +161,18 @@ static char *fixture_strndup(const char *text, size_t size)
     return allocation_fails() ? NULL : strndup(text, size);
 }
 
+static int fixture_access(const char *path, int mode)
+{
+    if (0 != strncmp(path, "/sys/class/cxi/", 15)) {
+        return access(path, mode);
+    }
+    if (NULL != failure_stage && !failure_injected && 0 == strcmp(failure_stage, "device")) {
+        failure_injected = true;
+        return -1;
+    }
+    return 0;
+}
+
 static FILE *fixture_fopen(const char *path, const char *mode)
 {
     if (0 != strncmp(path, "/run/cxi/", 9) && 0 != strncmp(path, "/sys/class/cxi/", 15)) {
@@ -232,6 +247,15 @@ static void test_lifecycle(void)
     EXPECT(failure_injected, "topology hostname allocation failure injected");
     EXPECT(NULL == global_job_data && NULL == global_cxi_counters,
         "failed topology setup leaves hook disabled");
+    hwpc_test_fini();
+    failure_injected = false;
+
+    failure_stage = "device";
+    hwpc_test_init();
+    failure_stage = NULL;
+    EXPECT(failure_injected, "missing Cassini device injected");
+    EXPECT(NULL == global_job_data && NULL == global_cxi_counters,
+        "missing Cassini device leaves hook disabled");
     hwpc_test_fini();
     failure_injected = false;
 }
@@ -522,7 +546,9 @@ static void test_summary(bool filter_zeros)
     long timeout_deltas[] = {3, 0};
     long rndzv_deltas[] = {10, 20};
     long idle_deltas[] = {0, 0};
+    long skew_deltas[] = {10, 40};
     uint64_t elapsed[] = {1000000, 1000000};
+    uint64_t skew_elapsed[] = {1000000, 8000000};
     cxi_counter_data_t timeout_counter = {
         .name = "rh:sct_timeouts", .num_devs = 2, .deltas = timeout_deltas, .delta_timestamps_usec = elapsed
     };
@@ -532,11 +558,14 @@ static void test_summary(bool filter_zeros)
     cxi_counter_data_t idle_counter = {
         .name = "hni_rx_paused_0", .num_devs = 2, .deltas = idle_deltas, .delta_timestamps_usec = elapsed
     };
-    cxi_counter_data_t *data[] = {&timeout_counter, &rndzv_counter, &idle_counter, NULL};
-    long summary_longs[8 * 3] = {0};
-    double summary_doubles[6 * 3] = {0};
+    cxi_counter_data_t skew_counter = {
+        .name = "hni_tx_paused_0", .num_devs = 2, .deltas = skew_deltas, .delta_timestamps_usec = skew_elapsed
+    };
+    cxi_counter_data_t *data[] = {&timeout_counter, &rndzv_counter, &idle_counter, &skew_counter, NULL};
+    long summary_longs[8 * 4] = {0};
+    double summary_doubles[6 * 4] = {0};
     cxi_counter_collection_t collection = {
-        .data = data, .num_counter_data = 3,
+        .data = data, .num_counter_data = 4,
         .summary_longs = summary_longs, .summary_doubles = summary_doubles
     };
 
@@ -567,6 +596,7 @@ static void test_summary(bool filter_zeros)
         bool timeout_seen = false;
         bool rndzv_seen = false;
         bool idle_seen = false;
+        bool skew_seen = false;
         char line[HWPC_CXI_MAX_LINE_LENGTH];
         rewind(capture);
         while (NULL != fgets(line, sizeof(line), capture)) {
@@ -597,10 +627,14 @@ static void test_summary(bool filter_zeros)
                 EXPECT(0 == samples && 0 == min && 0 == max && 0.0 == mean && 0.0 == min_rate &&
                        0.0 == mean_rate && 0.0 == max_rate,
                        "all-zero counter reports zeros instead of sentinels");
+            } else if (0 == strcmp("hni_tx_paused_0", name)) {
+                skew_seen = true;
+                EXPECT(2 == samples && 10 == min && 40 == max && 10.0 == min_rate && 5.0 == max_rate,
+                       "min/max rates come from the NIC holding the min/max delta");
             }
         }
         EXPECT(header_seen, "summary header printed");
-        EXPECT(timeout_seen && rndzv_seen, "summary rows printed for changed counters");
+        EXPECT(timeout_seen && rndzv_seen && skew_seen, "summary rows printed for changed counters");
         EXPECT(idle_seen != filter_zeros, "all-zero row shown only when zero filtering is off");
     }
     if (NULL != capture) {
@@ -781,7 +815,8 @@ static int test_mpi_case(int argc, char **argv)
         bool success_case = 0 == strcmp(scenario, "success");
         EXPECT(success_case || 0 == strcmp(scenario, "job")
                || 0 == strcmp(scenario, "topology") || 0 == strcmp(scenario, "comm")
-               || 0 == strcmp(scenario, "collection"), "known initialization scenario");
+               || 0 == strcmp(scenario, "collection") || 0 == strcmp(scenario, "device"),
+               "known initialization scenario");
         if (!success_case && rank == size - 1) {
             failure_stage = scenario;
         }

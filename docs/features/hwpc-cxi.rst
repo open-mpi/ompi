@@ -33,23 +33,18 @@ detected, verbose output is enabled, or a higher report level is selected.
 Building
 --------
 
-The ``hwpc_cxi`` component is built by default.  ``configure`` looks for
-libcxi (``libcxi/libcxi.h`` and ``libcxi``) via ``pkg-config``, then the
-default search paths, then ``/usr/local``.  Use ``--with-libcxi=DIR`` to
-search ``DIR/include``, ``DIR/lib``, and ``DIR/lib64`` instead:
+The ``hwpc_cxi`` component is built by default and has no build-time
+dependencies; it reads counters from sysfs (``/sys/class/cxi``) and
+``/run/cxi`` at run time:
 
-* If libcxi is found, counter collection and reporting are active.
-* If libcxi is not found, the component is built as a no-op: its MCA
-  parameters are still registered, but no counters are collected or
-  reported.  If any ``hwpc_cxi`` MCA parameter is set (and the report level
-  is not ``0``), rank 0 prints a one-time warning at ``MPI_Init()``.
-* ``--enable-hwpc-cxi`` or ``--with-libcxi[=DIR]`` makes ``configure``
-  abort if libcxi is not found.
+* When the report level is not ``0``, ``MPI_Init()`` checks every node for a
+  Cassini device (``/sys/class/cxi/cxi0``).  If any node lacks one, the
+  first rank on each such node prints a warning and counter collection is
+  disabled for the whole job.
 * ``--disable-hwpc-cxi`` skips building the component.
 
 The ``Miscellaneous`` section of the ``configure`` output summary reports
-``HWPC-CXI support`` as ``yes``, ``no-op (Cassini headers not found)``, or
-``no (disabled)``.
+``HWPC-CXI support`` as ``yes`` or ``no (disabled)``.
 
 Runtime Configuration
 ---------------------
@@ -127,7 +122,8 @@ Controls whether zero-delta counters are filtered from summary.
 
 Controls whether collected CXI counters are registered as MPI_T performance
 variables. Enabling registration does not affect counter collection or
-reporting.
+reporting.  Only the lowest local rank on each node registers the variables,
+so other ranks in the same job see a shorter performance variable list.
 
 * Type: boolean
 * Default: ``false``
@@ -163,6 +159,9 @@ At finalize time, output may include:
 
 * A one-line network timeout summary (for non-quiet modes).
 * A global CXI summary table with min/mean/max and rates (levels ``2``).
+  The table only counts NICs whose counter changed: ``Nonzero`` is the number
+  of such NICs.  The ``(/s)`` beside ``Min`` and ``Max`` is the rate of the NIC
+  that produced that delta; the one beside ``Mean`` is the mean rate.
 * NIC-level detailed counters in host-specific report files (levels ``3``,
   ``4``, and ``5``) when a report-file prefix is configured.
 
