@@ -1,0 +1,46 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
+/*
+ * SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+ *
+ * Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#ifndef MCA_HOOK_HWPC_CXI_H
+#define MCA_HOOK_HWPC_CXI_H
+
+#include "ompi_config.h"
+#include "ompi/constants.h"
+
+#include "opal/util/output.h"
+
+#include "ompi/mca/hook/hook.h"
+#include "ompi/mca/hook/base/base.h"
+
+BEGIN_C_DECLS
+
+OMPI_HIDDEN extern const ompi_hook_base_component_1_0_0_t mca_hook_hwpc_cxi_component;
+
+OMPI_HIDDEN extern char *mca_hook_hwpc_cxi_counter_file;
+OMPI_HIDDEN extern int mca_hook_hwpc_cxi_counter_report;
+OMPI_HIDDEN extern bool mca_hook_hwpc_cxi_counter_verbose;
+OMPI_HIDDEN extern bool mca_hook_hwpc_cxi_counter_summary_filter_zeros;
+OMPI_HIDDEN extern bool mca_hook_hwpc_cxi_counter_mpi_t_enable;
+OMPI_HIDDEN extern char *mca_hook_hwpc_cxi_counter_report_file;
+
+OMPI_HIDDEN void ompi_hook_hwpc_cxi_mpi_init_bottom(int argc, char **argv, int requested, int *provided);
+
+OMPI_HIDDEN void ompi_hook_hwpc_cxi_mpi_finalize_top(void);
+
+OMPI_DECLSPEC void ompi_hook_hwpc_cxi_init(void);
+OMPI_DECLSPEC void ompi_hook_hwpc_cxi_fini(void);
+
+END_C_DECLS
+
+#endif /* MCA_HOOK_HWPC_CXI_H */
+
