@@ -300,6 +300,8 @@ mca_coll_han_module_destruct(mca_coll_han_module_t * module)
     }
     free(module->a2a_cache.low_bufs);
     free(module->a2a_cache.gather_buf);
+    free(module->a2a_cache.peer_addr);
+    free(module->a2a_cache.peer_len);
     free(module->a2a_cache.recv_buf);
 
     /* Alltoallv cache cleanup */

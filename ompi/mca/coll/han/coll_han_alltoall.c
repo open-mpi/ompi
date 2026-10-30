@@ -63,61 +63,53 @@ static inline int ring_partner(int rank, int round, int comm_size) {
 
 
 /**
- * Set up or reuse cached SMSC arrays for alltoall.
- * Returns 1 if cache was valid (allgather + map can be skipped),
- * 0 on cache miss (arrays allocated, caller must populate),
- * or -1 on allocation failure.
+ * Set up or reuse the persistent per-peer arrays for alltoall.
+ *
+ * Whether a peer's mapping can be reused is decided per peer after the
+ * node-local allgather of buffer addresses (see the mapping loop in
+ * mca_coll_han_alltoall_using_smsc), never from this rank's own sbuf alone:
+ * that decision must be the same on every rank, because the allgather is a
+ * collective, and it must notice a peer whose buffer moved.
+ *
+ * Returns 0, or -1 on allocation failure.
  */
 static int alltoall_cache_setup(
-    mca_coll_han_module_t *han_module,
-    const void *sbuf, size_t scount, int low_size,
-    char ***low_bufs_out, void ***map_ctx_out, void ***gather_buf_out,
-    int *send_needs_bounce_out, int *ii_push_data_out)
+    mca_coll_han_module_t *han_module, int low_size,
+    char ***low_bufs_out, void ***map_ctx_out, void ***gather_buf_out)
 {
     struct han_alltoall_cache *c = &han_module->a2a_cache;
     const int nptrs_gather = 3;
 
-    if (c->cached_sbuf == sbuf
-        && c->cached_scount == scount
-        && c->cached_low_size == low_size
-        && NULL != c->low_bufs
-        && NULL != c->map_ctx
-        && NULL != c->gather_buf) {
-        *low_bufs_out = c->low_bufs;
-        *map_ctx_out = c->map_ctx;
-        *gather_buf_out = c->gather_buf;
-        *send_needs_bounce_out = c->cached_send_needs_bounce;
-        *ii_push_data_out = c->cached_ii_push_data;
-        return 1; /* cache valid */
-    }
-
-    /* Invalidate old cache — unmap old SMSC regions */
-    if (c->map_ctx) {
-        for (int i = 0; i < c->cached_low_size; i++) {
-            if (c->map_ctx[i])
-                mca_smsc->unmap_peer_region(c->map_ctx[i]);
+    if (c->cached_low_size != low_size || NULL == c->low_bufs || NULL == c->map_ctx
+        || NULL == c->gather_buf || NULL == c->peer_addr || NULL == c->peer_len) {
+        /* sized for another communicator layout: drop every mapping */
+        if (c->map_ctx) {
+            for (int i = 0; i < c->cached_low_size; i++) {
+                if (c->map_ctx[i])
+                    mca_smsc->unmap_peer_region(c->map_ctx[i]);
+            }
         }
-    }
-    /* Allocate/reuse persistent arrays */
-    if (c->cached_low_size < low_size || NULL == c->low_bufs
-        || NULL == c->map_ctx || NULL == c->gather_buf) {
         free(c->low_bufs);
         free(c->map_ctx);
         free(c->gather_buf);
+        free(c->peer_addr);
+        free(c->peer_len);
         c->cached_low_size = 0;
-        c->low_bufs = malloc(low_size * sizeof(char*));
-        c->map_ctx = malloc(low_size * sizeof(void*));
+        c->low_bufs = calloc(low_size, sizeof(char*));
+        c->map_ctx = calloc(low_size, sizeof(void*));
         c->gather_buf = calloc(low_size * nptrs_gather, sizeof(void*));
-        if (NULL == c->low_bufs || NULL == c->map_ctx || NULL == c->gather_buf) {
+        c->peer_addr = calloc(low_size, sizeof(void*));
+        c->peer_len = calloc(low_size, sizeof(size_t));
+        if (NULL == c->low_bufs || NULL == c->map_ctx || NULL == c->gather_buf
+            || NULL == c->peer_addr || NULL == c->peer_len) {
             return -1; /* allocation failure */
         }
+        c->cached_low_size = low_size;
     }
     *low_bufs_out = c->low_bufs;
     *map_ctx_out = c->map_ctx;
     *gather_buf_out = c->gather_buf;
-    memset(c->map_ctx, 0, low_size * sizeof(void*));
-    memset(c->gather_buf, 0, low_size * nptrs_gather * sizeof(void*));
-    return 0; /* cache miss */
+    return 0;
 }
 
 int mca_coll_han_alltoall_using_smsc(
@@ -279,8 +271,6 @@ int mca_coll_han_alltoall_using_smsc(
     inter_send_reqs = malloc(sizeof(*inter_send_reqs) * fanout);
     inter_recv_reqs = malloc(sizeof(*inter_recv_reqs) * up_size );
 
-    /* Check if cached SMSC mappings are still valid */
-    int a2a_cache_valid;
     char **low_bufs = NULL;
     void **sbuf_map_ctx = NULL;
     opal_free_list_item_t *send_fl_item = NULL;
@@ -289,15 +279,13 @@ int mca_coll_han_alltoall_using_smsc(
     int send_bounce_status = BOUNCE_NOT_INITIALIZED;
 
     if (mca_coll_han_component.han_use_persist_buffers) {
-        int cache_rc = alltoall_cache_setup(
-            han_module, sbuf, scount, low_size,
-            &low_bufs, &sbuf_map_ctx, &gather_buf_out,
-            &send_needs_bounce, &ii_push_data);
-        if (cache_rc < 0) { rc = OMPI_ERR_OUT_OF_RESOURCE; goto cleanup; }
-        a2a_cache_valid = (cache_rc == 1);
+        if (0 != alltoall_cache_setup(han_module, low_size,
+                                      &low_bufs, &sbuf_map_ctx, &gather_buf_out)) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
     } else {
         /* Original upstream path — fresh allocations per call */
-        a2a_cache_valid = 0;
         low_bufs = malloc(low_size * sizeof(*low_bufs));
         sbuf_map_ctx = malloc(low_size * sizeof(*sbuf_map_ctx));
         gather_buf_out = calloc(low_size * nptrs_gather, sizeof(void*));
@@ -338,68 +326,80 @@ start_allgather:
             }
         }
 
-        if (!a2a_cache_valid) {
-            if (ii_push_data) {
-                /* all ranks will push to the other ranks' bounce buffer */
-                gather_buf_in[0] = send_bounce;
-            } else {
-                /* all ranks will pull from the other ranks' sbuf */
-                gather_buf_in[0] = (void*)sbuf;
-            }
-            gather_buf_in[1] = (void*)(intptr_t)send_needs_bounce;
-            gather_buf_in[2] = (void*)(intptr_t)ii_push_data;
+        /* Always gather: every rank must take part, and the peers' addresses decide
+         * which mappings can be reused (below). */
+        if (ii_push_data) {
+            /* all ranks will push to the other ranks' bounce buffer */
+            gather_buf_in[0] = send_bounce;
+        } else {
+            /* all ranks will pull from the other ranks' sbuf */
+            gather_buf_in[0] = (void*)sbuf;
+        }
+        gather_buf_in[1] = (void*)(intptr_t)send_needs_bounce;
+        gather_buf_in[2] = (void*)(intptr_t)ii_push_data;
 
-            rc = low_comm->c_coll->coll_allgather(gather_buf_in, nptrs_gather, MPI_AINT,
-                        gather_buf_out, nptrs_gather, MPI_AINT, low_comm,
-                        low_comm->c_coll->coll_allgather_module);
+        rc = low_comm->c_coll->coll_allgather(gather_buf_in, nptrs_gather, MPI_AINT,
+                    gather_buf_out, nptrs_gather, MPI_AINT, low_comm,
+                    low_comm->c_coll->coll_allgather_module);
 
-            if (rc != 0) {
-                OPAL_OUTPUT_VERBOSE((40, mca_coll_han_component.han_output,
-                "Allgather failed with %d\n",rc));
-                goto cleanup;
-            }
+        if (rc != 0) {
+            OPAL_OUTPUT_VERBOSE((40, mca_coll_han_component.han_output,
+            "Allgather failed with %d\n",rc));
+            goto cleanup;
+        }
 
-            for (int jother=0; jother<low_size; jother++) {
-                int other_push_data = (uintptr_t)gather_buf_out[nptrs_gather*jother + 2] & 0x1;
-                if (ii_push_data != other_push_data) {
-                    ii_push_data = 1;
-                    goto start_allgather;
-                }
-                send_needs_bounce  |= (uintptr_t)gather_buf_out[nptrs_gather*jother + 1] & 0x1;
-                ii_push_data       |= other_push_data;
+        for (int jother=0; jother<low_size; jother++) {
+            int other_push_data = (uintptr_t)gather_buf_out[nptrs_gather*jother + 2] & 0x1;
+            if (ii_push_data != other_push_data) {
+                ii_push_data = 1;
+                goto start_allgather;
             }
-        } /* !a2a_cache_valid */
+            send_needs_bounce  |= (uintptr_t)gather_buf_out[nptrs_gather*jother + 1] & 0x1;
+            ii_push_data       |= other_push_data;
+        }
     } while (0);
 
     use_isend = fanout > 1 || ii_push_data;
 
-    if (!a2a_cache_valid) {
-        for (int jother=0; jother<low_size; jother++) {
-            low_bufs[jother] = gather_buf_out[nptrs_gather*jother];
-            if (jother == low_rank) {
-                sbuf_map_ctx[low_rank] = NULL;
-            } else {
-                struct ompi_proc_t* ompi_proc = ompi_comm_peer_lookup(low_comm, jother);
-                mca_smsc_endpoint_t *smsc_ep;
-                smsc_ep = mca_coll_han_get_smsc_endpoint(ompi_proc);
+    for (int jother=0; jother<low_size; jother++) {
+        void *peer_addr = gather_buf_out[nptrs_gather*jother];
+        size_t peer_len = sextent*w_size*scount;
 
-                sbuf_map_ctx[jother] = mca_smsc->map_peer_region(
-                    smsc_ep,
-                    MCA_RCACHE_FLAGS_PERSIST,
-                    low_bufs[jother],
-                    sextent*w_size*scount,
-                    (void**) &low_bufs[jother] );
-            }
+        if (jother == low_rank) {
+            low_bufs[jother] = peer_addr;
+            sbuf_map_ctx[low_rank] = NULL;
+            continue;
         }
-        /* Update cache (only when persist buffers enabled) */
         if (mca_coll_han_component.han_use_persist_buffers) {
-            han_module->a2a_cache.cached_sbuf = sbuf;
-            han_module->a2a_cache.cached_scount = scount;
-            han_module->a2a_cache.cached_low_size = low_size;
-            han_module->a2a_cache.cached_send_needs_bounce = send_needs_bounce;
-            han_module->a2a_cache.cached_ii_push_data = ii_push_data;
+            struct han_alltoall_cache *c = &han_module->a2a_cache;
+
+            /* Every rank has the same gathered addresses, so this check gives the
+             * same answer everywhere; reuse the mapping only if the peer's buffer
+             * has not moved. */
+            if (NULL != sbuf_map_ctx[jother] && c->peer_addr[jother] == peer_addr
+                && c->peer_len[jother] == peer_len) {
+                continue;
+            }
+            if (NULL != sbuf_map_ctx[jother]) {
+                mca_smsc->unmap_peer_region(sbuf_map_ctx[jother]);
+                sbuf_map_ctx[jother] = NULL;
+            }
+            c->peer_addr[jother] = peer_addr;
+            c->peer_len[jother] = peer_len;
         }
-    } /* !a2a_cache_valid */
+
+        struct ompi_proc_t* ompi_proc = ompi_comm_peer_lookup(low_comm, jother);
+        mca_smsc_endpoint_t *smsc_ep;
+        smsc_ep = mca_coll_han_get_smsc_endpoint(ompi_proc);
+
+        low_bufs[jother] = peer_addr;
+        sbuf_map_ctx[jother] = mca_smsc->map_peer_region(
+            smsc_ep,
+            MCA_RCACHE_FLAGS_PERSIST,
+            low_bufs[jother],
+            peer_len,
+            (void**) &low_bufs[jother] );
+    }
 
     for (int jslot=0; jslot < fanout; jslot++) {
         inter_send_reqs[jslot] = MPI_REQUEST_NULL;

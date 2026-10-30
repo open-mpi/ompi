@@ -482,14 +482,13 @@ typedef struct mca_coll_han_module_t {
     struct han_alltoall_cache {
         char *bounce;
         size_t bounce_size;
-        const void *cached_sbuf;
-        size_t cached_scount;
         int cached_low_size;
         char **low_bufs;
         void **map_ctx;
         void **gather_buf;
-        int cached_send_needs_bounce;
-        int cached_ii_push_data;
+        /* per peer: the buffer address and length its mapping in map_ctx was made for */
+        void **peer_addr;
+        size_t *peer_len;
         char *recv_buf;
         size_t recv_buf_size;
     } a2a_cache;
