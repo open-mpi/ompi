@@ -16,6 +16,7 @@
  * Copyright (c) 2013      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2015-2018 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -27,7 +28,7 @@
 
 #include "opal_config.h"
 
-#include MCA_memory_IMPLEMENTATION_HEADER
+#include "opal/mca/memory/base/base.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
@@ -71,8 +72,8 @@ int mca_rcache_base_vma_find(mca_rcache_base_vma_module_t *vma_module, void *add
     bound_addr = (unsigned char *) ((intptr_t) addr + size - 1);
 
     /* Check to ensure that the cache is valid */
-    if (OPAL_UNLIKELY(opal_memory_changed() && NULL != opal_memory->memoryc_process
-                      && OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+    rc = opal_memory_base_process();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
 
@@ -94,8 +95,8 @@ int mca_rcache_base_vma_find_all(mca_rcache_base_vma_module_t *vma_module, void 
     bound_addr = (unsigned char *) ((intptr_t) addr + size - 1);
 
     /* Check to ensure that the cache is valid */
-    if (OPAL_UNLIKELY(opal_memory_changed() && NULL != opal_memory->memoryc_process
-                      && OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+    rc = opal_memory_base_process();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
 
@@ -116,8 +117,8 @@ int mca_rcache_base_vma_insert(mca_rcache_base_vma_module_t *vma_module,
     }
 
     /* Check to ensure that the cache is valid */
-    if (OPAL_UNLIKELY(opal_memory_changed() && NULL != opal_memory->memoryc_process
-                      && OPAL_SUCCESS != (rc = opal_memory->memoryc_process()))) {
+    rc = opal_memory_base_process();
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
         return rc;
     }
 
