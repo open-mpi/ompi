@@ -76,6 +76,7 @@ struct ompi_comm_cid_context_t {
     ompi_communicator_t **newcommp;
     ompi_communicator_t *comm;
     ompi_communicator_t *bridgecomm;
+    ompi_group_t *group;    /* ranks of the point-to-point tree; owned by a communicator above */
 
     ompi_comm_allreduce_impl_fn_t allreduce_fn;
 
@@ -96,6 +97,7 @@ struct ompi_comm_cid_context_t {
     int local_leader;
     int remote_leader;
     int iter;
+    int mode;
     /** storage for activate barrier */
     int ok;
     char *port_string;
@@ -219,12 +221,20 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
     context->comm          = comm;
     context->bridgecomm    = bridgecomm;
     context->pml_tag       = 0;
+    context->mode          = mode;
 
     /* Determine which implementation of allreduce we have to use
      * for the current mode. */
     switch (mode) {
     case OMPI_COMM_CID_INTRA:
-        context->allreduce_fn = ompi_comm_allreduce_intra_nb;
+        if (NULL != arg0) {
+            /* a tag reserved by the caller: run the rounds point-to-point over the parent */
+            context->allreduce_fn = ompi_comm_allreduce_group_nb;
+            context->group = comm->c_local_group;
+            context->pml_tag = ((int *) arg0)[0];
+        } else {
+            context->allreduce_fn = ompi_comm_allreduce_intra_nb;
+        }
         break;
     case OMPI_COMM_CID_INTER:
         context->allreduce_fn = ompi_comm_allreduce_inter_nb;
@@ -232,6 +242,7 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
     case OMPI_COMM_CID_GROUP:
     case OMPI_COMM_CID_GROUP_NEW:
         context->allreduce_fn = ompi_comm_allreduce_group_nb;
+        context->group = newcomm->c_local_group;
         context->pml_tag = ((int *) arg0)[0];
         break;
     case OMPI_COMM_CID_INTRA_PMIX:
@@ -626,11 +637,16 @@ int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communicator_t *comm,
 static int ompi_comm_allreduce_getnextcid (ompi_comm_request_t *request)
 {
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
-    int64_t my_id = ((int64_t) ompi_comm_get_local_cid (context->comm) << 32 | context->pml_tag);
+    int64_t my_id = (int64_t) ompi_comm_get_local_cid (context->comm) << 32;
     ompi_request_t *subreq;
     bool flag = false;
     int ret = OMPI_SUCCESS;
     int participate = (context->newcomm->c_local_group->grp_my_rank != MPI_UNDEFINED);
+
+    /* only the GROUP modes tell negotiations on one parent apart by their (non-negative) tag */
+    if (OMPI_COMM_CID_GROUP == context->mode || OMPI_COMM_CID_GROUP_NEW == context->mode) {
+        my_id |= context->pml_tag;
+    }
 
     if (OPAL_THREAD_TRYLOCK(&ompi_cid_lock)) {
         return ompi_comm_request_schedule_append (request, ompi_comm_allreduce_getnextcid, NULL, 0);
@@ -927,6 +943,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
 
         (*newcomm)->c_index_vec = (uint32_t *)calloc(comm_size, sizeof(uint32_t));
         if (NULL == (*newcomm)->c_index_vec) {
+            ompi_comm_request_return (request);    /* also releases the context */
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -939,7 +956,7 @@ int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_communicator_t *c
         /* Initialize the PML stuff in the newcomm  */
         if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
             OBJ_RELEASE(*newcomm);
-            OBJ_RELEASE(context);
+            ompi_comm_request_return (request);
             *newcomm = MPI_COMM_NULL;
             return ret;
         }
@@ -1514,7 +1531,7 @@ static int ompi_comm_allreduce_group_nb (int *inbuf, int *outbuf, int count,
                                          struct ompi_op_t *op, ompi_comm_cid_context_t *cid_context,
                                          ompi_request_t **req)
 {
-    ompi_group_t *group = cid_context->newcomm->c_local_group;
+    ompi_group_t *group = cid_context->group;
     const int group_size = ompi_group_size (group);
     const int group_rank = ompi_group_rank (group);
     ompi_communicator_t *comm = cid_context->comm;
