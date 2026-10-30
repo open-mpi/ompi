@@ -298,3 +298,11 @@ Open MPI version v6.1.0
   point-to-point messages with a tag reserved when ``MPI_Comm_idup`` is
   called, instead of sharing the parent's nonblocking-collective stream
   with the application.
+
+- Fixed ``MPI_Comm_idup`` hanging when several ``MPI_Comm_idup`` calls
+  on the same intercommunicator were outstanding at once, and crashing
+  when the intercommunicator was freed before the ``MPI_Comm_idup``
+  completed.  As for intracommunicators, the context-id negotiation of a
+  nonblocking duplicate of an intercommunicator now runs over
+  point-to-point messages with tags reserved when ``MPI_Comm_idup`` is
+  called.
