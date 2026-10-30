@@ -108,6 +108,8 @@ struct ompi_comm_cid_context_t {
     char *port_string;
     bool send_first;
     int pml_tag;
+    int local_pml_tag;    /* INTER mode: tag of the rounds on local_comm */
+    ompi_communicator_t *local_comm;    /* INTER mode: communicator local_pml_tag was reserved on */
     char *pmix_tag;
 };
 
@@ -140,6 +142,8 @@ struct ompi_comm_allreduce_context_t {
 
     /* for group allreduce */
     int peers_comm[3];
+    ompi_communicator_t *comm;    /* communicator and tag the tree runs on */
+    int tag;
 };
 
 typedef struct ompi_comm_allreduce_context_t ompi_comm_allreduce_context_t;
@@ -242,7 +246,16 @@ static ompi_comm_cid_context_t *mca_comm_cid_context_alloc (ompi_communicator_t 
         }
         break;
     case OMPI_COMM_CID_INTER:
-        context->iallreduce_fn = ompi_comm_allreduce_inter_nb;
+        if (NULL != arg0) {
+            /* tags reserved by the caller on the intercommunicator and on its local communicator */
+            context->iallreduce_fn = ompi_comm_allreduce_group_nb;
+            context->local_comm = (ompi_communicator_t *) arg1;
+            context->group = context->local_comm->c_local_group;
+            context->pml_tag = ((int *) arg0)[0];
+            context->local_pml_tag = ((int *) arg0)[1];
+        } else {
+            context->iallreduce_fn = ompi_comm_allreduce_inter_nb;
+        }
         break;
     case OMPI_COMM_CID_GROUP:
     case OMPI_COMM_CID_GROUP_NEW:
@@ -1589,7 +1602,6 @@ static int ompi_comm_allreduce_intra_pmix_nb (int *inbuf, int *outbuf,
 static int ompi_comm_allreduce_group_broadcast (ompi_comm_request_t *request)
 {
     ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t *) request->context;
-    ompi_comm_cid_context_t *cid_context = context->cid_context;
     ompi_request_t *subreq[2];
     int subreq_count = 0;
     int rc;
@@ -1601,8 +1613,8 @@ static int ompi_comm_allreduce_group_broadcast (ompi_comm_request_t *request)
     for (int i = 0 ; i < 2 ; ++i) {
         if (MPI_PROC_NULL != context->peers_comm[i + 1]) {
             rc = MCA_PML_CALL(isend(context->outbuf, context->count, MPI_INT, context->peers_comm[i+1],
-                                    cid_context->pml_tag, MCA_PML_BASE_SEND_STANDARD,
-                                    cid_context->comm, subreq + subreq_count++));
+                                    context->tag, MCA_PML_BASE_SEND_STANDARD,
+                                    context->comm, subreq + subreq_count++));
             if (OMPI_SUCCESS != rc) {
                 return rc;
             }
@@ -1610,6 +1622,42 @@ static int ompi_comm_allreduce_group_broadcast (ompi_comm_request_t *request)
     }
 
     return ompi_comm_request_schedule_append (request, NULL, subreq, subreq_count);
+}
+
+static int ompi_comm_allreduce_group_leader_reduce (ompi_comm_request_t *request)
+{
+    ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t *) request->context;
+
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        return request->super.req_status.MPI_ERROR;
+    }
+
+    ompi_op_reduce (context->op, context->tmpbuf, context->outbuf, context->count, MPI_INT);
+
+    return ompi_comm_allreduce_group_broadcast (request);
+}
+
+/* INTER mode: the local roots swap their group's result over the intercommunicator */
+static int ompi_comm_allreduce_group_leader_exchange (ompi_comm_request_t *request)
+{
+    ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t *) request->context;
+    ompi_comm_cid_context_t *cid_context = context->cid_context;
+    ompi_request_t *subreq[2];
+    int rc;
+
+    rc = MCA_PML_CALL(irecv(context->tmpbuf, context->count, MPI_INT, 0, cid_context->pml_tag,
+                            cid_context->comm, subreq));
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    rc = MCA_PML_CALL(isend(context->outbuf, context->count, MPI_INT, 0, cid_context->pml_tag,
+                            MCA_PML_BASE_SEND_STANDARD, cid_context->comm, subreq + 1));
+    if (OMPI_SUCCESS != rc) {
+        return rc;
+    }
+
+    return ompi_comm_request_schedule_append (request, ompi_comm_allreduce_group_leader_reduce, subreq, 2);
 }
 
 static int ompi_comm_allreduce_group_recv_complete (ompi_comm_request_t *request)
@@ -1638,14 +1686,14 @@ static int ompi_comm_allreduce_group_recv_complete (ompi_comm_request_t *request
     if (MPI_PROC_NULL != context->peers_comm[0]) {
         /* interior node */
         rc = MCA_PML_CALL(isend(context->outbuf, context->count, MPI_INT, context->peers_comm[0],
-                                cid_context->pml_tag, MCA_PML_BASE_SEND_STANDARD,
-                                cid_context->comm, subreq));
+                                context->tag, MCA_PML_BASE_SEND_STANDARD,
+                                context->comm, subreq));
         if (OMPI_SUCCESS != rc) {
             return rc;
         }
 
         rc = MCA_PML_CALL(irecv(context->outbuf, context->count, MPI_INT, context->peers_comm[0],
-                                cid_context->pml_tag, cid_context->comm, subreq + 1));
+                                context->tag, context->comm, subreq + 1));
         if (OMPI_SUCCESS != rc) {
             return rc;
         }
@@ -1654,6 +1702,10 @@ static int ompi_comm_allreduce_group_recv_complete (ompi_comm_request_t *request
     }
 
     /* root */
+    if (OMPI_COMM_CID_INTER == cid_context->mode) {
+        return ompi_comm_allreduce_group_leader_exchange (request);
+    }
+
     return ompi_comm_allreduce_group_broadcast (request);
 }
 
@@ -1689,20 +1741,28 @@ static int ompi_comm_allreduce_group_nb (int *inbuf, int *outbuf, int count,
 
     request->context = &context->super;
 
+    context->comm = comm;
+    context->tag = cid_context->pml_tag;
+    if (OMPI_COMM_CID_INTER == cid_context->mode) {
+        /* reduce and broadcast within the local group; the roots meet in leader_exchange */
+        context->comm = cid_context->local_comm;
+        context->tag = cid_context->local_pml_tag;
+    }
+
     /* basic recursive doubling allreduce on the group */
     peers_group[0] = group_rank ? ((group_rank - 1) >> 1) : MPI_PROC_NULL;
     peers_group[1] = (group_rank * 2 + 1) < group_size ? group_rank * 2 + 1: MPI_PROC_NULL;
     peers_group[2] = (group_rank * 2 + 2) < group_size ? group_rank * 2 + 2 : MPI_PROC_NULL;
 
-    if (group == comm->c_local_group) {
-        /* The INTRA mode builds the tree over the parent's own group, where the
-         * translation is the identity.  ompi_group_translate_ranks() would scan
-         * the whole group once per peer to rediscover that, on every round of
-         * every creation. */
+    if (group == context->comm->c_local_group) {
+        /* The INTRA and INTER modes build the tree over the whole group of the
+         * communicator it runs on, where the translation is the identity.
+         * ompi_group_translate_ranks() would scan the whole group once per peer
+         * to rediscover that, on every round of every creation. */
         memcpy (context->peers_comm, peers_group, sizeof (peers_group));
     } else {
         /* translate the ranks into the ranks of the parent communicator */
-        ompi_group_translate_ranks (group, 3, peers_group, comm->c_local_group, context->peers_comm);
+        ompi_group_translate_ranks (group, 3, peers_group, context->comm->c_local_group, context->peers_comm);
     }
 
     /* reduce */
@@ -1711,7 +1771,7 @@ static int ompi_comm_allreduce_group_nb (int *inbuf, int *outbuf, int count,
     for (int i = 0 ; i < 2 ; ++i) {
         if (MPI_PROC_NULL != context->peers_comm[i + 1]) {
             int rc = MCA_PML_CALL(irecv(tmp, count, MPI_INT, context->peers_comm[i + 1],
-                                        cid_context->pml_tag, comm, subreq + subreq_count++));
+                                        context->tag, context->comm, subreq + subreq_count++));
             if (OMPI_SUCCESS != rc) {
                 ompi_comm_request_return (request);
                 return rc;
