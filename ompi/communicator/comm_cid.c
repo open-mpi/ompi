@@ -947,8 +947,8 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
         parent = NULL;
     }
     if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select(*newcomm, parent, !context->blocking))) {
-        OBJ_RELEASE(*newcomm);
-        *newcomm = MPI_COMM_NULL;
+        /* the new communicator stays the caller's to release, as with
+         * ompi_comm_nextcid(); see the note on ompi_comm_activate_nb_internal */
         return ret;
     }
 
@@ -984,7 +984,16 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
     return OMPI_SUCCESS;
 }
 
-/* blocking: the caller waits on the returned request (ompi_comm_activate). */
+/* blocking: the caller waits on the returned request (ompi_comm_activate).
+ *
+ * On failure *newcomm is left exactly as it was passed in: the activation
+ * never releases it and never stores MPI_COMM_NULL in it.  The new
+ * communicator belongs to the caller until the activation succeeds, which is
+ * the same contract as ompi_comm_nextcid().  Having only some of the exits
+ * here release and null it made the callers unsafe either way -- the ones
+ * that release their handle ended up doing it to MPI_COMM_NULL, and the ones
+ * that do not leaked on the remaining exits.
+ */
 static int ompi_comm_activate_nb_internal (ompi_communicator_t **newcomm, ompi_communicator_t *comm,
                                            ompi_communicator_t *bridgecomm, const void *arg0,
                                            const void *arg1, bool send_first, int mode,
@@ -1039,9 +1048,7 @@ static int ompi_comm_activate_nb_internal (ompi_communicator_t **newcomm, ompi_c
     if (MPI_UNDEFINED != (*newcomm)->c_local_group->grp_my_rank) {
         /* Initialize the PML stuff in the newcomm  */
         if ( OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(*newcomm))) ) {
-            OBJ_RELEASE(*newcomm);
             ompi_comm_request_return (request);
-            *newcomm = MPI_COMM_NULL;
             return ret;
         }
         OMPI_COMM_SET_PML_ADDED(*newcomm);
@@ -1163,6 +1170,14 @@ done:
 static int ompi_comm_activate_nb_complete (ompi_comm_request_t *request)
 {
     ompi_comm_cid_context_t *context = (ompi_comm_cid_context_t *) request->context;
+
+    /* The progress loop runs this even when the disjointness reduction failed,
+     * and then replaces the request status with what we return here.  Report
+     * the failure instead of selecting a collective module on its result. */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        return request->super.req_status.MPI_ERROR;
+    }
+
     return ompi_comm_activate_complete (context);
 }
 
@@ -1579,6 +1594,10 @@ static int ompi_comm_allreduce_group_broadcast (ompi_comm_request_t *request)
     int subreq_count = 0;
     int rc;
 
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        return request->super.req_status.MPI_ERROR;
+    }
+
     for (int i = 0 ; i < 2 ; ++i) {
         if (MPI_PROC_NULL != context->peers_comm[i + 1]) {
             rc = MCA_PML_CALL(isend(context->outbuf, context->count, MPI_INT, context->peers_comm[i+1],
@@ -1600,6 +1619,14 @@ static int ompi_comm_allreduce_group_recv_complete (ompi_comm_request_t *request
     int *tmp = context->tmpbuf;
     ompi_request_t *subreq[2];
     int rc;
+
+    /* A round that failed carries no data to reduce, and the rounds that would
+     * follow it have nothing to carry either.  Report the error rather than
+     * letting this request complete successfully, which would hand the cid
+     * negotiation an answer it never received. */
+    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+        return request->super.req_status.MPI_ERROR;
+    }
 
     for (int i = 0 ; i < 2 ; ++i) {
         if (MPI_PROC_NULL != context->peers_comm[i + 1]) {
@@ -1667,8 +1694,16 @@ static int ompi_comm_allreduce_group_nb (int *inbuf, int *outbuf, int count,
     peers_group[1] = (group_rank * 2 + 1) < group_size ? group_rank * 2 + 1: MPI_PROC_NULL;
     peers_group[2] = (group_rank * 2 + 2) < group_size ? group_rank * 2 + 2 : MPI_PROC_NULL;
 
-    /* translate the ranks into the ranks of the parent communicator */
-    ompi_group_translate_ranks (group, 3, peers_group, comm->c_local_group, context->peers_comm);
+    if (group == comm->c_local_group) {
+        /* The INTRA mode builds the tree over the parent's own group, where the
+         * translation is the identity.  ompi_group_translate_ranks() would scan
+         * the whole group once per peer to rediscover that, on every round of
+         * every creation. */
+        memcpy (context->peers_comm, peers_group, sizeof (peers_group));
+    } else {
+        /* translate the ranks into the ranks of the parent communicator */
+        ompi_group_translate_ranks (group, 3, peers_group, comm->c_local_group, context->peers_comm);
+    }
 
     /* reduce */
     memmove (outbuf, inbuf, sizeof (int) * count);
