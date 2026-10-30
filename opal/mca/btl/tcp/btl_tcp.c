@@ -624,7 +624,11 @@ int mca_btl_tcp_send_blocking(int sd, const void *data, size_t size)
     unsigned char *ptr = (unsigned char *) data;
     size_t cnt = 0;
     while (cnt < size) {
-        int retval = send(sd, ((const char *) ptr) + cnt, size - cnt, 0);
+        /* MSG_NOSIGNAL for the same reason as mca_btl_tcp_frag_send(): this
+         * also sends the closing message to a peer that may already have
+         * closed its end, and on Linux, where SO_NOSIGPIPE does not exist,
+         * that would raise SIGPIPE instead of failing with EPIPE */
+        int retval = send(sd, ((const char *) ptr) + cnt, size - cnt, MSG_NOSIGNAL);
         if (retval < 0) {
             if (opal_socket_errno != EINTR && opal_socket_errno != EAGAIN
                 && opal_socket_errno != EWOULDBLOCK) {
