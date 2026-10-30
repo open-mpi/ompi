@@ -503,14 +503,14 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_create(opal_proc_t *proc, int *status)
         return btl_proc;
     }
 
-    /* Fetched with no lock held. This is a blocking PMIx_Get with no
-     * timeout of its own: for a peer whose data has not been published
-     * yet it waits for the exchange, and it is reached from the
-     * listener's event callback, where the guid came off the wire. Under
-     * tcp_lock that wait would be the whole component's, including every
-     * other module's wire-up and teardown. Two threads racing here both
-     * fetch, which costs a duplicated read of data that does not change
-     * and is resolved by the recheck below.
+    /* Fetched with no lock held: under tcp_lock the wait would be the
+     * whole component's. Two threads racing both fetch, which the
+     * recheck below resolves.
+     *
+     * For a peer whose modex info has not arrived this answers
+     * OPAL_ERR_NOT_READY without asking PMIx, and being asked is what
+     * starts that fetch. So the status means "look again", not "failed",
+     * and there is no blocking variant to fall back on.
      */
     OPAL_MODEX_RECV(rc, &mca_btl_tcp_component.super.btl_version, &proc->proc_name,
                     (uint8_t **) &remote_addrs, &size);
@@ -771,11 +771,16 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_peek(const opal_process_name_t *name)
 
 /*
  * Look for an existing TCP process instance based on the globally unique
- * process identifier.
+ * process identifier, building it if this is the first we hear of the
+ * peer. On failure *status says whether a later look could succeed.
  */
-mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
+mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name, int *status)
 {
     mca_btl_tcp_proc_t *proc = mca_btl_tcp_proc_peek(name);
+
+    if (NULL != status) {
+        *status = OPAL_SUCCESS;
+    }
 
     if (OPAL_UNLIKELY(NULL == proc)) {
         opal_proc_t *opal_proc;
@@ -784,6 +789,9 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
 
         opal_proc = opal_proc_for_name(*name);
         if (NULL == opal_proc) {
+            if (NULL != status) {
+                *status = OPAL_ERR_NOT_FOUND;
+            }
             return NULL;
         }
 
@@ -792,7 +800,7 @@ mca_btl_tcp_proc_t *mca_btl_tcp_proc_lookup(const opal_process_name_t *name)
          * resolves the connection through, and that builds the one
          * endpoint the connection is for rather than one per module.
          */
-        proc = mca_btl_tcp_proc_create(opal_proc, NULL);
+        proc = mca_btl_tcp_proc_create(opal_proc, status);
     }
 
     return proc;
