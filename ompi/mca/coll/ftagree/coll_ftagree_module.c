@@ -38,12 +38,33 @@ mca_coll_ftagree_init_query(bool enable_progress_threads,
 /*
  * Init/Fini module on the communicator
  */
+/* Install only what this module provides, and on the way out remove only
+ * what it installed.  It does not provide every agreement on every
+ * communicator - there is no non-blocking one for an intercommunicator, and
+ * the NOFT algorithm provides neither - and installing a NULL would replace
+ * the fallback coll/basic put there, leaving the communicator with no
+ * implementation at all. */
+#define FTAGREE_INSTALL_COLL_API(__comm, __module, __api)                         \
+    do {                                                                          \
+        if (NULL != (__module)->coll_##__api) {                                   \
+            MCA_COLL_INSTALL_API(__comm, __api, (__module)->coll_##__api,         \
+                                 __module, "ftagree");                            \
+        }                                                                         \
+    } while (0)
+
+#define FTAGREE_UNINSTALL_COLL_API(__comm, __module, __api)                       \
+    do {                                                                          \
+        if ((__comm)->c_coll->coll_##__api##_module == (__module)) {              \
+            MCA_COLL_INSTALL_API(__comm, __api, NULL, NULL, "ftagree");           \
+        }                                                                         \
+    } while (0)
+
 static int
 mca_coll_ftagree_module_enable(mca_coll_base_module_t *module,
                              struct ompi_communicator_t *comm)
 {
-    MCA_COLL_INSTALL_API(comm, agree, module->coll_agree, module, "ftagree");
-    MCA_COLL_INSTALL_API(comm, iagree, module->coll_iagree, module, "ftagree");
+    FTAGREE_INSTALL_COLL_API(comm, module, agree);
+    FTAGREE_INSTALL_COLL_API(comm, module, iagree);
 
     /* All done */
     return OMPI_SUCCESS;
@@ -53,8 +74,8 @@ static int
 mca_coll_ftagree_module_disable(mca_coll_base_module_t *module,
                                 struct ompi_communicator_t *comm)
 {
-    MCA_COLL_INSTALL_API(comm, agree, NULL, NULL, "ftagree");
-    MCA_COLL_INSTALL_API(comm, iagree, NULL, NULL, "ftagree");
+    FTAGREE_UNINSTALL_COLL_API(comm, module, agree);
+    FTAGREE_UNINSTALL_COLL_API(comm, module, iagree);
 
     /* All done */
     return OMPI_SUCCESS;
