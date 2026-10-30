@@ -17,6 +17,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2016-2020 IBM Corporation.  All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -55,7 +56,6 @@
 #endif
 
 #include "memory_patcher.h"
-#undef opal_memory_changed
 
 #if defined(SYS_shmdt) || (defined(IPCOP_shmdt) && defined(SYS_ipc))
 #    define HAS_SHMDT 1
