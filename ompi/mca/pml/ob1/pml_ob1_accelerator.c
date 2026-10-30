@@ -132,7 +132,7 @@ static int mca_pml_ob1_accelerator_grow_events(void)
      * simply left unused.  Only fail if we could not create a single new event,
      * since the ring would then still be full. */
     for (i = old_size; i < new_size; i++) {
-        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &new_events[i], false);
+        result = opal_accelerator.create_event(MCA_ACCELERATOR_NO_DEVICE_ID, &new_events[i]);
         if (OPAL_SUCCESS != result) {
             opal_output_verbose(1, mca_pml_ob1_output,
                                 "Accelerator create event failed after %d of %d new events.",
