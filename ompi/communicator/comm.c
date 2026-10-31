@@ -1875,6 +1875,9 @@ static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_
     if (NULL != context->comm) {
         OBJ_RELEASE(context->comm);
     }
+    if (NULL != context->local_comm) {
+        OBJ_RELEASE(context->local_comm);
+    }
 }
 
 OBJ_CLASS_INSTANCE(ompi_comm_idup_with_info_context_t, opal_object_t,
@@ -1977,6 +1980,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     context->tag[0] = ompi_coll_base_nbc_reserve_tags (comm, 1);
     if (OMPI_COMM_IS_INTER (comm)) {
         context->local_comm = comm->c_local_comm;
+        OBJ_RETAIN(context->local_comm);    /* freeing the parent releases its c_local_comm at once */
         context->tag[1] = ompi_coll_base_nbc_reserve_tags (context->local_comm, 1);
     }
 
