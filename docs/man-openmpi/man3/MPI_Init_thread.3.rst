@@ -144,7 +144,7 @@ of the values listed below.
           Starting with Open MPI v6.0.0, the Open MPI community
           recommends using one of the string name variants so that it
           can be correctly mapped to the corresponding Open MPI ABI
-          value or the MPI Standard ABI value, as relevant.
+          value or the MPI Forum ABI value, as relevant.
 
 NOTES
 -----

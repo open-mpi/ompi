@@ -110,8 +110,8 @@ Open MPI provides wrapper compilers for several languages:
 
 * ``mpicc``: C
 
-* ``mpicc_abi``: C, using the MPI standard ABI when Open MPI was built
-  with standard ABI support
+* ``mpicc_abi``: C, using the MPI Forum ABI, when Open MPI was built
+  with support for it
 
 * ``mpic++``, ``mpicxx`` (and on systems with case-sensitive file
   systems, ``mpiCC``): C++
@@ -128,7 +128,7 @@ identical; they can be used interchangeably.  The different names are
 provided solely for backwards compatibility.
 
 The ``mpicc_abi`` wrapper is different: it compiles and links C MPI
-applications against the MPI standard ABI ``mpi.h`` and ``libmpi_abi``.
+applications against the MPI Forum ABI ``mpi.h`` and ``libmpi_abi``.
 See :ref:`Building MPI applications using the MPI Forum ABI
 <label-building-with-mpi-abi>` for more information.
 

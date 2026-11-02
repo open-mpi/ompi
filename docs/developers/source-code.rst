@@ -311,7 +311,7 @@ genuinely private to a single DSO.
    * ``libopen_mpi`` -- the internal OMPI implementation library
    * ``libmpi`` -- the Open MPI ABI library (linked by ``mpicc``)
    * ``libmpi_abi`` -- the standardized MPI ABI library (linked by
-     ``mpicc_abi``; only built with ``--enable-standard-abi``, which is
+     ``mpicc_abi``; only built with ``--enable-forum-abi``, which is
      the default)
 
    See ``ompi/mpi/README_ABI.md`` for the full picture of this library

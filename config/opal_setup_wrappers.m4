@@ -734,7 +734,7 @@ AC_DEFUN([OPAL_SETUP_WRAPPER_FINAL],[
        dnl Equivalents for the MPI Forum ABI pkg-config files
        dnl (ompi-forum-abi*.pc).  The Cflags intentionally omit
        dnl OMPI_WRAPPER_CPPFLAGS: the MPI Forum ABI pc files set
-       dnl includedir to the standard_abi subdirectory themselves,
+       dnl includedir to the forum_abi subdirectory themselves,
        dnl mirroring what the mpicc_abi wrapper passes.
        AC_MSG_CHECKING([for MPI Forum ABI pkg-config Cflags])
        OMPI_FORUM_ABI_PC_CFLAGS="${OMPI_WRAPPER_CFLAGS} ${OMPI_WRAPPER_CFLAGS_PREFIX}"

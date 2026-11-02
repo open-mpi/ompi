@@ -5,7 +5,7 @@ MPI_Abi_get_version
 
 .. include_body
 
-:ref:`MPI_Abi_get_version` |mdash| Returns the standard ABI version, if supported.
+:ref:`MPI_Abi_get_version` |mdash| Returns the MPI Forum ABI version, if supported.
 
 .. The following file was automatically generated
 .. include:: ./bindings/mpi_abi_get_version.rst
@@ -20,7 +20,7 @@ OUTPUT PARAMETERS
 DESCRIPTION
 -----------
 
-:ref:`MPI_Abi_get_version` returns the standard ABI version, if supported. Otherwise,
+:ref:`MPI_Abi_get_version` returns the MPI Forum ABI version, if supported. Otherwise,
 the values of the major and minor version are set to -1. The ABI version is independent
 of the MPI specification version. The major and minor version of the ABI associated
 with MPI-5.0 are 1 and 0.
@@ -29,11 +29,11 @@ The ABI version macros MPI_ABI_VERSION and MPI_ABI_SUBVERSION are present in the
 so that applications can check for consistency between the compilation
 environment and the properties of the implementation at runtime.
 
-When Open MPI is used through its standard ABI library, ``libmpi_abi``,
+When Open MPI is used through its MPI Forum ABI library, ``libmpi_abi``,
 this routine returns version 1.0.  When Open MPI is used through its
 normal ``libmpi`` library, this routine returns ``-1`` for both
 ``abi_major`` and ``abi_minor`` because normal ``libmpi`` uses
-Open MPI's internal ABI, not the MPI standard ABI.
+Open MPI's internal ABI, not the MPI Forum ABI.
 
 NOTE
 ----

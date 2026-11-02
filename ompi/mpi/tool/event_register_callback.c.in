@@ -38,7 +38,7 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
     /* Record which MPI ABI this registering tool is using, so the producers
        emit object handles (MPI_Comm / MPI_Win / MPI_Errhandler / MPI_Session)
        in the matching representation.  This entry point is the Open MPI ABI one,
-       so hard-code the Open MPI ABI; when the MPI Standard ABI lands
+       so hard-code the Open MPI ABI; when the MPI Forum ABI lands
        (open-mpi/ompi#13280) its separate entry point will set
        OMPI_MPIT_ABI_STANDARD here instead. */
     ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;

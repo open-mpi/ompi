@@ -41,7 +41,7 @@ The length of the name that can be stored depends on which Open MPI
 interface the application uses.  The traditional Open MPI interface limits
 names to |ompi_max_object_name| bytes (the value of ``MPI_MAX_OBJECT_NAME``
 in ``mpi.h``, which Open MPI has used for many years), while the MPI Forum
-standard ABI limits names to |mpi_abi_max_object_name| bytes (the value
+ABI limits names to |mpi_abi_max_object_name| bytes (the value
 required by the MPI standard).  Open MPI honors whichever limit corresponds
 to the interface the application was compiled against.  A name longer than
 the applicable limit (including its terminating null character) is silently

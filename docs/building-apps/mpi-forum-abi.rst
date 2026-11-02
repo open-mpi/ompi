@@ -72,12 +72,12 @@ ABI: a default Open MPI installation provides ``libmpi`` (the Open MPI
 ABI) and ``libmpi_abi`` (the MPI Forum ABI), along with the compiler
 wrappers and ``pkg-config`` files for each.
 
-The MPI Forum ABI support is controlled by the ``--enable-standard-abi``
-/ ``--disable-standard-abi`` ``configure`` options, which are described
+The MPI Forum ABI support is controlled by the ``--enable-forum-abi``
+/ ``--disable-forum-abi`` ``configure`` options, which are described
 with the rest of the :doc:`MPI functionality configure options
 </installing-open-mpi/configure-cli-options/mpi>`.
 
-.. note:: If Open MPI is configured with ``--disable-standard-abi``,
+.. note:: If Open MPI is configured with ``--disable-forum-abi``,
           ``libmpi_abi``, the ``mpicc_abi`` wrapper, and the
           ``ompi-forum-abi*`` pkg-config files are not built or
           installed.  Such an installation supports only the Open MPI
@@ -114,7 +114,7 @@ wrapper-provided flags with:
    shell$ mpicc_abi --showme:link
 
 The MPI Forum ABI ``mpi.h`` is installed under
-``$prefix/include/standard_abi``.  The normal Open MPI ``mpi.h`` remains
+``$prefix/include/forum_abi``.  The normal Open MPI ``mpi.h`` remains
 installed under ``$prefix/include`` and is used by the normal ``mpicc``
 wrapper.
 
@@ -136,11 +136,11 @@ Open MPI provides the following MPI Forum ABI pkg-config files:
 * ``ompi-forum-abi-cxx``: C++ applications using the MPI Forum ABI
 
 .. note:: These pkg-config files are only installed when Open MPI is
-          configured with ``--enable-standard-abi`` (the default).
+          configured with ``--enable-forum-abi`` (the default).
 
 Like the ``mpicc_abi`` wrapper, these pkg-config files link only
 against ``libmpi_abi`` and use the MPI Forum ABI header from
-``$prefix/include/standard_abi``.
+``$prefix/include/forum_abi``.
 
 Checking which ABIs an installation provides
 ---------------------------------------------
@@ -159,7 +159,7 @@ own ABI.  The ``MPI Forum ABI`` line reflects whether the installation
 was configured with the MPI Forum ABI support enabled (see
 :ref:`label-mpi-abi-enable-disable`, above); it is ``yes`` by default,
 and ``no`` in an installation configured with
-``--disable-standard-abi``.
+``--disable-forum-abi``.
 
 The same values are available in ``ompi_info``'s machine-readable
 output, which is more convenient for scripts:
@@ -238,7 +238,7 @@ Building the other implementation with MPI Forum ABI support
 
 An MPI implementation only provides the MPI Forum ABI library if it was
 built with MPI Forum ABI support enabled.  Open MPI builds ``libmpi_abi``
-by default (see ``--enable-standard-abi``).  Other implementations may
+by default (see ``--enable-forum-abi``).  Other implementations may
 gate their MPI Forum ABI library behind a build-time option and may not
 build it by default.
 
@@ -515,7 +515,7 @@ errors, or appear to work until an MPI object crosses the ABI boundary.
 
 Use *one* MPI ABI consistently for every object file that calls MPI:
 
-* For a C MPI application using the MPI-5.0 MPI Forum ABI, compile and
+* For a C MPI application using the MPI Forum ABI, compile and
   link all MPI-using C objects with ``mpicc_abi``.
 * For other MPI applications, including mixed C and Fortran
   applications, compile C objects with ``mpicc`` and Fortran objects
@@ -537,8 +537,7 @@ ultimately run by the same Open MPI installation.
 
 .. danger:: Do not launch an MPI job that mixes processes built against
             the Open MPI ABI with processes built against the MPI Forum
-            MPI Forum ABI.  Every process in the job must use the same
-            MPI ABI.
+            ABI.  Every process in the job must use the same MPI ABI.
 
 This restriction applies to every way that processes can end up in the
 same MPI job, including:
