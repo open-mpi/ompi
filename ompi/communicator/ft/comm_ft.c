@@ -345,7 +345,7 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
                         comm->error_handler,      /* error handler */
                         alive_group,              /* local group */
                         alive_rgroup,             /* remote group */
-                        0                         /* flags */
+                        OMPI_COMM_SET_FLAG_FT_CID /* flags */
                       );
     if( OMPI_SUCCESS != rc ) {
         exit_status = rc;
@@ -627,7 +627,7 @@ static int ompi_comm_ishrink_check_agree(ompi_comm_request_t *request) {
                            comm->error_handler,      /* error handler */
                            context->alive_group,     /* local group */
                            context->alive_rgroup,    /* remote group */
-                           0,                        /* flags */
+                           OMPI_COMM_SET_FLAG_FT_CID, /* flags */
                            subreq
                          );
     if( OMPI_SUCCESS != rc ) {

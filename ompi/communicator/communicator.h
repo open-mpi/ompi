@@ -1144,6 +1144,16 @@ OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
 #define OMPI_COMM_SET_FLAG_COPY_TOPOLOGY    0x00000002
 
 /**
+ * @brief Agree on the duplicated local communicator's context id rather
+ *        than reducing over it.
+ *
+ * Only shrink duplicates while the old communicator still holds failed
+ * processes, where an allreduce cannot complete.  Every other caller has
+ * ruled failures out and should not pay for an agreement.
+ */
+#define OMPI_COMM_SET_FLAG_FT_CID           0x00000004
+
+/**
  * This is THE routine, where all the communicator stuff
  * is really set. Non-blocking version.
  *
