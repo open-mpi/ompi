@@ -1788,9 +1788,11 @@ static int ompi_comm_ft_allreduce_intra_nb(int *inbuf, int *outbuf, int count,
 
     /** Repurpose the inbuf to store the failed_group */
     ompi_group_t** failed_group = (ompi_group_t**) &context->inbuf;
-    opal_mutex_lock(&ompi_group_afp_mutex);
-    ompi_group_intersection(comm->c_remote_group, ompi_group_all_failed_procs, failed_group);
-    opal_mutex_unlock(&ompi_group_afp_mutex);
+    rc = ompi_comm_failed_group(comm, failed_group);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        ompi_comm_request_return(request);
+        return rc;
+    }
 
     rc = comm->c_coll->coll_iagree(context->outbuf, context->count, &ompi_mpi_int.dt, context->op,
                                    failed_group, true,
