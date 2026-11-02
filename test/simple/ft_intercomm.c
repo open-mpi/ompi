@@ -108,7 +108,9 @@ static const char *errstr(int rc)
 int main(int argc, char *argv[])
 {
     MPI_Comm icomm, shrunk;
+    MPI_Group fgroup;
     MPI_Request req;
+    int nfailed = -1, nacked = -1;
     int nchildren = 2;
     int dofail = 0;
     int parent_side, nlocal, nremote;
@@ -221,6 +223,25 @@ int main(int argc, char *argv[])
         printf("     %s rank %d: agreed 0x%x, expected 0x%x\n", whoami, rank, flag, expected);
     }
     check(expected == flag, "agree is still a correct agreement after a failure");
+
+    /* The dead process is in the remote group as the parents see it and in
+     * the local group as the children do; the query has to find it either
+     * way. */
+    rc = MPIX_Comm_get_failed(icomm, &fgroup);
+    if (MPI_SUCCESS == rc) {
+        MPI_Group_size(fgroup, &nfailed);
+        MPI_Group_free(&fgroup);
+    }
+    check(MPI_SUCCESS == rc && 1 == nfailed, "get_failed reports it from either side");
+
+    /* Acknowledging it has to work from either side too, and an agreement
+     * stops reporting a failure that has been acknowledged. */
+    rc = MPIX_Comm_ack_failed(icomm, nlocal + nremote, &nacked);
+    check(MPI_SUCCESS == rc && 1 == nacked, "ack_failed acknowledges it from either side");
+
+    flag = contrib;
+    rc = MPIX_Comm_agree(icomm, &flag);
+    check(MPI_SUCCESS == rc && expected == flag, "agree ignores an acknowledged failure");
 
     /* Phase 5: rebuild, and use what we rebuilt */
     rc = MPIX_Comm_shrink(icomm, &shrunk);

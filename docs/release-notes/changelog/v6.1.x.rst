@@ -8,6 +8,19 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- The ULFM failure queries on an intercommunicator --
+  ``MPIX_Comm_get_failed``, ``MPIX_Comm_ack_failed`` and
+  ``MPIX_Comm_failure_get_acked`` -- now report and acknowledge the
+  failed processes of both of its groups, as their man pages describe.
+  They reported only the local group, so a process could not learn
+  through an intercommunicator that the processes on the other side of
+  it -- the only ones it can address through that communicator -- were
+  gone, could not acknowledge their failure, and could therefore
+  neither re-enable ``MPI_ANY_SOURCE`` nor complete an
+  ``MPIX_Comm_agree``.  ``MPIX_Comm_ack_failed`` also rejected a
+  ``num_to_ack`` larger than the local group, although the failures it
+  acknowledges can be in either group.
+
 - ULFM's non-blocking agreement, ``MPIX_Comm_iagree``, is now available
   on intercommunicators, and with it ``MPIX_Comm_ishrink``.  Both
   previously fell back on a plain ``MPI_Iallreduce``, which does not

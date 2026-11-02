@@ -41,7 +41,7 @@ int MPIX_Comm_get_failed(MPI_Comm comm, MPI_Group *failedgrp)
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = ompi_comm_get_failed_internal( (ompi_communicator_t*)comm, (ompi_group_t**)failedgrp );
+    rc = ompi_comm_failed_group( (ompi_communicator_t*)comm, (ompi_group_t**)failedgrp );
     if( OMPI_SUCCESS != rc ) {
         OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
     }
