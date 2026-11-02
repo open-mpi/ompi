@@ -677,11 +677,6 @@ static inline bool ompi_comm_is_revoked(ompi_communicator_t* comm)
 }
 
 /*
- * Obtain the group of locally known failed processes on comm
- */
-OMPI_DECLSPEC int ompi_comm_get_failed_internal(ompi_communicator_t* comm, ompi_group_t** failed_group);
-
-/*
  * Acknowledge failures and re-enable MPI_ANY_SOURCE
  * Related to OMPI_Comm_failure_ack() and OMPI_Comm_failure_get_acked()
  */

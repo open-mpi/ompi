@@ -30,6 +30,9 @@
 
 ompi_comm_rank_failure_callback_t *ompi_rank_failure_cbfunc = NULL;
 
+static int ompi_comm_group_failures_locked(ompi_communicator_t* comm, ompi_group_t *from,
+                                           ompi_group_t **failed_group);
+
 /**
  * The handling of known failed processes is based on a two level process. On one
  * side the MPI library itself must know the failed processes (in order to be able
@@ -88,24 +91,14 @@ int ompi_comm_failure_get_acked_internal(ompi_communicator_t* comm, ompi_group_t
     range[2] = 1;
 
     rc = ompi_group_range_incl(ompi_group_all_failed_procs, 1, &range, &tmp_sub_group);
-    opal_mutex_unlock(&ompi_group_afp_mutex);
-    if( OMPI_SUCCESS != rc ) {
-        exit_status = rc;
-        goto cleanup;
-    }
 
     /*
      * Access the intersection between the failed subgroup and our group
      */
-    if( OMPI_COMM_IS_INTER(comm) ) {
-        rc = ompi_group_intersection(tmp_sub_group,
-                                     comm->c_local_group,
-                                     group);
-    } else {
-        rc = ompi_group_intersection(tmp_sub_group,
-                                     comm->c_remote_group,
-                                     group);
+    if( OMPI_SUCCESS == rc ) {
+        rc = ompi_comm_group_failures_locked(comm, tmp_sub_group, group);
     }
+    opal_mutex_unlock(&ompi_group_afp_mutex);
 
     if( OMPI_SUCCESS != rc ) {
         exit_status = rc;
@@ -132,7 +125,6 @@ int ompi_comm_failure_get_acked_internal(ompi_communicator_t* comm, ompi_group_t
 int ompi_comm_ack_failed_internal(ompi_communicator_t* comm, int num_to_ack, int *num_acked) {
     int ret, exit_status = MPI_SUCCESS;
     int nf = -1, na = -1;
-    ompi_group_t *c_group = OMPI_COMM_IS_INTER(comm)? comm->c_local_group: comm->c_remote_group;
     ompi_group_t *failed_group = NULL;
 
     opal_mutex_lock(&ompi_group_afp_mutex);
@@ -146,9 +138,9 @@ int ompi_comm_ack_failed_internal(ompi_communicator_t* comm, int num_to_ack, int
     && comm->num_acked >= 0 /* reset by a call to v1 API? */)
         goto return_num_acked;
 
-    /* compute num_acked */
-    ret = ompi_group_intersection(ompi_group_all_failed_procs,
-                                  c_group, &failed_group);
+    /* compute num_acked over the same group MPIX_Comm_get_failed reports,
+     * which for an intercommunicator spans both of its groups */
+    ret = ompi_comm_group_failures_locked(comm, ompi_group_all_failed_procs, &failed_group);
     if(OMPI_SUCCESS != ret) {
         exit_status = ret;
         goto cleanup;
@@ -205,43 +197,97 @@ cleanup:
     return exit_status;
 }
 
-int ompi_comm_get_failed_internal(ompi_communicator_t* comm, ompi_group_t **group)
+/* Merge two groups of failed processes into the order 'from' holds them.
+ * Both are already in that order, so this walks their positions in it, and
+ * the two are disjoint, so there is nothing to deduplicate.  Sized by the
+ * failures and not by the groups they came from. */
+static int ompi_comm_merge_failed(ompi_group_t *from, ompi_group_t *lgroup,
+                                  ompi_group_t *rgroup, ompi_group_t **merged)
 {
-    int ret, exit_status = OMPI_SUCCESS;
-    ompi_group_t *c_group = OMPI_COMM_IS_INTER(comm)? comm->c_local_group: comm->c_remote_group;
-    opal_mutex_lock(&ompi_group_afp_mutex);
-    ret = ompi_group_intersection(ompi_group_all_failed_procs,
-                                  c_group,
-                                  group);
-    opal_mutex_unlock(&ompi_group_afp_mutex);
-    if( OMPI_SUCCESS != ret ) {
-        exit_status = ret;
+    int *lpos = NULL, *rpos = NULL, *pos = NULL;
+    int nl = ompi_group_size(lgroup);
+    int nr = ompi_group_size(rgroup);
+    int i, l, r, k, rc;
+
+    lpos = malloc((2 * (nl + nr)) * sizeof(int));
+    if( NULL == lpos ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    return exit_status;
+    rpos = lpos + nl;
+    pos = rpos + nr;
+
+    for( i = 0; i < nl + nr; i++ ) {
+        pos[i] = i;  /* reused below as the rank list into the global group */
+    }
+    rc = ompi_group_translate_ranks(lgroup, nl, pos, from, lpos);
+    if( OMPI_SUCCESS == rc ) {
+        rc = ompi_group_translate_ranks(rgroup, nr, pos, from, rpos);
+    }
+    if( OMPI_SUCCESS != rc ) {
+        free(lpos);
+        return rc;
+    }
+
+    for( l = r = k = 0; k < nl + nr; k++ ) {
+        if( r >= nr || (l < nl && lpos[l] < rpos[r]) ) {
+            pos[k] = lpos[l++];
+        } else {
+            pos[k] = rpos[r++];
+        }
+    }
+    rc = ompi_group_incl(from, nl + nr, pos, merged);
+
+    free(lpos);
+
+    return rc;
 }
 
-int ompi_comm_failed_group(ompi_communicator_t* comm, ompi_group_t **failed_group)
+/* The processes of 'comm' that appear in 'from', in the order 'from' holds
+ * them.  The caller must hold ompi_group_afp_mutex. */
+static int ompi_comm_group_failures_locked(ompi_communicator_t* comm, ompi_group_t *from,
+                                           ompi_group_t **failed_group)
 {
     ompi_group_t *rfailed_group = NULL, *both_group = NULL;
     int rc;
 
-    /* The intersection is ordered by its first group, so taking the global
-     * list first yields the failures in the order they were detected. */
-    opal_mutex_lock(&ompi_group_afp_mutex);
-    rc = ompi_group_intersection(ompi_group_all_failed_procs, comm->c_local_group, failed_group);
-    if( OMPI_SUCCESS == rc && OMPI_COMM_IS_INTER(comm) ) {
-        /* Two disjoint groups, either of which can lose processes.  Union
-         * the failures and not the groups: there are far fewer of them. */
-        rc = ompi_group_intersection(ompi_group_all_failed_procs, comm->c_remote_group, &rfailed_group);
-        if( OMPI_SUCCESS == rc ) {
-            rc = ompi_group_union(*failed_group, rfailed_group, &both_group);
-            if( OMPI_SUCCESS == rc ) {
-                OBJ_RELEASE(*failed_group);
-                *failed_group = both_group;
-            }
-            OBJ_RELEASE(rfailed_group);
-        }
+    /* The intersection is ordered by its first group, so taking 'from' first
+     * yields the failures in the order they were detected. */
+    rc = ompi_group_intersection(from, comm->c_local_group, failed_group);
+    if( OMPI_SUCCESS != rc || !OMPI_COMM_IS_INTER(comm) ) {
+        return rc;
     }
+
+    /* Two disjoint groups, either of which can lose processes. */
+    rc = ompi_group_intersection(from, comm->c_remote_group, &rfailed_group);
+    if( OMPI_SUCCESS != rc ) {
+        return rc;
+    }
+    if( 0 == ompi_group_size(rfailed_group) ) {
+        OBJ_RELEASE(rfailed_group);
+        return OMPI_SUCCESS;
+    }
+    if( 0 == ompi_group_size(*failed_group) ) {
+        OBJ_RELEASE(*failed_group);
+        *failed_group = rfailed_group;
+        return OMPI_SUCCESS;
+    }
+
+    rc = ompi_comm_merge_failed(from, *failed_group, rfailed_group, &both_group);
+    if( OMPI_SUCCESS == rc ) {
+        OBJ_RELEASE(*failed_group);
+        *failed_group = both_group;
+    }
+    OBJ_RELEASE(rfailed_group);
+
+    return rc;
+}
+
+int ompi_comm_failed_group(ompi_communicator_t* comm, ompi_group_t **failed_group)
+{
+    int rc;
+
+    opal_mutex_lock(&ompi_group_afp_mutex);
+    rc = ompi_comm_group_failures_locked(comm, ompi_group_all_failed_procs, failed_group);
     opal_mutex_unlock(&ompi_group_afp_mutex);
 
     return rc;
