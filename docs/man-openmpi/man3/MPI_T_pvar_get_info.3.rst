@@ -80,7 +80,7 @@ initial value, valid types, and behavior. The class returned in the
   MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. The starting value is the
   current utilization of the resource.
 
-* ``MPI_T_PVAR_CLASS_HIGHWATERMARK``: Variable represents the low
+* ``MPI_T_PVAR_CLASS_LOWWATERMARK``: Variable represents the low
   watermark of the utilization of a resource. Variables of this class
   are represented by an MPI_UNSIGNED, MPI_UNSIGNED_LONG,
   MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. The starting value is the
@@ -91,7 +91,7 @@ initial value, valid types, and behavior. The class returned in the
   are represented by an MPI_UNSIGNED, MPI_UNSIGNED_LONG, or
   MPI_UNSIGNED_LONG_LONG. The starting value is 0.
 
-* ``MPI_T_PVAR_CLASS_COUNTER``: Variable represents an aggregated
+* ``MPI_T_PVAR_CLASS_AGGREGATE``: Variable represents an aggregated
   value that represents a sum of arguments processed during a specific
   event. Variables of this class are represented by an MPI_UNSIGNED,
   MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG_LONG, or MPI_DOUBLE. The
@@ -106,7 +106,7 @@ initial value, valid types, and behavior. The class returned in the
   value is 0.
 
 * ``MPI_T_PVAR_CLASS_GENERIC``: Variable does not fit into any other
-  class. Can by represented by an type supported by the MPI tool
+  class. Can be represented by any type supported by the MPI tool
   information interface (see DATATYPE).  Starting value is variable
   specific.
 
