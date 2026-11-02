@@ -39,6 +39,12 @@ jobs:
               --enable-mpi-fortran
               --disable-silent-rules
               --enable-mca-dso
+          - os: ubuntu-latest
+            config_name: no-fortran
+            configure_options: >-
+              --enable-sphinx
+              --disable-mpi-fortran
+              --disable-silent-rules
           - os: macos-latest
             config_name: default
             configure_options: >-
