@@ -19,6 +19,7 @@
 
 #include "ompi_config.h"
 
+#include <limits.h>
 
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/btl/btl.h"
@@ -3494,6 +3495,30 @@ int mca_coll_ftagree_iera_intra(void *contrib,
     return OMPI_SUCCESS;
 }
 
+/**
+ * The identity element of 'op' over a single int, in *identity.
+ *
+ * Both halves are reduced at once, so each side has to leave in the half it
+ * does not belong to something that cannot change that half's result.
+ */
+static int era_op_identity(ompi_op_t *op, int *identity)
+{
+    if(      &ompi_mpi_op_band.op == op ) { *identity = ~0;      }
+    else if( &ompi_mpi_op_bor.op  == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_bxor.op == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_land.op == op ) { *identity = 1;       }
+    else if( &ompi_mpi_op_lor.op  == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_lxor.op == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_max.op  == op ) { *identity = INT_MIN; }
+    else if( &ompi_mpi_op_min.op  == op ) { *identity = INT_MAX; }
+    else if( &ompi_mpi_op_sum.op  == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_prod.op == op ) { *identity = 1;       }
+    else {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+    return OMPI_SUCCESS;
+}
+
 /*
  * mca_coll_ftagree_iera_inter
  *
@@ -3512,11 +3537,12 @@ int mca_coll_ftagree_iera_inter(void *contrib,
 {
     ompi_coll_ftagree_era_iagree_request_t *req;
     ompi_communicator_t *agreement_comm;
+    int identity;
 
     /* The pair of halves is a fixed two ints, so only a single int can be
-     * agreed on, and only with the operation MPIX_Comm_iagree() performs. */
+     * agreed on.  Every caller in the tree asks for exactly that. */
     if( OPAL_UNLIKELY(dt != &ompi_mpi_int.dt || 1 != dt_count
-                   || &ompi_mpi_op_band.op != op) ) {
+                   || OMPI_SUCCESS != era_op_identity(op, &identity)) ) {
         return MPI_ERR_UNSUPPORTED_OPERATION;
     }
 
@@ -3533,10 +3559,10 @@ int mca_coll_ftagree_iera_inter(void *contrib,
     req->first = ((mca_coll_ftagree_module_t *)module)->agreement_comm_first;
     if( req->first ) {
         req->contriblh[0] = *(int*)contrib;
-        req->contriblh[1] = ~0;
+        req->contriblh[1] = identity;
     }
     else {
-        req->contriblh[0] = ~0;
+        req->contriblh[0] = identity;
         req->contriblh[1] = *(int*)contrib;
     }
 
