@@ -2,6 +2,7 @@
  * Copyright (c) 2012-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -175,6 +176,12 @@ mca_coll_ftagree_module_construct(mca_coll_ftagree_module_t *module)
 
     /* This object is managed by the agreement operation selected */
     module->agreement_info = NULL;
+
+    /* These are set up by the agreement operation selected, on the first
+     * agreement that needs them */
+    module->comm = NULL;
+    module->agreement_comm = NULL;
+    module->agreement_comm_first = false;
 }
 
 static void
