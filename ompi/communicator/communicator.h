@@ -705,6 +705,13 @@ OMPI_DECLSPEC int ompi_comm_failure_get_acked_internal(ompi_communicator_t* comm
 OMPI_DECLSPEC int ompi_comm_revoke_internal(ompi_communicator_t* comm);
 
 /*
+ * The processes of the communicator already known to have failed.  Both
+ * groups of an intercommunicator are examined; an intracommunicator's two
+ * are the same object.
+ */
+OMPI_DECLSPEC int ompi_comm_failed_group(ompi_communicator_t* comm, ompi_group_t **failed_group);
+
+/*
  * Shrink the communicator
  */
 OMPI_DECLSPEC int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** newcomm);

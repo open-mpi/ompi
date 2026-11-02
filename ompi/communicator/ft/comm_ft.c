@@ -7,6 +7,7 @@
  *
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -219,6 +220,33 @@ int ompi_comm_get_failed_internal(ompi_communicator_t* comm, ompi_group_t **grou
     return exit_status;
 }
 
+int ompi_comm_failed_group(ompi_communicator_t* comm, ompi_group_t **failed_group)
+{
+    ompi_group_t *rfailed_group = NULL, *both_group = NULL;
+    int rc;
+
+    /* The intersection is ordered by its first group, so taking the global
+     * list first yields the failures in the order they were detected. */
+    opal_mutex_lock(&ompi_group_afp_mutex);
+    rc = ompi_group_intersection(ompi_group_all_failed_procs, comm->c_local_group, failed_group);
+    if( OMPI_SUCCESS == rc && OMPI_COMM_IS_INTER(comm) ) {
+        /* Two disjoint groups, either of which can lose processes.  Union
+         * the failures and not the groups: there are far fewer of them. */
+        rc = ompi_group_intersection(ompi_group_all_failed_procs, comm->c_remote_group, &rfailed_group);
+        if( OMPI_SUCCESS == rc ) {
+            rc = ompi_group_union(*failed_group, rfailed_group, &both_group);
+            if( OMPI_SUCCESS == rc ) {
+                OBJ_RELEASE(*failed_group);
+                *failed_group = both_group;
+            }
+            OBJ_RELEASE(rfailed_group);
+        }
+    }
+    opal_mutex_unlock(&ompi_group_afp_mutex);
+
+    return rc;
+}
+
 int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** newcomm)
 {
     int rc, exit_status = OMPI_SUCCESS;
@@ -242,9 +270,11 @@ int ompi_comm_shrink_internal(ompi_communicator_t* comm, ompi_communicator_t** n
 #if OPAL_ENABLE_DEBUG
     start = ompi_wtime();
 #endif
-    opal_mutex_lock(&ompi_group_afp_mutex);
-    ompi_group_intersection(comm->c_remote_group, ompi_group_all_failed_procs, &failed_group);
-    opal_mutex_unlock(&ompi_group_afp_mutex);
+    rc = ompi_comm_failed_group(comm, &failed_group);
+    if( OMPI_SUCCESS != rc ) {
+        exit_status = rc;
+        goto cleanup;
+    }
 #if OPAL_ENABLE_DEBUG
     stop = ompi_wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
@@ -473,7 +503,11 @@ int ompi_comm_ishrink_internal(ompi_communicator_t* comm, ompi_communicator_t** 
 #if OPAL_ENABLE_DEBUG
     context->start = ompi_wtime();
 #endif
-    ompi_group_intersection(comm->c_remote_group, ompi_group_all_failed_procs, &context->failed_group);
+    rc = ompi_comm_failed_group(comm, &context->failed_group);
+    if(OPAL_UNLIKELY( OMPI_SUCCESS != rc )) {
+        ompi_comm_request_return(request);
+        return rc;
+    }
 #if OPAL_ENABLE_DEBUG
     stop = ompi_wtime();
     OPAL_OUTPUT_VERBOSE((10, ompi_ftmpi_output_handle,
