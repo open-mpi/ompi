@@ -47,7 +47,10 @@ prototype_sources = \
         comm_create_errhandler_x.c.in \
         win_create_errhandler_x.c.in \
         file_create_errhandler_x.c.in \
-        session_create_errhandler_x.c.in
+        session_create_errhandler_x.c.in \
+        comm_create_keyval_x.c.in \
+        type_create_keyval_x.c.in \
+        win_create_keyval_x.c.in
 
 
 # This list is spelled out explicitly (rather than derived from
@@ -58,7 +61,10 @@ interface_profile_sources = \
         comm_create_errhandler_x_ompi_generated.c \
         win_create_errhandler_x_ompi_generated.c \
         file_create_errhandler_x_ompi_generated.c \
-        session_create_errhandler_x_ompi_generated.c
+        session_create_errhandler_x_ompi_generated.c \
+        comm_create_keyval_x_ompi_generated.c \
+        type_create_keyval_x_ompi_generated.c \
+        win_create_keyval_x_ompi_generated.c
 
 if OMPI_GENERATE_BINDINGS
 # See OMPI_BINDINGS_GENERATOR in Makefile.ompi-rules.

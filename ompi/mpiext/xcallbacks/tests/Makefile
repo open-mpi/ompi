@@ -22,9 +22,13 @@ FCFLAGS = -g
 
 # Example programs to build
 
+comm_create_keyval_x.c	type_create_keyval_x.c	win_create_keyval_x.c
 EXAMPLES = \
+        comm_create_keyval_x.c \
         errhandler_x \
-        op_create_x
+        op_create_x \
+        type_create_keyval_x.c \
+	win_create_keyval_x.c
 
 # Default target.  Always build the C example.  Only build the others
 # if Open MPI was build with the relevant language bindings.

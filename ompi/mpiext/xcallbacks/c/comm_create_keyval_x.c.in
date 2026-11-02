@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+ */
+#include "ompi_config.h"
+
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/attribute/attribute.h"
+#include "ompi/mpiext/xcallbacks/c/mpiext_xcallbacks_c.h"
+#if OMPI_ABI_SRC
+#include "ompi/mpi/c/abi.h"
+#include "ompi/mpi/c/abi_converters.h"
+#include "ompi/mpiext/xcallbacks/c/abi_xcallbacks_c.h"
+#endif
+
+PROTOTYPE ERROR_CODE comm_create_keyval_x(COMM_COPY_ATTR_FUNCTION comm_copy_attr_fn,
+                                          COMM_DELETE_ATTR_FUNCTION comm_delete_attr_fn,
+                                          USER_DESTRUCTOR_X destructor_fn,
+                                          ATTR_KEY_OUT comm_keyval,
+                                          VOID extra_state)
+{
+    int ret;
+    int flags = 0;
+    ompi_attribute_fn_ptr_union_t copy_fn;
+    ompi_attribute_fn_ptr_union_t del_fn;
+
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if ((NULL == comm_copy_attr_fn) || (NULL == comm_delete_attr_fn) ||
+            (NULL == comm_keyval)) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                          FUNC_NAME);
+        }
+    }
+
+#if OMPI_ABI_SRC
+// The user's copy/delete callbacks and extra_state were wrapped by the
+// generated prologue above (see the ompi_abi_wrapper_helper_t code
+// emitted into comm_create_keyval_abi_generated.c): the intern layer
+// invokes the ompi_abi_*_attr_fn trampolines below, which convert the
+// handle arguments before calling the user's callbacks.
+    copy_fn.attr_communicator_copy_fn = ompi_abi_copy_attr_fn;
+    del_fn.attr_communicator_delete_fn = ompi_abi_delete_attr_fn;
+    ret = ompi_attr_create_keyval_x(COMM_ATTR, 
+                                    copy_fn, 
+                                    del_fn,
+                                    comm_keyval, 
+                                    extra_state, 
+                                    flags,
+                                    extra_state,
+                                    destructor_fn);
+#else
+    copy_fn.attr_communicator_copy_fn = comm_copy_attr_fn;
+    del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
+    ret = ompi_attr_create_keyval_x(COMM_ATTR, 
+                                    copy_fn, 
+                                    del_fn,
+                                    comm_keyval, 
+                                    extra_state, 
+                                    flags, 
+                                    NULL,
+                                    destructor_fn);
+#endif
+
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(ret, MPI_ERR_OTHER, FUNC_NAME);
+}

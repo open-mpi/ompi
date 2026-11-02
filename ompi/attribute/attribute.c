@@ -515,6 +515,7 @@ ompi_attribute_keyval_construct(ompi_attribute_keyval_t *keyval)
     keyval->delete_attr_fn.attr_communicator_copy_fn = NULL;
     keyval->extra_state.c_ptr = NULL;
     keyval->bindings_extra_state = NULL;
+    keyval->user_destructor = NULL;
 
     /* Set the keyval->key value to an invalid value so that we can know
        if it has been initialized with a proper value or not.
@@ -532,6 +533,12 @@ ompi_attribute_keyval_destruct(ompi_attribute_keyval_t *keyval)
         /* If the bindings_extra_state pointer is not NULL, free it */
         if (NULL != keyval->bindings_extra_state) {
             free(keyval->bindings_extra_state);
+        }
+
+        /* Invoke the user destructor if set (for MPIX_*_create_keyval_x APIs) */
+        if (NULL != keyval->user_destructor) {
+            keyval->user_destructor(keyval->extra_state.c_ptr);
+            keyval->user_destructor = NULL;
         }
 
         opal_hash_table_remove_value_uint32(attr_subsys->keyval_hash, keyval->key);
@@ -748,6 +755,56 @@ int ompi_attr_create_keyval_aint(ompi_attribute_type_t type,
     return ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
                                         key, &es_tmp, flags,
                                         bindings_extra_state);
+}
+
+int ompi_attr_create_keyval_x(ompi_attribute_type_t type,
+                               ompi_attribute_fn_ptr_union_t copy_attr_fn,
+                               ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                               int *key,
+                               void *extra_state,
+                               int flags,
+                               void *bindings_extra_state,
+                               ompi_user_destructor_fn_t *user_destructor)
+{
+    ompi_attribute_keyval_t *keyval;
+    ompi_attribute_fortran_ptr_t es_tmp;
+    int ret;
+    bool is_predefined = flags & OMPI_KEYVAL_PREDEFINED;
+
+    /* Predefined attributes are created as part of the instance creation,
+     * so do not retain the instance to avoid a circular dependency */
+    if (!is_predefined) {
+        ret = ompi_mpi_instance_retain ();
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+            return ret;
+        }
+    }
+
+    /* Create the keyval using the standard implementation */
+    es_tmp.c_ptr = extra_state;
+    ret = ompi_attr_create_keyval_impl(type, copy_attr_fn, delete_attr_fn,
+                                       key, &es_tmp, flags,
+                                       bindings_extra_state);
+
+    if (OMPI_SUCCESS == ret) {
+        /* Retrieve the newly created keyval and set the user destructor fields */
+        OPAL_THREAD_LOCK(&attribute_lock);
+        ret = opal_hash_table_get_value_uint32(attr_subsys->keyval_hash, *key,
+                                               (void **) &keyval);
+        if (OMPI_SUCCESS == ret && NULL != keyval) {
+            keyval->user_destructor = user_destructor;
+        } else {
+            /* This should not happen - keyval was just created */
+            ret = OMPI_ERR_NOT_FOUND;
+        }
+        OPAL_THREAD_UNLOCK(&attribute_lock);
+    }
+
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret) && !is_predefined) {
+        ompi_mpi_instance_release ();
+    }
+
+    return ret;
 }
 
 /*****************************************************************************/

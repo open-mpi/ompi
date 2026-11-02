@@ -40,6 +40,7 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
+#include "ompi/xcallbacks.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_hash_table.h"
 
@@ -149,6 +150,13 @@ struct ompi_attribute_keyval_t {
     /** Extra state for bindings to hang data on.  If non-NULL, will be
         freed by the C base when the keyval is destroyed. */
     void *bindings_extra_state;
+
+    /** User destructor for extended callback APIs (MPIX_*_create_keyval_x).
+        Invoked exactly once when the keyval is destroyed. */
+    ompi_user_destructor_fn_t *user_destructor;
+
+    /** Extra state passed to the user destructor. */
+    void *user_extra_state;
 };
 
 typedef struct ompi_attribute_keyval_t ompi_attribute_keyval_t;
@@ -255,6 +263,32 @@ OMPI_DECLSPEC int ompi_attr_create_keyval_aint(ompi_attribute_type_t type,
                                                ompi_attribute_fn_ptr_union_t delete_attr_fn,
                                                int *key, MPI_Aint extra_state, int flags,
                                                void *bindings_extra_state);
+
+/**
+ * Create a keyval with extended callback support (destructor).
+ *
+ * Same as ompi_attr_create_keyval, but accepts an additional user
+ * destructor function and destructor_extra_state that are invoked
+ * when the keyval is destroyed.
+ *
+ * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
+ * @param copy_attr_fn   Union variable containing the copy function pointer (IN)
+ * @param delete_attr_fn Union variable containing the delete function pointer (IN)
+ * @param key            The newly created key is returned here (OUT)
+ * @param extra_state    Extra state for copy/delete and destructor callbacks (IN)
+ * @param flags          Flags for the key (OMPI_KEYVAL_F77, OMPI_KEYVAL_PREDEFINED)
+ * @param bindings_extra_state Extra state that will be free()'ed when keyval is destroyed (IN)
+ * @param user_destructor User destructor invoked when keyval is destroyed (IN)
+ *
+ * @return OMPI return code
+ */
+
+OMPI_DECLSPEC int ompi_attr_create_keyval_x(ompi_attribute_type_t type,
+                                            ompi_attribute_fn_ptr_union_t copy_attr_fn,
+                                            ompi_attribute_fn_ptr_union_t delete_attr_fn,
+                                            int *key, void *extra_state, int flags,
+                                            void *bindings_extra_state,
+                                            ompi_user_destructor_fn_t *user_destructor);
 
 /**
  * Free an attribute keyval
