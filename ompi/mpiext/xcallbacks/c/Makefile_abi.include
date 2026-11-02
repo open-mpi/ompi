@@ -36,7 +36,11 @@ noinst_LTLIBRARIES += libmpiext_xcallbacks_abi.la libmpiext_xcallbacks_abi_profi
 $(abi_interface_profile_sources): $(OMPI_BINDINGS_GENERATOR) abi_xcallbacks_c.h
 
 abi_interface_profile_sources = \
-        op_create_x_abi_generated.c
+        op_create_x_abi_generated.c \
+        comm_create_errhandler_x_abi_generated.c \
+        win_create_errhandler_x_abi_generated.c \
+        file_create_errhandler_x_abi_generated.c \
+        session_create_errhandler_x_abi_generated.c
 
 libmpiext_xcallbacks_abi_la_SOURCES = \
         $(abi_interface_profile_sources) \

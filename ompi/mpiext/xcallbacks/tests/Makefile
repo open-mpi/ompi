@@ -23,6 +23,7 @@ FCFLAGS = -g
 # Example programs to build
 
 EXAMPLES = \
+        errhandler_x \
         op_create_x
 
 # Default target.  Always build the C example.  Only build the others

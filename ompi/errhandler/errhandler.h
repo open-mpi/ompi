@@ -44,6 +44,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
+#include "ompi/include/ompi/xcallbacks.h"
 
 BEGIN_C_DECLS
 
@@ -75,6 +76,18 @@ typedef void (ompi_errhandler_generic_handler_fn_t)(void *, int *, ...);
  */
 
 typedef void (ompi_errhandler_converter_fn_t)(void *object, int object_type, int *err_code);
+
+/*
+ * TODO:  the following should be replaced by canonical MPI functions
+ * in mpi.h.in when extended callbacks proposal is accepted into the standard.
+ * The signatures are as they are because the proposal is only to
+ * support C variants of these callbacks, so no need to use pointers.
+ */
+
+typedef void (ompix_comm_errhandler_function_x) (MPI_Comm, int, void *);
+typedef void (ompix_file_errhandler_function_x) (MPI_File, int, void *);
+typedef void (ompix_win_errhandler_function_x) (MPI_Win, int, void *);
+typedef void (ompix_session_errhandler_function_x) (MPI_Session, int, void *);
 
 /**
  * Enum to denote what language the error handler was created from
@@ -127,6 +140,17 @@ struct ompi_errhandler_t {
      * compliant ones.  Only used for user defined errhandlers.
      */
     ompi_errhandler_converter_fn_t *eh_converter_fn;
+
+    /* Extended callback (_x) function pointers for MPIX_*_create_errhandler_x */
+    ompix_comm_errhandler_function_x *eh_comm_fn_x;
+    ompix_file_errhandler_function_x *eh_file_fn_x;
+    ompix_win_errhandler_function_x *eh_win_fn_x;
+    ompix_session_errhandler_function_x *eh_instance_fn_x;
+
+    /* Extended callback support: extra_state passed to _x callbacks,
+       and destructor invoked when the errhandler is freed */
+    void *extra_state;
+    ompi_user_destructor_fn_t *destructor;
 
     /* index in Fortran <-> C translation array */
     int eh_f_to_c_index;
@@ -417,6 +441,19 @@ extern opal_atomic_int32_t ompi_instance_count;
                                             ompi_errhandler_generic_handler_fn_t *func,
                                             ompi_errhandler_lang_t language,
                                             ompi_errhandler_converter_fn_t *converter);
+
+  /**
+   * Create an ompi_errhandler_t with extended callback support
+   *
+   * Like ompi_errhandler_create, but with extra_state passed to the _x callback
+   * and a destructor invoked when the errhandler is freed.
+   */
+  OMPI_DECLSPEC ompi_errhandler_t *ompi_errhandler_create_x(ompi_errhandler_type_t object_type,
+                                              ompi_errhandler_generic_handler_fn_t *func,
+                                              ompi_errhandler_lang_t language,
+                                              ompi_errhandler_converter_fn_t *converter,
+                                              void *extra_state,
+                                              ompi_user_destructor_fn_t *destructor);
 
   OMPI_DECLSPEC void ompi_errhandler_free (ompi_errhandler_t *errhandler);
 

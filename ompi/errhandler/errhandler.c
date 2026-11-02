@@ -310,6 +310,53 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
   return new_errhandler;
 }
 
+ompi_errhandler_t *ompi_errhandler_create_x(ompi_errhandler_type_t object_type,
+                                             ompi_errhandler_generic_handler_fn_t *func,
+                                             ompi_errhandler_lang_t lang,
+                                             ompi_errhandler_converter_fn_t *converter,
+                                             void *extra_state,
+                                             ompi_user_destructor_fn_t *destructor)
+{
+    ompi_errhandler_t *new_errhandler;
+
+    /* Build the base error handler, then layer the extended-callback state on
+       top.  ompi_errhandler_create() has already stored the user function in
+       the appropriate (standard) callback slot; for the _x variant we store it
+       in the matching _x slot instead so the invocation path dispatches with
+       the extended signature. */
+
+    new_errhandler = ompi_errhandler_create(object_type, func, lang, converter);
+    if (NULL == new_errhandler) {
+        return NULL;
+    }
+
+    switch (object_type) {
+    case OMPI_ERRHANDLER_TYPE_COMM:
+        new_errhandler->eh_comm_fn = NULL;
+        new_errhandler->eh_comm_fn_x = (ompix_comm_errhandler_function_x *)func;
+        break;
+    case OMPI_ERRHANDLER_TYPE_FILE:
+        new_errhandler->eh_file_fn = NULL;
+        new_errhandler->eh_file_fn_x = (ompix_file_errhandler_function_x *)func;
+        break;
+    case OMPI_ERRHANDLER_TYPE_WIN:
+        new_errhandler->eh_win_fn = NULL;
+        new_errhandler->eh_win_fn_x = (ompix_win_errhandler_function_x *)func;
+        break;
+    case OMPI_ERRHANDLER_TYPE_INSTANCE:
+        new_errhandler->eh_instance_fn = NULL;
+        new_errhandler->eh_instance_fn_x = (ompix_session_errhandler_function_x *)func;
+        break;
+    default:
+        break;
+    }
+
+    new_errhandler->extra_state = extra_state;
+    new_errhandler->destructor = destructor;
+
+    return new_errhandler;
+}
+
 #if OPAL_ENABLE_FT_MPI
 #include "opal/mca/threads/wait_sync.h"
 
@@ -627,6 +674,14 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
   new_errhandler->eh_fort_fn      = NULL;
   new_errhandler->eh_converter_fn = NULL;
 
+  new_errhandler->eh_comm_fn_x     = NULL;
+  new_errhandler->eh_win_fn_x      = NULL;
+  new_errhandler->eh_file_fn_x     = NULL;
+  new_errhandler->eh_instance_fn_x = NULL;
+
+  new_errhandler->extra_state = NULL;
+  new_errhandler->destructor  = NULL;
+
   memset (new_errhandler->eh_name, 0, MPI_MAX_OBJECT_NAME);
 }
 
@@ -636,6 +691,13 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
  */
 static void ompi_errhandler_destruct(ompi_errhandler_t *errhandler)
 {
+  /* Invoke the user destructor if this is an extended-callback errhandler
+     and the destructor is non-NULL. Do not invoke on predefined errhandlers. */
+  if (OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type &&
+      NULL != errhandler->destructor) {
+    errhandler->destructor(errhandler->extra_state);
+  }
+
   /* reset the ompi_errhandler_f_to_c_table entry - make sure that the
      entry is in the table */
 

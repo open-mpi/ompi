@@ -21,4 +21,5 @@
 
 EXTRA_DIST += \
         ../tests/Makefile \
-        ../tests/op_create_x.c
+        ../tests/op_create_x.c \
+        ../tests/errhandler_x.c

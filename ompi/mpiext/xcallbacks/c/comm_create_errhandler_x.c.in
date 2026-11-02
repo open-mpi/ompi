@@ -1,0 +1,76 @@
+/*
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2020 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2015      Research Organization for Information Science
+ *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+ */
+#include "ompi_config.h"
+#include <stdio.h>
+
+#include "ompi/mpi/c/bindings.h"
+#include "ompi/runtime/params.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/errhandler/errhandler.h"
+#include "ompi/mpiext/xcallbacks/c/mpiext_xcallbacks_c.h"
+#if OMPI_ABI_SRC
+#include "ompi/mpi/c/abi.h"
+#include "ompi/mpi/c/abi_converters.h"
+#include "ompi/mpiext/xcallbacks/c/abi_xcallbacks_c.h"
+#endif
+
+PROTOTYPE ERROR_CLASS comm_create_errhandler_x(COMM_ERRHANDLER_FUNCTION_X function, USER_DESTRUCTOR_X destructor, VOID extra_state, ERRHANDLER_OUT errhandler)
+{
+    ompi_errhandler_t *new_errhandler;
+
+    /* Error checking */
+
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == function || NULL == errhandler) {
+            return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_ARG,
+                                          FUNC_NAME);
+        }
+    }
+
+#if OMPI_ABI_SRC
+    new_errhandler =
+        ompi_errhandler_create_x(OMPI_ERRHANDLER_TYPE_COMM,
+                                (ompi_errhandler_generic_handler_fn_t *) function,
+                                OMPI_ERRHANDLER_LANG_C,
+                                (ompi_errhandler_converter_fn_t*)ompi_convert_errhandler_args_intern_to_abi,
+                                extra_state,
+                                destructor);
+#else
+    new_errhandler =
+        ompi_errhandler_create_x(OMPI_ERRHANDLER_TYPE_COMM,
+                                (ompi_errhandler_generic_handler_fn_t *) function,
+                                OMPI_ERRHANDLER_LANG_C,
+                                NULL,
+                                extra_state,
+                                destructor);
+#endif
+
+    if (NULL == new_errhandler) {
+        return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_INTERN, FUNC_NAME);
+    }
+
+    *errhandler = new_errhandler;
+    return MPI_SUCCESS;
+}

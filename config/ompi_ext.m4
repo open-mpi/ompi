@@ -475,6 +475,10 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     tmp[=]m4_translit([$1],[a-z],[A-Z])
     component_define="OMPI_HAVE_MPI_EXT_${tmp}"
 
+    # Define the enable macro in ompi_config.h so it's available before including mpi-ext.h
+    AC_DEFINE_UNQUOTED([${component_define}], [1],
+                       [MPI Extension ${component} is enabled])
+
     ###############
     # C Bindings
     ###############

@@ -2029,6 +2029,54 @@ class TypeUserDestructorXStandard(Type):
     def type_text(self, enable_count=False):
         return 'MPIX_Destructor_function *'
 
+@Type.add_type('COMM_ERRHANDLER_FUNCTION_X', abi_type=['ompi'])
+class TypeCommErrhandlerFunctionX(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Comm_errhandler_function_x *'
+
+@Type.add_type('COMM_ERRHANDLER_FUNCTION_X', abi_type=['standard'])
+class TypeCommErrhandlerFunctionXStandard(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Comm_errhandler_function_x *'
+
+@Type.add_type('WIN_ERRHANDLER_FUNCTION_X', abi_type=['ompi'])
+class TypeWinErrhandlerFunctionX(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Win_errhandler_function_x *'
+
+@Type.add_type('WIN_ERRHANDLER_FUNCTION_X', abi_type=['standard'])
+class TypeWinErrhandlerFunctionXStandard(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Win_errhandler_function_x *'
+
+@Type.add_type('FILE_ERRHANDLER_FUNCTION_X', abi_type=['ompi'])
+class TypeFileErrhandlerFunctionX(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_File_errhandler_function_x *'
+
+@Type.add_type('FILE_ERRHANDLER_FUNCTION_X', abi_type=['standard'])
+class TypeFileErrhandlerFunctionXStandard(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_File_errhandler_function_x *'
+
+@Type.add_type('SESSION_ERRHANDLER_FUNCTION_X', abi_type=['ompi'])
+class TypeSessionErrhandlerFunctionX(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Session_errhandler_function_x *'
+
+@Type.add_type('SESSION_ERRHANDLER_FUNCTION_X', abi_type=['standard'])
+class TypeSessionErrhandlerFunctionXStandard(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Session_errhandler_function_x *'
+
 @Type.add_type('COMM_COPY_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeCommCopyAttrFunction(Type):
 
