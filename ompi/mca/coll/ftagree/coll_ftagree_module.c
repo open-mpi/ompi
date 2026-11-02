@@ -40,9 +40,9 @@ mca_coll_ftagree_init_query(bool enable_progress_threads,
  */
 /* Install only what this module provides, and on the way out remove only
  * what it installed.  It does not provide every agreement on every
- * communicator - there is no non-blocking one for an intercommunicator, and
- * the NOFT algorithm provides neither - and installing a NULL would replace
- * the fallback coll/basic put there, leaving the communicator with no
+ * communicator - the NOFT algorithm provides neither, and ETA has nothing
+ * for an intercommunicator - and installing a NULL would replace the
+ * fallback coll/basic put there, leaving the communicator with no
  * implementation at all. */
 #define FTAGREE_INSTALL_COLL_API(__comm, __module, __api)                         \
     do {                                                                          \
@@ -99,11 +99,8 @@ mca_coll_ftagree_comm_query(struct ompi_communicator_t *comm,
     /* No FT, no need for fancy agreements */
     if( !ompi_ftmpi_enabled ) return NULL;
 
-    /* Decide which agreements this component can provide on this
-     * communicator.  Not every algorithm provides every agreement: NOFT
-     * provides neither, and there is no non-blocking one for an
-     * intercommunicator.
-     */
+    /* Which agreements this component can provide here: NOFT provides
+     * neither, and ETA has nothing for an intercommunicator. */
     switch( mca_coll_ftagree_algorithm ) {
     case COLL_FTAGREE_NOFT:
         /* These are set as default in coll_basic */
@@ -117,6 +114,7 @@ mca_coll_ftagree_comm_query(struct ompi_communicator_t *comm,
         era = true;
         if( OMPI_COMM_IS_INTER(comm) ) {
             agree  = mca_coll_ftagree_era_inter;
+            iagree = mca_coll_ftagree_iera_inter;
         } else {
             agree  = mca_coll_ftagree_era_intra;
             iagree = mca_coll_ftagree_iera_intra;
