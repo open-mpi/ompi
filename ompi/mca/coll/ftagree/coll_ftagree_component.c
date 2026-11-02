@@ -87,7 +87,7 @@ MCA_BASE_COMPONENT_INIT(ompi, coll, ftagree)
 static int
 ftagree_close(void)
 {
-    if( mca_coll_ftagree_algorithm ==  COLL_FTAGREE_EARLY_RETURNING ) {
+    if( COLL_FTAGREE_NOFT != mca_coll_ftagree_algorithm ) {
         return mca_coll_ftagree_era_finalize();
     }
     return OMPI_SUCCESS;

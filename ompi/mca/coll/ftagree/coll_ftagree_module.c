@@ -28,7 +28,9 @@ int
 mca_coll_ftagree_init_query(bool enable_progress_threads,
                             bool enable_mpi_threads)
 {
-    if( mca_coll_ftagree_algorithm == COLL_FTAGREE_EARLY_RETURNING ) {
+    /* Early termination borrows the early returning non-blocking
+     * agreement, so either algorithm needs that one's global state. */
+    if( COLL_FTAGREE_NOFT != mca_coll_ftagree_algorithm ) {
         return mca_coll_ftagree_era_init();
     }
 
@@ -108,6 +110,10 @@ mca_coll_ftagree_comm_query(struct ompi_communicator_t *comm,
     case COLL_FTAGREE_EARLY_TERMINATION:
         if( !OMPI_COMM_IS_INTER(comm) ) {
             agree = mca_coll_ftagree_eta_intra;
+            /* It has no non-blocking agreement of its own, and every
+             * communicator is built on one. */
+            iagree = mca_coll_ftagree_iera_intra;
+            era = true;
         }
         break;
     default: /* Manages the COLL_FTAGREE_EARLY_RETURNING as default case too */
