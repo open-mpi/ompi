@@ -231,11 +231,13 @@ if OMPI_REEXPORT_MACOS
 lib@OMPI_LIBMPI_NAME@_la_LDFLAGS += -L$(abs_builddir)/.libs -Wl,-reexport-lopen_mpi
 endif
 
-# The MPI Standard ABI library
+# The MPI Standard ABI library - note if OMPI_MPIEXT_C_LIBS has content
+# and the app uses MPIX symbols then portability is likely lost
 libmpi_abi_la_SOURCES =
 libmpi_abi_la_LIBADD = \
         libopen_mpi.la \
-	mpi/c/libmpi_c_abi.la \
+        mpi/c/libmpi_c_abi.la \
+        $(OMPI_MPIEXT_C_LIBS) \
 	mpi/tool/libmpi_mpit_abi.la
 libmpi_abi_la_DEPENDENCIES = $(libmpi_abi_la_LIBADD)
 

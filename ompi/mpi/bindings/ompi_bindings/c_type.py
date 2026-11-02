@@ -1987,12 +1987,47 @@ class TypeUserFunction(Type):
     def type_text(self, enable_count=False):
         return 'MPI_User_function_c *' if enable_count else 'MPI_User_function *'
 
+@Type.add_type('USER_FUNCTION_X', abi_type=['ompi'])
+class TypeUserFunctionX(Type):
+
+    @property
+    def is_count(self):
+        return False
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_User_function_x *'
 
 @Type.add_type('USER_FUNCTION', abi_type=['standard'])
 class TypeUserFunctionStandard(Type):
 
+    @property
+    def is_count(self):
+        return True
+
     def type_text(self, enable_count=False):
         return 'MPI_User_function_c *' if enable_count else 'MPI_User_function *'
+
+@Type.add_type('USER_FUNCTION_X', abi_type=['standard'])
+class TypeUserFunctionXStandard(Type):
+
+    @property
+    def is_count(self):
+        return False
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_User_function_x *'
+
+@Type.add_type('USER_DESTRUCTOR_X', abi_type=['ompi'])
+class TypeUserDestructorX(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Destructor_function *'
+
+@Type.add_type('USER_DESTRUCTOR_X', abi_type=['standard'])
+class TypeUserDestructorXStandard(Type):
+
+    def type_text(self, enable_count=False):
+        return 'MPIX_Destructor_function *'
 
 @Type.add_type('COMM_COPY_ATTR_FUNCTION', abi_type=['ompi'])
 class TypeCommCopyAttrFunction(Type):

@@ -1,4 +1,4 @@
-# Copyright (c) 2024-2025 Triad National Security, LLC. All rights
+# Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 #
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.

@@ -1,5 +1,7 @@
 # Copyright (c) 2025      Joe Downs. All rights reserved.
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      Triad National Security, LLC. All rights
+#                         reserved.
 #
 # $COPYRIGHT$
 #
@@ -141,6 +143,7 @@ def parse_args():
     parser.add_argument("--pympistd-dir", type=str, required=True, help="directory for the pympistandard library")
     parser.add_argument("--apis-json", type=str, required=True,
                         help="path to the MPI standard APIs JSON file (mpi-standard-apis.json)")
+    parser.add_argument("--prototypes-only", help="only emit prorotypes based on content of APIs JSON file", action="store_true")
     return parser.parse_args()
 
 
@@ -173,20 +176,21 @@ def main():
     import pympistandard as std
 
     # ================================ Load JSON ===============================
-    with open(JSON_PATH) as f:
-        abi = json.load(f)
+    if args.abi_json:
+        with open(JSON_PATH) as f:
+           abi = json.load(f)
 
-    CONSTS = abi["constants"]
-    CATEGORIES = abi["categories"]
+        CONSTS = abi["constants"]
+        CATEGORIES = abi["categories"]
 
-    # Populating the `categories` dictionary
-    categories_dict = {}
-    for category in CATEGORIES.values():
-        name = category["name"]
-        categories_dict[name] = []
-        for value in CONSTS.values():
-            if value["category"] == name:
-                categories_dict[name].append(value)
+        # Populating the `categories` dictionary
+        categories_dict = {}
+        for category in CATEGORIES.values():
+            name = category["name"]
+            categories_dict[name] = []
+            for value in CONSTS.values():
+                if value["category"] == name:
+                    categories_dict[name].append(value)
 
     # ====================== Manipulate Template Header ========================
     lines = []
@@ -272,7 +276,7 @@ def main():
              output.append(f"{binding[0]} P{' '.join(binding[1:])};\n")
 
     # ===================== Odds and ends for mangle case ======================
-    if MANGLE_NAMES:
+    if not args.prototypes_only and MANGLE_NAMES:
         output.append("\n")
         output.append("/*\n")
         output.append(" * define externs to help with attributes\n")

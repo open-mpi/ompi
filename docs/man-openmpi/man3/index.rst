@@ -559,6 +559,7 @@ MPI API manual pages (section 3)
    MPIX_Comm_is_revoked.3.rst
    MPIX_Comm_revoke.3.rst
    MPIX_Comm_shrink.3.rst
+   MPIX_Op_create_x.3.rst
    MPIX_Query_cuda_support.3.rst
    MPIX_Query_rocm_support.3.rst
    OMPI_Affinity_str.3.rst

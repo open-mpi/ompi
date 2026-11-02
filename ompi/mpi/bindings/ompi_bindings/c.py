@@ -861,11 +861,11 @@ def print_weak_mpi_wrapper(prototype, fn_name, out, abi_type='ompi',
 
 def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
     """Generate the OMPI ABI functions."""
+    print_cdefs_for_abi(out)
     template.print_header(out)
     if suppress_nbc == False:
         print_profiling_header(base_name, out, weak_mpi_symbol=True)
         print_cdefs_for_bigcount(out)
-        print_cdefs_for_abi(out)
         out.dump(template.prototype.signature(base_name, abi_type='ompi'))
         template.print_body(func_name=base_name, out=out,
                             replacements=generate_replacements(mangle_names=False))
@@ -880,7 +880,6 @@ def ompi_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
             base_name_c = f'{base_name}_c'
         print_profiling_header(base_name_c, out, weak_mpi_symbol=True)
         print_cdefs_for_bigcount(out, enable_count=True)
-        print_cdefs_for_abi(out)
         out.dump(template.prototype.signature(base_name_c, abi_type='ompi', enable_count=True))
         template.print_body(func_name=base_name_c, out=out,
                             replacements=generate_replacements(mangle_names=False))
@@ -893,10 +892,10 @@ ABI_INTERNAL_CONVERTOR = 'ompi/mpi/c/abi_converters.h'
 
 def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False):
     """Generate the standard ABI functions."""
+    print_cdefs_for_abi(out,abi_type='standard')
     template.print_header(out)
     out.dump(f'#include "{ABI_INTERNAL_HEADER}"')
     out.dump(f'#include "{ABI_INTERNAL_CONVERTOR}"')
-    print_cdefs_for_abi(out,abi_type='standard')
 
     # If any parameters are pointers to user callback functions, generate code
     # for callback wrappers
@@ -913,7 +912,6 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
     if suppress_nbc == False:
         internal_name = f'ompi_abi_{template.prototype.name}'
         print_cdefs_for_bigcount(out)
-        print_cdefs_for_abi(out, abi_type='standard')
         internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                     enable_count=False)
         out.dump(consts.INLINE_ATTRS, internal_sig)
@@ -921,7 +919,6 @@ def standard_abi(base_name, template, out, suppress_bc=False, suppress_nbc=False
     if util.prototype_has_bigcount(template.prototype) and suppress_bc == False:
         internal_name = f'ompi_abi_{template.prototype.name}_c'
         print_cdefs_for_bigcount(out, enable_count=True)
-        print_cdefs_for_abi(out, abi_type='standard')
         internal_sig = template.prototype.signature(internal_name, abi_type='ompi',
                                                     enable_count=True)
         out.dump(consts.INLINE_ATTRS, internal_sig)

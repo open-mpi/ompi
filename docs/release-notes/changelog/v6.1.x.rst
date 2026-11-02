@@ -36,6 +36,16 @@ Open MPI version v6.1.0
   on every communicator.  See :ref:`label-coll-ucc-sharp` for the
   rules.
 
+- Added ``MPIX_Op_create_x``, a C-only MPI extension that creates
+  user-defined reduction operations with extra state and a destructor
+  callback. This is part of the new ``xcallbacks`` extension, which
+  provides APIs compatible with MPICH's extended callback support. The
+  ``extra_state`` pointer is passed to the user reduction function on
+  every invocation, and the destructor is called when the operation is
+  freed with ``MPI_Op_free``, enabling deterministic cleanup of
+  per-operation resources. This feature is built into both ``libmpi``
+  (Open MPI ABI) and ``libmpi_abi`` (MPI Forum standard ABI).
+
 - Updated the embedded hwloc to v2.15.0.
 
 - **Build System**: Open MPI now requires Autoconf 2.69 or later for

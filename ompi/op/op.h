@@ -66,6 +66,11 @@ typedef void (ompi_op_c_handler_fn_t)(const void *, void *, int *,
                                       struct ompi_datatype_t **);
 typedef void (ompi_op_c_handler_bc_fn_t)(const void *, void *, size_t *,
                                          struct ompi_datatype_t **);
+/*
+ * Proposed extended op_create_x only supports big count op function
+ */
+typedef void (ompi_op_c_handler_x_fn_t)(const void *, void *, size_t,
+                                        struct ompi_datatype_t *, void *);
 
 /**
  * Typedef for fortran user-defined MPI_Ops.
@@ -111,6 +116,8 @@ typedef ompi_datatype_t * (*ompi_op_type_convert_to_abi_fn_t)(ompi_datatype_t *)
 #define OMPI_OP_FLAGS_COMMUTE      0x0040
 /** Set if the callback function is using bigcount */
 #define OMPI_OP_FLAGS_BIGCOUNT     0x0080
+/** Set if the callback function passes extra state */
+#define OMPI_OP_FLAGS_EXTRA_STATE  0x0100
 
 
 /*
@@ -169,12 +176,16 @@ struct ompi_op_t {
         ompi_op_fortran_handler_fn_t *fort_fn;
         /** Fortran handler function pointer  - bigcount*/
         ompi_op_fortran_handler_bc_fn_t *fort_fn_bc;
+        /** C handler function pointer with extra state */
+        ompi_op_c_handler_x_fn_t *c_x_fn;
     } o_func;
 
     /** 3-buffer functions, which is only for intrinsic ops.  No need
         for the C/C++/Fortran user-defined functions. */
     ompi_op_base_op_3buff_fns_t o_3buff_intrinsic;
     ompi_op_type_convert_to_abi_fn_t o_datatype_converter;
+    void *extra_state;
+    ompi_user_destructor_fn_t *destructor;
 };
 
 /**
@@ -343,8 +354,7 @@ int ompi_op_init(void);
  *        communative or not
  * @param bigcount Boolean indicating whether or not the op is
  *        using the bigcount (MPI_Count) interface
- * @param func Function pointer of the error handler
- *
+ * @param func Function pointer to user operation
  * @returns op Pointer to the ompi_op_t that will be
  *   created and returned
  *
@@ -367,6 +377,43 @@ int ompi_op_init(void);
 ompi_op_t *ompi_op_create_user(bool commute,
                                bool bigcount,
                                ompi_op_fortran_handler_fn_t func);
+
+/**
+ * Create a ompi_op_t with a user-defined callback (vs. creating an
+ * intrinsic ompi_op_t) which takes extra_state and allows for
+ * a destructor to be invoked when op is freed.
+ *                                             
+ * @param commute Boolean indicating whether the operation is
+ *        communative or not
+ * @param bigcount Boolean indicating whether or not the op is
+ *        using the bigcount (MPI_Count) interface 
+ * @param func Function pointer to user operation
+ * @param func Function pointer to user destructor
+ * param  pointer to extra state
+ * @returns op Pointer to the ompi_op_t that will be
+ *   created and returned
+ *
+ * This function is called as the back-end of all the MPI_OP_CREATE
+ * function.  It creates a new ompi_op_t object, initializes it to the
+ * correct object type, and sets the callback function on it.
+ *
+ * The type of the function pointer is (arbitrarily) the fortran
+ * function handler type.  Since this function has to accept 2
+ * different function pointer types (lest we have 2 different
+ * functions to create errhandlers), the fortran one was picked 
+ * arbitrarily.  Note that (void*) is not sufficient because at
+ * least theoretically, a sizeof(void*) may not necessarily be the
+ * same as sizeof(void(*)).
+ *  
+ * NOTE: It *always* sets the "fortran" flag to false.  The Fortran
+ * wrapper for MPI_OP_CREATE is expected to reset this flag to true
+ * manually.
+ */
+ompi_op_t *ompi_op_create_user_x(bool commute,
+                                 bool bigcount,
+                                 ompi_op_fortran_handler_fn_t func,
+                                 ompi_user_destructor_fn_t destructor,
+                                 void *extra_state);
 
 /**
  * Check to see if an op is intrinsic.
@@ -594,10 +641,14 @@ static inline void ompi_op_reduce(ompi_op_t * op, const void *source,
     if (NULL != op->o_datatype_converter) {
         dtype = op->o_datatype_converter(dtype);
     }
-    if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {
-        op->o_func.c_fn(source, target, &count, &dtype);
+    if (OPAL_LIKELY(0 == (op->o_flags & OMPI_OP_FLAGS_EXTRA_STATE ))) {
+        if (0 == (op->o_flags & OMPI_OP_FLAGS_BIGCOUNT)) {
+            op->o_func.c_fn(source, target, &count, &dtype);
+        } else {
+            op->o_func.c_fn_bc(source, target, &full_count, &dtype);
+        }
     } else {
-        op->o_func.c_fn_bc(source, target, &full_count, &dtype);
+        op->o_func.c_x_fn(source, target, full_count, dtype, op->extra_state);
     }
     return;
 }

@@ -1,0 +1,21 @@
+/*
+ * Copyright (c) 2023-2026 Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ * SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+ */
+
+#ifndef OMPI_MPIEXT_ABI_XCALLBACKS_H_ABI
+#define OMPI_MPIEXT_ABI_XCALLBACKSH_H_ABI 1
+
+#include <stdint.h>
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+
