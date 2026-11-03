@@ -417,7 +417,7 @@ OPAL_DECLSPEC int mca_base_pvar_get_count(int *count);
  * @param[in] value  New value of the variable.
  * @param[in] obj    Object updated handles should be bound to.
  *
- * This function will obtain and hold the mpit big lock until all handles are updated. It
+ * This function will obtain and hold the MPI_T lock until all handles are updated. It
  * is recommended this function not be called from within any critical code path. Calling
  * this function should only be necessary to update watermarks.
  */

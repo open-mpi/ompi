@@ -430,17 +430,16 @@ int mca_base_pvar_update_all_handles(int index, const void *obj)
     mca_base_pvar_t *pvar;
     int ret;
 
+    /* The bound handles belong to MPI_T sessions, which MPI_T modifies
+       only while holding this lock */
+    mca_base_tool_lock();
+
     ret = mca_base_pvar_get_internal(index, &pvar, false);
     if (OPAL_SUCCESS != ret) {
+        mca_base_tool_unlock();
         return ret;
     }
 
-    if (0 == opal_list_get_size(&pvar->bound_handles)) {
-        /* nothing to do */
-        return OPAL_SUCCESS;
-    }
-
-    /* TODO -- probably need to add a handle/variable lock */
     OPAL_LIST_FOREACH_SAFE (handle, next, &pvar->bound_handles, mca_base_pvar_handle_t) {
         handle = (mca_base_pvar_handle_t *) ((char *) handle
                                              - offsetof(mca_base_pvar_handle_t, list2));
@@ -451,6 +450,8 @@ int mca_base_pvar_update_all_handles(int index, const void *obj)
 
         (void) mca_base_pvar_handle_update(handle);
     }
+
+    mca_base_tool_unlock();
 
     return OPAL_SUCCESS;
 }
