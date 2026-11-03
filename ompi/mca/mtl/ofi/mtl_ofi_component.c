@@ -23,6 +23,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/printf.h"
 #include "opal/mca/common/ofi/common_ofi.h"
+#include "opal/mca/hwloc/base/base.h"
 
 static int ompi_mtl_ofi_component_open(void);
 static int ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority);
@@ -35,6 +36,7 @@ ompi_mtl_ofi_component_init(bool enable_progress_threads,
                             bool *accelerator_support);
 
 static int param_priority;
+static int param_priority_index = -1;
 static int control_progress;
 static int data_progress;
 static int av_type;
@@ -129,7 +131,7 @@ ompi_mtl_ofi_component_register(void)
     char *desc;
 
     param_priority = 25;   /* for now give a lower priority than the psm mtl */
-    mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
+    param_priority_index = mca_base_component_var_register(&mca_mtl_ofi_component.super.mtl_version,
                                     "priority", "Priority of the OFI MTL component",
                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, 0,
                                     OPAL_INFO_LVL_9,
@@ -296,10 +298,87 @@ ompi_mtl_ofi_component_open(void)
     return opal_common_ofi_open();
 }
 
+/* Whether the node has GPUs, from the PCI devices in the hwloc topology rather than from
+ * the accelerator runtime, whose answer depends on CUDA_VISIBLE_DEVICES and so can differ
+ * between processes on one node. */
+static bool
+ompi_mtl_ofi_node_has_gpus(void)
+{
+    bool has_gpus = false;
+
+    if (0 <= opal_hwloc_base_get_topology() && NULL != opal_hwloc_topology) {
+        hwloc_obj_t obj = NULL;
+
+        while (NULL != (obj = hwloc_get_next_pcidev(opal_hwloc_topology, obj))) {
+            /* display controller (PCI base class 0x03) from NVIDIA or AMD */
+            if (0x03 == (obj->attr->pcidev.class_id >> 8)
+                && (0x10de == obj->attr->pcidev.vendor_id
+                    || 0x1002 == obj->attr->pcidev.vendor_id)) {
+                has_gpus = true;
+                break;
+            }
+        }
+    }
+    return has_gpus;
+}
+
+/* Whether this MTL will run on the efa provider, by the rule ompi_mtl_ofi_component_init()
+ * uses to prefer it: efa allowed by the provider lists, and present. */
+static bool
+ompi_mtl_ofi_will_use_efa(void)
+{
+    bool use_efa = false;
+    char **include_list = NULL;
+    char **exclude_list = NULL;
+    struct fi_info *hints, *providers = NULL;
+
+    if (NULL != *opal_common_ofi.prov_include) {
+        include_list = opal_argv_split(*opal_common_ofi.prov_include, ',');
+    } else if (NULL != *opal_common_ofi.prov_exclude) {
+        exclude_list = opal_argv_split(*opal_common_ofi.prov_exclude, ',');
+    }
+
+    if ((include_list && opal_common_ofi_is_in_list(include_list, "efa")) ||
+        (exclude_list && !opal_common_ofi_is_in_list(exclude_list, "efa"))) {
+        hints = fi_allocinfo();
+        if (NULL != hints) {
+            hints->caps = FI_TAGGED;
+            hints->ep_attr->type = FI_EP_RDM;
+            hints->fabric_attr->prov_name = strdup("efa");
+            use_efa = (0 == fi_getinfo(FI_VERSION(1, 9), NULL, NULL, 0ULL, hints, &providers));
+            if (NULL != providers) {
+                fi_freeinfo(providers);
+            }
+            fi_freeinfo(hints);
+        }
+    }
+
+    opal_argv_free(include_list);
+    opal_argv_free(exclude_list);
+    return use_efa;
+}
+
 static int
 ompi_mtl_ofi_component_query(mca_base_module_t **module, int *priority)
 {
+    mca_base_var_source_t source = MCA_BASE_VAR_SOURCE_DEFAULT;
+
     *priority = param_priority;
+
+    /* On EFA, pml ob1 with btl/ofi drives all of a GPU's NICs, where this MTL drives
+     * one. On a GPU node, report a priority below ob1's so that ob1 is selected,
+     * unless the user set this component's priority. */
+    if (0 <= param_priority_index) {
+        (void) mca_base_var_get_value(param_priority_index, NULL, &source, NULL);
+    }
+    if (MCA_BASE_VAR_SOURCE_DEFAULT == source && ompi_mtl_ofi_node_has_gpus()
+        && ompi_mtl_ofi_will_use_efa()) {
+        *priority = 10;
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "%s:%d: mtl:ofi: efa on a node with GPUs, priority lowered to %d\n",
+                            __FILE__, __LINE__, *priority);
+    }
+
     *module = (mca_base_module_t *)&ompi_mtl_ofi.base;
     return OMPI_SUCCESS;
 }
