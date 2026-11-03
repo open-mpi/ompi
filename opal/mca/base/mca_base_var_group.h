@@ -119,6 +119,21 @@ OPAL_DECLSPEC int mca_base_var_group_component_register(const mca_base_component
 OPAL_DECLSPEC int mca_base_var_group_deregister(int group_index);
 
 /**
+ * Invalidate the performance variables and events of an MCA param group
+ *
+ * @param group_index [in] Group index from mca_base_var_group_register (),
+ * mca_base_var_group_find().
+ *
+ * This call invalidates the performance variables and events of the group
+ * and its subgroups, as mca_base_var_group_deregister() does, but leaves
+ * the group and its (control) variables registered.  It does not return
+ * while an MPI_T call is using any of those performance variables, so the
+ * caller may then free what their callbacks use.  As with
+ * mca_base_var_group_deregister(), that does not cover events.
+ */
+OPAL_DECLSPEC int mca_base_var_group_invalidate(int group_index);
+
+/**
  * Find an MCA group
  *
  * @param[in] project_name   Project name
