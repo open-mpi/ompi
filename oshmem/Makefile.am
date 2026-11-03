@@ -17,6 +17,11 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 #
 
+#
+# we only support OSHMEM when the OMPI ABI MPI library is built
+#
+if OMPI_BUILD_OMPI_ABI
+
 # Do we have the Fortran bindings?
 if OSHMEM_BUILD_FORTRAN_BINDINGS
 fortran_oshmem_lib = shmem/fortran/liboshmem_fortran.la
@@ -87,3 +92,5 @@ include shmem/Makefile.am
 include mca/Makefile.am
 include tools/Makefile.am
 include util/Makefile.am
+endif
+

@@ -697,6 +697,31 @@ int main(int argc, char *argv[])
     user_argv = opal_argv_copy(argv + 1);
     user_argc = opal_argv_count(user_argv);
 
+    /* Remove any compiler_args flags from user_argv since they were only used
+     * to select the configuration block and should not be passed to the compiler */
+    if (NULL != options_data[user_data_idx].compiler_args) {
+        int j, k;
+        for (j = 0; j < opal_argv_count(options_data[user_data_idx].compiler_args); ++j) {
+            for (k = 0; k < user_argc; ++k) {
+#ifdef HAVE_REGEXEC
+                regex_t res;
+                if (0 == regcomp(&res, options_data[user_data_idx].compiler_args[j], REG_NOSUB)) {
+                    if (0 == regexec(&res, user_argv[k], (size_t) 0, NULL, 0)) {
+                        opal_argv_delete(&user_argc, &user_argv, k, 1);
+                        --k;  /* adjust index since we just deleted an element */
+                    }
+                    regfree(&res);
+                }
+#else
+                if (0 == strcmp(user_argv[k], options_data[user_data_idx].compiler_args[j])) {
+                    opal_argv_delete(&user_argc, &user_argv, k, 1);
+                    --k;  /* adjust index since we just deleted an element */
+                }
+#endif
+            }
+        }
+    }
+
     for (i = 0; i < user_argc; ++i) {
         if (0 == strncmp(user_argv[i], "-showme", strlen("-showme"))
             || 0 == strncmp(user_argv[i], "--showme", strlen("--showme"))
