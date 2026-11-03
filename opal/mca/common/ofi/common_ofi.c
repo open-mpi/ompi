@@ -550,6 +550,54 @@ static int get_provider_nic_pci(struct fi_info *provider, struct fi_pci_attr *pc
 }
 #endif /* OPAL_OFI_PCI_DATA_AVAILABLE */
 
+int opal_common_ofi_pci_root_id(struct fi_info *provider, uintptr_t *root_id)
+{
+#if OPAL_OFI_PCI_DATA_AVAILABLE
+    struct fi_pci_attr pci = {0};
+    hwloc_obj_t obj, top;
+
+    if (NULL == provider || NULL == root_id) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+    /* The topology is not necessarily loaded yet, and it has to be, because
+     * the PCI objects only exist once it is. This is idempotent, so callers
+     * asking about several providers pay for it once. */
+    if (0 > opal_hwloc_base_get_topology() || NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    if (OPAL_SUCCESS != get_provider_nic_pci(provider, &pci)) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    obj = hwloc_get_pcidev_by_busid(opal_hwloc_topology, pci.domain_id, pci.bus_id,
+                                    pci.device_id, pci.function_id);
+    if (NULL == obj) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    /* Climb out of the PCI hierarchy.  The last bridge before a non-IO parent
+     * is the host bridge, and every device under it shares a root complex.
+     * The object address identifies it: all callers read the same topology, so
+     * two devices under one root complex return the same pointer.  It is only
+     * a key, never an ordering -- pointer values differ between processes. */
+    top = obj;
+    while (NULL != obj->parent
+           && (HWLOC_OBJ_BRIDGE == obj->parent->type
+               || HWLOC_OBJ_PCI_DEVICE == obj->parent->type)) {
+        obj = obj->parent;
+        top = obj;
+    }
+
+    *root_id = (uintptr_t) top;
+    return OPAL_SUCCESS;
+#else
+    if (NULL != root_id) {
+        *root_id = 0;
+    }
+    return OPAL_ERR_NOT_AVAILABLE;
+#endif /* OPAL_OFI_PCI_DATA_AVAILABLE */
+}
+
 /**
  * Calculate device distances
  *

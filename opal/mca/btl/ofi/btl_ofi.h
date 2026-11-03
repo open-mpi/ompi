@@ -174,6 +174,11 @@ struct mca_btl_ofi_component_t {
 
     bool disable_hmem;
 
+    /** btl_ofi_modules_per_proc: how many NICs (one module each) the user asked each process to
+     * open; 0 = divide the node's NICs among its local processes. The number actually opened is
+     * computed in mca_btl_ofi_component_init(). */
+    int requested_modules_per_proc;
+
     /** All BTL OFI modules (1 per tl) */
     mca_btl_ofi_module_t **modules;
     int modules_allocated;

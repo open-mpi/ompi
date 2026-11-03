@@ -35,6 +35,7 @@
 #include "opal/mca/common/ofi/common_ofi.h"
 #include "opal/mca/hwloc/base/base.h"
 
+#include <limits.h>
 #include <string.h>
 
 #include "btl_ofi.h"
@@ -65,6 +66,39 @@ static int mca_btl_ofi_init_device(struct fi_info *info);
 static int domain_name_compare(const void *a, const void *b)
 {
     return strcmp(*(const char *const *) a, *(const char *const *) b);
+}
+
+/* A NIC (libfabric domain) this process may open, and where it sits in the PCI topology.
+ * Used to sort the candidate NICs so that the NICs under one PCI root complex are next to each
+ * other, in the same order on every process of the node, so that each process can take its NICs
+ * from one root complex (see mca_btl_ofi_component_init()). */
+typedef struct {
+    /* libfabric domain name of the NIC (domain_attr->name of its fi_info) */
+    const char *domain_name;
+    /* identifies the NIC's root complex: the smallest domain_name among the NICs under that
+     * root complex. Every process on the node computes the same value, which the root complex
+     * object itself (opal_common_ofi_pci_root_id()) does not provide: its key is an address that
+     * is only meaningful within one process. A NIC whose root complex is unknown is its own group. */
+    const char *root_complex;
+    /* hwloc logical index of the root complex's host bridge, the same on every process and in
+     * PCI bus order; UINT_MAX when unknown */
+    unsigned order;
+} mca_btl_ofi_nic_t;
+
+/* qsort() comparator for an array of mca_btl_ofi_nic_t: by root complex, in PCI bus order, then by
+ * domain name. NICs under one root complex end up contiguous, and every process on the node gets
+ * the same order. */
+static int mca_btl_ofi_nic_compare(const void *a, const void *b)
+{
+    const mca_btl_ofi_nic_t *x = (const mca_btl_ofi_nic_t *) a;
+    const mca_btl_ofi_nic_t *y = (const mca_btl_ofi_nic_t *) b;
+    int rc;
+
+    if (x->order != y->order) {
+        return (x->order < y->order) ? -1 : 1;
+    }
+    rc = strcmp(x->root_complex, y->root_complex);
+    return (0 != rc) ? rc : strcmp(x->domain_name, y->domain_name);
 }
 
 /* validate information returned from fi_getinfo().
@@ -163,7 +197,16 @@ static int mca_btl_ofi_component_register(void)
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &mca_btl_ofi_component.mode);
 
+    mca_btl_ofi_component.requested_modules_per_proc = 0;
+    (void) mca_base_component_var_register(
+        &mca_btl_ofi_component.super.btl_version, "modules_per_proc",
+        "Number of modules (NICs) each process opens. 0 (default) divides the visible NICs "
+        "among the local processes. Experimental.",
+        MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+        &mca_btl_ofi_component.requested_modules_per_proc);
+
     mca_btl_ofi_component.num_cqe_read = MCA_BTL_OFI_NUM_CQE_READ;
+
     (void) mca_base_component_var_register(
         &mca_btl_ofi_component.super.btl_version, "num_cq_read",
         "Number of completion entries to read from a single cq_read. ", MCA_BASE_VAR_TYPE_INT, NULL,
@@ -512,16 +555,142 @@ no_hmem:
     /* Distribute NICs evenly across local processes */
     int num_local_procs = (int)(opal_process_info.num_local_peers + 1);
     int modules_per_proc = (num_nics > num_local_procs) ? (num_nics / num_local_procs) : 1;
+    int my_local_rank = (int) opal_process_info.my_local_rank;
+
+    /* Work out which PCI root complex each NIC sits under, and reorder the
+     * list so that each root complex is one contiguous run.
+     *
+     * This matters because driving concurrent traffic through NICs under more
+     * than one root complex can be far slower than using fewer NICs under a
+     * single one, so a process is better off confined to one of them. Without
+     * this, whether a process straddles root complexes is decided by wherever
+     * its NICs happen to land in the sorted list -- which is to say, by
+     * accident.
+     *
+     * If the PCI topology cannot be determined, group_start stays empty and
+     * the plain even split below is used unchanged. */
+    int *group_start = NULL;
+    int *group_size = NULL;
+    int num_groups = 0;
+
+    if (1 < num_nics) {
+        mca_btl_ofi_nic_t *nics = (mca_btl_ofi_nic_t *) calloc(num_nics, sizeof(*nics));
+        uintptr_t *roots = (uintptr_t *) calloc(num_nics, sizeof(*roots));
+
+        if (NULL != nics && NULL != roots) {
+            int resolved = 0;
+
+            for (int i = 0; i < num_nics; i++) {
+                nics[i].domain_name = unique_domains[i];
+                nics[i].root_complex = unique_domains[i];
+                nics[i].order = UINT_MAX;
+                for (info = info_list; NULL != info; info = info->next) {
+                    if (OPAL_SUCCESS
+                        != validate_info(info, required_caps, include_list, exclude_list)) {
+                        continue;
+                    }
+                    if (0 == strcmp(unique_domains[i], info->domain_attr->name)) {
+                        if (OPAL_SUCCESS == opal_common_ofi_pci_root_id(info, &roots[i])) {
+                            nics[i].order = ((hwloc_obj_t) roots[i])->logical_index;
+                            resolved++;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            /* Name each group by the smallest domain name in it. Every process
+             * on the node reaches the same answer, which keeps the ordering
+             * agreed even though the root complex keys themselves do not
+             * travel between processes. */
+            for (int i = 0; i < num_nics; i++) {
+                if (0 == roots[i]) {
+                    continue;
+                }
+                for (int j = 0; j < num_nics; j++) {
+                    if (roots[j] == roots[i] && strcmp(nics[j].domain_name, nics[i].root_complex) < 0) {
+                        nics[i].root_complex = nics[j].domain_name;
+                    }
+                }
+            }
+
+            if (0 < resolved) {
+                qsort(nics, num_nics, sizeof(*nics), mca_btl_ofi_nic_compare);
+
+                group_start = (int *) calloc(num_nics, sizeof(int));
+                group_size = (int *) calloc(num_nics, sizeof(int));
+                if (NULL != group_start && NULL != group_size) {
+                    for (int i = 0; i < num_nics; i++) {
+                        unique_domains[i] = nics[i].domain_name;
+                        if (0 == i || 0 != strcmp(nics[i].root_complex, nics[i - 1].root_complex)) {
+                            group_start[num_groups] = i;
+                            num_groups++;
+                        }
+                        group_size[num_groups - 1]++;
+                    }
+                    BTL_VERBOSE(("ofi btl: %d NIC(s) across %d PCI root complex(es)", num_nics,
+                                 num_groups));
+                } else {
+                    free(group_start);
+                    free(group_size);
+                    group_start = NULL;
+                    group_size = NULL;
+                    num_groups = 0;
+                }
+            }
+        }
+        free(nics);
+        free(roots);
+    }
 
     /* Each local process takes a disjoint, contiguous slice of the sorted
      * unique NIC (domain) list so that local processes do not collapse
      * onto the same NICs. The list order is identical on all processes on
      * a node, so slices are disjoint whenever there are at least as many
      * NICs as local processes. */
-    int slice_start = 0;
-    if (0 < num_nics) {
-        slice_start = ((int) opal_process_info.my_local_rank * modules_per_proc) % num_nics;
+    if (0 < mca_btl_ofi_component.requested_modules_per_proc) {
+        modules_per_proc = (mca_btl_ofi_component.requested_modules_per_proc < num_nics)
+                               ? mca_btl_ofi_component.requested_modules_per_proc : num_nics;
+        if (1 > modules_per_proc) {
+            modules_per_proc = 1;
+        }
     }
+    int slice_start = 0;
+    int slice_wrap_start = 0;
+    int slice_wrap_len = num_nics;
+
+    if (0 < num_groups) {
+        /* Hand each process one root complex, sharing a complex between
+         * processes when there are more processes than complexes, and split
+         * that complex's NICs among the processes that share it. */
+        /* Contiguous blocks of local ranks share a complex, matching the usual
+         * rank -> accelerator placement (accelerator = local_rank * n / local_size),
+         * where consecutive ranks sit on the same complex. Round-robin
+         * (local_rank % num_groups) hands ranks 0 and 1 different complexes and
+         * puts most of them away from their GPU. */
+        int g = (int) (((long) my_local_rank * num_groups) / num_local_procs);
+        int first = (int) (((long) g * num_local_procs + num_groups - 1) / num_groups);
+        int next = (int) (((long) (g + 1) * num_local_procs + num_groups - 1) / num_groups);
+        int peers_here = (next > first) ? next - first : 1;
+        int rank_here = my_local_rank - first;
+        int per_proc = group_size[g] / peers_here;
+
+        if (1 > per_proc) {
+            per_proc = 1;
+        }
+        modules_per_proc = (0 < mca_btl_ofi_component.requested_modules_per_proc)
+                               ? ((mca_btl_ofi_component.requested_modules_per_proc < group_size[g])
+                                  ? mca_btl_ofi_component.requested_modules_per_proc : group_size[g])
+                               : per_proc;
+        slice_wrap_start = group_start[g];
+        slice_wrap_len = group_size[g];
+        slice_start = slice_wrap_start + ((rank_here * per_proc) % group_size[g]);
+    } else if (0 < num_nics) {
+        slice_start = (my_local_rank * modules_per_proc) % num_nics;
+    }
+
+    free(group_start);
+    free(group_size);
 
     /* Allocate the modules array dynamically based on actual need */
     mca_btl_ofi_component.modules = (mca_btl_ofi_module_t **)
@@ -535,7 +704,9 @@ no_hmem:
      * unique-domain list. Pin to a single provider (the first valid one)
      * so all modules share one address format. */
     for (int mi = 0; mi < modules_per_proc && 0 < num_nics; mi++) {
-        const char *want = unique_domains[(slice_start + mi) % num_nics];
+        const char *want
+            = unique_domains[slice_wrap_start
+                             + ((slice_start - slice_wrap_start + mi) % slice_wrap_len)];
         for (info = info_list; NULL != info; info = info->next) {
             if (OPAL_SUCCESS != validate_info(info, required_caps, include_list, exclude_list)) {
                 continue;
