@@ -512,6 +512,9 @@ OPAL_DECLSPEC int mca_base_var_register_synonym(int synonym_for, const char *pro
  * mca_base_var_finalize() is called.
  *
  * If an enumerator is associated with this variable it will be dereferenced.
+ *
+ * This function does not return while an MPI_T call is using the variable,
+ * and MPI_T will not use the variable's storage after it returns.
  */
 OPAL_DECLSPEC int mca_base_var_deregister(int vari);
 
@@ -748,8 +751,12 @@ OPAL_DECLSPEC int mca_base_var_load_extra_files(char *files, bool rel_path_searc
  * It lives here, rather than with the MPI_T bindings, so that code
  * below the bindings (OPAL and the components) can take it.
  *
- * The lock is not recursive: a thread that holds it must not take it
- * again.  A debug build asserts if it does.
+ * The lock is not recursive: a thread that holds it must not call a
+ * function that takes it, including the public functions that
+ * deregister or invalidate MCA variables and performance variables.
+ * Code inside the MCA variable system that already holds it uses the
+ * *_locked versions of those functions (see mca_base_vari.h).  A debug
+ * build asserts if a thread takes it again.
  *
  * A thread that takes it while already holding another lock establishes
  * an order between the two: nothing may take that other lock while

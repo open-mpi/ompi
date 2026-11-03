@@ -244,6 +244,7 @@ ompi/test/t/mpi_t_lifecycle
 ompi/test/t/mpi_t_lock_order
 ompi/test/t/mpi_t_outlives_mpi
 ompi/test/t/mpi_t_pvar_monitoring
+ompi/test/t/mpi_t_read_vs_init
 ompi/test/t/mpi_t_repeated_sessions
 ompi/test/t/mpi_t_sessions
 ompi/test/t/mpi_t_stress

@@ -107,7 +107,14 @@ OPAL_DECLSPEC int mca_base_var_group_component_register(const mca_base_component
  * @param group_index [in] Group index from mca_base_var_group_register (),
  * mca_base_var_group_find().
  *
- * This call deregisters all associated variables and subgroups.
+ * This call deregisters all associated variables and subgroups, and
+ * invalidates all associated performance variables and events.  It does
+ * not return while an MPI_T call is using any of the group's variables or
+ * performance variables (see mca_base_var_deregister() and
+ * mca_base_pvar_mark_invalid()).  That does not cover events: the MPI_T
+ * event calls do not take the MPI_T lock (event callbacks must not run
+ * while it is held), so an MPI_T event call may still be using one of
+ * the group's events when this returns.
  */
 OPAL_DECLSPEC int mca_base_var_group_deregister(int group_index);
 
