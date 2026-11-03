@@ -246,6 +246,19 @@ static int mca_btl_ofi_component_register(void)
                                         MCA_BASE_VAR_SCOPE_READONLY,
                                         &mca_btl_ofi_component.progress_threshold);
 
+    /* A message the provider takes in one send costs one network latency, while ob1's
+     * rendezvous adds a round trip and an RDMA read. Providers such as efa carry
+     * messages much larger than 4 KB in one send with their own protocol, so let
+     * fragments reach 64 KB, clamped to what the provider accepts. */
+    mca_btl_ofi_component.frag_size = 65536;
+    (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version, "frag_size",
+                                           "Payload bytes of one fragment, which is also the eager "
+                                           "limit and the largest send; clamped to the provider's "
+                                           "maximum message size (default: 65536)",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_READONLY,
+                                           &mca_btl_ofi_component.frag_size);
+
     mca_btl_ofi_component.rd_num = MCA_BTL_OFI_DEFAULT_RD_NUM;
     (void) mca_base_component_var_register(&mca_btl_ofi_component.super.btl_version, "rd_num",
                                            "Number of receive descriptor posted per context.",
@@ -829,6 +842,13 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
 
     mca_btl_ofi_module_t *module;
 
+    /* Fragments must fit the largest message the provider takes; the module's send limits are
+     * derived from the fragment size when it is allocated */
+    if (0 < info->ep_attr->max_msg_size
+        && mca_btl_ofi_component.frag_size + MCA_BTL_OFI_HDR_SIZE > info->ep_attr->max_msg_size) {
+        mca_btl_ofi_component.frag_size = info->ep_attr->max_msg_size - MCA_BTL_OFI_HDR_SIZE;
+    }
+
     module = mca_btl_ofi_module_alloc(mca_btl_ofi_component.mode);
     if (NULL == module) {
         BTL_VERBOSE(("failed allocating ofi module"));
@@ -889,6 +909,16 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
      * Save the maximum sizes.
      */
     mca_btl_ofi_component.max_inject_size = ofi_info->tx_attr->inject_size;
+    if (MCA_BTL_OFI_MODE_TWO_SIDED == mca_btl_ofi_component.mode
+        || MCA_BTL_OFI_MODE_FULL_SUPPORT == mca_btl_ofi_component.mode) {
+        /* A device buffer sent eagerly is copied into a host fragment and out again on the
+         * receiver, which costs more than the zero-copy rendezvous once the message is larger
+         * than a few KB, so keep the eager limit of device buffers at the old 4 KB fragment size
+         * unless the user set one. */
+        if (0 == module->super.btl_accelerator_eager_limit) {
+            module->super.btl_accelerator_eager_limit = MCA_BTL_OFI_ACCELERATOR_EAGER_LIMIT;
+        }
+    }
 
     /* AV */
     av_attr.type = FI_AV_MAP;

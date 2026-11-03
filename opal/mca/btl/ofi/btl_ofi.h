@@ -170,6 +170,9 @@ struct mca_btl_ofi_component_t {
 
     /** Maximum inject size */
     size_t max_inject_size;
+
+    /** payload bytes of one fragment: the eager limit and the largest send */
+    size_t frag_size;
     bool disable_inject;
 
     bool disable_hmem;
