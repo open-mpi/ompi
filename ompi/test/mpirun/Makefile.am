@@ -43,6 +43,7 @@
 EXTRA_DIST = \
         async_modex_wireup.c \
         any_source_oneway.c \
+        comm_idup_overlap.c \
         late_first_contact.c \
         session_first_touch.c \
         session_partial_batch.c \
@@ -252,6 +253,11 @@ check-mpirun:
 	        run $(oversub_runner) --mca pml ob1 --mca btl self,smcuda \
 	            ./wireup_stress rma; \
 	    fi; \
+	    $(MPICC) -g "$(srcdir)/comm_idup_overlap.c" -o comm_idup_overlap; \
+	    echo "=== comm idup overlap, default transports ==="; \
+	    run $(mpirun_runner) ./comm_idup_overlap; \
+	    echo "=== comm idup overlap, four ranks ==="; \
+	    run $(oversub_runner) ./comm_idup_overlap; \
 	    $(MPICC) -g "$(srcdir)/session_first_touch.c" -o session_first_touch -lpthread; \
 	    echo "=== session first touch, direct modex, shared memory only ==="; \
 	    run env $(DIRECT_MODEX) \
@@ -289,6 +295,7 @@ check-mpirun:
 clean-local:
 	rm -rf async_modex_wireup async_modex_wireup.dSYM \
 	    any_source_oneway any_source_oneway.dSYM \
+	    comm_idup_overlap comm_idup_overlap.dSYM \
 	    late_first_contact late_first_contact.dSYM \
 	    session_first_touch session_first_touch.dSYM \
 	    session_partial_batch session_partial_batch.dSYM \
