@@ -37,10 +37,19 @@
 
 #include "mpi.h"
 
+#include <limits.h>
 #include <string.h>
+
+/* The smallest count MPI_T_cvar_handle_alloc() reports for a string
+   control variable */
+#define OMPI_MPIT_CVAR_STRING_MIN_COUNT 2048
 
 typedef struct ompi_mpit_cvar_handle_t {
     const mca_base_var_t *var;
+    /* The count reported by MPI_T_cvar_handle_alloc(): for a string, the
+       size of the buffer the tool allocated, which MPI_T_cvar_read() must
+       not overrun */
+    int             count;
     /* XXX -- TODO -- allow binding objects */
     void           *bound_object;
 } ompi_mpit_cvar_handle_t;

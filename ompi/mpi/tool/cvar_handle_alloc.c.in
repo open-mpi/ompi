@@ -12,6 +12,7 @@
  * Copyright (c) 2025-2026 Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,13 +66,35 @@ PROTOTYPE ERROR_CLASS cvar_handle_alloc (INT cvar_index, OBJ_HANDLE obj_handle,
         new_handle->bound_object = obj_handle;
 
         if (MCA_BASE_VAR_TYPE_STRING == new_handle->var->mbv_type) {
-            /* Arbitrary string limit. Is there a better way to do this? */
-            *count = 2048;
+            /* The count is the maximum length of the string, including the
+               terminating \0.  Make it large enough for the current value,
+               and no smaller than an arbitrary minimum so that the value
+               can grow a little.  MPI_T_cvar_read() truncates a value that
+               has grown beyond the count since. */
+            const mca_base_var_storage_t *value = NULL;
+            size_t len = 0;
+
+            /* Get the value the way MPI_T_cvar_read() does: a synonym's
+               value is its original variable's */
+            if (OPAL_SUCCESS == mca_base_var_get_value (cvar_index, &value, NULL, NULL)
+                && NULL != value && NULL != value->stringval) {
+                len = strlen (value->stringval);
+            }
+
+            if (len >= INT_MAX) {
+                rc = MPI_T_ERR_INVALID;
+                free (new_handle);
+                break;
+            }
+            new_handle->count = ((int) len + 1 > OMPI_MPIT_CVAR_STRING_MIN_COUNT)
+                                    ? (int) len + 1
+                                    : OMPI_MPIT_CVAR_STRING_MIN_COUNT;
         } else {
             /* MCA only supports a single integer at this time. Change me if
                this assumption changes. */
-            *count = 1;
+            new_handle->count = 1;
         }
+        *count = new_handle->count;
 
         *handle = (MPI_T_cvar_handle) new_handle;
     } while (0);
