@@ -53,6 +53,8 @@
 #include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/threads/mutex.h"
+#include "opal/mca/threads/thread_usage.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_params_core.h"
 #include "opal/util/argv.h"
@@ -90,6 +92,16 @@ static opal_list_t mca_base_var_override_values;
 static int mca_base_var_count = 0;
 
 static opal_hash_table_t mca_base_var_index_hash;
+
+/* The MCA tool lock (see mca_base_tool_lock() in mca_base_var.h).  It is
+   statically initialized because MPI_T entry points can take it before
+   (and after) the MCA variable system is initialized. */
+static opal_mutex_t tool_lock = OPAL_MUTEX_STATIC_INIT;
+
+#if OPAL_ENABLE_DEBUG
+/* How many times the calling thread currently holds tool_lock. */
+static opal_thread_local int tool_lock_depth = 0;
+#endif
 
 #define OPAL_MCA_VAR_MBV_ENUMERATOR_FREE(mbv_enumerator)         \
     {                                                            \
@@ -227,6 +239,34 @@ static char *append_filename_to_list(const char *filename)
     /* *#@*? */
     return NULL;
 }
+
+void mca_base_tool_lock(void)
+{
+#if OPAL_ENABLE_DEBUG
+    /* The lock is not recursive: taking it again would deadlock */
+    assert(0 == tool_lock_depth);
+#endif
+    opal_mutex_lock(&tool_lock);
+#if OPAL_ENABLE_DEBUG
+    ++tool_lock_depth;
+#endif
+}
+
+void mca_base_tool_unlock(void)
+{
+#if OPAL_ENABLE_DEBUG
+    assert(0 < tool_lock_depth);
+    --tool_lock_depth;
+#endif
+    opal_mutex_unlock(&tool_lock);
+}
+
+#if OPAL_ENABLE_DEBUG
+bool mca_base_tool_lock_held(void)
+{
+    return 0 < tool_lock_depth;
+}
+#endif
 
 /*
  * Set it up

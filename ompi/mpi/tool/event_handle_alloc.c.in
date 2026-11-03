@@ -38,10 +38,9 @@ PROTOTYPE ERROR_CLASS event_handle_alloc (INT event_index, OBJ_HANDLE obj_handle
     /* MPI_Info is an ompi_info_t whose first member is an opal_info_t. */
     opal_info = (MPI_INFO_NULL == info) ? NULL : &info->super;
 
-    /* No big lock: the OPAL framework is internally synchronized, and the fold
+    /* No MPI_T lock: the OPAL framework is internally synchronized, and the fold
        this can drive invokes user dropped handlers, which must not run with
-       ompi_mpit_big_lock held (sec. 5.10) -- a handler re-entering MPI_T would
-       deadlock on the non-recursive lock. */
+       the MPI_T lock held (sec. 5.10). */
     rc = mca_base_event_handle_alloc (event_index, obj_handle, opal_info, &reg);
 
     switch (rc) {
