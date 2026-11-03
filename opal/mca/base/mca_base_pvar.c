@@ -10,6 +10,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -371,19 +372,36 @@ int mca_base_pvar_get(int index, const mca_base_pvar_t **pvar)
     return mca_base_pvar_get_internal(index, (mca_base_pvar_t **) pvar, false);
 }
 
-int mca_base_pvar_mark_invalid(int index)
+int mca_base_pvar_mark_invalid_locked(int index)
 {
     mca_base_pvar_t *pvar;
     int ret;
 
+#if OPAL_ENABLE_DEBUG
+    assert(mca_base_tool_lock_held());
+#endif
+
     ret = mca_base_pvar_get_internal(index, &pvar, false);
-    if (OPAL_SUCCESS != ret) {
-        return ret;
+    if (OPAL_SUCCESS == ret) {
+        pvar->flags |= MCA_BASE_PVAR_FLAG_INVALID;
     }
 
-    pvar->flags |= MCA_BASE_PVAR_FLAG_INVALID;
+    return ret;
+}
 
-    return OPAL_SUCCESS;
+int mca_base_pvar_mark_invalid(int index)
+{
+    int ret;
+
+    /* Every MPI_T call that can reach this variable's callbacks holds the
+       MPI_T lock, so once this returns no such call is still running and
+       none will start: the caller may then free whatever the callbacks
+       use, or unload the code that implements them. */
+    mca_base_tool_lock();
+    ret = mca_base_pvar_mark_invalid_locked(index);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_pvar_notify(mca_base_pvar_handle_t *handle, mca_base_pvar_event_t event, int *count)

@@ -5,6 +5,8 @@
  * Copyright (c) 2018 The University of Tennessee and The University
  *                    of Tennessee Research Foundation.  All rights
  *                    reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
@@ -426,8 +428,13 @@ OPAL_DECLSPEC int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_t
  *
  * A performance variable that has been marked as invalid will not be available. To
  * restore a performance variable it has to be re-registered using mca_base_pvar_register().
+ *
+ * This function does not return while a callback of this variable is running on
+ * another thread (in an MPI_T call), and no callback of this variable is called
+ * after it returns.  The caller may then free whatever the variable's callbacks
+ * use.
  */
-int mca_base_pvar_mark_invalid(int index);
+OPAL_DECLSPEC int mca_base_pvar_mark_invalid(int index);
 
 /**
  * Convenience functions for performance variables

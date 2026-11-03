@@ -155,6 +155,27 @@ OPAL_DECLSPEC int mca_base_var_group_add_event(const int group_index, const int 
  */
 OPAL_DECLSPEC int mca_base_var_group_add_enum(const int group_index, const void *storage);
 
+/*
+ * The *_locked functions below are for callers that already hold the MCA
+ * tool lock (mca_base_tool_lock()), which is not recursive.  The public
+ * functions of the same names without the suffix take the lock
+ * themselves.
+ */
+
+/**
+ * \internal
+ *
+ * Deregister a variable (see mca_base_var_deregister())
+ */
+OPAL_DECLSPEC int mca_base_var_deregister_locked(int vari);
+
+/**
+ * \internal
+ *
+ * Mark a performance variable invalid (see mca_base_pvar_mark_invalid())
+ */
+OPAL_DECLSPEC int mca_base_pvar_mark_invalid_locked(int index);
+
 /**
  * \internal
  *

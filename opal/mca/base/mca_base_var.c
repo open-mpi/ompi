@@ -878,7 +878,7 @@ int mca_base_var_set_value(int vari, const void *value, size_t size, mca_base_va
 /*
  * Deregister a parameter
  */
-int mca_base_var_deregister(int vari)
+static int var_deregister(int vari)
 {
     mca_base_var_t *var;
     int ret;
@@ -916,6 +916,28 @@ int mca_base_var_deregister(int vari)
     var->mbv_storage = NULL;
 
     return OPAL_SUCCESS;
+}
+
+int mca_base_var_deregister_locked(int vari)
+{
+#if OPAL_ENABLE_DEBUG
+    assert(mca_base_tool_lock_held());
+#endif
+    return var_deregister(vari);
+}
+
+int mca_base_var_deregister(int vari)
+{
+    int ret;
+
+    /* Deregistering frees the variable's string value and enumerator and
+       detaches its storage, so it must not overlap an MPI_T call that is
+       reading or writing the variable. */
+    mca_base_tool_lock();
+    ret = var_deregister(vari);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 static int var_get(int vari, mca_base_var_t **var_out, bool original)
