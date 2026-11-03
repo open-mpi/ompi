@@ -269,6 +269,28 @@ OPAL_DECLSPEC int opal_common_ofi_fi_domain(struct fid_fabric *fabric, struct fi
 OPAL_DECLSPEC int opal_common_ofi_fabric_release(struct fid_fabric *fabric);
 
 /**
+ * Identify the PCI root complex a provider's NIC sits under
+ *
+ * Returns an opaque key that is equal for two providers exactly when their
+ * NICs hang off the same PCI root complex, and different otherwise.  The
+ * value carries no meaning beyond that comparison, and it is only comparable
+ * within one process.
+ *
+ * This matters because a process that drives concurrent traffic through NICs
+ * under more than one root complex can behave very differently from one that
+ * stays under a single root complex, so a component distributing NICs across
+ * local processes may want to keep each process within one of them.
+ *
+ * @param provider (IN)    Provider info
+ * @param root_id (OUT)    Opaque root complex key
+ *
+ * @return                 OPAL_SUCCESS, or OPAL_ERR_NOT_AVAILABLE when the
+ *                         PCI attributes or the hwloc topology needed to
+ *                         answer the question are not present
+ */
+OPAL_DECLSPEC int opal_common_ofi_pci_root_id(struct fi_info *provider, uintptr_t *root_id);
+
+/**
  * Release domain reference
  *
  * Decrements domain reference count and closes domain if count reaches zero.
