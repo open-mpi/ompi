@@ -120,6 +120,32 @@ enum {
 
 struct mca_base_pvar_t;
 
+/*
+ * Rules for performance variable callbacks (get_value, set_value, and
+ * notify, below):
+ *
+ * - They are called with the MCA tool lock (mca_base_tool_lock()) held.
+ *   So they must not block, call opal_progress(), call MPI functions, or
+ *   take any lock that the provider may hold while it registers or
+ *   invalidates a variable (which takes the tool lock).
+ *
+ * - They can be called at any time until the variable is invalidated.
+ *   A component's variables are invalidated when the component is closed
+ *   (before its close function is called).  A provider that frees
+ *   anything its callbacks use at any other time -- for example, in a
+ *   module finalize function -- must make sure that no callback is
+ *   using it.  Either:
+ *
+ *   - call mca_base_pvar_mark_invalid() on the affected variables first.
+ *     An invalidated variable stays invalid for as long as its component
+ *     stays registered; or
+ *
+ *   - if the data may become available again while the component stays
+ *     registered (e.g., when the module is initialized again), publish
+ *     and withdraw it while holding the MCA tool lock, and have the
+ *     callbacks return an error when it is not available.
+ */
+
 /**
  * Function to retrieve the current value of a variable.
  *
