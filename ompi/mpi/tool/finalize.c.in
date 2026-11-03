@@ -28,18 +28,23 @@
 
 PROTOTYPE ERROR_CLASS finalize()
 {
-    ompi_mpit_lock ();
-    /* Serialize against instance (world/session) init and teardown: the
-       last MPI_T_finalize() performs the deferred true component closes
-       and releases OPAL references, which share unlocked state with a
-       concurrent instance bring-up or teardown on another thread.  Lock
-       ordering: the MPI_T lock above always comes first; see
-       ompi_mpi_instance_lock() in instance.c. */
+    /* Serialize against MPI_T_init_thread() and instance (world/session)
+       init and teardown: the last MPI_T_finalize() performs the deferred
+       true component closes and releases OPAL references, which share
+       unlocked state with a concurrent instance bring-up or teardown on
+       another thread.  The instance lock does that; see
+       ompi_mpi_instance_lock() in instance.c.
+
+       Do not hold the MPI_T lock here.  It is not recursive, and closing
+       a component takes it (to invalidate and deregister the component's
+       MCA variables).  Nothing else needs it: ompi_mpit_init_count is
+       written only here and in MPI_T_init_thread(), both under the
+       instance lock, and when the last MPI_T_finalize() runs no other
+       thread may be in an MPI_T call. */
     ompi_mpi_instance_lock ();
 
     if (!mpit_is_initialized ()) {
         ompi_mpi_instance_unlock ();
-        ompi_mpit_unlock ();
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
@@ -77,7 +82,6 @@ PROTOTYPE ERROR_CLASS finalize()
     }
 
     ompi_mpi_instance_unlock ();
-    ompi_mpit_unlock ();
 
     return MPI_SUCCESS;
 }

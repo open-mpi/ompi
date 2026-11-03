@@ -41,6 +41,7 @@ check_PROGRAMS = \
         mpi_t_level_no_downgrade \
         mpi_t_level_pinning \
         mpi_t_lifecycle \
+        mpi_t_lock_order \
         mpi_t_outlives_mpi \
         mpi_t_pvar_monitoring \
         mpi_t_repeated_sessions \
@@ -124,6 +125,10 @@ mpi_t_level_pinning_LDADD = $(test_ldadd)
 mpi_t_lifecycle_SOURCES = mpi_t_lifecycle.c mpi_t_lifecycle.h
 mpi_t_lifecycle_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 mpi_t_lifecycle_LDADD = $(test_ldadd)
+
+mpi_t_lock_order_SOURCES = mpi_t_lock_order.c
+mpi_t_lock_order_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_lock_order_LDADD = $(test_ldadd)
 
 mpi_t_outlives_mpi_SOURCES = mpi_t_outlives_mpi.c
 mpi_t_outlives_mpi_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
