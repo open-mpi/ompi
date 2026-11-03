@@ -123,7 +123,20 @@ static int mca_btl_ofi_add_procs(mca_btl_base_module_t *btl, size_t nprocs,
                 continue;
             }
 
-            int target = ofi_btl->module_index % (int) nm;
+            /* Module i reaches only the peer's module i, so that every pair is
+             * symmetric: a fragment sent on module i lands on the peer's
+             * module i, and an RDMA the peer then issues from that module
+             * targets the NIC the memory key was registered on. Wrapping a
+             * module the peer lacks onto one it has (i % nm) breaks that when
+             * the two module counts differ: the peer reads with a key from one
+             * of our NICs at another, and the NIC fails it as a bad address. */
+            if (ofi_btl->module_index >= (int) nm) {
+                free(ep_name);
+                BTL_VERBOSE(("peer has no module %d", ofi_btl->module_index));
+                mca_btl_ofi_drop_unwired_endpoint(ofi_btl, proc, &peers[i]);
+                continue;
+            }
+            int target = ofi_btl->module_index;
             fi_addr_t peer_addr = FI_ADDR_NOTAVAIL;
 
             for (int k = 0; k <= target && k < (int) nm; k++) {
