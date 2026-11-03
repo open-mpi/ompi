@@ -13,6 +13,7 @@
  * Copyright (c) 2012-2013 Inria.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,11 +66,14 @@ int mca_topo_base_find_available(bool enable_progress_threads,
          if (OMPI_SUCCESS != init_query(cli->cli_component, cli,
                                         enable_progress_threads,
                                         enable_mpi_threads)) {
-             /* The component does not want to run, so close it. Its close()
-                has already been invoked. Close it out of the DSO repository
-                (if it is there in the repository) */
-             mca_base_component_repository_release(cli->cli_component);
+             /* The component does not want to run, so close it and
+                unload it (mca_base_component_close() invalidates the
+                component's performance variables before it calls the
+                component's close function, and deregisters its control
+                variables when it unloads it) */
              opal_list_remove_item(&ompi_topo_base_framework.framework_components, item);
+             mca_base_component_close(cli->cli_component,
+                                      ompi_topo_base_framework.framework_output);
              OBJ_RELEASE(item);
          }
          item = next;
@@ -122,9 +126,6 @@ static int init_query(const mca_base_component_t *m,
         opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                             "topo:find_available topo component %s is not available",
                             m->mca_component_name);
-        if (NULL != m->mca_close_component) {
-            m->mca_close_component();
-        }
     } else {
         opal_output_verbose(10, ompi_topo_base_framework.framework_output,
                             "topo:find_avalable: topo component %s is available",

@@ -148,6 +148,30 @@ OPAL_DECLSPEC int mca_base_var_group_register_locked(const char *project_name,
 /**
  * \internal
  *
+ * Find a group (see mca_base_var_group_find())
+ */
+OPAL_DECLSPEC int mca_base_var_group_find_locked(const char *project_name,
+                                                 const char *framework_name,
+                                                 const char *component_name);
+
+/**
+ * \internal
+ *
+ * Deregister a group (see mca_base_var_group_deregister())
+ */
+OPAL_DECLSPEC int mca_base_var_group_deregister_locked(int group_index);
+
+/**
+ * \internal
+ *
+ * Invalidate a group's performance variables and events (see
+ * mca_base_var_group_invalidate())
+ */
+OPAL_DECLSPEC int mca_base_var_group_invalidate_locked(int group_index);
+
+/**
+ * \internal
+ *
  * Add a variable to a group
  */
 OPAL_DECLSPEC int mca_base_var_group_add_var_locked(const int group_index, const int param_index);
