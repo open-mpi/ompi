@@ -569,6 +569,7 @@ test/mpi/environment/hw_resource_info
 test/util/aaa
 test/util/test_session_dir_out
 test/util/mca_base_event_test
+test/util/mca_base_pvar_test
 test/util/opal_os_path
 test/util/opal_argv
 test/util/opal_os_create_dirpath

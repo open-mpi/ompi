@@ -489,8 +489,6 @@ int mca_base_pvar_handle_alloc(mca_base_pvar_session_t *session, int index, void
         pvar_handle->obj_handle = (NULL == obj_handle ? NULL : *(void **) obj_handle);
         pvar_handle->pvar = pvar;
 
-        *handle = pvar_handle;
-
         /* notify the variable that a handle has been bound and determine
            how many values this handle has. NTH: finding the count should
            probably be pushed into a separate function. */
@@ -552,7 +550,7 @@ int mca_base_pvar_handle_alloc(mca_base_pvar_session_t *session, int index, void
                 }
 
                 if (OPAL_SUCCESS != ret) {
-                    return ret;
+                    break;
                 }
             }
         }
@@ -568,6 +566,7 @@ int mca_base_pvar_handle_alloc(mca_base_pvar_session_t *session, int index, void
             pvar_handle->started = true;
         }
 
+        *handle = pvar_handle;
         ret = OPAL_SUCCESS;
     } while (0);
 
@@ -1031,14 +1030,16 @@ static void mca_base_pvar_handle_destructor(mca_base_pvar_handle_t *handle)
         free(handle->tmp_value);
     }
 
-    /* remove this handle from the pvar list */
-    if (handle->pvar) {
+    /* remove this handle from the pvar list and the session.
+       mca_base_pvar_handle_alloc() sets the session only when it puts the
+       handle on both lists, so a handle that failed to allocate is on
+       neither. */
+    if (handle->session) {
         opal_list_remove_item(&handle->pvar->bound_handles, &handle->list2);
     }
 
     OBJ_DESTRUCT(&handle->list2);
 
-    /* remove this handle from the session */
     if (handle->session) {
         opal_list_remove_item(&handle->session->handles, &handle->super);
     }
