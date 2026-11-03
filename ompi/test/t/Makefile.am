@@ -46,6 +46,7 @@ check_PROGRAMS = \
         mpi_t_pvar_monitoring \
         mpi_t_read_vs_init \
         mpi_t_repeated_sessions \
+        mpi_t_session_free_race \
         mpi_t_var_index \
         mpi_t_world_close_first \
         mpi_t_world_inner \
@@ -143,6 +144,11 @@ mpi_t_read_vs_init_SOURCES = mpi_t_read_vs_init.c mpi_t_lifecycle.h
 mpi_t_read_vs_init_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 # Calls pthread_* directly; see mpi_t_concurrent_init above.
 mpi_t_read_vs_init_LDADD = $(test_ldadd) -lpthread
+
+mpi_t_session_free_race_SOURCES = mpi_t_session_free_race.c mpi_t_lifecycle.h
+mpi_t_session_free_race_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+# Calls pthread_* directly; see mpi_t_concurrent_init above.
+mpi_t_session_free_race_LDADD = $(test_ldadd) -lpthread
 
 mpi_t_var_index_SOURCES = mpi_t_var_index.c
 mpi_t_var_index_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
