@@ -17,8 +17,10 @@
 #    include "btl_ofi_endpoint.h"
 
 #    define MCA_BTL_OFI_HDR_SIZE  sizeof(mca_btl_ofi_header_t)
-#    define MCA_BTL_OFI_FRAG_SIZE 4096
+#    define MCA_BTL_OFI_FRAG_SIZE (mca_btl_ofi_component.frag_size)
 #    define MCA_BTL_OFI_RECV_SIZE MCA_BTL_OFI_FRAG_SIZE + MCA_BTL_OFI_HDR_SIZE
+/* eager limit of device buffers when the user sets none (see mca_btl_ofi_init_device) */
+#    define MCA_BTL_OFI_ACCELERATOR_EAGER_LIMIT 4096
 
 #    define MCA_BTL_OFI_NUM_SEND_INC(module)                                       \
         OPAL_ATOMIC_ADD_FETCH64(&(module)->outstanding_send, 1);                   \
