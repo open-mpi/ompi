@@ -347,10 +347,23 @@ AC_MSG_RESULT([${ompi_mpi_abi_mode}])
 AC_DEFINE_UNQUOTED([OMPI_BUILD_STANDARD_ABI],[$ompi_build_standard_abi],
                    [Whether we want to build the MPI Forum ABI library])
 AM_CONDITIONAL(OMPI_BUILD_STANDARD_ABI,[test $ompi_build_standard_abi = 1])
-AS_IF([test $ompi_build_standard_abi -eq 1],
-      [gen_abi="yes"],
-      [gen_abi="no"])
-OPAL_SUMMARY_ADD([Miscellaneous], [MPI Forum ABI support], [], [$gen_abi])
+dnl AS_IF([test $ompi_build_standard_abi -eq 1],
+dnl      [gen_abi="yes"],
+dnl      [gen_abi="no"])
+ompi_mpi_abi_summary="MPI Forum ABI support"
+case "$ompi_mpi_abi_mode" in
+    both)
+        ompi_mpi_gen_abi="yes"
+        ;;
+    ompi)
+        ompi_mpi_gen_abi="no"
+        ;;
+    standard)
+        ompi_mpi_gen_abi="no Fortran bindings available and no OpenSHMEM support"
+        ompi_mpi_abi_summary="MPI Forum ABI support only"
+        ;;
+esac
+OPAL_SUMMARY_ADD([Miscellaneous], [$ompi_mpi_abi_summary], [], [$ompi_mpi_gen_abi])
 
 # Warn about the limitations of ABI-only mode.
 AS_IF([test "${ompi_build_ompi_abi}" = "0"],
@@ -359,7 +372,7 @@ AS_IF([test "${ompi_build_ompi_abi}" = "0"],
      AC_MSG_WARN([Limitations:])
      AC_MSG_WARN([  * No Fortran bindings (mpifort, mpif77, mpif90)])
      AC_MSG_WARN([  * No OpenSHMEM support])
-     AC_MSG_WARN([  * Only C MPI applications are supported])
+     AC_MSG_WARN([  * Only C/C++ MPI applications are supported])
      AC_MSG_WARN([************************************************************])])
 
 AC_DEFINE_UNQUOTED([OMPI_BUILD_OMPI_ABI], [$ompi_build_ompi_abi],
