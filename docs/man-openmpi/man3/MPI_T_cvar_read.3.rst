@@ -23,7 +23,13 @@ DESCRIPTION
 the handle specified in *handle* and stores the value in the buffer
 pointed to by *buf*. The caller must ensure that the buffer pointed to
 by *buf* is large enough to hold the entire value of the control
-variable.
+variable: for a string, *count* characters, where *count* is the value
+returned by :ref:`MPI_T_cvar_handle_alloc`.
+
+If a string control variable's value has grown longer than *count* - 1
+characters since the handle was allocated, :ref:`MPI_T_cvar_read` stores
+only its first *count* - 1 characters, followed by a null character.
+Free the handle and allocate a new one to read the whole value.
 
 
 ERRORS

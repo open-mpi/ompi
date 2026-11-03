@@ -227,6 +227,7 @@ ompi/mpi/tool/profile/*.c
 
 ompi/test/t/mpi_t_category_get_events
 ompi/test/t/mpi_t_concurrent_init
+ompi/test/t/mpi_t_cvar_read_long_string
 ompi/test/t/mpi_t_errcodes
 ompi/test/t/mpi_t_event_14019
 ompi/test/t/mpi_t_event_comm_name

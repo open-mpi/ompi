@@ -38,6 +38,16 @@ Open MPI version v6.1.0
 
 - Updated the embedded hwloc to v2.15.0.
 
+- ``MPI_T_cvar_handle_alloc`` now reports a count large enough for the
+  current value of a string control variable, and ``MPI_T_cvar_read``
+  never writes more than that count.  Previously the count was always
+  2048, and reading a longer string overflowed the tool's buffer.
+
+- **Build System**: Open MPI now requires Autoconf 2.69 or later for
+  developers building from Git or modifying the build system. Released
+  tarballs remain unaffected. This update enables adoption of modern
+  Fortran compiler detection macros in subsequent changes.
+
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
   detect that the two jobs are running different versions of Open MPI,
   or that they selected different PMLs, and fail with a message naming
