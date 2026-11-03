@@ -333,9 +333,14 @@ int main(int argc, char **argv)
             int slen = sizeof(sname);
             MPI_T_source_order ordering = MPI_T_SOURCE_ORDERED;
             MPI_Count tps = 0, mt = 0;
+            MPI_Info info = MPI_INFO_NULL;
             if (MPI_SUCCESS
-                != MPI_T_source_get_info(i, sname, &slen, NULL, NULL, &ordering, &tps, &mt, NULL)) {
+                != MPI_T_source_get_info(i, sname, &slen, NULL, NULL, &ordering, &tps, &mt, &info)) {
                 continue;
+            }
+            expect("source_get_info returns an info object", MPI_INFO_NULL != info);
+            if (MPI_INFO_NULL != info) {
+                MPI_Info_free(&info);
             }
             if (0 == strcmp(sname, "ompi")) {
                 found_ordered = i;
