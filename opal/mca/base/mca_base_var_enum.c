@@ -848,14 +848,18 @@ int mca_base_var_enum_register(const char *project_name, const char *framework_n
     /* Developer error. Storage can not be NULL */
     assert(NULL != storage);
 
-    /* Create a new parameter entry */
-    group_index = mca_base_var_group_register(project_name, framework_name, component_name, NULL);
+    /* Register the group and add the enumerator to it under one hold of
+       the MCA tool lock (see mca_base_var_group_register()) */
+    mca_base_tool_lock();
+    group_index = mca_base_var_group_register_locked(project_name, framework_name,
+                                                     component_name, NULL);
+    if (0 <= group_index) {
+        mca_base_var_group_add_enum_locked(group_index, storage);
+    }
+    mca_base_tool_unlock();
+
     if (-1 > group_index) {
         return group_index;
-    }
-
-    if (0 <= group_index) {
-        mca_base_var_group_add_enum(group_index, storage);
     }
 
     return OPAL_SUCCESS;

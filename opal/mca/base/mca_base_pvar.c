@@ -65,26 +65,7 @@ int mca_base_pvar_init(void)
     return ret;
 }
 
-int mca_base_pvar_find(const char *project, const char *framework, const char *component,
-                       const char *name)
-{
-    char *full_name;
-    int ret, index;
-
-    ret = mca_base_var_generate_full_name4(NULL, framework, component, name, &full_name);
-    if (OPAL_SUCCESS != ret) {
-        return OPAL_ERROR;
-    }
-
-    ret = mca_base_pvar_find_by_name(full_name, MCA_BASE_PVAR_CLASS_ANY, &index);
-    free(full_name);
-
-    /* NTH: should we verify the name components match the returned variable? */
-
-    return (OPAL_SUCCESS != ret) ? ret : index;
-}
-
-int mca_base_pvar_find_by_name(const char *full_name, int var_class, int *index)
+static int pvar_find_by_name(const char *full_name, int var_class, int *index)
 {
     mca_base_pvar_t *pvar;
     void *tmp;
@@ -108,6 +89,50 @@ int mca_base_pvar_find_by_name(const char *full_name, int var_class, int *index)
     *index = (int) (uintptr_t) tmp;
 
     return OPAL_SUCCESS;
+}
+
+static int pvar_find(const char *project, const char *framework, const char *component,
+                     const char *name)
+{
+    char *full_name;
+    int ret, index;
+
+    ret = mca_base_var_generate_full_name4(NULL, framework, component, name, &full_name);
+    if (OPAL_SUCCESS != ret) {
+        return OPAL_ERROR;
+    }
+
+    ret = pvar_find_by_name(full_name, MCA_BASE_PVAR_CLASS_ANY, &index);
+    free(full_name);
+
+    /* NTH: should we verify the name components match the returned variable? */
+
+    return (OPAL_SUCCESS != ret) ? ret : index;
+}
+
+int mca_base_pvar_find(const char *project, const char *framework, const char *component,
+                       const char *name)
+{
+    int ret;
+
+    /* Registration modifies the name table under the MPI_T lock */
+    mca_base_tool_lock();
+    ret = pvar_find(project, framework, component, name);
+    mca_base_tool_unlock();
+
+    return ret;
+}
+
+int mca_base_pvar_find_by_name(const char *full_name, int var_class, int *index)
+{
+    int ret;
+
+    /* As in mca_base_pvar_find() */
+    mca_base_tool_lock();
+    ret = pvar_find_by_name(full_name, var_class, index);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_pvar_finalize(void)
@@ -176,13 +201,13 @@ static int mca_base_pvar_notify_ignore(mca_base_pvar_t *pvar, mca_base_pvar_even
     return OPAL_SUCCESS;
 }
 
-int mca_base_pvar_register(const char *project, const char *framework, const char *component,
-                           const char *name, const char *description,
-                           mca_base_var_info_lvl_t verbosity, int var_class,
-                           mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
-                           mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
-                           mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
-                           void *ctx)
+static int pvar_register(const char *project, const char *framework, const char *component,
+                         const char *name, const char *description,
+                         mca_base_var_info_lvl_t verbosity, int var_class,
+                         mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
+                         mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
+                         mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
+                         void *ctx)
 {
     int ret, group_index, pvar_index;
     mca_base_pvar_t *pvar;
@@ -240,7 +265,7 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
     assert(verbosity >= OPAL_INFO_LVL_1 && verbosity <= OPAL_INFO_LVL_9);
 
     /* check if this variable is already registered */
-    ret = mca_base_pvar_find(project, framework, component, name);
+    ret = pvar_find(project, framework, component, name);
     if (OPAL_SUCCESS <= ret) {
         ret = mca_base_pvar_get_internal(ret, &pvar, true);
         if (OPAL_SUCCESS != ret) {
@@ -253,7 +278,7 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
         }
     } else {
         /* find/register an MCA parameter group for this performance variable */
-        group_index = mca_base_var_group_register(project, framework, component, NULL);
+        group_index = mca_base_var_group_register_locked(project, framework, component, NULL);
         if (-1 > group_index) {
             return group_index;
         }
@@ -288,7 +313,7 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
 
             /* add this performance variable to the MCA variable group */
             if (0 <= group_index) {
-                ret = mca_base_var_group_add_pvar(group_index, pvar_index);
+                ret = mca_base_var_group_add_pvar_locked(group_index, pvar_index);
                 if (0 > ret) {
                     break;
                 }
@@ -331,6 +356,29 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
     pvar->ctx = ctx;
 
     return pvar->pvar_index;
+}
+
+int mca_base_pvar_register(const char *project, const char *framework, const char *component,
+                           const char *name, const char *description,
+                           mca_base_var_info_lvl_t verbosity, int var_class,
+                           mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
+                           mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
+                           mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
+                           void *ctx)
+{
+    int ret;
+
+    /* Re-registering a (valid) performance variable replaces its
+       callbacks and context, and registering a new one -- including one
+       whose old registration was invalidated -- grows the variable table
+       and repoints its name, so it must not overlap an MPI_T call that is
+       using the variable. */
+    mca_base_tool_lock();
+    ret = pvar_register(project, framework, component, name, description, verbosity, var_class,
+                        type, enumerator, bind, flags, get_value, set_value, notify, ctx);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_component_pvar_register(const mca_base_component_t *component, const char *name,
