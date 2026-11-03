@@ -767,6 +767,10 @@ int mca_base_pvar_handle_start(mca_base_pvar_handle_t *handle)
 {
     int ret;
 
+    if (mca_base_pvar_is_invalid(handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
+
     /* Can't start a continuous or an already started variable */
     if ((handle->pvar->flags & MCA_BASE_PVAR_FLAG_CONTINUOUS) || handle->started) {
         return OPAL_ERR_NOT_SUPPORTED;

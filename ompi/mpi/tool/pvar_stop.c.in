@@ -6,6 +6,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +21,12 @@
 
 static int pvar_handle_stop (mca_base_pvar_handle_t *handle)
 {
-    if (OPAL_SUCCESS != mca_base_pvar_handle_stop (handle)) {
+    int rc = mca_base_pvar_handle_stop (handle);
+
+    if (OPAL_ERR_NOT_BOUND == rc) {
+        /* The variable has been invalidated */
+        return MPI_T_ERR_INVALID_HANDLE;
+    } else if (OPAL_SUCCESS != rc) {
         return MPI_T_ERR_PVAR_NO_STARTSTOP;
     }
 
