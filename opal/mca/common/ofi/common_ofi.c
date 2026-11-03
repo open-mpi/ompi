@@ -46,6 +46,7 @@ opal_common_ofi_module_t opal_common_ofi = {.prov_include = NULL,
                                             .output = -1,
                                             .fabric = NULL,
                                             .domain = NULL,
+                                            .domain_name = NULL,
                                             .fabric_ref_count = 0,
                                             .domain_ref_count = 0};
 static const char default_prov_exclude_list[] = "shm,sockets,tcp,udp,rstream,usnic,net";
@@ -1300,7 +1301,11 @@ int opal_common_ofi_fi_fabric(struct fi_fabric_attr *fabric_attr,
  * Get or create domain object
  *
  * Reuses existing domain from info->domain_attr->domain if available,
- * otherwise creates new domain using fi_domain().
+ * otherwise creates new domain using fi_domain().  A new domain becomes the
+ * shared one only if no shared domain is open yet: a component that opens
+ * several domains, one per NIC, must not replace the domain another component
+ * shares, or that domain's reference count would be lost and the first release
+ * would close it under the other user.
  *
  * @param fabric (IN)      Fabric object
  * @param info (IN)        Provider info
@@ -1326,8 +1331,13 @@ int opal_common_ofi_fi_domain(struct fid_fabric *fabric, struct fi_info *info,
             OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
             return ret;
         }
-        opal_common_ofi.domain = *domain;
-        opal_common_ofi.domain_ref_count = 1;
+        if (NULL == opal_common_ofi.domain) {
+            opal_common_ofi.domain = *domain;
+            opal_common_ofi.domain_ref_count = 1;
+            opal_common_ofi.domain_name = (NULL != info->domain_attr->name)
+                                              ? strdup(info->domain_attr->name)
+                                              : NULL;
+        }
     }
 
     OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
@@ -1398,6 +1408,8 @@ int opal_common_ofi_domain_release(struct fid_domain *domain)
                                     __FILE__, __LINE__, fi_strerror(-ret), ret);
             }
             opal_common_ofi.domain = NULL;
+            free(opal_common_ofi.domain_name);
+            opal_common_ofi.domain_name = NULL;
         }
     } else {
         ret = fi_close(&domain->fid);
