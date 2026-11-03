@@ -134,9 +134,10 @@ the specification.
 The producer contract
 ---------------------
 
-* **Never hold the MPI_T big lock (or, in OMPI, raise while holding it).** A
-  tool callback may call back into the MPI_T interface, which would deadlock. A
-  debug build asserts that no event is raised while ``ompi_mpit_big_lock`` is
+* **Never raise while holding the MPI_T lock** (``mca_base_tool_lock()``). A
+  tool callback may call back into the MPI_T interface, or wait on another tool
+  thread that is itself waiting for the lock, so it must never run with the
+  lock held. A debug build asserts that no event is raised while the lock is
   held.
 * **Raise from a normal thread context.** v1 delivers callbacks synchronously
   at ``C in {NONE, MPI_RESTRICTED, THREAD_SAFE}``; it does not deliver from a

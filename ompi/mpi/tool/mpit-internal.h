@@ -68,8 +68,6 @@ OMPI_DECLSPEC extern volatile uint32_t ompi_mpit_init_count;
    why the two must never be conflated). */
 OMPI_DECLSPEC extern int ompi_mpit_thread_level;
 
-OMPI_HIDDEN extern opal_mutex_t ompi_mpit_big_lock;
-
 /* Set when a first MPI_T_init_thread() failed partway through framework
    registration, which is not unwindable; MPI_T can never be brought up
    in this process again, and MPI_T_finalize() must not run the component
