@@ -394,7 +394,9 @@ int mca_base_event_register(const char *project, const char *framework, const ch
         if (event->flags & MCA_BASE_EVENT_FLAG_INVALID) {
             event->flags &= ~MCA_BASE_EVENT_FLAG_INVALID;
             if (0 <= event->group_index) {
-                (void) mca_base_var_group_add_event(event->group_index, event_index);
+                mca_base_tool_lock();
+                (void) mca_base_var_group_add_event_locked(event->group_index, event_index);
+                mca_base_tool_unlock();
             }
         }
         return event_index;
@@ -454,7 +456,9 @@ int mca_base_event_register(const char *project, const char *framework, const ch
        above without re-appending), so a repeat registration cannot inflate the
        per-category count (sec. 9.1 / sec. 15.3.9). */
     if (0 <= event->group_index) {
-        (void) mca_base_var_group_add_event(event->group_index, event_index);
+        mca_base_tool_lock();
+        (void) mca_base_var_group_add_event_locked(event->group_index, event_index);
+        mca_base_tool_unlock();
     }
 
     opal_hash_table_set_value_ptr(&event_name_to_index, event->name, strlen(event->name),

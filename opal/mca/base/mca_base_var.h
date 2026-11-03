@@ -752,11 +752,12 @@ OPAL_DECLSPEC int mca_base_var_load_extra_files(char *files, bool rel_path_searc
  * below the bindings (OPAL and the components) can take it.
  *
  * The lock is not recursive: a thread that holds it must not call a
- * function that takes it, including the public functions that
- * deregister or invalidate MCA variables and performance variables.
- * Code inside the MCA variable system that already holds it uses the
- * *_locked versions of those functions (see mca_base_vari.h).  A debug
- * build asserts if a thread takes it again.
+ * function that takes it, including the public functions that register,
+ * deregister, invalidate, or look up MCA variables, performance
+ * variables, and variable groups.  Code inside the MCA variable system
+ * that already holds it uses the *_locked versions of those functions
+ * (see mca_base_vari.h).  A debug build asserts if a thread takes it
+ * again.
  *
  * A thread that takes it while already holding another lock establishes
  * an order between the two: nothing may take that other lock while

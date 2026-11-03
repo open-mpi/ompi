@@ -128,39 +128,49 @@ OPAL_DECLSPEC int mca_base_var_group_get_internal(const int group_index,
  */
 OPAL_DECLSPEC int mca_base_parse_paramfile(const char *paramfile, opal_list_t *list);
 
-/**
- * \internal
- *
- * Add a variable to a group
- */
-OPAL_DECLSPEC int mca_base_var_group_add_var(const int group_index, const int param_index);
-
-/**
- * \internal
- *
- * Add a performance variable to a group
- */
-OPAL_DECLSPEC int mca_base_var_group_add_pvar(const int group_index, const int param_index);
-
-/**
- * Add an MPI_T event (by index) to a group.  Append-only and order-preserving
- * (sec. 15.3.9): an event is never removed from or reordered within a category.
- */
-OPAL_DECLSPEC int mca_base_var_group_add_event(const int group_index, const int event_index);
-
-/**
- * \internal
- *
- * Add an enum to a group
- */
-OPAL_DECLSPEC int mca_base_var_group_add_enum(const int group_index, const void *storage);
-
 /*
  * The *_locked functions below are for callers that already hold the MCA
  * tool lock (mca_base_tool_lock()), which is not recursive.  The public
  * functions of the same names without the suffix take the lock
  * themselves.
  */
+
+/**
+ * \internal
+ *
+ * Register a group (see mca_base_var_group_register())
+ */
+OPAL_DECLSPEC int mca_base_var_group_register_locked(const char *project_name,
+                                                     const char *framework_name,
+                                                     const char *component_name,
+                                                     const char *description);
+
+/**
+ * \internal
+ *
+ * Add a variable to a group
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_var_locked(const int group_index, const int param_index);
+
+/**
+ * \internal
+ *
+ * Add a performance variable to a group
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_pvar_locked(const int group_index, const int param_index);
+
+/**
+ * Add an MPI_T event (by index) to a group.  Append-only and order-preserving
+ * (sec. 15.3.9): an event is never removed from or reordered within a category.
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_event_locked(const int group_index, const int event_index);
+
+/**
+ * \internal
+ *
+ * Add an enum to a group
+ */
+OPAL_DECLSPEC int mca_base_var_group_add_enum_locked(const int group_index, const void *storage);
 
 /**
  * \internal

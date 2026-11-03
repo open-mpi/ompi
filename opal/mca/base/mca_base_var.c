@@ -1043,7 +1043,14 @@ static int var_find(const char *project_name, const char *framework_name,
 int mca_base_var_find(const char *project_name, const char *framework_name,
                       const char *component_name, const char *variable_name)
 {
-    return var_find(project_name, framework_name, component_name, variable_name, false);
+    int ret;
+
+    /* Registration modifies the name table under the MPI_T lock */
+    mca_base_tool_lock();
+    ret = var_find(project_name, framework_name, component_name, variable_name, false);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 /*
@@ -1051,7 +1058,14 @@ int mca_base_var_find(const char *project_name, const char *framework_name,
  */
 int mca_base_var_find_by_name(const char *full_name, int *vari)
 {
-    return var_find_by_name(full_name, vari, false);
+    int ret;
+
+    /* As in mca_base_var_find() */
+    mca_base_tool_lock();
+    ret = var_find_by_name(full_name, vari, false);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_var_set_flag(int vari, mca_base_var_flag_t flag, bool set)
@@ -1446,9 +1460,11 @@ static int register_variable(const char *project_name, const char *framework_nam
     /* There are data holes in the var struct */
     OPAL_DEBUG_ZERO(var);
 
-    /* Initialize the array if it has never been initialized */
+    /* The public registration functions initialize the variable system
+       before taking the MCA tool lock (initializing it registers
+       variables, which takes the lock) */
     if (!mca_base_var_initialized) {
-        mca_base_var_init();
+        return OPAL_ERR_NOT_INITIALIZED;
     }
 
     /* See if this entry is already in the array */
@@ -1456,8 +1472,8 @@ static int register_variable(const char *project_name, const char *framework_nam
 
     if (0 > var_index) {
         /* Create a new parameter entry */
-        group_index = mca_base_var_group_register(project_name, framework_name, component_name,
-                                                  NULL);
+        group_index = mca_base_var_group_register_locked(project_name, framework_name,
+                                                         component_name, NULL);
         if (-1 > group_index) {
             return group_index;
         }
@@ -1520,7 +1536,7 @@ static int register_variable(const char *project_name, const char *framework_nam
         var->mbv_index = var_index;
 
         if (0 <= group_index) {
-            mca_base_var_group_add_var(group_index, var_index);
+            mca_base_var_group_add_var_locked(group_index, var_index);
         }
 
         mca_base_var_count++;
@@ -1606,12 +1622,16 @@ static int register_variable(const char *project_name, const char *framework_nam
     return var_index;
 }
 
-int mca_base_var_register(const char *project_name, const char *framework_name,
-                          const char *component_name, const char *variable_name,
-                          const char *description, mca_base_var_type_t type,
-                          mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
-                          mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
-                          void *storage)
+static int var_register_synonym(int synonym_for, const char *project_name,
+                                const char *framework_name, const char *component_name,
+                                const char *synonym_name, mca_base_var_syn_flag_t flags);
+
+static int var_register(const char *project_name, const char *framework_name,
+                        const char *component_name, const char *variable_name,
+                        const char *description, mca_base_var_type_t type,
+                        mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+                        mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
+                        void *storage)
 {
     int ret;
     /* Only integer variables can have enumerator */
@@ -1637,9 +1657,36 @@ int mca_base_var_register(const char *project_name, const char *framework_name,
         if (alias_item->alias_flags & MCA_BASE_ALIAS_FLAG_DEPRECATED) {
             flags_derived = MCA_BASE_VAR_SYN_FLAG_DEPRECATED;
         }
-        (void) mca_base_var_register_synonym(ret, project_name, framework_name,
-                                             alias_item->component_alias, variable_name, flags_derived);
+        (void) var_register_synonym(ret, project_name, framework_name,
+                                    alias_item->component_alias, variable_name, flags_derived);
     }
+
+    return ret;
+}
+
+int mca_base_var_register(const char *project_name, const char *framework_name,
+                          const char *component_name, const char *variable_name,
+                          const char *description, mca_base_var_type_t type,
+                          mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+                          mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
+                          void *storage)
+{
+    int ret;
+
+    /* Initialize the variable system if it has never been initialized.
+       Do it before taking the MCA tool lock: initializing it registers
+       variables, which takes the lock. */
+    if (!mca_base_var_initialized) {
+        mca_base_var_init();
+    }
+
+    /* (Re-)registering a variable can replace its storage, enumerator, and
+       description and grow the variable table, so it must not overlap an
+       MPI_T call that is using the variable. */
+    mca_base_tool_lock();
+    ret = var_register(project_name, framework_name, component_name, variable_name, description,
+                       type, enumerator, bind, flags, info_lvl, scope, storage);
+    mca_base_tool_unlock();
 
     return ret;
 }
@@ -1669,18 +1716,16 @@ int mca_base_framework_var_register(const mca_base_framework_t *framework,
                                  flags | MCA_BASE_VAR_FLAG_DWG, info_level, scope, storage);
 }
 
-int mca_base_var_register_synonym(int synonym_for, const char *project_name,
-                                  const char *framework_name, const char *component_name,
-                                  const char *synonym_name, mca_base_var_syn_flag_t flags)
+/* Register a synonym.  The caller holds the MCA tool lock, so that the
+   original variable cannot be re-registered or deregistered while its
+   attributes are copied. */
+static int var_register_synonym(int synonym_for, const char *project_name,
+                                const char *framework_name, const char *component_name,
+                                const char *synonym_name, mca_base_var_syn_flag_t flags)
 {
     mca_base_var_flag_t var_flags = (mca_base_var_flag_t) MCA_BASE_VAR_FLAG_SYNONYM;
     mca_base_var_t *var;
     int ret;
-
-    ret = var_get(synonym_for, &var, false);
-    if (OPAL_SUCCESS != ret || VAR_IS_SYNONYM(var[0])) {
-        return OPAL_ERR_BAD_PARAM;
-    }
 
     if (flags & MCA_BASE_VAR_SYN_FLAG_DEPRECATED) {
         var_flags |= MCA_BASE_VAR_FLAG_DEPRECATED;
@@ -1689,10 +1734,30 @@ int mca_base_var_register_synonym(int synonym_for, const char *project_name,
         var_flags |= MCA_BASE_VAR_FLAG_INTERNAL;
     }
 
+    ret = var_get(synonym_for, &var, false);
+    if (OPAL_SUCCESS != ret || VAR_IS_SYNONYM(var[0])) {
+        return OPAL_ERR_BAD_PARAM;
+    }
+
     return register_variable(project_name, framework_name, component_name, synonym_name,
                              var->mbv_description, var->mbv_type, var->mbv_enumerator,
                              var->mbv_bind, var_flags, var->mbv_info_lvl, var->mbv_scope,
                              synonym_for, NULL);
+}
+
+int mca_base_var_register_synonym(int synonym_for, const char *project_name,
+                                  const char *framework_name, const char *component_name,
+                                  const char *synonym_name, mca_base_var_syn_flag_t flags)
+{
+    int ret;
+
+    /* See mca_base_var_register() */
+    mca_base_tool_lock();
+    ret = var_register_synonym(synonym_for, project_name, framework_name, component_name,
+                               synonym_name, flags);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 static int var_get_env(mca_base_var_t *var, const char *name, char **source, char **value)
