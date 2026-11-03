@@ -673,14 +673,12 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
 
     /* initialize communicator subsystem */
     if (OMPI_SUCCESS != (ret = ompi_comm_init ())) {
-        opal_mutex_unlock (&instance_lock);
         return ompi_instance_print_error ("ompi_comm_init() failed", ret);
     }
 
     /* Construct predefined keyvals */
 
     if (OMPI_SUCCESS != (ret = ompi_attr_create_predefined_keyvals())) {
-        opal_mutex_unlock (&instance_lock);
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
     }
 
