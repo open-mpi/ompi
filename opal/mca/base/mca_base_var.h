@@ -512,6 +512,9 @@ OPAL_DECLSPEC int mca_base_var_register_synonym(int synonym_for, const char *pro
  * mca_base_var_finalize() is called.
  *
  * If an enumerator is associated with this variable it will be dereferenced.
+ *
+ * This function does not return while an MPI_T call is using the variable,
+ * and MPI_T will not use the variable's storage after it returns.
  */
 OPAL_DECLSPEC int mca_base_var_deregister(int vari);
 

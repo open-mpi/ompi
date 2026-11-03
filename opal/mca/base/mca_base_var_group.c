@@ -331,7 +331,7 @@ int mca_base_var_group_component_register(const mca_base_component_t *component,
                           component->mca_component_name, description);
 }
 
-int mca_base_var_group_deregister(int group_index)
+static int var_group_deregister(int group_index)
 {
     mca_base_var_group_t *group;
     int size, ret;
@@ -401,7 +401,7 @@ int mca_base_var_group_deregister(int group_index)
     size = opal_value_array_get_size(&group->group_subgroups);
     subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);
     for (int i = 0; i < size; ++i) {
-        (void) mca_base_var_group_deregister(subgroups[i]);
+        (void) var_group_deregister(subgroups[i]);
     }
     /* ordering of variables and subgroups must be the same if the
      * group is re-registered */
@@ -409,6 +409,22 @@ int mca_base_var_group_deregister(int group_index)
     mca_base_var_groups_timestamp++;
 
     return OPAL_SUCCESS;
+}
+
+int mca_base_var_group_deregister(int group_index)
+{
+    int ret;
+
+    /* Hold the MPI_T lock across the whole group (the variable and
+       performance variable calls below take it again; it is recursive),
+       so that no MPI_T call is using any of the group's variables when
+       this returns.  The caller -- typically a component being closed --
+       may then free the variables' storage and unload their callbacks. */
+    mca_base_tool_lock();
+    ret = var_group_deregister(group_index);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_var_group_find(const char *project_name, const char *framework_name,
