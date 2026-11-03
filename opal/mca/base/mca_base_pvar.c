@@ -176,13 +176,13 @@ static int mca_base_pvar_notify_ignore(mca_base_pvar_t *pvar, mca_base_pvar_even
     return OPAL_SUCCESS;
 }
 
-int mca_base_pvar_register(const char *project, const char *framework, const char *component,
-                           const char *name, const char *description,
-                           mca_base_var_info_lvl_t verbosity, int var_class,
-                           mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
-                           mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
-                           mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
-                           void *ctx)
+static int pvar_register(const char *project, const char *framework, const char *component,
+                         const char *name, const char *description,
+                         mca_base_var_info_lvl_t verbosity, int var_class,
+                         mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
+                         mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
+                         mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
+                         void *ctx)
 {
     int ret, group_index, pvar_index;
     mca_base_pvar_t *pvar;
@@ -331,6 +331,28 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
     pvar->ctx = ctx;
 
     return pvar->pvar_index;
+}
+
+int mca_base_pvar_register(const char *project, const char *framework, const char *component,
+                           const char *name, const char *description,
+                           mca_base_var_info_lvl_t verbosity, int var_class,
+                           mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
+                           mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
+                           mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
+                           void *ctx)
+{
+    int ret;
+
+    /* Re-registering a performance variable replaces its callbacks and
+       context and re-validates it, and registering a new one can grow the
+       variable table, so it must not overlap an MPI_T call that is using
+       the variable. */
+    mca_base_tool_lock();
+    ret = pvar_register(project, framework, component, name, description, verbosity, var_class,
+                        type, enumerator, bind, flags, get_value, set_value, notify, ctx);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_component_pvar_register(const mca_base_component_t *component, const char *name,

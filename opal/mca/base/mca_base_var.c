@@ -1604,12 +1604,12 @@ static int register_variable(const char *project_name, const char *framework_nam
     return var_index;
 }
 
-int mca_base_var_register(const char *project_name, const char *framework_name,
-                          const char *component_name, const char *variable_name,
-                          const char *description, mca_base_var_type_t type,
-                          mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
-                          mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
-                          void *storage)
+static int var_register(const char *project_name, const char *framework_name,
+                        const char *component_name, const char *variable_name,
+                        const char *description, mca_base_var_type_t type,
+                        mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+                        mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
+                        void *storage)
 {
     int ret;
     /* Only integer variables can have enumerator */
@@ -1638,6 +1638,26 @@ int mca_base_var_register(const char *project_name, const char *framework_name,
         (void) mca_base_var_register_synonym(ret, project_name, framework_name,
                                              alias_item->component_alias, variable_name, flags_derived);
     }
+
+    return ret;
+}
+
+int mca_base_var_register(const char *project_name, const char *framework_name,
+                          const char *component_name, const char *variable_name,
+                          const char *description, mca_base_var_type_t type,
+                          mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+                          mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
+                          void *storage)
+{
+    int ret;
+
+    /* (Re-)registering a variable can replace its storage, enumerator, and
+       description and grow the variable table, so it must not overlap an
+       MPI_T call that is using the variable. */
+    mca_base_tool_lock();
+    ret = var_register(project_name, framework_name, component_name, variable_name, description,
+                       type, enumerator, bind, flags, info_lvl, scope, storage);
+    mca_base_tool_unlock();
 
     return ret;
 }
@@ -1687,10 +1707,15 @@ int mca_base_var_register_synonym(int synonym_for, const char *project_name,
         var_flags |= MCA_BASE_VAR_FLAG_INTERNAL;
     }
 
-    return register_variable(project_name, framework_name, component_name, synonym_name,
-                             var->mbv_description, var->mbv_type, var->mbv_enumerator,
-                             var->mbv_bind, var_flags, var->mbv_info_lvl, var->mbv_scope,
-                             synonym_for, NULL);
+    /* See mca_base_var_register() */
+    mca_base_tool_lock();
+    ret = register_variable(project_name, framework_name, component_name, synonym_name,
+                            var->mbv_description, var->mbv_type, var->mbv_enumerator,
+                            var->mbv_bind, var_flags, var->mbv_info_lvl, var->mbv_scope,
+                            synonym_for, NULL);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 static int var_get_env(mca_base_var_t *var, const char *name, char **source, char **value)
