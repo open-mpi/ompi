@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -734,6 +735,37 @@ OPAL_DECLSPEC int mca_base_var_process_env_list_from_file(char ***argv);
  */
 OPAL_DECLSPEC int mca_base_var_cache_files(bool rel_path_search);
 OPAL_DECLSPEC int mca_base_var_load_extra_files(char *files, bool rel_path_search);
+
+/**
+ * Acquire the MCA tool lock.
+ *
+ * This lock serializes the MPI tool information interface (MPI_T)
+ * against changes to the variables that MPI_T exposes.  The MPI_T
+ * entry points that read or write a control or performance variable,
+ * or that call a performance variable's get_value, set_value, or
+ * notify callback, hold it for the duration of the call.
+ *
+ * It lives here, rather than with the MPI_T bindings, so that code
+ * below the bindings (OPAL and the components) can take it.
+ *
+ * The lock is recursive.  A thread that takes it while already holding
+ * another lock establishes an order between the two: nothing may take
+ * that other lock while holding this one.
+ */
+OPAL_DECLSPEC void mca_base_tool_lock(void);
+
+/**
+ * Release the MCA tool lock.
+ */
+OPAL_DECLSPEC void mca_base_tool_unlock(void);
+
+#if OPAL_ENABLE_DEBUG
+/**
+ * Debug builds only: whether the calling thread holds the MCA tool
+ * lock.  For assertions.
+ */
+OPAL_DECLSPEC bool mca_base_tool_lock_held(void);
+#endif
 
 extern char *mca_base_env_list;
 #define MCA_BASE_ENV_LIST_SEP_DEFAULT ";"

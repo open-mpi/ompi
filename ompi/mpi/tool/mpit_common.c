@@ -27,8 +27,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-OMPI_HIDDEN opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
-
 /* ompi_mpit_init_count and ompi_mpit_thread_level are read by the lower
    libopen_mpi layer (the instance and world-model init paths), which
    cannot reference symbols defined up here in libmpi.  They are
@@ -37,27 +35,17 @@ OMPI_HIDDEN opal_mutex_t ompi_mpit_big_lock = OPAL_MUTEX_STATIC_INIT;
 
 OMPI_HIDDEN bool ompi_mpit_init_failed = false;
 
-#if OPAL_ENABLE_DEBUG
-/* Per-thread depth of MPI_T big-lock sections this thread holds (debug only),
-   used by the OPAL raise-check hook to detect a producer raising an event
-   while this thread holds the big lock (a deadlock hazard -- sec. 5.10). */
-static opal_thread_local int ompi_mpit_locked_depth = 0;
-#endif
-
+/* The MPI_T lock is OPAL's MCA tool lock: code below the bindings
+   (OPAL and the components) has to take it too, when it invalidates or
+   frees what an MPI_T call might be using. */
 OMPI_HIDDEN void ompi_mpit_lock (void)
 {
-    opal_mutex_lock (&ompi_mpit_big_lock);
-#if OPAL_ENABLE_DEBUG
-    ++ompi_mpit_locked_depth;
-#endif
+    mca_base_tool_lock ();
 }
 
 OMPI_HIDDEN void ompi_mpit_unlock (void)
 {
-#if OPAL_ENABLE_DEBUG
-    --ompi_mpit_locked_depth;
-#endif
-    opal_mutex_unlock (&ompi_mpit_big_lock);
+    mca_base_tool_unlock ();
 }
 
 /* --- MPI_T events: callback contexts, trampolines, debug hook ------------ */
@@ -113,17 +101,17 @@ OMPI_HIDDEN void ompit_event_free_trampoline (mca_base_event_registration_t *reg
 }
 
 #if OPAL_ENABLE_DEBUG
-static void ompit_event_assert_no_big_lock (void)
+static void ompit_event_assert_no_mpit_lock (void)
 {
-    assert (0 == ompi_mpit_locked_depth
-            && "an MPI_T event was raised while this thread holds ompi_mpit_big_lock");
+    assert (!mca_base_tool_lock_held ()
+            && "an MPI_T event was raised while this thread holds the MPI_T lock");
 }
 #endif
 
 OMPI_HIDDEN void ompit_install_event_debug_hook (void)
 {
 #if OPAL_ENABLE_DEBUG
-    mca_base_event_debug_raise_check_fn = ompit_event_assert_no_big_lock;
+    mca_base_event_debug_raise_check_fn = ompit_event_assert_no_mpit_lock;
 #endif
 }
 
