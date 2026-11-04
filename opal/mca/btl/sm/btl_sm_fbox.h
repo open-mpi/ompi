@@ -73,12 +73,17 @@ static inline void mca_btl_sm_endpoint_setup_fbox_send(struct mca_btl_base_endpo
     endpoint->fbox_out.metadata = (mca_btl_sm_fbox_metadata_t *) base;
     endpoint->fbox_out.metadata->start = 0;
 
-    endpoint->fbox_out.buffer = (unsigned char *)(endpoint->fbox_out.metadata + 1);
+    unsigned char *buffer = (unsigned char *)(endpoint->fbox_out.metadata + 1);
 
     /* zero out the first header in the fast box */
-    ((mca_btl_sm_fbox_hdr_t *)endpoint->fbox_out.buffer)->ival = 0;
+    ((mca_btl_sm_fbox_hdr_t *) buffer)->ival = 0;
 
+    /* Senders test fbox_out.buffer without a lock to learn whether the
+     * box is usable, so it is the last thing to be set: a thread that
+     * sees it must also see everything above, and must not find a header
+     * of its own overwritten by the zeroing. */
     opal_atomic_wmb();
+    endpoint->fbox_out.buffer = buffer;
 }
 
 #define MCA_BTL_SM_FBOX_HDR(x) ((mca_btl_sm_fbox_hdr_t *) (x))
