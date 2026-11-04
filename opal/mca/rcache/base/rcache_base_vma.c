@@ -122,23 +122,12 @@ int mca_rcache_base_vma_insert(mca_rcache_base_vma_module_t *vma_module,
         return rc;
     }
 
-    rc = mca_rcache_base_vma_tree_insert(vma_module, reg, limit);
-    if (OPAL_LIKELY(OPAL_SUCCESS == rc)) {
-        /* If we successfully registered, then tell the memory manager
-           to start monitoring this region */
-        opal_memory->memoryc_register(reg->base, (uint64_t) reg_size, (uint64_t)(uintptr_t) reg);
-    }
-
-    return rc;
+    return mca_rcache_base_vma_tree_insert(vma_module, reg, limit);
 }
 
 int mca_rcache_base_vma_delete(mca_rcache_base_vma_module_t *vma_module,
                                mca_rcache_base_registration_t *reg)
 {
-    /* Tell the memory manager that we no longer care about this
-       region */
-    opal_memory->memoryc_deregister(reg->base, (uint64_t)(reg->bound - reg->base),
-                                    (uint64_t)(uintptr_t) reg);
     return mca_rcache_base_vma_tree_delete(vma_module, reg);
 }
 

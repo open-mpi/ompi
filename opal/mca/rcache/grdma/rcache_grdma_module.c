@@ -21,7 +21,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2020      Google, LLC. All rights reserved.
  *
- * Copyright (c) 2022      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+ * Copyright (c) 2022-2026 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,6 +43,7 @@
 #include "opal/mca/rcache/base/base.h"
 #include "opal/mca/rcache/rcache.h"
 #include "opal/mca/accelerator/accelerator.h"
+#include "opal/mca/memory/base/base.h"
 #include "opal/align.h"
 #include "opal/util/sys_limits.h"
 #include "rcache_grdma.h"
@@ -138,6 +139,9 @@ static inline int dereg_mem(mca_rcache_base_registration_t *reg)
     reg->ref_count = 0;
 
     if (!(reg->flags & MCA_RCACHE_FLAGS_CACHE_BYPASS)) {
+        /* stop watching the region */
+        opal_memory->memoryc_deregister(reg->base, (size_t) (reg->bound - reg->base + 1),
+                                        (uint64_t) (uintptr_t) reg);
         mca_rcache_base_vma_delete(rcache_grdma->cache->vma_module, reg);
     }
 
@@ -155,6 +159,10 @@ static inline void do_unregistration_gc(mca_rcache_base_module_t *rcache)
 {
     mca_rcache_grdma_module_t *rcache_grdma = (mca_rcache_grdma_module_t *) rcache;
     opal_list_item_t *item;
+
+    /* let the memory component report changes, which may add stale
+       registrations to the garbage collection list */
+    (void) opal_memory_base_process();
 
     /* Remove registration from garbage collection list before deregistering it */
     while (NULL != (item = opal_lifo_pop_atomic(&rcache_grdma->cache->gc_lifo))) {
@@ -290,6 +298,14 @@ static int mca_rcache_grdma_check_cached(mca_rcache_base_registration_t *grdma_r
         /* The allocation this registration was created for has been freed and
          * the address range reused, i.e. an alloc/free/alloc sequence. Retire
          * the registration and let the caller fall through to the slow path. */
+        return mca_rcache_grdma_add_to_gc(grdma_reg);
+    }
+
+    if (NULL != opal_memory->memoryc_valid
+        && !opal_memory->memoryc_valid(grdma_reg->base,
+                                       (size_t) (grdma_reg->bound - grdma_reg->base + 1),
+                                       (uint64_t) (uintptr_t) grdma_reg)) {
+        /* the memory mapping changed since this region was registered */
         return mca_rcache_grdma_add_to_gc(grdma_reg);
     }
 
@@ -454,6 +470,11 @@ static int mca_rcache_grdma_register(mca_rcache_base_module_t *rcache, void *add
             opal_free_list_return_mt(&rcache_grdma->reg_list, item);
             return rc;
         }
+        /* ask the memory component to watch the region, so that
+           memoryc_valid can tell when it changes */
+        opal_memory->memoryc_register(grdma_reg->base,
+                                      (size_t) (grdma_reg->bound - grdma_reg->base + 1),
+                                      (uint64_t) (uintptr_t) grdma_reg);
     }
 
     OPAL_OUTPUT_VERBOSE((MCA_BASE_VERBOSE_TRACE, opal_rcache_base_framework.framework_output,
