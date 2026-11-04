@@ -15,3 +15,4 @@ categories of Open MPI-specific features.
    extensions
    ulfm
    java
+   hwpc-cxi
