@@ -26,6 +26,14 @@ above categories that can be used with ``configure``:
 * ``--enable-peruse``:
   Enable the PERUSE MPI data analysis interface.
 
+* ``--enable-hwpc-cxi`` / ``--disable-hwpc-cxi``:
+  The HPE Cassini (CXI) hardware performance counter component
+  (``hook:hwpc_cxi``) is built by default.  Counter collection is enabled
+  at run time with the ``hook_hwpc_cxi_counter_report`` MCA parameter;
+  enabling it on a node without a Cassini device aborts the job.
+  ``--disable-hwpc-cxi`` skips building the component.  See
+  :doc:`/features/hwpc-cxi`.
+
 * ``--enable-heterogeneous``:
   Enable support for running on heterogeneous clusters (e.g., machines
   with different endian representations).  Heterogeneous support is

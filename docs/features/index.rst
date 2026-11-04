@@ -14,3 +14,4 @@ categories of Open MPI-specific features.
    profiling
    extensions
    ulfm
+   hwpc-cxi
