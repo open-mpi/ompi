@@ -123,7 +123,15 @@ static inline unsigned int mca_btl_sm_fbox_align(unsigned int size) {
     return (size + MCA_BTL_SM_FBOX_ALIGNMENT_MASK) & ~MCA_BTL_SM_FBOX_ALIGNMENT_MASK;
 }
 
-static inline unsigned char *mca_btl_sm_fbox_reserve_locked(mca_btl_base_endpoint_t *ep, unsigned int data_size) {
+/* Reserve room for one entry. The receiver consumes entries in buffer
+ * order and insists that their sequence numbers follow the same order,
+ * so the sequence number is drawn here, under the same lock as the slot.
+ * Drawing it after the lock is dropped lets two threads sending to the
+ * same peer duplicate or swap their numbers, which leaves the receiver
+ * waiting forever on a slot whose number never comes. */
+static inline unsigned char *mca_btl_sm_fbox_reserve_locked(mca_btl_base_endpoint_t *ep,
+                                                            unsigned int data_size,
+                                                            uint16_t *seq) {
     const unsigned int fbox_size = mca_btl_sm_component.fbox_size;
     const unsigned int fbox_offset_mask = fbox_size - 1;
     unsigned int buffer_free;
@@ -199,6 +207,7 @@ static inline unsigned char *mca_btl_sm_fbox_reserve_locked(mca_btl_base_endpoin
                  "peer's buffer. free = %u",
                  (unsigned int) aligned_entry_size, ep->fbox_out.start, ep->fbox_out.end, buffer_free));
 
+    *seq = ep->fbox_out.seq++;
     ep->fbox_out.end += aligned_entry_size;
     
     /* zero-out the next */
@@ -216,9 +225,10 @@ static inline bool mca_btl_sm_fbox_sendi(mca_btl_base_endpoint_t *ep, unsigned c
                                          void *restrict payload, const size_t payload_size)
 {
     size_t data_size = header_size + payload_size;
+    uint16_t seq;
 
     OPAL_THREAD_LOCK(&ep->lock);
-    unsigned char *dst = mca_btl_sm_fbox_reserve_locked(ep, (unsigned int) data_size);
+    unsigned char *dst = mca_btl_sm_fbox_reserve_locked(ep, (unsigned int) data_size, &seq);
     OPAL_THREAD_UNLOCK(&ep->lock);
     if (OPAL_UNLIKELY(NULL == dst)) {
         return false;
@@ -234,8 +244,7 @@ static inline bool mca_btl_sm_fbox_sendi(mca_btl_base_endpoint_t *ep, unsigned c
 
     opal_atomic_wmb();
     /* write out part of the header now. the tag will be written when the data is available */
-    mca_btl_sm_fbox_set_header(MCA_BTL_SM_FBOX_HDR(dst), tag, ep->fbox_out.seq++,
-                               (uint32_t) data_size);
+    mca_btl_sm_fbox_set_header(MCA_BTL_SM_FBOX_HDR(dst), tag, seq, (uint32_t) data_size);
 
     return true;
 }
