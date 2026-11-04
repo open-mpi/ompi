@@ -143,6 +143,7 @@ int mca_btl_ofi_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     }
 
     MCA_BTL_OFI_NUM_SEND_INC(ofi_btl);
+    mca_btl_ofi_frag_send_accepted(frag);
     return OPAL_SUCCESS;
 }
 

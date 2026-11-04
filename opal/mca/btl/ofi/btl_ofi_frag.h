@@ -75,12 +75,29 @@ static inline void mca_btl_ofi_frag_return(mca_btl_ofi_base_frag_t *frag)
     opal_free_list_return(frag->free_list, &frag->base.super);
 }
 
+/* The payload of a send has already been copied into the fragment, so once the provider has
+ * accepted the send the PML's buffer is free and its request can complete. When the BTL owns the
+ * fragment, tell the PML now instead of when the provider completes the send: on a reliable
+ * provider that completion waits for the peer's acknowledgement, a round trip that a rank sending
+ * and then receiving would otherwise pay on every exchange. The fragment itself is returned to
+ * its free list when the provider completes. Errors on the peer still reach the PML through the
+ * module's error callback. */
+static inline void mca_btl_ofi_frag_send_accepted(mca_btl_ofi_base_frag_t *frag)
+{
+    mca_btl_base_completion_fn_t cbfunc = frag->base.des_cbfunc;
+
+    if ((frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) && NULL != cbfunc) {
+        frag->base.des_cbfunc = NULL;
+        cbfunc(&frag->btl->super, frag->endpoint, &frag->base, OPAL_SUCCESS);
+    }
+}
+
 static inline void mca_btl_ofi_frag_complete(mca_btl_ofi_base_frag_t *frag, int rc)
 {
     mca_btl_ofi_module_t *ofi_btl = frag->btl;
 
     /* call the local callback if specified */
-    if (frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+    if ((frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) && NULL != frag->base.des_cbfunc) {
         frag->base.des_cbfunc(&ofi_btl->super, frag->endpoint, &frag->base, rc);
     }
 
