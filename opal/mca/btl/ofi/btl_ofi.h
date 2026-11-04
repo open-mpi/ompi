@@ -221,6 +221,10 @@ struct mca_btl_ofi_base_frag_t {
     struct mca_btl_ofi_module_t *btl;
     struct mca_btl_base_endpoint_t *endpoint;
     opal_free_list_t *free_list;
+    /* references held on a send fragment whose completion is reported to the PML when the
+     * provider accepts it (see mca_btl_ofi_send): one by the sender, one by the provider's
+     * completion. Whichever drops the last one returns the fragment. 0 otherwise. */
+    opal_atomic_int32_t send_refs;
     mca_btl_ofi_header_t hdr;
 };
 

@@ -80,13 +80,16 @@ static inline void mca_btl_ofi_frag_complete(mca_btl_ofi_base_frag_t *frag, int 
     mca_btl_ofi_module_t *ofi_btl = frag->btl;
 
     /* call the local callback if specified */
-    if (frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+    if ((frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) && NULL != frag->base.des_cbfunc) {
         frag->base.des_cbfunc(&ofi_btl->super, frag->endpoint, &frag->base, rc);
     }
 
-    /* If the BTL has ownership, return it to the free list, */
+    /* If the BTL has ownership, return it to the free list, unless the sender still holds a
+     * reference on it (see mca_btl_ofi_send). */
     if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-        mca_btl_ofi_frag_return(frag);
+        if (0 == frag->send_refs || 0 == opal_atomic_add_fetch_32(&frag->send_refs, -1)) {
+            mca_btl_ofi_frag_return(frag);
+        }
     }
 }
 
