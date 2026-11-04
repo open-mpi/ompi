@@ -510,6 +510,23 @@ int mca_btl_ofi_post_recvs(mca_btl_base_module_t *module, mca_btl_ofi_context_t 
 }
 
 /* Allocate and fill out the module capabilities according to operation mode. */
+/* A send limit of a module is the fragment size, or the value of btl_ofi_<name> if the user set
+ * one (the module template holds it), as long as it fits in a fragment. */
+static size_t mca_btl_ofi_send_limit(const char *name, size_t user_value)
+{
+    mca_base_var_source_t source = MCA_BASE_VAR_SOURCE_DEFAULT;
+    int idx = mca_base_var_find("opal", "btl", "ofi", name);
+
+    if (0 <= idx) {
+        (void) mca_base_var_get_value(idx, NULL, &source, NULL);
+    }
+    if (MCA_BASE_VAR_SOURCE_DEFAULT != source && 0 < user_value
+        && user_value < MCA_BTL_OFI_FRAG_SIZE) {
+        return user_value;
+    }
+    return MCA_BTL_OFI_FRAG_SIZE;
+}
+
 mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode)
 {
     mca_btl_ofi_module_t *module;
@@ -562,9 +579,12 @@ mca_btl_ofi_module_t *mca_btl_ofi_module_alloc(int mode)
         module->super.btl_send = mca_btl_ofi_send;
 
         module->super.btl_flags |= MCA_BTL_FLAGS_SEND;
-        module->super.btl_eager_limit = MCA_BTL_OFI_FRAG_SIZE;
-        module->super.btl_max_send_size = MCA_BTL_OFI_FRAG_SIZE;
-        module->super.btl_rndv_eager_limit = MCA_BTL_OFI_FRAG_SIZE;
+        module->super.btl_eager_limit = mca_btl_ofi_send_limit(
+            "eager_limit", mca_btl_ofi_module_template.super.btl_eager_limit);
+        module->super.btl_max_send_size = mca_btl_ofi_send_limit(
+            "max_send_size", mca_btl_ofi_module_template.super.btl_max_send_size);
+        module->super.btl_rndv_eager_limit = mca_btl_ofi_send_limit(
+            "rndv_eager_limit", mca_btl_ofi_module_template.super.btl_rndv_eager_limit);
 
         /* If two sided is enabled, we expected that the user knows exactly what
          * they want. We bump the priority to maximum, making this BTL the default. */
