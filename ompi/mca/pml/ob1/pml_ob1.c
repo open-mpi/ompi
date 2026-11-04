@@ -1055,7 +1055,7 @@ int mca_pml_ob1_send_control_any (ompi_proc_t *proc, int order, mca_pml_ob1_hdr_
  * Send an FIN to the peer. If we fail to send this ack (no more available
  * fragments or the send failed) this function automatically add the FIN
  * to the list of pending FIN, Which guarantee that the FIN will be sent
- * later.
+ * later. If bml_btl is NULL the FIN goes out on any BTL reaching the peer.
  */
 int mca_pml_ob1_send_fin (ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, opal_ptr_t hdr_frag, uint64_t rdma_size,
                           uint8_t order, int status)
@@ -1066,6 +1066,10 @@ int mca_pml_ob1_send_fin (ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, opal_p
     mca_pml_ob1_fin_hdr_prepare (&fin, 0, hdr_frag.lval, status ? status : (int64_t) rdma_size);
 
     ob1_hdr_hton((mca_pml_ob1_hdr_t *) &fin, MCA_PML_OB1_HDR_TYPE_FIN, proc);
+
+    if (NULL == bml_btl) {
+        return mca_pml_ob1_send_control_any (proc, order, (mca_pml_ob1_hdr_t *) &fin, sizeof (fin), true);
+    }
 
     return mca_pml_ob1_send_control_btl (bml_btl, order, (mca_pml_ob1_hdr_t *) &fin, sizeof (fin), true);
 }

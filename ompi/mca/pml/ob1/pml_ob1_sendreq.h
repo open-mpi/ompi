@@ -55,6 +55,9 @@ struct mca_pml_ob1_send_request_t {
     bool     req_throttle_sends;
     opal_atomic_int32_t  req_pipeline_depth;
     opal_atomic_size_t   req_bytes_delivered;
+    /** Bytes the receiver accepts: req_bytes_packed, lowered by the ACK on
+     *  truncation. The request completes once this many are delivered. */
+    opal_atomic_size_t   req_bytes_target;
     uint32_t req_rdma_cnt;
     mca_pml_ob1_send_pending_t req_pending;
     opal_mutex_t req_send_range_lock;
@@ -315,7 +318,7 @@ send_request_pml_complete_check(mca_pml_ob1_send_request_t *sendreq)
      * called free on this request, the request structure can be reused for
      * another request or if the request is persistent it can be restarted */
     if(sendreq->req_state == 0 &&
-            sendreq->req_bytes_delivered >= sendreq->req_send.req_bytes_packed
+            sendreq->req_bytes_delivered >= sendreq->req_bytes_target
             && lock_send_request(sendreq)) {
         send_request_pml_complete(sendreq);
         return true;
@@ -484,6 +487,7 @@ mca_pml_ob1_send_request_activate (mca_pml_ob1_send_request_t* sendreq, int32_t 
     sendreq->req_lock = 0;
     sendreq->req_pipeline_depth = 0;
     sendreq->req_bytes_delivered = 0;
+    sendreq->req_bytes_target = sendreq->req_send.req_bytes_packed;
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = seqn;
 

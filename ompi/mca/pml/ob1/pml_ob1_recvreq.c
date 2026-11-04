@@ -316,11 +316,16 @@ static int mca_pml_ob1_recv_request_ack(
 
     bml_endpoint = mca_bml_base_get_endpoint (proc, &eprc);
 
+    /* Bytes the receiver accepts: only these are transferred, by any protocol.
+     * The ACK tells the sender. */
+    const size_t msg_length = (hdr->hdr_msg_length > recvreq->req_bytes_expected)
+                              ? recvreq->req_bytes_expected : hdr->hdr_msg_length;
+
     /* by default copy everything */
     recvreq->req_send_offset = bytes_received;
     /* No endpoint means no BTL list to choose an RDMA protocol from, so
      * stay with copy in/out. */
-    if(NULL != bml_endpoint && hdr->hdr_msg_length > bytes_received) {
+    if(NULL != bml_endpoint && msg_length > bytes_received) {
         size_t rdma_num = mca_pml_ob1_rdma_pipeline_btls_count (bml_endpoint);
         /*
          * lookup request buffer to determine if memory is already
@@ -339,18 +344,18 @@ static int mca_pml_ob1_recv_request_ack(
 
             if(hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN)
                 recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(bml_endpoint,
-                        base, recvreq->req_recv.req_bytes_packed,
+                        base, msg_length,
                         recvreq->req_rdma );
             else
                 recvreq->req_rdma_cnt = 0;
 
             /* memory is already registered on both sides */
             if (recvreq->req_rdma_cnt != 0) {
-                recvreq->req_send_offset = hdr->hdr_msg_length;
+                recvreq->req_send_offset = msg_length;
                 /* are rdma devices available for long rdma protocol */
-            } else if(bml_endpoint->btl_send_limit < hdr->hdr_msg_length) {
+            } else if(bml_endpoint->btl_send_limit < msg_length) {
                 /* use convertor to figure out the rdma offset for this request */
-                recvreq->req_send_offset = hdr->hdr_msg_length -
+                recvreq->req_send_offset = msg_length -
                     bml_endpoint->btl_pipeline_send_length;
 
                 if(recvreq->req_send_offset < bytes_received)
@@ -367,7 +372,7 @@ static int mca_pml_ob1_recv_request_ack(
                             recvreq->req_rdma);
             }
         }
-        /* nothing to send by copy in/out - no need to ack */
+        /* nothing to send by copy in/out, message not truncated - no need to ack */
         if(recvreq->req_send_offset == hdr->hdr_msg_length)
             return OMPI_SUCCESS;
     }
@@ -380,19 +385,87 @@ static int mca_pml_ob1_recv_request_ack(
      */
     recvreq->req_ack_sent = true;
     return mca_pml_ob1_recv_request_ack_send(btl, proc, hdr->hdr_src_req.lval,
-                                             recvreq, recvreq->req_send_offset, 0,
+                                             recvreq, recvreq->req_send_offset,
+                                             (msg_length > recvreq->req_send_offset) ?
+                                                 msg_length - recvreq->req_send_offset : 0,
                                              recvreq->req_send_offset == bytes_received);
 }
 
 static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag);
 
-static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *frag, int rc)
+/**
+ * A get is finished. The last one tells the peer: a FIN if all succeeded,
+ * otherwise a request to send by copy in/out from the lowest failed offset.
+ */
+static void mca_pml_ob1_rget_frag_done (mca_pml_ob1_rdma_frag_t *frag, bool failed)
 {
     mca_pml_ob1_recv_request_t *recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
     ompi_proc_t *proc = (ompi_proc_t *) recvreq->req_recv.req_base.req_proc;
+    mca_bml_base_btl_t *bml_btl = frag->rdma_bml;
+    const mca_pml_ob1_rget_hdr_t *hdr = &frag->rdma_hdr.hdr_rget;
+    const opal_ptr_t fin_frag = hdr->hdr_frag;
+    const uint64_t src_req = hdr->hdr_rndv.hdr_src_req.lval;
+    const uint64_t fin_length = hdr->hdr_rndv.hdr_msg_length;
+    const size_t length = frag->rdma_length;
+    const size_t offset = frag->rdma_offset;
+    const size_t msg_length = (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected)
+                              ? recvreq->req_bytes_expected : recvreq->req_recv.req_bytes_packed;
 
-    if (OMPI_ERR_NOT_AVAILABLE == rc) {
-        /* get isn't supported for this transfer. tell peer to fallback on put */
+    MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
+
+    if (failed) {
+        OPAL_THREAD_LOCK(&recvreq->lock);
+        if (offset < recvreq->req_rget_fail_offset) {
+            recvreq->req_rget_fail_offset = offset;
+        }
+        OPAL_THREAD_UNLOCK(&recvreq->lock);
+        /* the counter update below is relaxed: publish the failure offset
+         * before it, the last get observes it after (see the rmb below) */
+        opal_atomic_wmb();
+    }
+    if (msg_length != OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_rget_done, length)) {
+        return;
+    }
+    /* last get: make the failures recorded by the other callbacks visible */
+    opal_atomic_rmb();
+    const size_t fail_offset = recvreq->req_rget_fail_offset;
+
+    if (SIZE_MAX == fail_offset) {
+        OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, msg_length);
+        SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_tag, (ompi_spc_value_t)msg_length,
+                        OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
+        /* the FIN covers the whole message, even what does not fit */
+        mca_pml_ob1_send_fin (proc, bml_btl, fin_frag, fin_length, 0, 0);
+    } else {
+        /* the bytes before the failure arrived, the rest comes as FRAGs */
+        const size_t first = fail_offset;
+        int rc;
+
+        OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, first);
+        rc = mca_pml_ob1_recv_request_ack_send(NULL, proc, src_req, recvreq, first, msg_length - first, true);
+        if (OPAL_LIKELY(OMPI_SUCCESS == rc || OMPI_ERR_OUT_OF_RESOURCE == rc)) {
+            return;  /* OUT_OF_RESOURCE: ACK queued */
+        }
+        opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, rc);
+        recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
+#if OPAL_ENABLE_FT_MPI
+            (OMPI_ERR_UNREACH == rc ? MPI_ERR_PROC_FAILED : rc);
+#else
+            rc;
+#endif /* OPAL_ENABLE_FT_MPI */
+        OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, msg_length - first);
+    }
+
+    /* ensure all prior stores are visible before complete_check may recycle the request */
+    opal_atomic_wmb();
+    recv_request_pml_complete_check(recvreq);
+}
+
+static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *frag, int rc)
+{
+    /* get isn't supported: fall back on put, only for a single-fragment message */
+    if (OMPI_ERR_NOT_AVAILABLE == rc &&
+        frag->rdma_length == frag->rdma_hdr.hdr_rget.hdr_rndv.hdr_msg_length) {
         rc = mca_pml_ob1_recv_request_put_frag (frag);
         if (OMPI_SUCCESS == rc){
             return OMPI_SUCCESS;
@@ -414,11 +487,9 @@ static int mca_pml_ob1_recv_request_get_frag_failed (mca_pml_ob1_rdma_frag_t *fr
         return OMPI_SUCCESS;
     }
 
-    /* tell peer to fall back on send for this region */
-    rc = mca_pml_ob1_recv_request_ack_send(NULL, proc, frag->rdma_hdr.hdr_rget.hdr_rndv.hdr_src_req.lval,
-                                           recvreq, frag->rdma_offset, frag->rdma_length, false);
-    MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
-    return rc;
+    /* give up on RDMA for this message */
+    mca_pml_ob1_rget_frag_done (frag, true);
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -431,46 +502,16 @@ static void mca_pml_ob1_rget_completion (mca_btl_base_module_t* btl, struct mca_
 {
     mca_bml_base_btl_t *bml_btl = (mca_bml_base_btl_t *) context;
     mca_pml_ob1_rdma_frag_t *frag = (mca_pml_ob1_rdma_frag_t *) cbdata;
-    mca_pml_ob1_recv_request_t *recvreq = (mca_pml_ob1_recv_request_t *) frag->rdma_req;
 
-    /* check completion status */
     if (OPAL_UNLIKELY(OMPI_SUCCESS != status)) {
-        status = mca_pml_ob1_recv_request_get_frag_failed (frag, status);
-        /* fragment was returned or queue by the above call */
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != status)) {
-            size_t skipped_bytes = recvreq->req_send_offset - recvreq->req_rdma_offset;
-            opal_output_verbose(mca_pml_ob1_output, 1, "pml:ob1: %s: operation failed with code %d", __func__, status);
-            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =
-#if OPAL_ENABLE_FT_MPI
-                (OMPI_ERR_UNREACH == status ? MPI_ERR_PROC_FAILED : status);
-#else
-                status;
-#endif /* OPAL_ENABLE_FT_MPI */
-            recvreq->req_rdma_offset = recvreq->req_send_offset; /* prevent posting of more RDMA */
-            /* Account for the skipped RDMA bytes when waiting for completion */
-            OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, skipped_bytes);
-        }
+        (void) mca_pml_ob1_recv_request_get_frag_failed (frag, status);
     } else {
-        /* is receive request complete */
-        OPAL_THREAD_ADD_FETCH_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length);
-        SPC_USER_OR_MPI(recvreq->req_recv.req_base.req_tag, (ompi_spc_value_t)frag->rdma_length,
-                        OMPI_SPC_BYTES_RECEIVED_USER, OMPI_SPC_BYTES_RECEIVED_MPI);
         /* TODO: re-add order */
-        mca_pml_ob1_send_fin (recvreq->req_recv.req_base.req_proc,
-                              bml_btl, frag->rdma_hdr.hdr_rget.hdr_frag,
-                              frag->rdma_length, 0, 0);
-
-        MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
+        mca_pml_ob1_rget_frag_done (frag, false);
     }
-
-    /* ensure all prior stores (bytes_received, error status, frag cleanup)
-     * are visible before complete_check may recycle the request */
-    opal_atomic_wmb();
-    recv_request_pml_complete_check(recvreq);
 
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
-
 
 static int mca_pml_ob1_recv_request_put_frag (mca_pml_ob1_rdma_frag_t *frag)
 {
@@ -737,7 +778,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 {
     mca_pml_ob1_rget_hdr_t* hdr = (mca_pml_ob1_rget_hdr_t*)segments->seg_addr.pval;
     mca_bml_base_endpoint_t* bml_endpoint = NULL;
-    size_t bytes_remaining, prev_sent, offset;
+    size_t bytes_remaining, prev_sent, offset, position;
     mca_pml_ob1_rdma_frag_t *frag;
     mca_bml_base_btl_t *rdma_bml;
     int rc;
@@ -746,8 +787,25 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
     recvreq->req_send_offset = 0;
     recvreq->req_rdma_offset = 0;
+    recvreq->req_rget_done = 0;
+    recvreq->req_rget_fail_offset = SIZE_MAX;
 
     MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
+
+    /* Nothing fits in the receive buffer, so no data moves whatever the
+     * protocol: release the peer with a FIN covering the whole message and
+     * complete the receive with MPI_ERR_TRUNCATE. This has to come before
+     * the copy in/out fallbacks below, whose ACK would leave this receive
+     * waiting for fragments that never come. The FIN goes out on any BTL
+     * (the matching one may not be an RDMA BTL, or have no endpoint yet).
+     * Do not touch recvreq after the completion check, it may be released. */
+    if (OPAL_UNLIKELY(0 == recvreq->req_bytes_expected)) {
+        (void) mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc, NULL, hdr->hdr_frag,
+                                    hdr->hdr_rndv.hdr_msg_length, 0, 0);
+        opal_atomic_wmb();
+        recv_request_pml_complete_check(recvreq);
+        return;
+    }
 
     /* if receive buffer is not contiguous we can't just RDMA read into it, so
      * fall back to copy in/out protocol. It is a pity because buffer on the
@@ -795,7 +853,11 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         ompi_rte_abort(-1, NULL);
     }
 
+    /* only get what fits in the receive buffer */
     bytes_remaining = hdr->hdr_rndv.hdr_msg_length;
+    if (bytes_remaining > recvreq->req_bytes_expected) {
+        bytes_remaining = recvreq->req_bytes_expected;
+    }
 
     /* save the request for put fallback */
     recvreq->remote_req_send = hdr->hdr_rndv.hdr_src_req;
@@ -851,9 +913,10 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         /* update the read location */
         frag->remote_address = hdr->hdr_src_ptr + offset;
 
-        /* updating the write location */
+        /* updating the write location (set_position may clamp its argument) */
+        position = offset;
         OPAL_THREAD_LOCK(&recvreq->lock);
-        opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor, &offset);
+        opal_convertor_set_position( &recvreq->req_recv.req_base.req_convertor, &position);
         opal_convertor_get_current_pointer (&recvreq->req_recv.req_base.req_convertor, &frag->local_address);
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 

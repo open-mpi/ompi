@@ -49,6 +49,7 @@ EXTRA_DIST = \
         session_partial_batch.c \
         spawn_first_touch.c \
         tcp_stranger_connect.c \
+        truncate_rdma.c \
         wireup_stress.c
 
 # Deliberately built by the check-mpirun target rather than by Automake:
@@ -287,18 +288,20 @@ check-mpirun:
 	        run $(trio_runner) --mca pml ob1 --mca btl self,smcuda \
 	            ./session_partial_batch; \
 	    fi; \
+	    $(MPICC) -g "$(srcdir)/truncate_rdma.c" -o truncate_rdma; \
+	    echo "=== truncated large messages, shared memory only ==="; \
+	    run $(mpirun_runner) --mca pml ob1 --mca btl self,sm ./truncate_rdma; \
+	    echo "=== truncated large messages, tcp only ==="; \
+	    run $(tcp_runner) ./truncate_rdma; \
+	    echo "=== truncated large messages, default transports ==="; \
+	    run $(mpirun_runner) --mca pml ob1 ./truncate_rdma; \
 	    $(MPICC) -g "$(srcdir)/spawn_first_touch.c" -o spawn_first_touch; \
 	    echo "=== spawn first touch, direct modex ==="; \
 	    run env $(DIRECT_MODEX) $(spawn_runner) ./spawn_first_touch; \
 	fi
 
 clean-local:
-	rm -rf async_modex_wireup async_modex_wireup.dSYM \
-	    any_source_oneway any_source_oneway.dSYM \
-	    comm_idup_overlap comm_idup_overlap.dSYM \
-	    late_first_contact late_first_contact.dSYM \
-	    session_first_touch session_first_touch.dSYM \
-	    session_partial_batch session_partial_batch.dSYM \
-	    spawn_first_touch spawn_first_touch.dSYM \
-	    tcp_stranger_connect tcp_stranger_connect.dSYM \
-	    wireup_stress wireup_stress.dSYM
+	rm -rf async_modex_wireup any_source_oneway comm_idup_overlap \
+	    late_first_contact session_first_touch session_partial_batch \
+	    spawn_first_touch tcp_stranger_connect truncate_rdma \
+	    wireup_stress *.dSYM
