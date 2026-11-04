@@ -8,7 +8,7 @@ PROGS = mpi_no_op mpi_barrier hello hello_nodename abort multi_abort comm_abort 
 		info_spawn server client ring binding badcoll attach xlib ompio_file_info \
 		no-disconnect nonzero interlib pinterlib add_host \
 		buffer_attach_detach_f08 \
-		osc_ucx_bottom_accumulate
+		osc_ucx_bottom_accumulate truncate_rdma
 
 all: $(PROGS)
 

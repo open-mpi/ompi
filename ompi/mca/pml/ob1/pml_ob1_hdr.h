@@ -335,7 +335,9 @@ struct mca_pml_ob1_ack_hdr_t {
     opal_ptr_t hdr_src_req;                   /**< source request */
     opal_ptr_t hdr_dst_req;                   /**< matched receive request */
     uint64_t hdr_send_offset;                 /**< starting point of copy in/out */
-    uint64_t hdr_send_size;                   /**< number of bytes requested (0: all remaining) */
+    /** Bytes to send by copy in/out from hdr_send_offset (0: none).
+     *  offset + size is the number of bytes the receiver accepts. */
+    uint64_t hdr_send_size;
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
