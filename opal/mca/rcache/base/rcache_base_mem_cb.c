@@ -14,6 +14,7 @@
  * Copyright (c) 2012-2015 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2020      Intel, Inc.  All rights reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,7 +65,12 @@ void mca_rcache_base_mem_cb(void *base, size_t size, void *cbdata, bool from_all
         if (current->rcache_module->rcache_invalidate_range != NULL) {
             rc = current->rcache_module->rcache_invalidate_range(current->rcache_module, base,
                                                                  size);
-            if (rc != OPAL_SUCCESS) {
+            /* A memory component that validates registrations reports a
+               change to the whole registered region, possibly after the
+               fact and also for changes that do not free the memory, so a
+               region in use is not an error.  The registration is not
+               reused because it is no longer valid. */
+            if (rc != OPAL_SUCCESS && NULL == opal_memory->memoryc_valid) {
                 if (from_alloc) {
                     int len;
                     len = snprintf(
