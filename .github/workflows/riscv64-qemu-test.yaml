@@ -14,7 +14,7 @@ jobs:
     - name: Install depencencies
       run: |
         sudo apt update 
-        sudo apt install -y --no-install-recommends qemu-user qemu-user-static binfmt-support wget   
+        sudo apt install -y --no-install-recommends qemu-user qemu-user-binfmt binfmt-support wget   
         wget ${riscv_gnu_toolchain_download_path}
         tar -xvf riscv64-glibc-ubuntu-24.04-gcc-nightly-2025.07.03-nightly.tar.xz -C /opt
         sed -i "s|libdir='/mnt/riscv/riscv64-unknown-linux-gnu/lib'|libdir='/opt/riscv/riscv64-unknown-linux-gnu/lib'|g" /opt/riscv/riscv64-unknown-linux-gnu/lib/libatomic.la
