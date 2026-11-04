@@ -12,6 +12,7 @@
  *                         reserved.
  * Copyright (c) 2026      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -82,10 +83,18 @@ PROTOTYPE ERROR_CLASS  cvar_read (CVAR_HANDLE handle, VOID buf)
             ((double *) buf)[0] = value->lfval;
             break;
         case MCA_BASE_VAR_TYPE_STRING:
+            /* The tool's buffer holds handle->count characters, including
+               the terminating \0.  The value may have grown since the
+               handle was allocated, so truncate it if needed. */
             if (NULL == value->stringval) {
                 ((char *)buf)[0] = '\0';
             } else {
-                strcpy ((char *) buf, value->stringval);
+                size_t max = (size_t) handle->count - 1;
+                const char *end = memchr (value->stringval, '\0', max);
+                size_t len = (NULL == end) ? max : (size_t) (end - value->stringval);
+
+                memcpy (buf, value->stringval, len);
+                ((char *)buf)[len] = '\0';
             }
 
             break;
