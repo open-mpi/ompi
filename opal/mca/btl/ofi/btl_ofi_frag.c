@@ -97,6 +97,7 @@ int mca_btl_ofi_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     mca_btl_ofi_endpoint_t *ofi_ep = (mca_btl_ofi_endpoint_t *) endpoint;
     mca_btl_ofi_base_frag_t *frag = (mca_btl_ofi_base_frag_t *) descriptor;
     mca_btl_ofi_frag_completion_t *comp;
+    mca_btl_base_completion_fn_t accepted_cbfunc = NULL;
 
     frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
@@ -133,13 +134,42 @@ int mca_btl_ofi_send(mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoi
     /* create completion context */
      comp = mca_btl_ofi_frag_completion_alloc(btl, context, frag, MCA_BTL_OFI_TYPE_SEND);
 
+    /* The payload has already been copied into the fragment, so once the provider accepts the
+     * send the PML's buffer is free and its request can complete. When the BTL owns the
+     * fragment, tell the PML then instead of when the provider completes the send: on a reliable
+     * provider that completion waits for the peer's acknowledgement, a round trip that a rank
+     * sending and then receiving would otherwise pay on every exchange. Errors on the peer still
+     * reach the PML through the module's error callback.
+     *
+     * The provider can complete the send as soon as it is posted, from progress called below or
+     * by another thread. So the callback is taken out of the fragment before posting, which keeps
+     * the completion from calling it, and the fragment holds a reference for each side, so that
+     * it is returned to its free list only once both are done with it. */
+    if ((frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) && NULL != frag->base.des_cbfunc) {
+        accepted_cbfunc = frag->base.des_cbfunc;
+        frag->base.des_cbfunc = NULL;
+        frag->send_refs = 2;
+        opal_atomic_wmb();
+    }
+
     /* send the frag. Note that we start sending from BTL header + payload
      * because we need the other side to have this header information. */
     rc = fi_send(context->tx_ctx, &frag->hdr, sizeof(mca_btl_ofi_header_t) + frag->hdr.len, NULL,
                  ofi_ep->peer_addr, &comp->comp_ctx);
 
     if (OPAL_UNLIKELY(FI_SUCCESS != rc)) {
+        if (NULL != accepted_cbfunc) {
+            frag->base.des_cbfunc = accepted_cbfunc;
+            frag->send_refs = 0;
+        }
         return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (NULL != accepted_cbfunc) {
+        accepted_cbfunc(&ofi_btl->super, frag->endpoint, &frag->base, OPAL_SUCCESS);
+        if (0 == opal_atomic_add_fetch_32(&frag->send_refs, -1)) {
+            mca_btl_ofi_frag_return(frag);
+        }
     }
 
     MCA_BTL_OFI_NUM_SEND_INC(ofi_btl);
