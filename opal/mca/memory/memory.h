@@ -54,7 +54,12 @@
    rcache calls memoryc_process() (through opal_memory_base_process())
    before it looks up or inserts cached registrations.  A component of
    the second kind reports the changes it has seen from there, on the
-   calling thread, through opal_mem_hooks_release_hook().
+   calling thread, through opal_mem_hooks_release_hook().  Such a
+   component may learn about a change some time after it happened, so
+   it also provides memoryc_valid(), which rcache calls before it
+   reuses a registration.  It does not set OPAL_MEMORY_FREE_SUPPORT or
+   OPAL_MEMORY_MUNMAP_SUPPORT, because it does not see every release;
+   rcache recognizes it by memoryc_valid().
 */
 
 #ifndef OPAL_MCA_MEMORY_MEMORY_H
@@ -112,6 +117,15 @@ typedef int (*opal_memory_base_component_register_fn_t)(void *base, size_t len, 
 typedef int (*opal_memory_base_component_deregister_fn_t)(void *base, size_t len, uint64_t cookie);
 
 /**
+ * Prototype for a function that checks whether the memory mapping of
+ * a region has changed since the region was passed to
+ * memoryc_register.  The parameters match the ones passed to
+ * memoryc_register.  Returns true if the mapping is unchanged, and
+ * false if it changed or the component cannot tell.
+ */
+typedef bool (*opal_memory_base_component_valid_fn_t)(void *base, size_t len, uint64_t cookie);
+
+/**
  * Prototype for a function that set the memory alignment
  */
 typedef void (*opal_memory_base_component_set_alignment_fn_t)(int use_memalign,
@@ -149,6 +163,11 @@ typedef struct opal_memory_base_component_2_0_0_t {
     opal_memory_base_component_deregister_fn_t memoryc_deregister;
     /** Function invoked in order to set malloc'ed memory alignment */
     opal_memory_base_component_set_alignment_fn_t memoryc_set_alignment;
+    /** Function invoked to check that a region passed to
+        memoryc_register has not changed.  May be NULL if the component
+        reports every change before it returns from the call that made
+        it. */
+    opal_memory_base_component_valid_fn_t memoryc_valid;
 } opal_memory_base_component_2_0_0_t;
 
 OPAL_DECLSPEC extern opal_memory_base_component_2_0_0_t *opal_memory;

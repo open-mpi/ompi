@@ -73,6 +73,13 @@ mca_rcache_base_module_create(const char *name, void *user_data,
                     opal_leave_pinned = !opal_leave_pinned_pipeline;
                 }
                 opal_mem_hooks_register_release(mca_rcache_base_mem_cb, NULL);
+            } else if (NULL != opal_memory->memoryc_valid) {
+                /* the memory component watches each registered region and
+                   rcache checks it before reusing a registration */
+                if (-1 == opal_leave_pinned) {
+                    opal_leave_pinned = !opal_leave_pinned_pipeline;
+                }
+                opal_mem_hooks_register_release(mca_rcache_base_mem_cb, NULL);
             } else if (1 == opal_leave_pinned || opal_leave_pinned_pipeline) {
                 opal_show_help("help-rcache-base.txt", "leave pinned failed", true, name,
                                OPAL_NAME_PRINT(OPAL_PROC_MY_NAME), opal_process_info.nodename);
