@@ -22,6 +22,7 @@
 # Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
 #                         reserved.
 # Copyright (c) 2025      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      Hewlett Packard Enterprise Development LP. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -289,6 +290,14 @@ include mpiext/Makefile.am
 include mca/Makefile.am
 include util/Makefile.am
 include instance/Makefile.am
+
+# After every include, so libopen_mpi, libmpi, and ompi_info exist before these tests link and run.
+# The tests link the Open MPI ABI library, which --enable-mpi-abi=standard does not build.
+if HWPC_CXI_ENABLE
+if OMPI_BUILD_OMPI_ABI
+SUBDIRS += mca/hook/hwpc_cxi/test
+endif
+endif
 
 # Enforce Open MPI's library layering rule: libopen_mpi is the lower layer,
 # and libmpi / libmpi_abi are the thin front-ends above it.  libopen_mpi
