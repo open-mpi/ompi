@@ -12,6 +12,7 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -19,6 +20,10 @@ dnl
 dnl $HEADER$
 dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
+
+dnl More than one component can be built (e.g., patcher and ucm); the
+dnl one that is used is chosen at run time, by priority, when the
+dnl framework is opened (see opal_memory_base_open()).
 
 AC_DEFUN([MCA_opal_memory_CONFIG],[
         AC_ARG_WITH([memory-manager],
