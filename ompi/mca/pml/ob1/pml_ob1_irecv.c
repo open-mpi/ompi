@@ -31,7 +31,6 @@
 #include "ompi/request/request.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_recvfrag.h"
-#include "ompi/peruse/peruse-internal.h"
 #include "ompi/message/message.h"
 #include "ompi/memchecker.h"
 
@@ -62,12 +61,6 @@ int mca_pml_ob1_irecv_init(void *addr,
                                    addr,
                                    count, datatype, src, tag, comm, true);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
-    /* MPI_Recv_init() only creates an inactive persistent request; the
-     * MPI_T request-activate event is raised from mca_pml_ob1_start() when
-     * the request is actually started. */
 
     /* Work around a leak in start by marking this request as complete. The
      * problem occurred because we do not have a way to differentiate an
@@ -97,9 +90,6 @@ int mca_pml_ob1_irecv(void *addr,
                                    addr,
                                    count, datatype, src, tag, comm, false);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
     mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                      recvreq->req_recv.req_base.req_comm,
                                      &recvreq->req_recv.req_base);
@@ -136,9 +126,6 @@ int mca_pml_ob1_recv(void *addr,
     MCA_PML_OB1_RECV_REQUEST_INIT(recvreq, addr, count, datatype,
                                   src, tag, comm, false);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(recvreq->req_recv.req_base),
-                             PERUSE_RECV);
     mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                      recvreq->req_recv.req_base.req_comm,
                                      &recvreq->req_recv.req_base);
@@ -232,9 +219,6 @@ mca_pml_ob1_imrecv( void *buf,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
     mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                      recvreq->req_recv.req_base.req_comm,
                                      &recvreq->req_recv.req_base);
@@ -331,9 +315,6 @@ mca_pml_ob1_mrecv( void *buf,
                                   src, tag, comm, false);
     OBJ_RELEASE(comm);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &((recvreq)->req_recv.req_base),
-                             PERUSE_RECV);
     mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                      recvreq->req_recv.req_base.req_comm,
                                      &recvreq->req_recv.req_base);

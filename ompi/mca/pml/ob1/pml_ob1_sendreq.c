@@ -109,8 +109,6 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     if(false == sendreq->req_send.req_base.req_free_called) {
 
         sendreq->req_send.req_base.req_free_called = true;
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
         mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_REQUEST_FREE,
                                         sendreq->req_send.req_base.req_comm,
                                         &sendreq->req_send.req_base);
@@ -257,8 +255,6 @@ mca_pml_ob1_match_completion_free_request( mca_bml_base_btl_t* bml_btl,
                                            mca_pml_ob1_send_request_t* sendreq )
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
         mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
                                          sendreq->req_send.req_base.req_comm,
                                          &sendreq->req_send.req_base,
@@ -306,8 +302,6 @@ mca_pml_ob1_rndv_completion_request( mca_bml_base_btl_t* bml_btl,
                                      size_t req_bytes_delivered )
 {
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
         mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
                                          sendreq->req_send.req_base.req_comm,
                                          &sendreq->req_send.req_base,
@@ -977,14 +971,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
     des->des_cbdata = sendreq;
 
-    /**
-     * Well, it's a get so we will not know when the peer will get the data anyway.
-     * If we generate the PERUSE event here, at least we will know when we
-     * sent the GET message ...
-     */
     if( sendreq->req_send.req_bytes_packed > 0 ) {
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                 &(sendreq->req_send.req_base), PERUSE_SEND );
         mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_BEGIN,
                                          sendreq->req_send.req_base.req_comm,
                                          &sendreq->req_send.req_base,
@@ -1295,10 +1282,6 @@ cannot_pack:
         ob1_hdr_hton(hdr, MCA_PML_OB1_HDR_TYPE_FRAG,
                 sendreq->req_send.req_base.req_proc);
 
-#if OMPI_WANT_PERUSE
-         PERUSE_TRACE_COMM_OMPI_EVENT(PERUSE_COMM_REQ_XFER_CONTINUE,
-                 &(sendreq->req_send.req_base), size, PERUSE_SEND);
-#endif  /* OMPI_WANT_PERUSE */
          mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
                                           sendreq->req_send.req_base.req_comm,
                                           &sendreq->req_send.req_base, size);
@@ -1460,8 +1443,6 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
         }
     }
 
-    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(((mca_pml_ob1_send_request_t*)frag->rdma_req)->req_send.req_base), frag->rdma_length, PERUSE_SEND );
     mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER,
                                      ((mca_pml_ob1_send_request_t *) frag->rdma_req)
                                          ->req_send.req_base.req_comm,

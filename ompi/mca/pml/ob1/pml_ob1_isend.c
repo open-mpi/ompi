@@ -30,7 +30,6 @@
 #include "pml_ob1.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
-#include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
 #if MPI_VERSION >= 4
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
@@ -67,13 +66,6 @@ int mca_pml_ob1_isend_init(const void *buf,
 
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
                                   comm, sendmode, true, ob1_proc);
-
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(sendreq)->req_send.req_base,
-                             PERUSE_SEND);
-    /* MPI_Send_init() only creates an inactive persistent request; the
-     * MPI_T request-activate event is raised from mca_pml_ob1_start() when
-     * the request is actually started. */
 
     /* Work around a leak in start by marking this request as complete. The
      * problem occurred because we do not have a way to differentiate an
@@ -201,9 +193,6 @@ int mca_pml_ob1_isend(const void *buf,
         }
         MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
                                       comm, sendmode, false, ob1_proc);
-        PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                                 &(sendreq)->req_send.req_base,
-                                 PERUSE_SEND);
         mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                          sendreq->req_send.req_base.req_comm,
                                          &sendreq->req_send.req_base);
@@ -241,9 +230,6 @@ int mca_pml_ob1_isend(const void *buf,
                                   dst, tag,
                                   comm, sendmode, false, ob1_proc);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(sendreq)->req_send.req_base,
-                             PERUSE_SEND);
     mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                      sendreq->req_send.req_base.req_comm,
                                      &sendreq->req_send.req_base);
@@ -265,9 +251,6 @@ alloc_ft_req:
                                   dst, tag,
                                   comm, sendmode, false, ob1_proc);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &(sendreq)->req_send.req_base,
-                             PERUSE_SEND);
     mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                      sendreq->req_send.req_base.req_comm,
                                      &sendreq->req_send.req_base);
@@ -370,9 +353,6 @@ int mca_pml_ob1_send(const void *buf,
     MCA_PML_OB1_SEND_REQUEST_INIT(sendreq, buf, count, datatype, dst, tag,
                                   comm, sendmode, false, ob1_proc);
 
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,
-                             &sendreq->req_send.req_base,
-                             PERUSE_SEND);
     mca_pml_ob1_event_raise_request (MCA_PML_OB1_EVENT_REQUEST_ACTIVATE,
                                      sendreq->req_send.req_base.req_comm,
                                      &sendreq->req_send.req_base);
