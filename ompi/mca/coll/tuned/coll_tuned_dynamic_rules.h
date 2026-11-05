@@ -13,6 +13,7 @@
  * Copyright (c) 2011-2012 FUJITSU LIMITED.  All rights reserved.
  * Copyright (c) 2025      Amazon.com, Inc. or its affiliates.  All rights
  *                         reserved.
+ * Copyright (c) 2026      Triad National Security, LLC. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,12 +29,10 @@
 
 BEGIN_C_DECLS
 
-enum coll_rules_magic_message_sizes {
-    /* our message sizes are unsigned, but our json reader library returns only
-    signed integers. Hopefully no one is sending 9 exabytes in a single message. */
-    COLL_RULES_MESSAGE_SIZE_INF = SSIZE_MAX,
-    COLL_RULES_VALUE_NOT_PROVIDED = -1,
-};
+/* our message sizes are unsigned, but our json reader library returns only
+   signed integers. Hopefully no one is sending 9 exabytes in a single message. */
+#define COLL_RULES_MESSAGE_SIZE_INF SSIZE_MAX
+#define COLL_RULES_VALUE_NOT_PROVIDED (-1)
 
 enum comm_rank_distro_t {
     COLL_RULES_DISTRO_ANY=0,
