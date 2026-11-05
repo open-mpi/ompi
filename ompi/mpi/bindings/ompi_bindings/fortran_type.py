@@ -394,31 +394,40 @@ class LogicalType(IntType):
 @FortranType.add('LOGICAL_PTR')
 class LogicalPtrType(LogicalType):
     """Logical pointer type.
-    
+
     This type is used for LOGICAL parameters that need to be passed directly
     as memory addresses (void*) to the C layer, rather than going through
     integer conversion. This is particularly useful for functions like
     MPI_Abi_set_fortran_booleans where the C code needs to read the actual
     bit pattern of the LOGICAL value, not an integer representation.
-    
-    Uses C_PTR and C_LOC from ISO_C_BINDING to pass the address of a
-    temporary LOGICAL variable to C.
+
+    A temporary LOGICAL variable is passed by reference to the C binding
+    interface, which declares the corresponding dummy argument as a plain
+    (non-VALUE) LOGICAL.  Fortran therefore passes the address of the native
+    LOGICAL temporary, and the C wrapper receives it as a void*.  This is the
+    same by-reference convention the generator uses for default INTEGER
+    arguments (passed to C as MPI_Fint *).
+
+    Note: we deliberately do not use C_LOC()/TYPE(C_PTR) here.  C_LOC() applied
+    to a default-kind LOGICAL is not standard-interoperable and makes compilers
+    such as flang emit a -Winteroperability warning; passing the LOGICAL by
+    reference avoids that while still handing C the native bit pattern.
     """
 
     def declare(self):
         return f'LOGICAL, INTENT(IN) :: {self.name}'
 
     def use(self):
-        return [('ISO_C_BINDING', 'C_PTR, C_LOC')]
+        return []
 
     def declare_tmp(self):
-        return f'LOGICAL, TARGET :: {self.tmp_name}'
+        return f'LOGICAL :: {self.tmp_name}'
 
     def declare_cbinding_fortran(self):
-        return f'Type(C_PTR), VALUE :: {self.name}'
+        return f'LOGICAL :: {self.name}'
 
     def argument(self):
-        return f'C_LOC({self.tmp_name})'
+        return f'{self.tmp_name}'
 
     def pre_c_call(self):
         return f'{self.tmp_name} = {self.name}'
