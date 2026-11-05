@@ -22,7 +22,7 @@ include $(top_srcdir)/Makefile.mca-dso-check
 
 # A self-contained copy of the test/support harness so that these tests
 # do not depend on the top-level test/ tree.
-EXTRA_DIST = README.md attr_interlang_source.F90 values-f.h
+EXTRA_DIST = README.md attr_interlang_source.F90 abi_fortran_f08.f90 values-f.h
 
 check_LIBRARIES = libompitest_support.a
 libompitest_support_a_SOURCES = support.c support.h
@@ -278,6 +278,26 @@ attr_interlang_usempif08.f90: $(srcdir)/attr_interlang_source.F90
 	  -e 's/MPI_NULL_COPY_FN/MPI_COMM_NULL_COPY_FN/g' \
 	  -e 's/MPI_NULL_DELETE_FN/MPI_COMM_NULL_DELETE_FN/g' \
 	  $(srcdir)/attr_interlang_source.F90 > $@
+
+# mpi_f08 unit test for MPI_Abi_get/set_fortran_booleans.  Unlike the C
+# abi_fortran test, this one goes through the generated mpi_f08 bindings
+# and therefore exercises the LOGICAL_PTR / LOGICAL_PTR_OUT type machinery
+# in the Fortran binding generator.
+check_PROGRAMS += abi_fortran_f08
+abi_fortran_f08_SOURCES = abi_fortran_f08.f90
+abi_fortran_f08_FCFLAGS = \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08 \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi
+abi_fortran_f08_LDADD = \
+	$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/libmpi_usempif08.la \
+	$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr/libmpi_usempi_ignore_tkr.la \
+	$(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
+	$(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la \
+	$(top_builddir)/ompi/libopen_mpi.la \
+	$(top_builddir)/opal/lib@OPAL_LIB_NAME@.la
+abi_fortran_f08_DEPENDENCIES = $(abi_fortran_f08_LDADD)
 endif
 
 distclean-local:
