@@ -1,0 +1,33 @@
+# -*- text -*-
+#
+# SPDX-FileCopyrightText:  Copyright Hewlett Packard Enterprise Development LP
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+#
+# Copyright (c) 2026       Hewlett Packard Enterprise Development LP. All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+# This is the US/English help file for the hook hwpc_cxi component.
+#
+[no-cxi-device]
+Cassini (CXI) hardware performance counter collection was requested, but
+no Cassini device was found on this node. The job will now abort.
+
+  Host:          %s
+  Missing path:  %s
+
+Either run the job only on nodes with a Cassini device, or disable counter
+collection by setting the MCA parameter
+hook_hwpc_cxi_counter_report to 0.
+#
+[mpi-t-needs-report-level]
+hook_hwpc_cxi_counter_mpi_t_enable is set, but hook_hwpc_cxi_counter_report
+is 0, so the hwpc_cxi component does not run and no Cassini counters are
+registered as MPI_T performance variables.
+
+To get the MPI_T performance variables, also set
+hook_hwpc_cxi_counter_report to 1 (timeouts) or higher. Level 1 prints at
+most a one-line network timeout summary.
