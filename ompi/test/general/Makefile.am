@@ -237,8 +237,8 @@ attr_interlang_usempi_SOURCES = attr_interlang.c
 nodist_attr_interlang_usempi_SOURCES = attr_interlang_usempi.f90
 attr_interlang_usempi_CPPFLAGS = $(attr_interlang_cppflags)
 attr_interlang_usempi_FCFLAGS = $(attr_interlang_fcflags) \
-	-I$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
-	-I$(top_builddir)/ompi/mpi/fortran/use-mpi
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi
 attr_interlang_usempi_LDADD = \
 	$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr/libmpi_usempi_ignore_tkr.la \
 	$(top_builddir)/ompi/mpi/fortran/mpif-h/libmpi_mpifh.la \
@@ -260,10 +260,10 @@ attr_interlang_usempif08_SOURCES = attr_interlang.c
 nodist_attr_interlang_usempif08_SOURCES = attr_interlang_usempif08.f90
 attr_interlang_usempif08_CPPFLAGS = $(attr_interlang_cppflags)
 attr_interlang_usempif08_FCFLAGS = $(attr_interlang_fcflags) \
-	-I$(top_builddir)/ompi/mpi/fortran/use-mpi-f08 \
-	-I$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
-	-I$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
-	-I$(top_builddir)/ompi/mpi/fortran/use-mpi
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08 \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
+	$(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi
 attr_interlang_usempif08_LDADD = \
 	$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/libmpi_usempif08.la \
 	$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr/libmpi_usempi_ignore_tkr.la \

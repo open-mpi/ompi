@@ -29,7 +29,7 @@
 @@ -9869,7 +9877,11 @@
        # Time to change all our "foo.ltframework" stuff back to "-framework foo"
        case $host in
-	  *-*-darwin*)
+	*-*-darwin*)
 -	  newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
 +	  func_cc_basename "$CC"
 +	  case $func_cc_basename_result in
