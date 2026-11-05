@@ -1284,9 +1284,18 @@ void mca_pml_ob1_recv_frag_callback_cid (mca_btl_base_module_t* btl,
              * Later on, when the communicator is completely instantiated,
              * this pending queue will be searched and all matching fragments
              * moved to the right communicator.
+             *
+             * Hold the segments as trimmed above, starting at the real
+             * header, exactly as a fragment for an existing communicator
+             * is stored.  The fragment initialization picks inline or
+             * allocated storage from the total size it is given and keeps
+             * that same total in segments[0].seg_len; releasing the fragment
+             * relies on seg_len still being that total, which holds as long
+             * as nothing shortens the segment afterwards.  The CID header
+             * itself lives on in the fragment's copy of the header.
              */
             append_frag_to_list (&mca_pml_ob1.non_existing_communicator_pending,
-                                 btl, (const mca_pml_ob1_match_hdr_t *)hdr, des->des_segments,
+                                 btl, (const mca_pml_ob1_match_hdr_t *)hdr, segments,
                                  num_segments, NULL);
         }
 
