@@ -467,12 +467,19 @@ static void mca_btl_uct_md_construct(mca_btl_uct_md_t *md)
     md->uct_component = NULL;
     md->uct_md = NULL;
     md->md_name = NULL;
+    md->ucs_async = NULL;
     OBJ_CONSTRUCT(&md->tls, opal_list_t);
 }
 
 static void mca_btl_uct_md_destruct(mca_btl_uct_md_t *md)
 {
+    /* the tls (and their device contexts, which use the async context) go first */
     OPAL_LIST_DESTRUCT(&md->tls);
+
+    if (md->ucs_async) {
+        ucs_async_context_destroy(md->ucs_async);
+        md->ucs_async = NULL;
+    }
 
     free(md->md_name);
     if (md->uct_md) {

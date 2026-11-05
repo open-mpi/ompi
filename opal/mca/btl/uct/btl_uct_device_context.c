@@ -35,7 +35,7 @@
 #    define MCA_BTL_UCT_CB_FLAG_SYNC 0
 #endif
 
-static void mca_btl_uct_context_enable_progress(mca_btl_uct_device_context_t *context)
+void mca_btl_uct_context_enable_progress(mca_btl_uct_device_context_t *context)
 {
     if (!context->progress_enabled) {
 #if HAVE_DECL_UCT_PROGRESS_THREAD_SAFE
