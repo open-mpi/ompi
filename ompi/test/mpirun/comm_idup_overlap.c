@@ -35,6 +35,9 @@
  * forward with MPI_Test before posting anything else, the even ones post
  * immediately.  That is what puts the rounds at different positions on
  * different ranks, which is the whole point.
+ *
+ * The concurrent and orphan cases run again on an intercommunicator,
+ * whose cid rounds also use the local communicator of each group.
  */
 
 #include <mpi.h>
@@ -43,7 +46,7 @@
 
 #define ROUNDS 16
 
-static int rank, size, expected;
+static int rank, size, expected, remote_expected;
 
 /* Let the odd ranks run their cid rounds ahead of the even ones, so that
  * whatever the creation posts on the parent lands at a different point in
@@ -65,15 +68,18 @@ static void skew(MPI_Request *req)
 /* A nonblocking allreduce on comm, checked.  Returns 0 on success. */
 static int checked_iallreduce(MPI_Comm comm, const char *what)
 {
-    int in = rank + 1, out = 0;
+    int in = rank + 1, out = 0, inter, want;
     MPI_Request req;
 
     MPI_Iallreduce(&in, &out, 1, MPI_INT, MPI_SUM, comm, &req);
     MPI_Wait(&req, MPI_STATUS_IGNORE);
 
-    if (out != expected) {
+    /* On an intercommunicator each group receives the other group's sum. */
+    MPI_Comm_test_inter(comm, &inter);
+    want = inter ? remote_expected : expected;
+    if (out != want) {
         fprintf(stderr, "ERROR: %s: rank %d reduced %d, expected %d\n",
-                what, rank, out, expected);
+                what, rank, out, want);
         return 1;
     }
     return 0;
@@ -172,8 +178,63 @@ static int test_orphan(void)
     return 0;
 }
 
+#define INTER_IDUPS 4
+
+/* Several idups of one intercommunicator in flight, with a barrier on it. */
+static int test_inter_concurrent(MPI_Comm inter)
+{
+    for (int i = 0; i < ROUNDS; ++i) {
+        MPI_Comm child[INTER_IDUPS];
+        MPI_Request reqs[INTER_IDUPS + 1];
+
+        for (int j = 0; j < INTER_IDUPS; ++j) {
+            MPI_Comm_idup(inter, &child[j], &reqs[j]);
+        }
+        MPI_Ibarrier(inter, &reqs[INTER_IDUPS]);
+        skew(&reqs[0]);
+
+        MPI_Waitall(INTER_IDUPS + 1, reqs, MPI_STATUSES_IGNORE);
+
+        for (int j = 0; j < INTER_IDUPS; ++j) {
+            if (checked_iallreduce(child[j], "inter concurrent, child")) {
+                return 1;
+            }
+            MPI_Comm_free(&child[j]);
+        }
+    }
+    return 0;
+}
+
+/* An intercommunicator is freed with several idups of it in flight. */
+static int test_inter_orphan(MPI_Comm inter)
+{
+    for (int i = 0; i < ROUNDS; ++i) {
+        MPI_Comm parent, child[INTER_IDUPS];
+        MPI_Request reqs[INTER_IDUPS];
+
+        MPI_Comm_dup(inter, &parent);
+        for (int j = 0; j < INTER_IDUPS; ++j) {
+            MPI_Comm_idup(parent, &child[j], &reqs[j]);
+        }
+
+        /* Freeing it also releases its local communicator. */
+        MPI_Comm_free(&parent);
+        skew(&reqs[0]);
+        MPI_Waitall(INTER_IDUPS, reqs, MPI_STATUSES_IGNORE);
+
+        for (int j = 0; j < INTER_IDUPS; ++j) {
+            if (checked_iallreduce(child[j], "inter orphan, child")) {
+                return 1;
+            }
+            MPI_Comm_free(&child[j]);
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
+    MPI_Comm local, inter;
     int failed;
 
     MPI_Init(&argc, &argv);
@@ -190,13 +251,26 @@ int main(int argc, char *argv[])
 
     expected = size * (size + 1) / 2;
 
-    failed = test_overlap() || test_blocking() || test_concurrent() || test_orphan();
+    /* Even and odd ranks form the two groups; each leader is the group's lowest rank. */
+    MPI_Comm_split(MPI_COMM_WORLD, rank & 1, rank, &local);
+    MPI_Intercomm_create(local, 0, MPI_COMM_WORLD, (rank & 1) ? 0 : 1, 0, &inter);
+    MPI_Comm_free(&local);
+    remote_expected = 0;
+    for (int r = 0; r < size; ++r) {
+        if ((r & 1) != (rank & 1)) {
+            remote_expected += r + 1;
+        }
+    }
+
+    failed = test_overlap() || test_blocking() || test_concurrent() || test_orphan() ||
+             test_inter_concurrent(inter) || test_inter_orphan(inter);
 
     if (failed) {
         MPI_Abort(MPI_COMM_WORLD, 1);
         return 1;
     }
 
+    MPI_Comm_free(&inter);
     if (0 == rank) {
         printf("comm idup overlap: PASSED (%d ranks, %d rounds each)\n", size, ROUNDS);
     }

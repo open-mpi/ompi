@@ -1059,7 +1059,12 @@ OMPI_DECLSPEC int ompi_comm_free (ompi_communicator_t **comm);
  *                                          the rounds then run point-to-point on the
  *                                          parent with that tag instead of through
  *                                          its collective module.
- *              OMPI_COMM_CID_INTER:        inter-comm
+ *              OMPI_COMM_CID_INTER:        inter-comm. arg0 is NULL, or points to two
+ *                                          ints reserved from the c_nbc_tag of the parent
+ *                                          and of its local communicator; arg1 is then
+ *                                          that local communicator, which the caller
+ *                                          keeps alive until the cid rounds complete,
+ *                                          and the rounds run point-to-point with them.
  *              OMPI_COMM_CID_GROUP:        only decide CID within the ompi_group_t
  *                                          associated with the communicator. arg0
  *                                          must point to an int which will be used
@@ -1089,7 +1094,7 @@ OMPI_DECLSPEC int ompi_comm_nextcid (ompi_communicator_t *newcomm, ompi_communic
  * @param bridgecomm: bridge comm for intercomm_create
  * @param mode: combination of input
  *              OMPI_COMM_CID_INTRA:        intra-comm (arg0 as for ompi_comm_nextcid)
- *              OMPI_COMM_CID_INTER:        inter-comm
+ *              OMPI_COMM_CID_INTER:        inter-comm (arg0 and arg1 as for ompi_comm_nextcid)
  * This routine has to be thread safe in the final version.
  */
 OMPI_DECLSPEC int ompi_comm_nextcid_nb (ompi_communicator_t *newcomm, ompi_communicator_t *comm,

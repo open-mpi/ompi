@@ -1856,7 +1856,8 @@ struct ompi_comm_idup_with_info_context_t {
     ompi_communicator_t *comm;
     ompi_communicator_t *newcomp;
     ompi_communicator_t **newcomm_out;    /* the handle the caller was given */
-    int tag;    /* pml tag of this creation's cid rounds on comm */
+    int tag[2];    /* pml tags of this creation's cid rounds on comm and on local_comm */
+    ompi_communicator_t *local_comm;    /* the parent's c_local_comm, taken at the call */
 };
 
 typedef struct ompi_comm_idup_with_info_context_t ompi_comm_idup_with_info_context_t;
@@ -1866,12 +1867,16 @@ static void ompi_comm_idup_with_info_context_construct (ompi_comm_idup_with_info
     context->comm        = NULL;
     context->newcomp     = NULL;
     context->newcomm_out = NULL;
+    context->local_comm  = NULL;
 }
 
 static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_context_t *context)
 {
     if (NULL != context->comm) {
         OBJ_RELEASE(context->comm);
+    }
+    if (NULL != context->local_comm) {
+        OBJ_RELEASE(context->local_comm);
     }
 }
 
@@ -1971,8 +1976,13 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
         }
     }
 
-    /* reserved at the call, so every rank hands this tag to the same creation */
-    context->tag = ompi_coll_base_nbc_reserve_tags (comm, 1);
+    /* reserved at the call, so every rank hands these tags to the same creation */
+    context->tag[0] = ompi_coll_base_nbc_reserve_tags (comm, 1);
+    if (OMPI_COMM_IS_INTER (comm)) {
+        context->local_comm = comm->c_local_comm;
+        OBJ_RETAIN(context->local_comm);    /* freeing the parent releases its c_local_comm at once */
+        context->tag[1] = ompi_coll_base_nbc_reserve_tags (context->local_comm, 1);
+    }
 
     ompi_comm_request_schedule_append (request, ompi_comm_idup_getcid, subreq, subreq[0] ? 1 : 0);
 
@@ -2008,8 +2018,8 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, &context->tag,
-                               NULL, false, mode, subreq);
+    rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, context->tag,
+                               context->local_comm, false, mode, subreq);
     if (OMPI_SUCCESS != rc) {
         /* Returning the request here would hand it back to the free list while
          * the progress loop still holds it and the caller still owns it, and
@@ -2050,8 +2060,8 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 	     ompi_comm_print_cid (context->newcomp), ompi_comm_print_cid (context->comm));
 
     /* activate communicator and init coll-module */
-    rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, &context->tag, NULL, false, mode,
-                                subreq);
+    rc = ompi_comm_activate_nb (&context->newcomp, context->comm, NULL, context->tag, context->local_comm,
+                                false, mode, subreq);
     if ( OMPI_SUCCESS != rc ) {
         ompi_comm_idup_with_info_discard (context);
         return rc;
