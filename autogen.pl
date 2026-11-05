@@ -839,6 +839,55 @@ sub safe_system {
 
 ##############################################################################
 
+# Apply one of the ltmain.sh patches, telling a harmless "all hunks
+# rejected" (the Libtool we ship doesn't need this patch) apart from a
+# dangerous "some hunks applied, some rejected" (the patch has rotted and
+# is now only partially protecting us).  When any hunk is rejected,
+# patch(1) writes a .rej file listing those hunks.  We count the hunks in
+# both the patch and the .rej to distinguish a total miss (all hunks
+# rejected) from a partial one (only some rejected).
+sub apply_ltmain_patch {
+    my ($patch_file, $desc, $indent_str) = @_;
+
+    unlink("config/ltmain.sh.rej");
+    system("$patch_prog -N -p0 < $patch_file >/dev/null 2>&1");
+
+    # A clean application leaves no .rej and needs no report.
+    if (-f "config/ltmain.sh.rej") {
+        my $total_hunks = count_hunks($patch_file);
+        my $rejected_hunks = count_hunks("config/ltmain.sh.rej");
+        # Only a *partial* rejection is suspicious; a complete miss just
+        # means this Libtool doesn't need the patch.
+        if ($rejected_hunks > 0 && $rejected_hunks < $total_hunks) {
+            my $patch_base = $patch_file;
+            $patch_base =~ s{.*/}{};
+            print "$indent_str"."WARNING: the $desc ltmain.sh patch only partially applied\n";
+            print "$indent_str"."         ($rejected_hunks of $total_hunks hunks rejected).  It has likely\n";
+            print "$indent_str"."         rotted against this Libtool and needs to be refreshed;\n";
+            print "$indent_str"."         see config/$patch_base and the rejects left in\n";
+            print "$indent_str"."         config/ltmain.sh.rej.\n";
+            # Leave the .rej in place so the developer can inspect it.
+        } else {
+            unlink("config/ltmain.sh.rej");
+        }
+    }
+}
+
+# Count the number of hunks (lines beginning with "@@") in a patch or
+# reject file.
+sub count_hunks {
+    my ($file) = @_;
+    my $count = 0;
+    open(my $fh, "<", $file)
+        || return 0;
+    while (<$fh>) {
+        $count++
+            if (/^\@\@ /);
+    }
+    close($fh);
+    return $count;
+}
+
 sub patch_autotools_output {
     my ($topdir) = @_;
 
@@ -848,20 +897,23 @@ sub patch_autotools_output {
         $indent_str = "=== ";
     }
 
-    # Patch ltmain.sh for the NAG and flang compilers.  Redirect stderr to
-    # /dev/null because these patches are only necessary for some versions
-    # of Libtool; they'll [rightfully] fail if you have a new enough
-    # Libtool that doesn't need them.  But don't alarm the user and make
-    # them think that autogen failed if a patch fails -- make the errors be
-    # silent.
+    # Patch ltmain.sh for the NAG and flang compilers.  These patches are
+    # only necessary for some versions of Libtool; they'll [rightfully]
+    # fail *in their entirety* if you have a new enough Libtool that
+    # doesn't need them, and we don't want to alarm the user in that case.
+    # A *partial* rejection, however -- where some hunks apply and others
+    # do not -- means the patch has silently rotted against the Libtool we
+    # ship (e.g., a context line no longer matches), leaving part of the
+    # workaround dead without anyone noticing.  apply_ltmain_patch() tells
+    # the two apart and warns loudly about the latter.
     if (-f "config/ltmain.sh") {
         verbose "$indent_str"."Patching \"-pthread\" option for NAG compiler in ltmain.sh\n";
-        system("$patch_prog -N -p0 < $topdir/config/ltmain_nag_pthread.diff >/dev/null 2>&1");
-        unlink("config/ltmain.sh.rej");
+        apply_ltmain_patch("$topdir/config/ltmain_nag_pthread.diff",
+                           "NAG \"-pthread\"", $indent_str);
 
         verbose "$indent_str"."Patching \"-framework\" option for flang compiler in ltmain.sh\n";
-        system("$patch_prog -N -p0 < $topdir/config/ltmain_flang_darwin.diff >/dev/null 2>&1");
-        unlink("config/ltmain.sh.rej");
+        apply_ltmain_patch("$topdir/config/ltmain_flang_darwin.diff",
+                           "flang \"-framework\"", $indent_str);
     }
 
     # If there's no configure script, there's nothing else to do.
