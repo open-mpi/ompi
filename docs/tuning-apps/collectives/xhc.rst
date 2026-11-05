@@ -60,8 +60,8 @@ Single-copy data transfers
 
 XHC supports data transfers between MPI ranks using a single copy, through Open
 MPI's ``opal/smsc`` (shared-memory-single-copy) framework. Despite the
-component's name, XHC actually also supports additional single-copy mechanisms
-in some collectives, though XPMEM is highly recommended.
+component's name, XHC also supports additional single-copy mechanisms in some
+collectives, though XPMEM is still highly recommended.
 
     * Bcast: XPMEM, CMA, KNEM
     * Allreduce/Reduce: XPMEM
@@ -90,7 +90,28 @@ messages. Supported in all primitives, regardless of XPMEM or SMSC presence.
 Synchronization
 ~~~~~~~~~~~~~~~
 
-XHC uses **lock-free** synchronization, using the single-writer paradigm and lightweight *read* or *write* memory barriers wherever appropriate.
+XHC uses **lock-free** synchronization, following the single-writer paradigm,
+with lightweight *read* or *write* memory barriers wherever appropriate.
+
+Auto-tuning
+~~~~~~~~~~~
+
+XHC includes basic auto-tuning functionality following empirical rules.
+Currently, the rules are fixed in code and can't be modified at run-time, only
+disabled. They live in ``xhc_autotune_hierarchy()`` & ``xhc_autotune_chunk()``,
+and mostly boil down to:
+    
+    * **Reduction hierarchy**: Depending on the system's topology, pick
+      appropriate localities to get 3-level and 4-level hierarchies, and switch
+      between them based on message size.
+    
+    * **Bcast hierarchy**: Switch between a flat and a hierarchical
+      configuration, depending on the system's cache layout and the message
+      size.
+    
+    * **Bcast chunk size**: Dynamically adjust the chunk size, within a range,
+      based on the message size, to strike a balance between copy performance
+      and pipeline latency.
 
 Multi-node with HAN
 -------------------
@@ -131,7 +152,7 @@ Main
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 20 60
+   :widths: 20 24 56
    
    * - Parameter
      - Default
@@ -165,20 +186,23 @@ Main
        exclusive with primitive-specific parameters.
    
    * - coll_xhc_<op>_hierarchy
-     - bcast/barrier: ``numa,socket``
-       (all)reduce: ``l3,numa,socket``
+     - ``auto``
      - Topological features to consider for XHC's hierarchy, specifically for
        this primitive. Mutually exclusive with the respective non-specific
        parameter.
    
    * - coll_xhc_<op>_chunk_size
-     - 16K
-     - Pipeline chunk size, specifically for this primitive. Mutually exclusive
-       with the non-specific parameter.
+     - bcast: ``auto``
+       reduce: ``4K:16K``
+       allreduce: ``1K:16K``
+     - Pipeline chunk size, specifically for this primitive. Single value for
+       bcast or ``min:max`` for (all)reduce. Mutually exclusive with the
+       non-specific parameter.
    
    * - coll_xhc_<op>_cico_max
      - bcast: ``256``
-       (all)reduce: ``4K``
+       reduce: ``8K``
+       allreduce: ``1K``
      - Max size for copy-in-copy-out transfers, specifically for this
        primitive. Mutually exclusive with the non-specific parameter.
 
@@ -196,17 +220,6 @@ Advanced
    * - coll_xhc_<barrier/allreduce>_root
      - 0
      - Internal root rank, for either of these operations.
-   
-   * - coll_xhc_uniforms_chunks
-     - true
-     - Whether to dynamically adjust (decrease) the chunk size in reduction
-       primitives, so that all ranks will perform equal work, depending on
-       the message size.
-   
-   * - coll_xhc_uniforms_chunks_min
-     - 4K
-     - Minimum allowed value for the automatically decreased chunk size in
-       reduction primitives.
    
    * - coll_xhc_reduce_load_balance
      - top,first
@@ -284,10 +297,6 @@ Limitations
   reduction collectives.
 
 * **Derived datatypes** are not yet supported.
-
-* The Reduce implementation only supports rank 0 as the root, and will
-  automatically fall back to another component in other scenarios. Work in
-  progress.
 
 Other resources
 ---------------
