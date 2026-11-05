@@ -27,6 +27,7 @@ include $(top_srcdir)/Makefile.mca-dso-check
 check_PROGRAMS = \
         mpi_t_category_get_events \
         mpi_t_concurrent_init \
+        mpi_t_cvar_read_long_string \
         mpi_t_errcodes \
         mpi_t_event_14019 \
         mpi_t_event_comm_name \
@@ -68,6 +69,10 @@ mpi_t_concurrent_init_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 # framework selected (not necessarily pthreads), and are only applied
 # to the wrapper compilers -- they are not AC_SUBSTed for Makefile use.
 mpi_t_concurrent_init_LDADD = $(test_ldadd) -lpthread
+
+mpi_t_cvar_read_long_string_SOURCES = mpi_t_cvar_read_long_string.c mpi_t_lifecycle.h
+mpi_t_cvar_read_long_string_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_cvar_read_long_string_LDADD = $(test_ldadd)
 
 mpi_t_errcodes_SOURCES = mpi_t_errcodes.c
 mpi_t_errcodes_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)

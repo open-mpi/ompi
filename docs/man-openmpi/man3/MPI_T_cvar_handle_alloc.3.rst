@@ -25,7 +25,9 @@ DESCRIPTION
 variable the *obj_handle* argument is ignored. The number of values
 represented by this control variable is returned in the *count*
 parameter. If the control variable represents a string then *count* will
-be the maximum length of the string.
+be the maximum length of the string, including the terminating null
+character: at least the length of the variable's value when the handle
+is allocated, and never less than 2048.
 
 :ref:`MPI_T_cvar_handle_free` frees a handle allocated by
 :ref:`MPI_T_cvar_handle_alloc` and sets the *handle* argument to
