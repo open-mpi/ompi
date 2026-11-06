@@ -847,28 +847,47 @@ sub safe_system {
 # both the patch and the .rej to distinguish a total miss (all hunks
 # rejected) from a partial one (only some rejected).
 sub apply_ltmain_patch {
-    my ($patch_file, $desc, $indent_str) = @_;
+    my ($patch_file, $desc, $indent_str, $depends_note) = @_;
 
-    unlink("config/ltmain.sh.rej");
-    system("$patch_prog -N -p0 < $patch_file >/dev/null 2>&1");
+    my $patch_base = $patch_file;
+    $patch_base =~ s{.*/}{};
+
+    # Give each patch its own reject file.  The patches share a single
+    # target (config/ltmain.sh), so if they all wrote to patch(1)'s
+    # default config/ltmain.sh.rej, a later patch's rejects would clobber
+    # an earlier patch's -- destroying exactly the file an earlier
+    # warning just told the developer to inspect.  The -r option used to
+    # redirect the rejects is supported by both GNU and BSD patch.
+    my $reject_base = $patch_base;
+    $reject_base =~ s/\.diff$//;
+    my $reject_file = "config/ltmain.sh.$reject_base.rej";
+
+    unlink($reject_file);
+    system("$patch_prog -N -p0 -r $reject_file < $patch_file >/dev/null 2>&1");
 
     # A clean application leaves no .rej and needs no report.
-    if (-f "config/ltmain.sh.rej") {
+    if (-f $reject_file) {
         my $total_hunks = count_hunks($patch_file);
-        my $rejected_hunks = count_hunks("config/ltmain.sh.rej");
+        my $rejected_hunks = count_hunks($reject_file);
         # Only a *partial* rejection is suspicious; a complete miss just
         # means this Libtool doesn't need the patch.
         if ($rejected_hunks > 0 && $rejected_hunks < $total_hunks) {
-            my $patch_base = $patch_file;
-            $patch_base =~ s{.*/}{};
             print "$indent_str"."WARNING: the $desc ltmain.sh patch only partially applied\n";
             print "$indent_str"."         ($rejected_hunks of $total_hunks hunks rejected).  It has likely\n";
             print "$indent_str"."         rotted against this Libtool and needs to be refreshed;\n";
             print "$indent_str"."         see config/$patch_base and the rejects left in\n";
-            print "$indent_str"."         config/ltmain.sh.rej.\n";
+            print "$indent_str"."         $reject_file.\n";
+            # Some patches build on top of others (see $depends_note at
+            # the call site); if so, point the developer at the patch
+            # that may be the real culprit rather than this one.
+            if ($depends_note) {
+                foreach my $line (split(/\n/, $depends_note)) {
+                    print "$indent_str"."         $line\n";
+                }
+            }
             # Leave the .rej in place so the developer can inspect it.
         } else {
-            unlink("config/ltmain.sh.rej");
+            unlink($reject_file);
         }
     }
 }
@@ -906,6 +925,14 @@ sub patch_autotools_output {
     # ship (e.g., a context line no longer matches), leaving part of the
     # workaround dead without anyone noticing.  apply_ltmain_patch() tells
     # the two apart and warns loudly about the latter.
+    #
+    # Order matters: the flang patch must be applied *after* the NAG
+    # patch, because some of the flang patch's hunks use context lines
+    # ("func_cc_basename $CC" / "case $func_cc_basename_result in") that
+    # the NAG patch inserts.  If the NAG patch is skipped or completely
+    # rejected (harmless on a new enough Libtool), those flang hunks will
+    # be rejected too -- so we tell apply_ltmain_patch() to mention the
+    # NAG patch as the likely real cause of a flang partial rejection.
     if (-f "config/ltmain.sh") {
         verbose "$indent_str"."Patching \"-pthread\" option for NAG compiler in ltmain.sh\n";
         apply_ltmain_patch("$topdir/config/ltmain_nag_pthread.diff",
@@ -913,7 +940,10 @@ sub patch_autotools_output {
 
         verbose "$indent_str"."Patching \"-framework\" option for flang compiler in ltmain.sh\n";
         apply_ltmain_patch("$topdir/config/ltmain_flang_darwin.diff",
-                           "flang \"-framework\"", $indent_str);
+                           "flang \"-framework\"", $indent_str,
+                           "Note: some of this patch's hunks build on context that the NAG\n" .
+                           "\"-pthread\" patch (config/ltmain_nag_pthread.diff) inserts, so a\n" .
+                           "rejected or skipped NAG patch can be the real cause -- check it first.");
     }
 
     # If there's no configure script, there's nothing else to do.
