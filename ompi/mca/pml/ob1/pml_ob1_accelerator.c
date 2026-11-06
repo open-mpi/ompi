@@ -442,11 +442,14 @@ size_t mca_pml_ob1_rdma_cuda_btls(
         return 0;
     }
 
-    /* check to see if memory is registered */
+    /* check to see if memory is registered. Start from the btl after the one the last RDMA
+     * started from, as mca_pml_ob1_rdma_btls() does for host memory, so that consecutive
+     * messages to a peer use all of its btls rather than always the first one. */
     for(n = 0; n < num_btls && num_btls_used < mca_pml_ob1.max_rdma_per_request;
             n++) {
         mca_bml_base_btl_t* bml_btl =
-            mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n);
+            mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send,
+                                             (bml_endpoint->btl_rdma_index + n) % num_btls);
 
         if (bml_btl->btl_flags & MCA_BTL_FLAGS_ACCELERATOR_GET) {
             mca_btl_base_registration_handle_t *handle = NULL;
@@ -480,6 +483,7 @@ size_t mca_pml_ob1_rdma_cuda_btls(
     mca_pml_ob1_calc_weighted_length(rdma_btls, num_btls_used, size,
                                      weight_total);
 
+    bml_endpoint->btl_rdma_index = (bml_endpoint->btl_rdma_index + 1) % num_btls;
     return num_btls_used;
 }
 
