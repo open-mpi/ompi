@@ -63,6 +63,17 @@ Open MPI version v6.1.0
   replaced the ones of the patcher and feeds the Open MPI memory release
   hooks from UCM.
 
+- The components that depend on UCX or UCC (``common/ucx``,
+  ``btl/uct``, ``pml/ucx``, ``osc/ucx``, ``coll/ucc``, ``atomic/ucx``,
+  ``spml/ucx``, ``sshmem/ucx`` and ``scoll/ucc``) are now built as DSOs
+  by default, like the accelerator components.  An Open MPI that is
+  built with UCX no longer links ``libopen-pal``, ``libopen_mpi`` or
+  ``liboshmem`` against the UCX libraries, so it can run where UCX is
+  not available, and the memory hooks that the UCX libraries install
+  when they are loaded are only set up in the processes that load these
+  components.  Use ``--enable-mca-static=LIST`` to build any of them
+  into the Open MPI core libraries as before.
+
 - **Build System**: Open MPI now requires Autoconf 2.69 or later for
   developers building from Git or modifying the build system. Released
   tarballs remain unaffected. This update enables adoption of modern

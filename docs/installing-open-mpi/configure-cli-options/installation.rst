@@ -226,7 +226,18 @@ be used with ``configure``:
 
   .. note:: As of Open MPI |ompi_ver|, ``configure``'s global default
             is to build all components as static (i.e., part of the
-            Open MPI core libraries, not as DSOs).  Prior to Open MPI
+            Open MPI core libraries, not as DSOs), with the exception
+            of the ``accelerator-cuda``, ``accelerator-rocm``, and
+            ``accelerator-ze`` components, and of the components that
+            depend on UCX or UCC (``common-ucx``, ``btl-uct``,
+            ``pml-ucx``, ``osc-ucx``, ``coll-ucc``, ``atomic-ucx``,
+            ``spml-ucx``, ``sshmem-ucx``, and ``scoll-ucc``), which
+            are built as DSOs by default.  An Open MPI that is built
+            with UCX therefore does not depend on the UCX libraries
+            at run time unless one of these components is used.
+            This exception only applies when ``--enable-mca-dso`` is
+            not specified: giving it a ``LIST`` replaces this default
+            list.  Prior to Open MPI
             v5.0.0, the global default behavior was to build
             most components as DSOs.
 

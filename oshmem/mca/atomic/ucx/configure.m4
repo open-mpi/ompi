@@ -21,6 +21,9 @@ AC_DEFUN([MCA_oshmem_atomic_ucx_CONFIG],[
                    [atomic_ucx_happy="no"])
 
     AS_IF([test "$atomic_ucx_happy" = "yes"],
+          [OPAL_MCA_CHECK_DEPENDENCY([oshmem], [atomic], [ucx], [opal], [common], [ucx])])
+
+    AS_IF([test "$atomic_ucx_happy" = "yes"],
           [$1],
           [$2])
 

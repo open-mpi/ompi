@@ -21,6 +21,9 @@ AC_DEFUN([MCA_oshmem_spml_ucx_CONFIG],[
                    [spml_ucx_happy="no"])
 
     AS_IF([test "$spml_ucx_happy" = "yes"],
+          [OPAL_MCA_CHECK_DEPENDENCY([oshmem], [spml], [ucx], [opal], [common], [ucx])])
+
+    AS_IF([test "$spml_ucx_happy" = "yes"],
           [$1],
           [$2])
 

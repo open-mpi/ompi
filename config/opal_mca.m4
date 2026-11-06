@@ -168,8 +168,15 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
     # Second, set the DSO_all and STATIC_all variables.  conflict
     # resolution (prefer static) is done in the big loop below
     #
-    # Exception here is the components of the accelerator framework,
-    # which by default are built to be dynamic, except for null.
+    # Exceptions here are the components of the accelerator framework,
+    # which by default are built to be dynamic, except for null, and
+    # every component that depends on the UCX (or UCC) libraries, and
+    # the common/ucx component they share.  Building them as DSOs
+    # keeps libopen-pal, libopen_mpi and liboshmem free of any
+    # dependency on UCX, so that an Open MPI built with UCX can run
+    # where UCX is not available (the components that cannot load are
+    # skipped), and keeps the memory hooks that UCX installs when its
+    # libraries are loaded out of processes that do not use it.
     #
     AC_MSG_CHECKING([which components should be run-time loadable])
     if test "$enable_static" != "no"; then
@@ -188,6 +195,10 @@ of type-component pairs.  For example, --enable-mca-no-build=pml-ob1])
        msg=
        if test -z "$enable_mca_dso"; then
            enable_mca_dso="accelerator-cuda,accelerator-rocm,accelerator-ze"
+           # components that depend on UCX or UCC (and the common/ucx
+           # component that they share)
+           enable_mca_dso="$enable_mca_dso,common-ucx,btl-uct,pml-ucx,osc-ucx,coll-ucc"
+           enable_mca_dso="$enable_mca_dso,atomic-ucx,spml-ucx,sshmem-ucx,scoll-ucc"
            msg="(default)"
        fi
        DSO_all=0
