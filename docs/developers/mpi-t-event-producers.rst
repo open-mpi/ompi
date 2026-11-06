@@ -148,7 +148,8 @@ The producer contract
   when it is present; an absent event is conformant (a smaller event set).
 
 A producer that cannot safely deliver from its raise context -- for example the
-OS memory-release producer behind ``ompi.mca.memory.patcher.released``, whose
+OS memory-release producer behind ``ompi.mca.memory.patcher.released`` (fed by
+the active memory component, ``patcher`` or ``ucm``), whose
 hook runs inside ``free()`` / ``munmap()`` where it may not lock or allocate --
 can instead accumulate its occurrences in a lock-free sink and let the framework
 *drain* that sink at a later safe operation, delivering one aggregated,
