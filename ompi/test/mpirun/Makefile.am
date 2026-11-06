@@ -49,6 +49,7 @@ EXTRA_DIST = \
         session_partial_batch.c \
         spawn_first_touch.c \
         tcp_stranger_connect.c \
+        thread_sendrecv.c \
         wireup_stress.c
 
 # Deliberately built by the check-mpirun target rather than by Automake:
@@ -258,6 +259,16 @@ check-mpirun:
 	    run $(mpirun_runner) ./comm_idup_overlap; \
 	    echo "=== comm idup overlap, four ranks ==="; \
 	    run $(oversub_runner) ./comm_idup_overlap; \
+	    $(MPICC) -g "$(srcdir)/thread_sendrecv.c" -o thread_sendrecv -lpthread; \
+	    echo "=== threads sharing a communicator, shared memory only ==="; \
+	    run $(mpirun_runner) --mca btl self,sm ./thread_sendrecv; \
+	    echo "=== threads sharing a communicator, default transports ==="; \
+	    run $(mpirun_runner) ./thread_sendrecv; \
+	    echo "=== threads sharing a communicator, direct modex, shared memory only ==="; \
+	    run env $(DIRECT_MODEX) \
+	        $(mpirun_runner) --mca btl self,sm ./thread_sendrecv; \
+	    echo "=== threads sharing a communicator, tcp only ==="; \
+	    run $(tcp_runner) ./thread_sendrecv; \
 	    $(MPICC) -g "$(srcdir)/session_first_touch.c" -o session_first_touch -lpthread; \
 	    echo "=== session first touch, direct modex, shared memory only ==="; \
 	    run env $(DIRECT_MODEX) \
@@ -301,4 +312,5 @@ clean-local:
 	    session_partial_batch session_partial_batch.dSYM \
 	    spawn_first_touch spawn_first_touch.dSYM \
 	    tcp_stranger_connect tcp_stranger_connect.dSYM \
+	    thread_sendrecv thread_sendrecv.dSYM \
 	    wireup_stress wireup_stress.dSYM
