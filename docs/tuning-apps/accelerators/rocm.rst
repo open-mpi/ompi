@@ -72,18 +72,18 @@ The user has multiple options for running an Open MPI job with GPU support
 in a single node scenario:
 
 * the default shared memory component ``btl/sm`` has support for
-  accelerators, will use however by default a bounce buffer on the CPU
-  for data transfers. Hence, while this works, it will not be able to
-  take advantage of the high-speed GPU-to-GPU InfinityFabric
-  interconnect (if available).
-
-* to use the high-speed GPU-to-GPU interconnect within a node, the user has to
-  enable the accelerator single-copy component (``smsc/accelerator``), e.g.:
+  accelerators.  When the accelerator supports IPC, it uses the
+  accelerator single-copy component (``smsc/accelerator``) by default,
+  which copies device buffers directly between GPUs and so can take
+  advantage of the high-speed GPU-to-GPU InfinityFabric interconnect
+  (if available).  Host buffers still go to the host single-copy
+  component (``xpmem`` or ``cma``).  Without ``smsc/accelerator``,
+  ``btl/sm`` uses a bounce buffer on the CPU for device buffers.
 
 .. code-block:: sh
 
-  # Enable the smsc/accelerator component
-  shell$ mpirun --mca smsc_accelerator_priority 80 -n 64 ./<my_executable>
+  # Keep device buffers out of the smsc/accelerator component
+  shell$ mpirun --mca smsc ^accelerator -n 64 ./<my_executable>
 
 * Alternatively, the user can replace the default shared memory
   component ``btl/sm`` with the ``btl/smcuda`` component, which has
@@ -219,7 +219,6 @@ There are two mechanism for using libfabric and Open MPI with ROCm support.
    # Use the ofi btl for inter-node and sm btl
    # for intra-node communication
    mpirun --mca pml ob1 --mca btl ofi,sm,tcp,self   \
-          --mca smsc_accelerator_priority 80        \
           -n 64 ./<my_executable>
 
 
