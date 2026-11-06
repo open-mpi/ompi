@@ -465,6 +465,41 @@ several GPUs may be equidistant.
 Run-time tuning and debugging
 -----------------------------
 
+Small copies with GDRCopy
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When Open MPI stages a device buffer through host memory, for example to send
+a small GPU message eagerly over a BTL, each copy goes through a CUDA stream
+and a synchronization, which costs several microseconds even for a few bytes.
+When the GDRCopy library (``libgdrapi``) and its ``gdrdrv`` kernel driver are
+present, the CUDA accelerator component does small copies between host and
+device memory with GDRCopy instead, as a CPU load or store through a mapping of
+the device memory.  The library is opened at run time, so no build option is
+needed, and a node without it keeps the stream copies.
+
+Each device allocation is pinned and mapped once, on its first small copy.
+Reads of device memory through the mapping are slow, so copies from device
+memory use a lower limit than copies to it.
+
+.. list-table::
+   :header-rows: 1
+
+   * - MCA parameter
+     - Default
+     - Meaning
+   * - ``accelerator_cuda_gdrcopy``
+     - true
+     - Use GDRCopy for small host/device copies when it is available.
+   * - ``accelerator_cuda_gdrcopy_htod_limit``
+     - 32768
+     - Largest copy to device memory done with GDRCopy, in bytes.
+   * - ``accelerator_cuda_gdrcopy_dtoh_limit``
+     - 4096
+     - Largest copy from device memory done with GDRCopy, in bytes.
+   * - ``accelerator_cuda_gdrcopy_max_pin``
+     - 1073741824
+     - Largest device allocation GDRCopy pins, in bytes.
+
 Enabling the ``smcuda`` BTL
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
