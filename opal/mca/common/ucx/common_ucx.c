@@ -9,6 +9,7 @@
  * Copyright (c) 2022      Google, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -48,6 +49,7 @@ opal_common_ucx_module_t opal_common_ucx =
 };
 
 static opal_mutex_t opal_common_ucx_mutex = OPAL_MUTEX_STATIC_INIT;
+static bool opal_common_ucx_memory_open = false;
 
 static void opal_common_ucx_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
 {
@@ -192,6 +194,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
                                    ret);
             return;
         }
+        opal_common_ucx_memory_open = true;
 
         if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
             == ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
@@ -213,8 +216,9 @@ OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void)
     }
     opal_mem_hooks_unregister_release(opal_common_ucx_mem_release_cb);
     opal_output_close(opal_common_ucx.output);
-    if (opal_common_ucx.opal_mem_hooks) {
+    if (opal_common_ucx_memory_open) {
         mca_base_framework_close(&opal_memory_base_framework);
+        opal_common_ucx_memory_open = false;
     }
 }
 
