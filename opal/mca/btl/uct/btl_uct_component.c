@@ -147,6 +147,16 @@ static int mca_btl_uct_component_register(void)
         MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_4,
         MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.connection_retry_timeout);
 
+    /* how long finalize waits for operations still in flight */
+    mca_btl_uct_component.finalize_flush_timeout = 5000;
+    (void) mca_base_component_var_register(
+        &mca_btl_uct_component.super.btl_version, "finalize_flush_timeout",
+        "Longest time, in milliseconds, that closing a UCT module waits for "
+        "the operations it still has in flight to complete before its "
+        "endpoints are destroyed. 0 disables the wait. (default: 5000)",
+        MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_4,
+        MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.finalize_flush_timeout);
+
     return OPAL_SUCCESS;
 }
 
