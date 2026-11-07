@@ -37,9 +37,9 @@ if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi \
-             $(OMPI_FC_MODULE_FLAG)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
-             $(OMPI_FC_MODULE_FLAG). \
+             $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi \
+             $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
+             $(FC_MODINC). \
              -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
 MOSTLYCLEANFILES = *.mod
