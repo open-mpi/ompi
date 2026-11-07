@@ -49,6 +49,35 @@
 
 static const char path_sep[] = OPAL_PATH_SEP;
 
+/**
+ * Copy a path without its trailing separators, keeping a lone root
+ * separator.
+ *
+ * A trailing separator makes the kernel resolve the final component as a
+ * directory, and it follows a symlink there in order to do it.  O_NOFOLLOW
+ * does not stop that: open("link/", O_DIRECTORY | O_NOFOLLOW) opens the
+ * link's target.  So any entry point below that refuses a symlink at the
+ * final component of a whole path has to drop the separators first, or
+ * "link/" walks straight past the refusal.
+ *
+ * @retval NULL on allocation failure
+ */
+static char *dirpath_strip_trailing_seps(const char *path)
+{
+    char *copy;
+    size_t len;
+
+    copy = strdup(path);
+    if (NULL == copy) {
+        return NULL;
+    }
+    len = strlen(copy);
+    while (len > 1 && path_sep[0] == copy[len - 1]) {
+        copy[--len] = '\0';
+    }
+    return copy;
+}
+
 /* Open flag for a directory descriptor that is only used as the dirfd
    of *at() calls: it needs search permission on the directory, not
    read permission.  POSIX.1-2008 spells this O_SEARCH; Linux spells
@@ -134,7 +163,7 @@ static int dirpath_ensure_mode(const char *path, const mode_t mode)
 
 int opal_os_dirpath_create(const char *path, const mode_t mode)
 {
-    char **parts, *tmp;
+    char **parts, *tmp, *clean;
     int i, len;
     int ret;
 
@@ -142,13 +171,27 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
         return (OPAL_ERR_BAD_PARAM);
     }
 
+    /* Drop trailing separators before anything opens the name.  Only the
+       fast path below hands the caller's string to dirpath_ensure_mode(),
+       whose O_NOFOLLOW would otherwise follow a symlink planted at the
+       final component and fchmod() its target; the tree walk further down
+       assembles its names from opal_argv_split(), which already drops the
+       empty field a trailing separator leaves. */
+    clean = dirpath_strip_trailing_seps(path);
+    if (NULL == clean) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    path = clean;
+
     /* quick -- try to make directory */
     if (0 == mkdir(path, mode)) {
+        free(clean);
         return (OPAL_SUCCESS);
     }
     if (EEXIST == errno) {
         ret = dirpath_ensure_mode(path, mode);
         if (OPAL_ERR_NOT_FOUND != ret) {
+            free(clean);
             return ret;
         }
         /* The path vanished; fall through and build the tree */
@@ -205,6 +248,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
             if (OPAL_SUCCESS != err) {
                 opal_argv_free(parts);
                 free(tmp);
+                free(clean);
                 return err;
             }
         } else {
@@ -218,6 +262,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
                 opal_show_help("help-opal-util.txt", "mkdir-failed", true, tmp, strerror(ret));
                 opal_argv_free(parts);
                 free(tmp);
+                free(clean);
                 return OPAL_ERROR;
             }
         }
@@ -227,6 +272,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
 
     opal_argv_free(parts);
     free(tmp);
+    free(clean);
     return OPAL_SUCCESS;
 }
 
@@ -387,7 +433,6 @@ int opal_os_dirpath_destroy(const char *path, bool recursive,
     struct stat basebuf, buf;
     const char *parent, *base;
     char *copy, *sep;
-    size_t len;
 
     if (NULL == path) { /* protect against error */
         return OPAL_ERROR;
@@ -395,13 +440,9 @@ int opal_os_dirpath_destroy(const char *path, bool recursive,
 
     /* Split path into its parent directory and final component
        (ignoring trailing separators) */
-    copy = strdup(path);
+    copy = dirpath_strip_trailing_seps(path);
     if (NULL == copy) {
         return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    len = strlen(copy);
-    while (len > 1 && path_sep[0] == copy[len - 1]) {
-        copy[--len] = '\0';
     }
     sep = strrchr(copy, path_sep[0]);
     if (NULL == sep) {
