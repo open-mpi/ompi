@@ -410,6 +410,28 @@ static inline void opal_atomic_sc_ptr(opal_atomic_intptr_t *addr, intptr_t newva
 
 /**********************************************************************
  *
+ * Check configure's 128-bit compare-and-swap decision
+ *
+ *********************************************************************/
+
+/* __sync cannot be asked whether it is lock-free, so configure answers
+ * for it with __atomic_always_lock_free().  GCC and clang derive both
+ * from one target capability and advertise the __sync half as
+ * __GCC_HAVE_SYNC_COMPARE_AND_SWAP_16; where the proxy stops holding,
+ * the counted-pointer algorithms in opal_lifo.h and opal_fifo.h get a
+ * libatomic lock, which corrupts their lists rather than slowing them
+ * down.  The 8-byte member only says the compiler uses this family of
+ * macros at all. */
+#if defined(OPAL_SYNC_BUILTIN_CSWAP_INT128_INLINE) && OPAL_SYNC_BUILTIN_CSWAP_INT128_INLINE
+#    if defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8) \
+        && !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16)
+#        error "configure concluded that this compiler emits a lock-free 128-bit compare-and-swap, but it does not expand __sync_val_compare_and_swap() on a 16-byte object inline.  Reconfigure with --disable-cswap-int128 to build without the operation, and please report this to the Open MPI developers."
+#    endif
+#endif
+
+
+/**********************************************************************
+ *
  * Load the appropriate architecture files and set some reasonable
  * default values for our support
  *
