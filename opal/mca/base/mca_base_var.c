@@ -53,6 +53,8 @@
 #include "opal/mca/base/mca_base_vari.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/threads/mutex.h"
+#include "opal/mca/threads/thread_usage.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_params_core.h"
 #include "opal/util/argv.h"
@@ -90,6 +92,26 @@ static opal_list_t mca_base_var_override_values;
 static int mca_base_var_count = 0;
 
 static opal_hash_table_t mca_base_var_index_hash;
+
+/* The MCA tool lock (see mca_base_tool_lock() in mca_base_var.h).  It is
+   statically initialized because MPI_T entry points can take it before
+   (and after) the MCA variable system is initialized. */
+#if defined(OPAL_RECURSIVE_MUTEX_STATIC_INIT)
+static opal_recursive_mutex_t tool_lock = OPAL_RECURSIVE_MUTEX_STATIC_INIT;
+#elif OPAL_HAVE_ATTRIBUTE_CONSTRUCTOR
+static opal_recursive_mutex_t tool_lock;
+__opal_attribute_constructor__ static void tool_lock_init(void)
+{
+    OBJ_CONSTRUCT(&tool_lock, opal_recursive_mutex_t);
+}
+#else
+#    error "No support for recursive mutexes available on this platform."
+#endif
+
+#if OPAL_ENABLE_DEBUG
+/* How many times the calling thread currently holds tool_lock. */
+static opal_thread_local int tool_lock_depth = 0;
+#endif
 
 #define OPAL_MCA_VAR_MBV_ENUMERATOR_FREE(mbv_enumerator)         \
     {                                                            \
@@ -227,6 +249,30 @@ static char *append_filename_to_list(const char *filename)
     /* *#@*? */
     return NULL;
 }
+
+void mca_base_tool_lock(void)
+{
+    opal_mutex_lock(&tool_lock);
+#if OPAL_ENABLE_DEBUG
+    ++tool_lock_depth;
+#endif
+}
+
+void mca_base_tool_unlock(void)
+{
+#if OPAL_ENABLE_DEBUG
+    assert(0 < tool_lock_depth);
+    --tool_lock_depth;
+#endif
+    opal_mutex_unlock(&tool_lock);
+}
+
+#if OPAL_ENABLE_DEBUG
+bool mca_base_tool_lock_held(void)
+{
+    return 0 < tool_lock_depth;
+}
+#endif
 
 /*
  * Set it up
@@ -838,7 +884,7 @@ int mca_base_var_set_value(int vari, const void *value, size_t size, mca_base_va
 /*
  * Deregister a parameter
  */
-int mca_base_var_deregister(int vari)
+static int var_deregister(int vari)
 {
     mca_base_var_t *var;
     int ret;
@@ -876,6 +922,20 @@ int mca_base_var_deregister(int vari)
     var->mbv_storage = NULL;
 
     return OPAL_SUCCESS;
+}
+
+int mca_base_var_deregister(int vari)
+{
+    int ret;
+
+    /* Deregistering frees the variable's string value and enumerator and
+       detaches its storage, so it must not overlap an MPI_T call that is
+       reading or writing the variable. */
+    mca_base_tool_lock();
+    ret = var_deregister(vari);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 static int var_get(int vari, mca_base_var_t **var_out, bool original)
@@ -1544,12 +1604,12 @@ static int register_variable(const char *project_name, const char *framework_nam
     return var_index;
 }
 
-int mca_base_var_register(const char *project_name, const char *framework_name,
-                          const char *component_name, const char *variable_name,
-                          const char *description, mca_base_var_type_t type,
-                          mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
-                          mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
-                          void *storage)
+static int var_register(const char *project_name, const char *framework_name,
+                        const char *component_name, const char *variable_name,
+                        const char *description, mca_base_var_type_t type,
+                        mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+                        mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
+                        void *storage)
 {
     int ret;
     /* Only integer variables can have enumerator */
@@ -1578,6 +1638,26 @@ int mca_base_var_register(const char *project_name, const char *framework_name,
         (void) mca_base_var_register_synonym(ret, project_name, framework_name,
                                              alias_item->component_alias, variable_name, flags_derived);
     }
+
+    return ret;
+}
+
+int mca_base_var_register(const char *project_name, const char *framework_name,
+                          const char *component_name, const char *variable_name,
+                          const char *description, mca_base_var_type_t type,
+                          mca_base_var_enum_t *enumerator, int bind, mca_base_var_flag_t flags,
+                          mca_base_var_info_lvl_t info_lvl, mca_base_var_scope_t scope,
+                          void *storage)
+{
+    int ret;
+
+    /* (Re-)registering a variable can replace its storage, enumerator, and
+       description and grow the variable table, so it must not overlap an
+       MPI_T call that is using the variable. */
+    mca_base_tool_lock();
+    ret = var_register(project_name, framework_name, component_name, variable_name, description,
+                       type, enumerator, bind, flags, info_lvl, scope, storage);
+    mca_base_tool_unlock();
 
     return ret;
 }
@@ -1627,10 +1707,15 @@ int mca_base_var_register_synonym(int synonym_for, const char *project_name,
         var_flags |= MCA_BASE_VAR_FLAG_INTERNAL;
     }
 
-    return register_variable(project_name, framework_name, component_name, synonym_name,
-                             var->mbv_description, var->mbv_type, var->mbv_enumerator,
-                             var->mbv_bind, var_flags, var->mbv_info_lvl, var->mbv_scope,
-                             synonym_for, NULL);
+    /* See mca_base_var_register() */
+    mca_base_tool_lock();
+    ret = register_variable(project_name, framework_name, component_name, synonym_name,
+                            var->mbv_description, var->mbv_type, var->mbv_enumerator,
+                            var->mbv_bind, var_flags, var->mbv_info_lvl, var->mbv_scope,
+                            synonym_for, NULL);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 static int var_get_env(mca_base_var_t *var, const char *name, char **source, char **value)

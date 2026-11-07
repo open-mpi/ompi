@@ -161,6 +161,7 @@ void mca_common_monitoring_coll_finalize( void )
     if( NULL != comm_data ) {
         opal_hash_table_remove_all( comm_data );
         OBJ_RELEASE(comm_data);
+        comm_data = NULL;
     }
 }
 

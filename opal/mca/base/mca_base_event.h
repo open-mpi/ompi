@@ -302,7 +302,7 @@ OPAL_DECLSPEC int mca_base_event_source_dump(int index, char ***out,
  * mca_base_event_dispatch.c).
  ****************************************************************************/
 
-/** Optional debug hook installed by OMPI to assert the MPI_T big lock is
+/** Optional debug hook installed by OMPI to assert the MPI_T lock is
     not held on the raise path (keeps OPAL free of any OMPI symbol).  NULL
     in release builds and until OMPI installs it. */
 OPAL_DECLSPEC extern void (*mca_base_event_debug_raise_check_fn)(void);

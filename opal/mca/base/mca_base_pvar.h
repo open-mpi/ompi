@@ -5,6 +5,8 @@
  * Copyright (c) 2018 The University of Tennessee and The University
  *                    of Tennessee Research Foundation.  All rights
  *                    reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+ * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
@@ -117,6 +119,32 @@ enum {
 };
 
 struct mca_base_pvar_t;
+
+/*
+ * Rules for performance variable callbacks (get_value, set_value, and
+ * notify, below):
+ *
+ * - They are called with the MCA tool lock (mca_base_tool_lock()) held.
+ *   So they must not block, call opal_progress(), call MPI functions, or
+ *   take any lock that the provider may hold while it registers or
+ *   invalidates a variable (which takes the tool lock).
+ *
+ * - They can be called at any time until the variable is invalidated.
+ *   A component's variables are invalidated when the component is closed
+ *   (before its close function is called).  A provider that frees
+ *   anything its callbacks use at any other time -- for example, in a
+ *   module finalize function -- must make sure that no callback is
+ *   using it.  Either:
+ *
+ *   - call mca_base_pvar_mark_invalid() on the affected variables first.
+ *     An invalidated variable stays invalid for as long as its component
+ *     stays registered; or
+ *
+ *   - if the data may become available again while the component stays
+ *     registered (e.g., when the module is initialized again), publish
+ *     and withdraw it while holding the MCA tool lock, and have the
+ *     callbacks return an error when it is not available.
+ */
 
 /**
  * Function to retrieve the current value of a variable.
@@ -389,7 +417,7 @@ OPAL_DECLSPEC int mca_base_pvar_get_count(int *count);
  * @param[in] value  New value of the variable.
  * @param[in] obj    Object updated handles should be bound to.
  *
- * This function will obtain and hold the mpit big lock until all handles are updated. It
+ * This function will obtain and hold the MPI_T lock until all handles are updated. It
  * is recommended this function not be called from within any critical code path. Calling
  * this function should only be necessary to update watermarks.
  */
@@ -426,8 +454,13 @@ OPAL_DECLSPEC int mca_base_pvar_dump(int index, char ***out, mca_base_var_dump_t
  *
  * A performance variable that has been marked as invalid will not be available. To
  * restore a performance variable it has to be re-registered using mca_base_pvar_register().
+ *
+ * This function does not return while a callback of this variable is running on
+ * another thread (in an MPI_T call), and no callback of this variable is called
+ * after it returns.  The caller may then free whatever the variable's callbacks
+ * use.
  */
-int mca_base_pvar_mark_invalid(int index);
+OPAL_DECLSPEC int mca_base_pvar_mark_invalid(int index);
 
 /**
  * Convenience functions for performance variables

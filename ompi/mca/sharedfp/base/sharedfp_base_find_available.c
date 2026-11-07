@@ -12,6 +12,7 @@
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -65,10 +66,13 @@ int mca_sharedfp_base_find_available(bool enable_progress_threads,
          if (OMPI_SUCCESS != init_query(cli->cli_component, cli,
                                         enable_progress_threads,
                                         enable_mpi_threads)) {
-             /* The component does not want to run, so close it. Its close()
-                has already been invoked. Close it out of the DSO repository
-                (if it is there in the repository) */
-             mca_base_component_repository_release(cli->cli_component);
+             /* The component does not want to run, so close it and
+                unload it (mca_base_component_close() deregisters the
+                component's MCA variables before it calls the component's
+                close function) */
+             opal_list_remove_item(&ompi_sharedfp_base_framework.framework_components, item);
+             mca_base_component_close(cli->cli_component,
+                                      ompi_sharedfp_base_framework.framework_output);
              OBJ_RELEASE(item);
          }
          item = next;
@@ -118,9 +122,6 @@ static int init_query(const mca_base_component_t *m,
         opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
                             "sharedfp:find_available sharedfp component %s is not available",
                             m->mca_component_name);
-        if (NULL != m->mca_close_component) {
-            m->mca_close_component();
-        }
     } else {
         opal_output_verbose(10, ompi_sharedfp_base_framework.framework_output,
                             "sharedfp:find_avalable: sharedfp component %s is available",

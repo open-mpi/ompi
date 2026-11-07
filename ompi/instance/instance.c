@@ -22,11 +22,15 @@
 #include "ompi_config.h"
 #include "instance.h"
 
+#include <assert.h>
+
 #include "opal/util/arch.h"
 
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_params.h"
+#include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/threads/thread_usage.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/runtime/params.h"
@@ -80,6 +84,38 @@ __opal_attribute_constructor__ static void instance_lock_init(void) {
 #error "No support for recursive mutexes available on this platform."
 #endif  /* defined(OPAL_RECURSIVE_MUTEX_STATIC_INIT) */
 
+#if OPAL_ENABLE_DEBUG
+/* How many times the calling thread currently holds instance_lock. */
+static opal_thread_local int instance_lock_depth = 0;
+#endif
+
+/* Lock ordering: instance_lock comes BEFORE the MPI_T lock
+   (mca_base_tool_lock()).  Instance initialization and teardown open and
+   close components, and closing a component takes the MPI_T lock to
+   invalidate the component's MCA variables, so a thread may take the
+   MPI_T lock while holding this one -- never the other way around.  A
+   debug build asserts that no thread takes this lock for the first time
+   while it holds the MPI_T lock. */
+static void instance_lock_acquire (void)
+{
+#if OPAL_ENABLE_DEBUG
+    assert (0 < instance_lock_depth || !mca_base_tool_lock_held ());
+#endif
+    opal_mutex_lock (&instance_lock);
+#if OPAL_ENABLE_DEBUG
+    ++instance_lock_depth;
+#endif
+}
+
+static void instance_lock_release (void)
+{
+#if OPAL_ENABLE_DEBUG
+    assert (0 < instance_lock_depth);
+    --instance_lock_depth;
+#endif
+    opal_mutex_unlock (&instance_lock);
+}
+
 /* MPI_T_init_thread()/MPI_T_finalize() serialize themselves with the same
    lock that serializes instance (world and session) initialization and
    teardown.  The two families share unlocked under-layers -- the
@@ -87,17 +123,16 @@ __opal_attribute_constructor__ static void instance_lock_init(void) {
    reference count, MCA variable registration, and every framework's
    refcnt -- so a first MPI_T initialization racing a session (or world)
    initialization on another thread would corrupt that state.  Lock
-   ordering: MPI_T takes its own serializing lock (ompi_mpit_big_lock)
-   first, then this one; nothing on the instance side ever takes the MPI_T
-   lock, so the ordering cannot invert. */
+   ordering: they take this lock first, then the MPI_T lock (see
+   instance_lock_acquire()). */
 void ompi_mpi_instance_lock (void)
 {
-    opal_mutex_lock (&instance_lock);
+    instance_lock_acquire ();
 }
 
 void ompi_mpi_instance_unlock (void)
 {
-    opal_mutex_unlock (&instance_lock);
+    instance_lock_release ();
 }
 
 /** MPI_Init instance */
@@ -286,10 +321,10 @@ static bool ompi_instance_basic_init;
 
 void ompi_mpi_instance_release (void)
 {
-    opal_mutex_lock (&instance_lock);
+    instance_lock_acquire ();
 
     if (0 != --ompi_mpi_instance_init_basic_count) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return;
     }
 
@@ -303,23 +338,23 @@ void ompi_mpi_instance_release (void)
 
     opal_finalize_util ();
 
-    opal_mutex_unlock (&instance_lock);
+    instance_lock_release ();
 }
 
 int ompi_mpi_instance_retain (void)
 {
     int ret;
 
-    opal_mutex_lock (&instance_lock);
+    instance_lock_acquire ();
 
     if (0 < ompi_mpi_instance_init_basic_count++) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return OMPI_SUCCESS;
     }
 
     /* Setup enough to check get/set MCA params */
     if (OPAL_SUCCESS != (ret = opal_init_util (NULL, NULL))) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return ompi_instance_print_error ("ompi_mpi_instance_init: opal_init_util failed", ret);
     }
 
@@ -333,7 +368,7 @@ int ompi_mpi_instance_retain (void)
     OBJ_CONSTRUCT(&ompi_instance_f_to_c_table, opal_pointer_array_t);
     if (OPAL_SUCCESS != opal_pointer_array_init (&ompi_instance_f_to_c_table, 8,
                                                  OMPI_FORTRAN_HANDLE_MAX, 32)) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return OMPI_ERROR;
     }
 
@@ -350,37 +385,37 @@ int ompi_mpi_instance_retain (void)
 
     /* Register MCA variables */
     if (OPAL_SUCCESS != (ret = ompi_mpi_register_params ())) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return ompi_instance_print_error ("ompi_mpi_init: ompi_register_mca_variables failed", ret);
     }
 
     /* initialize error handlers */
     if (OMPI_SUCCESS != (ret = ompi_errhandler_init ())) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return ompi_instance_print_error ("ompi_errhandler_init() failed", ret);
     }
 
     /* initialize error codes */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_init ())) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return ompi_instance_print_error ("ompi_mpi_errcode_init() failed", ret);
     }
 
     /* initialize internal error codes */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_init ())) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return ompi_instance_print_error ("ompi_errcode_intern_init() failed", ret);
     }
 
     /* initialize info */
     if (OMPI_SUCCESS != (ret = ompi_mpiinfo_init ())) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return ompi_instance_print_error ("ompi_info_init() failed", ret);
     }
 
     ompi_instance_basic_init = false;
 
-    opal_mutex_unlock (&instance_lock);
+    instance_lock_release ();
 
     return OMPI_SUCCESS;
 }
@@ -673,14 +708,12 @@ static int ompi_mpi_instance_init_common (int argc, char **argv)
 
     /* initialize communicator subsystem */
     if (OMPI_SUCCESS != (ret = ompi_comm_init ())) {
-        opal_mutex_unlock (&instance_lock);
         return ompi_instance_print_error ("ompi_comm_init() failed", ret);
     }
 
     /* Construct predefined keyvals */
 
     if (OMPI_SUCCESS != (ret = ompi_attr_create_predefined_keyvals())) {
-        opal_mutex_unlock (&instance_lock);
         return ompi_instance_print_error ("ompi_attr_create_predefined_keyvals() failed", ret);
     }
 
@@ -918,10 +951,10 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
 
     *instance = &ompi_mpi_instance_null.instance;
 
-    opal_mutex_lock (&instance_lock);
+    instance_lock_acquire ();
 
     if (OPAL_UNLIKELY(instance_init_failed)) {
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return OMPI_ERROR;
     }
 
@@ -1003,7 +1036,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
                cleanly. */
             instance_init_failed = true;
             (void) opal_atomic_add_fetch_32 (&ompi_instance_count, -1);
-            opal_mutex_unlock (&instance_lock);
+            instance_lock_release ();
             return ret;
         }
     }
@@ -1016,7 +1049,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
             // look at the return value.
             (void) ompi_mpi_instance_finalize_common ();
         }
-        opal_mutex_unlock (&instance_lock);
+        instance_lock_release ();
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -1063,7 +1096,7 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
     }
 
     *instance = new_instance;
-    opal_mutex_unlock (&instance_lock);
+    instance_lock_release ();
 
     /* Raise the MPI_T initialization event after dropping instance_lock (no-op
        when no tool is listening or the producer is disabled).  This common path
@@ -1238,11 +1271,11 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
 
     OBJ_RELEASE(*instance);
 
-    opal_mutex_lock (&instance_lock);
+    instance_lock_acquire ();
     if (0 == opal_atomic_add_fetch_32 (&ompi_instance_count, -1)) {
         ret = ompi_mpi_instance_finalize_common ();
     }
-    opal_mutex_unlock (&instance_lock);
+    instance_lock_release ();
 
     *instance = &ompi_mpi_instance_null.instance;
 
@@ -1322,7 +1355,7 @@ static void ompi_instance_refresh_pmix_psets (const char *key)
     opal_pmix_lock_t lock;
     bool refresh = true;
 
-    opal_mutex_lock (&instance_lock);
+    instance_lock_acquire ();
 
     PMIX_QUERY_CONSTRUCT(&query);
     PMIX_ARGV_APPEND(rc, query.keys, key);
@@ -1338,14 +1371,14 @@ static void ompi_instance_refresh_pmix_psets (const char *key)
     if (PMIX_SUCCESS != (rc = PMIx_Query_info_nb(&query, 1, 
                                                  ompi_instance_get_num_psets_complete,
                                                  (void*)&lock))) {
-       opal_mutex_unlock (&instance_lock);
+       instance_lock_release ();
        return;
     }
 
     OPAL_PMIX_WAIT_THREAD(&lock);
     OPAL_PMIX_DESTRUCT_LOCK(&lock);
 
-    opal_mutex_unlock (&instance_lock);
+    instance_lock_release ();
 }
 
 

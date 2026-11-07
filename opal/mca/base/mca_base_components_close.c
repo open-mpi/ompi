@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2013-2015 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,25 +30,55 @@
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
 
-void mca_base_component_unload(const mca_base_component_t *component, int output_id)
+/* Deregister the component's MCA variables and invalidate its performance
+   variables.  Once this returns, no MPI_T call is using them (see
+   mca_base_var_group_deregister()).  Harmless if they are already
+   deregistered. */
+static void component_vars_deregister(const mca_base_component_t *component)
 {
     int ret;
-
-    /* Unload */
-    opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
-                        "mca: base: close: unloading component %s", component->mca_component_name);
 
     ret = mca_base_var_group_find(component->mca_project_name, component->mca_type_name,
                                   component->mca_component_name);
     if (0 <= ret) {
         mca_base_var_group_deregister(ret);
     }
+}
+
+/* Invalidate the component's performance variables (and events).  Once
+   this returns, no MPI_T call is using them (see
+   mca_base_var_group_invalidate()). */
+static void component_pvars_invalidate(const mca_base_component_t *component)
+{
+    int ret;
+
+    ret = mca_base_var_group_find(component->mca_project_name, component->mca_type_name,
+                                  component->mca_component_name);
+    if (0 <= ret) {
+        mca_base_var_group_invalidate(ret);
+    }
+}
+
+void mca_base_component_unload(const mca_base_component_t *component, int output_id)
+{
+    /* Unload */
+    opal_output_verbose(MCA_BASE_VERBOSE_COMPONENT, output_id,
+                        "mca: base: close: unloading component %s", component->mca_component_name);
+
+    component_vars_deregister(component);
 
     mca_base_component_repository_release(component);
 }
 
 void mca_base_component_close(const mca_base_component_t *component, int output_id)
 {
+    /* Invalidate the component's performance variables BEFORE its close
+       function frees what their callbacks use, as
+       mca_base_framework_close() does for a whole framework.  Its control
+       variables stay registered until it is unloaded: a component that
+       refuses to close stays loaded, and may still use them. */
+    component_pvars_invalidate(component);
+
     /* Close */
     if (NULL != component->mca_close_component) {
         if (OPAL_SUCCESS == component->mca_close_component()) {

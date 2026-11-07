@@ -242,8 +242,11 @@ ompi/test/t/mpi_t_level_no_downgrade
 ompi/test/t/mpi_t_level_pinning
 ompi/test/t/mpi_t_lifecycle
 ompi/test/t/mpi_t_outlives_mpi
+ompi/test/t/mpi_t_pvar_after_finalize
 ompi/test/t/mpi_t_pvar_monitoring
+ompi/test/t/mpi_t_read_vs_init
 ompi/test/t/mpi_t_repeated_sessions
+ompi/test/t/mpi_t_session_free_race
 ompi/test/t/mpi_t_sessions
 ompi/test/t/mpi_t_stress
 ompi/test/t/mpi_t_var_index
@@ -572,6 +575,7 @@ test/mpi/environment/hw_resource_info
 test/util/aaa
 test/util/test_session_dir_out
 test/util/mca_base_event_test
+test/util/mca_base_pvar_test
 test/util/opal_os_path
 test/util/opal_argv
 test/util/opal_os_create_dirpath

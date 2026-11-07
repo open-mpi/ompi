@@ -42,8 +42,11 @@ check_PROGRAMS = \
         mpi_t_level_pinning \
         mpi_t_lifecycle \
         mpi_t_outlives_mpi \
+        mpi_t_pvar_after_finalize \
         mpi_t_pvar_monitoring \
+        mpi_t_read_vs_init \
         mpi_t_repeated_sessions \
+        mpi_t_session_free_race \
         mpi_t_var_index \
         mpi_t_world_close_first \
         mpi_t_world_inner \
@@ -129,9 +132,23 @@ mpi_t_outlives_mpi_SOURCES = mpi_t_outlives_mpi.c
 mpi_t_outlives_mpi_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 mpi_t_outlives_mpi_LDADD = $(test_ldadd)
 
+mpi_t_pvar_after_finalize_SOURCES = mpi_t_pvar_after_finalize.c mpi_t_lifecycle.h
+mpi_t_pvar_after_finalize_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+mpi_t_pvar_after_finalize_LDADD = $(test_ldadd)
+
 mpi_t_pvar_monitoring_SOURCES = mpi_t_pvar_monitoring.c
 mpi_t_pvar_monitoring_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
 mpi_t_pvar_monitoring_LDADD = $(test_ldadd)
+
+mpi_t_read_vs_init_SOURCES = mpi_t_read_vs_init.c mpi_t_lifecycle.h
+mpi_t_read_vs_init_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+# Calls pthread_* directly; see mpi_t_concurrent_init above.
+mpi_t_read_vs_init_LDADD = $(test_ldadd) -lpthread
+
+mpi_t_session_free_race_SOURCES = mpi_t_session_free_race.c mpi_t_lifecycle.h
+mpi_t_session_free_race_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)
+# Calls pthread_* directly; see mpi_t_concurrent_init above.
+mpi_t_session_free_race_LDADD = $(test_ldadd) -lpthread
 
 mpi_t_var_index_SOURCES = mpi_t_var_index.c
 mpi_t_var_index_LDFLAGS = $(OMPI_PKG_CONFIG_LDFLAGS)

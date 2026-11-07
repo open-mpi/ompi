@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2017 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2013-2015 Intel, Inc. All rights reserved
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,6 +72,13 @@ static int mca_mtl_psm2_get_stats(const mca_base_pvar_t *pvar, void *value, void
 {
     psm2_mq_stats_t stats;
     int index = (int)(intptr_t) pvar->ctx;
+
+    /* There is no MQ before the module is initialized or after it is
+       finalized (which clears it while holding the MCA tool lock, as this
+       callback does) */
+    if (NULL == ompi_mtl_psm2.mq) {
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
 
     psm2_mq_get_stats(ompi_mtl_psm2.mq, &stats);
 

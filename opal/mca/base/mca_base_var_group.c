@@ -318,47 +318,34 @@ static int group_register(const char *project_name, const char *framework_name,
     return group_id;
 }
 
+/* Registering a group, and adding a variable, performance variable,
+   event, or enumerator to one, modify the group table, which the MPI tool
+   information interface reads with the MCA tool lock held.  So the public
+   functions below take that lock too.  It is recursive, so callers that
+   already hold it (e.g., variable registration) are unaffected. */
+
 int mca_base_var_group_register(const char *project_name, const char *framework_name,
                                 const char *component_name, const char *description)
 {
-    return group_register(project_name, framework_name, component_name, description);
+    mca_base_tool_lock();
+    int ret = group_register(project_name, framework_name, component_name, description);
+    mca_base_tool_unlock();
+    return ret;
 }
 
 int mca_base_var_group_component_register(const mca_base_component_t *component,
                                           const char *description)
 {
-    return group_register(component->mca_project_name, component->mca_type_name,
-                          component->mca_component_name, description);
+    return mca_base_var_group_register(component->mca_project_name, component->mca_type_name,
+                                       component->mca_component_name, description);
 }
 
-int mca_base_var_group_deregister(int group_index)
+/* Invalidate the group's performance variables and events (those that
+   ask to be invalidated with their group), but not its subgroups' */
+static void group_invalidate_members(mca_base_var_group_t *group)
 {
-    mca_base_var_group_t *group;
     int size, ret;
-    int *params, *subgroups;
-    opal_object_t **enums;
-
-    ret = mca_base_var_group_get_internal(group_index, &group, false);
-    if (OPAL_SUCCESS != ret) {
-        return ret;
-    }
-
-    group->group_isvalid = false;
-
-    /* deregister all associated mca parameters */
-    size = opal_value_array_get_size(&group->group_vars);
-    params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_vars, int);
-
-    for (int i = 0; i < size; ++i) {
-        const mca_base_var_t *var;
-
-        ret = mca_base_var_get(params[i], &var);
-        if (OPAL_SUCCESS != ret || !(var->mbv_flags & MCA_BASE_VAR_FLAG_DWG)) {
-            continue;
-        }
-
-        (void) mca_base_var_deregister(params[i]);
-    }
+    int *params;
 
     /* invalidate all associated mca performance variables */
     size = opal_value_array_get_size(&group->group_pvars);
@@ -389,6 +376,61 @@ int mca_base_var_group_deregister(int group_index)
 
         (void) mca_base_event_mark_invalid(params[i]);
     }
+}
+
+static int var_group_invalidate(int group_index)
+{
+    mca_base_var_group_t *group;
+    int size, ret;
+    int *subgroups;
+
+    ret = mca_base_var_group_get_internal(group_index, &group, false);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    group_invalidate_members(group);
+
+    size = opal_value_array_get_size(&group->group_subgroups);
+    subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);
+    for (int i = 0; i < size; ++i) {
+        (void) var_group_invalidate(subgroups[i]);
+    }
+
+    return OPAL_SUCCESS;
+}
+
+static int var_group_deregister(int group_index)
+{
+    mca_base_var_group_t *group;
+    int size, ret;
+    int *params, *subgroups;
+    opal_object_t **enums;
+
+    ret = mca_base_var_group_get_internal(group_index, &group, false);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    group->group_isvalid = false;
+
+    /* deregister all associated mca parameters */
+    size = opal_value_array_get_size(&group->group_vars);
+    params = OPAL_VALUE_ARRAY_GET_BASE(&group->group_vars, int);
+
+    for (int i = 0; i < size; ++i) {
+        const mca_base_var_t *var;
+
+        ret = mca_base_var_get(params[i], &var);
+        if (OPAL_SUCCESS != ret || !(var->mbv_flags & MCA_BASE_VAR_FLAG_DWG)) {
+            continue;
+        }
+
+        (void) mca_base_var_deregister(params[i]);
+    }
+
+    /* invalidate all associated mca performance variables and events */
+    group_invalidate_members(group);
 
     size = opal_value_array_get_size(&group->group_enums);
     enums = OPAL_VALUE_ARRAY_GET_BASE(&group->group_enums, opal_object_t *);
@@ -401,7 +443,7 @@ int mca_base_var_group_deregister(int group_index)
     size = opal_value_array_get_size(&group->group_subgroups);
     subgroups = OPAL_VALUE_ARRAY_GET_BASE(&group->group_subgroups, int);
     for (int i = 0; i < size; ++i) {
-        (void) mca_base_var_group_deregister(subgroups[i]);
+        (void) var_group_deregister(subgroups[i]);
     }
     /* ordering of variables and subgroups must be the same if the
      * group is re-registered */
@@ -409,6 +451,35 @@ int mca_base_var_group_deregister(int group_index)
     mca_base_var_groups_timestamp++;
 
     return OPAL_SUCCESS;
+}
+
+int mca_base_var_group_deregister(int group_index)
+{
+    int ret;
+
+    /* Hold the MPI_T lock across the whole group (the variable and
+       performance variable calls below take it again; it is recursive),
+       so that no MPI_T call is using any of the group's variables when
+       this returns.  The caller -- typically a component being closed --
+       may then free the variables' storage and unload their callbacks. */
+    mca_base_tool_lock();
+    ret = var_group_deregister(group_index);
+    mca_base_tool_unlock();
+
+    return ret;
+}
+
+int mca_base_var_group_invalidate(int group_index)
+{
+    int ret;
+
+    /* As in mca_base_var_group_deregister(): hold the MPI_T lock across
+       the whole group */
+    mca_base_tool_lock();
+    ret = var_group_invalidate(group_index);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_var_group_find(const char *project_name, const char *framework_name,
@@ -423,7 +494,7 @@ int mca_base_var_group_find_by_name(const char *full_name, int *index)
     return group_find_by_name(full_name, index, false);
 }
 
-int mca_base_var_group_add_var(const int group_index, const int param_index)
+static int group_add_var(const int group_index, const int param_index)
 {
     mca_base_var_group_t *group;
     int size, i, ret;
@@ -452,7 +523,7 @@ int mca_base_var_group_add_var(const int group_index, const int param_index)
     return (int) opal_value_array_get_size(&group->group_vars) - 1;
 }
 
-int mca_base_var_group_add_pvar(const int group_index, const int param_index)
+static int group_add_pvar(const int group_index, const int param_index)
 {
     mca_base_var_group_t *group;
     int size, i, ret;
@@ -481,7 +552,7 @@ int mca_base_var_group_add_pvar(const int group_index, const int param_index)
     return (int) opal_value_array_get_size(&group->group_pvars) - 1;
 }
 
-int mca_base_var_group_add_event(const int group_index, const int event_index)
+static int group_add_event(const int group_index, const int event_index)
 {
     mca_base_var_group_t *group;
     int size, i, ret;
@@ -510,7 +581,7 @@ int mca_base_var_group_add_event(const int group_index, const int event_index)
     return (int) opal_value_array_get_size(&group->group_events) - 1;
 }
 
-int mca_base_var_group_add_enum(const int group_index, const void *storage)
+static int group_add_enum(const int group_index, const void *storage)
 {
     mca_base_var_group_t *group;
     int size, i, ret;
@@ -535,6 +606,38 @@ int mca_base_var_group_add_enum(const int group_index, const void *storage)
 
     /* return the group index */
     return (int) opal_value_array_get_size(&group->group_enums) - 1;
+}
+
+int mca_base_var_group_add_var(const int group_index, const int param_index)
+{
+    mca_base_tool_lock();
+    int ret = group_add_var(group_index, param_index);
+    mca_base_tool_unlock();
+    return ret;
+}
+
+int mca_base_var_group_add_pvar(const int group_index, const int param_index)
+{
+    mca_base_tool_lock();
+    int ret = group_add_pvar(group_index, param_index);
+    mca_base_tool_unlock();
+    return ret;
+}
+
+int mca_base_var_group_add_event(const int group_index, const int event_index)
+{
+    mca_base_tool_lock();
+    int ret = group_add_event(group_index, event_index);
+    mca_base_tool_unlock();
+    return ret;
+}
+
+int mca_base_var_group_add_enum(const int group_index, const void *storage)
+{
+    mca_base_tool_lock();
+    int ret = group_add_enum(group_index, storage);
+    mca_base_tool_unlock();
+    return ret;
 }
 
 int mca_base_var_group_get(const int group_index, const mca_base_var_group_t **group)
