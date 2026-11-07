@@ -20,6 +20,7 @@
  * Copyright (c) 2019-2025 Google, LLC. All rights reserved.
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,11 +35,9 @@
 #include "btl_uct_modex.h"
 #include "opal/mca/btl/base/base.h"
 #include "opal/mca/btl/btl.h"
+#include "opal/mca/common/ucx/common_ucx.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/memory/base/base.h"
-#include "opal/memoryhooks/memory.h"
 #include "opal/util/argv.h"
-#include <ucm/api/ucm.h>
 
 #include "opal/util/printf.h"
 
@@ -113,17 +112,16 @@ static int mca_btl_uct_component_register(void)
         MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE, OPAL_INFO_LVL_3,
         MCA_BASE_VAR_SCOPE_ALL, &mca_btl_uct_component.num_contexts_per_module);
 
-    mca_btl_uct_component.disable_ucx_memory_hooks = true;
-    (void)
-        mca_base_component_var_register(&mca_btl_uct_component.super.btl_version,
-                                        "disable_ucx_memory_hooks",
-                                        "Disable the munmap memory hook "
-                                        "inside UCX. These hooks are not necessary when using the "
-                                        "uct btl and tend to cause performance problems when using "
-                                        "multiple threads (default: true)",
-                                        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                        OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_ALL,
-                                        &mca_btl_uct_component.disable_ucx_memory_hooks);
+    /* The memory hooks are owned by common/ucx, which is shared with the other UCX components so
+     * that they are set up once. Register its variables (without per-component synonyms) and keep
+     * the old name of the memory hooks parameter as a deprecated synonym. */
+    opal_common_ucx_mca_var_register(NULL);
+    int hooks_index = mca_base_var_find("opal", "opal_common", "ucx", "opal_mem_hooks");
+    if (0 <= hooks_index) {
+        (void) mca_base_var_register_synonym(hooks_index, "opal", "btl", "uct",
+                                             "disable_ucx_memory_hooks",
+                                             MCA_BASE_VAR_SYN_FLAG_DEPRECATED);
+    }
 
 #if OPAL_C_HAVE__THREAD_LOCAL
     mca_btl_uct_component.bind_threads_to_contexts = true;
@@ -148,11 +146,6 @@ static int mca_btl_uct_component_register(void)
         MCA_BASE_VAR_SCOPE_LOCAL, &mca_btl_uct_component.connection_retry_timeout);
 
     return OPAL_SUCCESS;
-}
-
-static void mca_btl_uct_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
-{
-    ucm_vm_munmap(buf, length);
 }
 
 static int mca_btl_uct_component_open(void)
@@ -182,13 +175,8 @@ static int mca_btl_uct_component_open(void)
         mca_btl_uct_component.num_contexts_per_module = MCA_BTL_UCT_MAX_WORKERS;
     }
 
-    if (mca_btl_uct_component.disable_ucx_memory_hooks
-        && ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
-            == ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
-                & opal_mem_hooks_support_level()))) {
-        ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
-        opal_mem_hooks_register_release(mca_btl_uct_mem_release_cb, NULL);
-    }
+    /* hook the memory framework to UCX (shared with the other UCX components) */
+    opal_common_ucx_mca_register();
 
     OBJ_CONSTRUCT(&mca_btl_uct_component.md_list, opal_list_t);
     OBJ_CONSTRUCT(&mca_btl_uct_component.memory_domain_list, mca_btl_uct_include_list_t);
@@ -216,9 +204,7 @@ static int mca_btl_uct_component_close(void)
 {
     mca_btl_uct_component.conn_tl = NULL;
 
-    if (mca_btl_uct_component.disable_ucx_memory_hooks) {
-        opal_mem_hooks_unregister_release(mca_btl_uct_mem_release_cb);
-    }
+    opal_common_ucx_mca_deregister();
 
     /* complete delayed cleanup */
     mca_btl_uct_cleanup();
@@ -441,8 +427,3 @@ mca_btl_uct_component_t mca_btl_uct_component = {
         .btl_progress = mca_btl_uct_component_progress,
     }};
 MCA_BASE_COMPONENT_INIT(opal, btl, uct)
-
-static void safety_valve(void) __opal_attribute_destructor__;
-void safety_valve(void) {
-    opal_mem_hooks_unregister_release(mca_btl_uct_mem_release_cb);
-}

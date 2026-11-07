@@ -16,6 +16,7 @@
  * Copyright (c) 2019      Intel, Inc.  All rights reserved.
  * Copyright (c) 2020      Amazon.com, Inc. or its affiliates.
  *                         All Rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -149,9 +150,6 @@ struct mca_btl_uct_component_t {
     /** bind threads to contexts */
     bool bind_threads_to_contexts;
 #endif
-
-    /** disable UCX memory hooks */
-    bool disable_ucx_memory_hooks;
 
     /** connection retry timeout */
     unsigned int connection_retry_timeout;
