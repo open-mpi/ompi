@@ -52,10 +52,10 @@ mcacomponentdir          = $(ompilibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_coll_ucc_la_SOURCES  = $(coll_ucc_sources)
 mca_coll_ucc_la_LIBADD   = $(top_builddir)/ompi/libopen_mpi.la \
-	                     $(coll_ucc_LIBS)
+	                     $(coll_ucc_LIBS) $(coll_ucc_COMMON_UCX_LIBS)
 mca_coll_ucc_la_LDFLAGS  = -module -avoid-version $(coll_ucc_LDFLAGS)
 
 noinst_LTLIBRARIES         = $(component_noinst)
 libmca_coll_ucc_la_SOURCES = $(coll_ucc_sources)
-libmca_coll_ucc_la_LIBADD  = $(coll_ucc_LIBS)
+libmca_coll_ucc_la_LIBADD  = $(coll_ucc_LIBS) $(coll_ucc_COMMON_UCX_LIBS)
 libmca_coll_ucc_la_LDFLAGS = -module -avoid-version $(coll_ucc_LDFLAGS)

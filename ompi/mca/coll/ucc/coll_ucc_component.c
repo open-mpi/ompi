@@ -15,6 +15,9 @@
 #include "coll_ucc.h"
 #include "coll_ucc_dtypes.h"
 #include "opal/util/argv.h"
+#if OMPI_COLL_UCC_HAVE_COMMON_UCX
+#    include "opal/mca/common/ucx/common_ucx.h"
+#endif
 #include <limits.h>
 
 static int mca_coll_ucc_open(void);
@@ -64,6 +67,10 @@ static int mca_coll_ucc_register(void)
 {
     mca_coll_ucc_component_t *cm = &mca_coll_ucc_component;
     mca_base_component_t     *c  = &cm->super.collm_version;
+#if OMPI_COLL_UCC_HAVE_COMMON_UCX
+    /* the variables of the memory hooks that common/ucx shares with the other UCX components */
+    opal_common_ucx_mca_var_register(NULL);
+#endif
     mca_base_component_var_register(c, "priority", "Priority of the UCC coll component",
                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_9,
@@ -377,6 +384,11 @@ static int mca_coll_ucc_open(void)
     opal_pointer_array_init(&cm->modules, 8, INT_MAX, 8);
     opal_output_set_verbosity(mca_coll_ucc_output, cm->ucc_verbose);
     mca_coll_ucc_init_default_cts();
+#if OMPI_COLL_UCC_HAVE_COMMON_UCX
+    /* Loading the UCC library loads UCX, and with it the UCM memory hooks, in the process: set up the
+       memory hooks with the other UCX components, so that they do not compete with the OPAL ones */
+    opal_common_ucx_mca_register();
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -411,5 +423,8 @@ static int mca_coll_ucc_close(void)
     cm->progress_ctx_cap = 0;
     OBJ_DESTRUCT(&cm->lock);
     OBJ_DESTRUCT(&cm->domains);
+#if OMPI_COLL_UCC_HAVE_COMMON_UCX
+    opal_common_ucx_mca_deregister();
+#endif
     return OMPI_SUCCESS;
 }

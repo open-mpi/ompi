@@ -15,6 +15,9 @@
 
 #include "scoll_ucc.h"
 #include "opal/util/argv.h"
+#if OSHMEM_SCOLL_UCC_HAVE_COMMON_UCX
+#    include "opal/mca/common/ucx/common_ucx.h"
+#endif
 
 /*
  * Public string showing the oshmem scoll_ucc component version number
@@ -110,6 +113,10 @@ static int ucc_register(void)
                                     MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0, 
                                     OPAL_INFO_LVL_6, MCA_BASE_VAR_SCOPE_READONLY,
                                     &cm->cts);
+#if OSHMEM_SCOLL_UCC_HAVE_COMMON_UCX
+    /* the variables of the memory hooks that common/ucx shares with the other UCX components */
+    opal_common_ucx_mca_var_register(NULL);
+#endif
     return OSHMEM_SUCCESS;
 }
 
@@ -171,10 +178,18 @@ static int ucc_open(void)
     mca_scoll_ucc_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_scoll_ucc_output, cm->ucc_verbose);
     mca_scoll_ucc_init_default_cts();
+#if OSHMEM_SCOLL_UCC_HAVE_COMMON_UCX
+    /* Loading the UCC library loads UCX, and with it the UCM memory hooks, in the process: set up the
+       memory hooks with the other UCX components, so that they do not compete with the OPAL ones */
+    opal_common_ucx_mca_register();
+#endif
     return OSHMEM_SUCCESS;
 }
 
 static int ucc_close(void)
 {
+#if OSHMEM_SCOLL_UCC_HAVE_COMMON_UCX
+    opal_common_ucx_mca_deregister();
+#endif
     return OSHMEM_SUCCESS;
 }
