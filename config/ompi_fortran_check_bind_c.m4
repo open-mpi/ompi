@@ -86,7 +86,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_BIND_C_TYPE],[
 end module]])],
              [AS_VAR_SET(bind_c_type_var, yes)],
              [AS_VAR_SET(bind_c_type_var, no)])
-        rm -rf *.mod 2>/dev/null
+        rm -rf *.$FC_MODEXT 2>/dev/null
         AC_LANG_POP([Fortran])
        ])
 
