@@ -222,7 +222,8 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
 
 /* idup with local group and info. the local group support is provided to support ompi_comm_set_nb */
 static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_group_t *remote_group,
-                                    opal_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req);
+                                    opal_info_t *info, ompi_communicator_t **newcomm, uint32_t flags,
+                                    ompi_request_t **req);
 
 
 static int ompi_comm_get_rprocs (ompi_communicator_t *local_comm, ompi_communicator_t *bridge_comm,
@@ -369,7 +370,8 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
 
             /* NTH: use internal idup function that takes a local group argument */
             ompi_comm_idup_internal (old_localcomm, newcomm->c_local_group, NULL, NULL,
-                                     &newcomm->c_local_comm, req);
+                                     &newcomm->c_local_comm,
+                                     flags & OMPI_COMM_SET_FLAG_FT_CID, req);
             if (NULL != newcomm->c_local_comm
                 && !OMPI_COMM_IS_INTRINSIC(newcomm->c_local_comm)) {
                 OBJ_RETAIN(newcomm->c_local_comm);
@@ -1857,6 +1859,7 @@ struct ompi_comm_idup_with_info_context_t {
     ompi_communicator_t *newcomp;
     ompi_communicator_t **newcomm_out;    /* the handle the caller was given */
     int tag;    /* pml tag of this creation's cid rounds on comm */
+    uint32_t flags;    /* OMPI_COMM_SET_FLAG_* this duplication was asked for with */
 };
 
 typedef struct ompi_comm_idup_with_info_context_t ompi_comm_idup_with_info_context_t;
@@ -1866,6 +1869,7 @@ static void ompi_comm_idup_with_info_context_construct (ompi_comm_idup_with_info
     context->comm        = NULL;
     context->newcomp     = NULL;
     context->newcomm_out = NULL;
+    context->flags       = 0;
 }
 
 static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_context_t *context)
@@ -1878,6 +1882,18 @@ static void ompi_comm_idup_with_info_context_destruct (ompi_comm_idup_with_info_
 OBJ_CLASS_INSTANCE(ompi_comm_idup_with_info_context_t, opal_object_t,
                    ompi_comm_idup_with_info_context_construct,
                    ompi_comm_idup_with_info_context_destruct);
+
+/* The context id and activation mode this duplication has to run in. */
+static int ompi_comm_idup_cid_mode (ompi_comm_idup_with_info_context_t *context)
+{
+#if OPAL_ENABLE_FT_MPI
+    if (context->flags & OMPI_COMM_SET_FLAG_FT_CID) {
+        return OMPI_COMM_IS_INTER(context->comm) ? OMPI_COMM_CID_INTER_FT
+                                                 : OMPI_COMM_CID_INTRA_FT;
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
+    return OMPI_COMM_IS_INTER(context->comm) ? OMPI_COMM_CID_INTER : OMPI_COMM_CID_INTRA;
+}
 
 /* Take the new communicator back from a creation that fails after
  * MPI_Comm_idup() has already returned the handle.  The application has no
@@ -1905,12 +1921,13 @@ int ompi_comm_idup (ompi_communicator_t *comm, ompi_communicator_t **newcomm, om
 
 int ompi_comm_idup_with_info (ompi_communicator_t *comm, opal_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
 {
-    return ompi_comm_idup_internal (comm, comm->c_local_group, comm->c_remote_group, info, newcomm, req);
+    return ompi_comm_idup_internal (comm, comm->c_local_group, comm->c_remote_group, info, newcomm, 0, req);
 }
 
 /* NTH: we need a way to idup with a smaller local group so this function takes a local group */
 static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *group, ompi_group_t *remote_group,
-                                    opal_info_t *info, ompi_communicator_t **newcomm, ompi_request_t **req)
+                                    opal_info_t *info, ompi_communicator_t **newcomm, uint32_t flags,
+                                    ompi_request_t **req)
 {
     ompi_comm_idup_with_info_context_t *context;
     ompi_comm_request_t *request;
@@ -1935,6 +1952,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     }
 
     context->comm    = comm;
+    context->flags   = flags;
     OBJ_RETAIN(comm);    /* the request's callbacks use the parent until completion */
 
     request->context = &context->super;
@@ -1950,7 +1968,8 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
                             comm->error_handler,                    /* error handler */
                             group,                                  /* local group */
                             remote_group,                           /* remote group */
-                            OMPI_COMM_SET_FLAG_COPY_TOPOLOGY,       /* flags */
+                            OMPI_COMM_SET_FLAG_COPY_TOPOLOGY
+                            | (flags & OMPI_COMM_SET_FLAG_FT_CID),  /* flags */
                             subreq);                                /* new subrequest */
     if (OMPI_SUCCESS != rc) {
         ompi_comm_request_return (request);
@@ -2001,11 +2020,7 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
         return request->super.req_status.MPI_ERROR;
     }
 
-    if (OMPI_COMM_IS_INTER(context->comm)){
-        mode  = OMPI_COMM_CID_INTER;
-    } else {
-        mode  = OMPI_COMM_CID_INTRA;
-    }
+    mode = ompi_comm_idup_cid_mode (context);
 
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid_nb (context->newcomp, context->comm, NULL, &context->tag,
@@ -2039,11 +2054,7 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
         return request->super.req_status.MPI_ERROR;
     }
 
-    if (OMPI_COMM_IS_INTER(context->comm)){
-        mode  = OMPI_COMM_CID_INTER;
-    } else {
-        mode  = OMPI_COMM_CID_INTRA;
-    }
+    mode = ompi_comm_idup_cid_mode (context);
 
     /* Set name for debugging purposes */
     snprintf(context->newcomp->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "MPI COMM %s DUP FROM %s",
