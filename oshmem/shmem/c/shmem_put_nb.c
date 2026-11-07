@@ -37,7 +37,7 @@
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
-        RUNTIME_CHECK_ADDR(target);                                 \
+        RUNTIME_CHECK_ADDR_SIZE(target, len);                       \
                                                                     \
         size = len * sizeof(type);                                  \
         rc = MCA_SPML_CALL(put_nb(                                  \
@@ -188,7 +188,7 @@ SHMEM_TYPE_PUT_NB(_ptrdiff, ptrdiff_t)
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
-        RUNTIME_CHECK_ADDR(target);                                 \
+        RUNTIME_CHECK_ADDR_SIZE(target, nelems);                    \
                                                                     \
         size = nelems * element_size;                               \
         rc = MCA_SPML_CALL(put_nb(                                  \
