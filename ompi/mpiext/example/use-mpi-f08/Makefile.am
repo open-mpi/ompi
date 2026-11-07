@@ -24,7 +24,8 @@ AM_CPPFLAGS =
 
 # We must set these #defines and include paths so that the inner OMPI
 # MPI prototype header files do the Right Thing.
-AM_FCFLAGS = $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
+AM_FCFLAGS = $(FC_MODOUT_CURDIR) \
+             $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi-f08/mod \
              -I$(top_srcdir) $(FCFLAGS_f90)
 
 # Note that the mpi_f08-based bindings are optional -- they can only

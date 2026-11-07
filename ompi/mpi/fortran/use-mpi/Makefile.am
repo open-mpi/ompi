@@ -32,7 +32,8 @@ AM_CPPFLAGS =
 # MPI bindings.
 if OMPI_FORTRAN_HAVE_TYPE_MPI_STATUS
 
-AM_FCFLAGS = -I$(top_builddir)/ompi/include \
+AM_FCFLAGS = $(FC_MODOUT_CURDIR) \
+             -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
              -I$(top_srcdir) -I$(top_builddir) $(FCFLAGS_f90)
 
