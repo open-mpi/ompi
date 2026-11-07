@@ -42,12 +42,15 @@ static int init_context_freelists(mca_btl_ofi_context_t *context)
             return rc;
         }
 
-        /* Initialize frag pool */
+        /* Initialize frag pool, growing about 4 MB at a time whatever the fragment size */
+        size_t frag_elem_size = sizeof(mca_btl_ofi_base_frag_t) + MCA_BTL_OFI_FRAG_SIZE;
+        int frag_batch = (int) ((4 * 1024 * 1024) / frag_elem_size);
+
+        frag_batch = (16 > frag_batch) ? 16 : ((1024 < frag_batch) ? 1024 : frag_batch);
         OBJ_CONSTRUCT(&context->frag_list, opal_free_list_t);
-        rc = opal_free_list_init(&context->frag_list,
-                                 sizeof(mca_btl_ofi_base_frag_t) + MCA_BTL_OFI_FRAG_SIZE,
+        rc = opal_free_list_init(&context->frag_list, frag_elem_size,
                                  opal_cache_line_size, OBJ_CLASS(mca_btl_ofi_base_frag_t), 0, 0,
-                                 1024, -1, 1024, NULL, 0, NULL, NULL, NULL);
+                                 frag_batch, -1, frag_batch, NULL, 0, NULL, NULL, NULL);
         if (OPAL_SUCCESS != rc) {
             BTL_VERBOSE(("failed to init frag pool (free_list)"));
         }
