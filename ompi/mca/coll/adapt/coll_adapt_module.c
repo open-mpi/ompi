@@ -5,7 +5,7 @@
  * Copyright (c) 2021      Triad National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -213,6 +213,13 @@ mca_coll_base_module_t *ompi_coll_adapt_comm_query(struct ompi_communicator_t * 
  */
 int ompi_coll_adapt_request_free(ompi_request_t ** request)
 {
+    /* Freeing a request still associated with an outstanding collective is
+     * erroneous: the operation keeps writing through this request after we
+     * return.  Refuse it, as libnbc and portals4 do. */
+    if (!REQUEST_COMPLETE(*request)) {
+        return MPI_ERR_REQUEST;
+    }
+
     OMPI_REQUEST_FINI(*request);
     (*request)->req_state = OMPI_REQUEST_INVALID;
     OBJ_RELEASE(*request);

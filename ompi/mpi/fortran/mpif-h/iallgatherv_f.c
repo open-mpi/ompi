@@ -113,9 +113,10 @@ void ompi_iallgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
         OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
     } else {
         if ((void *)recvcounts != (void *)OMPI_ARRAY_NAME_CONVERT(recvcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(displs));
-            ompi_coll_base_add_release_arrays_cb(c_request);
+            ompi_coll_base_nbc_set_cleanup_v(c_request, NULL,
+                                             NULL,
+                                             OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                                             OMPI_ARRAY_NAME_CONVERT(displs));
         }
     }
 }

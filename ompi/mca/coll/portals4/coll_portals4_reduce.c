@@ -4,6 +4,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2017      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -432,7 +433,7 @@ ompi_coll_portals4_ireduce_intra(const void* sendbuf, void* recvbuf, size_t coun
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
 
-    *ompi_request = &request->super;
+    *ompi_request = &request->super.super.super;
     request->fallback_request = ompi_request;
     request->is_sync = false;
 
@@ -458,7 +459,7 @@ ompi_coll_portals4_ireduce_intra_fini(ompi_coll_portals4_request_t *request)
     if (OMPI_SUCCESS != ret)
         return ret;
 
-    ompi_request_complete(&request->super, true);
+    ompi_request_complete(&request->super.super.super, true);
 
     return (OMPI_SUCCESS);
 }
