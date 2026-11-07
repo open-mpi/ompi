@@ -48,6 +48,8 @@ struct mca_pml_ob1_recv_request_t {
     opal_atomic_int32_t  req_pipeline_depth;
     opal_atomic_size_t   req_bytes_received;  /**< amount of data transferred into the user buffer */
     size_t   req_bytes_expected; /**< local size of the data as suggested by the user */
+    opal_atomic_size_t req_rget_done;   /**< RGET: bytes covered by finished gets (ok or failed) */
+    size_t req_rget_fail_offset;        /**< RGET: lowest offset of a failed get, SIZE_MAX if none */
     size_t   req_rdma_offset;
     size_t   req_send_offset;
     uint32_t req_rdma_cnt;
@@ -224,11 +226,20 @@ recv_request_pml_complete_check(mca_pml_ob1_recv_request_t *recvreq)
 {
     opal_atomic_rmb();
 
-    if(recvreq->req_match_received &&
-            recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed &&
-            lock_recv_request(recvreq)) {
-        recv_request_pml_complete(recvreq);
-        return true;
+    if(recvreq->req_match_received) {
+        /* req_bytes_packed is published before req_match_received */
+        opal_atomic_rmb();
+
+        /* on truncation only what fits is transferred */
+        const size_t bytes_target =
+            (recvreq->req_recv.req_bytes_packed > recvreq->req_bytes_expected)
+            ? recvreq->req_bytes_expected : recvreq->req_recv.req_bytes_packed;
+
+        if(recvreq->req_bytes_received >= bytes_target &&
+           lock_recv_request(recvreq)) {
+            recv_request_pml_complete(recvreq);
+            return true;
+        }
     }
 
     return false;

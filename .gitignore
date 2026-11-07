@@ -454,6 +454,7 @@ test/simple/*.dwarf
 test/simple/junk*
 test/simple/sio
 test/simple/sendrecv_blaster
+test/simple/truncate_rdma
 test/simple/early_abort
 test/simple/spawn_problem/ch_rec
 test/simple/spawn_problem/output
