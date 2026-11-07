@@ -645,6 +645,39 @@ static inline struct ompi_proc_t* ompi_comm_peer_lookup (const ompi_communicator
     return ompi_group_peer_lookup(comm->c_remote_group,peer_id);
 }
 
+/**
+ * Find the rank a process holds in a communicator, searching both of its
+ * groups.
+ *
+ * Returns the rank, or a negative value if the process is in neither group.
+ * *remote says which group answered, and is only meaningful when the returned
+ * rank is valid: the two ranks name different peers in an inter-communicator,
+ * so a caller that acts on the rank needs to know which group to read it
+ * against.
+ */
+static inline int ompi_comm_proc_lookup_rank (ompi_communicator_t *comm,
+                                              struct ompi_proc_t *proc, bool *remote)
+{
+    int rank = ompi_group_proc_lookup_rank (comm->c_local_group, (ompi_proc_t *) proc);
+
+    *remote = false;
+    if (0 > rank && comm->c_local_group != comm->c_remote_group) {
+        rank = ompi_group_proc_lookup_rank (comm->c_remote_group, (ompi_proc_t *) proc);
+        *remote = true;
+    }
+
+    return rank;
+}
+
+/**
+ * Is this process a member of any communicator in this process?
+ *
+ * A false answer means the application has no communicator through which it
+ * could name that peer, and therefore no way to observe anything that happens
+ * to it.
+ */
+OMPI_DECLSPEC bool ompi_comm_proc_in_any_comm (struct ompi_proc_t *proc);
+
 static inline bool ompi_comm_instances_same(const ompi_communicator_t *comm1,
                                             const ompi_communicator_t *comm2)
 {
