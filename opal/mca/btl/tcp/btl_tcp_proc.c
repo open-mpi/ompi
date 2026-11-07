@@ -727,6 +727,20 @@ mca_btl_base_endpoint_t *mca_btl_tcp_proc_endpoint(mca_btl_tcp_proc_t *btl_proc,
 /*
  * Remove an endpoint from the proc array and indicate the address is
  * no longer in use.
+ *
+ * The proc outlives its endpoints. It used to be released here once the
+ * last one went away, which made the endpoint count stand in for "this
+ * peer is of no further interest" -- and that is not what it means. The
+ * modules are offered a peer one at a time, so the count walks up to one
+ * and back to zero between two of them whenever the first module to be
+ * asked is then turned away (by exclusivity, say). Releasing the proc
+ * there threw away the modex and the interface matching that every
+ * module behind it was about to ask for, so each one refetched and
+ * rematched from scratch: as many solves as there are TCP interfaces,
+ * per peer, for a matching that is the same for all of them.
+ *
+ * The table now holds the proc until mca_btl_tcp_component_close()
+ * drains it, which is also the lifetime of the matching it caches.
  */
 
 int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t *btl_proc, mca_btl_base_endpoint_t *btl_endpoint)
@@ -739,17 +753,49 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t *btl_proc, mca_btl_base_endpoint_
                 memmove(btl_proc->proc_endpoints + i, btl_proc->proc_endpoints + i + 1,
                         (btl_proc->proc_endpoint_count - i - 1)
                             * sizeof(mca_btl_base_endpoint_t *));
-                if (--btl_proc->proc_endpoint_count == 0) {
-                    OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
-                    OBJ_RELEASE(btl_proc);
-                    return OPAL_SUCCESS;
-                }
+                --btl_proc->proc_endpoint_count;
                 break;
             }
         }
         OPAL_THREAD_UNLOCK(&btl_proc->proc_lock);
     }
     return OPAL_SUCCESS;
+}
+
+/*
+ * Release every peer the component still knows about. The table holds
+ * the only reference to each, so destructing it is not enough.
+ *
+ * One at a time, always asking for the first entry again, because each
+ * proc unlinks itself from the table as it goes and takes tcp_lock to do
+ * it -- so neither the walk nor the lock can be held across the release.
+ * The key is kept to clear an entry whose proc did not unlink itself,
+ * which would otherwise be handed back forever.
+ */
+void mca_btl_tcp_proc_remove_all(void)
+{
+    for (;;) {
+        opal_process_name_t name;
+        mca_btl_tcp_proc_t *btl_proc = NULL;
+        void *node1, *node2;
+        int rc;
+
+        OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
+        rc = opal_proc_table_get_first_key(&mca_btl_tcp_component.tcp_procs, &name,
+                                           (void **) &btl_proc, &node1, &node2);
+        OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+        if (OPAL_SUCCESS != rc) {
+            return;
+        }
+
+        if (NULL != btl_proc) {
+            OBJ_RELEASE(btl_proc);
+        }
+
+        OPAL_THREAD_LOCK(&mca_btl_tcp_component.tcp_lock);
+        (void) opal_proc_table_remove_value(&mca_btl_tcp_component.tcp_procs, name);
+        OPAL_THREAD_UNLOCK(&mca_btl_tcp_component.tcp_lock);
+    }
 }
 
 /*
