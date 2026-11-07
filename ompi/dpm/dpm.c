@@ -2283,7 +2283,7 @@ static int start_dvm(char **hostfiles, char **dash_host)
     sigset_t sigs;
     pmix_info_t info;
     int buffer_length, num_chars_read, chunk;
-    char *uri;
+    char *uri, *contact;
     char *opal_prefix = getenv("OPAL_PREFIX");
 
     /* as a special case, if OPAL_PREFIX was set and either PRRTE or
@@ -2452,8 +2452,19 @@ static int start_dvm(char **hostfiles, char **dash_host)
         return OMPI_ERROR;
     }
 
-    /* connect to the spawned PRRTE daemon */
-    PMIX_INFO_LOAD(&info, PMIX_SERVER_URI, uri, PMIX_STRING);
+    /* connect to the spawned PRRTE daemon. A PMIx of v7.0 or later that
+     * takes clients of earlier releases writes two strings to the pipe:
+     * its TCP URI and then its local socket's. An earlier PMIx library
+     * can use only the first; one of v7.0 or later must use the second,
+     * as such a server refuses it on TCP. With a single string - an
+     * earlier server, or one taking no earlier clients - it is the one */
+    contact = uri;
+#if PMIX_VERSION_MAJOR >= 7
+    if ((int) strlen(uri) + 1 < num_chars_read) {
+        contact = uri + strlen(uri) + 1;
+    }
+#endif
+    PMIX_INFO_LOAD(&info, PMIX_SERVER_URI, contact, PMIX_STRING);
     free(uri);
     pret = PMIx_Init(NULL, &info, 1);
     rc = opal_pmix_convert_status(pret);
