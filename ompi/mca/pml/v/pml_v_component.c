@@ -251,7 +251,7 @@ static int mca_pml_v_enable(bool enable)
     if(enable) {
         /* Check if a protocol have been selected during init */
         if(! mca_vprotocol_base_selected())
-            mca_vprotocol_base_select(OPAL_ENABLE_PROGRESS_THREADS,
+            mca_vprotocol_base_select(opal_async_progress_thread_spawned,
                                       ompi_mpi_thread_multiple);
 
         /* Check if we succeeded selecting a protocol */

@@ -347,9 +347,10 @@ typedef struct mca_base_component_2_1_0_t mca_base_component_2_1_0_t;
 /*
  * Metadata Bit field parameters
  */
-#define MCA_BASE_METADATA_PARAM_NONE       (uint32_t) 0x00 /**< No Metadata flags */
-#define MCA_BASE_METADATA_PARAM_CHECKPOINT (uint32_t) 0x02 /**< Checkpoint enabled Component */
-#define MCA_BASE_METADATA_PARAM_DEBUG      (uint32_t) 0x04 /**< Debug enabled/only Component */
+#define MCA_BASE_METADATA_PARAM_NONE        ((uint32_t) 0x00) /**< No Metadata flags */
+#define MCA_BASE_METADATA_PARAM_CHECKPOINT  ((uint32_t) 0x02) /**< Checkpoint enabled Component */
+#define MCA_BASE_METADATA_PARAM_DEBUG       ((uint32_t) 0x04) /**< Debug enabled/only Component */
+#define MCA_BASE_METADATA_PARAM_THREAD_SAFE ((uint32_t) 0x08) /**< Thread-safe progress component */
 
 /**
  * Meta data for MCA v2.0.0 components.
