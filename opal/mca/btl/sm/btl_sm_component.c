@@ -183,6 +183,17 @@ static int mca_btl_sm_component_register(void)
                                            MCA_BASE_VAR_SCOPE_LOCAL,
                                            &mca_btl_sm_component.fbox_max);
 
+    /* One stream was as fast as eight or faster: the copies into one device run one after
+     * another either way, and what the asynchronous gets save is the host waiting on each */
+    mca_btl_sm_component.accelerator_get_streams = 1;
+    (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version,
+                                           "accelerator_get_streams",
+                                           "Accelerator streams that gets from peers' device "
+                                           "buffers are queued on, chosen by peer (1-8, default: 1)",
+                                           MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL, 0, 0,
+                                           OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_LOCAL,
+                                           &mca_btl_sm_component.accelerator_get_streams);
+
     mca_btl_sm_component.fbox_size = 4096;
     (void) mca_base_component_var_register(&mca_btl_sm_component.super.btl_version, "fbox_size",
                                            "Size of per-peer fast transfer buffers. Must be a power of two (default: 4k)",
@@ -206,7 +217,10 @@ static int mca_btl_sm_component_register(void)
 
     mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
 
-    mca_btl_sm.super.btl_eager_limit = 4 * 1024;
+    /* Above the eager limit a message takes the single-copy path, which without a
+     * mapping mechanism (CMA) costs a system call per message and loses to the copy
+     * through the shared segment until several KB. */
+    mca_btl_sm.super.btl_eager_limit = 16 * 1024;
     mca_btl_sm.super.btl_rndv_eager_limit = 32 * 1024;
     mca_btl_sm.super.btl_max_send_size = 32 * 1024;
     mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
@@ -250,6 +264,7 @@ static int mca_btl_sm_component_open(void)
 
 static int mca_btl_sm_component_close(void)
 {
+    mca_btl_sm_async_gets_fini();
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_eager);
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_user);
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_max_send);
@@ -576,6 +591,8 @@ static int mca_btl_sm_component_progress(void)
     }
 
     mca_btl_sm_progress_endpoints();
+
+    count += mca_btl_sm_progress_async_gets();
 
     if (NULL == mca_btl_sm_component.my_fifo
         || SM_FIFO_FREE == mca_btl_sm_component.my_fifo->fifo_head) {
