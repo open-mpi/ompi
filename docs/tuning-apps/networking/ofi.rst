@@ -66,6 +66,42 @@ Each component also has its own component-specific parameters; use
 
    shell$ ompi_info --param mtl ofi --level 9
 
+Point-to-point selection on EFA nodes with GPUs
+-----------------------------------------------
+
+Open MPI initializes every available PML and keeps the one that reports the
+highest priority.  The ``cm`` PML reports the priority of its MTL; the ``ofi``
+MTL reports 25 by default, and the ``ob1`` PML reports 20.  On most systems
+``cm`` with the ``ofi`` MTL is therefore selected wherever Libfabric is
+available.
+
+On nodes with GPUs whose MTL would use the ``efa`` provider, the ``ofi`` MTL
+reports a priority of 10 instead, so that the ``ob1`` PML with the ``ofi`` BTL
+is selected.  The ``ofi`` BTL can drive several network interfaces per process,
+where the ``ofi`` MTL drives one, and it can move device buffers with RDMA.
+The rule applies when all of the following hold:
+
+* the node has a GPU, as found from the PCI devices in the hwloc topology (a
+  display controller from NVIDIA or AMD), which every process on the node
+  sees the same way whatever ``CUDA_VISIBLE_DEVICES`` is set to;
+* the provider include and exclude settings allow ``efa``, and Libfabric
+  offers it;
+* the ``mtl_ofi_priority`` MCA parameter has not been set.
+
+Nodes without GPUs and other providers keep the previous selection.  To use
+``cm`` with the ``ofi`` MTL on such a node, select it explicitly, or set the
+MTL's priority, which disables the rule:
+
+.. code-block:: sh
+
+   shell$ mpirun --mca pml cm ...
+   shell$ mpirun --mca mtl_ofi_priority 25 ...
+
+The decision is reported with ``--mca opal_common_ofi_verbose 1``.  All
+processes of a job must use the same PML: a job whose nodes differ (for
+example, some with GPUs and some without) stops at startup with a PML mismatch
+error, and needs ``--mca pml cm`` or ``--mca pml ob1`` on the command line.
+
 Provider and domain selection
 -----------------------------
 
