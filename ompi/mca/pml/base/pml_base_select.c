@@ -244,18 +244,6 @@ int mca_pml_base_select(bool enable_progress_threads,
     return ret;
 }
 
-/* need a "commonly" named PML structure so everything ends up in the
-   same modex field. Not static: ompi_modex.c probes the same key to
-   learn whether a peer has committed. */
-mca_base_component_t mca_pml_base_modex_component = {
-    OMPI_MCA_BASE_VERSION_2_1_0("pml", 2, 0, 0),
-    .mca_component_name = "base",
-    .mca_component_major_version = 2,
-    .mca_component_minor_version = 0,
-    .mca_component_release_version = 0,
-};
-
-
 /* What went into the modex, which is what a peer compares itself
  * against. Not mca_pml_base_selected_component's name: vprotocol renames
  * that copy ("ob1]vpessimist") as the losing components close. */
@@ -285,9 +273,9 @@ mca_pml_base_pml_selected(const char *name)
      * been truncated into it would otherwise reach a peer by two routes
      * under two spellings. */
     if (!opal_pmix_collect_all_data || 0 == OMPI_PROC_MY_NAME->vpid) {
-        OPAL_MODEX_SEND(rc, PMIX_GLOBAL, &mca_pml_base_modex_component,
-                        mca_pml_base_pml_name,
-                        strlen(mca_pml_base_pml_name) + 1);
+        OPAL_MODEX_SEND_STRING(rc, PMIX_GLOBAL, OMPI_MODEX_KEY_PML,
+                               mca_pml_base_pml_name,
+                               strlen(mca_pml_base_pml_name) + 1);
     }
     return rc;
 }
@@ -312,7 +300,6 @@ static int pml_check_one(opal_process_name_t proc_name, bool cache_only)
     size_t size;
     int ret = 0;
     char *remote_pml;
-    char *key;
 
     /* if we are proc_name=OMPI_PROC_MY_NAME, then we can also assume success */
     if (0 == opal_compare_proc(ompi_proc_local()->super.proc_name, proc_name)) {
@@ -324,20 +311,13 @@ static int pml_check_one(opal_process_name_t proc_name, bool cache_only)
         return OMPI_SUCCESS;
     }
 
-    /* The macro expands its key argument twice, so building the key
-     * inline would allocate twice and leak both. */
-    key = mca_base_component_to_string(&mca_pml_base_modex_component);
-    if (NULL == key) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
     if (cache_only) {
-        OPAL_MODEX_RECV_STRING_OPTIONAL(ret, key, &proc_name,
+        OPAL_MODEX_RECV_STRING_OPTIONAL(ret, OMPI_MODEX_KEY_PML, &proc_name,
                                         (void**) &remote_pml, &size);
     } else {
-        OPAL_MODEX_RECV_STRING(ret, key, &proc_name,
+        OPAL_MODEX_RECV_STRING(ret, OMPI_MODEX_KEY_PML, &proc_name,
                                (void**) &remote_pml, &size);
     }
-    free(key);
     if (OPAL_ERR_NOT_READY == ret) {
         /* Distinct from NOT_FOUND: the peer did publish, so the caller
          * must come back later rather than declare it unreachable. */
