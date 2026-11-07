@@ -155,10 +155,19 @@ class TunedRuleReader(GenericOpenMPIRuleReader):
                     if result_topo_faninout != 0:
                         rule['faninout'] = result_topo_faninout
                     if result_segsize != 0:
-                        rule['segsize'] = result_segsize
+                        rule['seg_size'] = result_segsize
+                    result_bine_imp = 0
+                    if file_ver >= 3:
+                        result_bine_imp = self.get_next()
+                    if file_ver >= 3 and result_bine_imp is None:
+                        raise ValueError(f'Unexpected EOF while reading bine_imp at line {self.jline}')
+                    if result_bine_imp != 0:
+                        rule['bine_imp'] = result_bine_imp
                     result_maxreq = 0
                     if file_ver > 1 and self.isnext_digit():
                         result_maxreq = self.get_next()
+                    if result_maxreq is None:
+                        raise ValueError(f'Unexpected EOF while reading maxreq at line {self.jline}')
                     if result_maxreq != 0:
                         rule['reqs'] = result_maxreq
                     msg_rules.append(rule)
