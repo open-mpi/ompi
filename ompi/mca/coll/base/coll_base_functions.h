@@ -277,6 +277,8 @@ int ompi_coll_base_reduce_intra_binomial(REDUCE_ARGS, uint32_t segsize, int max_
 int ompi_coll_base_reduce_intra_in_order_binary(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs );
 int ompi_coll_base_reduce_intra_redscat_gather(REDUCE_ARGS);
 int ompi_coll_base_reduce_intra_knomial(REDUCE_ARGS, uint32_t segsize, int max_outstanding_reqs, int radix);
+/* Messages below this size (bytes) may be reduced in arrival order by knomial reduce */
+OMPI_DECLSPEC extern size_t ompi_coll_base_reduce_knomial_arrival_max;
 
 /* Reduce_scatter */
 int ompi_coll_base_reduce_scatter_intra_nonoverlapping(REDUCESCATTER_ARGS);

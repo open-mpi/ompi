@@ -439,7 +439,7 @@ Reduce (Id=11)
    5, "binomial", "..."
    6, "in-order_binary", "..."
    7, "rabenseifner", "..."
-   8, "knomial", "..."
+   8, "knomial", "k-nomial tree. Non-commutative operations keep the order of the operands. For commutative operations the first child's receive buffer is the accumulator, so no rank copies its own data. If the operation is also exact in any order (integer sum and product, min, max, logical, bitwise) and the message is smaller than the coll_tuned_reduce_knomial_arrival_max_size MCA variable (512 KiB by default; 0 disables it), children are combined in the order they arrive."
 
 .. _Reduce_scatter:
 
