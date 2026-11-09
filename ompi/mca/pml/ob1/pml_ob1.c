@@ -282,11 +282,20 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
             /* handle this CID*/
             mca_pml_ob1_handle_cid (comm, frag->hdr.hdr_ext_match.hdr_match.hdr_src, &frag->hdr.hdr_cid);
 
-            hdr = &frag->hdr.hdr_ext_match.hdr_match;
+            /* The fragment was held with its CID header in front of the
+             * real one, but from here on it is matched - and, once matched,
+             * progressed - by the header behind it: whatever reads frag->hdr
+             * looks there for the type, source, tag and sequence number.
+             * Bring the real header to the front, as it would have been
+             * stored had the communicator existed when the fragment arrived.
+             * The segment was held starting at the real header, so it needs
+             * no adjustment.  Which header it is, and so how long, is not
+             * needed: move everything behind the CID header, the union has
+             * room for the longest one. */
+            memmove (&frag->hdr, (char *) &frag->hdr + offsetof (mca_pml_ob1_ext_match_hdr_t, hdr_match),
+                     sizeof (frag->hdr) - offsetof (mca_pml_ob1_ext_match_hdr_t, hdr_match));
+            hdr = &frag->hdr.hdr_match;
             hdr->hdr_ctx = comm->c_index;
-
-            /* NTH: this is ok because the pointer that will be freed is stored in frag->addr[] */
-            frag->segments[0].seg_addr.pval = (void *)((uintptr_t) frag->segments[0].seg_addr.pval + sizeof (frag->hdr.hdr_cid));
         }
 
         /* Is this fragment for the current communicator ? */

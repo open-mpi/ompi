@@ -57,4 +57,5 @@ EXTRA_DIST += \
         test/mpi/spawn_tree.c \
         test/mpi/info_spawn.c \
 		test/mpi/pmix.c \
-		test/mpi/xlib.c
+		test/mpi/xlib.c \
+        test/simple/create_from_group_first_msg.c

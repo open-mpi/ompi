@@ -436,6 +436,7 @@ test/simple/debugger
 test/simple/server_port_name.txt
 test/simple/singleton_client_server
 test/simple/intercomm_create
+test/simple/create_from_group_first_msg
 test/simple/spawn_tree
 test/simple/init-exit77
 test/simple/mpi_info
