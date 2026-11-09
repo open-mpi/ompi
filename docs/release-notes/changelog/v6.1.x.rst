@@ -8,6 +8,32 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- The ``base`` collective algorithms behind ``MPI_Reduce``,
+  ``MPI_Allreduce``, ``MPI_Reduce_scatter``,
+  ``MPI_Reduce_scatter_block``, ``MPI_Scan`` and ``MPI_Exscan`` no
+  longer copy their input, nor allocate extra temporary buffers, when
+  the operation is commutative and the input is not ``MPI_IN_PLACE``:
+  the first contribution is received straight into the buffer that
+  holds the partial result.  This makes large-message reductions
+  faster (up to roughly 2x for the ring and recursive-halving
+  algorithms on the systems measured).  Non-commutative operations and
+  ``MPI_IN_PLACE`` keep their previous, order-preserving code paths.
+
+- Added a ``knomial`` algorithm (id 8) for ``MPI_Reduce`` to the
+  ``tuned`` collective component.  For associative operations on
+  messages smaller than the new
+  ``coll_tuned_reduce_knomial_arrival_max_size`` MCA parameter (default
+  512 KiB, 0 disables), contributions are combined in arrival order.
+
+- The recursive doubling algorithms of ``MPI_Allreduce``, ``MPI_Scan``
+  and ``MPI_Exscan`` in the ``tuned`` collective component now exchange
+  and reduce large messages of commutative operations in a pipeline of
+  segments, overlapping the reduction of a segment with the transfer of
+  the following ones.  The segment size is set by the new
+  ``coll_tuned_recursivedoubling_segment_size`` MCA parameter (default
+  256 KiB, 0 disables) and the number of segments in flight with a peer
+  by ``coll_tuned_recursivedoubling_window`` (default 4).
+
 - ``coll/ucc`` now creates a UCC context per family of communicators
   instead of one per process over ``MPI_COMM_WORLD``.  MPI Sessions
   programs that never create ``MPI_COMM_WORLD`` can use UCC, and a
