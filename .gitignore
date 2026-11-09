@@ -399,6 +399,7 @@ ompi/test/mpirun/session_first_touch
 ompi/test/mpirun/session_partial_batch
 ompi/test/mpirun/spawn_first_touch
 ompi/test/mpirun/tcp_stranger_connect
+ompi/test/mpirun/thread_sendrecv
 ompi/test/mpirun/wireup_stress
 
 test/simple/abort
