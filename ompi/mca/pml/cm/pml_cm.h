@@ -158,7 +158,7 @@ mca_pml_cm_recv(void *addr,
 
     req.req_pml_type = MCA_PML_CM_REQUEST_RECV_THIN;
     req.req_free_called = false;
-    req.req_ompi.req_complete = false;
+    req.req_ompi.req_complete = REQUEST_PENDING;
     req.req_ompi.req_complete_cb = NULL;
     req.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
     req.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;
