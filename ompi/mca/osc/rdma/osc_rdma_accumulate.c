@@ -37,6 +37,20 @@
 static inline void ompi_osc_rdma_peer_accumulate_cleanup (ompi_osc_rdma_module_t *module, ompi_osc_rdma_peer_t *peer, bool lock_acquired)
 {
     if (lock_acquired) {
+#if defined(BTL_VERSION) && (BTL_VERSION >= 310)
+        /* The accumulate lock lives in the (shared memory) state and is released with a cpu
+         * atomic when the peer's state is local, but the data may have been updated through
+         * the btl. A btl put completion callback only guarantees local completion (btl/uct
+         * invokes it as soon as the put is posted), so the remote data may not be visible yet
+         * when the cpu releases the lock. Another process could then acquire the lock and read
+         * stale data (lost update). Flush the btl before releasing the lock in this case. When
+         * the release is itself a btl atomic it is ordered behind the put on the same endpoint. */
+        if (ompi_osc_rdma_peer_local_state (peer) && !ompi_osc_rdma_peer_local_base (peer) &&
+            ompi_osc_rdma_use_btl_flush (module)) {
+            mca_btl_base_module_t *btl = ompi_osc_rdma_selected_btl (module, peer->data_btl_index);
+            (void) btl->btl_flush (btl, peer->data_endpoint);
+        }
+#endif
         (void) ompi_osc_rdma_lock_release_exclusive (module, peer, offsetof (ompi_osc_rdma_state_t, accumulate_lock));
     }
 
