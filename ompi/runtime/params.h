@@ -183,6 +183,19 @@ OMPI_DECLSPEC extern bool ompi_mpi_spc_dump_enabled;
  */
 OMPI_DECLSPEC extern uint32_t ompi_pmix_connect_timeout;
 
+/**
+ * A comma-delimited list of additional environment variable names to check
+ * when detecting if running in a PMI environment. This supplements the built-in
+ * sentinels (PMI_FD, PMI_CONTROL_PORT).
+ */
+OMPI_DECLSPEC extern char * ompi_mpi_pmi_sentinels;
+
+/**
+ * A comma-delimited list of SLURM_MPI_TYPE values to recognize as indicating
+ * a PMI environment. Default is "pmi,pmi2,cray_shasta".
+ */
+OMPI_DECLSPEC extern char * ompi_mpi_pmi_slurm_types;
+
  /**
  * A boolean value that determines whether or not to enable runtime timing of
  * init and finalize.

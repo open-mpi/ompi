@@ -92,6 +92,9 @@ char *ompi_mpi_spc_attach_string = NULL;
 bool ompi_mpi_spc_dump_enabled = false;
 uint32_t ompi_pmix_connect_timeout = 0;
 
+char *ompi_mpi_pmi_sentinels = NULL;
+char *ompi_mpi_pmi_slurm_types = NULL;
+
 bool ompi_enable_timing = false;
 
 static bool show_default_mca_params = false;
@@ -398,6 +401,24 @@ int ompi_mpi_register_params(void)
                                   MCA_BASE_VAR_TYPE_UNSIGNED_INT, NULL,
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_pmix_connect_timeout);
+
+    ompi_mpi_pmi_sentinels = "PMI_FD,PMI_CONTROL_PORT";
+    (void) mca_base_var_register("ompi", "mpi", NULL, "pmi_sentinels",
+                                 "A comma-delimited list of environment variable names to check "
+                                 "when detecting if running in a PMI environment.",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_pmi_sentinels);
+
+    ompi_mpi_pmi_slurm_types = "pmi,pmi2,cray_shasta";
+    (void) mca_base_var_register("ompi", "mpi", NULL, "pmi_slurm_types",
+                                 "A comma-delimited list of SLURM_MPI_TYPE values to recognize as indicating "
+                                 "a PMI environment.",
+                                 MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
+                                 OPAL_INFO_LVL_4,
+                                 MCA_BASE_VAR_SCOPE_READONLY,
+                                 &ompi_mpi_pmi_slurm_types);
 
     /* check to see if we want timing information */
     /* TODO: enable OMPI init and OMPI finalize timings if
