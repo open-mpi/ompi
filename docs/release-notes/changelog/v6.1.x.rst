@@ -19,6 +19,15 @@ Open MPI version v6.1.0
   algorithms on the systems measured).  Non-commutative operations and
   ``MPI_IN_PLACE`` keep their previous, order-preserving code paths.
 
+- The intra-communicator reduction functions of the ``basic`` collective
+  component (``MPI_Allreduce``, ``MPI_Reduce_scatter``,
+  ``MPI_Reduce_scatter_block`` and ``MPI_Reduce`` above
+  ``coll_basic_crossover``) now use the algorithms of the ``base``
+  component instead of their own copies, and so benefit from the
+  improvements above.  ``MPI_Reduce`` with a non-commutative operation
+  above ``coll_basic_crossover`` now uses an in-order binary tree
+  instead of the linear algorithm.
+
 - Added a ``knomial`` algorithm (id 8) for ``MPI_Reduce`` to the
   ``tuned`` collective component.  For associative operations on
   messages smaller than the new

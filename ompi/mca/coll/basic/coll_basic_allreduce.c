@@ -35,41 +35,6 @@
 
 
 /*
- *	allreduce_intra
- *
- *	Function:	- allreduce using other MPI collectives
- *	Accepts:	- same as MPI_Allreduce()
- *	Returns:	- MPI_SUCCESS or error code
- */
-int
-mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
-                               struct ompi_datatype_t *dtype,
-                               struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm,
-                               mca_coll_base_module_t *module)
-{
-    int err;
-
-    /* Reduce to 0 and broadcast. */
-
-    if (MPI_IN_PLACE == sbuf) {
-        if (0 == ompi_comm_rank(comm)) {
-            err = comm->c_coll->coll_reduce(MPI_IN_PLACE, rbuf, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
-        } else {
-            err = comm->c_coll->coll_reduce(rbuf, NULL, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
-        }
-    } else {
-        err = comm->c_coll->coll_reduce(sbuf, rbuf, count, dtype, op, 0, comm, comm->c_coll->coll_reduce_module);
-    }
-    if (MPI_SUCCESS != err) {
-        return err;
-    }
-
-    return comm->c_coll->coll_bcast(rbuf, count, dtype, 0, comm, comm->c_coll->coll_bcast_module);
-}
-
-
-/*
  *	allreduce_inter
  *
  *	Function:	- allreduce using other MPI collectives
