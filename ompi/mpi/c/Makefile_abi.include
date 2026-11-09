@@ -31,7 +31,7 @@
 
 # ABI specific make components
 
-if OMPI_STANDARD_ABI
+if OMPI_BUILD_STANDARD_ABI
 
 noinst_LTLIBRARIES += libmpi_c_abi.la libmpi_c_abi_profile.la
 
