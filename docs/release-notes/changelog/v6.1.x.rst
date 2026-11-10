@@ -46,6 +46,12 @@ Open MPI version v6.1.0
   <man1-ompi_info-support-library-versions>`.  The documentation
   continues to show the embedded versions.
 
+- Building the documentation no longer fails when the source tree
+  does not include the embedded OpenPMIx, PRRTE, hwloc, or Libevent
+  and Open MPI is built against an external installation of that
+  library (e.g., by downstream packagers).  The documentation then
+  says that the embedded copy was not included.
+
 - ``MPI_T_cvar_handle_alloc`` now reports a count large enough for the
   current value of a string control variable, and ``MPI_T_cvar_read``
   never writes more than that count.  Previously the count was always
