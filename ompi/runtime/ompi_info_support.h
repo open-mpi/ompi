@@ -34,4 +34,11 @@ OMPI_DECLSPEC void  ompi_info_close_components(void);
 
 OMPI_DECLSPEC void ompi_info_show_ompi_version(const char *scope);
 
+/*
+ * Show the same values for PRRTE, with the same pretty-print labels
+ * and --parsable keys, that opal_info_do_3rd_party_versions() shows
+ * for the OPAL-level support libraries.
+ */
+OMPI_DECLSPEC void ompi_info_do_prrte_versions(void);
+
 #endif /* OMPI_INFO_SUPPORT_H */

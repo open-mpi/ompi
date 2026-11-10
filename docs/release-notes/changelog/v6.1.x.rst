@@ -38,6 +38,14 @@ Open MPI version v6.1.0
 
 - Updated the embedded hwloc to v2.15.0.
 
+- ``ompi_info`` and ``oshmem_info`` now show, for each of OpenPMIx,
+  PRRTE, hwloc, and Libevent: whether Open MPI was built with the copy
+  embedded in the Open MPI source code or with an external
+  installation, and (for all but PRRTE) the version that is loaded at
+  run time.  See :ref:`ompi_info(1)
+  <man1-ompi_info-support-library-versions>`.  The documentation
+  continues to show the embedded versions.
+
 - ``MPI_T_cvar_handle_alloc`` now reports a count large enough for the
   current value of a string control variable, and ``MPI_T_cvar_read``
   never writes more than that count.  Previously the count was always

@@ -39,6 +39,7 @@
 #include "opal/util/printf.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/runtime/opal_info_support.h"
+#include "ompi/runtime/ompi_info_support.h"
 
 #include "ompi/tools/ompi_info/ompi_info.h"
 #include "opal/opal_portable_platform.h"
@@ -137,6 +138,9 @@ void oshmem_info_do_config(bool want_all)
     opal_info_out("Built by", "build:user", OMPI_BUILD_USER);
     opal_info_out("Built on", "build:timestamp", OMPI_BUILD_DATE);
     opal_info_out("Built host", "build:host", OMPI_BUILD_HOST);
+
+    opal_info_do_3rd_party_versions();
+    ompi_info_do_prrte_versions();
 
     opal_info_out("C bindings", "bindings:c", "yes");
     opal_info_out("Fort shmem.fh", "bindings:fortran", fortran_binding);
