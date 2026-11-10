@@ -281,6 +281,7 @@ ompi/test/datatype/to_self
 ompi/test/datatype/unpack_ooo
 
 ompi/test/general/abi_fortran
+ompi/test/general/abi_fortran_f08
 ompi/test/general/attr_interlang_mpifh
 ompi/test/general/attr_interlang_mpifh.f90
 ompi/test/general/attr_interlang_usempi
