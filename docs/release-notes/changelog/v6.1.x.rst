@@ -319,3 +319,8 @@ Open MPI version v6.1.0
   including an option to enable registration of CXI counters as MPI_T
   performance variables without affecting collection or reporting (it
   requires ``hook_hwpc_cxi_counter_report`` of ``1`` or higher).
+
+- Fixed the ``ob1`` PML writing past the receive buffer (and crashing in
+  ``MPI_Wait``) when a message is larger than the posted receive and a
+  single-copy transport is used (e.g., ``sm`` with CMA, XPMEM or KNEM).
+  The receive now completes with ``MPI_ERR_TRUNCATE``.

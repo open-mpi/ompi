@@ -889,6 +889,9 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
     }
 #endif /*OPAL_ENABLE_FT_MPI*/
 
+    /* a pending rdma_frag means the request started as an RGET */
+    const bool was_rget = (NULL != sendreq->rdma_frag);
+
     /* if the request should be delivered entirely by copy in/out
      * then throttle sends */
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA) {
@@ -900,13 +903,31 @@ void mca_pml_ob1_recv_frag_callback_ack (mca_btl_base_module_t *btl,
         sendreq->req_throttle_sends = true;
     }
 
-    if (hdr->hdr_ack.hdr_send_size) {
-        size = hdr->hdr_ack.hdr_send_size;
-    } else {
-        size = sendreq->req_send.req_bytes_packed - hdr->hdr_ack.hdr_send_offset;
-    }
+    /* The region is the tail of what the receiver accepts: never send more
+     * than its end, and complete once that much is delivered. */
+    {
+        const size_t packed = sendreq->req_send.req_bytes_packed;
+        size_t offset = hdr->hdr_ack.hdr_send_offset;
+        size_t end;
 
-    mca_pml_ob1_send_request_copy_in_out(sendreq, hdr->hdr_ack.hdr_send_offset, size);
+        if (offset > packed) {
+            offset = packed;
+        }
+        end = (hdr->hdr_ack.hdr_send_size > packed - offset) ? packed
+                                                             : offset + hdr->hdr_ack.hdr_send_size;
+        size = end - offset;
+
+        /* the receiver's gets already delivered the bytes before the region */
+        if (was_rget) {
+            OPAL_THREAD_ADD_FETCH_SIZE_T(&sendreq->req_bytes_delivered, offset);
+        }
+
+        /* must be visible before req_state signals that the ACK was received */
+        sendreq->req_bytes_target = end;
+        opal_atomic_wmb();
+
+        mca_pml_ob1_send_request_copy_in_out(sendreq, offset, size);
+    }
 
     if (sendreq->req_state != 0) {
         /* Typical receipt of an ACK message causes req_state to be
