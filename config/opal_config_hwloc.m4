@@ -6,6 +6,7 @@ dnl                         and Technology (RIST). All rights reserved.
 dnl Copyright (c) 2020-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
 dnl Copyright (c) 2020      Intel, Inc.  All rights reserved.
 dnl Copyright (c) 2022      IBM Corporation.  All rights reserved.
+dnl Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -71,6 +72,14 @@ AC_DEFUN([OPAL_CONFIG_HWLOC], [
 
     AS_IF([test "$external_hwloc_happy" = "0" -a "$internal_hwloc_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable hwloc build.])])
+
+    AS_IF([test "$opal_hwloc_mode" = "internal"],
+          [OPAL_USING_INTERNAL_HWLOC=1],
+          [OPAL_USING_INTERNAL_HWLOC=0])
+    AC_DEFINE_UNQUOTED([OPAL_USING_INTERNAL_HWLOC],
+                       [$OPAL_USING_INTERNAL_HWLOC],
+                       [Whether or not we are using the internal hwloc])
+    AC_SUBST(OPAL_USING_INTERNAL_HWLOC)
 
     dnl this will work even if there is no hwloc package included,
     dnl because hwloc_tarball and hwloc_directory will evaluate to an
