@@ -29,7 +29,7 @@
 @@ -9869,7 +9877,11 @@
        # Time to change all our "foo.ltframework" stuff back to "-framework foo"
        case $host in
-	  *-*-darwin*)
+	*-*-darwin*)
 -	  newdeplibs=`$ECHO " $newdeplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
 +	  func_cc_basename "$CC"
 +	  case $func_cc_basename_result in
@@ -39,3 +39,23 @@
 	  new_inherited_linker_flags=`$ECHO " $new_inherited_linker_flags" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
 	  deplibs=`$ECHO " $deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
 	  ;;
+@@ -10505,8 +10517,17 @@
+ 	  esac
+ 	fi
+ 	# Time to change all our "foo.ltframework" stuff back to "-framework foo"
+-	compile_deplibs=`$ECHO " $compile_deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
+-	finalize_deplibs=`$ECHO " $finalize_deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	func_cc_basename "$CC"
++	case $func_cc_basename_result in
++	  flang*)
++	    compile_deplibs=`$ECHO " $compile_deplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
++	    finalize_deplibs=`$ECHO " $finalize_deplibs" | $SED 's% \([^ $]*\).ltframework% -Wl,-framework,\1%g'`
++	    ;;
++	  *)
++	    compile_deplibs=`$ECHO " $compile_deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	    finalize_deplibs=`$ECHO " $finalize_deplibs" | $SED 's% \([^ $]*\).ltframework% -framework \1%g'`
++	    ;;
++	esac
+ 	;;
+       esac
+ 
