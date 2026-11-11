@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,6 +81,13 @@ void ompi_file_set_view_f(MPI_Fint *fh, MPI_Offset *disp,
     /* Convert the fortran string */
    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(datarep, datarep_len,
                                                        &c_datarep))) {
+        /* An out-of-range handle converts to NULL and a closed file has
+         * already dropped its handler, so fall back to MPI_FILE_NULL, which
+         * carries the default file error handler -- the same target the
+         * other file bindings use when they have no file to blame. */
+        if (ompi_file_invalid(c_fh)) {
+            c_fh = MPI_FILE_NULL;
+        }
         c_ierr = OMPI_ERRHANDLER_INVOKE(c_fh, ret, "MPI_FILE_SET_VIEW");
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
