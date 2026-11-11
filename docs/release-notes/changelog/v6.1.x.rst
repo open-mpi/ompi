@@ -36,6 +36,23 @@ Open MPI version v6.1.0
   on every communicator.  See :ref:`label-coll-ucc-sharp` for the
   rules.
 
+- An Open MPI installation tree that was moved as a whole, and is
+  visible at the same path on every node, no longer needs
+  ``OPAL_PREFIX`` to be set: Open MPI asks the operating system where
+  its own shared library was loaded from and strips the configured
+  ``libdir`` suffix off that path.  ``mpirun`` and the wrapper
+  compilers, which link Open MPI statically, use the location of the
+  command itself and strip the configured ``bindir`` suffix.  Trees
+  that are at different paths on different nodes, or whose
+  installation directories were configured as absolute paths outside
+  ``prefix``, still need one of the existing mechanisms; so do
+  installations whose ``prefix`` and ``exec_prefix`` differ, for which
+  only the half that ``libdir`` hangs off can be recovered.  An
+  explicitly set ``OPAL_PREFIX`` continues to take precedence.  The
+  new MCA parameter ``opal_installdir_warn`` reports installation
+  directories that do not exist.  See
+  :ref:`install-location-automatic`.
+
 - Updated the embedded hwloc to v2.15.0.
 
 - ``MPI_Comm_connect``, ``MPI_Comm_accept`` and ``MPI_Comm_spawn`` now
