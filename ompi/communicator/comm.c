@@ -3115,6 +3115,39 @@ int ompi_comm_determine_first_auto ( ompi_communicator_t* intercomm )
 /********************************************************************************/
 /********************************************************************************/
 /********************************************************************************/
+bool ompi_comm_proc_in_any_comm (struct ompi_proc_t *proc)
+{
+    int max_num_comm = ompi_comm_get_num_communicators();
+
+    for (int i = 0 ; i < max_num_comm ; ++i) {
+        ompi_communicator_t *comm;
+        bool remote;
+
+        /* Read the slot directly rather than through ompi_comm_lookup(),
+         * which hides a communicator whose PML add_comm() has not run yet.
+         * Such a communicator already carries its groups -- the cid is only
+         * published once ompi_comm_set() has built them -- and hiding it
+         * would answer "no communicator" for a peer that a communicator
+         * under construction is about to use.  Reading the groups is all we
+         * do here, so the reason ompi_comm_lookup() hides it (a NULL
+         * c_pml_comm is not safe to send through) does not apply.
+         */
+        comm = (ompi_communicator_t *) opal_pointer_array_get_item (&ompi_mpi_communicators, i);
+        if (NULL == comm || (ompi_communicator_t *) OMPI_COMM_SENTINEL == comm) {
+            continue;
+        }
+
+        if (0 <= ompi_comm_proc_lookup_rank (comm, proc, &remote)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/********************************************************************************/
+/********************************************************************************/
+/********************************************************************************/
 int ompi_comm_dump ( ompi_communicator_t *comm )
 {
     opal_output(0, "Dumping information for comm_cid %s : %d\n", ompi_comm_print_cid (comm), ompi_comm_get_local_cid(comm));

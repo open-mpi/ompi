@@ -89,6 +89,7 @@ static void mca_btl_tcp_endpoint_construct(mca_btl_tcp_endpoint_t *endpoint)
     endpoint->endpoint_send_frag = 0;
     endpoint->endpoint_recv_frag = 0;
     endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
+    endpoint->endpoint_err_code = 0;
     endpoint->endpoint_retries = 0;
     endpoint->endpoint_nbo = false;
 #if MCA_BTL_TCP_ENDPOINT_CACHE
@@ -639,11 +640,21 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t *btl_endpoint)
             frag = (mca_btl_tcp_frag_t *) opal_list_remove_first(&btl_endpoint->endpoint_frags);
         }
         btl_endpoint->endpoint_send_frag = NULL;
-        /* Let's report the error upstream */
+        /* Let's report the error upstream.  Name the reason when we know it:
+         * "Socket closed" is only accurate when the peer actually hung up,
+         * and reporting it for, say, a connection the kernel timed out sends
+         * the reader looking for a peer that never exited. */
         if (NULL != btl_endpoint->endpoint_btl->tcp_error_cb) {
+            char reason[128] = "Socket closed";
+
+            if (0 != btl_endpoint->endpoint_err_code) {
+                snprintf(reason, sizeof(reason), "Socket operation failed: %s (%d)",
+                         strerror(btl_endpoint->endpoint_err_code),
+                         btl_endpoint->endpoint_err_code);
+            }
             btl_endpoint->endpoint_btl
                 ->tcp_error_cb((mca_btl_base_module_t *) btl_endpoint->endpoint_btl, 0,
-                               btl_endpoint->endpoint_proc->proc_opal, "Socket closed");
+                               btl_endpoint->endpoint_proc->proc_opal, reason);
         }
     } else {
         btl_endpoint->endpoint_state = MCA_BTL_TCP_CLOSED;
@@ -661,6 +672,7 @@ static void mca_btl_tcp_endpoint_connected(mca_btl_base_endpoint_t *btl_endpoint
     /* setup socket options */
     assert(MCA_BTL_TCP_CONNECTED != btl_endpoint->endpoint_state);
     btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTED;
+    btl_endpoint->endpoint_err_code = 0;
     btl_endpoint->endpoint_retries = 0;
     MCA_BTL_TCP_ENDPOINT_DUMP(1, btl_endpoint, true, "READY [endpoint_connected]");
 

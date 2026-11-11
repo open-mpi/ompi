@@ -489,12 +489,14 @@ final_agree:
 
     OBJ_DESTRUCT(&comm_info);
 
+#if OPAL_ENABLE_FT_MPI
     if (OMPI_SUCCESS != rc) {
         /**
          * Revoke the input communicator to ensure no process is stuck.
          */
         ompi_comm_revoke_internal(comm);
     }
+#endif /* OPAL_ENABLE_FT_MPI */
 
     /**
      * Agree that everyone has successfully created the sub-communicators.
@@ -529,7 +531,9 @@ final_agree:
         if (low_comms != NULL) {
             for(int i = 0; i < COLL_HAN_LOW_MODULES; i++) {
                 if (NULL != low_comms[i]) {
+#if OPAL_ENABLE_FT_MPI
                     ompi_comm_revoke_internal(low_comms[i]);
+#endif /* OPAL_ENABLE_FT_MPI */
                     ompi_comm_free(&low_comms[i]);
                 }
             }
@@ -539,7 +543,9 @@ final_agree:
         if (up_comms != NULL) {
             for(int i = 0; i < COLL_HAN_UP_MODULES; i++) {
                 if (NULL != up_comms[i]) {
+#if OPAL_ENABLE_FT_MPI
                     ompi_comm_revoke_internal(up_comms[i]);
+#endif /* OPAL_ENABLE_FT_MPI */
                     ompi_comm_free(&up_comms[i]);
                 }
             }
@@ -572,6 +578,10 @@ final_agree:
 int mca_coll_han_revoke_local(ompi_communicator_t *comm,
                               mca_coll_base_module_t *module)
 {
+    /* The hook is installed unconditionally, like the base one it is reached
+     * through, but only the fault-tolerant code revokes anything -- and
+     * ompi_comm_revoke_local() only exists when that code is built. */
+#if OPAL_ENABLE_FT_MPI
     // Note that this "coll" revokes the subcomms regardless of whether the
     // parent comm is "coll" revoked or "fully" revoked, so it is important
     // to only use collective tags on communication in these subcomms. Else,
@@ -594,5 +604,6 @@ int mca_coll_han_revoke_local(ompi_communicator_t *comm,
             ompi_comm_revoke_local(han_module->cached_up_comms[i], true);
         }
     }
+#endif /* OPAL_ENABLE_FT_MPI */
     return MPI_SUCCESS;
 }
