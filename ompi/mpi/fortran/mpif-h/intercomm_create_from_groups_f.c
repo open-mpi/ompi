@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -100,7 +101,11 @@ void ompi_intercomm_create_from_groups_f(MPI_Fint *local_group, MPI_Fint *local_
     /* Convert the fortran string */
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(stringtag, name_len,
                                                        &c_tag))) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(ompi_group_get_instance(c_lgroup), ret, "MPI_INTERCOMM_CREATE_FROM_GROUPS");
+        ompi_instance_t *c_instance = (NULL == c_lgroup)
+                                          ? NULL
+                                          : ompi_group_get_instance(c_lgroup);
+        c_ierr = OMPI_ERRHANDLER_INVOKE_OR_NOHANDLE(c_instance, ret,
+                                                    "MPI_INTERCOMM_CREATE_FROM_GROUPS");
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
