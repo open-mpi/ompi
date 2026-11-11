@@ -39,10 +39,10 @@ mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_scoll_ucc_la_SOURCES = $(scoll_ucc_sources)
 mca_scoll_ucc_la_LIBADD = $(top_builddir)/oshmem/liboshmem.la \
-	$(scoll_ucc_LIBS)
+	$(scoll_ucc_LIBS) $(scoll_ucc_COMMON_UCX_LIBS)
 mca_scoll_ucc_la_LDFLAGS = -module -avoid-version $(scoll_ucc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_scoll_ucc_la_SOURCES =$(scoll_ucc_sources)
-libmca_scoll_ucc_la_LIBADD = $(scoll_ucc_LIBS)
+libmca_scoll_ucc_la_LIBADD = $(scoll_ucc_LIBS) $(scoll_ucc_COMMON_UCX_LIBS)
 libmca_scoll_ucc_la_LDFLAGS = -module -avoid-version $(scoll_ucc_LDFLAGS)

@@ -18,6 +18,7 @@
 #                         and Technology (RIST).  All rights reserved.
 # Copyright (c) 2019      Triad National Security, LLC. All rights
 #                         reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -85,6 +86,9 @@ dnl
         CPPFLAGS="$CPPFLAGS_save"
         OPAL_VAR_SCOPE_POP
     fi
+
+    AS_IF([test "$btl_uct_happy" = "yes"],
+          [OPAL_MCA_CHECK_DEPENDENCY([opal], [btl], [uct], [opal], [common], [ucx])])
 
     AS_IF([test "$btl_uct_happy" = "yes"],
           [$1

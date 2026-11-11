@@ -11,6 +11,8 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
+dnl Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 dnl $COPYRIGHT$
 dnl
 dnl Additional copyrights may follow
@@ -19,8 +21,9 @@ dnl $HEADER$
 dnl SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 dnl
 
-dnl we only want one :)
-m4_define(MCA_opal_memory_CONFIGURE_MODE, STOP_AT_FIRST)
+dnl More than one component can be built (e.g., patcher and ucm); the
+dnl one that is used is chosen at run time, by priority, when the
+dnl framework is opened (see opal_memory_base_open()).
 
 AC_DEFUN([MCA_opal_memory_CONFIG],[
         AC_ARG_WITH([memory-manager],
@@ -35,13 +38,4 @@ AC_DEFUN([MCA_opal_memory_CONFIG],[
 
         AC_DEFINE_UNQUOTED([OPAL_MEMORY_HAVE_COMPONENT], [$memory_base_found],
             [Whether any opal memory mca components were found])
-
-        # See if someone set to use their header file
-        if test "$memory_base_include" = "" ; then
-            memory_base_include="base/empty.h"
-        fi
-
-        AC_DEFINE_UNQUOTED([MCA_memory_IMPLEMENTATION_HEADER],
-                           ["opal/mca/memory/$memory_base_include"],
-                           [Header to include for parts of the memory implementation])
 ])

@@ -8,7 +8,8 @@
  *                         reserved.
  * Copyright (c) 2022      Google, LLC. All rights reserved.
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
- * Copyright (c) 2023      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2023-2026 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -23,6 +24,7 @@
 #include "common_ucx.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/memory/memory.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/util/argv.h"
@@ -32,6 +34,8 @@
 #include "mpi.h"
 
 #include <fnmatch.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <ucm/api/ucm.h>
 
@@ -48,10 +52,98 @@ opal_common_ucx_module_t opal_common_ucx =
 };
 
 static opal_mutex_t opal_common_ucx_mutex = OPAL_MUTEX_STATIC_INIT;
+static bool opal_common_ucx_memory_open = false;
 
 static void opal_common_ucx_mem_release_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
 {
     ucm_vm_munmap(buf, length);
+}
+
+/* UCM -> OPAL events are forwarded (see opal_common_ucx_ucm_shadows_opal_hooks()) */
+static bool opal_common_ucx_ucm_to_opal = false;
+
+/* OPAL -> UCM events are forwarded (UCM was told, with ucm_set_external_event(), to expect them) */
+static bool opal_common_ucx_opal_to_ucm = false;
+
+/* UCM -> OPAL: used only when the UCM hooks sit on top of the OPAL patcher ones, so the OPAL
+ * hooks do not see anything by themselves anymore. UCM calls this before the memory is released. */
+static void opal_common_ucx_ucm_event_cb(ucm_event_type_t event_type, ucm_event_t *event,
+                                         void *arg)
+{
+    (void) event_type;
+    (void) arg;
+
+    opal_mem_hooks_release_hook(event->vm_unmapped.address, event->vm_unmapped.size, true);
+}
+
+/* Probe state: which of the two sets of hooks noticed the release of a large malloc() chunk */
+static void *opal_common_ucx_probe_buffer = NULL;
+static int opal_common_ucx_probe_opal_events = 0;
+static int opal_common_ucx_probe_ucm_events = 0;
+
+static void opal_common_ucx_probe_opal_cb(void *buf, size_t length, void *cbdata, bool from_alloc)
+{
+    (void) cbdata;
+    (void) from_alloc;
+
+    if ((char *) buf <= (char *) opal_common_ucx_probe_buffer
+        && (char *) opal_common_ucx_probe_buffer < (char *) buf + length) {
+        ++opal_common_ucx_probe_opal_events;
+    }
+}
+
+static void opal_common_ucx_probe_ucm_cb(ucm_event_type_t event_type, ucm_event_t *event,
+                                         void *arg)
+{
+    char *address = (char *) event->vm_unmapped.address;
+
+    (void) event_type;
+    (void) arg;
+
+    if (address <= (char *) opal_common_ucx_probe_buffer
+        && (char *) opal_common_ucx_probe_buffer < address + event->vm_unmapped.size) {
+        ++opal_common_ucx_probe_ucm_events;
+    }
+}
+
+/* True if the UCM hooks replaced the OPAL patcher ones: the release of memory is reported by UCM
+ * only. It happens if the memory framework was opened, and selected the patcher, before UCM was
+ * loaded in the process (e.g., by a component that does not depend on UCX). */
+static bool opal_common_ucx_ucm_shadows_opal_hooks(void)
+{
+    /* Go through volatile pointers so that the compiler cannot discard the malloc()/free() pair */
+    void *(*volatile probe_malloc)(size_t) = malloc;
+    void (*volatile probe_free)(void *) = free;
+    /* Large enough to always be served by mmap(), never touched so that it costs nothing */
+    const size_t length = (size_t) 64 * 1024 * 1024;
+
+    if (UCS_OK
+        != ucm_set_event_handler(UCM_EVENT_VM_UNMAPPED, 0, opal_common_ucx_probe_ucm_cb, NULL)) {
+        return false;
+    }
+    opal_mem_hooks_register_release(opal_common_ucx_probe_opal_cb, NULL);
+
+    opal_common_ucx_probe_opal_events = 0;
+    opal_common_ucx_probe_ucm_events = 0;
+    opal_common_ucx_probe_buffer = probe_malloc(length);
+    if (NULL != opal_common_ucx_probe_buffer) {
+        probe_free(opal_common_ucx_probe_buffer);
+        opal_common_ucx_probe_buffer = NULL;
+    }
+
+    opal_mem_hooks_unregister_release(opal_common_ucx_probe_opal_cb);
+    ucm_unset_event_handler(UCM_EVENT_VM_UNMAPPED, opal_common_ucx_probe_ucm_cb, NULL);
+
+    return 0 == opal_common_ucx_probe_opal_events && 0 < opal_common_ucx_probe_ucm_events;
+}
+
+/* True if the OPAL memory hooks are fed by UCM (the "ucm" memory component), i.e., UCM has its own
+ * hooks in the memory functions and OPAL listens to its events. The events then flow from UCM to
+ * the OPAL hooks, and must not be sent back to UCM. */
+static bool opal_common_ucx_memory_hooks_from_ucm(void)
+{
+    return NULL != opal_memory
+           && 0 == strcmp("ucm", opal_memory->memoryc_version.mca_component_name);
 }
 
 ucs_thread_mode_t opal_common_ucx_thread_mode(int ompi_mode)
@@ -192,6 +284,28 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
                                    ret);
             return;
         }
+        opal_common_ucx_memory_open = true;
+
+        if (opal_common_ucx_memory_hooks_from_ucm()) {
+            MCA_COMMON_UCX_VERBOSE(1, "%s", "OPAL memory hooks are fed by UCM, nothing to forward");
+            return;
+        }
+
+        if (0 != opal_mem_hooks_support_level() && opal_common_ucx_ucm_shadows_opal_hooks()) {
+            /* UCM was loaded after the memory framework selected another component, and its hooks
+             * replaced the ones of that component. Feed the OPAL hooks from UCM; sending the OPAL
+             * events to UCM would be pointless as OPAL does not see any. */
+            if (UCS_OK
+                == ucm_set_event_handler(UCM_EVENT_VM_UNMAPPED, 0, opal_common_ucx_ucm_event_cb,
+                                         NULL)) {
+                opal_common_ucx_ucm_to_opal = true;
+                opal_mem_hooks_set_support(OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
+                MCA_COMMON_UCX_VERBOSE(1, "%s",
+                                       "UCM hooks replaced the OPAL memory hooks, "
+                                       "feeding the OPAL memory hooks from UCM");
+            }
+            return;
+        }
 
         if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
             == ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
@@ -199,6 +313,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_register(void)
             MCA_COMMON_UCX_VERBOSE(1, "%s", "using OPAL memory hooks as external events");
             ucm_set_external_event(UCM_EVENT_VM_UNMAPPED);
             opal_mem_hooks_register_release(opal_common_ucx_mem_release_cb, NULL);
+            opal_common_ucx_opal_to_ucm = true;
         }
     }
 }
@@ -212,9 +327,17 @@ OPAL_DECLSPEC void opal_common_ucx_mca_deregister(void)
         return;
     }
     opal_mem_hooks_unregister_release(opal_common_ucx_mem_release_cb);
+    if (opal_common_ucx_ucm_to_opal) {
+        ucm_unset_event_handler(UCM_EVENT_VM_UNMAPPED, opal_common_ucx_ucm_event_cb, NULL);
+        opal_common_ucx_ucm_to_opal = false;
+        /* the OPAL hooks are not fed anymore */
+        opal_mem_hooks_set_support(0);
+    }
+    opal_common_ucx_opal_to_ucm = false;
     opal_output_close(opal_common_ucx.output);
-    if (opal_common_ucx.opal_mem_hooks) {
+    if (opal_common_ucx_memory_open) {
         mca_base_framework_close(&opal_memory_base_framework);
+        opal_common_ucx_memory_open = false;
     }
 }
 
@@ -404,9 +527,16 @@ static void opal_common_ucx_mca_test_events(void)
     ucs_status_t status;
 
     if (!warned) {
-        if (opal_common_ucx.opal_mem_hooks) {
+        if (opal_common_ucx_opal_to_ucm) {
+            /* UCM was told to expect the OPAL events, test that path */
             suggestion = "Please check OPAL memory events infrastructure.";
             status = opal_common_ucx_mca_test_external_events(UCM_EVENT_VM_UNMAPPED);
+        } else if (opal_common_ucx.opal_mem_hooks) {
+            /* UCM reports the events itself: the OPAL hooks are fed by UCM (memory/ucm or
+             * the late-UCM case), or the selected memory component does not report every release
+             * (e.g., kdreg2) and nothing is forwarded, so UCM keeps its own hooks */
+            suggestion = "Please check the UCM memory hooks.";
+            status = ucm_test_events(UCM_EVENT_VM_UNMAPPED);
         } else {
             suggestion = "Pls try adding --mca opal_common_ucx_opal_mem_hooks 1 "
                          "to mpirun/oshrun command line to resolve this issue.";
