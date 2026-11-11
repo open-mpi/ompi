@@ -376,7 +376,7 @@ opal/mca/event/libevent*/libevent/libevent_openssl.pc
 opal/mca/event/libevent*/libevent/libevent_pthreads.pc
 opal/mca/event/libevent*/libevent/include/event2/event-config.h
 
-opal/mca/installdirs/config/install_dirs.h
+opal/mca/installdirs/install_dirs.h
 
 opal/tools/wrappers/opalcc-wrapper-data.txt
 opal/tools/wrappers/opalc++-wrapper-data.txt

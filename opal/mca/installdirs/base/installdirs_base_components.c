@@ -5,6 +5,7 @@
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2025-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,8 +23,9 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/mca.h"
 
+#include "opal/mca/base/mca_base_var.h"
+
 #include <sys/stat.h>
-#include <errno.h>
 
 opal_install_dirs_t opal_install_dirs = {0};
 static int opal_install_dir_warn_if_non_existent = 0;
@@ -35,19 +37,22 @@ static int opal_install_dir_warn_if_non_existent = 0;
         }                                                   \
     } while (0)
 
-#define CHECK_AND_COMPLAIN(field) \
-    do { \
-        if(!directory_exists(opal_install_dirs.field)) { \
-            fprintf(stderr, #field ":         %s\n", opal_install_dirs.field); \
-        } \
+#define CHECK_AND_COMPLAIN(field)                                                       \
+    do {                                                                                \
+        if (!directory_exists(opal_install_dirs.field)) {                               \
+            opal_output(0, "Open MPI expected to find its %s at \"%s\", but that "      \
+                           "directory does not exist. Files installed there will not "  \
+                           "be found; set OPAL_PREFIX if this install tree was moved.", \
+                        #field, opal_install_dirs.field);                               \
+        }                                                                               \
     } while (0)
 
-static int directory_exists(const char *path)
+static bool directory_exists(const char *path)
 {
     struct stat info;
 
-    if (0 != stat(path, &info)) {
-        return 0;
+    if (NULL == path || 0 != stat(path, &info)) {
+        return false;
     }
     return S_ISDIR(info.st_mode);
 }
@@ -109,33 +114,48 @@ static int opal_installdirs_base_open(mca_base_open_flag_t flags)
     opal_install_dirs.opalincludedir = opal_install_dirs_expand_setup(
         opal_install_dirs.opalincludedir);
 
-    (void)mca_base_var_register("opal", "opal", "installdir", "warn",
-                                "Print a warning is any of the OMPI necessary paths cannot be found",
-                                MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
-                                MCA_BASE_VAR_SCOPE_READONLY, &opal_install_dir_warn_if_non_existent);
+    /* NTH: Is it ok not to close the components? If not we can add a flag
+       to mca_base_framework_components_close to indicate not to deregister
+       variable groups */
+    return OPAL_SUCCESS;
+}
 
-    if(opal_install_dir_warn_if_non_existent) {
+/* Registered from opal_register_util_params() rather than from the framework
+ * open above: installdirs is opened before mca_base_var_init(), because the
+ * variable system needs these paths to find its own files.  Registering a
+ * variable there would drag the whole variable system up with it. */
+int opal_installdirs_base_register_params(void)
+{
+    int ret;
+
+    ret = mca_base_var_register("opal", "opal", "installdir", "warn",
+                                "Warn about install directories that do not exist",
+                                MCA_BASE_VAR_TYPE_INT, NULL, 0, 0, OPAL_INFO_LVL_9,
+                                MCA_BASE_VAR_SCOPE_READONLY,
+                                &opal_install_dir_warn_if_non_existent);
+    if (0 > ret) {
+        return ret;
+    }
+
+    if (opal_install_dir_warn_if_non_existent) {
+        /* Only the directories Open MPI itself reads at run time: a missing
+         * one of these is what makes a relocated tree fail. The rest
+         * (sbindir, libexecdir, sharedstatedir, localstatedir, infodir) are
+         * install-time locations that a working job never consults. */
         CHECK_AND_COMPLAIN(prefix);
         CHECK_AND_COMPLAIN(exec_prefix);
         CHECK_AND_COMPLAIN(bindir);
-        //CHECK_AND_COMPLAIN(sbindir);
-        //CHECK_AND_COMPLAIN(libexecdir);
         CHECK_AND_COMPLAIN(datarootdir);
         CHECK_AND_COMPLAIN(datadir);
         CHECK_AND_COMPLAIN(sysconfdir);
-        //CHECK_AND_COMPLAIN(sharedstatedir);
-        //CHECK_AND_COMPLAIN(localstatedir);
         CHECK_AND_COMPLAIN(libdir);
         CHECK_AND_COMPLAIN(includedir);
-        //CHECK_AND_COMPLAIN(infodir);
         CHECK_AND_COMPLAIN(mandir);
         CHECK_AND_COMPLAIN(opaldatadir);
         CHECK_AND_COMPLAIN(opallibdir);
         CHECK_AND_COMPLAIN(opalincludedir);
     }
-    /* NTH: Is it ok not to close the components? If not we can add a flag
-       to mca_base_framework_components_close to indicate not to deregister
-       variable groups */
+
     return OPAL_SUCCESS;
 }
 
