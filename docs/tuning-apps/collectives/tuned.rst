@@ -406,7 +406,7 @@ Exscan (Id=8)
 
    0, "ignore", "Use fixed rules"
    1, "linear", "..."
-   2, "recursive_doubling", "..."
+   2, "recursive_doubling", "Large messages are pipelined as in Allreduce (commutative operations)."
 
 .. _Gather:
 
