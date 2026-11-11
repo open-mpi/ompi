@@ -909,6 +909,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
      * Save the maximum sizes.
      */
     mca_btl_ofi_component.max_inject_size = ofi_info->tx_attr->inject_size;
+#if OPAL_CUDA_GDR_SUPPORT
     if (MCA_BTL_OFI_MODE_TWO_SIDED == mca_btl_ofi_component.mode
         || MCA_BTL_OFI_MODE_FULL_SUPPORT == mca_btl_ofi_component.mode) {
         /* A device buffer sent eagerly is copied into a host fragment and out again on the
@@ -919,6 +920,7 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
             module->super.btl_accelerator_eager_limit = MCA_BTL_OFI_ACCELERATOR_EAGER_LIMIT;
         }
     }
+#endif /* OPAL_CUDA_GDR_SUPPORT */
 
     /* AV */
     av_attr.type = FI_AV_MAP;
