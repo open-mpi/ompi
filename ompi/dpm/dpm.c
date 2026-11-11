@@ -867,13 +867,66 @@ static int ompi_dpm_compare_names(const void *a, const void *b)
                              *(const opal_process_name_t *) b);
 }
 
+/* Convert a sorted list of names into the participants of a disconnect,
+ * naming any job the list holds in full by its wildcard.
+ *
+ * The host's record of what is connected is mostly made of wildcards:
+ * a connect from MPI_COMM_WORLD names its job that way, and so does the
+ * connection the runtime makes between a spawned job and its parent. A
+ * host can only treat a disconnect as dissolving such a record if the
+ * disconnect names the job the same way - a list of every rank is the
+ * same set of processes, but PMIx does not equate the two forms, and so
+ * neither may a host.
+ *
+ * Every participant must arrive at the same list, which holds because
+ * they all start from the same set of names and ask the same question
+ * of each job. The names are sorted, so a job's ranks are contiguous and
+ * ascending, and a communicator never names a process twice: a run of
+ * a job's names that is as long as the job, and starts at rank 0, is the
+ * whole job. A job whose size cannot be read is listed rank by rank. */
+static int ompi_dpm_disconnect_procs(const opal_process_name_t *names, size_t nnames,
+                                     pmix_proc_t **procs, size_t *nprocs)
+{
+    opal_process_name_t wildcard;
+    pmix_proc_t *out;
+    uint32_t jsize, *u32ptr;
+    size_t i, j, n = 0;
+    int rc;
+
+    PMIX_PROC_CREATE(out, nnames);
+    if (NULL == out) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    for (i = 0; i < nnames; i = j) {
+        for (j = i + 1; j < nnames && names[j].jobid == names[i].jobid; j++) {
+            continue;
+        }
+        wildcard.jobid = names[i].jobid;
+        wildcard.vpid = OPAL_VPID_WILDCARD;
+        u32ptr = &jsize;
+        OPAL_MODEX_RECV_VALUE(rc, PMIX_JOB_SIZE, &wildcard, &u32ptr, PMIX_UINT32);
+        if (PMIX_SUCCESS == rc && 0 == names[i].vpid && (size_t) jsize == j - i) {
+            OPAL_PMIX_CONVERT_NAME(&out[n], &wildcard);
+            ++n;
+            continue;
+        }
+        for (; i < j; i++) {
+            OPAL_PMIX_CONVERT_NAME(&out[n], &names[i]);
+            ++n;
+        }
+    }
+    *procs = out;
+    *nprocs = n;
+    return OMPI_SUCCESS;
+}
+
 int ompi_dpm_disconnect(ompi_communicator_t *comm)
 {
     int ret;
     pmix_status_t rc;
     opal_process_name_t *names;
     pmix_proc_t *procs;
-    size_t nprocs, n = 0;
+    size_t nprocs, n = 0, nentries;
 
     /* Note that we explicitly use an RTE-based barrier (vs. an MPI
        barrier).  See a lengthy comment in
@@ -904,24 +957,35 @@ int ompi_dpm_disconnect(ompi_communicator_t *comm)
     }
     assert(n == nprocs);
 
-    /* the procs must be handed to the fence in a consistent order to
+    /* the procs must be handed to the host in a consistent order to
      * ensure the tracker signatures match across all participants */
     qsort(names, nprocs, sizeof(opal_process_name_t), ompi_dpm_compare_names);
 
-    PMIX_PROC_CREATE(procs, nprocs);
-    if (NULL == procs) {
-        free(names);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for (n = 0; n < nprocs; n++) {
-        OPAL_PMIX_CONVERT_NAME(&procs[n], &names[n]);
-    }
+    ret = ompi_dpm_disconnect_procs(names, nprocs, &procs, &nentries);
     free(names);
+    if (OMPI_SUCCESS != ret) {
+        return ret;
+    }
 
-    /* ensure we tell the host RM to disconnect us - this
-     * is a blocking operation so just use a fence */
-    rc = PMIx_Fence(procs, nprocs, NULL, 0);
-    PMIX_PROC_FREE(procs, nprocs);
+    /* Tell the host that these procs are no longer connected. A fence
+     * would give us the barrier but leave the host believing they still
+     * were, and a host keeps that belief for a reason: it owes every
+     * process in a connected set an event when any member of it
+     * terminates. Built without ULFM, that event aborts the process that
+     * hears it, so a parent that outlived the children it had
+     * disconnected from would be killed by their normal exit; built with
+     * it, every one of those exits is still sent, and marks a peer failed
+     * that the application has already let go of.
+     *
+     * A host that cannot dissolve a connection, or that holds no record
+     * of this one, refuses the operation - and refuses it to every
+     * participant alike, since it is one collective - so all of them
+     * fall back to the barrier together. */
+    rc = PMIx_Disconnect(procs, nentries, NULL, 0);
+    if (PMIX_ERR_NOT_SUPPORTED == rc || PMIX_ERR_INVALID_OPERATION == rc) {
+        rc = PMIx_Fence(procs, nentries, NULL, 0);
+    }
+    PMIX_PROC_FREE(procs, nentries);
     if (PMIX_SUCCESS != rc) {
         ret = opal_pmix_convert_status(rc);
         OMPI_ERROR_LOG(ret);

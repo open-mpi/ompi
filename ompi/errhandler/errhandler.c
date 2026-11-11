@@ -459,45 +459,124 @@ typedef struct ompi_errhandler_event_s {
     pmix_info_t info[];
 } ompi_errhandler_event_t;
 
+/* The info array was copied in, data arrays and all, so it has to be
+ * destructed before the event is freed. */
+static void ompi_errhandler_event_release(ompi_errhandler_event_t *event)
+{
+    opal_event_del(&event->super);
+    for (int i = 0; i < event->nvalue; i++) {
+        PMIX_INFO_DESTRUCT(&event->info[i]);
+    }
+    free(event);
+}
+
+#if OPAL_ENABLE_FT_MPI
+static void ompi_errhandler_mark_failed(ompi_proc_t *proc, int status)
+{
+    if (NULL == proc) {
+        return; /* we are not 'MPI connected' with this proc. */
+    }
+    assert( !ompi_proc_is_sentinel(proc) );
+    ompi_errhandler_proc_failed_internal(proc, status, false);
+}
+
+/* Mark failed every process one entry of a fault event names.
+ *
+ * The runtime reports a departure as one process or, when every process
+ * of a job has gone, as that job's wildcard. A wildcard must not be
+ * looked up as a name: ompi_proc_for_name() builds a proc for any name in
+ * a job we know, so it would hand back a phantom whose rank is the
+ * wildcard, mark that failed, and leave the real ones untouched.
+ *
+ * Instead it is expanded to the procs we hold for that job, which for a
+ * job we connected to is all of them - a connect builds a proc for every
+ * remote member. Our own job is the exception: a rank we never spoke to
+ * exists only as a sentinel until something asks for it by name, so
+ * there every rank is asked for, exactly as a report naming each one
+ * would have. */
+static void ompi_errhandler_event_proc_failed(const pmix_proc_t *pproc, int status,
+                                              const opal_process_name_t *source)
+{
+    opal_process_name_t prc;
+    ompi_proc_t **procs;
+    size_t nprocs, n;
+    int rc;
+
+    OPAL_PMIX_CONVERT_PROCT(rc, &prc, (pmix_proc_t *) pproc);
+    if (OPAL_SUCCESS != rc) {
+        OPAL_ERROR_LOG(rc);
+        return;
+    }
+    OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
+        "%s ompi: proc %s reported dead by PMIx event handler (found at %s): %s",
+        OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
+        OPAL_NAME_PRINT(prc), OPAL_NAME_PRINT(*source),
+        PMIx_Error_string(status)));
+
+    if (OPAL_VPID_WILDCARD != prc.vpid) {
+        ompi_errhandler_mark_failed((ompi_proc_t *) ompi_proc_for_name(prc), status);
+        return;
+    }
+    if (prc.jobid == OMPI_PROC_MY_NAME->jobid) {
+        for (prc.vpid = 0; prc.vpid < ompi_process_info.num_procs; prc.vpid++) {
+            ompi_errhandler_mark_failed((ompi_proc_t *) ompi_proc_for_name(prc), status);
+        }
+        return;
+    }
+    procs = ompi_proc_all(&nprocs);
+    if (NULL == procs) {
+        OMPI_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        return;
+    }
+    for (n = 0; n < nprocs; n++) {
+        if (procs[n]->super.proc_name.jobid == prc.jobid) {
+            ompi_errhandler_mark_failed(procs[n], status);
+        }
+        OBJ_RELEASE(procs[n]);
+    }
+    free(procs);
+}
+#endif /* OPAL_ENABLE_FT_MPI */
+
 static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
     ompi_errhandler_event_t *event = (ompi_errhandler_event_t*) context;
     int status = event->status;
-    opal_process_name_t source = event->source;
-    opal_process_name_t prc;
-    int rc;
 #if OPAL_ENABLE_FT_MPI
+    opal_process_name_t source = event->source;
+    pmix_data_array_t *darray;
+    pmix_proc_t *pprocs;
+
     switch( status ) {
     case PMIX_ERR_PROC_TERM_WO_SYNC:
     case PMIX_ERR_PROC_ABORTED_BY_SIG:
     case PMIX_ERR_PROC_ABORTED: /* that is, proc aborted by pmix_abort */
+        /* A departure is reported as one PMIX_EVENT_AFFECTED_PROC - a
+         * process, or a job's wildcard once all of it has gone - or, for
+         * processes that departed together, as one PMIX_EVENT_AFFECTED_PROCS
+         * listing them. */
         for(int i = 0; i < event->nvalue; i++) {
-            if (strcmp(PMIX_EVENT_AFFECTED_PROC, event->info[i].key)) {
-                OPAL_OUTPUT_VERBOSE((70, ompi_ftmpi_output_handle,
-                    "%s ompi: ignoring the following key for a PMIx fault event: %s",
-                    OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                    event->info[i].key));
+            if (0 == strcmp(PMIX_EVENT_AFFECTED_PROC, event->info[i].key)) {
+                assert(event->info[i].value.type == PMIX_PROC);
+                ompi_errhandler_event_proc_failed(event->info[i].value.data.proc,
+                                                  status, &source);
                 continue;
             }
-            assert(event->info[i].value.type == PMIX_PROC);
-            OPAL_PMIX_CONVERT_PROCT(rc, &prc, event->info[i].value.data.proc);
-            if (OPAL_SUCCESS != rc) {
-                OPAL_ERROR_LOG(rc);
-                break;
+            if (0 == strcmp(PMIX_EVENT_AFFECTED_PROCS, event->info[i].key) &&
+                PMIX_DATA_ARRAY == event->info[i].value.type &&
+                NULL != (darray = event->info[i].value.data.darray) &&
+                PMIX_PROC == darray->type) {
+                pprocs = (pmix_proc_t *) darray->array;
+                for (size_t n = 0; n < darray->size; n++) {
+                    ompi_errhandler_event_proc_failed(&pprocs[n], status, &source);
+                }
+                continue;
             }
-            OPAL_OUTPUT_VERBOSE((5, ompi_ftmpi_output_handle,
-                "%s ompi: proc %s reported dead by PMIx event handler (found at %s): %s",
+            OPAL_OUTPUT_VERBOSE((70, ompi_ftmpi_output_handle,
+                "%s ompi: ignoring the following key for a PMIx fault event: %s",
                 OMPI_NAME_PRINT(OMPI_PROC_MY_NAME),
-                OPAL_NAME_PRINT(prc), OPAL_NAME_PRINT(source),
-                PMIx_Error_string(status)));
-            ompi_proc_t *proc = (ompi_proc_t*)ompi_proc_for_name(prc);
-            if( NULL == proc ) {
-                continue; /* we are not 'MPI connected' with this proc. */
-            }
-            assert( !ompi_proc_is_sentinel(proc) );
-            ompi_errhandler_proc_failed_internal(proc, status, false);
+                event->info[i].key));
         }
-        opal_event_del(&event->super);
-        free(event);
+        ompi_errhandler_event_release(event);
         return NULL;
     case PMIX_ERR_LOST_CONNECTION:
         opal_output_verbose(1, ompi_ftmpi_output_handle,
@@ -515,8 +594,7 @@ static void *ompi_errhandler_event_cb(int fd, int flags, void *context) {
             PMIx_Error_string(status));
     }
 #endif /* OPAL_ENABLE_FT_MPI */
-    opal_event_del(&event->super);
-    free(event);
+    ompi_errhandler_event_release(event);
     /* our default action is to abort */
     /* TODO: this error should store the error and later invoke an
      * error handler from an impacted MPI API call.
