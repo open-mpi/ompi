@@ -192,10 +192,13 @@ void ompi_pml_ob1_append_frag_to_ordered_list (mca_pml_ob1_recv_frag_t **queue,
     frag->super.super.opal_list_next->opal_list_prev = (opal_list_item_t*)frag;
     parent = frag;  /* the frag is not part of a range yet */
 
-    /* if the newly added element is closer to the next expected sequence mark it so */
-    if( parent->hdr.hdr_match.hdr_seq >= seq )
-        if( abs(parent->hdr.hdr_match.hdr_seq - seq) < abs((*queue)->hdr.hdr_match.hdr_seq - seq))
-            *queue = parent;
+    /* if the newly added element is closer to the next expected sequence mark it so.
+     * Measure the distance modulo 2^16: a frag that arrives just after hdr_seq
+     * wraps (seq 0 while 65535 is expected) is the closest one, and if it does
+     * not become the head nothing matches it once 65535 arrives. */
+    if( (uint16_t) (parent->hdr.hdr_match.hdr_seq - seq) <
+        (uint16_t) ((*queue)->hdr.hdr_match.hdr_seq - seq) )
+        *queue = parent;
 
  merge_ranges:
     /* is the next hdr_seq the increasing next one ? */
