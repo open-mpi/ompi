@@ -107,7 +107,33 @@ static inline void mca_fs_base_get_real_filename (const char *filename, char **r
     else {
         /* successfully read the link */
         linkbuf[namelen] = '\0'; /* readlink doesn't null terminate */
-        *rfilename = strdup(linkbuf);
+        if ('/' == linkbuf[0]) {
+            /* absolute symlink target — use directly */
+            *rfilename = strdup(linkbuf);
+        } else {
+            /* Relative symlink target: resolve relative to the directory
+             * that contains the symlink, not the current working directory.
+             * Find the last '/' in the symlink path itself. */
+            const char *slash = strrchr(filename, '/');
+            if (NULL == slash) {
+                /* Symlink is in the current directory; relative target is
+                 * already correct relative to CWD. */
+                *rfilename = strdup(linkbuf);
+            } else {
+                /* Prepend the directory portion (up to and including the
+                 * last '/') of the symlink path to the relative target. */
+                size_t dir_len = (size_t)(slash - filename) + 1; /* include '/' */
+                size_t link_len = (size_t) namelen;
+                char *full_path = (char *) malloc(dir_len + link_len + 1);
+                if (NULL == full_path) {
+                    *rfilename = strdup(filename);
+                } else {
+                    memcpy(full_path, filename, dir_len);
+                    memcpy(full_path + dir_len, linkbuf, link_len + 1);
+                    *rfilename = full_path;
+                }
+            }
+        }
     }
 }
 
