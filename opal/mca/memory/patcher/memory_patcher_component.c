@@ -18,6 +18,7 @@
  * Copyright (c) 2016-2020 IBM Corporation.  All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -603,9 +604,6 @@ static int patcher_open(void)
         return OPAL_ERR_NOT_AVAILABLE;
     }
 
-    /* set memory hooks support level */
-    opal_mem_hooks_set_support(OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
-
 #if defined(SYS_mmap)
     rc = opal_patcher->patch_symbol("mmap", (uintptr_t) intercept_mmap,
                                     (uintptr_t *) &original_mmap);
@@ -666,6 +664,11 @@ static int patcher_open(void)
         goto err_patching;
     }
 
+    /* every function is patched: the hooks are now guaranteed to be called, so advertise them. This
+     * must not be done earlier, other components trust the support level (e.g., to decide that a
+     * registration cache can be kept valid). */
+    opal_mem_hooks_set_support(OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT);
+
     return OPAL_SUCCESS;
 
 err_patching:
@@ -673,6 +676,7 @@ err_patching:
        directly return OPAL_SUCCESS if we call patcher_open() again. */
     was_executed_already = 0;
     opal_patcher_base_restore_all();
+    opal_mem_hooks_set_support(0);
 
     return rc;
 }

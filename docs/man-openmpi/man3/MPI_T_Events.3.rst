@@ -423,9 +423,13 @@ Memory-release events
 ``ompi.mca.memory.patcher.released``
    Source ``ompi.unordered``; level 4. Present only where the ``ompi.unordered``
    source is (see above). It reports memory returned to the operating system, as
-   observed by Open MPI's memory-release hooks (the "patcher" memory component,
-   which intercepts ``munmap``, ``mremap``, ``madvise``, ``brk`` / ``sbrk``
-   shrink, and SysV ``shmdt``). Payload (2 elements, both ``uint64``):
+   observed by Open MPI's memory-release hooks. Those are provided by the active
+   memory component: either "patcher", which intercepts ``munmap``, ``mremap``,
+   ``madvise``, ``brk`` / ``sbrk`` shrink, and SysV ``shmdt``; or "ucm", which is
+   used instead when the UCX memory event layer has already hooked the C library
+   memory functions, and which reports the same releases (plus, for example,
+   an ``mmap`` with ``MAP_FIXED`` over an existing mapping). The event keeps the name
+   ``patcher`` in both cases. Payload (2 elements, both ``uint64``):
 
    * ``count`` -- the number of release operations aggregated since the previous
      delivery.
