@@ -115,6 +115,14 @@ ompi_coll_base_allreduce_recd_partial_to_scratch(char **tmpsend, char *tmprecv,
     return MPI_SUCCESS;
 }
 
+/* True if buf is one of the two scratch buffers (rbuf or inplacebuf), which can
+ * be written. The user send buffer is not. */
+static inline bool
+ompi_coll_base_allreduce_recd_is_scratch(const char *buf, const char *inplacebuf, const char *rbuf)
+{
+    return (buf == rbuf) || (buf == inplacebuf);
+}
+
 /* The scratch that does not hold the running partial. Never the user buffer. */
 static inline char *
 ompi_coll_base_allreduce_recd_other(char *buf, char *inplacebuf, char *rbuf)
@@ -123,6 +131,25 @@ ompi_coll_base_allreduce_recd_other(char *buf, char *inplacebuf, char *rbuf)
         return inplacebuf;
     }
     return rbuf;
+}
+
+/*
+ * Reduction of one segment in a segmented exchange of recursive doubling for
+ * a commutative operation: inout = in op inout.
+ */
+typedef struct {
+    struct ompi_op_t *op;
+    struct ompi_datatype_t *dtype;
+    char *in;
+    char *inout;
+} ompi_coll_base_allreduce_recd_segment_t;
+
+static void
+ompi_coll_base_allreduce_recd_segment_reduce(void *ctx, ptrdiff_t offset, size_t count)
+{
+    ompi_coll_base_allreduce_recd_segment_t *seg = (ompi_coll_base_allreduce_recd_segment_t *) ctx;
+
+    ompi_op_reduce(seg->op, seg->in + offset, seg->inout + offset, count, seg->dtype);
 }
 
 /*
@@ -178,6 +205,8 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     int newrank, newremote, extra_ranks;
     char *tmpsend = NULL, *tmprecv = NULL, *inplacebuf_free = NULL, *inplacebuf = NULL;
     ptrdiff_t span, gap = 0;
+    const bool commute = ompi_op_is_commute(op);
+    int nsegs = 1;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -235,16 +264,28 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
                                     MCA_COLL_BASE_TAG_ALLREDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-            /* tmpsend = tmprecv (op) tmpsend */
-            ret = ompi_coll_base_allreduce_recd_partial_to_scratch(&tmpsend, tmprecv, inplacebuf,
-                                                                   (char *) rbuf, count, dtype);
-            if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-            ompi_op_reduce(op, tmprecv, tmpsend, count, dtype);
+            if (commute && !ompi_coll_base_allreduce_recd_is_scratch(tmpsend, inplacebuf, (char *) rbuf)) {
+                /* The partial is still in the user send buffer and the
+                 * operation is commutative: reduce it into the received data
+                 * rather than copying it first. */
+                ompi_op_reduce(op, tmpsend, tmprecv, count, dtype);
+                tmpsend = tmprecv;
+            } else {
+                /* tmpsend = tmprecv (op) tmpsend */
+                ret = ompi_coll_base_allreduce_recd_partial_to_scratch(&tmpsend, tmprecv, inplacebuf,
+                                                                       (char *) rbuf, count, dtype);
+                if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
+                ompi_op_reduce(op, tmprecv, tmpsend, count, dtype);
+            }
             tmprecv = ompi_coll_base_allreduce_recd_other(tmpsend, inplacebuf, (char *) rbuf);
             newrank = rank >> 1;
         }
     } else {
         newrank = rank - extra_ranks;
+    }
+
+    if (commute) {
+        nsegs = ompi_coll_base_recdoubling_nsegs(count, dtype);
     }
 
     /* Communication/Computation loop
@@ -259,6 +300,28 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
         remote = (newremote < extra_ranks)?
             (newremote * 2 + 1):(newremote + extra_ranks);
 
+        if (nsegs > 1) {
+            /* Segmented exchange: the reduction of a segment overlaps the
+             * transfer of the following ones. Commutative operations only. */
+            bool into_recv = !ompi_coll_base_allreduce_recd_is_scratch(tmpsend, inplacebuf, (char *) rbuf);
+            ompi_coll_base_allreduce_recd_segment_t seg_ctx = {
+                op, dtype,
+                into_recv ? tmpsend : tmprecv,    /* in */
+                into_recv ? tmprecv : tmpsend     /* inout */
+            };
+
+            ret = ompi_coll_base_segmented_sendrecv(tmpsend, tmprecv, count, dtype, remote,
+                                                    MCA_COLL_BASE_TAG_ALLREDUCE, comm, nsegs,
+                                                    ompi_coll_base_allreduce_recd_segment_reduce,
+                                                    &seg_ctx);
+            if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
+            if (into_recv) {
+                tmpsend = tmprecv;
+            }
+            tmprecv = ompi_coll_base_allreduce_recd_other(tmpsend, inplacebuf, (char *) rbuf);
+            continue;
+        }
+
         /* Exchange the data */
         ret = ompi_coll_base_sendrecv_actual(tmpsend, count, dtype, remote,
                                              MCA_COLL_BASE_TAG_ALLREDUCE,
@@ -267,10 +330,15 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
                                              comm, MPI_STATUS_IGNORE);
         if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
-        /* Apply operation. The lower rank is the left operand, same as before.
-         * After the op the partial sits in one scratch and the next receive
-         * uses the other, so the user send buffer is never written. */
-        if (rank < remote) {
+        /* Apply operation. The user send buffer is never written.
+         * Non-commutative operations keep the order of the operands: the lower
+         * rank holds the left one. A commutative operation can choose: while
+         * the partial is still in the user send buffer it is reduced into the
+         * received data (no copy), afterwards it is reduced in place in the
+         * scratch buffer that holds it (no copy, and no buffer swap, so the
+         * result ends up in rbuf). */
+        if (commute ? !ompi_coll_base_allreduce_recd_is_scratch(tmpsend, inplacebuf, (char *) rbuf)
+                    : (rank < remote)) {
             /* tmprecv = tmpsend (op) tmprecv */
             ompi_op_reduce(op, tmpsend, tmprecv, count, dtype);
             tmpsend = tmprecv;
@@ -322,34 +390,32 @@ ompi_coll_base_allreduce_intra_recursivedoubling(const void *sbuf, void *rbuf,
     return ret;
 }
 
-/*
- * Copy src into dst except the element range [skip_offset, skip_offset +
- * skip_count). That range is sent from src and later overwritten in dst.
- */
-static int
-ompi_coll_base_allreduce_copy_excluding(const void *src, void *dst, size_t count,
-                                        ptrdiff_t extent, ptrdiff_t skip_offset,
-                                        size_t skip_count, struct ompi_datatype_t *dtype)
+/* Offset (in elements) of a ring block */
+static inline ptrdiff_t
+ompi_coll_base_allreduce_ring_block_offset(int block, int split_rank,
+                                           int early_segcount, int late_segcount)
 {
-    int ret = MPI_SUCCESS;
-    size_t prefix = (size_t) skip_offset;
+    return (block < split_rank) ? ((ptrdiff_t) block * early_segcount)
+                                : ((ptrdiff_t) block * late_segcount + split_rank);
+}
 
-    if (0 < skip_offset) {
-        ret = ompi_datatype_copy_content_same_ddt(dtype, prefix,
-                                                   (char *) dst, (char *) src);
-        if (MPI_SUCCESS != ret) {
-            return ret;
-        }
-    }
-    if ((prefix + skip_count) < count) {
-        size_t tail = count - (prefix + skip_count);
-        ptrdiff_t off = (ptrdiff_t) (prefix + skip_count) * extent;
+/* Offset (in elements) and count of one phase's segment of a ring block, for
+ * the segmented ring (each block is split into num_phases segments) */
+static inline void
+ompi_coll_base_allreduce_ring_segment(int block, int phase, int split_rank,
+                                      int early_blockcount, int late_blockcount,
+                                      int num_phases, ptrdiff_t *offset, int *seg_count)
+{
+    int block_count = (block < split_rank) ? early_blockcount : late_blockcount;
+    int split_phase, early_segcount, late_segcount;
 
-        ret = ompi_datatype_copy_content_same_ddt(dtype, tail,
-                                                   (char *) dst + off,
-                                                   (char *) src + off);
-    }
-    return ret;
+    COLL_BASE_COMPUTE_BLOCKCOUNT(block_count, num_phases, split_phase,
+                                 early_segcount, late_segcount)
+    *seg_count = (phase < split_phase) ? early_segcount : late_segcount;
+    *offset = ompi_coll_base_allreduce_ring_block_offset(block, split_rank,
+                                                         early_blockcount, late_blockcount)
+              + ompi_coll_base_allreduce_ring_block_offset(phase, split_phase,
+                                                           early_segcount, late_segcount);
 }
 
 /*
@@ -430,6 +496,7 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
     ptrdiff_t true_lb, true_extent, lb, extent;
     ptrdiff_t block_offset, max_real_segsize;
     ompi_request_t *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
+    bool direct;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -488,28 +555,26 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
     max_segcount = early_segcount;
     max_real_segsize = true_extent + (max_segcount - 1) * extent;
 
-
-    inbuf[0] = (char*)malloc(max_real_segsize);
-    if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
-    if (size > 2) {
-        inbuf[1] = (char*)malloc(max_real_segsize);
-        if (NULL == inbuf[1]) { ret = -1; line = __LINE__; goto error_hndl; }
+    /* The operation is commutative, so the local contribution does not have
+       to be the right-hand operand. Unless MPI_IN_PLACE is used, the
+       incoming blocks are received straight into rbuf and reduced with the
+       matching block of sbuf (rbuf[block] = sbuf[block] op rbuf[block]).
+       Neither the local data nor the incoming blocks need a copy or a
+       temporary buffer. Our own block is sent from sbuf and the allgather
+       fills it in rbuf later. With MPI_IN_PLACE rbuf holds the local data,
+       so the incoming blocks need temporary buffers. */
+    direct = (MPI_IN_PLACE != sbuf);
+    if (!direct) {
+        inbuf[0] = (char*)malloc(max_real_segsize);
+        if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
+        if (size > 2) {
+            inbuf[1] = (char*)malloc(max_real_segsize);
+            if (NULL == inbuf[1]) { ret = -1; line = __LINE__; goto error_hndl; }
+        }
     }
-
-    /* Local data is the right-hand operand of every block reduction
-       (rbuf[block] = incoming op rbuf[block]). Copy every block except
-       ours: that block is sent from the user buffer and the allgather
-       overwrites it. MPI_IN_PLACE already holds the data in rbuf. */
-    block_offset = ((rank < split_rank)?
-                    ((ptrdiff_t)rank * (ptrdiff_t)early_segcount) :
-                    ((ptrdiff_t)rank * (ptrdiff_t)late_segcount + split_rank));
+    block_offset = ompi_coll_base_allreduce_ring_block_offset(rank, split_rank,
+                                                              early_segcount, late_segcount);
     block_count = ((rank < split_rank)? early_segcount : late_segcount);
-    if (MPI_IN_PLACE != sbuf) {
-        ret = ompi_coll_base_allreduce_copy_excluding(sbuf, rbuf, count, extent,
-                                                       block_offset,
-                                                       (size_t) block_count, dtype);
-        if (ret < 0) { line = __LINE__; goto error_hndl; }
-    }
 
     /* Computation loop */
 
@@ -533,8 +598,15 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
 
     inbi = 0;
     /* Initialize first receive from the neighbor on the left */
-    ret = MCA_PML_CALL(irecv(inbuf[inbi], max_segcount, dtype, recv_from,
-                             MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+    if (direct) {
+        const int first = (rank + size - 1) % size;
+        ret = MCA_PML_CALL(irecv((char *) rbuf + ompi_coll_base_allreduce_ring_block_offset(first, split_rank, early_segcount, late_segcount) * extent,
+                                 (first < split_rank) ? early_segcount : late_segcount,
+                                 dtype, recv_from, MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+    } else {
+        ret = MCA_PML_CALL(irecv(inbuf[inbi], max_segcount, dtype, recv_from,
+                                 MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+    }
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
     /* Send first block (my block) to the neighbor on the right.
        Not copied into rbuf; the allgather writes that block later. */
@@ -550,8 +622,15 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
         inbi = inbi ^ 0x1;
 
         /* Post irecv for the current block */
-        ret = MCA_PML_CALL(irecv(inbuf[inbi], max_segcount, dtype, recv_from,
-                                 MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+        if (direct) {
+            const int curr = (rank + size - k) % size;
+            ret = MCA_PML_CALL(irecv((char *) rbuf + ompi_coll_base_allreduce_ring_block_offset(curr, split_rank, early_segcount, late_segcount) * extent,
+                                     (curr < split_rank) ? early_segcount : late_segcount,
+                                     dtype, recv_from, MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+        } else {
+            ret = MCA_PML_CALL(irecv(inbuf[inbi], max_segcount, dtype, recv_from,
+                                     MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
+        }
         if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
         /* Wait on previous block to arrive */
@@ -560,13 +639,15 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
 
         /* Apply operation on previous block: result goes to rbuf
            rbuf[prevblock] = inbuf[inbi ^ 0x1] (op) rbuf[prevblock]
+           or, when received directly into rbuf, rbuf[prevblock] = sbuf[prevblock] (op) rbuf[prevblock]
         */
         block_offset = ((prevblock < split_rank)?
                         ((ptrdiff_t)prevblock * early_segcount) :
                         ((ptrdiff_t)prevblock * late_segcount + split_rank));
         block_count = ((prevblock < split_rank)? early_segcount : late_segcount);
         tmprecv = ((char*)rbuf) + (ptrdiff_t)block_offset * extent;
-        ompi_op_reduce(op, inbuf[inbi ^ 0x1], tmprecv, block_count, dtype);
+        ompi_op_reduce(op, direct ? (char *) sbuf + block_offset * extent : inbuf[inbi ^ 0x1],
+                       tmprecv, block_count, dtype);
 
         /* send previous block to send_to */
         ret = MCA_PML_CALL(send(tmprecv, block_count, dtype, send_to,
@@ -587,7 +668,8 @@ ompi_coll_base_allreduce_intra_ring(const void *sbuf, void *rbuf, size_t count,
                     ((ptrdiff_t)recv_from * late_segcount + split_rank));
     block_count = ((recv_from < split_rank)? early_segcount : late_segcount);
     tmprecv = ((char*)rbuf) + (ptrdiff_t)block_offset * extent;
-    ompi_op_reduce(op, inbuf[inbi], tmprecv, block_count, dtype);
+    ompi_op_reduce(op, direct ? (char *) sbuf + block_offset * extent : inbuf[inbi],
+                   tmprecv, block_count, dtype);
 
     /* Distribution loop - variation of ring allgather */
     send_to = (rank + 1) % size;
@@ -726,7 +808,8 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size
     size_t typelng, segcount, max_segcount;
     char *tmpsend = NULL, *tmprecv = NULL, *inbuf[2] = {NULL, NULL};
     char *my_base = NULL;
-    ptrdiff_t block_offset, max_real_segsize;
+    bool direct;
+    ptrdiff_t max_real_segsize;
     ompi_request_t *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
     ptrdiff_t lb, extent, gap;
 
@@ -793,42 +876,32 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
      max_real_segsize = opal_datatype_span(&dtype->super, max_segcount, &gap);
 
-    /* Allocate and initialize temporary buffers */
-    inbuf[0] = (char*)malloc(max_real_segsize);
-    if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
-    if (size > 2) {
-        inbuf[1] = (char*)malloc(max_real_segsize);
-        if (NULL == inbuf[1]) { ret = -1; line = __LINE__; goto error_hndl; }
-    }
-
-    /* Same operand order as the plain ring: rbuf[block] = incoming op
-       rbuf[block]. Our own block is sent from the user buffer a phase at
-       a time and replaced by the allgather, so it is not copied. */
-    block_offset = ((rank < split_rank)?
-                    ((ptrdiff_t)rank * (ptrdiff_t)early_blockcount) :
-                    ((ptrdiff_t)rank * (ptrdiff_t)late_blockcount + split_rank));
-    block_count = ((rank < split_rank)? early_blockcount : late_blockcount);
-    if (MPI_IN_PLACE != sbuf) {
-        ret = ompi_coll_base_allreduce_copy_excluding(sbuf, rbuf, count, extent,
-                                                       block_offset,
-                                                       (size_t) block_count, dtype);
-        if (ret < 0) { line = __LINE__; goto error_hndl; }
-        my_base = (char *) sbuf;
-    } else {
-        my_base = (char *) rbuf;
+    /* Out of place, the incoming segments are received straight into rbuf and
+       combined with the local data: rbuf[seg] = sbuf[seg] (op) rbuf[seg]. This
+       needs neither temporary buffers nor a copy of sbuf into rbuf, and the
+       operation reads only two buffers. Our own block is sent from sbuf and
+       replaced by the allgather. In place, rbuf already holds the local data
+       so the incoming segments need temporary buffers. */
+    direct = (MPI_IN_PLACE != sbuf);
+    my_base = (char *) (direct ? sbuf : rbuf);
+    if (!direct) {
+        inbuf[0] = (char*)malloc(max_real_segsize);
+        if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
+        if (size > 2) {
+            inbuf[1] = (char*)malloc(max_real_segsize);
+            if (NULL == inbuf[1]) { ret = -1; line = __LINE__; goto error_hndl; }
+        }
     }
 
     /* Computation loop: for each phase, repeat ring allreduce computation loop */
     for (phase = 0; phase < num_phases; phase ++) {
-        ptrdiff_t phase_offset;
-        int early_phase_segcount, late_phase_segcount, split_phase, phase_count;
+        ptrdiff_t seg_offset;
+        int seg_count;
 
         /*
            For each of the remote nodes:
            - post irecv for block (r-1)
            - send block (r)
-           To do this, first compute block offset and count, and use block offset
-           to compute phase offset.
            - in loop for every step k = 2 .. n
            - post irecv for block (r + n - k) % n
            - wait on block (r + n - k + 1) % n to arrive
@@ -836,45 +909,43 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size
            - send block (r + n - k + 1) % n
            - wait on block (r + 1)
            - compute on block (r + 1)
-           - send block (r + 1) to rank (r + 1)
-           Note that we must be careful when computing the beginning of buffers and
-           for send operations and computation we must compute the exact block size.
         */
         send_to = (rank + 1) % size;
         recv_from = (rank + size - 1) % size;
 
         inbi = 0;
         /* Initialize first receive from the neighbor on the left */
-        ret = MCA_PML_CALL(irecv(inbuf[inbi], max_segcount, dtype, recv_from,
+        ompi_coll_base_allreduce_ring_segment(recv_from, phase, split_rank,
+                                              early_blockcount, late_blockcount,
+                                              num_phases, &seg_offset, &seg_count);
+        ret = MCA_PML_CALL(irecv(direct ? (char *) rbuf + seg_offset * extent : inbuf[inbi],
+                                 direct ? (size_t) seg_count : max_segcount,
+                                 dtype, recv_from,
                                  MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
         if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-        /* Send first block (my block) to the neighbor on the right:
-           - compute my block and phase offset
-           - send data */
-        block_offset = ((rank < split_rank)?
-                        ((ptrdiff_t)rank * (ptrdiff_t)early_blockcount) :
-                        ((ptrdiff_t)rank * (ptrdiff_t)late_blockcount + split_rank));
-        block_count = ((rank < split_rank)? early_blockcount : late_blockcount);
-        COLL_BASE_COMPUTE_BLOCKCOUNT(block_count, num_phases, split_phase,
-                                      early_phase_segcount, late_phase_segcount)
-        phase_count = ((phase < split_phase)?
-                       (early_phase_segcount) : (late_phase_segcount));
-        phase_offset = ((phase < split_phase)?
-                        ((ptrdiff_t)phase * (ptrdiff_t)early_phase_segcount) :
-                        ((ptrdiff_t)phase * (ptrdiff_t)late_phase_segcount + split_phase));
-        tmpsend = my_base + (ptrdiff_t)(block_offset + phase_offset) * extent;
-        ret = MCA_PML_CALL(send(tmpsend, phase_count, dtype, send_to,
+
+        /* Send first block (my block) to the neighbor on the right */
+        ompi_coll_base_allreduce_ring_segment(rank, phase, split_rank,
+                                              early_blockcount, late_blockcount,
+                                              num_phases, &seg_offset, &seg_count);
+        ret = MCA_PML_CALL(send(my_base + seg_offset * extent, seg_count, dtype, send_to,
                                 MCA_COLL_BASE_TAG_ALLREDUCE,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
         if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
         for (k = 2; k < size; k++) {
             const int prevblock = (rank + size - k + 1) % size;
+            const int nextblock = (rank + size - k) % size;
 
             inbi = inbi ^ 0x1;
 
             /* Post irecv for the current block */
-            ret = MCA_PML_CALL(irecv(inbuf[inbi], max_segcount, dtype, recv_from,
+            ompi_coll_base_allreduce_ring_segment(nextblock, phase, split_rank,
+                                                  early_blockcount, late_blockcount,
+                                                  num_phases, &seg_offset, &seg_count);
+            ret = MCA_PML_CALL(irecv(direct ? (char *) rbuf + seg_offset * extent : inbuf[inbi],
+                                     direct ? (size_t) seg_count : max_segcount,
+                                     dtype, recv_from,
                                      MCA_COLL_BASE_TAG_ALLREDUCE, comm,
                                      &reqs[inbi]));
             if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
@@ -883,26 +954,16 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size
             ret = ompi_request_wait(&reqs[inbi ^ 0x1], MPI_STATUS_IGNORE);
             if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
-            /* Apply operation on previous block: result goes to rbuf
-               rbuf[prevblock] = inbuf[inbi ^ 0x1] (op) rbuf[prevblock]
-            */
-            block_offset = ((prevblock < split_rank)?
-                            ((ptrdiff_t)prevblock * (ptrdiff_t)early_blockcount) :
-                            ((ptrdiff_t)prevblock * (ptrdiff_t)late_blockcount + split_rank));
-            block_count = ((prevblock < split_rank)?
-                           early_blockcount : late_blockcount);
-            COLL_BASE_COMPUTE_BLOCKCOUNT(block_count, num_phases, split_phase,
-                                          early_phase_segcount, late_phase_segcount)
-                phase_count = ((phase < split_phase)?
-                               (early_phase_segcount) : (late_phase_segcount));
-            phase_offset = ((phase < split_phase)?
-                            ((ptrdiff_t)phase * (ptrdiff_t)early_phase_segcount) :
-                            ((ptrdiff_t)phase * (ptrdiff_t)late_phase_segcount + split_phase));
-            tmprecv = ((char*)rbuf) + (ptrdiff_t)(block_offset + phase_offset) * extent;
-            ompi_op_reduce(op, inbuf[inbi ^ 0x1], tmprecv, phase_count, dtype);
+            /* Apply operation on previous block: result goes to rbuf */
+            ompi_coll_base_allreduce_ring_segment(prevblock, phase, split_rank,
+                                                  early_blockcount, late_blockcount,
+                                                  num_phases, &seg_offset, &seg_count);
+            tmprecv = (char *) rbuf + seg_offset * extent;
+            ompi_op_reduce(op, direct ? my_base + seg_offset * extent : inbuf[inbi ^ 0x1],
+                           tmprecv, seg_count, dtype);
 
             /* send previous block to send_to */
-            ret = MCA_PML_CALL(send(tmprecv, phase_count, dtype, send_to,
+            ret = MCA_PML_CALL(send(tmprecv, seg_count, dtype, send_to,
                                     MCA_COLL_BASE_TAG_ALLREDUCE,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
             if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
@@ -912,23 +973,14 @@ ompi_coll_base_allreduce_intra_ring_segmented(const void *sbuf, void *rbuf, size
         ret = ompi_request_wait(&reqs[inbi], MPI_STATUS_IGNORE);
         if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
-        /* Apply operation on the last block (from neighbor (rank + 1)
-           rbuf[rank+1] = inbuf[inbi] (op) rbuf[rank + 1] */
+        /* Apply operation on the last block (from neighbor (rank + 1)) */
         recv_from = (rank + 1) % size;
-        block_offset = ((recv_from < split_rank)?
-                        ((ptrdiff_t)recv_from * (ptrdiff_t)early_blockcount) :
-                        ((ptrdiff_t)recv_from * (ptrdiff_t)late_blockcount + split_rank));
-        block_count = ((recv_from < split_rank)?
-                       early_blockcount : late_blockcount);
-        COLL_BASE_COMPUTE_BLOCKCOUNT(block_count, num_phases, split_phase,
-                                      early_phase_segcount, late_phase_segcount)
-            phase_count = ((phase < split_phase)?
-                           (early_phase_segcount) : (late_phase_segcount));
-        phase_offset = ((phase < split_phase)?
-                        ((ptrdiff_t)phase * (ptrdiff_t)early_phase_segcount) :
-                        ((ptrdiff_t)phase * (ptrdiff_t)late_phase_segcount + split_phase));
-        tmprecv = ((char*)rbuf) + (ptrdiff_t)(block_offset + phase_offset) * extent;
-        ompi_op_reduce(op, inbuf[inbi], tmprecv, phase_count, dtype);
+        ompi_coll_base_allreduce_ring_segment(recv_from, phase, split_rank,
+                                              early_blockcount, late_blockcount,
+                                              num_phases, &seg_offset, &seg_count);
+        tmprecv = (char *) rbuf + seg_offset * extent;
+        ompi_op_reduce(op, direct ? my_base + seg_offset * extent : inbuf[inbi],
+                       tmprecv, seg_count, dtype);
     }
 
     /* Distribution loop - variation of ring allgather */
@@ -1032,33 +1084,45 @@ ompi_coll_base_allreduce_intra_basic_linear(const void *sbuf, void *rbuf, size_t
 }
 
 /*
- * Fold one slice of a Rabenseifner allreduce.
- *
- * Received data is the left operand and the running partial is the right
- * operand (rbuf = received op partial). The user send buffer must not be
- * written, so a partial that still lives there is copied into rbuf for this
- * slice only. The sent half is not copied. After the first fold the window
- * shrinks to the reduced slice, which now lives in rbuf. MPI_IN_PLACE
- * already has the partial in rbuf.
+ * Where to receive a slice of a Rabenseifner allreduce. While the partial
+ * still lives in the user send buffer, the slice is received straight into
+ * rbuf, where the fold below reduces it with the local slice without any
+ * copy. Once the partial lives in rbuf (MPI_IN_PLACE, or after the first
+ * fold) the slice goes to the temporary buffer.
  */
-static int
+static inline char *
+ompi_coll_base_allreduce_redscat_recv_target(const char *partial, char *rbuf, char *tmp_buf,
+                                             ptrdiff_t offset)
+{
+    return ((partial != rbuf) ? rbuf : tmp_buf) + offset;
+}
+
+/*
+ * Fold one slice of a Rabenseifner allreduce into rbuf.
+ *
+ * If the partial still lives in the user send buffer, the slice has been
+ * received into rbuf and rbuf = partial op rbuf. Otherwise the slice is in
+ * the temporary buffer and rbuf = received op rbuf. The algorithm is only
+ * used for commutative operations, so the order of the operands does not
+ * matter. The user send buffer is never written. After the first fold the
+ * window shrinks to the reduced slice, which lives in rbuf.
+ */
+static inline void
 ompi_coll_base_allreduce_redscat_fold(struct ompi_op_t *op, char **partial, char *rbuf,
                                       char *received, ptrdiff_t offset, size_t count,
                                       struct ompi_datatype_t *dtype)
 {
     char *out = rbuf + offset;
-    int err;
 
     if (*partial != rbuf) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, out,
-                                                   *partial + offset);
-        if (MPI_SUCCESS != err) {
-            return err;
-        }
+        /* The slice was received straight into rbuf (see
+         * ompi_coll_base_allreduce_redscat_recv_target): reduce the local slice into
+         * it. The operation is commutative, so no copy is needed. */
+        ompi_op_reduce(op, *partial + offset, out, count, dtype);
         *partial = rbuf;
+    } else {
+        ompi_op_reduce(op, received, out, count, dtype);
     }
-    ompi_op_reduce(op, received, out, count, dtype);
-    return MPI_SUCCESS;
 }
 
 /*
@@ -1166,7 +1230,8 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
     tmp_buf = tmp_buf_raw - gap;
 
     /* Partial starts in the user buffer. MPI_IN_PLACE already stores it
-     * in rbuf. Only the slice about to be reduced is copied. */
+     * in rbuf. The local data is never copied: the first slice received is
+     * reduced with it straight into rbuf. */
     if (MPI_IN_PLACE == sbuf) {
         partial = (char *) rbuf;
     } else {
@@ -1205,18 +1270,18 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
              */
             err = ompi_coll_base_sendrecv(partial, count_lhalf, dtype, rank - 1,
                                           MCA_COLL_BASE_TAG_ALLREDUCE,
-                                          (char *)tmp_buf + (ptrdiff_t)count_lhalf * extent,
+                                          ompi_coll_base_allreduce_redscat_recv_target(partial, (char *) rbuf, tmp_buf,
+                                                                                       (ptrdiff_t)count_lhalf * extent),
                                           count_rhalf, dtype, rank - 1,
                                           MCA_COLL_BASE_TAG_ALLREDUCE, comm,
                                           MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
-            /* rbuf = received op partial, on the right half. */
-            err = ompi_coll_base_allreduce_redscat_fold(op, &partial, (char *) rbuf,
-                                                        (char *) tmp_buf + (ptrdiff_t) count_lhalf * extent,
-                                                        (ptrdiff_t) count_lhalf * extent,
-                                                        count_rhalf, dtype);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            /* Fold into rbuf, on the right half. */
+            ompi_coll_base_allreduce_redscat_fold(op, &partial, (char *) rbuf,
+                                                  (char *) tmp_buf + (ptrdiff_t) count_lhalf * extent,
+                                                  (ptrdiff_t) count_lhalf * extent,
+                                                  count_rhalf, dtype);
 
             /* Send the right half to the left neighbor */
             err = MCA_PML_CALL(send((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
@@ -1237,15 +1302,15 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
             err = ompi_coll_base_sendrecv(partial + (ptrdiff_t)count_lhalf * extent,
                                           count_rhalf, dtype, rank + 1,
                                           MCA_COLL_BASE_TAG_ALLREDUCE,
-                                          tmp_buf, count_lhalf, dtype, rank + 1,
+                                          ompi_coll_base_allreduce_redscat_recv_target(partial, (char *) rbuf, tmp_buf, 0),
+                                          count_lhalf, dtype, rank + 1,
                                           MCA_COLL_BASE_TAG_ALLREDUCE, comm,
                                           MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
-            /* rbuf = received op partial, on the left half. */
-            err = ompi_coll_base_allreduce_redscat_fold(op, &partial, (char *) rbuf,
-                                                        tmp_buf, 0, count_lhalf, dtype);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            /* Fold into rbuf, on the left half. */
+            ompi_coll_base_allreduce_redscat_fold(op, &partial, (char *) rbuf,
+                                                  tmp_buf, 0, count_lhalf, dtype);
 
             /* Recv the right half from the right neighbor */
             err = MCA_PML_CALL(recv((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
@@ -1315,23 +1380,23 @@ int ompi_coll_base_allreduce_intra_redscat_allgather(
                 rindex[step] = sindex[step] + scount[step];
             }
 
-            /* Send the outgoing half from the partial, recv into tmp_buf.
-             * Once this window has been folded, partial is rbuf. */
+            /* Send the outgoing half from the partial, receive into rbuf (first
+             * slice) or tmp_buf. Once this window has been folded, partial is rbuf. */
             err = ompi_coll_base_sendrecv(partial + (ptrdiff_t)sindex[step] * extent,
                                           scount[step], dtype, dest,
                                           MCA_COLL_BASE_TAG_ALLREDUCE,
-                                          (char *)tmp_buf + (ptrdiff_t)rindex[step] * extent,
+                                          ompi_coll_base_allreduce_redscat_recv_target(partial, (char *) rbuf, tmp_buf,
+                                                                                       (ptrdiff_t)rindex[step] * extent),
                                           rcount[step], dtype, dest,
                                           MCA_COLL_BASE_TAG_ALLREDUCE, comm,
                                           MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
-            /* rbuf[] = tmp_buf[] <op> partial[] */
-            err = ompi_coll_base_allreduce_redscat_fold(op, &partial, (char *) rbuf,
-                                                        (char *) tmp_buf + (ptrdiff_t) rindex[step] * extent,
-                                                        (ptrdiff_t) rindex[step] * extent,
-                                                        rcount[step], dtype);
-            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            /* Fold the received slice into rbuf. */
+            ompi_coll_base_allreduce_redscat_fold(op, &partial, (char *) rbuf,
+                                                  (char *) tmp_buf + (ptrdiff_t) rindex[step] * extent,
+                                                  (ptrdiff_t) rindex[step] * extent,
+                                                  rcount[step], dtype);
 
             /* Move the current window to the received message */
             if (step + 1 < nsteps) {

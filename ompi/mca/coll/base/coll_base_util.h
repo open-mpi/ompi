@@ -202,6 +202,35 @@ ompi_coll_base_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdatatyp
 }
 
 /**
+ * Segmented exchange used by the recursive doubling algorithms for
+ * commutative operations: the reduction of a segment overlaps the transfer
+ * of the following ones.
+ *
+ * ompi_coll_base_recdoubling_segsize is the segment size in bytes (0
+ * disables segmenting) and ompi_coll_base_recdoubling_window the maximum
+ * number of segments in flight per peer.
+ */
+OMPI_DECLSPEC extern size_t ompi_coll_base_recdoubling_segsize;
+OMPI_DECLSPEC extern int ompi_coll_base_recdoubling_window;
+
+/** Called when a segment has been exchanged: offset (in bytes) and count of the segment */
+typedef void (*ompi_coll_base_segment_fn_t)(void *ctx, ptrdiff_t offset, size_t count);
+
+/** Number of segments to use for count elements of dtype, 1 if the message is not segmented */
+int ompi_coll_base_recdoubling_nsegs(size_t count, ompi_datatype_t *dtype);
+
+/**
+ * Exchange count elements with remote in nsegs segments. At most
+ * ompi_coll_base_recdoubling_window segments are in flight; when a segment
+ * has been received and its send has completed, the next one is posted and
+ * fn is called for it. fn may therefore overwrite the segment of sendbuf.
+ */
+int ompi_coll_base_segmented_sendrecv(const void *sendbuf, void *recvbuf, size_t count,
+                                      ompi_datatype_t *dtype, int remote, int tag,
+                                      struct ompi_communicator_t *comm, int nsegs,
+                                      ompi_coll_base_segment_fn_t fn, void *ctx);
+
+/**
  * ompi_mirror_perm: Returns mirror permutation of nbits low-order bits
  *                   of x [*].
  * [*] Warren Jr., Henry S. Hacker's Delight (2ed). 2013.

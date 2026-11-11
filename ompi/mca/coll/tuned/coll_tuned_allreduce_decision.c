@@ -103,6 +103,22 @@ int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorith
                                         MCA_BASE_VAR_SCOPE_ALL,
                                         &coll_tuned_allreduce_segment_size);
 
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "recursivedoubling_segment_size",
+                                           "Segment size, in bytes, used by the recursive doubling algorithms of allreduce, scan and exscan (commutative operations only) to overlap the reduction of a segment with the transfer of the following ones. Messages of fewer than 4 segments are not segmented. 0 disables segmenting.",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &ompi_coll_base_recdoubling_segsize);
+
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "recursivedoubling_window",
+                                           "Maximum number of segments in flight with each peer in the segmented recursive doubling algorithms (at most 16).",
+                                           MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &ompi_coll_base_recdoubling_window);
+
     coll_tuned_allreduce_tree_fanout = ompi_coll_tuned_init_tree_fanout; /* get system wide default */
     mca_param_indices->tree_fanout_param_index =
         mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
