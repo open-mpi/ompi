@@ -63,6 +63,18 @@ Open MPI version v6.1.0
   replaced the ones of the patcher and feeds the Open MPI memory release
   hooks from UCM.
 
+- The UCX components (``pml/ucx``, ``osc/ucx`` and ``spml/ucx``)
+  synchronize every process of the job with a PMIx fence while they
+  release their resources, so ``MPI_Session_finalize`` does not return
+  in a process until all the other processes of the job have finalized,
+  even if it disconnected from all of them.  The new MCA parameter
+  ``opal_common_ucx_finalize_fence`` (default ``1``) set to ``0`` removes
+  that fence, for applications whose processes finalize their sessions at
+  different times, for example ones that shrink while running.  All the
+  processes of a job must use the same value, and every communicator,
+  window and file of a process must be released before it finalizes.  It
+  should not be set for OpenSHMEM jobs, whose finalize is collective.
+
 - **Build System**: Open MPI now requires Autoconf 2.69 or later for
   developers building from Git or modifying the build system. Released
   tarballs remain unaffected. This update enables adoption of modern
