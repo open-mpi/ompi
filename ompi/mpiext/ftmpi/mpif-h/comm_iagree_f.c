@@ -16,6 +16,7 @@
 
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 #include "ompi/mpiext/ftmpi/mpif-h/prototypes_mpi.h"
@@ -78,7 +79,20 @@ void ompix_comm_iagree_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *request, MPI_
     int c_ierr;
 
     if (NULL == c_flag) {
-        *ierr = OMPI_INT_2_FINT(MPI_ERR_NO_MEM);
+        /* Raise this the way the back-end call would have.  Nothing has
+         * validated the communicator yet -- that is the job of the call we
+         * could not reach -- so test it here: PMPI_Comm_f2c() yields NULL for
+         * an out-of-range handle, and MPI_COMM_NULL is a real object whose
+         * error handler is permanently MPI_ERRORS_ARE_FATAL.  Neither is
+         * something to raise on, so let the no-handle path place the error. */
+        if (ompi_comm_invalid(c_comm)) {
+            c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
+                                                     "MPIX_COMM_IAGREE");
+        } else {
+            c_ierr = OMPI_ERRHANDLER_INVOKE(c_comm, MPI_ERR_NO_MEM,
+                                            "MPIX_COMM_IAGREE");
+        }
+        *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
     *c_flag = OMPI_FINT_2_INT(*flag);

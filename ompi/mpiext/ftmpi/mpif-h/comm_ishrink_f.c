@@ -88,8 +88,21 @@ void ompix_comm_ishrink_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *request, 
     int c_ierr;
 
     if (NULL == shrunk) {
-        *ierr = OMPI_INT_2_FINT(MPI_ERR_NO_MEM);
         *newcomm = PMPI_Comm_c2f(&ompi_mpi_comm_null.comm);
+        /* Raise this the way the back-end call would have.  Nothing has
+         * validated the communicator yet -- that is the job of the call we
+         * could not reach -- so test it here: PMPI_Comm_f2c() yields NULL for
+         * an out-of-range handle, and MPI_COMM_NULL is a real object whose
+         * error handler is permanently MPI_ERRORS_ARE_FATAL.  Neither is
+         * something to raise on, so let the no-handle path place the error. */
+        if (ompi_comm_invalid(c_comm)) {
+            c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
+                                                     "MPIX_COMM_ISHRINK");
+        } else {
+            c_ierr = OMPI_ERRHANDLER_INVOKE(c_comm, MPI_ERR_NO_MEM,
+                                            "MPIX_COMM_ISHRINK");
+        }
+        *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
     shrunk->f_newcomm = newcomm;
