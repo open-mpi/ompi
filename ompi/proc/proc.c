@@ -654,16 +654,18 @@ ompi_proc_t **ompi_proc_world (size_t *size)
 
 ompi_proc_t** ompi_proc_all(size_t* size)
 {
-    ompi_proc_t **procs =
-        (ompi_proc_t**) malloc(opal_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
+    ompi_proc_t **procs;
     ompi_proc_t *proc;
     size_t count = 0;
 
+    /* size the array under the lock that the walk below holds, so a proc
+     * added in between cannot take the walk past its end */
+    opal_mutex_lock (&ompi_proc_lock);
+    procs = (ompi_proc_t**) malloc(opal_list_get_size(&ompi_proc_list) * sizeof(ompi_proc_t*));
     if (NULL == procs) {
+        opal_mutex_unlock (&ompi_proc_lock);
         return NULL;
     }
-
-    opal_mutex_lock (&ompi_proc_lock);
     OPAL_LIST_FOREACH(proc, &ompi_proc_list, ompi_proc_t) {
         /* We know this isn't consistent with the behavior in ompi_proc_world,
          * but we are leaving the RETAIN for now because the code using this function
