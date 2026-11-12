@@ -72,14 +72,16 @@ typedef uint64_t (*ompi_mpit_abi_handle_convert_fn_t)(void *object,
 /* Some event payloads also carry integer values whose numeric encoding differs
    between the Open MPI ABI and the MPI Standard ABI -- notably MPI error codes
    (roughly a third of the MPI_ERR_* space differs), the MPI_T_BIND_* object
-   binding kind (the Standard-ABI values are the internal values + 1), and the
-   MPI thread support level (MPI_THREAD_* constants differ between ABIs).  These
-   value converters live in libmpi_abi (the upper layer) just like the handle
-   converter, so they are installed downward the same way.  The raise sites call
-   ompi_mpit_abi_error() / ompi_mpit_abi_bind() / ompi_mpit_abi_thread_level(),
-   which forward to the registered converter, or return the value unchanged if
-   none was registered (the Open MPI ABI never installs one, and there the
-   internal encoding is what the tool expects). */
+   binding kind (the Standard-ABI values are the internal values + 1), the MPI
+   thread support level (MPI_THREAD_* constants differ between ABIs), and the
+   MPI window creation flavor (native MPI_WIN_FLAVOR_* are 1-4, the Standard-ABI
+   values are 311-314).  These value converters live in libmpi_abi (the upper
+   layer) just like the handle converter, so they are installed downward the
+   same way.  The raise sites call ompi_mpit_abi_error() / ompi_mpit_abi_bind()
+   / ompi_mpit_abi_thread_level() / ompi_mpit_abi_win_flavor(), which forward to
+   the registered converter, or return the value unchanged if none was
+   registered (the Open MPI ABI never installs one, and there the internal
+   encoding is what the tool expects). */
 typedef int32_t (*ompi_mpit_abi_value_convert_fn_t)(int32_t value);
 
 /* Immutable converter set for Standard-ABI event payload transformation.
@@ -90,6 +92,7 @@ struct ompi_mpit_abi_converters {
     ompi_mpit_abi_value_convert_fn_t error_convert;
     ompi_mpit_abi_value_convert_fn_t bind_convert;
     ompi_mpit_abi_value_convert_fn_t thread_level_convert;
+    ompi_mpit_abi_value_convert_fn_t win_flavor_convert;
 };
 
 /* Install all Standard-ABI converters atomically.  This must be called
@@ -105,6 +108,7 @@ OMPI_DECLSPEC uint64_t ompi_mpit_abi_handle(void *object, int handle_kind);
 OMPI_DECLSPEC int32_t ompi_mpit_abi_error(int32_t err_code);
 OMPI_DECLSPEC int32_t ompi_mpit_abi_bind(int32_t object_bind);
 OMPI_DECLSPEC int32_t ompi_mpit_abi_thread_level(int32_t thread_level);
+OMPI_DECLSPEC int32_t ompi_mpit_abi_win_flavor(int32_t flavor);
 
 /* Event type handles for the in-tree producers.  NULL until (and unless) the
    producers are registered, so a raise site must NULL-check before raising. */

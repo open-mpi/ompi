@@ -120,6 +120,21 @@ int32_t ompi_mpit_abi_thread_level(int32_t thread_level)
     return thread_level;
 }
 
+int32_t ompi_mpit_abi_win_flavor(int32_t flavor)
+{
+    /* Load the converter set pointer with a read barrier. */
+    const struct ompi_mpit_abi_converters *converters
+        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
+    opal_atomic_rmb();
+
+    if (NULL != converters && NULL != converters->win_flavor_convert) {
+        return converters->win_flavor_convert(flavor);
+    }
+    /* No converter registered (Open MPI ABI): the internal encoding is what the
+       tool expects. */
+    return flavor;
+}
+
 mca_base_event_t *ompi_event_comm_created = NULL;
 mca_base_event_t *ompi_event_comm_freed = NULL;
 mca_base_event_t *ompi_event_comm_name_set = NULL;

@@ -19,6 +19,7 @@ struct mpit_win_created_state {
     MPI_T_event_registration registration;
     int calls;
     int failure_code;
+    int32_t flavor;
     uint64_t handle;
 };
 
@@ -39,7 +40,9 @@ static void mpit_win_created_callback(MPI_T_event_instance event_instance,
         state->failure_code = 403;
     } else {
         ++state->calls;
-        /* Element 3 of the win_created payload is the MPI_Win handle. */
+        /* Element 2 of the win_created payload is the window creation flavor;
+           element 3 is the MPI_Win handle. */
+        (void) MPI_T_event_read(event_instance, 2, &state->flavor);
         (void) MPI_T_event_read(event_instance, 3, &state->handle);
     }
 }
