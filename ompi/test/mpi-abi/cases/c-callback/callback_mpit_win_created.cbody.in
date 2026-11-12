@@ -12,9 +12,18 @@
  * Test intent:
  *   Drive the ompi.mpi.win_created MPI_T event under the MPI Standard ABI
  *   and confirm its payload carries the Standard-ABI integer MPI_Win handle
- *   (open-mpi/ompi#13280). This tests the MPI_T_BIND_MPI_WIN conversion path.
+ *   and the Standard-ABI window flavor value (open-mpi/ompi#13280).
  *   Skips stably (77) when the event APIs are unavailable, the event is not
  *   registered, or no registration can be allocated.
+ *
+ *   Coverage note: there is no predefined window object other than
+ *   MPI_WIN_NULL, so a
+ *   user-created window's Standard-ABI handle is just the object pointer.  The
+ *   handle comparison below therefore only detects the old 0 stub, not a
+ *   regression to publishing the internal pointer unconverted.  The flavor
+ *   assertion is what gives this probe teeth: the native MPI_WIN_FLAVOR_*
+ *   values (1-4) differ from the Standard-ABI values (311-314), so it fails if
+ *   the flavor conversion is dropped.
  */
 int ret = MPI_Init(&argc, &argv);
 if (MPI_SUCCESS != ret) {
@@ -126,8 +135,9 @@ if (0 != mpit_win_created_state.failure_code) {
 } else if (mpit_win_created_state.handle !=
            (uint64_t) (uintptr_t) win) {
     /* The payload must carry the Standard-ABI integer handle the
-       application holds for the new window, not 0 or an internal
-       pointer. */
+       application holds for the new window.  For a user-created window this
+       equals the object pointer, so this comparison only detects the old 0
+       stub; the flavor assertion below is what detects a dropped conversion. */
     fprintf(stderr, "ABI_FAIL:mpit:win_created_handle:%llu:%llu\n",
             (unsigned long long) mpit_win_created_state.handle,
             (unsigned long long) (uintptr_t) win);

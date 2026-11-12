@@ -22,6 +22,7 @@ struct mpit_file_errhandler_state {
     int failure_code;
     int32_t err_code;
     int32_t object_type;
+    uint64_t errhandler_handle;
     uint64_t object_handle;
 };
 
@@ -42,9 +43,11 @@ static void mpit_file_errhandler_callback(MPI_T_event_instance event_instance,
         state->failure_code = 503;
     } else {
         ++state->calls;
-        /* The errhandler_invoked payload: err_code, object_type, errhandler_handle, object_handle. */
+        /* The errhandler_invoked payload: err_code, object_type,
+           errhandler_handle, object_handle. */
         (void) MPI_T_event_read(event_instance, 0, &state->err_code);
         (void) MPI_T_event_read(event_instance, 1, &state->object_type);
+        (void) MPI_T_event_read(event_instance, 2, &state->errhandler_handle);
         (void) MPI_T_event_read(event_instance, 3, &state->object_handle);
     }
 }
