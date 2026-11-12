@@ -17,7 +17,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/include/opal/sys/atomic.h"
 #include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/base/mca_base_pvar.h"
 #include "opal/mca/base/mca_base_event.h"
