@@ -43,6 +43,26 @@ Open MPI version v6.1.0
   never writes more than that count.  Previously the count was always
   2048, and reading a longer string overflowed the tool's buffer.
 
+- A new ``memory/ucm`` component feeds the Open MPI memory release hooks
+  from the UCX memory event layer (UCM) when UCX has already hooked the
+  libc memory functions, instead of patching them a second time.  This
+  fixes data corruption with ``btl/uct`` on large messages, caused by
+  the ``memory/patcher`` overwriting the hooks UCX installed.  The
+  component is only selected if UCM reports the release of memory; the
+  ``memory/patcher`` is used otherwise (for example with
+  ``UCX_MEM_MMAP_HOOK_MODE=none``), and ``--mca memory ^ucm`` disables
+  the new component.  Its priority (91) is above the ones of the
+  ``memory/patcher`` (80) and of other memory components that may be
+  built (90), so it is used whenever it can work.  ``btl/uct`` now
+  shares the memory hooks set up of ``common/ucx`` with the other UCX
+  components; the MCA parameter ``btl_uct_disable_ucx_memory_hooks`` is
+  deprecated in favor of ``opal_common_ucx_opal_mem_hooks``.  The ``memory/patcher`` also no
+  longer advertises hook support before all the functions are patched.
+  If the memory framework was opened, and selected the ``memory/patcher``,
+  before UCM was loaded, ``common/ucx`` now detects that the UCM hooks
+  replaced the ones of the patcher and feeds the Open MPI memory release
+  hooks from UCM.
+
 - **Build System**: Open MPI now requires Autoconf 2.69 or later for
   developers building from Git or modifying the build system. Released
   tarballs remain unaffected. This update enables adoption of modern
