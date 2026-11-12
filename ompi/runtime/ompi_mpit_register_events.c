@@ -24,15 +24,12 @@
 
 #include "ompi/runtime/ompi_mpit_events.h"
 
-/* The MPI ABI of the running process (process-global; see the header).
-   Defaults to the Open MPI ABI; the MPI Standard ABI init entry points set it
-   to OMPI_MPIT_ABI_STANDARD (open-mpi/ompi#13280).
-
-   THREAD SAFETY: Accessed with OPAL atomic operations (read barrier after load
-   at raise sites; write barrier followed by opal_atomic_swap_32() to store
-   during initialization) to avoid data races under MPI_THREAD_MULTIPLE.  A
-   plain assignment is not an atomic access on every OPAL atomics backend
-   (e.g. the GCC-builtin backend types this as a bare volatile int32_t). */
+/* The MPI ABI of the running process (process-global).  Defaults to the Open
+   MPI ABI; the MPI Standard ABI init entry points set it to
+   OMPI_MPIT_ABI_STANDARD (open-mpi/ompi#13280).  See the declaration in
+   ompi/runtime/ompi_mpit_events.h for the authoritative THREAD SAFETY note
+   governing how this variable must be read (via ompi_mpit_get_callback_abi())
+   and written. */
 opal_atomic_int32_t ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
 
 /* Downward-installed converters from internal representations to MPI Standard
