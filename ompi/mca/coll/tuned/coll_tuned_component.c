@@ -307,6 +307,7 @@ mca_coll_tuned_module_construct(mca_coll_tuned_module_t *module)
     for( int i = 0; i < COLLCOUNT; i++ ) {
         tuned_module->user_forced[i].algorithm = 0;
         tuned_module->com_rules[i] = NULL;
+        tuned_module->user_forced[i].bine_implementation = 0;
     }
 }
 
@@ -383,13 +384,9 @@ int coll_tuned_alg_bine_to_str(int collective_id, int alg_value, char **alg_stri
         }
         return OPAL_SUCCESS;
     }
-    if (NULL != alg_string) {
-        rc = coll_tuned_algorithm_bine_enums[collective_id]
-                 ->string_from_value(coll_tuned_algorithm_bine_enums[collective_id], alg_value,
-                                     alg_string);
-    } else {
-        rc = OPAL_SUCCESS;
-    }
+    rc = coll_tuned_algorithm_bine_enums[collective_id]
+             ->string_from_value(coll_tuned_algorithm_bine_enums[collective_id], alg_value,
+                                 alg_string);
     return rc;
 }
 

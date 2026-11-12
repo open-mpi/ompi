@@ -38,14 +38,16 @@ static int coll_tuned_alltoall_chain_fanout;
 static int deprecated_mca_params = -1;
 
 /* valid values for coll_tuned_alltoall_forced_algorithm */
-static const mca_base_var_enum_value_t alltoall_algorithms[] = {{0, "ignore"},
-                                                                {1, "linear"},
-                                                                {2, "pairwise"},
-                                                                {3, "modified_bruck"},
-                                                                {4, "linear_sync"},
-                                                                {5, "two_proc"},
-                                                                {6, "bine"},
-                                                                {0, NULL}};
+static const mca_base_var_enum_value_t alltoall_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "pairwise"},
+    {3, "modified_bruck"},
+    {4, "linear_sync"},
+    {5, "two_proc"},
+    {6, "bine"},
+    {0, NULL}
+};
 
 /* The following are used by dynamic and forced rules */
 

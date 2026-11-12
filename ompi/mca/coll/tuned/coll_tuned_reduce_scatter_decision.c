@@ -45,12 +45,11 @@ static const mca_base_var_enum_value_t reduce_scatter_algorithms[] = {{0, "ignor
                                                                       {5, "bine"},
                                                                       {0, NULL}};
 
-static const mca_base_var_enum_value_t
-    reduce_scatter_bine_algorithms[] = {{0, "ignore"},
-                                        {1, "block_by_block_any_even"},
-                                        {2, "send_remap"},
-                                        {3, "permute_remap"},
-                                        {0, NULL}};
+static const mca_base_var_enum_value_t reduce_scatter_bine_imp[] = {{0, "ignore"},
+                                                                    {1, "block_by_block_any_even"},
+                                                                    {2, "send_remap"},
+                                                                    {3, "permute_remap"},
+                                                                    {0, NULL}};
 
 /**
  * The following are used by dynamic and forced rules
@@ -131,7 +130,7 @@ int ompi_coll_tuned_reduce_scatter_intra_check_forced_init (coll_tuned_force_alg
 
     coll_tuned_reduce_scatter_bine_imp = 0;
     (void) mca_base_var_enum_create("coll_tuned_reduce_scatter_bine_implementation",
-                                    reduce_scatter_bine_algorithms, &new_enum);
+                                    reduce_scatter_bine_imp, &new_enum);
     mca_param_indices->bine_implementation_index = mca_base_component_var_register(
         &mca_coll_tuned_component.super.collm_version, "reduce_scatter_bine_implementation",
         "Bine implementation to use for reduce_scatter. "

@@ -36,24 +36,28 @@ static int coll_tuned_allgather_tree_fanout;
 static int coll_tuned_allgather_chain_fanout;
 
 /* valid values for coll_tuned_allgather_forced_algorithm */
-static const mca_base_var_enum_value_t allgather_algorithms[] = {{0, "ignore"},
-                                                                 {1, "linear"},
-                                                                 {2, "bruck-k-fanout"},
-                                                                 {3, "recursive_doubling"},
-                                                                 {4, "ring"},
-                                                                 {5, "neighbor"},
-                                                                 {6, "two_proc"},
-                                                                 {7, "sparbit"},
-                                                                 {8, "direct-messaging"},
-                                                                 {9, "bine"},
-                                                                 {0, NULL}};
+static const mca_base_var_enum_value_t allgather_algorithms[] = {
+    {0, "ignore"},
+    {1, "linear"},
+    {2, "bruck-k-fanout"},
+    {3, "recursive_doubling"},
+    {4, "ring"},
+    {5, "neighbor"},
+    {6, "two_proc"},
+    {7, "sparbit"},
+    {8, "direct-messaging"},
+    {9, "bine"},
+    {0, NULL}
+};
 
-static const mca_base_var_enum_value_t allgather_bine_algorithms[] = {{0, "ignore"},
-                                                                      {1, "send_remap"},
-                                                                      {2, "block_by_block"},
-                                                                      {3, "2_block"},
-                                                                      {4, "permutation"},
-                                                                      {0, NULL}};
+static const mca_base_var_enum_value_t allgather_bine_imp[] = {
+    {0, "ignore"},
+    {1, "send_remap"},
+    {2, "block_by_block"},
+    {3, "2_block"},
+    {4, "permutation"},
+    {0, NULL}
+};
 
 /* The following are used by dynamic and forced rules */
 
@@ -134,7 +138,7 @@ ompi_coll_tuned_allgather_intra_check_forced_init(coll_tuned_force_algorithm_mca
 
     coll_tuned_allgather_forced_bine_imp = 0;
     (void) mca_base_var_enum_create("coll_tuned_allgather_bine_implementation",
-                                    allgather_bine_algorithms, &new_enum);
+                                    allgather_bine_imp, &new_enum);
     mca_param_indices->bine_implementation_index = mca_base_component_var_register(
         &mca_coll_tuned_component.super.collm_version, "allgather_bine_implementation",
         "Bine implementation to use for allgather. "

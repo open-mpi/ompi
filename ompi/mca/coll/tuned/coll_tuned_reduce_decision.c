@@ -138,7 +138,7 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
     }
 
     coll_tuned_reduce_forced_bine_imp = 0;
-    (void) mca_base_var_enum_create("coll_tuned_reduce_bine_imp", reduce_bine_imp, &new_enum);
+    (void) mca_base_var_enum_create("coll_tuned_reduce_bine_implementation", reduce_bine_imp, &new_enum);
     mca_param_indices->bine_implementation_index = mca_base_component_var_register(
         &mca_coll_tuned_component.super.collm_version, "reduce_bine_implementation",
         "Bine implementation to use for reduce. "

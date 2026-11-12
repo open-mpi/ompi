@@ -131,7 +131,7 @@ int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorith
                                       &coll_tuned_allreduce_chain_fanout);
 
     coll_tuned_allreduce_forced_bine_imp = 0;
-    (void) mca_base_var_enum_create("coll_tuned_allreduce_bine_imp", allreduce_bine_imp, &new_enum);
+    (void) mca_base_var_enum_create("coll_tuned_allreduce_bine_implementation", allreduce_bine_imp, &new_enum);
     mca_param_indices->bine_implementation_index = mca_base_component_var_register(
         &mca_coll_tuned_component.super.collm_version, "allreduce_bine_implementation",
         "Which allreduce bine implementation is used. Can be locked down to any of: 0 ignore, 1 lat, "

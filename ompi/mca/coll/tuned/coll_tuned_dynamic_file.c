@@ -54,50 +54,82 @@ static int fileline=0; /* used for verbose error messages */
 #define isnext_digit(fptr)         ompi_coll_base_file_peek_next_char_isdigit(fptr)
 
 
-static int coll_tuned_read_alg(const opal_json_t *msg_rule, ompi_coll_msg_rule_t *msg_p, int coll_id) {
-    const char *RESULT_ALG_FIELD = "alg";
+/* Read an algorithm selector from a message-size rule and store its validated
+ * value in either result_alg (is_bine == false) or result_bine_implementation
+ * (is_bine == true).  The value may be either an integer matching the classic
+ * file format column, or a string naming the algorithm/variant; un-recognized
+ * values disable the rule rather than failing the whole file.
+ *
+ * The "alg" field is required, while the optional "bine_imp" field is only
+ * meaningful for collectives that provide Bine variants.
+ *
+ * Returns OPAL_SUCCESS unless the field exists and is neither an integer nor a
+ * string, or a required field is missing.
+ */
+static int coll_tuned_read_alg_field(const opal_json_t *msg_rule, ompi_coll_msg_rule_t *msg_p,
+                                     int coll_id, const char *field_name, bool is_bine,
+                                     bool required) {
     const opal_json_t *alg_prop = NULL;
     int rc, rc_as_str, rc_as_int, rc_validation;
     const char* string_buf;
     size_t string_len;
     char int_as_str[24];
     int64_t int_val;
+    int *target = is_bine ? &msg_p->result_bine_implementation : &msg_p->result_alg;
 
-    rc = opal_json_get_key( msg_rule, RESULT_ALG_FIELD, &alg_prop);
+    rc = opal_json_get_key( msg_rule, field_name, &alg_prop);
     if (rc != OPAL_SUCCESS) {
+        if (!required) {
+            /* optional field, absent: keep the default */
+            return OPAL_SUCCESS;
+        }
         opal_output_verbose(1, ompi_coll_tuned_stream,
-                "The \"alg\" field is required, but was not found." );
+                "The \"%s\" field is required, but was not found.", field_name);
         return OPAL_ERROR;
     }
     rc_as_str = opal_json_read_string(alg_prop, &string_buf, &string_len);
     rc_as_int = opal_json_read_integer(alg_prop, &int_val);
     opal_json_free(&alg_prop);
     if (rc_as_str == OPAL_SUCCESS) {
-        rc_validation = coll_tuned_alg_from_str( coll_id, string_buf, &msg_p->result_alg );
+        rc_validation = is_bine
+            ? coll_tuned_alg_bine_from_str(coll_id, string_buf, target)
+            : coll_tuned_alg_from_str(coll_id, string_buf, target);
     } else if (rc_as_int == OPAL_SUCCESS) {
-        rc_validation = coll_tuned_alg_to_str( coll_id, int_val, NULL );
+        rc_validation = is_bine
+            ? coll_tuned_alg_bine_to_str(coll_id, int_val, NULL)
+            : coll_tuned_alg_to_str(coll_id, int_val, NULL);
+
         if (rc_validation != OPAL_SUCCESS) {
-            snprintf(int_as_str, 23, "%" PRId64, int_val);
-            int_as_str[23] = '\0';
+            snprintf(int_as_str, sizeof(int_as_str), "%" PRId64, int_val);
             string_buf = int_as_str;
         } else {
-            msg_p->result_alg = int_val;
+            *target = int_val;
         }
     } else {
         opal_output_verbose(1, ompi_coll_tuned_stream,
-                "The \"alg\" field must be either a string or an integer, but it is something else." );
+                "The \"%s\" field must be either a string or an integer, but it is something else.", field_name );
         return OPAL_ERROR;
     }
     if (rc_validation != OPAL_SUCCESS) {
-        opal_output_verbose(1, ompi_coll_tuned_stream,
-        "Algorithm (%s) provided for collective \"%s\" is not valid.  "
-        "Check documentation for valid configurations of coll_tuned_%s_algorithm.  Ignoring this rule.",
-        string_buf, mca_coll_base_colltype_to_str(coll_id), mca_coll_base_colltype_to_str(coll_id) );
+        if (is_bine) {
+            opal_output_verbose(1, ompi_coll_tuned_stream,
+                "Bine implementation (%s) provided for collective \"%s\" is not valid.  "
+                "Check documentation for valid configurations of coll_tuned_%s_bine_implementation.  "
+                "Ignoring this rule.",
+                string_buf, mca_coll_base_colltype_to_str(coll_id),
+                mca_coll_base_colltype_to_str(coll_id) );
+        } else {
+            opal_output_verbose(1, ompi_coll_tuned_stream,
+                "Algorithm (%s) provided for collective \"%s\" is not valid.  "
+                "Check documentation for valid configurations of coll_tuned_%s_algorithm.  "
+                "Ignoring this rule.",
+                string_buf, mca_coll_base_colltype_to_str(coll_id),
+                mca_coll_base_colltype_to_str(coll_id) );
+        }
         /* the rationale for disabling the rule is to allow two ompi versions to use the same file. */
         /* disable the rule by making an impossible condition: */
         msg_p->msg_size_min = COLL_RULES_MESSAGE_SIZE_INF;
         msg_p->msg_size_max = 0;
-        rc = OPAL_SUCCESS;
     }
     return OPAL_SUCCESS;
 }
@@ -150,74 +182,6 @@ static int coll_tuned_get_json_integer_field(const opal_json_t *parent,
     return OPAL_ERR_DATA_VALUE_NOT_FOUND;
 }
 
-/* Reads the optional "bine_imp" field of a JSON message-size rule.  The value
- * is a Bine variant: either the integer matching the classic file format
- * column, or a string naming the variant.  Only meaningful when the rule's
- * algorithm is a Bine algorithm; for collectives without Bine variants the
- * field is ignored entirely.
- *
- * Returns OPAL_SUCCESS unless the field exists and is neither an
- * integer nor a string.
- */
-static int coll_tuned_read_bine_implementation( const opal_json_t *msg_rule,
-                                                ompi_coll_msg_rule_t *msg_p,
-                                                int coll_id ) {
-    const char *RESULT_BINE_IMP_FIELD = "bine_imp";
-    const opal_json_t *bine_imp_prop = NULL;
-    int rc, rc_as_str, rc_as_int, rc_validation;
-    const char* string_buf;
-    size_t string_len;
-    char int_as_str[24];
-    int64_t int_val;
-
-    /* Collectives without registered Bine variants never honor "bine_imp":
-     * ignore the field silently (no warning, no rule change). */
-    if (coll_id >= COLLCOUNT || 0 > coll_id) {
-        return OPAL_SUCCESS;
-    }
-
-    rc = opal_json_get_key( msg_rule, RESULT_BINE_IMP_FIELD, &bine_imp_prop );
-    if (rc != OPAL_SUCCESS) {
-        /* optional field, absent: keep the default */
-        return OPAL_SUCCESS;
-    }
-    rc_as_str = opal_json_read_string( bine_imp_prop, &string_buf, &string_len );
-    rc_as_int = opal_json_read_integer( bine_imp_prop, &int_val );
-    opal_json_free( &bine_imp_prop );
-    if (rc_as_str == OPAL_SUCCESS) {
-        rc_validation = coll_tuned_alg_bine_from_str( coll_id, string_buf,
-                                                      &msg_p->result_bine_implementation );
-    } else if (rc_as_int == OPAL_SUCCESS) {
-        rc_validation = coll_tuned_alg_bine_to_str( coll_id, int_val, NULL );
-        if (rc_validation != OPAL_SUCCESS) {
-            snprintf(int_as_str, 23, "%" PRId64, int_val);
-            int_as_str[23] = '\0';
-            string_buf = int_as_str;
-        } else {
-            msg_p->result_bine_implementation = int_val;
-        }
-    } else {
-        opal_output_verbose(1, ompi_coll_tuned_stream,
-            "The \"%s\" field must be either a string or an integer, but it is something else.",
-            RESULT_BINE_IMP_FIELD );
-        return OPAL_ERROR;
-    }
-    if (rc_validation != OPAL_SUCCESS) {
-        opal_output_verbose(1, ompi_coll_tuned_stream,
-            "Bine implementation (%s) provided for collective \"%s\" is not valid.  "
-            "Check documentation for valid configurations of coll_tuned_%s_bine_implementation.  "
-            "Ignoring this rule.",
-            string_buf, mca_coll_base_colltype_to_str(coll_id),
-            mca_coll_base_colltype_to_str(coll_id) );
-        /* the rationale for disabling the rule is to allow two ompi versions to use the same file. */
-        /* disable the rule by making an impossible condition: */
-        msg_p->msg_size_min = COLL_RULES_MESSAGE_SIZE_INF;
-        msg_p->msg_size_max = 0;
-        rc = OPAL_SUCCESS;
-    }
-    return OPAL_SUCCESS;
-}
-
 static int coll_tuned_read_message_size_rule(   ompi_coll_msg_rule_t *msg_p,
                                                 const opal_json_t *msg_rule, int coll_id ) {
     int rc;
@@ -256,10 +220,11 @@ static int coll_tuned_read_message_size_rule(   ompi_coll_msg_rule_t *msg_p,
     OPTIONAL_READ( MAX_REQUESTS_FIELD, msg_p->result_max_requests )
 
     msg_p->result_bine_implementation = 0;
-    rc = coll_tuned_read_bine_implementation( msg_rule, msg_p, coll_id );
+    rc = coll_tuned_read_alg_field( msg_rule, msg_p, coll_id, "bine_imp", true, false );
     if (rc != OPAL_SUCCESS) { return rc; }
 
-    rc = coll_tuned_read_alg( msg_rule, msg_p, coll_id );
+    rc = coll_tuned_read_alg_field( msg_rule, msg_p, coll_id, "alg", false, true );
+    if (rc != OPAL_SUCCESS) { return rc; }
 
     return OPAL_SUCCESS;
 
@@ -493,18 +458,17 @@ error_cleanup:
 
 static int ompi_coll_tuned_read_rules_config_file_classic (char *fname, ompi_coll_alg_rule_t** rules)
 {
-    long NCOL = 0,     /* number of collectives for which rules are provided  */
-        COLID = 0,     /* identifies the collective type to associate the rules with */
-        NCOMSIZES = 0, /* number of sets of message size rules. the key is communicator size */
-        COMSIZE
-        = 0, /* communicator size, the key identifying a specific set of message size rules. */
-        NMSGSIZES = 0, /* number of message size rules in the set. */
-        MSGSIZE = 0,   /* message size, the key identifying a specific rule in the set. */
-        ALG = 0,       /* the collective specific algorithm to use */
-        FANINOUT = 0,  /* algorithm specific tuning parameter */
-        SEGSIZE = 0,   /* algorithm specific tuning parameter */
-        MAXREQ = 0,    /* algorithm specific tuning parameter */
-        BINE_IMP = 0;  /* algorithm specific tuning parameter */
+    long NCOL = 0,      /* number of collectives for which rules are provided  */
+         COLID = 0,     /* identifies the collective type to associate the rules with */
+         NCOMSIZES = 0, /* number of sets of message size rules. the key is communicator size */
+         COMSIZE = 0,   /* communicator size, the key identifying a specific set of message size rules. */
+         NMSGSIZES = 0, /* number of message size rules in the set. */
+         MSGSIZE = 0,   /* message size, the key identifying a specific rule in the set. */
+         ALG = 0,       /* the collective specific algorithm to use */
+         FANINOUT = 0,  /* algorithm specific tuning parameter */
+         SEGSIZE = 0,   /* algorithm specific tuning parameter */
+         MAXREQ = 0,    /* algorithm specific tuning parameter */
+         BINE_IMP = 0;  /* algorithm specific tuning parameter */
     FILE *fptr = (FILE*) NULL;
     int x, ncs, nms, version;
 
