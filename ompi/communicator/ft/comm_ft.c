@@ -32,6 +32,7 @@ ompi_comm_rank_failure_callback_t *ompi_rank_failure_cbfunc = NULL;
 
 static int ompi_comm_group_failures_locked(ompi_communicator_t* comm, ompi_group_t *from,
                                            ompi_group_t **failed_group);
+static int ompi_comm_remote_failures_acked_locked(ompi_communicator_t* comm, bool *acked);
 
 /**
  * The handling of known failed processes is based on a two level process. On one
@@ -180,6 +181,20 @@ int ompi_comm_ack_failed_internal(ompi_communicator_t* comm, int num_to_ack, int
                 exit_status = ret;
                 goto cleanup;
             }
+            if(OMPI_COMM_IS_INTER(comm)) {
+                /* ANY_SOURCE draws from the remote group only, and only the
+                 * failures there disabled it: it resumes once all of them
+                 * are acknowledged, whatever remains in the local group */
+                bool remote_acked = false;
+                ret = ompi_comm_remote_failures_acked_locked(comm, &remote_acked);
+                if(OMPI_SUCCESS != ret) {
+                    exit_status = ret;
+                    goto cleanup;
+                }
+                if(remote_acked) {
+                    comm->any_source_enabled = true;
+                }
+            }
         }
     }
 
@@ -275,6 +290,34 @@ static int ompi_comm_group_failures_locked(ompi_communicator_t* comm, ompi_group
     if( OMPI_SUCCESS == rc ) {
         OBJ_RELEASE(*failed_group);
         *failed_group = both_group;
+    }
+    OBJ_RELEASE(rfailed_group);
+
+    return rc;
+}
+
+/* Whether every known failure in the remote group of 'comm' lies within the
+ * prefix of the global failed list that has been acknowledged.  The caller
+ * must hold ompi_group_afp_mutex. */
+static int ompi_comm_remote_failures_acked_locked(ompi_communicator_t* comm, bool *acked)
+{
+    ompi_group_t *rfailed_group = NULL;
+    int last, position, rc;
+
+    *acked = true;
+    rc = ompi_group_intersection(ompi_group_all_failed_procs, comm->c_remote_group,
+                                 &rfailed_group);
+    if( OMPI_SUCCESS != rc ) {
+        return rc;
+    }
+    if( 0 < ompi_group_size(rfailed_group) ) {
+        /* ordered by the global list, so the last one is the latest detected */
+        last = ompi_group_size(rfailed_group) - 1;
+        rc = ompi_group_translate_ranks(rfailed_group, 1, &last,
+                                        ompi_group_all_failed_procs, &position);
+        if( OMPI_SUCCESS == rc ) {
+            *acked = (position < comm->any_source_offset);
+        }
     }
     OBJ_RELEASE(rfailed_group);
 
@@ -879,11 +922,14 @@ int ompi_comm_set_rank_failed(ompi_communicator_t *comm, int peer_id, bool remot
                                         peer_id, true);
     assert(NULL != ompi_proc);
 
-    /* Disable ANY_SOURCE */
-    comm->any_source_enabled = false;
-    opal_atomic_wmb(); /* non-locked update needs a memory barrier to propagate */
+    /* Disable ANY_SOURCE.  On an intercommunicator it only draws from the
+     * remote group, so a failure in the local group leaves it alone. */
+    if( !OMPI_COMM_IS_INTER(comm) || remote ) {
+        comm->any_source_enabled = false;
+        opal_atomic_wmb(); /* non-locked update needs a memory barrier to propagate */
+    }
 
-    /* Disable collectives */
+    /* Disable collectives, which a failure in either group breaks */
     ompi_comm_revoke_local(comm, true);
 
     if( NULL != ompi_rank_failure_cbfunc ) {
