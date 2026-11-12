@@ -733,7 +733,10 @@ def _runtime_api_probe_body_calls(srcdir, case):
     source = _probe_prologue_text(srcdir, case)
     source += "\n"
     source += _probe_body_text(srcdir, case)
-    return set(call_re.findall(source))
+    # Strip C comments before scanning so prose like "MPI_Foo (...)" in a
+    # comment is not mistaken for an undeclared API call.  _remove_c_comments()
+    # is DOTALL-correct, unlike _strip_c_comments() which truncates at "//".
+    return set(call_re.findall(_remove_c_comments(source)))
 
 
 def _runtime_api_probe_generation_check(
