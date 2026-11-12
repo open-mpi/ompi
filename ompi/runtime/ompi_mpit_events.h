@@ -47,9 +47,27 @@ typedef enum {
    Standard-ABI integer handle values instead of internal object pointers.
 
    THREAD SAFETY: This variable is set once during initialization and read
-   concurrently by event raise sites under MPI_THREAD_MULTIPLE. Write uses
-   opal_atomic_swap_32(); read is a plain load followed by opal_atomic_rmb(). */
+   concurrently by event raise sites under MPI_THREAD_MULTIPLE.  The write uses
+   opal_atomic_swap_32(); readers must use ompi_mpit_get_callback_abi() below
+   rather than loading the variable directly (a plain load is not an atomic
+   access on every OPAL atomics backend -- e.g. the GCC-builtin backend types
+   opal_atomic_int32_t as a bare volatile int32_t -- so it would race with the
+   swap). */
 OMPI_DECLSPEC extern opal_atomic_int32_t ompi_mpit_callback_abi;
+
+/* Atomically read the process MPI ABI mode.  OPAL exposes no atomic-load
+   primitive, so read with the portable no-op read-modify-write idiom (adding
+   0), matching opal/mca/common/ubcl/common_ubcl.c.  The trailing read barrier
+   synchronizes with the write barrier the Standard-ABI installer issues before
+   it stores OMPI_MPIT_ABI_STANDARD, so a reader that observes STANDARD also
+   observes the converter set installed beforehand. */
+static inline ompi_mpit_abi_t ompi_mpit_get_callback_abi(void)
+{
+    ompi_mpit_abi_t abi =
+        (ompi_mpit_abi_t) opal_atomic_add_fetch_32(&ompi_mpit_callback_abi, 0);
+    opal_atomic_rmb();
+    return abi;
+}
 
 /* Convert an internal MPI object handle to the value an MPI Standard ABI
    MPI_T tool expects to see in an event payload.  `object` is the internal

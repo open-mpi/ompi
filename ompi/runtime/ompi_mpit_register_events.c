@@ -59,13 +59,33 @@ void ompi_mpit_register_abi_converters(const struct ompi_mpit_abi_converters *co
     (void) opal_atomic_swap_ptr(&ompi_mpit_abi_converters_ptr, (intptr_t) converters);
 }
 
+/* Atomically load the installed converter set.  OPAL exposes no atomic-load
+   primitive, so read with the portable no-op read-modify-write idiom (adding
+   0), sized to the pointer like opal_atomic_swap_ptr() so it pairs with the
+   swap in ompi_mpit_register_abi_converters().  A plain load of the
+   opal_atomic_intptr_t is not an atomic access on every OPAL atomics backend
+   and would race with that swap.  The trailing read barrier synchronizes with
+   the installer's write barrier, so a reader that observes the pointer also
+   observes the fully-populated struct it points at. */
+static inline const struct ompi_mpit_abi_converters *load_abi_converters(void)
+{
+    intptr_t p;
+#if SIZEOF_VOID_P == 4
+    p = (intptr_t) opal_atomic_add_fetch_32((opal_atomic_int32_t *) &ompi_mpit_abi_converters_ptr,
+                                            0);
+#elif SIZEOF_VOID_P == 8
+    p = (intptr_t) opal_atomic_add_fetch_64((opal_atomic_int64_t *) &ompi_mpit_abi_converters_ptr,
+                                            0);
+#else
+#error "No implementation of load_abi_converters for this pointer size"
+#endif
+    opal_atomic_rmb();
+    return (const struct ompi_mpit_abi_converters *) p;
+}
+
 uint64_t ompi_mpit_abi_handle(void *object, int handle_kind)
 {
-    /* Load the converter set pointer with a read barrier to synchronize with the
-       write barrier in ompi_mpit_register_abi_converters(). */
-    const struct ompi_mpit_abi_converters *converters
-        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
-    opal_atomic_rmb();
+    const struct ompi_mpit_abi_converters *converters = load_abi_converters();
 
     if (NULL != converters && NULL != converters->handle_convert) {
         return converters->handle_convert(object, handle_kind);
@@ -77,10 +97,7 @@ uint64_t ompi_mpit_abi_handle(void *object, int handle_kind)
 
 int32_t ompi_mpit_abi_error(int32_t err_code)
 {
-    /* Load the converter set pointer with a read barrier. */
-    const struct ompi_mpit_abi_converters *converters
-        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
-    opal_atomic_rmb();
+    const struct ompi_mpit_abi_converters *converters = load_abi_converters();
 
     if (NULL != converters && NULL != converters->error_convert) {
         return converters->error_convert(err_code);
@@ -92,10 +109,7 @@ int32_t ompi_mpit_abi_error(int32_t err_code)
 
 int32_t ompi_mpit_abi_bind(int32_t object_bind)
 {
-    /* Load the converter set pointer with a read barrier. */
-    const struct ompi_mpit_abi_converters *converters
-        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
-    opal_atomic_rmb();
+    const struct ompi_mpit_abi_converters *converters = load_abi_converters();
 
     if (NULL != converters && NULL != converters->bind_convert) {
         return converters->bind_convert(object_bind);
@@ -107,10 +121,7 @@ int32_t ompi_mpit_abi_bind(int32_t object_bind)
 
 int32_t ompi_mpit_abi_thread_level(int32_t thread_level)
 {
-    /* Load the converter set pointer with a read barrier. */
-    const struct ompi_mpit_abi_converters *converters
-        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
-    opal_atomic_rmb();
+    const struct ompi_mpit_abi_converters *converters = load_abi_converters();
 
     if (NULL != converters && NULL != converters->thread_level_convert) {
         return converters->thread_level_convert(thread_level);
@@ -122,10 +133,7 @@ int32_t ompi_mpit_abi_thread_level(int32_t thread_level)
 
 int32_t ompi_mpit_abi_win_flavor(int32_t flavor)
 {
-    /* Load the converter set pointer with a read barrier. */
-    const struct ompi_mpit_abi_converters *converters
-        = (const struct ompi_mpit_abi_converters *) (intptr_t) ompi_mpit_abi_converters_ptr;
-    opal_atomic_rmb();
+    const struct ompi_mpit_abi_converters *converters = load_abi_converters();
 
     if (NULL != converters && NULL != converters->win_flavor_convert) {
         return converters->win_flavor_convert(flavor);
