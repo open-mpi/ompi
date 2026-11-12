@@ -94,6 +94,13 @@ static int32_t ompi_mpit_abi_thread_level_convert_impl(int32_t thread_level)
     return (int32_t) ompi_convert_ts_level_ompi_to_standard((int) thread_level);
 }
 
+static int32_t ompi_mpit_abi_win_flavor_convert_impl(int32_t flavor)
+{
+    /* Map an internal MPI_WIN_FLAVOR_* value (1-4) to its MPI Standard ABI
+       value (311-314). */
+    return (int32_t) ompi_convert_win_flavor_ompi_to_standard((int) flavor);
+}
+
 /* Immutable converter set for Standard-ABI event payloads.  Installed
    atomically into libopen_mpi by the Standard-ABI init entry points to avoid
    data races under MPI_THREAD_MULTIPLE. */
@@ -102,4 +109,5 @@ const struct ompi_mpit_abi_converters ompi_mpit_abi_standard_converters = {
     .error_convert = ompi_mpit_abi_error_convert_impl,
     .bind_convert = ompi_mpit_abi_bind_convert_impl,
     .thread_level_convert = ompi_mpit_abi_thread_level_convert_impl,
+    .win_flavor_convert = ompi_mpit_abi_win_flavor_convert_impl,
 };

@@ -80,6 +80,7 @@ if (win_created_index < 0) {
 mpit_win_created_state.registration = (MPI_T_event_registration) 0;
 mpit_win_created_state.calls = 0;
 mpit_win_created_state.failure_code = 0;
+mpit_win_created_state.flavor = 0;
 mpit_win_created_state.handle = 0;
 
 ret = MPI_T_event_handle_alloc(win_created_index, NULL, MPI_INFO_NULL,
@@ -131,6 +132,15 @@ if (0 != mpit_win_created_state.failure_code) {
             (unsigned long long) mpit_win_created_state.handle,
             (unsigned long long) (uintptr_t) win);
     local_failure = 6;
+} else if (mpit_win_created_state.flavor != MPI_WIN_FLAVOR_CREATE) {
+    /* MPI_Win_create produces an MPI_WIN_FLAVOR_CREATE window, and the
+       payload must carry the Standard-ABI flavor value (not the native
+       1-4 encoding) so a Standard-ABI tool can match it against its
+       MPI_WIN_FLAVOR_* constants. */
+    fprintf(stderr, "ABI_FAIL:mpit:win_created_flavor:%d:%d\n",
+            (int) mpit_win_created_state.flavor,
+            (int) MPI_WIN_FLAVOR_CREATE);
+    local_failure = 11;
 }
 
 ret = MPI_Win_free(&win);
