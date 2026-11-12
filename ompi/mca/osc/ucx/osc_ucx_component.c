@@ -6,6 +6,7 @@
  *
  * Copyright (c) 2022      IBM Corporation.  All rights reserved.
  * Copyright (c) 2025      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,8 +88,7 @@ ompi_osc_ucx_component_t mca_osc_ucx_component = {
     .support_level          = OPAL_COMMON_UCX_SUPPORT_NONE,
     .num_modules            = 0,
     .acc_single_intrinsic   = false,
-    .comm_world_size        = 0,
-    .endpoints              = NULL
+    .endpoint_table_ready   = false
 };
 MCA_BASE_COMPONENT_INIT(ompi, osc, ucx)
 
@@ -355,6 +355,58 @@ static int component_set_priority(int flavor) {
     return OMPI_SUCCESS;
 }
 
+/* The slot, in the component's endpoint table, of the endpoint to a process. */
+static ucp_ep_h *ompi_osc_ucx_endpoint_slot(const opal_process_name_t *name)
+{
+    ucp_ep_h *slot = NULL;
+
+    if (OPAL_SUCCESS == opal_proc_table_get_value(&mca_osc_ucx_component.endpoint_table,
+                                                  *name, (void **) &slot)) {
+        return slot;
+    }
+
+    slot = calloc(1, sizeof(*slot));
+    if (NULL == slot) {
+        return NULL;
+    }
+    if (OPAL_SUCCESS != opal_proc_table_set_value(&mca_osc_ucx_component.endpoint_table,
+                                                  *name, slot)) {
+        free(slot);
+        return NULL;
+    }
+    return slot;
+}
+
+/* Close the endpoints that were shared between windows, and the table that
+ * holds them. No window may exist. */
+static void ompi_osc_ucx_release_endpoints(void)
+{
+    opal_process_name_t name;
+    void *value, *node_job, *node_vpid;
+    int rc;
+
+    if (!mca_osc_ucx_component.endpoint_table_ready) {
+        return;
+    }
+
+    rc = opal_proc_table_get_first_key(&mca_osc_ucx_component.endpoint_table, &name, &value,
+                                       &node_job, &node_vpid);
+    while (OPAL_SUCCESS == rc) {
+        ucp_ep_h *slot = (ucp_ep_h *) value;
+
+        if (NULL != *slot) {
+            ucp_ep_destroy(*slot);
+            OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_ep_counts, -1);
+        }
+        free(slot);
+        rc = opal_proc_table_get_next_key(&mca_osc_ucx_component.endpoint_table, &name, &value,
+                                          node_job, &node_job, node_vpid, &node_vpid);
+    }
+    opal_proc_table_remove_all(&mca_osc_ucx_component.endpoint_table);
+    OBJ_DESTRUCT(&mca_osc_ucx_component.endpoint_table);
+    mca_osc_ucx_component.endpoint_table_ready = false;
+}
+
 static void component_close_eps_and_fence(void)
 {
     volatile int fenced = 0;
@@ -366,17 +418,7 @@ static void component_close_eps_and_fence(void)
     }
 
     if (!opal_common_ucx_thread_enabled) {
-        int i;
-        for (i = 0; i < mca_osc_ucx_component.comm_world_size; i++) {
-            ucp_ep_h ep = mca_osc_ucx_component.endpoints[i];
-            if (ep != NULL) {
-                ucp_ep_destroy(ep);
-                OPAL_COMMON_UCX_DEBUG_ATOMIC_ADD(opal_common_ucx_ep_counts, -1);
-            }
-        }
-        free(mca_osc_ucx_component.endpoints);
-        mca_osc_ucx_component.endpoints = NULL;
-        mca_osc_ucx_component.comm_world_size = 0;
+        ompi_osc_ucx_release_endpoints();
     }
 
     if (ompi_async_mpi_finalize) {
@@ -607,7 +649,7 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, pt
     opal_common_ucx_mem_type_t mem_type;
     char *my_mem_addr;
     int my_mem_addr_size;
-    uint64_t my_info[3] = {0};
+    uint64_t my_info[2] = {0};
     char *recv_buf = NULL;
     void *dynamic_base = NULL;
     unsigned long adjusted_size = size;
@@ -659,8 +701,15 @@ static int component_select(struct ompi_win_t *win, void **base, size_t size, pt
             goto select_unlock;
         }
         if (!opal_common_ucx_thread_enabled) {
-            mca_osc_ucx_component.comm_world_size = ompi_proc_world_size();
-            mca_osc_ucx_component.endpoints = calloc(mca_osc_ucx_component.comm_world_size, sizeof(ucp_ep_h));
+            OBJ_CONSTRUCT(&mca_osc_ucx_component.endpoint_table, opal_proc_table_t);
+            ret = opal_proc_table_init(&mca_osc_ucx_component.endpoint_table, 16,
+                                       ompi_proc_world_size());
+            if (OPAL_SUCCESS != ret) {
+                OBJ_DESTRUCT(&mca_osc_ucx_component.endpoint_table);
+                OSC_UCX_VERBOSE(1, "opal_proc_table_init failed: %d", ret);
+                goto select_unlock;
+            }
+            mca_osc_ucx_component.endpoint_table_ready = true;
         }
         /* Make sure that all memory updates performed above are globally
          * observable before (mca_osc_ucx_component.env_initialized = true)
@@ -971,7 +1020,6 @@ select_unlock:
         my_info[0] = (uint64_t)dynamic_base;
     }
     my_info[1] = (uint64_t)state_base;
-    my_info[2] = ompi_comm_rank(&ompi_mpi_comm_world.comm);
 
     recv_buf = (char *)calloc(comm_size, sizeof(my_info));
     ret = comm->c_coll->coll_allgather((void *)my_info, sizeof(my_info),
@@ -986,13 +1034,34 @@ select_unlock:
                 sizeof(ompi_osc_ucx_mem_ranges_t));
     module->addrs = calloc(comm_size, sizeof(uint64_t));
     module->state_addrs = calloc(comm_size, sizeof(uint64_t));
-    module->comm_world_ranks = calloc(comm_size, sizeof(uint64_t));
     for (i = 0; i < comm_size; i++) {
-        memcpy(&(module->addrs[i]), recv_buf + i * 3 * sizeof(uint64_t), sizeof(uint64_t));
-        memcpy(&(module->state_addrs[i]), recv_buf + i * 3 * sizeof(uint64_t) + sizeof(uint64_t), sizeof(uint64_t));
-        memcpy(&(module->comm_world_ranks[i]), recv_buf + i * 3 * sizeof(uint64_t) + 2 * sizeof(uint64_t), sizeof(uint64_t));
+        memcpy(&(module->addrs[i]), recv_buf + i * sizeof(my_info), sizeof(uint64_t));
+        memcpy(&(module->state_addrs[i]), recv_buf + i * sizeof(my_info) + sizeof(uint64_t), sizeof(uint64_t));
     }
     free(recv_buf);
+
+    /* Find where the endpoint to each target is cached. The processes are known
+     * from the communicator, nothing needs to be exchanged for that. */
+    if (!opal_common_ucx_thread_enabled) {
+        module->ep_slots = calloc(comm_size, sizeof(ucp_ep_h *));
+        if (NULL == module->ep_slots) {
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto error;
+        }
+        _osc_ucx_init_lock();
+        for (i = 0; i < comm_size; i++) {
+            module->ep_slots[i] = ompi_osc_ucx_endpoint_slot(
+                &ompi_comm_peer_lookup(module->comm, i)->super.proc_name);
+            if (NULL == module->ep_slots[i]) {
+                break;
+            }
+        }
+        _osc_ucx_init_unlock();
+        if (i < comm_size) {
+            ret = OMPI_ERR_OUT_OF_RESOURCE;
+            goto error;
+        }
+    }
 
     /* init window state */
     module->state.lock = TARGET_LOCK_UNLOCKED;
@@ -1041,6 +1110,7 @@ select_unlock:
     return ret;
 
 error:
+    free(module->ep_slots);
     if (module->disp_units) free(module->disp_units);
     if (module->comm) ompi_comm_free(&module->comm);
     if (module->sizes) free(module->sizes);
@@ -1049,6 +1119,7 @@ error:
 
 error_nomem:
     if (env_initialized == true) {
+        ompi_osc_ucx_release_endpoints();
         opal_common_ucx_wpool_finalize(mca_osc_ucx_component.wpool);
         OBJ_DESTRUCT(&mca_osc_ucx_component.requests);
         mca_osc_ucx_component.env_initialized = false;
@@ -1290,7 +1361,7 @@ int ompi_osc_ucx_free(struct ompi_win_t *win) {
     }
     free(module->addrs);
     free(module->state_addrs);
-    free(module->comm_world_ranks);
+    free(module->ep_slots);
 
     opal_common_ucx_wpmem_free(module->state_mem);
     if (NULL != module->mem) {
