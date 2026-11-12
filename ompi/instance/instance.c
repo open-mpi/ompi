@@ -1142,10 +1142,10 @@ int ompi_mpi_instance_init (int ts_level,  opal_info_t *info, ompi_errhandler_t 
         payload.world_size = -1;
         /* For the session model the instance is the MPI_Session, so instance_id
            is its handle.  XXX ABI: it must match the registering MPI_T tool's
-           ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize with
-           the write barrier in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
-        opal_atomic_rmb();
+           ABI (ompi_mpit_callback_abi).  The accessor loads atomically and
+           issues the read barrier that synchronizes with the write barrier in
+           the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             /* Open MPI ABI: publish internal representations directly. */
             payload.thread_level = (int32_t) ts_level;
@@ -1286,11 +1286,10 @@ int ompi_mpi_instance_finalize (ompi_instance_t **instance)
         payload.model = OMPI_T_MODEL_SESSION;
         payload.world_rank = -1;
         /* instance_id is the MPI_Session handle.  XXX ABI: it must match the
-           registering MPI_T tool's ABI (ompi_mpit_callback_abi).  Load with read barrier
-           to synchronize with the write barrier in the init path under
-           MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
-        opal_atomic_rmb();
+           registering MPI_T tool's ABI (ompi_mpit_callback_abi).  The accessor
+           loads atomically and issues the read barrier that synchronizes with
+           the write barrier in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.instance_id = (uint64_t) (uintptr_t) *instance;
         } else {

@@ -761,9 +761,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided,
         payload.world_size = ompi_comm_size(MPI_COMM_WORLD);
         payload.instance_id = (uint64_t) (uintptr_t) ompi_mpi_instance_default;
         /* The thread_level value encoding differs between ABIs, so convert it
-           when the Standard ABI is active. */
-        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
-        opal_atomic_rmb();
+           when the Standard ABI is active.  The accessor loads the ABI mode
+           atomically with the read barrier that synchronizes with the init
+           path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.thread_level = (int32_t) *provided;
         } else {

@@ -73,10 +73,10 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
         /* The MPI_Errhandler handle and the invoking object's handle must match
            the registering MPI_T tool's ABI (ompi_mpit_callback_abi).  So must
            the err_code and object_type integer values, whose encodings differ
-           between the two ABIs.  Load with read barrier to synchronize with the
-           write barrier in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
-        opal_atomic_rmb();
+           between the two ABIs.  The accessor loads atomically and issues the
+           read barrier that synchronizes with the init path under
+           MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             /* Open MPI ABI: publish internal representations directly. */
             payload.err_code = (int32_t) err_code;

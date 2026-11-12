@@ -2526,10 +2526,10 @@ int ompi_comm_set_name (ompi_communicator_t *comm, const char *name )
             uint64_t handle;
         } payload;
         /* XXX ABI (#13280): the MPI_Comm handle must match the registering
-           tool's ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize
-           with the write barrier in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
-        opal_atomic_rmb();
+           tool's ABI (ompi_mpit_callback_abi).  The accessor loads atomically
+           and issues the read barrier that synchronizes with the write barrier
+           in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) comm;
         } else {
@@ -2695,10 +2695,10 @@ int ompi_comm_free( ompi_communicator_t **comm )
             uint64_t handle;
         } payload;
         /* XXX ABI: the MPI_Comm handle value must match the registering MPI_T
-           tool's ABI (ompi_mpit_callback_abi).  Load with read barrier to synchronize
-           with the write barrier in the init path under MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
-        opal_atomic_rmb();
+           tool's ABI (ompi_mpit_callback_abi).  The accessor loads atomically
+           and issues the read barrier that synchronizes with the write barrier
+           in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) *comm;
         } else {

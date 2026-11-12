@@ -945,11 +945,10 @@ static int ompi_comm_activate_complete (ompi_comm_cid_context_t *context)
         payload.size = (int32_t) ompi_comm_size(*newcomm);
         payload.pad = 0;
         /* XXX ABI: the MPI_Comm handle value carried here must match the ABI of
-           the registering MPI_T tool (ompi_mpit_callback_abi).  Load with read barrier
-           to synchronize with the write barrier in the init path under
-           MPI_THREAD_MULTIPLE. */
-        ompi_mpit_abi_t abi = (ompi_mpit_abi_t) ompi_mpit_callback_abi;
-        opal_atomic_rmb();
+           the registering MPI_T tool (ompi_mpit_callback_abi).  The accessor
+           loads atomically and issues the read barrier that synchronizes with
+           the write barrier in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
         if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) *newcomm;
         } else {
