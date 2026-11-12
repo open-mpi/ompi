@@ -78,12 +78,12 @@ PROTOTYPE ERROR_CLASS allreduce(BUFFER_CONST sendbuf, BUFFER_OUT recvbuf, COUNT 
             return ret;
         } else if ((MPI_IN_PLACE == sendbuf && OMPI_COMM_IS_INTER(comm)) ||
                    MPI_IN_PLACE == recvbuf ) {
-	    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_BUFFER,
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER,
                                           FUNC_NAME);
         } else if( (sendbuf == recvbuf) &&
                    (MPI_BOTTOM != sendbuf) &&
-                   (count > 1) ) {
-	    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_BUFFER,
+                   (count > 0) ) {
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER,
                                           FUNC_NAME);
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
