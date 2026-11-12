@@ -42,22 +42,20 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
 
     /* ompi_mpit_callback_abi records which MPI ABI this process uses, so the
        producers emit object handles (MPI_Comm / MPI_Win / MPI_Errhandler /
-       MPI_Session) in the matching representation.  It is a whole-process
-       property set at init (MPI_Init / MPI_Init_thread / MPI_Session_init),
-       which also covers events -- such as ompi.mpi.initialization -- raised
-       before any tool registers a callback.  Re-assert it here, ABI-conditioned
-       on which copy of this template is compiled (open-mpi/ompi#13280), so a
-       Standard-ABI tool registering after an intervening reinit is still seen
-       correctly; this is idempotent with the init-time set.
+       MPI_Session) and integer values in the matching representation.  Register
+       it here, ABI-conditioned on which copy of this template is compiled
+       (open-mpi/ompi#13280).
 
-       MPI_T is init-independent: a Standard-ABI tool may call
-       MPI_T_init_thread + MPI_T_event_register_callback before MPI_Init, and
-       events (notably ompi.mpi.errhandler_invoked for an error routed to a
-       predefined handler) can be raised in that pre-init window.  The init
-       entry points install the intern->ABI converters, but they have not run
-       yet here, so install them too (this Standard-ABI copy is compiled into
-       libmpi_abi alongside the converter implementations).  This is idempotent
-       with the init-time registration.
+       Registering a callback is the only way a tool starts observing an event:
+       mca_base_event_raise() short-circuits and delivers nothing until a
+       registration makes the event active (num_active != 0), and that only
+       happens through this routine.  So this is the single site that must
+       establish the process ABI and install the intern->ABI converters -- no
+       event payload can be read before a callback is registered, and MPI_T is
+       init-independent (a Standard-ABI tool may call MPI_T_init_thread +
+       MPI_T_event_register_callback before MPI_Init), so we cannot rely on an
+       init entry point having run first.  This Standard-ABI copy is compiled
+       into libmpi_abi alongside the converter implementations.
 
        Install the converter set atomically BEFORE setting the ABI mode to avoid
        data races under MPI_THREAD_MULTIPLE where concurrent events could see
