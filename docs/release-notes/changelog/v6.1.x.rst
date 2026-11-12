@@ -19,7 +19,11 @@ Open MPI version v6.1.0
   neither re-enable ``MPI_ANY_SOURCE`` nor complete an
   ``MPIX_Comm_agree``.  ``MPIX_Comm_ack_failed`` also rejected a
   ``num_to_ack`` larger than the local group, although the failures it
-  acknowledges can be in either group.
+  acknowledges can be in either group.  ``MPI_ANY_SOURCE`` receives
+  on an intercommunicator, which only match the remote group, are now
+  disabled only by a failure in the remote group, and resume once the
+  failures there are acknowledged; a failure in the local group no
+  longer affects them.
 
 - ULFM's non-blocking agreement, ``MPIX_Comm_iagree``, is now available
   on intercommunicators, and with it ``MPIX_Comm_ishrink``.  Both
