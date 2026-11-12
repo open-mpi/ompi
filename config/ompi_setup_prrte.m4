@@ -255,7 +255,7 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
                   AC_MSG_WARN([above says that this PMIx is too old, configure Open MPI])
                   AC_MSG_WARN([with --with-pmix=internal --with-prrte=internal to use the])
                   AC_MSG_WARN([bundled PMIx and PRRTE, or point --with-prrte at an])
-                  AC_MSG_WARN([external PRRTE that supports this PMIx.])])
+                  AC_MSG_WARN([external PRRTE built against this PMIx.])])
            AC_MSG_ERROR([PRRTE configuration failed.  Cannot continue.])])
 
     OMPI_HAVE_PRRTE_RST=0
