@@ -828,6 +828,7 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
     int line = -1, rank, size, err = MPI_SUCCESS, tmp;
     ptrdiff_t rlb, rext;
     ompi_request_t **requests = NULL;
+    int *block_k = NULL;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -878,6 +879,27 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
         line = __LINE__;
         goto err_hndl;
     }
+
+    /* The step a block belongs to depends only on the block index and the
+     * communicator size, so compute it once instead of once per step.
+     */
+    block_k = (int *) malloc(size * sizeof(int));
+    if (NULL == block_k) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+    block_k[0] = 0; /* never read: the loops below start at block 1 */
+    for (size_t block = 1; block < (size_t) size; block++) {
+        uint32_t nu = 0;
+        err = ompi_coll_bine_get_nu(block, size, &nu);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        block_k[block] = opal_cube_dim((int) nu + 1) - 1;
+    }
+
     while (inverse_mask > 0) {
         int partner, req_count = 0;
         if (rank % 2 == 0) {
@@ -899,13 +921,7 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
         for (size_t block = 1; block < (size_t) size; block++) {
             // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            uint32_t nu = 0;
-            err = ompi_coll_bine_get_nu(block, size, &nu);
-            if (MPI_SUCCESS != err) {
-                line = __LINE__;
-                goto err_hndl;
-            }
-            int k = opal_cube_dim((int) nu + 1) - 1;
+            int k = block_k[block];
             //  Check if this must be sent (recvd in allgather)
             if (k == step || block == 0) {
                 // 0 would send this block
@@ -977,6 +993,7 @@ int ompi_coll_base_allgather_intra_bine_block_by_block_any_even(const void *sbuf
         step++;
     }
 
+    free(block_k);
     return MPI_SUCCESS;
 
 err_hndl:
@@ -998,6 +1015,9 @@ err_hndl:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     (void) line; // silence compiler warning
+    if (NULL != block_k) {
+        free(block_k);
+    }
     return err;
 }
 

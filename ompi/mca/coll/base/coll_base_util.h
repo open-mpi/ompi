@@ -500,6 +500,68 @@ static inline int ompi_coll_bine_get_sender(uint32_t num_ranks, uint32_t rank, u
 }
 
 /*
+ * Compute the step at which "rank" receives the broadcast in the Bine
+ * latency-optimized schedule rooted at "root".
+ *
+ * At step s a rank r that already owns the data sends it to pi(r, s); pi is
+ * an involution, so a rank that receives at step s receives from pi(rank, s).
+ * The schedule is therefore a tree rooted at "root", and recv_step is the
+ * depth of "rank" in that tree.
+ *
+ * The tree is a distance-halving Bine tree, so its depth is encoded in the
+ * Bine (negabinary) coordinate of the rank: it is the most significant set
+ * bit of the Gray-coded negabinary address.  ompi_coll_bine_remap_rank()
+ * returns that address with its bits reversed, turning the most significant
+ * set bit into a trailing-zero count.  Deriving the depth this way costs
+ * O(log size) instead of replaying the whole O(size * log size) schedule.
+ *
+ * "reversed" selects the distance-doubling variant, which applies the same
+ * permutations in reverse order and therefore reads the depth from the least
+ * significant negabinary digit instead.
+ *
+ * Returns MPI_SUCCESS with *recv_step set (-1 for the root, which never
+ * receives), or an MPI error code.
+ */
+static inline int ompi_coll_bine_bcast_recv_step(int rank, int root, int size, int steps,
+                                                 bool reversed, int *recv_step)
+{
+    int relative_rank, err;
+
+    if (rank == root) {
+        *recv_step = -1;
+        return MPI_SUCCESS;
+    }
+
+    /* Rank relative to the root, in the coordinate system of the schedule.
+     * Odd roots traverse the rank order in the opposite direction. */
+    err = ompi_coll_mod((root & 1) ? root - rank : rank - root, size, &relative_rank);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+        return err;
+    }
+
+    if (!reversed) {
+        int pos = ompi_coll_bine_remap_rank((uint32_t) size, (uint32_t) relative_rank);
+        if (OPAL_UNLIKELY(pos < 0)) {
+            return MPI_ERR_ARG;
+        }
+        *recv_step = steps - 1 - (ffs(pos) - 1);
+        return MPI_SUCCESS;
+    }
+
+    uint32_t nb;
+    uint32_t mask = (UINT32_C(1) << steps) - 1;
+    err = ompi_coll_binary_to_negabinary(relative_rank, &nb);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
+        return err;
+    }
+    /* Reversing the schedule flips the tree orientation, which complements
+     * the low `steps` bits of the negabinary address for odd ranks. */
+    uint32_t dist = (nb ^ ((nb & 1) ? mask : 0)) & mask;
+    *recv_step = steps - ((dist == 0) ? steps : (ffs((int) dist) - 1));
+    return MPI_SUCCESS;
+}
+
+/*
  * Computes the destination rank for a given process in a bine
  * algorithm step.
  *
@@ -653,6 +715,31 @@ static inline int ompi_coll_bine_reorder_blocks(void *buffer, size_t block_size,
     free(visited);
 
     return MPI_SUCCESS;
+}
+
+/* True when block i of the root's send buffer already lies at byte offset
+ * i * packed_block_size and its bytes equal its MPI_PACKED representation.
+ * That holds when sdtype is dense: no leading gap, no holes, and
+ * extent == type size. */
+static inline bool
+ompi_coll_bine_sbuf_is_dense(const struct ompi_datatype_t *sdtype, size_t scount,
+                             ptrdiff_t sextent, size_t packed_block_size)
+{
+    ptrdiff_t true_lb, true_extent;
+    size_t stype_size;
+
+    if (0 == packed_block_size) {
+        return true;
+    }
+
+    ompi_datatype_type_size(sdtype, &stype_size);
+    ompi_datatype_get_true_extent(sdtype, &true_lb, &true_extent);
+
+    return (true_lb == 0) &&
+           ((size_t) true_extent == stype_size) &&
+           ((size_t) sextent == stype_size) &&
+           (packed_block_size == scount * stype_size) &&
+           ompi_datatype_is_contiguous_memory_layout(sdtype, (int32_t) scount);
 }
 
 /* Function to calculate a Mersenne number (2^n - 1): the mask with bits

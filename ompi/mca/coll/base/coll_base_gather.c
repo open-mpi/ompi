@@ -462,7 +462,7 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
     char *tmpbuf = NULL, *base = NULL, *dst;
     struct ompi_datatype_t *block_dtype;
     size_t block_count;
-    MPI_Aint span, rextent, extent, gap = 0;
+    MPI_Aint span, extent, gap = 0;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -478,13 +478,22 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
                                                     root, comm, module);
     }
 
-    ompi_datatype_type_extent(rdtype, &rextent);
-    block_dtype = rdtype;
-    block_count = rcount;
-    extent = rextent;
+    if (rank == root) {
+        ompi_datatype_type_extent(rdtype, &extent);
+        block_dtype = rdtype;
+        block_count = rcount;
+    } else {
+        /* recvtype and recvcount are only significant at the root; on
+         * non-root ranks they may legally be MPI_DATATYPE_NULL / 0, so
+         * use the send type and count for the staging buffer. */
+        ompi_datatype_type_extent(sdtype, &extent);
+        block_dtype = sdtype;
+        block_count = scount;
+    }
 
     if (rank != root) {
-        span = opal_datatype_span(&rdtype->super, (int64_t)rcount * size, &gap);
+        span = opal_datatype_span(&block_dtype->super,
+                                  (int64_t)block_count * size, &gap);
         tmpbuf = (char *) malloc(span);
         if (tmpbuf == NULL) {
             err = OMPI_ERR_OUT_OF_RESOURCE;
@@ -500,7 +509,7 @@ ompi_coll_base_gather_intra_bine(const void *sbuf, size_t scount,
 
     if (MPI_IN_PLACE != sbuf) {
         err = ompi_datatype_sndrcv((void *)sbuf, scount, sdtype,
-                                   (void *)dst, rcount, rdtype);
+                                   (void *)dst, block_count, block_dtype);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
     }
 

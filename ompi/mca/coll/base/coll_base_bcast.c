@@ -1100,8 +1100,7 @@ int ompi_coll_base_bcast_intra_bine_lat(void *buf, size_t count, struct ompi_dat
                                          int root, struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int size, rank, steps, recv_step = -1, line, err = MPI_SUCCESS;
-    char *received = NULL;
+    int size, rank, steps, recv_step, line, err = MPI_SUCCESS;
     MPI_Request requests[BINE_MAX_STEPS];
     int request_count = 0;
     size = ompi_comm_size(comm);
@@ -1117,31 +1116,10 @@ int ompi_coll_base_bcast_intra_bine_lat(void *buf, size_t count, struct ompi_dat
         return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
     }
 
-    received = calloc(size, sizeof(char));
-    if (received == NULL) {
+    err = ompi_coll_bine_bcast_recv_step(rank, root, size, steps, false, &recv_step);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
         line = __LINE__;
-        err = MPI_ERR_NO_MEM;
         goto cleanup_and_return;
-    }
-    received[root] = 1;
-
-    for (int step = 0; step < steps && !received[rank]; step++) {
-        for (int proc = 0; proc < size; proc++) {
-            if (!received[proc])
-                continue;
-
-            int dest;
-            err = ompi_coll_bine_pi(proc, step, size, &dest);
-            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
-                line = __LINE__;
-                goto cleanup_and_return;
-            }
-            received[dest] = 1;
-            if (dest == rank) {
-                recv_step = step;
-                break;
-            }
-        }
     }
 
     /* Main loop.
@@ -1196,16 +1174,12 @@ int ompi_coll_base_bcast_intra_bine_lat(void *buf, size_t count, struct ompi_dat
         }
     }
 
-    free(received);
-
     return MPI_SUCCESS;
 
 cleanup_and_return:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     (void) line; // silence compiler warnings
-    if (NULL != received)
-        free(received);
 
     return err;
 }
@@ -1239,8 +1213,7 @@ int ompi_coll_base_bcast_intra_bine_lat_reversed(void *buf, size_t count,
                                                   struct ompi_communicator_t *comm,
                                                   mca_coll_base_module_t *module)
 {
-    int size, rank, steps, recv_step = -1, line, err = MPI_SUCCESS;
-    char *received = NULL;
+    int size, rank, steps, recv_step, line, err = MPI_SUCCESS;
     MPI_Request requests[BINE_MAX_STEPS];
     int request_count = 0;
     size = ompi_comm_size(comm);
@@ -1256,33 +1229,10 @@ int ompi_coll_base_bcast_intra_bine_lat_reversed(void *buf, size_t count,
         return ompi_coll_base_bcast_intra_binomial(buf, count, datatype, root, comm, module, 0);
     }
 
-    // Use an auxiliary array to record visited node in order
-    // to calculate at which step node is gonna receive the message.
-    received = calloc(size, sizeof(char));
-    if (received == NULL) {
+    err = ompi_coll_bine_bcast_recv_step(rank, root, size, steps, true, &recv_step);
+    if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
         line = __LINE__;
-        err = MPI_ERR_NO_MEM;
         goto cleanup_and_return;
-    }
-    received[root] = 1;
-
-    for (int step = 0; step < steps && !received[rank]; step++) {
-        for (int proc = 0; proc < size; proc++) {
-            if (!received[proc])
-                continue;
-
-            int dest;
-            err = ompi_coll_bine_pi(proc, steps - step - 1, size, &dest);
-            if (OPAL_UNLIKELY(MPI_SUCCESS != err)) {
-                line = __LINE__;
-                goto cleanup_and_return;
-            }
-            received[dest] = 1;
-            if (dest == rank) {
-                recv_step = step;
-                break;
-            }
-        }
     }
 
     /* Main loop.
@@ -1337,16 +1287,12 @@ int ompi_coll_base_bcast_intra_bine_lat_reversed(void *buf, size_t count,
         }
     }
 
-    free(received);
-
     return MPI_SUCCESS;
 
 cleanup_and_return:
     OPAL_OUTPUT((ompi_coll_base_framework.framework_output, "%s:%4d\tError occurred %d, rank %2d",
                  __FILE__, line, err, rank));
     (void) line; // silence compiler warnings
-    if (NULL != received)
-        free(received);
 
     return err;
 }

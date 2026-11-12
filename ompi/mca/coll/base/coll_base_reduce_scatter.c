@@ -941,6 +941,7 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     void *tmpbuf = NULL, *resbuf = NULL;
     MPI_Request *reqs_s = NULL, *reqs_r = NULL, *requests = NULL;
     int *blocks_to_recv = NULL;
+    int *block_k = NULL;
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
     ompi_datatype_type_extent(dtype, &dtsize);    
@@ -977,19 +978,6 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
         count += ompi_count_array_get(rcounts, i);
     }
 
-    /* Special case for size == 1 */
-    if (1 == size) {
-        if (MPI_IN_PLACE != sbuf) {
-            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char *) rbuf, (char *) sbuf);
-            if (MPI_SUCCESS != err) {
-                line = __LINE__;
-                goto err_hndl;
-            }
-        }
-        free(displs);
-        return MPI_SUCCESS;
-    }
-
     tmpbuf = malloc(count * dtsize);
     resbuf = malloc(count * dtsize);
     if (NULL == tmpbuf || NULL == resbuf) {
@@ -1022,6 +1010,26 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
         goto err_hndl;
     }
 
+    /* The step a block belongs to depends only on the block index and the
+     * communicator size, so compute it once instead of once per step.
+     */
+    block_k = (int *) malloc(size * sizeof(int));
+    if (NULL == block_k) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+    block_k[0] = 0; /* never read: the loops below start at block 1 */
+    for (size_t block = 1; block < (size_t) size; block++) {
+        uint32_t nu = 0;
+        err = ompi_coll_bine_get_nu(block, size, &nu);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        block_k[block] = opal_cube_dim((int) nu + 1) - 1;
+    }
+
     int next_req_s = 0, next_req_r = 0;
     int reverse_step = opal_cube_dim(size) - 1;
     int last_recv_done = 0;
@@ -1049,13 +1057,7 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
         for (size_t block = 1; block < (size_t) size; block++) {
             // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            uint32_t nu = 0;
-            err = ompi_coll_bine_get_nu(block, size, &nu);
-            if (MPI_SUCCESS != err) {
-                line = __LINE__;
-                goto err_hndl;
-            }
-            int k = opal_cube_dim((int) nu + 1) - 1;
+            int k = block_k[block];
             // Check if this must be sent
             if (k == reverse_step) {
                 // 0 would send this block
@@ -1171,6 +1173,7 @@ int ompi_coll_base_reduce_scatter_intra_bine_block_by_block_any_even(
     }
 
     free(blocks_to_recv);
+    free(block_k);
     free(displs);
     free(tmpbuf);
     free(resbuf);
@@ -1198,6 +1201,8 @@ err_hndl:
     (void) line; // silence compiler warning
     if (NULL != blocks_to_recv)
         free(blocks_to_recv);
+    if (NULL != block_k)
+        free(block_k);
     if (NULL != displs)
         free(displs);
     if (NULL != tmpbuf)

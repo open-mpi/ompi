@@ -1815,6 +1815,7 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
 {
     int size, rank, line, err = MPI_SUCCESS, tmp;
     int *blocks_to_recv = NULL;
+    int *block_k = NULL;
     MPI_Request *reqs_s = NULL, *reqs_r = NULL, *requests = NULL;
     ptrdiff_t lb, extent, true_extent, gap;
     size_t span;
@@ -1901,6 +1902,26 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
         goto err_hndl;
     }
 
+    /* The step a block belongs to depends only on the block index and the
+     * communicator size, so compute it once instead of once per step.
+     */
+    block_k = (int *) malloc(size * sizeof(int));
+    if (NULL == block_k) {
+        line = __LINE__;
+        err = MPI_ERR_NO_MEM;
+        goto err_hndl;
+    }
+    block_k[0] = 0; /* never read: the loops below start at block 1 */
+    for (size_t block = 1; block < (size_t) size; block++) {
+        uint32_t nu = 0;
+        err = ompi_coll_bine_get_nu(block, size, &nu);
+        if (MPI_SUCCESS != err) {
+            line = __LINE__;
+            goto err_hndl;
+        }
+        block_k[block] = opal_cube_dim((int) nu + 1) - 1;
+    }
+
     int next_req_s = 0, next_req_r = 0;
     int reverse_step = opal_cube_dim(size) - 1;
     while (mask < size) {
@@ -1926,13 +1947,7 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
         for (size_t block = 1; block < (size_t) size; block++) {
             // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            uint32_t nu = 0;
-            err = ompi_coll_bine_get_nu(block, size, &nu);
-            if (MPI_SUCCESS != err) {
-                line = __LINE__;
-                goto err_hndl;
-            }
-            int k = opal_cube_dim((int) nu + 1) - 1;
+            int k = block_k[block];
             // Check if this must be sent
             if (k == reverse_step) {
                 // 0 would send this block
@@ -2046,13 +2061,7 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
         for (size_t block = 1; block < (size_t) size; block++) {
             // Get the position of the highest set bit
             // That gives us the first at which block departs from 0
-            uint32_t nu = 0;
-            err = ompi_coll_bine_get_nu(block, size, &nu);
-            if (MPI_SUCCESS != err) {
-                line = __LINE__;
-                goto err_hndl;
-            }
-            int k = opal_cube_dim((int) nu + 1) - 1;
+            int k = block_k[block];
             // int k = __builtin_ctz(get_nu(block, size));
             //  Check if this must be sent (recvd in allgather)
             if (k == step || block == 0) {
@@ -2132,6 +2141,7 @@ int ompi_coll_base_allreduce_intra_bine_block_by_block_any_even_over(
         step++;
     }
     free(blocks_to_recv);
+    free(block_k);
     free(displs);
     free(tmpbuf);
     free(recvcounts);
@@ -2160,6 +2170,8 @@ err_hndl:
 
     if (NULL != blocks_to_recv)
         free(blocks_to_recv);
+    if (NULL != block_k)
+        free(block_k);
     if (NULL != displs)
         free(displs);
     if (NULL != tmpbuf) {
@@ -2222,7 +2234,7 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
 
     steps = opal_hibit(size, (int) (sizeof(size) * CHAR_BIT) - 1);
 
-    if (!ompi_coll_is_power_of_two(size) || steps == -1) {
+    if (size & 0x1 || steps == -1) {
         OPAL_OUTPUT((ompi_coll_base_framework.framework_output,
                      "coll:base:allreduce_intra_bine_bdw_remap_segmented WARNING: "
                      "non-pow-2 size %d, switching to recursive doubling",
@@ -2287,7 +2299,6 @@ int ompi_coll_base_allreduce_intra_bine_bdw_remap_segmented(
             }
             loop_flag = 1;
         } else {
-            // TODO: Pay attention to commuitativity of the operation
             err = MCA_PML_CALL(recv(rbuf, count, dtype, (rank - 1), MCA_COLL_BASE_TAG_ALLREDUCE,
                                     comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {

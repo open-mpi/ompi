@@ -429,8 +429,8 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
     int size, rank, err = MPI_SUCCESS, line = -1, vrank, vrank_nb, tmp;
     int halving_direction, mask, recvd = 0, is_leaf = 0, log_2_size;
     size_t min_resident_block, max_resident_block;
-    size_t sbuf_offset, rtype_size, packed_block_size;
-    ptrdiff_t sextent, slb, rextent, rlb;
+    size_t sbuf_offset, block_type_size, packed_block_size;
+    ptrdiff_t sextent, slb;
     char *tmpbuf = NULL, *sbuf_ptr = NULL, *rbuf_ptr = NULL, *root_tmpbuf = NULL;
 
     rank = ompi_comm_rank(comm);
@@ -447,9 +447,18 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
                                                      root, comm, module);
     }
 
-    ompi_datatype_type_size(rdtype, &rtype_size);
-    packed_block_size = rcount * rtype_size;
-    ompi_datatype_get_extent(rdtype, &rlb, &rextent);
+    if (rank == root && MPI_IN_PLACE == rbuf) {
+        /* recvtype and recvcount are ignored at the root when recvbuf is
+         * MPI_IN_PLACE; derive the packed block size from the send type
+         * instead.  The send and receive signatures must match, so this
+         * is the same size every receiver computes from its own
+         * rcount/rdtype. */
+        ompi_datatype_type_size(sdtype, &block_type_size);
+        packed_block_size = scount * block_type_size;
+    } else {
+        ompi_datatype_type_size(rdtype, &block_type_size);
+        packed_block_size = rcount * block_type_size;
+    }
 
     if (rank == root) {
         ompi_datatype_get_extent(sdtype, &slb, &sextent);
@@ -509,39 +518,41 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
 
     mask = 0x1 << (int) (log_2_size - 1);
     sbuf_offset = rank;
-    if (root == rank) {
+    if (rank == root) {
         recvd = 1;
-        /* Convert the send buffer from (scount, sdtype) per block into a packed
-           (rcount, rdtype) per block layout, so that every rank sends and
-           receives with the same MPI_PACKED / packed_block_size convention. */
-        root_tmpbuf = (char *) malloc(size * packed_block_size);
-        if (NULL == root_tmpbuf) {
-            err = OMPI_ERR_OUT_OF_RESOURCE;
-            line = __LINE__;
-            goto err_hndl;
-        }
-        for (int i = 0; i < size; i++) {
-            err = ompi_datatype_sndrcv((char *) sbuf + (ptrdiff_t) i * (ptrdiff_t) scount * sextent,
-                                       scount, sdtype,
-                                       root_tmpbuf + (ptrdiff_t) i * (ptrdiff_t) packed_block_size,
-                                       packed_block_size, MPI_PACKED);
-            if (MPI_SUCCESS != err) {
+        if (ompi_coll_bine_sbuf_is_dense(sdtype, scount, sextent, packed_block_size)) {
+            /* The user buffer already has the packed block layout, so the
+             * root sends directly from it: no second copy, no packing pass. */
+            sbuf_ptr = (char *) sbuf;
+        } else {
+            /* Non-dense send type: pack once into a temporary buffer. */
+            root_tmpbuf = (char *) malloc(size * packed_block_size);
+            if (NULL == root_tmpbuf) {
+                err = OMPI_ERR_OUT_OF_RESOURCE;
                 line = __LINE__;
                 goto err_hndl;
             }
+            for (int i = 0; i < size; i++) {
+                err = ompi_datatype_sndrcv((char *) sbuf + (ptrdiff_t) i * (ptrdiff_t) scount * sextent,
+                                           scount, sdtype,
+                                           root_tmpbuf + (ptrdiff_t) i * (ptrdiff_t) packed_block_size,
+                                           packed_block_size, MPI_PACKED);
+                if (MPI_SUCCESS != err) {
+                    line = __LINE__;
+                    goto err_hndl;
+                }
+            }
+            sbuf_ptr = root_tmpbuf;
         }
-        sbuf_ptr = (char *) root_tmpbuf;
     }
 
-    {
-        uint32_t btnb_vrank_u32;
-        if (MPI_SUCCESS != ompi_coll_binary_to_negabinary(vrank, &btnb_vrank_u32)) {
-            line = __LINE__;
-            err = MPI_ERR_ARG;
-            goto err_hndl;
-        }
-        vrank_nb = (int) btnb_vrank_u32;
+    uint32_t btnb_vrank_u32;
+    if (MPI_SUCCESS != ompi_coll_binary_to_negabinary(vrank, &btnb_vrank_u32)) {
+        line = __LINE__;
+        err = MPI_ERR_ARG;
+        goto err_hndl;
     }
+    vrank_nb = (int) btnb_vrank_u32;
     while (mask > 0) {
         size_t top_start, top_end, bottom_start, bottom_end;
         size_t send_start, send_end, recv_start, recv_end;
@@ -670,14 +681,14 @@ int ompi_coll_base_scatter_intra_bine(const void *sbuf, size_t scount,
                 sbuf_offset = (size_t) tmp;
                 
                 if (recv_end >= recv_start || partner != root) {
-                    // Ricezione standard: un singolo blocco continuo
+                    // Standard recive: a single continuous block
                     err = MCA_PML_CALL(recv(rbuf_ptr, num_blocks * packed_block_size,
                                             MPI_PACKED, partner, MCA_COLL_BASE_TAG_SCATTER,
                                             comm, MPI_STATUS_IGNORE));
                     if(err != MPI_SUCCESS){ line = __LINE__; goto err_hndl; }
                 } else {
-                    // Wrap-around receive: Il mittente (es. la root) ha effettuato 
-                    // il wrap-around e inviato 2 messaggi. Dobbiamo ricevere in due parti!
+                    // Wrap-around receive: The sender (e.g., root) performed
+                    // the wrap-around and sent 2 messages. We need to receive in two parts!
                     size_t part_a = size - recv_start;
                     err = MCA_PML_CALL(recv(rbuf_ptr, part_a * packed_block_size,
                                             MPI_PACKED, partner, MCA_COLL_BASE_TAG_SCATTER,
