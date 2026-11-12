@@ -115,6 +115,7 @@ mpit_errhandler_state.calls = 0;
 mpit_errhandler_state.failure_code = 0;
 mpit_errhandler_state.err_code = 0;
 mpit_errhandler_state.object_type = 0;
+mpit_errhandler_state.errhandler_handle = 0;
 mpit_errhandler_state.object_handle = 0;
 
 ret = MPI_T_event_handle_alloc(errhandler_index, NULL, MPI_INFO_NULL,
@@ -191,7 +192,10 @@ if (0 == local_failure) {
         if (MPI_SUCCESS != ret) {
             local_failure = 12;
         } else {
-            ret = MPI_Comm_call_errhandler(MPI_COMM_SELF, MPI_ERR_OTHER);
+            /* Use MPI_ERR_SESSION rather than MPI_ERR_OTHER: its value differs
+               between the ABIs (78 in the Open MPI ABI, 60 in the Standard
+               ABI), so the payload err_code conversion is actually exercised. */
+            ret = MPI_Comm_call_errhandler(MPI_COMM_SELF, MPI_ERR_SESSION);
             if (MPI_SUCCESS != ret) {
                 local_failure = 13;
             } else if (0 != mpit_errhandler_state.failure_code) {
@@ -209,12 +213,12 @@ if (0 == local_failure) {
                         (unsigned long long) (uintptr_t) MPI_COMM_SELF);
                 local_failure = 16;
             } else if (mpit_errhandler_state.err_code !=
-                       (int32_t) (uintptr_t) MPI_ERR_OTHER) {
-                /* The err_code must be the Standard-ABI error code for MPI_ERR_OTHER,
-                   not the internal error code. */
+                       (int32_t) (uintptr_t) MPI_ERR_SESSION) {
+                /* The err_code must be the Standard-ABI error code for
+                   MPI_ERR_SESSION, not the internal error code. */
                 fprintf(stderr, "ABI_FAIL:mpit:errhandler_err_code:%d:%d\n",
                         (int) mpit_errhandler_state.err_code,
-                        (int) (uintptr_t) MPI_ERR_OTHER);
+                        (int) (uintptr_t) MPI_ERR_SESSION);
                 local_failure = 19;
             } else if (mpit_errhandler_state.object_type !=
                        (int32_t) (uintptr_t) MPI_T_BIND_MPI_COMM) {
@@ -224,6 +228,17 @@ if (0 == local_failure) {
                         (int) mpit_errhandler_state.object_type,
                         (int) (uintptr_t) MPI_T_BIND_MPI_COMM);
                 local_failure = 20;
+            } else if (mpit_errhandler_state.errhandler_handle !=
+                       (uint64_t) (uintptr_t) test_errhandler) {
+                /* The errhandler_handle must be the Standard-ABI MPI_Errhandler
+                   handle the application holds.  For a user-created handler this
+                   equals the pointer, so it only detects the old 0 stub; the
+                   predefined-handler scenario below gives the
+                   MPI_T_BIND_MPI_ERRHANDLER arm real teeth. */
+                fprintf(stderr, "ABI_FAIL:mpit:errhandler_errhandler_handle:%llu:%llu\n",
+                        (unsigned long long) mpit_errhandler_state.errhandler_handle,
+                        (unsigned long long) (uintptr_t) test_errhandler);
+                local_failure = 21;
             }
             /* Restore the default errhandler. */
             ret = MPI_Comm_set_errhandler(MPI_COMM_SELF, MPI_ERRORS_RETURN);
@@ -234,6 +249,44 @@ if (0 == local_failure) {
         ret = MPI_Errhandler_free(&test_errhandler);
         if (MPI_SUCCESS != ret && 0 == local_failure) {
             local_failure = 18;
+        }
+    }
+}
+
+/* Test 3: Invoke the predefined MPI_ERRORS_RETURN handler on MPI_COMM_SELF
+   and verify the errhandler_invoked payload carries that handler's Standard-ABI
+   handle.  Unlike a user-created handler (whose Standard-ABI handle is just the
+   object pointer), a predefined handler's Standard-ABI value is a small reserved
+   integer that differs from its internal pointer, so this genuinely exercises
+   the MPI_T_BIND_MPI_ERRHANDLER arm of the handle converter: publishing 0, the
+   internal pointer, or the wrong reserved value would all fail here. */
+if (0 == local_failure) {
+    mpit_errhandler_state.calls = 0;
+    mpit_errhandler_state.failure_code = 0;
+    mpit_errhandler_state.err_code = 0;
+    mpit_errhandler_state.object_type = 0;
+    mpit_errhandler_state.errhandler_handle = 0;
+    mpit_errhandler_state.object_handle = 0;
+
+    ret = MPI_Comm_set_errhandler(MPI_COMM_SELF, MPI_ERRORS_RETURN);
+    if (MPI_SUCCESS != ret) {
+        local_failure = 22;
+    } else {
+        ret = MPI_Comm_call_errhandler(MPI_COMM_SELF, MPI_ERR_SESSION);
+        if (MPI_SUCCESS != ret) {
+            local_failure = 23;
+        } else if (0 != mpit_errhandler_state.failure_code) {
+            local_failure = 24;
+        } else if (mpit_errhandler_state.calls < 1) {
+            local_failure = 25;
+        } else if (mpit_errhandler_state.errhandler_handle !=
+                   (uint64_t) (uintptr_t) MPI_ERRORS_RETURN) {
+            /* The errhandler_handle must be MPI_ERRORS_RETURN's Standard-ABI
+               reserved handle, which differs from its internal pointer. */
+            fprintf(stderr, "ABI_FAIL:mpit:errhandler_predefined_handle:%llu:%llu\n",
+                    (unsigned long long) mpit_errhandler_state.errhandler_handle,
+                    (unsigned long long) (uintptr_t) MPI_ERRORS_RETURN);
+            local_failure = 26;
         }
     }
 }

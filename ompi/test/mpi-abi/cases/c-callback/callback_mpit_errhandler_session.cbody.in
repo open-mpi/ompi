@@ -75,6 +75,7 @@ mpit_session_errhandler_state.calls = 0;
 mpit_session_errhandler_state.failure_code = 0;
 mpit_session_errhandler_state.err_code = 0;
 mpit_session_errhandler_state.object_type = 0;
+mpit_session_errhandler_state.errhandler_handle = 0;
 mpit_session_errhandler_state.object_handle = 0;
 
 ret = MPI_T_event_handle_alloc(errhandler_index, NULL, MPI_INFO_NULL,
@@ -118,7 +119,13 @@ if (MPI_SUCCESS != ret || MPI_SESSION_NULL == session) {
 }
 
 int local_failure = 0;
-ret = MPI_Session_call_errhandler(session, MPI_ERR_OTHER);
+/* Use MPI_ERR_SESSION rather than MPI_ERR_OTHER: its value differs between
+   the ABIs (78 in the Open MPI ABI, 60 in the Standard ABI), so the payload
+   err_code conversion is actually exercised -- the ABI
+   MPI_Session_call_errhandler wrapper converts this Standard-ABI code to the
+   internal code on entry, and the raise site must convert it back to the
+   Standard-ABI value. */
+ret = MPI_Session_call_errhandler(session, MPI_ERR_SESSION);
 if (MPI_SUCCESS != ret) {
     local_failure = 5;
 } else if (0 != mpit_session_errhandler_state.failure_code) {
@@ -133,11 +140,11 @@ if (MPI_SUCCESS != ret) {
             (unsigned long long) (uintptr_t) session);
     local_failure = 8;
 } else if (mpit_session_errhandler_state.err_code !=
-           (int32_t) (uintptr_t) MPI_ERR_OTHER) {
+           (int32_t) (uintptr_t) MPI_ERR_SESSION) {
     /* The err_code must be the Standard-ABI error code. */
     fprintf(stderr, "ABI_FAIL:mpit:session_errhandler_err_code:%d:%d\n",
             (int) mpit_session_errhandler_state.err_code,
-            (int) (uintptr_t) MPI_ERR_OTHER);
+            (int) (uintptr_t) MPI_ERR_SESSION);
     local_failure = 9;
 } else if (mpit_session_errhandler_state.object_type !=
            (int32_t) (uintptr_t) MPI_T_BIND_MPI_SESSION) {
@@ -146,6 +153,15 @@ if (MPI_SUCCESS != ret) {
             (int) mpit_session_errhandler_state.object_type,
             (int) (uintptr_t) MPI_T_BIND_MPI_SESSION);
     local_failure = 10;
+} else if (mpit_session_errhandler_state.errhandler_handle !=
+           (uint64_t) (uintptr_t) session_errhandler) {
+    /* The errhandler_handle must be the Standard-ABI MPI_Errhandler handle
+       the application holds, exercising the MPI_T_BIND_MPI_ERRHANDLER arm of
+       the handle converter. */
+    fprintf(stderr, "ABI_FAIL:mpit:session_errhandler_errhandler_handle:%llu:%llu\n",
+            (unsigned long long) mpit_session_errhandler_state.errhandler_handle,
+            (unsigned long long) (uintptr_t) session_errhandler);
+    local_failure = 15;
 }
 
 ret = MPI_Session_finalize(&session);
