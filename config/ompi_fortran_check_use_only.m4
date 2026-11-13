@@ -65,7 +65,7 @@ END PROGRAM]])],
                                                               [AS_VAR_SET(use_only_var, no)])],
                                            [AS_VAR_SET(use_only_var, no)])],
                          [AS_VAR_SET(use_only_var, no)])
-        rm -rf aaa.f90 aaa.o bbb.f90 bbb.o *.mod 2>/dev/null
+        rm -rf aaa.f90 aaa.o bbb.f90 bbb.o *.$FC_MODEXT 2>/dev/null
         AC_LANG_POP([Fortran])
        ])
 

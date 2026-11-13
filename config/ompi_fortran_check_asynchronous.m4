@@ -46,7 +46,7 @@ END MODULE asynch_mod]])],
              [AS_VAR_SET(asynchronous_var, yes)],
              [AS_VAR_SET(asynchronous_var, no)])
         touch conftest_foo.mod
-        rm -rf *.mod 2>/dev/null
+        rm -rf *.$FC_MODEXT 2>/dev/null
         AC_LANG_POP([Fortran])
        ])
 
