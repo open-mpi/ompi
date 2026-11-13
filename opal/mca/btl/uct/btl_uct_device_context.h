@@ -39,6 +39,13 @@ mca_btl_uct_device_context_t *mca_btl_uct_context_create(mca_btl_uct_module_t *m
 void mca_btl_uct_context_destroy(mca_btl_uct_device_context_t *context);
 
 /**
+ * @brief Enable progress on context if not already enabled
+ *
+ * @param[in] context Context to enable progress on.
+ */
+void mca_btl_uct_context_enable_progress(mca_btl_uct_device_context_t *context);
+
+/**
  * @brief Enable active messages on context if not already enabled
  *
  * @param[in] tl      TL this context belongs to
