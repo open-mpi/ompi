@@ -63,6 +63,10 @@ Open MPI version v6.1.0
   replaced the ones of the patcher and feeds the Open MPI memory release
   hooks from UCM.
 
+- ``osc/ucx`` no longer fails on windows created in a program that only
+  uses MPI Sessions, or on a communicator that includes processes of
+  another job (after ``MPI_Comm_spawn`` or ``MPI_Comm_connect``).
+
 - **Build System**: Open MPI now requires Autoconf 2.69 or later for
   developers building from Git or modifying the build system. Released
   tarballs remain unaffected. This update enables adoption of modern
