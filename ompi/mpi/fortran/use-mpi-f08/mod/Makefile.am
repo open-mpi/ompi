@@ -35,7 +35,8 @@ AM_CPPFLAGS =
 # MPI bindings.
 if OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS
 
-AM_FCFLAGS = -I$(top_builddir)/ompi/include \
+AM_FCFLAGS = $(FC_MODOUT_CURDIR) \
+             -I$(top_builddir)/ompi/include \
              -I$(top_srcdir)/ompi/include \
              $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi \
              $(FC_MODINC)$(top_builddir)/ompi/mpi/fortran/use-mpi-ignore-tkr \
