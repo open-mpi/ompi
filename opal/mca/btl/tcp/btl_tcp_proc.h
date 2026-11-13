@@ -75,6 +75,7 @@ mca_btl_base_endpoint_t *mca_btl_tcp_proc_endpoint(mca_btl_tcp_proc_t *, mca_btl
                                                    int *status);
 int mca_btl_tcp_proc_insert(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);
 int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t *, mca_btl_base_endpoint_t *);
+void mca_btl_tcp_proc_remove_all(void);
 void mca_btl_tcp_proc_accept(mca_btl_tcp_proc_t *, struct sockaddr *, int);
 bool mca_btl_tcp_proc_tosocks(mca_btl_tcp_addr_t *, struct sockaddr_storage *);
 
