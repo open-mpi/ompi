@@ -82,7 +82,7 @@ PROTOTYPE ERROR_CLASS allreduce(BUFFER_CONST sendbuf, BUFFER_OUT recvbuf, COUNT 
                                           FUNC_NAME);
         } else if( (sendbuf == recvbuf) &&
                    (MPI_BOTTOM != sendbuf) &&
-                   (count > 1) ) {
+                   (count > 0) ) {
 	    return OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_BUFFER,
                                           FUNC_NAME);
         } else {

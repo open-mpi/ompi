@@ -128,6 +128,12 @@ PROTOTYPE ERROR_CLASS gather(BUFFER_CONST sendbuf, COUNT sendcount, DATATYPE sen
                 if (recvcount < 0) {
                     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
                 }
+
+                /* The root may not use overlapping send and receive buffers. */
+                if (MPI_IN_PLACE != sendbuf && sendcount > 0 && recvcount > 0 &&
+                    sendbuf == recvbuf) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER, FUNC_NAME);
+                }
             }
         }
 

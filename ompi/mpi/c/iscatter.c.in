@@ -109,8 +109,12 @@ PROTOTYPE ERROR_CLASS iscatter(BUFFER_CONST sendbuf, COUNT sendcount, DATATYPE s
              run time) for efficiency, it's more clear to separate
              them out into individual tests. */
 
-          else if (ompi_comm_rank(comm) == root) {
+          if (MPI_SUCCESS == err && ompi_comm_rank(comm) == root) {
             OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+            if (MPI_SUCCESS == err && MPI_IN_PLACE != recvbuf &&
+                sendcount > 0 && recvcount > 0 && sendbuf == recvbuf) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER, FUNC_NAME);
+            }
           }
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
         }
