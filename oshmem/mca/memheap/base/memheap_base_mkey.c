@@ -583,50 +583,98 @@ static void memheap_attach_segment(sshmem_mkey_t *mkey, int tr_id)
 }
 
 
-static void unpack_remote_mkeys(shmem_ctx_t ctx, pmix_data_buffer_t *msg, int remote_pe)
+static int unpack_remote_mkeys(shmem_ctx_t ctx, pmix_data_buffer_t *msg,
+                               int remote_pe, int n_transports)
 {
     int32_t cnt;
-    int32_t n;
-    int32_t tr_id;
-    int i;
+    uint32_t n;
+    uint32_t tr_id;
+    sshmem_mkey_t *mkey;
+    int rc;
+    uint32_t i;
+
     cnt = 1;
-    PMIx_Data_unpack(NULL, msg, &n, &cnt, PMIX_UINT32);
+    rc = PMIx_Data_unpack(NULL, msg, &n, &cnt, PMIX_UINT32);
+    if (PMIX_SUCCESS != rc) {
+        MEMHEAP_ERROR("PE%d: failed to unpack transport count: %s",
+                      remote_pe, PMIx_Error_string(rc));
+        return OSHMEM_ERROR;
+    }
+    if (n > (uint32_t) n_transports) {
+        MEMHEAP_ERROR("PE%d: %u transports in key payload, at most %d expected",
+                      remote_pe, n, n_transports);
+        return OSHMEM_ERR_BAD_PARAM;
+    }
+
     for (i = 0; i < n; i++) {
         cnt = 1;
-        PMIx_Data_unpack(NULL, msg, &tr_id, &cnt, PMIX_UINT32);
-        cnt = 1;
-        PMIx_Data_unpack(NULL, msg,
-                        &memheap_oob.mkeys[tr_id].va_base,
-                        &cnt,
-                        PMIX_UINT64);
+        rc = PMIx_Data_unpack(NULL, msg, &tr_id, &cnt, PMIX_UINT32);
+        if (PMIX_SUCCESS != rc) {
+            MEMHEAP_ERROR("PE%d: failed to unpack transport id: %s",
+                          remote_pe, PMIx_Error_string(rc));
+            return OSHMEM_ERROR;
+        }
+        if (tr_id >= (uint32_t) n_transports) {
+            MEMHEAP_ERROR("PE%d: transport id %u out of range [0, %d)",
+                          remote_pe, tr_id, n_transports);
+            return OSHMEM_ERR_BAD_PARAM;
+        }
+        mkey = &memheap_oob.mkeys[tr_id];
 
-        if (0 == memheap_oob.mkeys[tr_id].va_base) {
+        cnt = 1;
+        rc = PMIx_Data_unpack(NULL, msg, &mkey->va_base, &cnt, PMIX_UINT64);
+        if (PMIX_SUCCESS != rc) {
+            MEMHEAP_ERROR("PE%d: failed to unpack va_base: %s",
+                          remote_pe, PMIx_Error_string(rc));
+            return OSHMEM_ERROR;
+        }
+
+        if (0 == mkey->va_base) {
             cnt = 1;
-            PMIx_Data_unpack(NULL, msg, &memheap_oob.mkeys[tr_id].u.key, &cnt, PMIX_UINT64);
+            rc = PMIx_Data_unpack(NULL, msg, &mkey->u.key, &cnt, PMIX_UINT64);
+            if (PMIX_SUCCESS != rc) {
+                MEMHEAP_ERROR("PE%d: failed to unpack segment key: %s",
+                              remote_pe, PMIx_Error_string(rc));
+                return OSHMEM_ERROR;
+            }
             if (oshmem_proc_on_local_node(remote_pe)) {
-                memheap_attach_segment(&memheap_oob.mkeys[tr_id], tr_id);
+                memheap_attach_segment(mkey, tr_id);
             }
         } else {
             cnt = 1;
-            PMIx_Data_unpack(NULL, msg, &memheap_oob.mkeys[tr_id].len, &cnt, PMIX_UINT16);
-            if (0 < memheap_oob.mkeys[tr_id].len) {
-                memheap_oob.mkeys[tr_id].u.data = malloc(memheap_oob.mkeys[tr_id].len);
-                if (NULL == memheap_oob.mkeys[tr_id].u.data) {
-                    MEMHEAP_ERROR("Failed allocate %d bytes", memheap_oob.mkeys[tr_id].len);
+            rc = PMIx_Data_unpack(NULL, msg, &mkey->len, &cnt, PMIX_UINT16);
+            if (PMIX_SUCCESS != rc) {
+                MEMHEAP_ERROR("PE%d: failed to unpack key length: %s",
+                              remote_pe, PMIx_Error_string(rc));
+                return OSHMEM_ERROR;
+            }
+            if (0 < mkey->len) {
+                mkey->u.data = malloc(mkey->len);
+                if (NULL == mkey->u.data) {
+                    MEMHEAP_ERROR("Failed allocate %d bytes", mkey->len);
                     oshmem_shmem_abort(-1);
                 }
-                cnt = memheap_oob.mkeys[tr_id].len;
-                PMIx_Data_unpack(NULL, msg, memheap_oob.mkeys[tr_id].u.data, &cnt, PMIX_BYTE);
+                cnt = mkey->len;
+                rc = PMIx_Data_unpack(NULL, msg, mkey->u.data, &cnt, PMIX_BYTE);
+                if (PMIX_SUCCESS != rc) {
+                    MEMHEAP_ERROR("PE%d: failed to unpack %d byte key: %s",
+                                  remote_pe, mkey->len, PMIx_Error_string(rc));
+                    free(mkey->u.data);
+                    mkey->u.data = NULL;
+                    mkey->len = 0;
+                    return OSHMEM_ERROR;
+                }
             } else {
-                memheap_oob.mkeys[tr_id].u.key = MAP_SEGMENT_SHM_INVALID;
+                mkey->u.key = MAP_SEGMENT_SHM_INVALID;
             }
-            MCA_SPML_CALL(rmkey_unpack(ctx, &memheap_oob.mkeys[tr_id], memheap_oob.segno, remote_pe, tr_id));
+            MCA_SPML_CALL(rmkey_unpack(ctx, mkey, memheap_oob.segno, remote_pe, tr_id));
         }
 
         MEMHEAP_VERBOSE(5,
                         "tr_id: %d %s",
-                        tr_id, mca_spml_base_mkey2str(&memheap_oob.mkeys[tr_id]));
+                        tr_id, mca_spml_base_mkey2str(mkey));
     }
+    return OSHMEM_SUCCESS;
 }
 
 static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
@@ -681,8 +729,10 @@ static void do_recv(int source_pe, pmix_data_buffer_t* buffer)
     case MEMHEAP_RKEY_RESP:
         MEMHEAP_VERBOSE(5, "*** RKEY RESP");
         OPAL_THREAD_LOCK(&memheap_oob.lck);
-        unpack_remote_mkeys(memheap_oob.ctx, buffer, source_pe);
-        memheap_oob.mkeys_rcvd = MEMHEAP_RKEY_RESP;
+        rc = unpack_remote_mkeys(memheap_oob.ctx, buffer, source_pe,
+                                 memheap_map->num_transports);
+        memheap_oob.mkeys_rcvd = (OSHMEM_SUCCESS == rc) ? MEMHEAP_RKEY_RESP
+                                                        : MEMHEAP_RKEY_RESP_FAIL;
         opal_condition_broadcast(&memheap_oob.cond);
         OPAL_THREAD_UNLOCK(&memheap_oob.lck);
         break;
@@ -1179,7 +1229,12 @@ void mca_memheap_modex_recv_all(void)
             }
             memheap_oob.mkeys = segment->mkeys_cache[i];
             memheap_oob.segno = j;
-            unpack_remote_mkeys(oshmem_ctx_default, msg, i);
+            rc = unpack_remote_mkeys(oshmem_ctx_default, msg, i,
+                                     rcv_n_transports[i]);
+            if (OSHMEM_SUCCESS != rc) {
+                MEMHEAP_ERROR("PE%d: segment%d: failed to unpack remote keys", i, j);
+                break;
+            }
         }
         if (OSHMEM_SUCCESS != rc) {
             break;
