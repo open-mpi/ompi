@@ -19,6 +19,7 @@
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/memory/base/base.h"
 #include "ompi/mca/coll/coll.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/mca/threads/thread_usage.h"
 #include "ompi/communicator/communicator.h"
@@ -48,7 +49,7 @@ BEGIN_C_DECLS
 
 struct mca_coll_ucc_module_t;
 typedef struct mca_coll_ucc_req {
-    ompi_request_t super;
+    ompi_coll_base_nbc_request_t super;
     ucc_coll_req_h ucc_req;
     struct mca_coll_ucc_module_t *module;  /* posting module; counted in module/domain ->active in flight */
 } mca_coll_ucc_req_t;

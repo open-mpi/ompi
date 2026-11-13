@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1130,9 +1131,9 @@ ompi_coll_portals4_gather_intra_binomial_bottom(struct ompi_communicator_t *comm
     if (request->u.gather.free_after)
         free(request->u.gather.gather_buf);
 
-    request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+    request->super.super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    ompi_request_complete(&request->super, true);
+    ompi_request_complete(&request->super.super.super, true);
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_binomial_bottom exit rank %d", request->u.gather.my_rank));
@@ -1140,7 +1141,7 @@ ompi_coll_portals4_gather_intra_binomial_bottom(struct ompi_communicator_t *comm
     return OMPI_SUCCESS;
 
 err_hdlr:
-    request->super.req_status.MPI_ERROR = ret;
+    request->super.super.super.req_status.MPI_ERROR = ret;
 
     if (request->u.gather.free_after)
         free(request->u.gather.gather_buf);
@@ -1190,9 +1191,9 @@ ompi_coll_portals4_gather_intra_linear_bottom(struct ompi_communicator_t *comm,
     if (request->u.gather.free_after)
         free(request->u.gather.gather_buf);
 
-    request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+    request->super.super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    ompi_request_complete(&request->super, true);
+    ompi_request_complete(&request->super.super.super, true);
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:gather_intra_linear_bottom exit rank %d", request->u.gather.my_rank));
@@ -1200,7 +1201,7 @@ ompi_coll_portals4_gather_intra_linear_bottom(struct ompi_communicator_t *comm,
     return OMPI_SUCCESS;
 
 err_hdlr:
-    request->super.req_status.MPI_ERROR = ret;
+    request->super.super.super.req_status.MPI_ERROR = ret;
 
     if (request->u.gather.free_after)
         free(request->u.gather.gather_buf);
@@ -1306,7 +1307,7 @@ ompi_coll_portals4_igather_intra(const void *sbuf, size_t scount, struct ompi_da
     if (NULL == request) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE; line = __LINE__; goto err_hdlr;
     }
-    *ompi_request = &request->super;
+    *ompi_request = &request->super.super.super;
     request->u.gather.is_sync = 0;
 
     /*
@@ -1359,10 +1360,10 @@ ompi_coll_portals4_igather_intra_fini(ompi_coll_portals4_request_t *request)
      *  cleanup the gather
      */
     if (1 == mca_coll_portals4_component.use_binomial_gather_algorithm) {
-        ret = ompi_coll_portals4_gather_intra_binomial_bottom(request->super.req_mpi_object.comm, request);
+        ret = ompi_coll_portals4_gather_intra_binomial_bottom(request->super.super.super.req_mpi_object.comm, request);
         if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
     } else {
-        ret = ompi_coll_portals4_gather_intra_linear_bottom(request->super.req_mpi_object.comm, request);
+        ret = ompi_coll_portals4_gather_intra_linear_bottom(request->super.super.super.req_mpi_object.comm, request);
         if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
     }
 

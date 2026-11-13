@@ -1938,7 +1938,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
     OBJ_RETAIN(comm);    /* the request's callbacks use the parent until completion */
 
     request->context = &context->super;
-    request->super.req_mpi_object.comm = comm;
+    request->super.super.req_mpi_object.comm = comm;
 
     rc =  ompi_comm_set_nb (&context->newcomp,                      /* new comm */
                             comm,                                   /* old comm */
@@ -1982,7 +1982,7 @@ static int ompi_comm_idup_internal (ompi_communicator_t *comm, ompi_group_t *gro
 
     /* kick off the request */
     ompi_comm_request_start (request);
-    *req = &request->super;
+    *req = &request->super.super;
 
     return OMPI_SUCCESS;
 }
@@ -1996,9 +1996,9 @@ static int ompi_comm_idup_getcid (ompi_comm_request_t *request)
 
     /* ompi_comm_request_progress() runs this even when the construction
      * subrequest failed, so there may be no usable communicator to go on with */
-    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+    if (OMPI_SUCCESS != request->super.super.req_status.MPI_ERROR) {
         ompi_comm_idup_with_info_discard (context);
-        return request->super.req_status.MPI_ERROR;
+        return request->super.super.req_status.MPI_ERROR;
     }
 
     if (OMPI_COMM_IS_INTER(context->comm)){
@@ -2034,9 +2034,9 @@ static int ompi_comm_idup_with_info_activate (ompi_comm_request_t *request)
 
     /* the cid negotiation may have failed, in which case the new communicator
      * has no context id and must not be named or activated */
-    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+    if (OMPI_SUCCESS != request->super.super.req_status.MPI_ERROR) {
         ompi_comm_idup_with_info_discard (context);
-        return request->super.req_status.MPI_ERROR;
+        return request->super.super.req_status.MPI_ERROR;
     }
 
     if (OMPI_COMM_IS_INTER(context->comm)){
@@ -2070,9 +2070,9 @@ static int ompi_comm_idup_with_info_finish (ompi_comm_request_t *request)
     /* ompi_comm_request_progress() replaces the request status with whatever
      * the last callback returns, so a failed activation has to be reported
      * from here or the creation is reported as having succeeded */
-    if (OMPI_SUCCESS != request->super.req_status.MPI_ERROR) {
+    if (OMPI_SUCCESS != request->super.super.req_status.MPI_ERROR) {
         ompi_comm_idup_with_info_discard (context);
-        return request->super.req_status.MPI_ERROR;
+        return request->super.super.req_status.MPI_ERROR;
     }
 
     return MPI_SUCCESS;

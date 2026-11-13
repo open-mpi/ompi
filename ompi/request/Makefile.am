@@ -14,6 +14,7 @@
 # Copyright (c) 2016      IBM Corporation.  All rights reserved.
 # Copyright (c) 2018      Research Organization for Information Science
 #                         and Technology (RIST).  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -36,6 +37,7 @@ headers += \
 endif
 
 libopen_mpi_la_SOURCES += \
+        request/api_request.c \
         request/grequest.c \
         request/request.c \
         request/req_test.c \

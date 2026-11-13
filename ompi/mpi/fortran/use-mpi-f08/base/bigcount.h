@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2024      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -43,14 +44,21 @@
         } \
     } while (0)
 
-#define OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(array, tmp_array, c_request, c_ierr, idx) \
+/*
+ * Settle who owns a converted array once a nonblocking call has returned,
+ * leaving tmp_array holding exactly what the request should take over and
+ * NULL otherwise.  A conversion that did not allocate left the user's own
+ * array in tmp_array, and an error means no request was produced to hand
+ * anything to; both of those are disowned here.
+ *
+ * The caller then passes the surviving tmp_array pointers to
+ * ompi_coll_base_nbc_set_cleanup_v() or _w(), which frees them once the
+ * collective is done with them.
+ */
+#define OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(array, tmp_array, c_ierr) \
     do { \
-        if (MPI_SUCCESS == (c_ierr)) { \
-            if ((void *)(array) != (void *)(tmp_array) && (tmp_array) != NULL) { \
-                ompi_coll_base_append_array_to_release((c_request), (tmp_array)); \
-                (idx)++;                                                         \
-            } \
-        } else { \
+        if (MPI_SUCCESS != (c_ierr) || (void *)(array) == (void *)(tmp_array)) { \
             OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP((array), (tmp_array)); \
+            (tmp_array) = NULL; \
         } \
     } while (0)

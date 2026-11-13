@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -624,9 +625,9 @@ ompi_coll_portals4_scatter_intra_linear_bottom(struct ompi_communicator_t *comm,
     if (request->u.scatter.free_after)
         free(request->u.scatter.scatter_buf);
 
-    request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+    request->super.super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    ompi_request_complete(&request->super, true);
+    ompi_request_complete(&request->super.super.super, true);
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,
                  "coll:portals4:scatter_intra_linear_bottom exit rank %d", request->u.scatter.my_rank));
@@ -634,7 +635,7 @@ ompi_coll_portals4_scatter_intra_linear_bottom(struct ompi_communicator_t *comm,
     return OMPI_SUCCESS;
 
 err_hdlr:
-    request->super.req_status.MPI_ERROR = ret;
+    request->super.super.super.req_status.MPI_ERROR = ret;
 
     if (request->u.scatter.free_after)
         free(request->u.scatter.scatter_buf);
@@ -727,7 +728,7 @@ ompi_coll_portals4_iscatter_intra(const void *sbuf, size_t scount, struct ompi_d
     if (NULL == request) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE; line = __LINE__; goto err_hdlr;
     }
-    *ompi_request = &request->super;
+    *ompi_request = &request->super.super.super;
     request->u.scatter.is_sync = 0;
 
     /*
@@ -769,7 +770,7 @@ ompi_coll_portals4_iscatter_intra_fini(ompi_coll_portals4_request_t *request)
     /*
      *  cleanup the scatter
      */
-    ret = ompi_coll_portals4_scatter_intra_linear_bottom(request->super.req_mpi_object.comm, request);
+    ret = ompi_coll_portals4_scatter_intra_linear_bottom(request->super.super.super.req_mpi_object.comm, request);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto err_hdlr; }
 
     OPAL_OUTPUT_VERBOSE((10, ompi_coll_base_framework.framework_output,

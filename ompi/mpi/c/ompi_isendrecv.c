@@ -61,10 +61,10 @@ static int ompi_isendrecv_complete_func (ompi_comm_request_t *request)
      */
 
     if (MPI_PROC_NULL != context->source) {
-        OMPI_COPY_STATUS(&request->super.req_status,
+        OMPI_COPY_STATUS(&request->super.super.req_status,
                          context->subreq[0]->req_status, false);
     } else {
-        OMPI_COPY_STATUS(&request->super.req_status,
+        OMPI_COPY_STATUS(&request->super.super.req_status,
                          ompi_request_empty.req_status, false);
     }
 
@@ -157,7 +157,7 @@ OMPI_HIDDEN int ompi_isendrecv(const void * sendbuf, size_t sendcount, MPI_Datat
     /* kick off the request */
 
     ompi_comm_request_start (crequest);
-    *request = &crequest->super;
+    *request = &crequest->super.super;
 
     return rc;
 }

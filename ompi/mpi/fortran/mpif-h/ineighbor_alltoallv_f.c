@@ -125,11 +125,10 @@ void ompi_ineighbor_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *s
         OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
     } else {
         if ((void *)recvcounts != (void *)OMPI_ARRAY_NAME_CONVERT(recvcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sdispls));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(rdispls));
-            ompi_coll_base_add_release_arrays_cb(c_request);
+            ompi_coll_base_nbc_set_cleanup_v(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                                             OMPI_ARRAY_NAME_CONVERT(sdispls),
+                                             OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                                             OMPI_ARRAY_NAME_CONVERT(rdispls));
         }
     }
 }
