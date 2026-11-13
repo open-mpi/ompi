@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2026      Triad National Security, LLC. All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+/*
+ * Test intent:
+ *   Validate end-to-end MPI_T event payload encoding for MPI_Init_thread.
+ *   The initialization event callback is registered via MPI_T_event_register_callback
+ *   before MPI_Init_thread, and the test verifies that the initialization event
+ *   payload carries correct Standard-ABI instance handle and thread_level values,
+ *   not zero or an internal pointer.
+ *
+ *   MPI_T_init_thread is called before MPI_Init_thread, and the initialization
+ *   event callback is registered before MPI_Init_thread is called.
+ */
+struct mpit_initialization_state {
+    MPI_T_event_registration registration;
+    int calls;
+    int failure_code;
+    uint64_t instance_id;
+    int32_t thread_level;
+};
+
+static struct mpit_initialization_state mpit_initialization_state;
+
+static void mpit_initialization_callback(MPI_T_event_instance event_instance,
+                                         MPI_T_event_registration event_registration,
+                                         MPI_T_cb_safety cb_safety,
+                                         void *user_data)
+{
+    struct mpit_initialization_state *state =
+        (struct mpit_initialization_state *) user_data;
+    if (&mpit_initialization_state != state) {
+        mpit_initialization_state.failure_code = 101;
+    } else if (event_registration != state->registration) {
+        state->failure_code = 102;
+    } else if (MPI_T_CB_REQUIRE_NONE != cb_safety) {
+        state->failure_code = 103;
+    } else {
+        ++state->calls;
+        /* Element 1 of the initialization payload is the thread_level
+           (element 0 is model, element 2 is world_rank, element 3 is
+           world_size, element 4 is instance_id). */
+        (void) MPI_T_event_read(event_instance, 1, &state->thread_level);
+        (void) MPI_T_event_read(event_instance, 4, &state->instance_id);
+    }
+}

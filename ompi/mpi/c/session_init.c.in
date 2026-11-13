@@ -26,6 +26,14 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
     opal_cstring_t *info_value;
     const char ts_level_multi[] = "MPI_THREAD_MULTIPLE";
 
+#if !OMPI_ABI_SRC
+    /* Register the mpiext initialization function with libopen_mpi.
+     * This breaks the circular dependency: libopen_mpi calls ompi_mpiext_init indirectly
+     * through the registered function pointer, avoiding a direct symbol dependency on libmpi.
+     * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI. */
+    ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init);
+#endif
+
     if ( MPI_PARAM_CHECK ) {
         if (NULL == errhandler) {
             rc = MPI_ERR_ERRHANDLER;
@@ -52,14 +60,6 @@ PROTOTYPE ERROR_CLASS session_init (INFO info, ERRHANDLER errhandler, SESSION_OU
             OBJ_RELEASE(info_value);
         }
     }
-
-#if !OMPI_ABI_SRC
-    /* Register the mpiext initialization function with libopen_mpi.
-     * This breaks the circular dependency: libopen_mpi calls ompi_mpiext_init indirectly
-     * through the registered function pointer, avoiding a direct symbol dependency on libmpi.
-     * MPI extensions are only supported in the OMPI ABI, not the MPI Forum ABI. */
-    ompi_mpi_instance_register_mpiext_init(ompi_mpiext_init);
-#endif
 
     rc = ompi_mpi_instance_init (ts_level, &info->super, errhandler, session, 0, NULL);
     /* if an error occurred raise it on the null session */

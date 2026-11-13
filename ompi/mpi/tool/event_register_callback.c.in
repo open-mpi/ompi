@@ -20,6 +20,10 @@
 #include "ompi/mpi/tool/mpit-internal.h"
 #include "ompi/info/info.h"
 #include "ompi/runtime/ompi_mpit_events.h"
+/* Declares the intern->ABI converters installed below in the Standard-ABI
+   compile (guarded by OMPI_ABI_SRC).  Included unconditionally because
+   OMPI_ABI_SRC is not yet defined this early in the generated file. */
+#include "ompi/mpi/c/mpit_abi_handle_convert.h"
 
 PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registration,
                                                CB_SAFETY cb_safety, INFO info, VOID user_data,
@@ -35,13 +39,35 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
         return MPI_T_ERR_NOT_INITIALIZED;
     }
 
-    /* Record which MPI ABI this registering tool is using, so the producers
-       emit object handles (MPI_Comm / MPI_Win / MPI_Errhandler / MPI_Session)
-       in the matching representation.  This entry point is the Open MPI ABI one,
-       so hard-code the Open MPI ABI; when the MPI Standard ABI lands
-       (open-mpi/ompi#13280) its separate entry point will set
-       OMPI_MPIT_ABI_STANDARD here instead. */
-    ompi_mpit_callback_abi = OMPI_MPIT_ABI_OMPI;
+    /* ompi_mpit_callback_abi records which MPI ABI this process uses, so the
+       producers emit object handles (MPI_Comm / MPI_Win / MPI_Errhandler /
+       MPI_Session) and integer values in the matching representation.  Register
+       it here, ABI-conditioned on which copy of this template is compiled
+       (open-mpi/ompi#13280).
+
+       Registering a callback is the only way a tool starts observing an event:
+       mca_base_event_raise() short-circuits and delivers nothing until a
+       registration makes the event active (num_active != 0), and that only
+       happens through this routine.  So this is the single site that must
+       establish the process ABI and install the intern->ABI converters -- no
+       event payload can be read before a callback is registered, and MPI_T is
+       init-independent (a Standard-ABI tool may call MPI_T_init_thread +
+       MPI_T_event_register_callback before MPI_Init), so we cannot rely on an
+       init entry point having run first.  This Standard-ABI copy is compiled
+       into libmpi_abi alongside the converter implementations.
+
+       Install the converter set atomically BEFORE setting the ABI mode to avoid
+       data races under MPI_THREAD_MULTIPLE where concurrent events could see
+       STANDARD mode but NULL converters. */
+#if OMPI_ABI_SRC
+    ompi_mpit_register_abi_converters(&ompi_mpit_abi_standard_converters);
+    /* Write barrier before storing the ABI mode makes the converter set visible to
+     * concurrent event producers under MPI_THREAD_MULTIPLE. */
+    opal_atomic_wmb();
+    (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_STANDARD);
+#else
+    (void) opal_atomic_swap_32(&ompi_mpit_callback_abi, OMPI_MPIT_ABI_OMPI);
+#endif
 
     /* MPI_Info is an ompi_info_t whose first member is an opal_info_t. */
     opal_info = (MPI_INFO_NULL == info) ? NULL : &info->super;

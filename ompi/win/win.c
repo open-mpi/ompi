@@ -261,13 +261,18 @@ config_window(void *base, size_t size, ptrdiff_t disp_unit,
         payload.disp_unit = (int32_t) disp_unit;
         payload.flavor = (int32_t) flavor;
         /* XXX ABI: the MPI_Win handle value must match the registering MPI_T
-           tool's ABI (ompi_mpit_callback_abi). */
-        if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+           tool's ABI (ompi_mpit_callback_abi).  The accessor loads atomically
+           and issues the read barrier that synchronizes with the write barrier
+           in the init path under MPI_THREAD_MULTIPLE. */
+        ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
+        if (OMPI_MPIT_ABI_OMPI == abi) {
             payload.handle = (uint64_t) (uintptr_t) win;
         } else {
-            /* TODO ABI (#13280): set the MPI Standard ABI handle value for the
-               window win. */
-            payload.handle = 0;
+            /* MPI Standard ABI: publish the integer MPI_Win handle, and the
+               Standard-ABI flavor value (native MPI_WIN_FLAVOR_* are 1-4, the
+               Standard-ABI values are 311-314). */
+            payload.handle = ompi_mpit_abi_handle(win, MPI_T_BIND_MPI_WIN);
+            payload.flavor = ompi_mpit_abi_win_flavor(payload.flavor);
         }
         mca_base_event_raise(ompi_event_win_created, NULL, &payload);
     }
@@ -430,13 +435,18 @@ ompi_win_free(ompi_win_t *win)
             payload.flavor = (int32_t) win->w_flavor;
             payload.pad = 0;
             /* XXX ABI: the MPI_Win handle value must match the registering MPI_T
-               tool's ABI (ompi_mpit_callback_abi). */
-            if (OMPI_MPIT_ABI_OMPI == ompi_mpit_callback_abi) {
+               tool's ABI (ompi_mpit_callback_abi).  The accessor loads atomically
+               and issues the read barrier that synchronizes with the write
+               barrier in the init path under MPI_THREAD_MULTIPLE. */
+            ompi_mpit_abi_t abi = ompi_mpit_get_callback_abi();
+            if (OMPI_MPIT_ABI_OMPI == abi) {
                 payload.handle = (uint64_t) (uintptr_t) win;
             } else {
-                /* TODO ABI (#13280): set the MPI Standard ABI handle value for
-                   the window win. */
-                payload.handle = 0;
+                /* MPI Standard ABI: publish the integer MPI_Win handle, and the
+                   Standard-ABI flavor value (native MPI_WIN_FLAVOR_* are 1-4,
+                   the Standard-ABI values are 311-314). */
+                payload.handle = ompi_mpit_abi_handle(win, MPI_T_BIND_MPI_WIN);
+                payload.flavor = ompi_mpit_abi_win_flavor(payload.flavor);
             }
             mca_base_event_raise(ompi_event_win_freed, NULL, &payload);
         }
