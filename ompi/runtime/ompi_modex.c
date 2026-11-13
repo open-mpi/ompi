@@ -108,16 +108,11 @@ static void ompi_modex_get_cb(pmix_status_t status, pmix_value_t *kv, void *cbda
 static void ompi_modex_proc_fetch(ompi_proc_t *proc)
 {
     pmix_proc_t pmix_proc;
-    pmix_status_t rc = PMIX_ERROR;
-    char *key;
+    pmix_status_t rc;
 
-    key = mca_base_component_to_string(&mca_pml_base_modex_component);
-    if (NULL != key) {
-        OPAL_PMIX_CONVERT_NAME(&pmix_proc, &proc->super.proc_name);
-        rc = PMIx_Get_nb(&pmix_proc, key, NULL, 0, ompi_modex_get_cb, proc);
-        free(key);
-    }
-
+    OPAL_PMIX_CONVERT_NAME(&pmix_proc, &proc->super.proc_name);
+    rc = PMIx_Get_nb(&pmix_proc, OMPI_MODEX_KEY_PML, NULL, 0,
+                     ompi_modex_get_cb, proc);
     if (PMIX_SUCCESS == rc) {
         return; /* the callback owns the reference now */
     }
