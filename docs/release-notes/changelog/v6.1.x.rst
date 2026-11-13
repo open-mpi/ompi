@@ -139,6 +139,14 @@ Open MPI version v6.1.0
   ``smcuda`` BTL will now wait for the connection-info modex during
   ``MPI_Init`` again.  ``--mca btl ^smcuda`` restores the deferred wire-up.
 
+- The ``smsc/accelerator`` single-copy component is now selected by
+  default when the accelerator supports IPC, so the ``sm`` BTL copies
+  device buffers directly between GPUs instead of staging them through
+  host shared memory.  Host buffers still go to ``xpmem`` or ``cma``.
+  Gets of a peer's device buffer are queued on an accelerator stream and
+  completed from the progress engine.  ``--mca smsc ^accelerator``
+  restores the previous behavior.
+
 - The ``btl/smcuda`` component now gates its startup on a new
   ``btl_smcuda_enable`` MCA parameter.  A negative value (default)
   starts the component only when ``smcuda`` is explicitly listed via
