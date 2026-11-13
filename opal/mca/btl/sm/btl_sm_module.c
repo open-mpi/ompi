@@ -37,6 +37,7 @@
 #include "opal/mca/btl/sm/btl_sm_fifo.h"
 #include "opal/mca/btl/sm/btl_sm_frag.h"
 #include "opal/mca/smsc/smsc.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/argv.h"
 
 #include <stdlib.h>
@@ -508,6 +509,7 @@ int mca_btl_sm_attach_local_peers(void)
 {
     mca_btl_sm_component_t *component = &mca_btl_sm_component;
     int rc, missing = OPAL_SUCCESS;
+    uint64_t epoch;
 
     if (NULL != component->endpoints) {
         return OPAL_SUCCESS;
@@ -518,10 +520,24 @@ int mca_btl_sm_attach_local_peers(void)
         return rc;
     }
 
-    /* Nothing can be mapped before the map naming the peers is whole. */
+    /* The loop below indexes component->local_procs by local rank, so
+     * every slot must hold a proc before any of it can be used. */
     if (!component->local_procs_mapped) {
         return OPAL_ERR_NOT_READY;
     }
+
+    /* Only the runtime can make a missing peer readable, so with no
+     * answer since the last pass this one finds the same thing. Worth
+     * skipping: sm_fifo_read() reaches here on every progress tick while
+     * any local peer is unpublished, and a pass walks the whole node.
+     *
+     * Read before the pass, so an answer landing mid-pass is not recorded
+     * as already accounted for. */
+    epoch = opal_modex_knowledge_epoch;
+    if (epoch == component->attach_epoch) {
+        return OPAL_ERR_NOT_READY;
+    }
+    component->attach_epoch = epoch;
 
     /* Every peer in one pass rather than a stop at the first miss: a miss
      * is what starts the fetch of that peer's blob, so one retry can
