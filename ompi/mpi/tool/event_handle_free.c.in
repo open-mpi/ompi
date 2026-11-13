@@ -39,11 +39,11 @@ PROTOTYPE ERROR_CLASS event_handle_free (EVENT_REGISTRATION event_registration,
         }
     }
 
-    /* Do NOT hold ompi_mpit_big_lock here: the OPAL framework is internally
+    /* Do NOT hold the MPI_T lock here: the OPAL framework is internally
        synchronized, and handle_free flushes the dropped handler and invokes the
-       free callback.  Per sec. 5.10 no user callback may run while the big lock
-       is held -- the standard lets such a callback re-enter MPI_T, which would
-       deadlock on the non-recursive lock. */
+       free callback.  Per sec. 5.10 no user callback may run while the MPI_T
+       lock is held -- such a callback may wait on another tool thread that is
+       itself waiting for the lock. */
     rc = mca_base_event_handle_free (ompit_event_reg (event_registration), ctx,
                                      (NULL != free_cb_function) ? ompit_event_free_trampoline
                                                                : NULL);

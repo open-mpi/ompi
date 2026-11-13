@@ -63,6 +63,17 @@ Open MPI version v6.1.0
   replaced the ones of the patcher and feeds the Open MPI memory release
   hooks from UCM.
 
+- Using MPI tool information interface (MPI_T) control and
+  performance variables no longer races with closing a component, or
+  with a component freeing the data behind its performance variables,
+  on another thread.  A performance
+  variable that is no longer valid is now reported as such:
+  ``MPI_T_pvar_start`` and ``MPI_T_pvar_stop`` return
+  ``MPI_T_ERR_INVALID_HANDLE`` for it, instead of
+  ``MPI_T_ERR_PVAR_NO_STARTSTOP``.  In particular, the monitoring
+  components' performance variables are no longer valid after
+  ``MPI_Finalize``; previously, using them read freed memory.
+
 - **Build System**: Open MPI now requires Autoconf 2.69 or later for
   developers building from Git or modifying the build system. Released
   tarballs remain unaffected. This update enables adoption of modern

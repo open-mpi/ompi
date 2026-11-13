@@ -46,7 +46,7 @@ ERRORS
 
 * ``MPI_T_ERR_INVALID_SESSION``: Session parameter is not a valid session
 
-* ``MPI_T_ERR_INVALID_HANDLE``: Invalid handle or handle not associated with the session
+* ``MPI_T_ERR_INVALID_HANDLE``: Invalid handle, handle not associated with the session, or the handle's variable is no longer valid
 
 * ``MPI_T_ERR_PVAR_NO_STARTSTOP``: The variable cannot be started or stopped
 

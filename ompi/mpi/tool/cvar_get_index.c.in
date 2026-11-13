@@ -34,9 +34,8 @@ PROTOTYPE ERROR_CLASS cvar_get_index(STRING name, INT_OUT cvar_index)
         return MPI_T_ERR_INVALID;
     }
 
-    ompi_mpit_lock ();
+    /* This takes the MPI_T lock */
     ret = mca_base_var_find_by_name (name, cvar_index);
-    ompi_mpit_unlock ();
     if (OPAL_SUCCESS != ret) {
         return MPI_T_ERR_INVALID_NAME;
     }

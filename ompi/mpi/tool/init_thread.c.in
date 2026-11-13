@@ -30,8 +30,6 @@
 #include "ompi/instance/instance.h"
 
 
-extern opal_mutex_t ompi_mpit_big_lock;
-
 extern volatile uint32_t ompi_mpit_init_count;
 
 extern volatile int32_t initted;
@@ -41,18 +39,22 @@ PROTOTYPE ERROR_CLASS init_thread(TS_LEVEL required, TS_LEVEL_OUT provided)
 {
     int rc = MPI_SUCCESS;
 
-    ompi_mpit_lock ();
-    /* Also serialize against instance (world/session) init and teardown:
-       a first MPI_T initialization shares unlocked state (OPAL init
-       counters, the shared event base refcount, MCA variable and
-       framework registration) with instance bring-up on other threads.
-       Lock ordering: the MPI_T lock above always comes first; see
-       ompi_mpi_instance_lock() in instance.c. */
+    /* Serialize against MPI_T_finalize() and instance (world/session)
+       init and teardown: a first MPI_T initialization shares unlocked
+       state (OPAL init counters, the shared event base refcount, MCA
+       variable and framework registration) with instance bring-up on
+       other threads.  The instance lock does that; see
+       ompi_mpi_instance_lock() in instance.c.
+
+       Do not hold the MPI_T lock here.  It is not recursive, and
+       registering the frameworks' MCA variables below takes it.  Nothing
+       else needs it: when the first MPI_T_init_thread() runs, no other
+       thread may be in an MPI_T call. */
     ompi_mpi_instance_lock ();
 
     /* ompi_mpit_init_failed -- like ompi_mpit_init_count and
-       ompi_mpit_thread_level -- is read and written only under the MPI_T
-       lock (taken above; released in MPI_T_finalize()), so these
+       ompi_mpit_thread_level -- is written only here and in
+       MPI_T_finalize(), both under the instance lock, so these
        unlocked-looking accesses are in fact serialized. */
     if (ompi_mpit_init_failed) {
         rc = MPI_T_ERR_CANNOT_INIT;
@@ -138,7 +140,7 @@ PROTOTYPE ERROR_CLASS init_thread(TS_LEVEL required, TS_LEVEL_OUT provided)
     }
 
     /* Install the OPAL debug raise-check hook so a producer that raises an
-       MPI_T event while holding the big lock trips an assert rather than
+       MPI_T event while holding the MPI_T lock trips an assert rather than
        deadlocking (no-op unless OPAL_ENABLE_DEBUG; sec. 5.10). */
     ompit_install_event_debug_hook ();
 
@@ -172,8 +174,8 @@ PROTOTYPE ERROR_CLASS init_thread(TS_LEVEL required, TS_LEVEL_OUT provided)
        cannot deliver, grant at most MPI_THREAD_SERIALIZED, the
        coupling that MPI 5.0 secs. 11.6.2/15.3.4 explicitly permit
        ("may influence").  Note that the MPI_T entry points that
-       mutate shared state serialize on ompi_mpit_big_lock, but not
-       every MPI_T query routine takes it, so the big lock alone is
+       mutate shared state serialize on the MPI_T lock, but not
+       every MPI_T query routine takes it, so the MPI_T lock alone is
        not grounds for granting MPI_THREAD_MULTIPLE. */
     if (MPI_THREAD_SINGLE != required) {
         if (0 == ompi_instance_count) {
@@ -207,7 +209,6 @@ err_count:
 
 unlock:
     ompi_mpi_instance_unlock ();
-    ompi_mpit_unlock ();
 
     return rc;
 }

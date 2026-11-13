@@ -545,9 +545,11 @@ producer's responsibility, hence the per-raise-site branch.
 A single engine mutex (`mca_base_event_lock`) guards the registries and
 the registration sets. It is held only for bookkeeping and the dispatch
 snapshot, never across a callback (sec. 5.9). The OMPI tool layer does
-*not* hold the MPI_T big lock across calls into the engine, because a
-drained deferred-release event can invoke a tool dropped handler that
-re-enters MPI_T (sec. 5.10) — which would deadlock a non-recursive lock.
+*not* hold the MPI_T lock (`mca_base_tool_lock()`) across calls into the
+engine, because a drained deferred-release event can invoke a tool dropped
+handler, and a tool callback must never run with that lock held: it may
+re-enter MPI_T (sec. 5.10), or wait on another tool thread that is itself
+waiting for the lock.
 
 ### 12.2 Atomicity
 

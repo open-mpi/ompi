@@ -58,9 +58,9 @@ PROTOTYPE ERROR_CLASS event_register_callback (EVENT_REGISTRATION event_registra
         cb = ompit_event_cb_trampoline;
     }
 
-    /* No big lock: the OPAL framework is internally synchronized, and replacing
+    /* No MPI_T lock: the OPAL framework is internally synchronized, and replacing
        a callback can run a slot's release_cb at teardown, which must not run
-       with ompi_mpit_big_lock held (sec. 5.10). */
+       with the MPI_T lock held (sec. 5.10). */
     rc = mca_base_event_register_callback (ompit_event_reg (event_registration),
                                            (mca_base_event_cb_safety_t) cb_safety, opal_info,
                                            ctx, release_cb, cb);
