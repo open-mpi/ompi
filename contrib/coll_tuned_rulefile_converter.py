@@ -155,7 +155,7 @@ class TunedRuleReader(GenericOpenMPIRuleReader):
                     if result_topo_faninout != 0:
                         rule['faninout'] = result_topo_faninout
                     if result_segsize != 0:
-                        rule['segsize'] = result_segsize
+                        rule['seg_size'] = result_segsize
                     result_bine_imp = 0
                     if file_ver >= 3:
                         result_bine_imp = self.get_next()
