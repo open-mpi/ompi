@@ -677,11 +677,6 @@ static inline bool ompi_comm_is_revoked(ompi_communicator_t* comm)
 }
 
 /*
- * Obtain the group of locally known failed processes on comm
- */
-OMPI_DECLSPEC int ompi_comm_get_failed_internal(ompi_communicator_t* comm, ompi_group_t** failed_group);
-
-/*
  * Acknowledge failures and re-enable MPI_ANY_SOURCE
  * Related to OMPI_Comm_failure_ack() and OMPI_Comm_failure_get_acked()
  */
@@ -703,6 +698,13 @@ OMPI_DECLSPEC int ompi_comm_failure_get_acked_internal(ompi_communicator_t* comm
  * Revoke the communicator
  */
 OMPI_DECLSPEC int ompi_comm_revoke_internal(ompi_communicator_t* comm);
+
+/*
+ * The processes of the communicator already known to have failed.  Both
+ * groups of an intercommunicator are examined; an intracommunicator's two
+ * are the same object.
+ */
+OMPI_DECLSPEC int ompi_comm_failed_group(ompi_communicator_t* comm, ompi_group_t **failed_group);
 
 /*
  * Shrink the communicator
@@ -1135,6 +1137,16 @@ OMPI_DECLSPEC int ompi_comm_set ( ompi_communicator_t** newcomm,
  * @brief Copy the topology from the old communicator
  */
 #define OMPI_COMM_SET_FLAG_COPY_TOPOLOGY    0x00000002
+
+/**
+ * @brief Agree on the duplicated local communicator's context id rather
+ *        than reducing over it.
+ *
+ * Only shrink duplicates while the old communicator still holds failed
+ * processes, where an allreduce cannot complete.  Every other caller has
+ * ruled failures out and should not pay for an agreement.
+ */
+#define OMPI_COMM_SET_FLAG_FT_CID           0x00000004
 
 /**
  * This is THE routine, where all the communicator stuff

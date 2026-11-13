@@ -196,6 +196,9 @@ static int ompi_comm_ft_allreduce_inter_nb(int *inbuf, int *outbuf, int count,
                                            struct ompi_op_t *op, ompi_comm_cid_context_t *cid_context,
                                            ompi_request_t **req);
 
+static int ompi_comm_ft_allreduce_inter_local_completion(ompi_comm_request_t *request);
+static int ompi_comm_ft_allreduce_inter_remote_completion(ompi_comm_request_t *request);
+
 static int ompi_comm_ft_allreduce_intra_pmix_nb(int *inbuf, int *outbuf, int count,
                                                 struct ompi_op_t *op, ompi_comm_cid_context_t *cid_context,
                                                 ompi_request_t **req);
@@ -1788,9 +1791,11 @@ static int ompi_comm_ft_allreduce_intra_nb(int *inbuf, int *outbuf, int count,
 
     /** Repurpose the inbuf to store the failed_group */
     ompi_group_t** failed_group = (ompi_group_t**) &context->inbuf;
-    opal_mutex_lock(&ompi_group_afp_mutex);
-    ompi_group_intersection(comm->c_remote_group, ompi_group_all_failed_procs, failed_group);
-    opal_mutex_unlock(&ompi_group_afp_mutex);
+    rc = ompi_comm_failed_group(comm, failed_group);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        ompi_comm_request_return(request);
+        return rc;
+    }
 
     rc = comm->c_coll->coll_iagree(context->outbuf, context->count, &ompi_mpi_int.dt, context->op,
                                    failed_group, true,
@@ -1807,12 +1812,172 @@ static int ompi_comm_ft_allreduce_intra_nb(int *inbuf, int *outbuf, int count,
     return OMPI_SUCCESS;
 }
 
+/**
+ * Round 2: contribute the local group's result, read back the remote
+ * group's.  The failed group is rebuilt because round 1 left it holding
+ * local ranks only and this round spans both groups.
+ */
+static int ompi_comm_ft_allreduce_inter_remote_round(ompi_comm_request_t *request)
+{
+    ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t *) request->context;
+    ompi_communicator_t *intercomm = context->cid_context->comm;
+    ompi_group_t **failed_group = (ompi_group_t**) &context->inbuf;
+    ompi_request_t *subreq;
+    int rc;
+
+    memcpy(context->tmpbuf, context->outbuf, context->count * sizeof(int));
+
+    rc = intercomm->c_coll->coll_iagree(context->tmpbuf, context->count, &ompi_mpi_int.dt,
+                                        context->op, failed_group, true, intercomm, &subreq,
+                                        intercomm->c_coll->coll_iagree_module);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        OBJ_RELEASE(*failed_group);
+        return rc;
+    }
+
+    request->super.req_status.MPI_ERROR = MPI_SUCCESS;
+    return ompi_comm_request_schedule_append(request, ompi_comm_ft_allreduce_inter_remote_completion,
+                                             &subreq, 1);
+}
+
+/**
+ * Round 1 is done: the local group has agreed on its own result.
+ */
+static int ompi_comm_ft_allreduce_inter_local_completion(ompi_comm_request_t *request)
+{
+    ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t *) request->context;
+    ompi_communicator_t *localcomm = context->cid_context->comm->c_local_comm;
+    ompi_group_t **failed_group = (ompi_group_t**) &context->inbuf;
+    ompi_request_t *subreq;
+    int rc = request->super.req_status.MPI_ERROR;
+
+    /* New failures: the round has to be redone before its result
+     * can be called agreed. */
+    if( OPAL_UNLIKELY(MPI_ERR_PROC_FAILED == rc) ) {
+        rc = localcomm->c_coll->coll_iagree(context->outbuf, context->count, &ompi_mpi_int.dt,
+                                            context->op, failed_group, true, localcomm, &subreq,
+                                            localcomm->c_coll->coll_iagree_module);
+        if( OPAL_LIKELY(OMPI_SUCCESS == rc) ) {
+            request->super.req_status.MPI_ERROR = MPI_SUCCESS;
+            return ompi_comm_request_schedule_append(request,
+                                                     ompi_comm_ft_allreduce_inter_local_completion,
+                                                     &subreq, 1);
+        }
+    }
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        OBJ_RELEASE(*failed_group);
+        return rc;
+    }
+
+    OBJ_RELEASE(*failed_group);
+    rc = ompi_comm_failed_group(context->cid_context->comm, failed_group);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        return rc;
+    }
+
+    return ompi_comm_ft_allreduce_inter_remote_round(request);
+}
+
+/**
+ * Round 2 is done: combine the two groups' results.
+ */
+static int ompi_comm_ft_allreduce_inter_remote_completion(ompi_comm_request_t *request)
+{
+    ompi_comm_allreduce_context_t *context = (ompi_comm_allreduce_context_t *) request->context;
+    ompi_group_t **failed_group = (ompi_group_t**) &context->inbuf;
+    int rc = request->super.req_status.MPI_ERROR;
+
+    if( OPAL_UNLIKELY(MPI_ERR_PROC_FAILED == rc) ) {
+        return ompi_comm_ft_allreduce_inter_remote_round(request);
+    }
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        OBJ_RELEASE(*failed_group);
+        return rc;
+    }
+    OBJ_RELEASE(*failed_group);
+
+    /* Both groups combine the same two values with a commutative op,
+     * so both reach the same result. */
+    ompi_op_reduce(context->op, context->tmpbuf, context->outbuf, context->count, MPI_INT);
+
+    return OMPI_SUCCESS;
+}
+
+/**
+ * Fault tolerant allreduce over both groups of an intercommunicator.
+ *
+ * An agreement there reports the remote group, as every intercommunicator
+ * collective does, so no single one spans the whole: the local group agrees
+ * among itself first, then the two groups agree on each other's result.
+ * Both rounds tolerate a failure, which is the point -- this runs while a
+ * communicator is being rebuilt around them.
+ */
 static int ompi_comm_ft_allreduce_inter_nb(int *inbuf, int *outbuf, int count,
                                            struct ompi_op_t *op, ompi_comm_cid_context_t *cid_context,
                                            ompi_request_t **req) {
-    //TODO: CID_INTER_FT needs an implementation, using the non-ft for now...
-    int rc = ompi_comm_allreduce_inter_nb(inbuf, outbuf, count, op, cid_context, req);
-    return (rc == MPI_ERR_REVOKED  || rc == MPI_ERR_PROC_FAILED) ? MPI_ERR_UNSUPPORTED_OPERATION: rc;
+    ompi_communicator_t *intercomm = cid_context->comm;
+    ompi_communicator_t *localcomm;
+    ompi_comm_allreduce_context_t *context;
+    ompi_comm_request_t *request;
+    ompi_request_t *subreq;
+    ompi_group_t **failed_group;
+    int rc;
+
+    if( OPAL_UNLIKELY(!OMPI_COMM_IS_INTER(intercomm)) ) {
+        return MPI_ERR_COMM;
+    }
+    localcomm = intercomm->c_local_comm;
+
+    request = ompi_comm_request_get();
+    if( OPAL_UNLIKELY(NULL == request) ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    context = ompi_comm_allreduce_context_alloc(inbuf, outbuf, count, op, cid_context);
+    if( OPAL_UNLIKELY(NULL == context) ) {
+        ompi_comm_request_return(request);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    request->context = &context->super;
+    request->super.req_mpi_object.comm = intercomm;
+
+    /* Every rank holds the remote group's result, not just a leader. */
+    context->tmpbuf = (int *) calloc(count, sizeof(int));
+    if( OPAL_UNLIKELY(NULL == context->tmpbuf) ) {
+        ompi_comm_request_return(request);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /** Because the agreement operates "in place",
+     *  one needs first to copy the inbuf into the outbuf
+     */
+    if( inbuf != outbuf ) {
+        memcpy(outbuf, inbuf, count * sizeof(int));
+    }
+
+    /** Repurpose the inbuf to store the failed_group */
+    failed_group = (ompi_group_t**) &context->inbuf;
+    rc = ompi_comm_failed_group(localcomm, failed_group);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        ompi_comm_request_return(request);
+        return rc;
+    }
+
+    /* Round 1: the local group's own result, over the local
+     * intracommunicator, which an agreement does span. */
+    rc = localcomm->c_coll->coll_iagree(outbuf, count, &ompi_mpi_int.dt, op,
+                                        failed_group, true, localcomm, &subreq,
+                                        localcomm->c_coll->coll_iagree_module);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        OBJ_RELEASE(*failed_group);
+        ompi_comm_request_return(request);
+        return rc;
+    }
+
+    ompi_comm_request_schedule_append(request, ompi_comm_ft_allreduce_inter_local_completion, &subreq, 1);
+    ompi_comm_request_start(request);
+    *req = &request->super;
+    return OMPI_SUCCESS;
 }
 
 static int ompi_comm_ft_allreduce_intra_pmix_nb(int *inbuf, int *outbuf, int count,

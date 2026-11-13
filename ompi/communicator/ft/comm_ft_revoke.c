@@ -89,9 +89,14 @@ bool ompi_comm_revoke_local(ompi_communicator_t* comm, bool coll_only)
      * Just to be pedantic, as the 'revoke' condition is checked first
      * by all other communication,
      * - Turn off collectives
-     * - Turn off ANY_SOURCE receives
+     * - Turn off ANY_SOURCE receives, except when only collectives are
+     *   revoked on an intercommunicator: this is how a failure in either
+     *   group is recorded, and ANY_SOURCE only draws from the remote one,
+     *   so ompi_comm_set_rank_failed() decides about it.
      */
-    comm->any_source_enabled = false;
+    if( !coll_only || !OMPI_COMM_IS_INTER(comm) ) {
+        comm->any_source_enabled = false;
+    }
     /* purge the communicator unexpected fragments and matching logic */
     MCA_PML_CALL(revoke_comm(comm, coll_only));
     /* if coll has been assigned, revoke any subcomms created by it */

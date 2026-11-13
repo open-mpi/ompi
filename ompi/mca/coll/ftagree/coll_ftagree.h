@@ -3,7 +3,7 @@
  * Copyright (c) 2012-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -87,6 +87,19 @@ struct mca_coll_ftagree_module_t {
 
     /* Pointer to the agreement structure */
     mca_coll_ftagree_t *agreement_info;
+
+    /* Borrowed, never retained: a reference here would close a cycle
+     * through comm->c_coll->module_list. */
+    ompi_communicator_t *comm;
+
+    /* The communicator the agreements run over: 'comm' itself for an
+     * intracommunicator, otherwise a shadow over the union of the two
+     * groups, built on first use.  Retained only when it is not 'comm'. */
+    ompi_communicator_t *agreement_comm;
+
+    /* Which side contributes the low half of the agreement value;
+     * meaningless without agreement_comm. */
+    bool agreement_comm_first;
 };
 typedef struct mca_coll_ftagree_module_t mca_coll_ftagree_module_t;
 OBJ_CLASS_DECLARATION(mca_coll_ftagree_module_t);
@@ -136,6 +149,14 @@ int mca_coll_ftagree_era_inter( void* contrib,
                                 ompi_op_t *op,
                                 ompi_group_t **group, bool grp_update,
                                 ompi_communicator_t* comm,
+                                mca_coll_base_module_t *module);
+int mca_coll_ftagree_iera_inter(void* contrib,
+                                size_t dt_count,
+                                ompi_datatype_t *dt,
+                                ompi_op_t *op,
+                                ompi_group_t **group, bool grp_update,
+                                ompi_communicator_t* comm,
+                                ompi_request_t **request,
                                 mca_coll_base_module_t *module);
 
 /*
