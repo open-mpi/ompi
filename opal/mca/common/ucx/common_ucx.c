@@ -46,6 +46,7 @@ opal_common_ucx_module_t opal_common_ucx =
 {
     .progress_iterations = 100,
     .opal_mem_hooks = 1,
+    .finalize_fence = true,
     .tls = NULL,
     .devices = NULL,
 };
@@ -171,6 +172,7 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
     char *default_devices = "mlx*";
     char *old_str = NULL;
     int hook_index;
+    int finalize_fence_index;
     int verbose_index;
     int progress_index;
     int tls_index;
@@ -197,6 +199,26 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
                                        MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_3,
                                        MCA_BASE_VAR_SCOPE_LOCAL,
                                        &opal_common_ucx.opal_mem_hooks);
+    finalize_fence_index = mca_base_var_register("opal", "opal_common", "ucx", "finalize_fence",
+                                                 "Synchronize with all the processes of the job "
+                                                 "(PMIx fence over the whole namespace) while "
+                                                 "releasing the UCX resources, so that no process "
+                                                 "destroys them while a peer may still be using them. "
+                                                 "Setting it to 0 lets a process return from its "
+                                                 "last MPI_Session_finalize without waiting for "
+                                                 "the other processes, which an application "
+                                                 "whose processes finalize at different times "
+                                                 "(for example one that shrinks while running) "
+                                                 "needs. All the processes of a job must use the "
+                                                 "same value, as a process that waits on the "
+                                                 "fence is never released by one that does not. "
+                                                 "Only safe when every communicator, window and "
+                                                 "file of a process is released before it "
+                                                 "finalizes; do not use with OpenSHMEM, whose "
+                                                 "finalize is collective.",
+                                                 MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0,
+                                                 OPAL_INFO_LVL_5, MCA_BASE_VAR_SCOPE_READONLY,
+                                                 &opal_common_ucx.finalize_fence);
 
     if (NULL == opal_common_ucx.tls) {
         // Extra level of string indirection needed to make ompi_info
@@ -251,6 +273,9 @@ OPAL_DECLSPEC void opal_common_ucx_mca_var_register(const mca_base_component_t *
         mca_base_var_register_synonym(hook_index, component->mca_project_name,
                                       component->mca_type_name, component->mca_component_name,
                                       "opal_mem_hooks", 0);
+        mca_base_var_register_synonym(finalize_fence_index, component->mca_project_name,
+                                      component->mca_type_name, component->mca_component_name,
+                                      "finalize_fence", 0);
         mca_base_var_register_synonym(tls_index, component->mca_project_name,
                                       component->mca_type_name, component->mca_component_name,
                                       "tls", 0);
@@ -566,9 +591,10 @@ void opal_common_ucx_mca_proc_added(void)
 OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence_nb(int *fenced)
 {
     int ret;
-    
-    /* Singleton processes don't need PMIx fence */
-    if (opal_process_info.is_singleton) {
+
+    /* Singleton processes don't need PMIx fence, and neither do the
+     * processes of a job that asked not to wait for each other at finalize. */
+    if (opal_process_info.is_singleton || !opal_common_ucx.finalize_fence) {
         *fenced = 1;
         return OPAL_SUCCESS;
     }
@@ -590,8 +616,9 @@ OPAL_DECLSPEC int opal_common_ucx_mca_pmix_fence(ucp_worker_h worker)
     volatile int fenced = 0;
     int ret;
 
-    /* Singleton processes don't need PMIx fence */
-    if (opal_process_info.is_singleton) {
+    /* Singleton processes don't need PMIx fence, and neither do the
+     * processes of a job that asked not to wait for each other at finalize. */
+    if (opal_process_info.is_singleton || !opal_common_ucx.finalize_fence) {
         return OPAL_SUCCESS;
     }
 
