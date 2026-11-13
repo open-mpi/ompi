@@ -47,7 +47,6 @@
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
-#include "ompi/peruse/peruse-internal.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #include "pml_ob1.h"
@@ -643,8 +642,6 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * figure out if the messages are not received in the correct
      * order (if multiple network interfaces).
      */
-    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
-                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_MESSAGE_ARRIVED, comm_ptr,
                                     hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
@@ -701,8 +698,6 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * received in the correct sequence. Otherwise, we delay the event
      * generation until we reach the correct sequence number.
      */
-    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
-                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN, comm_ptr,
                                     hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
@@ -712,8 +707,6 @@ void mca_pml_ob1_recv_frag_callback_match (mca_btl_base_module_t *btl,
      * before going into check_cantmatch_for_match so we can make
      * a difference for the searching time for all messages.
      */
-    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
-                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_END, comm_ptr,
                                     hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
@@ -1071,8 +1064,6 @@ static mca_pml_ob1_recv_request_t *match_incomming(const mca_pml_ob1_match_hdr_t
         req_tag = (*match)->req_recv.req_base.req_tag;
         if(req_tag == tag || (req_tag == OMPI_ANY_TAG && tag >= 0)) {
             opal_list_remove_item(queue, (opal_list_item_t*)(*match));
-            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
-                    &((*match)->req_recv.req_base), PERUSE_RECV);
             mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
                                             (*match)->req_recv.req_base.req_comm,
                                             &(*match)->req_recv.req_base);
@@ -1088,8 +1079,6 @@ static mca_pml_ob1_recv_request_t *match_incomming(const mca_pml_ob1_match_hdr_t
     mca_pml_ob1_recv_request_t *match =
         custom_match_prq_find_dequeue_verify(comm->prq, hdr->hdr_tag, hdr->hdr_src);
     if (NULL != match) {
-        PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
-                                &match->req_recv.req_base, PERUSE_RECV);
         mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
                                         match->req_recv.req_base.req_comm,
                                         &match->req_recv.req_base);
@@ -1111,8 +1100,6 @@ static mca_pml_ob1_recv_request_t *match_incomming_no_any_source (const mca_pml_
 
         if (req_tag == tag || (req_tag == OMPI_ANY_TAG && tag >= 0)) {
             opal_list_remove_item (&proc->specific_receives, (opal_list_item_t *) recv_req);
-            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
-                    &(recv_req->req_recv.req_base), PERUSE_RECV);
             mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_REMOVE,
                                             recv_req->req_recv.req_base.req_comm,
                                             &recv_req->req_recv.req_base);
@@ -1181,8 +1168,6 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
                 return NULL;
             }
 
-            PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,
-                                    &(match->req_recv.req_base), PERUSE_RECV);
             mca_pml_ob1_event_raise_request(MCA_PML_OB1_EVENT_POSTED_MATCH,
                                             match->req_recv.req_base.req_comm,
                                             &match->req_recv.req_base);
@@ -1201,8 +1186,6 @@ static mca_pml_ob1_recv_request_t *match_one (mca_btl_base_module_t *btl,
         SPC_RECORD(OMPI_SPC_UNEXPECTED, 1);
         SPC_RECORD(OMPI_SPC_UNEXPECTED_IN_QUEUE, 1);
         SPC_UPDATE_WATERMARK(OMPI_SPC_MAX_UNEXPECTED_IN_QUEUE, OMPI_SPC_UNEXPECTED_IN_QUEUE);
-        PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
-                               hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
         mca_pml_ob1_event_raise_unex_insert(comm_ptr, frag,
                                             hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx,
                                             hdr->hdr_seq);
@@ -1274,8 +1257,6 @@ static int mca_pml_ob1_recv_frag_match (mca_btl_base_module_t *btl,
      * figure out if the messages are not received in the correct
      * order (if multiple network interfaces).
      */
-    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm_ptr,
-                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_MESSAGE_ARRIVED, comm_ptr,
                                     hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
@@ -1384,8 +1365,6 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      * received in the correct sequence. Otherwise, we delay the event
      * generation until we reach the correct sequence number.
      */
-    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
-                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_BEGIN, comm_ptr,
                                     hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
@@ -1395,8 +1374,6 @@ mca_pml_ob1_recv_frag_match_proc (mca_btl_base_module_t *btl,
      * before going into check_cantmatch_for_match we can make a
      * difference for the searching time for all messages.
      */
-    PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
-                           hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
     mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_SEARCH_POSTED_END, comm_ptr,
                                     hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 

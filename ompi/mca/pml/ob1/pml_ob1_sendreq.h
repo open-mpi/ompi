@@ -216,8 +216,6 @@ do {                                                                            
         (sendreq)->req_send.req_base.req_tag;                                        \
    (sendreq)->req_send.req_base.req_ompi.req_status._ucount =                        \
         (sendreq)->req_send.req_bytes_packed;                                        \
-   PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                                \
-                            &(sendreq->req_send.req_base), PERUSE_SEND);             \
    mca_pml_ob1_event_raise_request( MCA_PML_OB1_EVENT_REQUEST_COMPLETE,               \
                                     (sendreq)->req_send.req_base.req_comm,            \
                                     &(sendreq)->req_send.req_base );                  \
@@ -268,8 +266,6 @@ send_request_pml_complete(mca_pml_ob1_send_request_t *sendreq)
 {
     if(false == sendreq->req_send.req_base.req_pml_complete) {
         if(sendreq->req_send.req_bytes_packed > 0) {
-            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,
-                                     &(sendreq->req_send.req_base), PERUSE_SEND);
             mca_pml_ob1_event_raise_transfer(MCA_PML_OB1_EVENT_TRANSFER_END,
                                              sendreq->req_send.req_base.req_comm,
                                              &sendreq->req_send.req_base,
