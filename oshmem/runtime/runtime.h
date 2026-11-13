@@ -151,6 +151,12 @@ OSHMEM_DECLSPEC int oshmem_shmem_allgatherv(void *send_buf, void* rcv_buf, int s
 OSHMEM_DECLSPEC void oshmem_shmem_barrier(void);
 
 /**
+ * Free a block of the symmetric heap.  The pointer must be non-NULL and
+ * symmetric.  Implemented in oshmem/shmem/c/shmem_free.c.
+ */
+OSHMEM_DECLSPEC void oshmem_shmem_free(void *ptr);
+
+/**
  * Register OSHMEM specific runtime parameters
  */
 OSHMEM_DECLSPEC int oshmem_shmem_register_params(void);

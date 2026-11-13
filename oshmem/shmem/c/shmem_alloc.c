@@ -39,7 +39,15 @@ void* shmem_malloc(size_t size)
 
 void* shmem_calloc(size_t count, size_t size)
 {
-    size_t req_sz = count * size;
+    size_t req_sz;
+
+    /* The allocation cannot succeed if the request does not fit in a
+     * size_t; return NULL like any other failed allocation. */
+    if (0 != count && size > SIZE_MAX / count) {
+        return NULL;
+    }
+
+    req_sz = count * size;
     if (!req_sz) return NULL;
     void *ptr = _shmalloc(req_sz);
     if (ptr) {
@@ -59,6 +67,12 @@ static inline void* _shmalloc(size_t size)
     void* pBuff = NULL;
 
     RUNTIME_CHECK_INIT();
+
+    /* Zero size performs no action: no allocation and no barrier. */
+    if (0 == size) {
+        return NULL;
+    }
+
     RUNTIME_CHECK_WITH_MEMHEAP_SIZE(size);
 
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
@@ -89,6 +103,11 @@ void* shmem_malloc_with_hints(size_t size, long hint)
     }
 
     RUNTIME_CHECK_INIT();
+
+    if (0 == size) {
+        return NULL;
+    }
+
     RUNTIME_CHECK_WITH_MEMHEAP_SIZE(size);
 
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
