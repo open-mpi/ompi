@@ -429,7 +429,9 @@ Memory-release events
    used instead when the UCX memory event layer has already hooked the C library
    memory functions, and which reports the same releases (plus, for example,
    an ``mmap`` with ``MAP_FIXED`` over an existing mapping). The event keeps the name
-   ``patcher`` in both cases. Payload (2 elements, both ``uint64``):
+   ``patcher`` in both cases. The "kdreg2" component does not see every release,
+   so the event is not available when it is the active memory component. Payload
+   (2 elements, both ``uint64``):
 
    * ``count`` -- the number of release operations aggregated since the previous
      delivery.
