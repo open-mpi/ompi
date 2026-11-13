@@ -5,7 +5,7 @@
  * Copyright (c) 2020      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
  * Copyright (c) 2023      Jeffrey M. Squyres.  All rights reserved.
- * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -57,13 +57,18 @@ int ompi_coll_adapt_ireduce_register(void)
                                     MCA_BASE_VAR_SCOPE_ALL,
                                     &mca_coll_adapt_component.adapt_ireduce_segment_size);
 
-    mca_coll_adapt_component.adapt_ireduce_max_send_requests = 2;
+    mca_coll_adapt_component.adapt_ireduce_max_send_requests = 8;
     mca_base_component_var_register(c, "reduce_max_send_requests",
-                                    "Maximum number of send requests",
+                                    "Maximum number of send requests outstanding to the parent, which also sets the interval between synchronous sends and so bounds how far ahead of the parent this process may run",
                                     MCA_BASE_VAR_TYPE_INT, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_ALL,
                                     &mca_coll_adapt_component.adapt_ireduce_max_send_requests);
+    /* Less than one send would stop the pipeline instead of pacing it, and
+     * it also sets the checkpoint interval */
+    if (1 > mca_coll_adapt_component.adapt_ireduce_max_send_requests) {
+        mca_coll_adapt_component.adapt_ireduce_max_send_requests = 1;
+    }
 
     mca_coll_adapt_component.adapt_ireduce_max_recv_requests = 3;
     mca_base_component_var_register(c, "reduce_max_recv_requests",
@@ -97,14 +102,6 @@ int ompi_coll_adapt_ireduce_register(void)
                                     OPAL_INFO_LVL_5,
                                     MCA_BASE_VAR_SCOPE_ALL,
                                     &mca_coll_adapt_component.adapt_inbuf_free_list_inc);
-
-    mca_coll_adapt_component.adapt_ireduce_synchronous_send = true;
-    (void) mca_base_component_var_register(c, "reduce_synchronous_send",
-                                           "Whether to use synchronous send operations during setup of reduce operations",
-                                           MCA_BASE_VAR_TYPE_BOOL, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
-                                           OPAL_INFO_LVL_9,
-                                           MCA_BASE_VAR_SCOPE_ALL,
-                                           &mca_coll_adapt_component.adapt_ireduce_synchronous_send);
 
     mca_coll_adapt_component.adapt_ireduce_context_free_list = NULL;
     return OMPI_SUCCESS;
@@ -214,6 +211,11 @@ static int ireduce_request_fini(ompi_coll_adapt_reduce_context_t * context)
     return OMPI_SUCCESS;
 }
 
+static int send_cb(ompi_request_t * req);
+static int recv_cb(ompi_request_t * req);
+static int send_cb_body(ompi_coll_adapt_context_t * base);
+static int recv_cb_body(ompi_coll_adapt_context_t * base);
+
 /*
  * Callback function of isend
  */
@@ -221,12 +223,43 @@ static int send_cb(ompi_request_t * req)
 {
     ompi_coll_adapt_reduce_context_t *context =
         (ompi_coll_adapt_reduce_context_t *) req->req_complete_cb_data;
+
+    context->super.cb_body = send_cb_body;
+    req->req_free(&req);
+    ompi_coll_adapt_run_callbacks(&context->con->super, &context->super);
+
+    /* Call back function return 1 to signal that request has been free'd */
+    return 1;
+}
+
+/*
+ * Callback function of irecv
+ */
+static int recv_cb(ompi_request_t * req)
+{
+    ompi_coll_adapt_reduce_context_t *context =
+        (ompi_coll_adapt_reduce_context_t *) req->req_complete_cb_data;
+
+    context->super.cb_body = recv_cb_body;
+    req->req_free(&req);
+    ompi_coll_adapt_run_callbacks(&context->con->super, &context->super);
+
+    /* Call back function return 1 to signal that request has been free'd */
+    return 1;
+}
+
+/*
+ * Body of the isend callback
+ */
+static int send_cb_body(ompi_coll_adapt_context_t * base)
+{
+    ompi_coll_adapt_reduce_context_t *context = (ompi_coll_adapt_reduce_context_t *) base;
     OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output,
                          "[%d]: ireduce_send_cb, peer %d, seg_id %d\n", context->con->rank,
                          context->peer, context->seg_index));
     int err;
 
-    opal_atomic_sub_fetch_32((opal_atomic_int32_t*)&(context->con->ongoing_send), 1);
+    opal_atomic_sub_fetch_32((opal_atomic_int32_t*)&(context->con->peer_send.ongoing), 1);
 
     /* Send a new segment */
     ompi_coll_adapt_item_t *item =
@@ -247,7 +280,9 @@ static int send_cb(ompi_request_t * req)
         send_context->peer = context->peer;
         send_context->con = context->con;
 
-        opal_atomic_add_fetch_32((opal_atomic_int32_t*)&(context->con->ongoing_send), 1);
+        mca_pml_base_send_mode_t sendmode =
+            ompi_coll_adapt_peer_send_mode(&context->con->peer_send, mca_coll_adapt_component.adapt_ireduce_max_send_requests);
+        opal_atomic_add_fetch_32((opal_atomic_int32_t*)&(context->con->peer_send.ongoing), 1);
 
         int send_count = send_context->con->seg_count;
         if (item->id == (send_context->con->num_segs - 1)) {
@@ -260,20 +295,20 @@ static int send_cb(ompi_request_t * req)
                              send_context->con->ireduce_tag - send_context->seg_index));
 
         ompi_request_t *send_req;
-        err = MCA_PML_CALL(isend
-                           (send_context->buff, send_count, send_context->con->datatype,
-                            send_context->peer,
-                            context->con->ireduce_tag - send_context->seg_index,
-                            MCA_PML_BASE_SEND_STANDARD, send_context->con->comm, &send_req));
+
+        /* Release the item before starting the send: the request can complete
+         * inline, and the callback runs before we get back here. */
+        OBJ_RELEASE(item);
+
+        err = ompi_coll_adapt_isend_with_cb(send_context->buff, send_count,
+                                            send_context->con->datatype,
+                                            send_context->peer,
+                                            context->con->ireduce_tag - send_context->seg_index,
+                                            sendmode, send_context->con->comm,
+                                            send_cb, send_context, &send_req);
         if (MPI_SUCCESS != err) {
             return err;
         }
-
-        /* Release the item */
-        OBJ_RELEASE(item);
-
-        /* Set the send callback */
-        ompi_request_set_callback(send_req, send_cb, send_context);
     }
 
     int32_t num_sent = opal_atomic_add_fetch_32((opal_atomic_int32_t*)&(context->con->num_sent_segs), 1);
@@ -290,17 +325,15 @@ static int send_cb(ompi_request_t * req)
         opal_free_list_return(mca_coll_adapt_component.adapt_ireduce_context_free_list,
                               (opal_free_list_item_t *) context);
     }
-    /* Call back function return 1, which means successful */
-    req->req_free(&req);
-    return 1;
+    return OMPI_SUCCESS;
 }
 
 /*
- * Callback function of irecv
+ * Body of the irecv callback
  */
-static int recv_cb(ompi_request_t * req)
+static int recv_cb_body(ompi_coll_adapt_context_t * base)
 {
-    ompi_coll_adapt_reduce_context_t *context = (ompi_coll_adapt_reduce_context_t *) req->req_complete_cb_data;
+    ompi_coll_adapt_reduce_context_t *context = (ompi_coll_adapt_reduce_context_t *) base;
     int32_t new_id = opal_atomic_add_fetch_32((opal_atomic_int32_t*)&(context->con->next_recv_segs[context->child_id]), 1);
     int err;
 
@@ -343,15 +376,15 @@ static int recv_cb(ompi_request_t * req)
                              (void *) inbuf,
                              recv_context->con->ireduce_tag - recv_context->seg_index));
         ompi_request_t *recv_req;
-        err = MCA_PML_CALL(irecv(temp_recv_buf, recv_count, recv_context->con->datatype,
-                                 recv_context->peer,
-                                 recv_context->con->ireduce_tag - recv_context->seg_index,
-                                 recv_context->con->comm, &recv_req));
+        err = ompi_coll_adapt_irecv_with_cb(temp_recv_buf, recv_count,
+                                            recv_context->con->datatype,
+                                            recv_context->peer,
+                                            recv_context->con->ireduce_tag - recv_context->seg_index,
+                                            recv_context->con->comm,
+                                            recv_cb, recv_context, &recv_req);
         if (MPI_SUCCESS != err) {
             return err;
         }
-        /* Set the receive callback */
-        ompi_request_set_callback(recv_req, recv_cb, recv_context);
     }
 
     /* Do the op */
@@ -413,7 +446,7 @@ static int recv_cb(ompi_request_t * req)
 
     /* Send to parent */
     if (context->con->rank != context->con->tree->tree_root
-        && context->con->ongoing_send < mca_coll_adapt_component.adapt_ireduce_max_send_requests) {
+        && context->con->peer_send.ongoing < mca_coll_adapt_component.adapt_ireduce_max_send_requests) {
         ompi_coll_adapt_item_t *item = get_next_ready_item(context->con, context->con->tree->tree_nextsize);
 
         if (NULL != item) {
@@ -425,7 +458,9 @@ static int recv_cb(ompi_request_t * req)
             send_context->seg_index = item->id;
             send_context->peer = context->con->tree->tree_prev;
             send_context->con = context->con;
-            opal_atomic_add_fetch_32((opal_atomic_int32_t*)&(context->con->ongoing_send), 1);
+            mca_pml_base_send_mode_t sendmode =
+                ompi_coll_adapt_peer_send_mode(&context->con->peer_send, mca_coll_adapt_component.adapt_ireduce_max_send_requests);
+            opal_atomic_add_fetch_32((opal_atomic_int32_t*)&(context->con->peer_send.ongoing), 1);
 
             int send_count = send_context->con->seg_count;
             if (item->id == (send_context->con->num_segs - 1)) {
@@ -437,17 +472,21 @@ static int recv_cb(ompi_request_t * req)
                                  send_context->con->ireduce_tag - send_context->seg_index));
 
             ompi_request_t *send_req;
-            err = MCA_PML_CALL(isend(send_context->buff, send_count, send_context->con->datatype,
-                                     send_context->peer,
-                                     send_context->con->ireduce_tag - send_context->seg_index,
-                                     MCA_PML_BASE_SEND_STANDARD, send_context->con->comm, &send_req));
+
+            /* Release the item before starting the send: the request can
+             * complete inline, and the callback runs before we get back. */
+            OBJ_RELEASE(item);
+
+            err = ompi_coll_adapt_isend_with_cb(send_context->buff, send_count,
+                                                send_context->con->datatype,
+                                                send_context->peer,
+                                                send_context->con->ireduce_tag - send_context->seg_index,
+                                                sendmode,
+                                                send_context->con->comm,
+                                                send_cb, send_context, &send_req);
             if (MPI_SUCCESS != err) {
                 return err;
             }
-            OBJ_RELEASE(item);
-
-            /* Set the send callback */
-            ompi_request_set_callback(send_req, send_cb, send_context);
         }
     }
 
@@ -475,8 +514,7 @@ static int recv_cb(ompi_request_t * req)
         opal_free_list_return(mca_coll_adapt_component.adapt_ireduce_context_free_list,
                               (opal_free_list_item_t *) context);
     }
-    req->req_free(&req);
-    return 1;
+    return OMPI_SUCCESS;
 }
 
 int ompi_coll_adapt_ireduce(const void *sbuf, void *rbuf, size_t count, struct ompi_datatype_t *dtype,
@@ -531,9 +569,6 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
     /* Used to store the accumuate result, pointer to every segment */
     char **accumbuf = NULL;
     opal_mutex_t *mutex_op_list;
-    /* A list to store the segments need to be sent */
-    mca_pml_base_send_mode_t sendmode = (mca_coll_adapt_component.adapt_ireduce_synchronous_send)
-                                        ? MCA_PML_BASE_SEND_SYNCHRONOUS : MCA_PML_BASE_SEND_STANDARD;
 
     /* Determine number of segments and number of elements sent per operation */
     rank = ompi_comm_rank(comm);
@@ -596,7 +631,8 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
     con->rank = rank;
     con->num_recv_segs = 0;
     con->num_sent_segs = 0;
-    con->ongoing_send  = 0;
+    con->peer_send.ongoing = 0;
+    con->peer_send.until_sync = 0;
     con->mutex_op_list = mutex_op_list;
     con->op = op;
     con->tree = tree;
@@ -707,14 +743,13 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
 
                 /* Create a recv request */
                 ompi_request_t *recv_req;
-                err = MCA_PML_CALL(irecv
-                                    (temp_recv_buf, recv_count, dtype, tree->tree_next[i],
-                                    con->ireduce_tag - seg_index, comm, &recv_req));
+                err = ompi_coll_adapt_irecv_with_cb(temp_recv_buf, recv_count, dtype,
+                                                    tree->tree_next[i],
+                                                    con->ireduce_tag - seg_index, comm,
+                                                    recv_cb, context, &recv_req);
                 if (MPI_SUCCESS != err) {
                     return err;
                 }
-                /* Set the recv callback */
-                ompi_request_set_callback(recv_req, recv_cb, context);
             }
         }
     }
@@ -735,7 +770,6 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
             opal_list_append(&con->recv_list, (opal_list_item_t *) item);
         }
         con->accumbuf = accumbuf;
-        con->ongoing_send = min;
         for (int32_t seg_index = 0; seg_index < min; seg_index++) {
             send_count = seg_count;
             if (seg_index == (num_segs - 1)) {
@@ -750,6 +784,12 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
             context->con = con;
             context->inbuf = NULL;
 
+            /* Same accounting as the callbacks, so the first send to the
+             * parent checkpoints */
+            mca_pml_base_send_mode_t sendmode =
+                ompi_coll_adapt_peer_send_mode(&con->peer_send, mca_coll_adapt_component.adapt_ireduce_max_send_requests);
+            ++(con->peer_send.ongoing);
+
             OPAL_OUTPUT_VERBOSE((30, mca_coll_adapt_component.adapt_output,
                                   "[%d]: In ireduce, create isend to seg %d, peer %d, send_count %zu tag %d\n",
                                   context->con->rank, context->seg_index, context->peer,
@@ -757,16 +797,14 @@ int ompi_coll_adapt_ireduce_generic(const void *sbuf, void *rbuf, size_t count,
 
             /* Create send request */
             ompi_request_t *send_req;
-            err = MCA_PML_CALL(isend
-                                (context->buff, send_count, dtype, tree->tree_prev,
-                                con->ireduce_tag - context->seg_index,
-                                sendmode, comm, &send_req));
+            err = ompi_coll_adapt_isend_with_cb(context->buff, send_count, dtype,
+                                                tree->tree_prev,
+                                                con->ireduce_tag - context->seg_index,
+                                                sendmode, comm,
+                                                send_cb, context, &send_req);
             if (MPI_SUCCESS != err) {
                 return err;
             }
-
-            /* Set the send callback */
-            ompi_request_set_callback(send_req, send_cb, context);
         }
 
     }
