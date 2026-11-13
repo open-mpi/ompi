@@ -74,18 +74,6 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, size_t count,
         }
         pml_buffer = free_buffer - gap;
 
-        /* Copy the send buffer into the receive buffer. */
-
-        if (MPI_IN_PLACE != sbuf) {
-            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
-            if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
-                return err;
-            }
-        }
-
         /* Receive the prior answer */
 
         err = MCA_PML_CALL(recv(pml_buffer, count, dtype,
@@ -98,9 +86,15 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, size_t count,
             return err;
         }
 
-        /* Perform the operation */
+        /* Perform the operation. Unless MPI_IN_PLACE is used, combine our
+         * data directly into the receive buffer instead of copying it there
+         * first. */
 
-        ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+        if (MPI_IN_PLACE != sbuf) {
+            ompi_3buff_op_reduce(op, (void *)sbuf, pml_buffer, rbuf, count, dtype);
+        } else {
+            ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+        }
 
         /* All done */
 
@@ -171,12 +165,12 @@ int ompi_coll_base_scan_intra_recursivedoubling(
     if (count == 0)
         return MPI_SUCCESS;
 
-    if (sendbuf != MPI_IN_PLACE) {
-        err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, (char *)sendbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+    if (comm_size < 2) {
+        if (sendbuf != MPI_IN_PLACE) {
+            err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, (char *)sendbuf);
+        }
+        return err;
     }
-    if (comm_size < 2)
-        return MPI_SUCCESS;
 
     ptrdiff_t dsize, gap;
     dsize = opal_datatype_span(&datatype->super, count, &gap);
@@ -186,10 +180,17 @@ int ompi_coll_base_scan_intra_recursivedoubling(
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
     }
-    char *psend = tmpsend_raw - gap;
+    /*
+     * Instead of copying our data into recvbuf and psend up front, psend
+     * points to our data (in sendbuf, or in recvbuf for MPI_IN_PLACE) until
+     * the first reduction writes the partial result into the spare buffer.
+     * Similarly, recvbuf is only written by the first prefix reduction.
+     */
+    char *own = (sendbuf != MPI_IN_PLACE) ? (char *)sendbuf : (char *)recvbuf;
+    char *psend = own;
     char *precv = tmprecv_raw - gap;
-    err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, recvbuf);
-    if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+    char *pspare = tmpsend_raw - gap;
+    bool recvbuf_valid = (sendbuf == MPI_IN_PLACE);
     int is_commute = ompi_op_is_commute(op);
 
     for (int mask = 1; mask < comm_size; mask <<= 1) {
@@ -203,23 +204,44 @@ int ompi_coll_base_scan_intra_recursivedoubling(
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
             if (rank > remote) {
+                /* Partial result: psend = precv <op> psend. This has to come
+                 * first as psend may still point to our data in recvbuf. */
+                if (psend == own) {
+                    ompi_3buff_op_reduce(op, psend, precv, pspare, count, datatype);
+                    psend = pspare;
+                } else {
+                    ompi_op_reduce(op, precv, psend, count, datatype);
+                }
                 /* Accumulate prefix reduction: recvbuf = precv <op> recvbuf */
-                ompi_op_reduce(op, precv, recvbuf, count, datatype);
-                /* Partial result: psend = precv <op> psend */
-                ompi_op_reduce(op, precv, psend, count, datatype);
+                if (recvbuf_valid) {
+                    ompi_op_reduce(op, precv, recvbuf, count, datatype);
+                } else {
+                    ompi_3buff_op_reduce(op, own, precv, recvbuf, count, datatype);
+                    recvbuf_valid = true;
+                }
             } else {
                 if (is_commute) {
                     /* psend = precv <op> psend */
-                    ompi_op_reduce(op, precv, psend, count, datatype);
+                    if (psend == own) {
+                        ompi_3buff_op_reduce(op, psend, precv, pspare, count, datatype);
+                        psend = pspare;
+                    } else {
+                        ompi_op_reduce(op, precv, psend, count, datatype);
+                    }
                 } else {
                     /* precv = psend <op> precv */
                     ompi_op_reduce(op, psend, precv, count, datatype);
-                    char *tmp = psend;
+                    char *tmp = (psend == own) ? pspare : psend;
                     psend = precv;
                     precv = tmp;
                 }
             }
         }
+    }
+
+    /* Rank 0 never receives a prefix */
+    if (!recvbuf_valid) {
+        err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, own);
     }
 
 cleanup_and_return:

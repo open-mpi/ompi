@@ -58,9 +58,13 @@ int mca_coll_base_reduce_local(const void *inbuf, void *inoutbuf, size_t count,
  * For the last communication it will update the count in order to limit
  * the number of datatype to the original count (original_count)
  *
- * Note that for non-commutative operations we cannot save memory copy
- * for the first block: thus we must copy sendbuf to accumbuf on intermediate
- * to keep the optimized loop happy.
+ * The local contribution is never copied into the accumulation buffer.
+ * Instead, it is folded in by the first reduction of each segment: for
+ * commutative operations the first child's data is received directly into
+ * the accumulation buffer and the local data is reduced into it, while for
+ * non-commutative operations the first child's data and the local data are
+ * combined into the accumulation buffer using a three-buffer reduction, to
+ * preserve the order of operations.
  */
 int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, size_t original_count,
                                     ompi_datatype_t* datatype, ompi_op_t* op,
@@ -76,6 +80,7 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, size_t or
     ompi_request_t **sreq = NULL, *reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
     int num_segments, line, ret, segindex, i, rank;
     int recvcount, prevcount, inbi;
+    bool commute, use_sendbuf;
 
     /**
      * Determine number of segments and number of elements
@@ -95,6 +100,11 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, size_t or
                  (unsigned long)segment_increment, max_outstanding_reqs));
 
     rank = ompi_comm_rank(comm);
+    commute = ompi_op_is_commute(op);
+    /* Unless we are the root using MPI_IN_PLACE (in which case our data
+     * already lives in the accumulation buffer), the first reduction of
+     * each segment has to take our data from sendtmpbuf. */
+    use_sendbuf = !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root));
 
     /* non-leaf nodes - wait for children to send me data & forward up
        (if needed) */
@@ -114,14 +124,6 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, size_t or
             accumbuf = accumbuf_free - gap;
         }
 
-        /* If this is a non-commutative operation we must copy
-           sendbuf to the accumbuf, in order to simplify the loops */
-        
-        if (!ompi_op_is_commute(op) && MPI_IN_PLACE != sendbuf) {
-            ompi_datatype_copy_content_same_ddt(datatype, original_count,
-                                                (char*)accumbuf,
-                                                (char*)sendtmpbuf);
-        }
         /* Allocate two buffers for incoming segments */
         real_segment_size = opal_datatype_span(&datatype->super, count_by_segment, &gap);
         inbuf_free[0] = (char*) malloc(real_segment_size);
@@ -161,17 +163,14 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, size_t or
                     void* local_recvbuf = inbuf[inbi];
                     if( 0 == i ) {
                         /* for the first step (1st child per segment) and
-                         * commutative operations we might be able to irecv
-                         * directly into the accumulate buffer so that we can
-                         * reduce(op) this with our sendbuf in one step as
-                         * ompi_op_reduce only has two buffer pointers,
-                         * this avoids an extra memory copy.
+                         * commutative operations we can irecv directly into
+                         * the accumulate buffer and later reduce(op) our
+                         * sendbuf into it.
                          *
                          * BUT if the operation is non-commutative or
                          * we are root and are USING MPI_IN_PLACE this is wrong!
                          */
-                        if( (ompi_op_is_commute(op)) &&
-                            !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
+                        if( commute && use_sendbuf ) {
                             local_recvbuf = accumbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
                         }
                     }
@@ -191,31 +190,42 @@ int ompi_coll_base_reduce_generic( const void* sendbuf, void* recvbuf, size_t or
                 if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                 local_op_buffer = inbuf[inbi ^ 1];
                 if( i > 0 ) {
+                    void* accumulator = accumbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
                     /* our first operation is to combine our own [sendbuf] data
-                     * with the data we recvd from down stream (but only
-                     * the operation is commutative and if we are not root and
-                     * not using MPI_IN_PLACE)
+                     * with the data we recvd from down stream (unless we are
+                     * root and using MPI_IN_PLACE)
                      */
-                    if( 1 == i ) {
-                        if( (ompi_op_is_commute(op)) &&
-                            !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_op_buffer = sendtmpbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
+                    if( (1 == i) && use_sendbuf ) {
+                        char *local_sendbuf = sendtmpbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
+                        if( commute ) {
+                            /* data of the first child is in the accumulator */
+                            ompi_op_reduce(op, local_sendbuf, accumulator,
+                                           recvcount, datatype);
+                        } else {
+                            ompi_3buff_op_reduce(op, local_sendbuf, local_op_buffer,
+                                                 accumulator, recvcount, datatype);
                         }
+                    } else {
+                        /* apply operation */
+                        ompi_op_reduce(op, local_op_buffer, accumulator,
+                                       recvcount, datatype );
                     }
-                    /* apply operation */
-                    ompi_op_reduce(op, local_op_buffer,
-                                   accumbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment,
-                                   recvcount, datatype );
                 } else if ( segindex > 0 ) {
                     void* accumulator = accumbuf + (ptrdiff_t)(segindex-1) * (ptrdiff_t)segment_increment;
-                    if( tree->tree_nextsize <= 1 ) {
-                        if( (ompi_op_is_commute(op)) &&
-                            !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_op_buffer = sendtmpbuf + (ptrdiff_t)(segindex-1) * (ptrdiff_t)segment_increment;
+                    if( (tree->tree_nextsize <= 1) && use_sendbuf ) {
+                        char *local_sendbuf = sendtmpbuf + (ptrdiff_t)(segindex-1) * (ptrdiff_t)segment_increment;
+                        if( commute ) {
+                            /* data of the only child is in the accumulator */
+                            ompi_op_reduce(op, local_sendbuf, accumulator,
+                                           prevcount, datatype);
+                        } else {
+                            ompi_3buff_op_reduce(op, local_sendbuf, local_op_buffer,
+                                                 accumulator, prevcount, datatype);
                         }
+                    } else {
+                        ompi_op_reduce(op, local_op_buffer, accumulator, prevcount,
+                                       datatype );
                     }
-                    ompi_op_reduce(op, local_op_buffer, accumulator, prevcount,
-                                   datatype );
 
                     /* all reduced on available data this step (i) complete,
                      * pass to the next process unless you are the root.
@@ -561,15 +571,11 @@ int ompi_coll_base_reduce_intra_in_order_binary( const void *sendbuf, void *recv
         dsize = opal_datatype_span(&datatype->super, count, &gap);
 
         if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
-            tmpbuf_free = (char *) malloc(dsize);
-            if (NULL == tmpbuf_free) {
-                return MPI_ERR_INTERN;
-            }
-            tmpbuf = tmpbuf_free - gap;
-            ompi_datatype_copy_content_same_ddt(datatype, count,
-                                                (char*)tmpbuf,
-                                                (char*)recvbuf);
-            use_this_sendbuf = tmpbuf;
+            /* The generic function only reads the send buffer on ranks
+               other than io_root and accumulates into a temporary buffer,
+               so our data can be used directly from recvbuf. It is only
+               overwritten once the result is received from io_root. */
+            use_this_sendbuf = recvbuf;
         } else if (io_root == rank) {
             tmpbuf_free = (char *) malloc(dsize);
             if (NULL == tmpbuf_free) {
@@ -647,12 +653,12 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, size_t co
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int i, rank, err, size;
-    ptrdiff_t extent, dsize, gap = 0;
+    int i, rank, err = MPI_SUCCESS, size;
+    ptrdiff_t dsize, gap = 0;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
     char *inplace_temp_free = NULL;
-    char *inbuf;
+    char *inbuf, *accbuf, *curbuf;
 
     /* Initialize */
 
@@ -668,46 +674,53 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, size_t co
         return err;
     }
 
-    dsize = opal_datatype_span(&dtype->super, count, &gap);
-    ompi_datatype_type_extent(dtype, &extent);
-
-    if (MPI_IN_PLACE == sbuf) {
-        sbuf = rbuf;
-        inplace_temp_free = (char*)malloc(dsize);
-        if (NULL == inplace_temp_free) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        rbuf = inplace_temp_free - gap;
-    }
-
-    if (size > 1) {
-        free_buffer = (char*)malloc(dsize);
-        if (NULL == free_buffer) {
-            if (NULL != inplace_temp_free) {
-                free(inplace_temp_free);
-            }
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-        pml_buffer = free_buffer - gap;
-    }
-
-    /* Initialize the receive buffer. */
-
-    if (rank == (size - 1)) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
-    } else {
-        err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
-                                MCA_COLL_BASE_TAG_REDUCE, comm,
-                                MPI_STATUS_IGNORE));
-    }
-    if (MPI_SUCCESS != err) {
-        if (NULL != free_buffer) {
-            free(free_buffer);
-        }
-        if (NULL != inplace_temp_free) {
-            free(inplace_temp_free);
+    if (1 == size) {
+        if (MPI_IN_PLACE != sbuf) {
+            err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
         }
         return err;
+    }
+
+    dsize = opal_datatype_span(&dtype->super, count, &gap);
+
+    free_buffer = (char*)malloc(dsize);
+    if (NULL == free_buffer) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    pml_buffer = free_buffer - gap;
+
+    /* The result is accumulated in accbuf. With MPI_IN_PLACE our data lives
+     * in rbuf and must not be overwritten before it has been reduced, so
+     * unless our data starts the reduction we accumulate into a temporary
+     * buffer until then. */
+    accbuf = (char*)rbuf;
+    if (MPI_IN_PLACE == sbuf) {
+        sbuf = rbuf;
+        if (rank != (size - 1)) {
+            inplace_temp_free = (char*)malloc(dsize);
+            if (NULL == inplace_temp_free) {
+                free(free_buffer);
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            accbuf = inplace_temp_free - gap;
+        }
+    }
+
+    /* The data of rank (size - 1) starts the reduction. curbuf points to the
+     * current partial result. If it is not in accbuf (i.e., it is our send
+     * buffer), the next reduction combines it with the incoming data into
+     * accbuf, saving the copy of the send buffer into accbuf. */
+
+    if (rank == (size - 1)) {
+        curbuf = (char*)sbuf;
+    } else {
+        err = MCA_PML_CALL(recv(accbuf, count, dtype, size - 1,
+                                MCA_COLL_BASE_TAG_REDUCE, comm,
+                                MPI_STATUS_IGNORE));
+        if (MPI_SUCCESS != err) {
+            goto cleanup_and_return;
+        }
+        curbuf = accbuf;
     }
 
     /* Loop receiving and calling reduction function (C or Fortran). */
@@ -720,13 +733,7 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, size_t co
                                     MCA_COLL_BASE_TAG_REDUCE, comm,
                                     MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
-                if (NULL != free_buffer) {
-                    free(free_buffer);
-                }
-                if (NULL != inplace_temp_free) {
-                    free(inplace_temp_free);
-                }
-                return err;
+                goto cleanup_and_return;
             }
 
             inbuf = pml_buffer;
@@ -734,20 +741,57 @@ ompi_coll_base_reduce_intra_basic_linear(const void *sbuf, void *rbuf, size_t co
 
         /* Perform the reduction */
 
-        ompi_op_reduce(op, inbuf, rbuf, count, dtype);
+        if ((rank == i) && (accbuf != rbuf)) {
+            /* MPI_IN_PLACE: our data in rbuf is consumed now, so the
+             * reduction can continue in rbuf. */
+            if (ompi_op_is_commute(op)) {
+                ompi_op_reduce(op, accbuf, rbuf, count, dtype);
+                curbuf = (char*)rbuf;
+            } else {
+                ompi_op_reduce(op, inbuf, accbuf, count, dtype);
+            }
+            accbuf = (char*)rbuf;
+        } else if (curbuf != accbuf) {
+            ompi_3buff_op_reduce(op, curbuf, inbuf, accbuf, count, dtype);
+            curbuf = accbuf;
+        } else {
+            ompi_op_reduce(op, inbuf, accbuf, count, dtype);
+        }
     }
 
+    /* Only if root is 0, the operation is non-commutative, and MPI_IN_PLACE
+     * is used does the result end up in the temporary buffer. */
+    if (curbuf != rbuf) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)rbuf, curbuf);
+    }
+
+  cleanup_and_return:
     if (NULL != inplace_temp_free) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, (char*)sbuf, rbuf);
         free(inplace_temp_free);
     }
-    if (NULL != free_buffer) {
-        free(free_buffer);
-    }
+    free(free_buffer);
 
     /* All done */
 
-    return MPI_SUCCESS;
+    return err;
+}
+
+/*
+ * Reduce the received data in tmp_buf with the local data in lbuf into rbuf,
+ * at the given byte offset. If the local data is not yet in rbuf, use a
+ * three-buffer reduction to save copying it into rbuf first.
+ */
+static inline void
+coll_base_reduce_first_local(struct ompi_op_t *op, const char *lbuf, void *rbuf,
+                             char *tmp_buf, ptrdiff_t offset, size_t count,
+                             struct ompi_datatype_t *dtype)
+{
+    if (lbuf == (const char *)rbuf) {
+        ompi_op_reduce(op, tmp_buf + offset, (char *)rbuf + offset, count, dtype);
+    } else {
+        ompi_3buff_op_reduce(op, (char *)lbuf + offset, tmp_buf + offset,
+                             (char *)rbuf + offset, count, dtype);
+    }
 }
 
 /*
@@ -861,11 +905,13 @@ int ompi_coll_base_reduce_intra_redscat_gather(
         rbuf = rbuf_raw - gap;
     }
 
-    if ((rank != root) || (sbuf != MPI_IN_PLACE)) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, count, rbuf,
-                                                  (char *)sbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
-    }
+    /*
+     * lbuf holds our local data: until the first local reduction, this is
+     * the send buffer (the receive buffer if MPI_IN_PLACE is used). Instead
+     * of copying the send buffer into rbuf, data is sent directly from it and
+     * the first local reduction combines it with the received data into rbuf.
+     */
+    const char *lbuf = (MPI_IN_PLACE == sbuf) ? (const char *)rbuf : (const char *)sbuf;
 
     /*
      * Step 1. Reduce the number of processes to the nearest lower power of two
@@ -898,7 +944,7 @@ int ompi_coll_base_reduce_intra_redscat_gather(
              * Send the left half of the input vector to the left neighbor,
              * Recv the right half of the input vector from the left neighbor
              */
-            err = ompi_coll_base_sendrecv(rbuf, count_lhalf, dtype, rank - 1,
+            err = ompi_coll_base_sendrecv((void *)lbuf, count_lhalf, dtype, rank - 1,
                                           MCA_COLL_BASE_TAG_REDUCE,
                                           (char *)tmp_buf + (ptrdiff_t)count_lhalf * extent,
                                           count_rhalf, dtype, rank - 1,
@@ -907,8 +953,10 @@ int ompi_coll_base_reduce_intra_redscat_gather(
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
             /* Reduce on the right half of the buffers (result in rbuf) */
-            ompi_op_reduce(op, (char *)tmp_buf + (ptrdiff_t)count_lhalf * extent,
-                           (char *)rbuf + count_lhalf * extent, count_rhalf, dtype);
+            coll_base_reduce_first_local(op, lbuf, rbuf, tmp_buf,
+                                         (ptrdiff_t)count_lhalf * extent,
+                                         count_rhalf, dtype);
+            lbuf = rbuf;
 
             /* Send the right half to the left neighbor */
             err = MCA_PML_CALL(send((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
@@ -926,7 +974,7 @@ int ompi_coll_base_reduce_intra_redscat_gather(
              * Send the right half of the input vector to the right neighbor,
              * Recv the left half of the input vector from the right neighbor
              */
-            err = ompi_coll_base_sendrecv((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
+            err = ompi_coll_base_sendrecv((char *)lbuf + (ptrdiff_t)count_lhalf * extent,
                                           count_rhalf, dtype, rank + 1,
                                           MCA_COLL_BASE_TAG_REDUCE,
                                           tmp_buf, count_lhalf, dtype, rank + 1,
@@ -934,8 +982,10 @@ int ompi_coll_base_reduce_intra_redscat_gather(
                                           MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
-            /* Reduce on the right half of the buffers (result in rbuf) */
-            ompi_op_reduce(op, tmp_buf, rbuf, count_lhalf, dtype);
+            /* Reduce on the left half of the buffers (result in rbuf) */
+            coll_base_reduce_first_local(op, lbuf, rbuf, tmp_buf, 0,
+                                         count_lhalf, dtype);
+            lbuf = rbuf;
 
             /* Recv the right half from the right neighbor */
             err = MCA_PML_CALL(recv((char *)rbuf + (ptrdiff_t)count_lhalf * extent,
@@ -1006,8 +1056,8 @@ int ompi_coll_base_reduce_intra_redscat_gather(
                 rindex[step] = sindex[step] + scount[step];
             }
 
-            /* Send part of data from the rbuf, recv into the tmp_buf */
-            err = ompi_coll_base_sendrecv((char *)rbuf + (ptrdiff_t)sindex[step] * extent,
+            /* Send part of data from the lbuf, recv into the tmp_buf */
+            err = ompi_coll_base_sendrecv((char *)lbuf + (ptrdiff_t)sindex[step] * extent,
                                           scount[step], dtype, dest,
                                           MCA_COLL_BASE_TAG_REDUCE,
                                           (char *)tmp_buf + (ptrdiff_t)rindex[step] * extent,
@@ -1016,10 +1066,11 @@ int ompi_coll_base_reduce_intra_redscat_gather(
                                           MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
-            /* Local reduce: rbuf[] = tmp_buf[] <op> rbuf[] */
-            ompi_op_reduce(op, (char *)tmp_buf + (ptrdiff_t)rindex[step] * extent,
-                           (char *)rbuf + (ptrdiff_t)rindex[step] * extent,
-                           rcount[step], dtype);
+            /* Local reduce: rbuf[] = tmp_buf[] <op> lbuf[] */
+            coll_base_reduce_first_local(op, lbuf, rbuf, tmp_buf,
+                                         (ptrdiff_t)rindex[step] * extent,
+                                         rcount[step], dtype);
+            lbuf = rbuf;
 
             /* Move the current window to the received message */
             if (step + 1 < nsteps) {
@@ -1215,23 +1266,39 @@ int ompi_coll_base_reduce_intra_knomial( const void *sendbuf, void *recvbuf,
     if( sendbuf == MPI_IN_PLACE ) {
         sendtmpbuf = (char *)recvbuf;
     }
-    buf_size = opal_datatype_span(&datatype->super, (int64_t)count, &gap);
-    reduce_buf = (char *)malloc(buf_size);
-    reduce_buf_start = reduce_buf - gap;
-    err = ompi_datatype_copy_content_same_ddt(datatype, count,
-                                              (char*)reduce_buf_start,
-                                              (char*)sendtmpbuf);
-    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+
+    if (is_leaf) {
+        if (rank == root) {
+            /* single process */
+            if (MPI_IN_PLACE != sendbuf) {
+                err = ompi_datatype_copy_content_same_ddt(datatype, count,
+                                                          (char*)recvbuf,
+                                                          sendtmpbuf);
+            }
+            return err;
+        }
+        return MCA_PML_CALL(send(sendtmpbuf, count, datatype, tree->tree_prev,
+                                 MCA_COLL_BASE_TAG_REDUCE,
+                                 MCA_PML_BASE_SEND_STANDARD, comm));
+    }
+
+    /* The root reduces directly into recvbuf, others into a temporary buffer */
+    if (rank == root) {
+        reduce_buf_start = (char *)recvbuf;
+    } else {
+        buf_size = opal_datatype_span(&datatype->super, (int64_t)count, &gap);
+        reduce_buf = (char *)malloc(buf_size);
+        if (NULL == reduce_buf) { err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl; }
+        reduce_buf_start = reduce_buf - gap;
+    }
 
     // do transfer in a single transaction instead of segments
     num_reqs = 0;
     max_reqs = num_children;
-    if(!is_leaf) {
-        buf_size = opal_datatype_span(&datatype->super, (int64_t)count * num_children, &gap);
-        child_buf = (char *)malloc(buf_size);
-        child_buf_start = child_buf - gap;
-        reqs = ompi_coll_base_comm_get_reqs(data, max_reqs);
-    }
+    buf_size = opal_datatype_span(&datatype->super, (int64_t)count * num_children, &gap);
+    child_buf = (char *)malloc(buf_size);
+    child_buf_start = child_buf - gap;
+    reqs = ompi_coll_base_comm_get_reqs(data, max_reqs);
 
     for (int i = 0; i < num_children; i++) {
         int child = tree->tree_next[i];
@@ -1251,11 +1318,15 @@ int ompi_coll_base_reduce_intra_knomial( const void *sendbuf, void *recvbuf,
     }
 
     for (int i = 0; i < num_children; i++) {
-        ompi_op_reduce(op,
-                       child_buf_start + (ptrdiff_t)i * count * extent,
-                       reduce_buf_start,
-                       count,
-                       datatype);
+        char *child_data = child_buf_start + (ptrdiff_t)i * count * extent;
+        if ((0 == i) && (sendtmpbuf != reduce_buf_start)) {
+            /* Combine our data with the first child's data directly into
+             * reduce_buf_start, saving a copy of our data */
+            ompi_3buff_op_reduce(op, sendtmpbuf, child_data,
+                                 reduce_buf_start, count, datatype);
+        } else {
+            ompi_op_reduce(op, child_data, reduce_buf_start, count, datatype);
+        }
     }
 
     if (rank != root) {
@@ -1266,13 +1337,6 @@ int ompi_coll_base_reduce_intra_knomial( const void *sendbuf, void *recvbuf,
                                 MCA_COLL_BASE_TAG_REDUCE,
                                 MCA_PML_BASE_SEND_STANDARD,
                                 comm));
-        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-    }
-
-    if (rank == root) {
-        err = ompi_datatype_copy_content_same_ddt(datatype, count,
-                                                  (char*)recvbuf,
-                                                  (char*)reduce_buf_start);
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
     }
 

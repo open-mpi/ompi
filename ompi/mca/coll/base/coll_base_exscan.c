@@ -81,8 +81,16 @@ ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, size_t count,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     reduce_buffer = free_buffer - gap;
-    err = ompi_datatype_copy_content_same_ddt(dtype, count,
-                                              reduce_buffer, (char*)sbuf);
+
+    /* With MPI_IN_PLACE, our data in rbuf is overwritten by the receive
+     * below, so save it in the temporary reduce_buffer first. */
+    if (sbuf == rbuf) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, count,
+                                                  reduce_buffer, (char*)sbuf);
+        if (MPI_SUCCESS != err) {
+            goto error;
+        }
+    }
 
     /* Receive the reduced value from the prior rank */
     err = MCA_PML_CALL(recv(rbuf, count, dtype, rank - 1,
@@ -91,9 +99,13 @@ ompi_coll_base_exscan_intra_linear(const void *sbuf, void *rbuf, size_t count,
         goto error;
     }
 
-    /* Now reduce the prior rank's result with my source buffer.  The source
-     * buffer had been previously copied into the temporary reduce_buffer. */
-    ompi_op_reduce(op, rbuf, reduce_buffer, count, dtype);
+    /* Now reduce the prior rank's result with my source buffer into the
+     * temporary reduce_buffer. */
+    if (sbuf == rbuf) {
+        ompi_op_reduce(op, rbuf, reduce_buffer, count, dtype);
+    } else {
+        ompi_3buff_op_reduce(op, (void *)sbuf, rbuf, reduce_buffer, count, dtype);
+    }
 
     /* Send my result off to the next rank */
     err = MCA_PML_CALL(send(reduce_buffer, count, dtype, rank + 1,
@@ -165,49 +177,71 @@ int ompi_coll_base_exscan_intra_recursivedoubling(
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
     }
-    char *psend = tmpsend_raw - gap;
+    /*
+     * Instead of copying our data into psend up front, psend points to our
+     * data (in sendbuf, or in recvbuf for MPI_IN_PLACE) until the first
+     * reduction writes the partial result into the spare buffer.
+     */
+    char *own = (sendbuf != MPI_IN_PLACE) ? (char *)sendbuf : (char *)recvbuf;
+    char *psend = own;
     char *precv = tmprecv_raw - gap;
-    if (sendbuf != MPI_IN_PLACE) {
-        err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, (char *)sendbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
-    } else {
-        err = ompi_datatype_copy_content_same_ddt(datatype, count, psend, recvbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
-    }
+    char *pspare = tmpsend_raw - gap;
     int is_commute = ompi_op_is_commute(op);
     int is_first_block = 1;
 
     for (int mask = 1; mask < comm_size; mask <<= 1) {
         int remote = rank ^ mask;
         if (remote < comm_size) {
+            /*
+             * The first block from a lower rank becomes the initial prefix in
+             * recvbuf: receive it there directly unless we still send our data
+             * from recvbuf (MPI_IN_PLACE).
+             */
+            char *pin = precv;
+            if ((rank > remote) && is_first_block && (psend != (char *)recvbuf)) {
+                pin = recvbuf;
+            }
             err = ompi_coll_base_sendrecv(psend, count, datatype, remote,
                                           MCA_COLL_BASE_TAG_EXSCAN,
-                                          precv, count, datatype, remote,
+                                          pin, count, datatype, remote,
                                           MCA_COLL_BASE_TAG_EXSCAN, comm,
                                           MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
             if (rank > remote) {
+                /* Partial result: psend = pin <op> psend. This has to come
+                 * first as psend may still point to our data in recvbuf. */
+                if (psend == own) {
+                    ompi_3buff_op_reduce(op, psend, pin, pspare, count, datatype);
+                    psend = pspare;
+                } else {
+                    ompi_op_reduce(op, pin, psend, count, datatype);
+                }
                 /* Assertion: rank > 0 and rbuf is valid */
                 if (is_first_block) {
-                    err = ompi_datatype_copy_content_same_ddt(datatype, count,
-                                                              recvbuf, precv);
-                    if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                    if (pin != (char *)recvbuf) {
+                        err = ompi_datatype_copy_content_same_ddt(datatype, count,
+                                                                  recvbuf, pin);
+                        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+                    }
                     is_first_block = 0;
                 } else {
                     /* Accumulate prefix reduction: recvbuf = precv <op> recvbuf */
-                    ompi_op_reduce(op, precv, recvbuf, count, datatype);
+                    ompi_op_reduce(op, pin, recvbuf, count, datatype);
                 }
-                /* Partial result: psend = precv <op> psend */
-                ompi_op_reduce(op, precv, psend, count, datatype);
             } else {
                 if (is_commute) {
                     /* psend = precv <op> psend */
-                    ompi_op_reduce(op, precv, psend, count, datatype);
+                    if (psend == own) {
+                        ompi_3buff_op_reduce(op, psend, precv, pspare, count, datatype);
+                        psend = pspare;
+                    } else {
+                        ompi_op_reduce(op, precv, psend, count, datatype);
+                    }
                 } else {
                     /* precv = psend <op> precv */
                     ompi_op_reduce(op, psend, precv, count, datatype);
-                    char *tmp = psend;
+                    char *tmp = (psend == own) ? pspare : psend;
                     psend = precv;
                     precv = tmp;
                 }
