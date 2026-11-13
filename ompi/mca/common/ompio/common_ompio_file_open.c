@@ -19,6 +19,7 @@
  *                         reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * Copyright (c) 2026      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -325,6 +326,7 @@ int mca_common_ompio_file_open (ompi_communicator_t *comm,
 	if ( OMPI_SUCCESS != ret )  {
 	    goto fn_fail;
 	}
+	ompi_comm_mark_communicator_as_internal (ompio_fh->f_comm);
     }
     else {
 	/* No need to duplicate the communicator if the file_open is called

@@ -409,6 +409,7 @@ ompi_report_comm_methods(int called_from_location)
     if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
         return;
     }
+    ompi_comm_mark_communicator_as_internal(local_comm);
     mylocalrank = ompi_comm_rank(local_comm);
     nlocalranks = ompi_comm_size(local_comm);
 
@@ -419,6 +420,7 @@ ompi_report_comm_methods(int called_from_location)
         ompi_comm_free(&local_comm);
         return;
     }
+    ompi_comm_mark_communicator_as_internal(leader_comm);
 
 // Non-host-leaders return early.
     if (mylocalrank != 0) {

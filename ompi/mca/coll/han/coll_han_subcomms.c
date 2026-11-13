@@ -257,7 +257,9 @@ int mca_coll_han_comm_create_new(struct ompi_communicator_t *comm,
 
     /* Retain sub-communicators so they survive finalize ordering */
     OBJ_RETAIN(*low_comm);
+    ompi_comm_mark_communicator_as_internal(*low_comm);
     OBJ_RETAIN(*up_comm);
+    ompi_comm_mark_communicator_as_internal(*up_comm);
 
     return OMPI_SUCCESS;
 
@@ -479,9 +481,11 @@ int mca_coll_han_comm_create(struct ompi_communicator_t *comm,
     /* Retain sub-communicators so they survive finalize ordering */
     for(int i = 0; i < COLL_HAN_LOW_MODULES; i++) {
         OBJ_RETAIN(low_comms[i]);
+        ompi_comm_mark_communicator_as_internal(low_comms[i]);
     }
     for(int i = 0; i < COLL_HAN_UP_MODULES; i++) {
         OBJ_RETAIN(up_comms[i]);
+        ompi_comm_mark_communicator_as_internal(up_comms[i]);
     }
 
 

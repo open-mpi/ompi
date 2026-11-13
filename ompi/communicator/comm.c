@@ -373,6 +373,7 @@ int ompi_comm_set_nb (ompi_communicator_t **ncomm, ompi_communicator_t *oldcomm,
             if (NULL != newcomm->c_local_comm
                 && !OMPI_COMM_IS_INTRINSIC(newcomm->c_local_comm)) {
                 OBJ_RETAIN(newcomm->c_local_comm);
+                ompi_comm_mark_communicator_as_internal(newcomm->c_local_comm);
             }
         } else {
             assert (OMPI_COMM_IS_INTRA(oldcomm));
@@ -2826,6 +2827,11 @@ int ompi_comm_free( ompi_communicator_t **comm )
     if ( OMPI_COMM_IS_DYNAMIC (*comm) ) {
         ompi_comm_num_dyncomm --;
     }
+
+    /* The user is done with this communicator, whoever else still holds a
+     * reference to it. */
+    (*comm)->c_flags |= OMPI_COMM_ISFREED;
+
     OBJ_RELEASE( (*comm) );
 
     *comm = MPI_COMM_NULL;

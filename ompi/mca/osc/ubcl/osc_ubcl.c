@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2025-2026 Bull SAS.  All rights reserved.
  *
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -352,6 +353,7 @@ static int new_module(struct ompi_win_t *win, void **base, size_t size,
     if (OMPI_SUCCESS != ret) {
         goto error;
     }
+    ompi_comm_mark_communicator_as_internal(module->comm);
 
     /* Putting the cid into the wid that way it should be unique */
     module->win = win;
