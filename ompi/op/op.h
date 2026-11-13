@@ -50,6 +50,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/mca/op/op.h"
+#include "ompi/xcallbacks.h"
 
 BEGIN_C_DECLS
 
@@ -81,6 +82,13 @@ typedef void (ompi_op_fortran_handler_bc_fn_t)(const void *, void *,
  */
 
 typedef ompi_datatype_t * (*ompi_op_type_convert_to_abi_fn_t)(ompi_datatype_t *);
+
+/*
+ * The user destructor callback type (ompi_user_destructor_fn_t) used by
+ * the "extended callback" (MPIX_*_x) APIs is shared with the errhandler
+ * and attribute back ends and is defined in ompi/xcallbacks.h, included
+ * above.
+ */
 
 /*
  * Flags for MPI_Op
