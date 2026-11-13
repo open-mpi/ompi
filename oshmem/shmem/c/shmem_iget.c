@@ -31,7 +31,7 @@
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
-        RUNTIME_CHECK_ADDR(source);                                 \
+        RUNTIME_CHECK_ADDR_SIZE(source, nelems);                    \
                                                                     \
         element_size = sizeof(type);                                \
         for (i = 0; i < nelems; i++)                                \
@@ -183,7 +183,7 @@ SHMEM_TYPE_IGET(_ptrdiff, ptrdiff_t)
                                                                     \
         RUNTIME_CHECK_INIT();                                       \
         RUNTIME_CHECK_PE(pe);                                       \
-        RUNTIME_CHECK_ADDR(source);                                 \
+        RUNTIME_CHECK_ADDR_SIZE(source, nelems);                    \
                                                                     \
         for (i = 0; i < nelems; i++)                                \
         {                                                           \
