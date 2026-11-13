@@ -21,25 +21,32 @@ used from the copy embedded in the Open MPI distribution:
 
 * `OpenPMIx <https://openpmix.github.io/>`_: version
   |pmix_min_version| or later when building without PRRTE (when
-  building with PRRTE, PRRTE's own OpenPMIx minimum applies).  Open
-  MPI |ompi_ver| embeds OpenPMIx |pmix_embedded_version|.
+  building with PRRTE, PRRTE's own OpenPMIx minimum applies).
+  Version embedded in the Open MPI |ompi_ver| distribution:
+  |pmix_embedded_version|.
 * `PRRTE <https://github.com/openpmix/prrte>`_: version
-  |prte_min_version| or later.  Open MPI |ompi_ver| embeds PRRTE
-  |prte_embedded_version|.  PRRTE is what provides ``mpirun``; it is
-  not needed if MPI jobs are always launched directly by a
-  PMIx-enabled resource manager.
+  |prte_min_version| or later.  PRRTE is what provides ``mpirun``; it
+  is not needed if MPI jobs are always launched directly by a
+  PMIx-enabled resource manager.  Version embedded in the Open MPI
+  |ompi_ver| distribution: |prte_embedded_version|.
 * `hwloc <https://www.open-mpi.org/projects/hwloc/>`_: version
   |hwloc_min_version| or later, and older than v3.0.0 (Open MPI does
-  not yet support the hwloc v3.x series).  Open MPI |ompi_ver| embeds
-  hwloc |hwloc_embedded_version|.
+  not yet support the hwloc v3.x series).  Version embedded in the
+  Open MPI |ompi_ver| distribution: |hwloc_embedded_version|.
 * `Libevent <https://libevent.org/>`_: version |event_min_version| or
-  later.  Open MPI |ompi_ver| embeds Libevent
+  later.  Version embedded in the Open MPI |ompi_ver| distribution:
   |event_embedded_version|.
 
 See the :ref:`Required support libraries section
 <label-install-required-support-libraries>` for the full details,
 including how ``configure`` chooses between an embedded and an
 external copy of each library.
+
+The versions listed above are the ones embedded in the Open MPI
+distribution.  To see whether an installation of Open MPI was built
+with these embedded copies or with external installations |mdash|
+and, for all but PRRTE, which version of each it loads at run time
+|mdash| run :ref:`ompi_info(1) <man1-ompi_info>`.
 
 The versions of OpenPMIx and PRRTE that a given Open MPI release
 supports determine which back-end run-time systems that release

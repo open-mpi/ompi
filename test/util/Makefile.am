@@ -63,6 +63,7 @@ check_PROGRAMS = \
 	opal_error \
 	opal_if \
 	opal_info \
+	opal_info_support \
 	opal_net \
 	opal_output
 
@@ -169,6 +170,10 @@ opal_if_DEPENDENCIES = $(opal_test_ldadd)
 opal_info_SOURCES = opal_info.c
 opal_info_LDADD = $(opal_test_ldadd)
 opal_info_DEPENDENCIES = $(opal_test_ldadd)
+
+opal_info_support_SOURCES = opal_info_support.c
+opal_info_support_LDADD = $(opal_test_ldadd)
+opal_info_support_DEPENDENCIES = $(opal_test_ldadd)
 
 opal_net_SOURCES = opal_net.c
 opal_net_LDADD = $(opal_test_ldadd)

@@ -29,6 +29,23 @@ than guessing from this corpus, which documents the API, not the local build.
   mpi-api:version:full:4.1.0    # the MPI standard level this build implements
   ```
 
+## Support library versions (OpenPMIx, PRRTE, hwloc, Libevent)
+
+The Open MPI documentation lists the versions of OpenPMIx, PRRTE, hwloc, and
+Libevent that are *embedded* in the Open MPI distribution. A given
+installation may instead have been built against external copies of those
+libraries, and may load yet another version at run time (e.g., via
+`LD_LIBRARY_PATH`). `ompi_info` (with no arguments, `--config`, or `--all`)
+always reports two keys per library, where `<lib>` is `pmix`, `prrte`,
+`hwloc`, or `libevent`:
+
+```
+3rdparty:<lib>:build:source      # "embedded", "external", or (PRRTE only) "not built"
+3rdparty:<lib>:version:runtime   # version loaded at run time, "not available", or (PRRTE, always) "not applicable"
+```
+
+For example: `ompi_info --config --parsable | grep ^3rdparty:`
+
 ## Available components
 
 Open MPI is built from MCA components (plugins) grouped into frameworks (such
