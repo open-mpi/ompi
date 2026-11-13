@@ -33,6 +33,9 @@ typedef struct opal_common_ofi_module {
     int output;
     struct fid_fabric *fabric;
     struct fid_domain *domain;
+    /* name of the NIC that domain belongs to, so another component can tell whether
+     * a NIC it picked is the one already open */
+    char *domain_name;
     int fabric_ref_count;
     int domain_ref_count;
 } opal_common_ofi_module_t;

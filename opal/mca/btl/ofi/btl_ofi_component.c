@@ -62,6 +62,32 @@ static char *ofi_progress_mode;
 static bool disable_sep;
 static int mca_btl_ofi_init_device(struct fi_info *info);
 
+/* Whether the node has GPUs, from the PCI devices in the hwloc topology rather than from
+ * the accelerator runtime, whose answer depends on CUDA_VISIBLE_DEVICES and so can differ
+ * between processes on one node. */
+static bool mca_btl_ofi_node_has_gpus(void)
+{
+    static int has_gpus = -1;
+
+    if (0 > has_gpus) {
+        has_gpus = 0;
+        if (0 <= opal_hwloc_base_get_topology() && NULL != opal_hwloc_topology) {
+            hwloc_obj_t obj = NULL;
+
+            while (NULL != (obj = hwloc_get_next_pcidev(opal_hwloc_topology, obj))) {
+                /* display controller (PCI base class 0x03) from NVIDIA or AMD */
+                if (0x03 == (obj->attr->pcidev.class_id >> 8)
+                    && (0x10de == obj->attr->pcidev.vendor_id
+                        || 0x1002 == obj->attr->pcidev.vendor_id)) {
+                    has_gpus = 1;
+                    break;
+                }
+            }
+        }
+    }
+    return 1 == has_gpus;
+}
+
 /* qsort comparator for an array of domain name strings */
 static int domain_name_compare(const void *a, const void *b)
 {
@@ -455,8 +481,12 @@ static mca_btl_base_module_t **mca_btl_ofi_component_init(int *num_btl_modules,
 no_hmem:
 #endif
 
+    /* Share what the MTL already opened. On a node with GPUs, where this btl carries
+     * point-to-point traffic over several NICs, share only the fabric: with the domain in
+     * the hints libfabric returns that one NIC, and the btl would be left with it alone.
+     * mca_btl_ofi_init_device() still reuses the shared domain for its own NIC. */
     hints.fabric_attr->fabric = opal_common_ofi.fabric;
-    hints.domain_attr->domain = opal_common_ofi.domain;
+    hints.domain_attr->domain = mca_btl_ofi_node_has_gpus() ? NULL : opal_common_ofi.domain;
 
     /* Do the query. The earliest version that supports FI_HMEM hints is 1.9.
      * The earliest version the explictly allow provider to call CUDA API is 1.18  */
@@ -898,7 +928,12 @@ static int mca_btl_ofi_init_device(struct fi_info *info)
         goto fail;
     }
 
-    /* domain */
+    /* domain: reuse the shared one if it belongs to this NIC */
+    if (NULL == domain_attr->domain && NULL != opal_common_ofi.domain
+        && NULL != opal_common_ofi.domain_name
+        && 0 == strcmp(opal_common_ofi.domain_name, domain_name)) {
+        domain_attr->domain = opal_common_ofi.domain;
+    }
     rc = opal_common_ofi_fi_domain(fabric, ofi_info, &domain);
     if (0 != rc) {
         BTL_VERBOSE(("%s failed fi_domain with err=%s", domain_name, fi_strerror(-rc)));
