@@ -287,7 +287,7 @@ Allgather (Id=0)
    0, "ignore", "Use fixed rules"
    1, "linear", "..."
    2, "bruck-k-fanout", "..."
-   3, "recursive_doubling", "..."
+   3, "recursive_doubling", "Large messages are pipelined in segments (commutative operations); see ``coll_tuned_recursivedoubling_segment_size`` and ``coll_tuned_recursivedoubling_window``."
    4, "ring", "..."
    5, "neighbor", "..."
    6, "two_proc", "..."
@@ -323,7 +323,7 @@ Allreduce (Id=2)
    0, "ignore", "Use fixed rules"
    1, "basic_linear", "..."
    2, "nonoverlapping", "..."
-   3, "recursive_doubling", "..."
+   3, "recursive_doubling", "For commutative operations, messages of at least four segments of ``coll_tuned_recursivedoubling_segment_size`` bytes (default 256 KiB, 0 disables) are exchanged and reduced in segments, so that the reduction of one segment overlaps the transfer of the following ones. At most ``coll_tuned_recursivedoubling_window`` segments (default 4, at most 16) are in flight with a peer at any time."
    4, "ring", "..."
    5, "segmented_ring", "..."
    6, "rabenseifner", "..."
@@ -406,7 +406,7 @@ Exscan (Id=8)
 
    0, "ignore", "Use fixed rules"
    1, "linear", "..."
-   2, "recursive_doubling", "..."
+   2, "recursive_doubling", "Large messages are pipelined as in Allreduce (commutative operations)."
 
 .. _Gather:
 
@@ -439,7 +439,7 @@ Reduce (Id=11)
    5, "binomial", "..."
    6, "in-order_binary", "..."
    7, "rabenseifner", "..."
-   8, "knomial", "..."
+   8, "knomial", "k-nomial tree. Non-commutative operations keep the order of the operands. For commutative operations the first child's receive buffer is the accumulator, so no rank copies its own data. If the operation is also exact in any order (integer sum and product, min, max, logical, bitwise) and the message is smaller than the coll_tuned_reduce_knomial_arrival_max_size MCA variable (512 KiB by default; 0 disables it), children are combined in the order they arrive."
 
 .. _Reduce_scatter:
 
@@ -482,7 +482,7 @@ Scan (Id=14)
 
    0, "ignore", "Use fixed rules"
    1, "linear", "..."
-   2, "recursive_doubling", "..."
+   2, "recursive_doubling", "Large messages are pipelined as in Allreduce (commutative operations)."
 
 .. _Scatter:
 
