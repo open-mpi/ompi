@@ -1,0 +1,65 @@
+#
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+#
+# Additional copyrights may follow
+#
+# $HEADER$
+#
+
+help()
+{
+    printf "  do [<command>]\n"
+}
+
+detailed_help()
+{
+    cat <<EOF
+do [<command>]
+  With <command>, run that one line in every selected debugger.  With no
+  argument, read debugger commands until two consecutive empty lines and run
+  the whole block.  Either way the commands reach the debugger unchanged, so
+  this is how to reach a native command whose name this tool shadows, as in
+  "do frame 2".  Raw output is printed per PID.
+EOF
+}
+
+run()
+{
+    require_selection || return 1
+
+    if [ 0 -lt $# ] && [ "help" = "$1" ] ; then
+        detailed_help
+        return 0
+    fi
+
+    if [ 0 -lt $# ] ; then
+        pdeb_debugger_commands=$*
+    else
+        block_file="$tmpdir/do.commands"
+        : > "$block_file"
+        pending_empties=0
+
+        printf "Enter debugger commands. Finish with two empty lines.\n"
+        while IFS= read -r command_line ; do
+            if [ -z "$command_line" ] ; then
+                pending_empties=$((pending_empties + 1))
+                if [ 2 -eq "$pending_empties" ] ; then
+                    break
+                fi
+            else
+                # Empty lines are the terminator, never part of the block: both
+                # gdb and lldb read a blank line on stdin as "repeat the
+                # previous command", which would run it twice in every
+                # selected rank.
+                pending_empties=0
+                printf "%s\n" "$command_line" >> "$block_file"
+            fi
+        done
+
+        pdeb_debugger_commands=$(cat "$block_file")
+    fi
+
+    pdeb_output_dir_seq=$((pdeb_output_dir_seq + 1))
+    pdeb_output_dir="$tmpdir/do.$pdeb_output_dir_seq"
+}
