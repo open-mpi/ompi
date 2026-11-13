@@ -21,6 +21,7 @@ AC_DEFUN([OSHMEM_CONFIG_FILES],[
     oshmem/include/Makefile
     oshmem/shmem/c/Makefile
     oshmem/test/memheap/Makefile
+    oshmem/test/shmem/Makefile
 
     oshmem/shmem/fortran/Makefile
 
