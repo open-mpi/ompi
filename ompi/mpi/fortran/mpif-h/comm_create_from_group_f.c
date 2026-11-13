@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019-2021 Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -90,7 +91,11 @@ void ompi_comm_create_from_group_f(MPI_Fint *group, char *stringtag, MPI_Fint *i
     /* Convert the fortran string */
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(stringtag, name_len,
                                                        &c_tag))) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(ompi_group_get_instance(c_group), ret, "MPI_COMM_CREATE_FROM_GROUP");
+        ompi_instance_t *c_instance = (NULL == c_group)
+                                          ? NULL
+                                          : ompi_group_get_instance(c_group);
+        c_ierr = OMPI_ERRHANDLER_INVOKE_OR_NOHANDLE(c_instance, ret,
+                                                    "MPI_COMM_CREATE_FROM_GROUP");
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
