@@ -863,7 +863,30 @@ sub apply_ltmain_patch {
     my $reject_file = "config/ltmain.sh.$reject_base.rej";
 
     unlink($reject_file);
-    system("$patch_prog -N -p0 -r $reject_file < $patch_file >/dev/null 2>&1");
+    my $status = system("$patch_prog -N -p0 -r $reject_file < $patch_file >/dev/null 2>&1");
+
+    # Decode patch(1)'s exit status.  It returns 0 when every hunk
+    # applied cleanly, 1 when some hunks were rejected (which leaves a
+    # .rej -- handled below), and 2 or higher for serious trouble: the
+    # patch or target file couldn't be read, patch itself couldn't be
+    # run (127), and so on.  Those serious failures do *not* leave a
+    # .rej behind, so checking only for the .rej file would silently
+    # miss them and leave config/ltmain.sh in an unknown state.
+    my $exit_code;
+    if ($status == -1 || ($status & 127)) {
+        # Couldn't launch patch at all, or it died from a signal.
+        $exit_code = -1;
+    } else {
+        $exit_code = $status >> 8;
+    }
+    if (($exit_code < 0 || $exit_code >= 2) && ! -f $reject_file) {
+        print "$indent_str"."ERROR: could not apply the $desc ltmain.sh patch\n";
+        print "$indent_str"."       ($patch_prog failed but left no .rej file to inspect).\n";
+        print "$indent_str"."       config/ltmain.sh may be in an unknown state; check that\n";
+        print "$indent_str"."       '$patch_prog' is installed and that config/$patch_base is\n";
+        print "$indent_str"."       readable, then re-run autogen.\n";
+        my_exit(1);
+    }
 
     # A clean application leaves no .rej and needs no report.
     if (-f $reject_file) {
