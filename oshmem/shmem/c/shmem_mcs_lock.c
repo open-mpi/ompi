@@ -24,6 +24,7 @@
 #include "oshmem/mca/memheap/memheap.h"
 #include "oshmem/mca/memheap/base/base.h"
 #include "oshmem/mca/atomic/atomic.h"
+#include "opal/runtime/opal_progress.h"
 
 #define OPAL_BITWISE_SIZEOF_LONG (SIZEOF_LONG * 8)
 
@@ -38,8 +39,7 @@ struct shmem_mcs_lock {
 };
 typedef struct shmem_mcs_lock shmem_mcs_lock_t;
 
-#define SHMEM_MCSL_TAIL_OWNER(lock_ptr)\
-    (((uintptr_t)(lock_ptr) / sizeof(long)) % shmem_n_pes())
+#define SHMEM_MCSL_TAIL_OWNER(lock_ptr) shmem_mcs_lock_tail_owner(lock_ptr)
 
 #define SHMEM_MCSL_NEXT_MASK            0x7FFFFFFFU
 #define SHMEM_MCSL_SIGNAL_MASK          0x80000000U /** Wait signal mask */
@@ -48,6 +48,28 @@ typedef struct shmem_mcs_lock shmem_mcs_lock_t;
 #define SHMEM_MCSL_GET_PE(tail_val)     ((tail_val) & SHMEM_MCSL_NEXT_MASK)
 #define SHMEM_MCSL_SIGNAL(lock_val)     ((lock_val) & SHMEM_MCSL_SIGNAL_MASK)
 #define SHMEM_MCSL_SET_SIGNAL(lock_val) ((lock_val) | SHMEM_MCSL_SIGNAL_MASK)
+
+/**
+ * All PEs must agree on the tail owner of a given lock.  Use the offset
+ * from the base of the enclosing symmetric segment, because the raw
+ * address of a lock in the data segment differs between PEs when the
+ * executable is position independent and randomized.
+ */
+static int
+shmem_mcs_lock_tail_owner(const void *lock)
+{
+    map_segment_t *s = memheap_find_va((void *) lock);
+
+    if (NULL == s) {
+        SHMEM_API_ERROR("PE#%i lock %p is not a shared variable",
+                        shmem_my_pe(), lock);
+        oshmem_shmem_abort(-1);
+        return 0;
+    }
+
+    return (int) (((uintptr_t) lock - (uintptr_t) s->super.va_base)
+                  / sizeof(long) % shmem_n_pes());
+}
 
 void
 _shmem_mcs_set_lock(long *lockp)
@@ -236,5 +258,16 @@ _shmem_mcs_test_lock(long *lockp)
                                  sizeof(int), mcs_tail_owner));
     RUNTIME_CHECK_RC(retv);
 
-    return (0 != prev_tail);
+    if (0 != prev_tail) {
+        /**
+         * Callers typically poll this function.  The atomic above can
+         * complete without driving the transport, so without progress here
+         * a PE spinning on a held lock never services the holder's pending
+         * operations and the holder cannot finish releasing the lock.
+         */
+        opal_progress();
+        return 1;
+    }
+
+    return 0;
 }
