@@ -136,6 +136,8 @@ ompi_coll_libnbc_component_t mca_coll_libnbc_component = {
         .collm_data = {
             /* The component is checkpoint ready */
             MCA_BASE_METADATA_PARAM_CHECKPOINT
+            /* The component progress (ompi_coll_libnbc_progress()) is thread-safe */
+            | MCA_BASE_METADATA_PARAM_THREAD_SAFE
         },
 
         /* Initialization / querying functions */
