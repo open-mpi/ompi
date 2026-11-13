@@ -56,7 +56,6 @@ The call to cuMemHostRegister(%p, %d, 0) failed.
 The call to cuMemHostRegister(%p, %d, 0) failed.
   Host:  %s
   cuMemHostRegister return value:  %d
-  Registration cache:  %s
 #
 [cuMemHostUnregister failed]
 The call to cuMemHostRegister(%p) failed.
