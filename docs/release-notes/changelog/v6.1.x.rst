@@ -123,6 +123,14 @@ Open MPI version v6.1.0
   ``sync_init``, ``full``) to select when the TCP BTL constructs
   peer endpoints relative to ``MPI_Init``.
 
+- The default ``btl_sm_eager_limit`` is now 16 KiB instead of 4 KiB
+  when no single-copy component that maps a peer's memory (``xpmem``)
+  is available, for example with ``cma``.  Messages between 4 and
+  16 KiB are then copied through the shared segment instead of with a
+  system call per message, which is faster for most of them, above all
+  in collectives.  Ping-pong latency around 8 KiB can be slightly
+  higher.  With ``xpmem`` the limit stays 32 KiB.
+
 - The BTL interface is now version 3.4.0. The last argument of
   ``btl_add_procs()`` changed meaning: it is no longer a reachability
   bit per process, but a two-bit status per process, set with

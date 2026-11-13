@@ -206,7 +206,11 @@ static int mca_btl_sm_component_register(void)
 
     mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
 
-    mca_btl_sm.super.btl_eager_limit = 4 * 1024;
+    /* Above the eager limit a message takes the single-copy path. Without a component that
+     * maps a peer's memory (xpmem, which sets its own limit below), that is a copy system
+     * call per message (CMA), which loses to the copy through the shared segment for
+     * messages of a few KB. */
+    mca_btl_sm.super.btl_eager_limit = 16 * 1024;
     mca_btl_sm.super.btl_rndv_eager_limit = 32 * 1024;
     mca_btl_sm.super.btl_max_send_size = 32 * 1024;
     mca_btl_sm.super.btl_min_rdma_pipeline_size = INT_MAX;
