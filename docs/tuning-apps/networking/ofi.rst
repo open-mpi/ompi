@@ -123,6 +123,40 @@ The exact diagnostics and available component parameters depend on the Open
 MPI and Libfabric versions in use.  ``ompi_info`` is the authoritative way to
 list the parameters in a particular installation.
 
+Multiple network interfaces in the ``ofi`` BTL
+----------------------------------------------
+
+When a node has more network interfaces than local processes, each process of
+the ``ofi`` BTL opens several of them, one BTL module per interface, and the
+``ob1`` PML spreads traffic over them.  The interfaces are grouped by the PCI
+root complex they sit under, and each process takes its interfaces from one
+root complex: driving concurrent traffic through interfaces under more than one
+root complex can be much slower than using fewer interfaces under one.
+Contiguous blocks of local ranks share a root complex, which with the usual
+placement of one rank per GPU puts each rank on the root complex of its GPU.
+
+.. list-table::
+   :header-rows: 1
+
+   * - MCA parameter
+     - Default
+     - Meaning
+   * - ``btl_ofi_modules_per_proc``
+     - 0
+     - Number of interfaces each process opens; 0 divides them among the
+       local processes.  Experimental.
+   * - ``btl_ofi_frag_size``
+     - 65536
+     - Payload bytes of one fragment, which is also the eager limit and the
+       largest send, clamped to the provider's maximum message size.  Device
+       buffers keep an eager limit of 4 KB unless
+       ``btl_ofi_accelerator_eager_limit`` is set.
+
+Messages up to the fragment size are sent eagerly, without the rendezvous
+round trip.  The receiver copies an eager message once more than a rendezvous
+message, so a stream of messages of 16 KB to 32 KB to one peer can reach more
+bandwidth with a smaller fragment size, at the cost of latency.
+
 LINKx provider
 --------------
 
