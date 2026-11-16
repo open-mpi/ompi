@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2014-2020 Research Organization for Information Science
  *                         and Technology (RIST).  All rights reserved.
- * Copyright (c) 2024      NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA CORPORATION. All rights reserved.
  * Copyright (c) 2025      Triad National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -40,59 +40,82 @@
 
 BEGIN_C_DECLS
 
+struct ompi_coll_base_nbc_request_t;
+
 /**
- * The largest array we need to track collective temporary memory. Right now
- * the record is for ialltoallw, for the array of send and receive types,
- * count and displacements.
+ * Drop the reference counts this request holds on user objects.  Installed
+ * by the retain helpers, which run from the C bindings, so this is internal
+ * bookkeeping independent of the calling language.
  */
-#define OMPI_REQ_NB_RELEASE_ARRAYS 7
+typedef void (*ompi_coll_base_nbc_release_fn_t)(struct ompi_coll_base_nbc_request_t *req);
 
 /**
  * Request structure to be returned by non-blocking
  * collective operations.
+ *
+ * Every collective request handed to the user must be of this type: the
+ * language hooks ompi_api_request_t carries are reached by casting an
+ * OMPI_REQUEST_COLL request to this.
  */
 struct ompi_coll_base_nbc_request_t {
-    ompi_request_t super;
+    ompi_api_request_t super;
+
+    /* The component's own dispose hook, displaced so that the release and
+     * cleanup hooks can run while the request is still alive. */
+    ompi_request_free_fn_t req_dispose;
+
+    ompi_coll_base_nbc_release_fn_t release;
+
+    /* Everything this operation owns.  The variants are mutually
+     * exclusive per call, and the hooks above record which one is live.
+     * The two-pointer spellings (op, types, objs) deliberately alias: the
+     * retain helpers write the typed ones for readability and the release
+     * hook reads objs[] generically. */
     union {
-        ompi_request_complete_fn_t req_complete_cb;
-        ompi_request_free_fn_t req_free;
-    } cb;
-    void *req_complete_cb_data;
-    struct {
-        /* The refcounted modes are mutually exclusive (each retain
-         * helper uses exactly one of them), so they share a union.
-         * release_arrays is NOT part of that union: temporary arrays
-         * (e.g. the Fortran bindings' converted count/displacement and
-         * datatype arrays for the *w collectives) are appended to the
-         * same request whose refcounted.vecs entries were populated by
-         * ompi_coll_base_retain_datatypes_w().  When the two aliased,
-         * releasing the vecs NULLed the leading release_arrays slots
-         * and every appended array leaked. */
-        union {
-            struct {
-                ompi_op_t *op;
-                ompi_datatype_t *datatype;
-            } op;
-            struct {
-                ompi_datatype_t *stype;
-                ompi_datatype_t *rtype;
-            } types;
-            struct {
-                opal_object_t *objs[2];
-            } objs;
-            struct {
-                ompi_datatype_t * const *stypes;
-                ompi_datatype_t * const *rtypes;
-                int scount;
-                int rcount;
-            } vecs;
-        } refcounted;
-        /* Slots are claimed by ompi_coll_base_append_array_to_release()
-         * and drained (with an atomic swap, so a completion callback
-         * racing with the post-append drain in
-         * ompi_coll_base_add_release_arrays_cb() cannot double-free)
-         * by release_objs_callback(). */
-        opal_atomic_intptr_t release_arrays[OMPI_REQ_NB_RELEASE_ARRAYS];
+        struct {
+            ompi_op_t *op;
+            ompi_datatype_t *datatype;
+        } op;
+        struct {
+            ompi_datatype_t *stype;
+            ompi_datatype_t *rtype;
+        } types;
+        struct {
+            opal_object_t *objs[2];
+        } objs;
+        /* The *v shapes: retained scalar datatypes plus whatever
+         * count/displacement arrays the binding converted. */
+        struct {
+            opal_object_t *objs[2];
+            void *scounts;
+            void *sdispls;
+            void *rcounts;
+            void *rdispls;
+        } v;
+        /* The *w shapes: no scalar retains, because what is reference
+         * counted is the elements of the type vectors.  The language
+         * cleanup reuses these same pointers rather than recording a
+         * second copy of them. */
+        struct {
+            void *scounts;
+            void *sdispls;
+            void *rcounts;
+            void *rdispls;
+            ompi_datatype_t **stypes;
+            ompi_datatype_t **rtypes;
+            int scount;
+            int rcount;
+        } w;
+        /* MPIX_Comm_iagree: c_flag is the C-side contribution the binding
+         * allocated and handed to the agreement; flag is the user's.
+         *
+         * MPIX_Comm_ishrink has the same need but hands back an
+         * ompi_comm_request_t rather than one of these, so it parks its
+         * payload in that request's lang_data instead. */
+        struct {
+            int *c_flag;
+            MPI_Fint *flag;
+        } agree;
     } data;
 };
 
@@ -112,42 +135,6 @@ ompi_coll_base_nbc_reserve_tags(ompi_communicator_t* comm, int32_t reserve)
         goto reread_tag;
     }
     return tag;
-}
-
-/**
- * Append an array to a request object to be freed upon completion
- * of the associated operation.
- * The request object must be of type ompi_coll_base_nbc_request_t.
- */
-__opal_attribute_always_inline__ static inline int
-ompi_coll_base_append_array_to_release(struct ompi_request_t *req, void *array_ptr)
-{
-    int i, ret = OMPI_SUCCESS;
-    struct ompi_coll_base_nbc_request_t *request = (struct ompi_coll_base_nbc_request_t *)req;
-
-    /*
-     * important sanity check - doing steps below on a non-libnbc request can lead
-     * to difficult to debug memory corruption problems
-     */
-    assert(request->super.req_type == OMPI_REQUEST_COLL);
-
-    for(i = 0; i < OMPI_REQ_NB_RELEASE_ARRAYS; i++ ) {
-        if (0 == request->data.release_arrays[i]) {
-            break;
-        }
-    }
-
-    if (OMPI_REQ_NB_RELEASE_ARRAYS > i) {
-        request->data.release_arrays[i] = (intptr_t) array_ptr;
-        ++i;
-        if (OMPI_REQ_NB_RELEASE_ARRAYS > i) {
-            request->data.release_arrays[i] = 0;
-        }
-    } else {
-        ret = OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    return ret;
 }
 
 typedef struct ompi_coll_base_nbc_request_t ompi_coll_base_nbc_request_t;
@@ -244,11 +231,55 @@ int ompi_coll_base_retain_datatypes_w( ompi_request_t *request,
                                        bool use_topo);
 
 /**
- * If necessary, set callback to free extra memory regions
- * set in release_arrays.  Not set if a callback is already
- * associated with the request.
+ * Install the language cleanup hook: the temporaries recorded in the
+ * request's data union are freed at disposal, after the internal release
+ * hook has dropped the reference counts that point into them.
+ *
+ * The request must be of type ompi_coll_base_nbc_request_t.
  */
-int ompi_coll_base_add_release_arrays_cb(ompi_request_t *request);
+/**
+ * Install the language hooks on a collective request.
+ *
+ * ompi_api_request_set_lang_hooks() plus the one thing a collective needs on
+ * top of it: each component supplies its own req_free, so that has to be
+ * displaced by a disposal that reaches the cleanup hook.  Use this rather
+ * than the generic setter on anything of type OMPI_REQUEST_COLL.
+ */
+OMPI_DECLSPEC int ompi_coll_base_nbc_set_lang_hooks(ompi_request_t *request,
+                                                    ompi_api_request_hook_fn_t complete,
+                                                    ompi_api_request_hook_fn_t cleanup);
+
+/**
+ * Record the count/displacement arrays a binding converted for a *v
+ * collective and install the cleanup that frees them at disposal.  The
+ * whole family of shapes (recvcounts only, one side's counts and
+ * displacements, or all four) differs only in which arguments are
+ * non-NULL.
+ *
+ * Only the non-NULL arguments are recorded, so NULL never takes an array
+ * back from an earlier call and the two sides can be handed over
+ * independently.
+ *
+ * This takes ownership unconditionally: a request that cannot carry the
+ * hook has no disposal to defer to, so the arrays are freed here instead.
+ * Either way the caller must not free or touch them again.
+ */
+int ompi_coll_base_nbc_set_cleanup_v(ompi_request_t *request,
+                                     void *scounts, void *sdispls,
+                                     void *rcounts, void *rdispls);
+
+/**
+ * Same for a *w collective, which additionally owns the converted datatype
+ * vectors.  Those are the same pointers ompi_coll_base_retain_datatypes_w()
+ * recorded in order to release their elements, so a non-NULL stypes or
+ * rtypes here is simply the binding claiming the right to free the array
+ * once the release hook has run.
+ */
+int ompi_coll_base_nbc_set_cleanup_w(ompi_request_t *request,
+                                     void *scounts, void *sdispls,
+                                     void *rcounts, void *rdispls,
+                                     ompi_datatype_t **stypes,
+                                     ompi_datatype_t **rtypes);
 
 /* File reading function */
 int ompi_coll_base_file_getnext_long(FILE *fptr, int *fileline, long* val);

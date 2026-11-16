@@ -12,8 +12,12 @@
  */
 #include "ompi_config.h"
 
+#include <stdlib.h>
+
 #include "ompi/mpi/fortran/mpif-h/bindings.h"
 #include "ompi/mpi/fortran/base/constants.h"
+#include "ompi/communicator/communicator.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/mpiext/ftmpi/c/mpiext_ftmpi_c.h"
 #include "ompi/mpiext/ftmpi/mpif-h/prototypes_mpi.h"
 
@@ -50,26 +54,75 @@ OMPI_GENERATE_F77_BINDINGS(PMPIX_COMM_IAGREE,
                         (comm, flag, request, ierr))
 #endif
 
+/* flag is INOUT: the integer the caller contributes to the bitwise AND, and
+ * on completion the reduced result.  The agreement writes that result when
+ * the request completes, long after this binding has returned, so the int it
+ * reduces cannot live on our stack and the conversion back to the caller's
+ * INTEGER cannot happen here. */
+static void iagree_convert_flag(ompi_api_request_t *req)
+{
+    ompi_coll_base_nbc_request_t *request = (ompi_coll_base_nbc_request_t *) req;
+
+    *request->data.agree.flag = OMPI_INT_2_FINT(*request->data.agree.c_flag);
+}
+
+static void iagree_free_flag(ompi_api_request_t *req)
+{
+    free(((ompi_coll_base_nbc_request_t *) req)->data.agree.c_flag);
+}
+
 void ompix_comm_iagree_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = PMPI_Comm_f2c(*comm);
     MPI_Request c_req;
-    OMPI_SINGLE_NAME_DECL(flag);
+    int *c_flag = malloc(sizeof(*c_flag));
+    int c_ierr;
 
-    /* flag is INOUT: the integer the caller contributes to the bitwise AND,
-     * and on completion the reduced result.  The agreement writes that
-     * result when the request completes, long after we have returned, so
-     * the result only reaches the caller when a Fortran INTEGER is a C int
-     * and the caller's own variable is what we hand to the agreement.
-     * Where a conversion is required this binding has no way to perform it
-     * at completion time. */
-    OMPI_SINGLE_FINT_2_INT(flag);
-
-    *ierr = OMPI_INT_2_FINT(PMPIX_Comm_iagree(c_comm,
-                                              OMPI_SINGLE_NAME_CONVERT(flag),
-                                              &c_req));
-
-    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        *request = PMPI_Request_c2f(c_req);
+    if (NULL == c_flag) {
+        /* Raise this the way the back-end call would have.  Nothing has
+         * validated the communicator yet -- that is the job of the call we
+         * could not reach -- so test it here: PMPI_Comm_f2c() yields NULL for
+         * an out-of-range handle, and MPI_COMM_NULL is a real object whose
+         * error handler is permanently MPI_ERRORS_ARE_FATAL.  Neither is
+         * something to raise on, so let the no-handle path place the error. */
+        if (ompi_comm_invalid(c_comm)) {
+            c_ierr = OMPI_ERRHANDLER_NOHANDLE_INVOKE(MPI_ERR_NO_MEM,
+                                                     "MPIX_COMM_IAGREE");
+        } else {
+            c_ierr = OMPI_ERRHANDLER_INVOKE(c_comm, MPI_ERR_NO_MEM,
+                                            "MPIX_COMM_IAGREE");
+        }
+        *ierr = OMPI_INT_2_FINT(c_ierr);
+        return;
     }
+    *c_flag = OMPI_FINT_2_INT(*flag);
+
+    c_ierr = PMPIX_Comm_iagree(c_comm, c_flag, &c_req);
+    *ierr = OMPI_INT_2_FINT(c_ierr);
+
+    if (MPI_SUCCESS != c_ierr) {
+        free(c_flag);
+        return;
+    }
+
+    *request = PMPI_Request_c2f(c_req);
+
+    if (!ompi_api_request_is(c_req)) {
+        /* Nothing was scheduled -- a single-process communicator, or a
+         * build without fault tolerance where this degrades to an
+         * iallreduce that had nothing to do.  The result is already in
+         * place and there is no collective request to defer to. */
+        *flag = OMPI_INT_2_FINT(*c_flag);
+        free(c_flag);
+        return;
+    }
+
+    /* Convert the result where the user observes completion, and release
+     * the C-side contribution when the request is disposed of.  An
+     * agreement that reports MPI_ERR_PROC_FAILED still produces a valid
+     * value, which is why the conversion runs ahead of the error check. */
+    ((ompi_coll_base_nbc_request_t *) c_req)->data.agree.c_flag = c_flag;
+    ((ompi_coll_base_nbc_request_t *) c_req)->data.agree.flag = flag;
+    (void) ompi_coll_base_nbc_set_lang_hooks(c_req, iagree_convert_flag,
+                                             iagree_free_flag);
 }

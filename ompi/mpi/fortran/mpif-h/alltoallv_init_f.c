@@ -112,11 +112,10 @@ void ompi_alltoallv_init_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispl
     if (MPI_SUCCESS == c_ierr) {
         *request = PMPI_Request_c2f(c_request);
         if ((void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sdispls));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(rdispls));
-            ompi_coll_base_add_release_arrays_cb(c_request);
+            ompi_coll_base_nbc_set_cleanup_v(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts),
+                                             OMPI_ARRAY_NAME_CONVERT(sdispls),
+                                             OMPI_ARRAY_NAME_CONVERT(recvcounts),
+                                             OMPI_ARRAY_NAME_CONVERT(rdispls));
         }
     } else {
         OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);

@@ -13,7 +13,7 @@
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2025      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2025-2026 NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -61,6 +61,9 @@ recheck_request_status:
             opal_atomic_rmb();
             OMPI_COPY_STATUS(status, request->req_status, false);
         }
+        /* Before the error check below: an operation that completed with
+         * an error may still have produced an outcome to convert. */
+        ompi_request_lang_complete(request);
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
             return request->req_status.MPI_ERROR;
@@ -136,6 +139,8 @@ int ompi_request_default_test_any(
                 opal_atomic_rmb();
                 OMPI_COPY_STATUS(status, request->req_status, false);
             }
+
+            ompi_request_lang_complete(request);
 
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -251,6 +256,7 @@ int ompi_request_default_test_all(
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
             OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
+            ompi_request_lang_complete(request);
             if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
                 rc = MPI_ERR_IN_STATUS;
 #if OPAL_ENABLE_FT_MPI
@@ -285,6 +291,7 @@ int ompi_request_default_test_all(
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
+            ompi_request_lang_complete(request);
             if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
                 rc = MPI_ERR_IN_STATUS;
 #if OPAL_ENABLE_FT_MPI
@@ -388,6 +395,8 @@ int ompi_request_default_test_some(
         if (MPI_STATUSES_IGNORE != statuses) {
             OMPI_COPY_STATUS(&statuses[i], request->req_status, true);
         }
+
+        ompi_request_lang_complete(request);
 
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
             rc = MPI_ERR_IN_STATUS;

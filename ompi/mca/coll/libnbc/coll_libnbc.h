@@ -145,13 +145,13 @@ typedef ompi_coll_libnbc_request_t NBC_Handle;
         opal_free_list_item_t *item;                                    \
         item = opal_free_list_wait (&mca_coll_libnbc_component.requests); \
         req = (ompi_coll_libnbc_request_t*) item;                       \
-        OMPI_REQUEST_INIT(&req->super.super, persistent);               \
-        req->super.super.req_mpi_object.comm = comm;                    \
+        OMPI_REQUEST_INIT(&req->super.super.super, persistent);               \
+        req->super.super.super.req_mpi_object.comm = comm;                    \
     } while (0)
 
 #define OMPI_COLL_LIBNBC_REQUEST_RETURN(req)                            \
     do {                                                                \
-        OMPI_REQUEST_FINI(&(req)->super.super);                         \
+        OMPI_REQUEST_FINI(&(req)->super.super.super);                   \
         opal_free_list_return (&mca_coll_libnbc_component.requests,     \
                                (opal_free_list_item_t*) (req));         \
     } while (0)

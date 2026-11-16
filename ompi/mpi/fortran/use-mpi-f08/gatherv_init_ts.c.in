@@ -14,6 +14,7 @@
  *                         and Technology (RIST).  All rights reserved.
  * Copyright (c) 2024-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,7 @@ PROTOTYPE VOID gatherv_init(BUFFER_ASYNC x1, COUNT sendcount, DATATYPE sendtype,
     MPI_Datatype c_senddatatype = MPI_DATATYPE_NULL;
     MPI_Info c_info;
     MPI_Request c_request;
-    int idx = 0, c_ierr;
+    int c_ierr;
     int c_root = OMPI_FINT_2_INT(*root);
     char *sendbuf = OMPI_CFI_BASE_ADDR(x1), *recvbuf = OMPI_CFI_BASE_ADDR(x2);
     @COUNT_TYPE@ *tmp_recvcounts = NULL;
@@ -110,10 +111,11 @@ PROTOTYPE VOID gatherv_init(BUFFER_ASYNC x1, COUNT sendcount, DATATYPE sendtype,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
     if (MPI_SUCCESS == c_ierr) *request = PMPI_Request_c2f(c_request);
 
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_request, c_ierr, idx);
-    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(displs, tmp_displs, c_request, c_ierr, idx);
-    if (idx > 0) {
-        ompi_coll_base_add_release_arrays_cb(c_request);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(recvcounts, tmp_recvcounts, c_ierr);
+    OMPI_FORTRAN_BIGCOUNT_ARRAY_CLEANUP_NONBLOCKING(displs, tmp_displs, c_ierr);
+    if (MPI_SUCCESS == c_ierr) {
+        ompi_coll_base_nbc_set_cleanup_v(c_request, NULL, NULL,
+                                         tmp_recvcounts, tmp_displs);
     }
 }
 

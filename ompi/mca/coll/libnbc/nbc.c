@@ -356,7 +356,7 @@ int NBC_Progress(NBC_Handle *handle) {
                 NBC_Error ("MPI Error in NBC subrequest %p : %d", subreq, subreq->req_status.MPI_ERROR);
                 /* copy the error code from the underlying request and let the
                  * round finish */
-                handle->super.super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
+                handle->super.super.super.req_status.MPI_ERROR = subreq->req_status.MPI_ERROR;
             }
             handle->req_count--;
             ompi_request_free(&subreq);
@@ -382,11 +382,11 @@ int NBC_Progress(NBC_Handle *handle) {
     handle->req_count = 0;
 
     /* previous round had an error */
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != handle->super.super.req_status.MPI_ERROR)) {
-      res = handle->super.super.req_status.MPI_ERROR;
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != handle->super.super.super.req_status.MPI_ERROR)) {
+      res = handle->super.super.super.req_status.MPI_ERROR;
       NBC_Error("NBC_Progress: an error %d was found during schedule %p at row-offset %li - aborting the schedule\n", res, handle->schedule, handle->row_offset);
       handle->nbc_complete = true;
-      if (!handle->super.super.req_persistent) {
+      if (!handle->super.super.super.req_persistent) {
         NBC_Free(handle);
       }
       return res;
@@ -406,7 +406,7 @@ int NBC_Progress(NBC_Handle *handle) {
       NBC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
 
       handle->nbc_complete = true;
-      if (!handle->super.super.req_persistent) {
+      if (!handle->super.super.super.req_persistent) {
         NBC_Free(handle);
       }
 
@@ -672,8 +672,8 @@ int NBC_Start(NBC_Handle *handle) {
   }
 
   /* kick off first round */
-  handle->super.super.req_state = OMPI_REQUEST_ACTIVE;
-  handle->super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
+  handle->super.super.super.req_state = OMPI_REQUEST_ACTIVE;
+  handle->super.super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
   res = NBC_Start_round(handle);
   if (OPAL_UNLIKELY(OMPI_SUCCESS != res)) {
     return res;

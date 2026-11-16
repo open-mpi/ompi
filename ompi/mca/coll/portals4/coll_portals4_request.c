@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2013      Sandia National Laboratories.  All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,7 +29,7 @@ request_free(struct ompi_request_t **ompi_req)
     ompi_coll_portals4_request_t *request =
         (ompi_coll_portals4_request_t*) *ompi_req;
 
-    if (!REQUEST_COMPLETE(&request->super)) {
+    if (!REQUEST_COMPLETE(&request->super.super.super)) {
         return MPI_ERR_REQUEST;
     }
 
@@ -43,13 +44,13 @@ static
 void
 request_construct(ompi_coll_portals4_request_t *request)
 {
-    request->super.req_type = OMPI_REQUEST_COLL;
-    request->super.req_status._cancelled = 0;
-    request->super.req_free = request_free;
-    request->super.req_cancel = request_cancel;
+    request->super.super.super.req_type = OMPI_REQUEST_COLL;
+    request->super.super.super.req_status._cancelled = 0;
+    request->super.super.super.req_free = request_free;
+    request->super.super.super.req_cancel = request_cancel;
 }
 
 OBJ_CLASS_INSTANCE(ompi_coll_portals4_request_t,
-                   ompi_request_t,
+                   ompi_coll_base_nbc_request_t,
                    request_construct,
                    NULL);

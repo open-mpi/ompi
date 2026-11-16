@@ -113,7 +113,7 @@ int mca_coll_ucc_ireduce_scatter_block(const void *sbuf, void *rbuf, size_t rcou
                                                                  dtype, op, false, ucc_module,
                                                                  &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -144,7 +144,7 @@ int mca_coll_ucc_reduce_scatter_block_init(const void *sbuf, void *rbuf, size_t 
     COLL_UCC_CHECK(mca_coll_ucc_reduce_scatter_block_init_common(sbuf, rbuf, rcount,
                                                                  dtype, op, true, ucc_module,
                                                                  &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback reduce_scatter_block_init");

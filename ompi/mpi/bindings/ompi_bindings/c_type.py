@@ -1,6 +1,7 @@
 # Copyright (c) 2024-2026 Triad National Security, LLC. All rights
 #                         reserved.
 # Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
+# Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
 #
 # $COPYRIGHT$
 #
@@ -726,6 +727,20 @@ class TypeDatatypeArrayStandard(StandardABIType):
     def argument(self):
         return f'(MPI_Datatype *) {self.tmpname}'
 
+def nbc_cleanup_w_args(type_):
+    """Build the ompi_coll_base_nbc_set_cleanup_w() arguments for one
+    converted datatype vector.
+
+    The two sides of a *w collective are converted independently but share
+    a single request, so each records only its own slot and passes NULL for
+    everything else, which leaves whatever the other side already stored
+    untouched.
+    """
+    sendtypes = f'(MPI_Datatype *) {type_.tmpname}' if type_.name == 'sendtypes' else 'NULL'
+    recvtypes = f'(MPI_Datatype *) {type_.tmpname}' if type_.name == 'recvtypes' else 'NULL'
+    return f'NULL, NULL, NULL, NULL, {sendtypes}, {recvtypes}'
+
+
 @Type.add_type('DATATYPE_ARRAY_ASYNC', abi_type=['standard'])
 class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
 
@@ -739,8 +754,7 @@ class TypeDatatypeArrayAsyncStandard(TypeDatatypeArrayStandard):
         code = []
         code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
         code.append(f'if (NULL != {self.tmpname})' + '{')
-        code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
-        code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
+        code.append(f'ompi_coll_base_nbc_set_cleanup_w({request_tmp_name}, {nbc_cleanup_w_args(self)});')
         code.append('}')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')
@@ -870,8 +884,7 @@ class TypeNeighborDatatypeArrayAsyncStandard(TypeNeighborDatatypeArrayStandard):
         code = []
         code.append(f'if((MPI_SUCCESS == ret_value) && (MPI_REQUEST_NULL != {request_tmp_name}) && (!REQUEST_COMPLETE({request_tmp_name})))' + '{')
         code.append(f'if (NULL != {self.tmpname})' + '{')
-        code.append(f'ompi_coll_base_append_array_to_release({request_tmp_name}, (void *){self.tmpname});')
-        code.append(f'ompi_coll_base_add_release_arrays_cb({request_tmp_name});')
+        code.append(f'ompi_coll_base_nbc_set_cleanup_w({request_tmp_name}, {nbc_cleanup_w_args(self)});')
         code.append('}')
         code.append('} else {')
         code.append(f'if (NULL != {self.tmpname}) free({self.tmpname});')

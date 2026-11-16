@@ -131,16 +131,22 @@ void ompi_ialltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
         OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
         OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
     } else {
+        /* The type vectors are always ours; the count and displacement
+         * arrays only when the conversion actually allocated, which is why
+         * each is handed over under its own aliasing guard. */
+        void *own_scounts = NULL, *own_rcounts = NULL;
+        void *own_sdispls = NULL, *own_rdispls = NULL;
+
         if ((void *)sendcounts != (void *)OMPI_ARRAY_NAME_CONVERT(sendcounts)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sendcounts));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(recvcounts));
+            own_scounts = OMPI_ARRAY_NAME_CONVERT(sendcounts);
+            own_rcounts = OMPI_ARRAY_NAME_CONVERT(recvcounts);
         }
         if ((void *)sdispls != (void *)OMPI_ARRAY_NAME_CONVERT(sdispls)) {
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(sdispls));
-            ompi_coll_base_append_array_to_release(c_request, OMPI_ARRAY_NAME_CONVERT(rdispls));
+            own_sdispls = OMPI_ARRAY_NAME_CONVERT(sdispls);
+            own_rdispls = OMPI_ARRAY_NAME_CONVERT(rdispls);
         }
-        ompi_coll_base_append_array_to_release(c_request, c_recvtypes);
-        ompi_coll_base_append_array_to_release(c_request, c_sendtypes);
-        ompi_coll_base_add_release_arrays_cb(c_request);
+        ompi_coll_base_nbc_set_cleanup_w(c_request, own_scounts, own_sdispls,
+                                         own_rcounts, own_rdispls,
+                                         c_sendtypes, c_recvtypes);
     }
 }

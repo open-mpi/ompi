@@ -4,7 +4,7 @@
  *                         reserved.
  * Copyright (c) 2020      Bull S.A.S. All rights reserved.
  * Copyright (c) 2022      IBM Corporation. All rights reserved
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,6 +20,7 @@
  */
 
 #include "coll_han.h"
+#include "ompi/mca/coll/base/coll_base_util.h"
 #include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/coll/base/coll_tags.h"
 #include "ompi/mca/pml/pml.h"
@@ -194,7 +195,7 @@ mca_coll_han_allgather_intra(const void *sbuf, size_t scount,
 
     ompi_request_t *temp_request;
     /* Set up request */
-    temp_request = OBJ_NEW(ompi_request_t);
+    temp_request = (ompi_request_t *) OBJ_NEW(ompi_coll_base_nbc_request_t);
     temp_request->req_state = OMPI_REQUEST_ACTIVE;
     temp_request->req_type = OMPI_REQUEST_COLL;
     temp_request->req_free = ompi_coll_han_request_free;

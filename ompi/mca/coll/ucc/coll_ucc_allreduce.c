@@ -100,7 +100,7 @@ int mca_coll_ucc_iallreduce(const void *sbuf, void *rbuf, size_t count,
     COLL_UCC_CHECK(mca_coll_ucc_allreduce_init_common(sbuf, rbuf, count, dtype, op,
                                                       false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -128,7 +128,7 @@ int mca_coll_ucc_allreduce_init(const void *sbuf, void *rbuf, size_t count,
     UCC_VERBOSE(3, "allreduce_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_allreduce_init_common(sbuf, rbuf, count, dtype, op,
                                                       true, ucc_module, &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback allreduce_init");

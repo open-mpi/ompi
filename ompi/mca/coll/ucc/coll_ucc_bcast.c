@@ -80,7 +80,7 @@ int mca_coll_ucc_ibcast(void *buf, size_t count, struct ompi_datatype_t *dtype,
     COLL_UCC_CHECK(mca_coll_ucc_bcast_init_common(buf, count, dtype, root,
                                                   false, ucc_module, &req, coll_req));
     COLL_UCC_POST_AND_CHECK(req);
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 failed:
     mca_coll_ucc_req_free((ompi_request_t **)&coll_req);
@@ -107,7 +107,7 @@ int mca_coll_ucc_bcast_init(void *buf, size_t count, struct ompi_datatype_t *dty
     UCC_VERBOSE(3, "bcast_init init %p", (void *)coll_req);
     COLL_UCC_CHECK(mca_coll_ucc_bcast_init_common(buf, count, dtype, root,
                                                   true, ucc_module, &req, coll_req));
-    *request = &coll_req->super;
+    *request = &coll_req->super.super.super;
     return OMPI_SUCCESS;
 fallback:
     UCC_VERBOSE(3, "running fallback bcast_init");

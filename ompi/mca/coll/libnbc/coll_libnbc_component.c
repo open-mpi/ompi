@@ -19,7 +19,7 @@
  * Copyright (c) 2017      Ian Bradley Morgan and Anthony Skjellum. All
  *                         rights reserved.
  * Copyright (c) 2018      FUJITSU LIMITED.  All rights reserved.
- * Copyright (c) 2024      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2024-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -579,21 +579,21 @@ ompi_coll_libnbc_progress(void)
                 /* done, remove and complete */
                 OPAL_THREAD_LOCK(&mca_coll_libnbc_component.lock);
                 opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
-                                      &request->super.super.super.super);
+                                      &request->super.super.super.super.super);
                 OPAL_THREAD_UNLOCK(&mca_coll_libnbc_component.lock);
 
                 if( OMPI_SUCCESS == res || NBC_OK == res || NBC_SUCCESS == res ) {
-                    request->super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
+                    request->super.super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
                 }
                 else {
-                    request->super.super.req_status.MPI_ERROR = res;
+                    request->super.super.super.req_status.MPI_ERROR = res;
                 }
-                if(request->super.super.req_persistent) {
+                if(request->super.super.super.req_persistent) {
                     /* reset for the next communication */
                     request->row_offset = 0;
                 }
-                if(!request->super.super.req_persistent || !REQUEST_COMPLETE(&request->super.super)) {
-            	    ompi_request_complete(&request->super.super, true);
+                if(!request->super.super.super.req_persistent || !REQUEST_COMPLETE(&request->super.super.super)) {
+            	    ompi_request_complete(&request->super.super.super, true);
                 }
                 completed++;
             }
@@ -659,7 +659,7 @@ request_start(size_t count, ompi_request_t ** requests)
         NBC_DEBUG(5, "tmpbuf address=%p size=%u\n", handle->tmpbuf, sizeof(handle->tmpbuf));
         NBC_DEBUG(5, "--------------------------------\n");
 
-        handle->super.super.req_complete = REQUEST_PENDING;
+        handle->super.super.super.req_complete = REQUEST_PENDING;
         handle->nbc_complete = false;
 
         res = NBC_Start(handle);
@@ -689,11 +689,14 @@ request_free(struct ompi_request_t **ompi_req)
     ompi_coll_libnbc_request_t *request =
         (ompi_coll_libnbc_request_t*) *ompi_req;
 
-    if( !REQUEST_COMPLETE(&request->super.super) ) {
+    if( !REQUEST_COMPLETE(&request->super.super.super) ) {
         return MPI_ERR_REQUEST;
     }
 
-    OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
+    /* NBC_Progress() releases the schedule and the temporary buffer when a
+     * non-persistent request completes, but a persistent one is meant to be
+     * started again and so keeps both until it is freed -- here. */
+    NBC_Return_handle(request);
     *ompi_req = MPI_REQUEST_NULL;
 
     return OMPI_SUCCESS;
@@ -703,11 +706,11 @@ request_free(struct ompi_request_t **ompi_req)
 static void
 request_construct(ompi_coll_libnbc_request_t *request)
 {
-    request->super.super.req_type = OMPI_REQUEST_COLL;
-    request->super.super.req_status._cancelled = 0;
-    request->super.super.req_start = request_start;
-    request->super.super.req_free = request_free;
-    request->super.super.req_cancel = request_cancel;
+    request->super.super.super.req_type = OMPI_REQUEST_COLL;
+    request->super.super.super.req_status._cancelled = 0;
+    request->super.super.super.req_start = request_start;
+    request->super.super.super.req_free = request_free;
+    request->super.super.super.req_cancel = request_cancel;
 }
 
 

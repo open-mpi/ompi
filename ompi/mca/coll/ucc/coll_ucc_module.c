@@ -1743,7 +1743,7 @@ OBJ_CLASS_INSTANCE(mca_coll_ucc_module_t,
                    mca_coll_ucc_module_construct,
                    mca_coll_ucc_module_destruct);
 
-OBJ_CLASS_INSTANCE(mca_coll_ucc_req_t, ompi_request_t,
+OBJ_CLASS_INSTANCE(mca_coll_ucc_req_t, ompi_coll_base_nbc_request_t,
                    NULL, NULL);
 
 OBJ_CLASS_INSTANCE(mca_coll_ucc_oob_domain_t, opal_list_item_t,
@@ -1754,11 +1754,11 @@ int mca_coll_ucc_req_free(struct ompi_request_t **ompi_req)
     {
         mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t *) ompi_req[0];
         /* Freed before completion: its post failed. */
-        if (!coll_req->super.req_persistent && !REQUEST_COMPLETE(&coll_req->super)) {
+        if (!coll_req->super.super.super.req_persistent && !REQUEST_COMPLETE(&coll_req->super.super.super)) {
             mca_coll_ucc_req_account(coll_req, -1);
             coll_req->module = NULL;
         }
-        if (true == coll_req->super.req_persistent) {
+        if (true == coll_req->super.super.super.req_persistent) {
             UCC_VERBOSE(5, "%s free %p", "<coll>_init", (void *)coll_req);
             if (NULL != coll_req->ucc_req) {
                 ucc_status_t rc_ucc;
@@ -1788,17 +1788,17 @@ void mca_coll_ucc_completion(void *data, ucc_status_t status)
     if (UCC_OK != status) {
         UCC_ERROR("ucc collective completed with %s",
                   ucc_status_string(status));
-        coll_req->super.req_status.MPI_ERROR = MPI_ERR_OTHER;
+        coll_req->super.super.super.req_status.MPI_ERROR = MPI_ERR_OTHER;
     }
-    if (false == coll_req->super.req_persistent) {
+    if (false == coll_req->super.super.super.req_persistent) {
         ucc_collective_finalize(coll_req->ucc_req);
     } else {
         UCC_VERBOSE(5, "%s done %p", "<coll>_init", (void *)coll_req);
-        assert(!REQUEST_COMPLETE(&coll_req->super));
+        assert(!REQUEST_COMPLETE(&coll_req->super.super.super));
     }
     /* Only now does the operation stop using the team: a free draining ->active may destroy it. */
     mca_coll_ucc_req_account(coll_req, -1);
-    ompi_request_complete(&coll_req->super, true);
+    ompi_request_complete(&coll_req->super.super.super, true);
 }
 
 /* req_start() : ompi_request_start_fn_t */
@@ -1811,33 +1811,33 @@ int mca_coll_ucc_req_start(size_t count, struct ompi_request_t **requests)
         mca_coll_ucc_req_t *coll_req = (mca_coll_ucc_req_t *) requests[ii];
         ucc_status_t rc_ucc;
 
-        if ((NULL == coll_req) || (OMPI_REQUEST_COLL != coll_req->super.req_type)) {
+        if ((NULL == coll_req) || (OMPI_REQUEST_COLL != coll_req->super.super.super.req_type)) {
             continue;
         }
-        if (true != coll_req->super.req_persistent) {
-            coll_req->super.req_status.MPI_ERROR = MPI_ERR_REQUEST;
+        if (true != coll_req->super.super.super.req_persistent) {
+            coll_req->super.super.super.req_status.MPI_ERROR = MPI_ERR_REQUEST;
             if (OMPI_SUCCESS == rc) {
                 rc = OMPI_ERROR;
             }
             continue;
         }
         UCC_VERBOSE(5, "%s post %p", "<coll>_init", (void *)coll_req);
-        assert(REQUEST_COMPLETE(&coll_req->super));
-        assert(OMPI_REQUEST_INACTIVE == coll_req->super.req_state);
+        assert(REQUEST_COMPLETE(&coll_req->super.super.super));
+        assert(OMPI_REQUEST_INACTIVE == coll_req->super.super.super.req_state);
 
-        coll_req->super.req_status.MPI_TAG = MPI_ANY_TAG;
-        coll_req->super.req_status.MPI_ERROR = OMPI_SUCCESS;
-        coll_req->super.req_status._cancelled = 0;
-        coll_req->super.req_complete = REQUEST_PENDING;
-        coll_req->super.req_state = OMPI_REQUEST_ACTIVE;
+        coll_req->super.super.super.req_status.MPI_TAG = MPI_ANY_TAG;
+        coll_req->super.super.super.req_status.MPI_ERROR = OMPI_SUCCESS;
+        coll_req->super.super.super.req_status._cancelled = 0;
+        coll_req->super.super.super.req_complete = REQUEST_PENDING;
+        coll_req->super.super.super.req_state = OMPI_REQUEST_ACTIVE;
 
         mca_coll_ucc_req_account(coll_req, 1);
         rc_ucc = ucc_collective_post(coll_req->ucc_req);
         if (UCC_OK != rc_ucc) {
             UCC_ERROR("ucc_collective_post failed: %s", ucc_status_string(rc_ucc));
             mca_coll_ucc_req_account(coll_req, -1);
-            coll_req->super.req_complete = REQUEST_COMPLETED;
-            coll_req->super.req_status.MPI_ERROR = MPI_ERR_OTHER;
+            coll_req->super.super.super.req_complete = REQUEST_COMPLETED;
+            coll_req->super.super.super.req_status.MPI_ERROR = MPI_ERR_OTHER;
             if (OMPI_SUCCESS == rc) {
                 rc = OMPI_ERROR;
             }

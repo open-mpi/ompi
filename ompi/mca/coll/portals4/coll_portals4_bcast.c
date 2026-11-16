@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2015      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2015      Bull SAS.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -896,7 +897,7 @@ ompi_coll_portals4_ibcast_intra(void *buff, size_t count,
                 __FILE__, __LINE__);
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
-    *ompi_request = &request->super;
+    *ompi_request = &request->super.super.super;
     request->is_sync = false;
 
     prepare_bcast_data(comm, buff, count, datatype, root, request);
@@ -942,7 +943,7 @@ ompi_coll_portals4_ibcast_intra_fini(ompi_coll_portals4_request_t *request)
 
     post_bcast_data(request);
 
-    ompi_request_complete(&request->super, true);
+    ompi_request_complete(&request->super.super.super, true);
 
     opal_output_verbose(10, ompi_coll_base_framework.framework_output, "ibcast_intra_fini");
     return (OMPI_SUCCESS);
