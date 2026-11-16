@@ -520,9 +520,6 @@ int ompi_rte_init(int *pargc, char ***pargv)
     pmix_status_t rc;
     char **tmp;
     bool singleton = false;
-    const static char *pmi_sentinels[] = {"PMI_FD", /* SLURM PMI1,2 */
-                                          "PMI_CONTROL_PORT", /* Cray Shasta */
-                                          NULL};
 
     u32ptr = &u32;
     u16ptr = &u16;
@@ -555,12 +552,33 @@ int ompi_rte_init(int *pargc, char ***pargv)
             int n = 0;
             /* if we are in a PMI environment with two tasks or more,
              * we probably do not want to start singletons */
-            while (pmi_sentinels[n] != NULL) {
-                if (NULL != getenv(pmi_sentinels[n])) {
-                    found_a_pmi = true;
-                    break;
+            if (NULL != ompi_mpi_pmi_sentinels) {
+                char **sentinels = opal_argv_split(ompi_mpi_pmi_sentinels, ',');
+                if (NULL != sentinels) {
+                    for (n = 0; NULL != sentinels[n]; n++) {
+                        if (NULL != getenv(sentinels[n])) {
+                            found_a_pmi = true;
+                            break;
+                        }
+                    }
+                    opal_argv_free(sentinels);
                 }
-                n++;
+            }
+            /* check SLURM_MPI_TYPE if still not found */
+            if (!found_a_pmi && NULL != ompi_mpi_pmi_slurm_types) {
+                char *slurm_mpi_type = getenv("SLURM_MPI_TYPE");
+                if (NULL != slurm_mpi_type) {
+                    char **slurm_types = opal_argv_split(ompi_mpi_pmi_slurm_types, ',');
+                    if (NULL != slurm_types) {
+                        for (n = 0; NULL != slurm_types[n]; n++) {
+                            if (0 == strcasecmp(slurm_mpi_type, slurm_types[n])) {
+                                found_a_pmi = true;
+                                break;
+                            }
+                        }
+                        opal_argv_free(slurm_types);
+                    }
+                }
             }
             if (found_a_pmi) {
                 char *size_str = getenv("PMI_SIZE");
