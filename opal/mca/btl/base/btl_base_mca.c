@@ -109,8 +109,7 @@ int mca_btl_base_param_register(mca_base_component_t *version, mca_btl_base_modu
                                                &module->btl_put_alignment);
     }
 
-#if OPAL_CUDA_GDR_SUPPORT
-    /* If no CUDA RDMA support, zero them out */
+    /* Without support for accelerator buffers, these do not apply */
     if (!(MCA_BTL_FLAGS_ACCELERATOR_GET & module->btl_flags)) {
         module->btl_accelerator_eager_limit = 0;
         module->btl_accelerator_rdma_limit = SIZE_MAX;
@@ -126,7 +125,6 @@ int mca_btl_base_param_register(mca_base_component_t *version, mca_btl_base_modu
                                            MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, 0, OPAL_INFO_LVL_5,
                                            MCA_BASE_VAR_SCOPE_READONLY,
                                            &module->btl_accelerator_rdma_limit);
-#endif /* OPAL_CUDA_GDR_SUPPORT */
     module->btl_accelerator_max_send_size = 0;
     (void) mca_base_component_var_register(
         version, "accelerator_max_send_size",
