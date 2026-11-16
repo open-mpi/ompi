@@ -6,7 +6,7 @@
  *                         reserved.
  * Copyright (c) 2020-2021 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2021-2026 Nanook Consulting  All rights reserved.
- * Copyright (c) 2021-2025 Amazon.com, Inc. or its affiliates. All rights
+ * Copyright (c) 2021-2026 Amazon.com, Inc. or its affiliates. All rights
  *                         reserved.
  * Copyright (c) 2023      UT-Battelle, LLC.  All rights reserved.
  * $COPYRIGHT$
@@ -168,9 +168,18 @@ int opal_common_ofi_export_memory_monitor(void)
        memory_base_frame_open = true;
     }
 
+    /*
+     * Libfabric's import monitor needs to hear about every release of
+     * memory.  A memory component that only watches the regions Open
+     * MPI registers (e.g., kdreg2) cannot provide that, so Libfabric
+     * keeps its own monitor, which FI_MR_CACHE_MONITOR selects.
+     */
     if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT)
         != (((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT))
         & opal_mem_hooks_support_level())) {
+        opal_output_verbose(1, opal_common_ofi.output,
+                            "memory hooks do not report every release, so Libfabric keeps "
+                            "its own memory monitor");
         ret = -FI_ENOSYS;
         goto err;
     }

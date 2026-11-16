@@ -1,6 +1,6 @@
 // -*- groovy -*-
 //
-// Copyright (c) 2022-2023 Amazon.com, Inc. or its affiliates.  All rights
+// Copyright (c) 2022-2026 Amazon.com, Inc. or its affiliates.  All rights
 //                         reserved.
 // Copyright (c) 2022-2023 Joe Downs.  All rights reserved.
 // Copyright (c) 2023      Cisco Systems, Inc.  All rights reserved.
@@ -61,7 +61,8 @@ def prepare_check_stages() {
 	"--disable-oshmem",
 	"--enable-builtin-atomic",
 	"--enable-ipv6",
-	"--enable-mca-dso"
+	"--enable-mca-dso",
+	"--with-kdreg2"
     ]
     // explicitly list the newest and oldest versions of GCC that are included
     // in the distros listed below to try and give us good version coverage.
@@ -101,6 +102,13 @@ def prepare_check_stages() {
         def name = "Configure: ${configure_option}".replaceAll("-", "")
         build_parallel_map.put(name, prepare_build(name, "amazon_linux_2", "--configure-args \\\"${configure_option}\\\""))
     }
+
+    // The CI images load the kdreg2 kernel module on Amazon Linux 2023,
+    // so make check there uses the kdreg2 component as a DSO
+    build_parallel_map.put("Configure: enablemcadso (amazon_linux_2023)",
+                           prepare_build("Configure: enablemcadso (amazon_linux_2023)",
+                                         "amazon_linux_2023-x86_64",
+                                         "--configure-args \\\"--enable-mca-dso\\\""))
 
     build_parallel_map.put("distcheck", prepare_build("distcheck", "tarball_build", "--distcheck"))
     build_parallel_map.put("vpath", prepare_build("vpath", "", "--build-dir ompi-build"))

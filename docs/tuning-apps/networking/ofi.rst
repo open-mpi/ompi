@@ -268,3 +268,46 @@ contain only providers that support the intended buffer type and memory
 registration mode.  Validate the configuration with a representative
 application and consult the installed provider manuals before using GPU
 buffers in production.
+
+Memory monitors
+---------------
+
+Open MPI and Libfabric both cache memory registrations.  Each cache
+needs a memory monitor that reports when cached memory is unmapped or
+remapped.
+
+Open MPI's monitor comes from the ``memory`` framework, which has three
+components:
+
+* ``ucm`` reports the releases that UCX's memory event layer (UCM)
+  sees.  It is only used when UCM has already hooked the C library's
+  memory functions, for example because a UCX component is loaded.
+* ``kdreg2`` uses the `kdreg2
+  <https://github.com/HewlettPackard/shs-kdreg2>`_ kernel module,
+  which watches each registered region.  It is built when
+  ``configure`` finds ``kdreg2.h`` (see ``--with-kdreg2``).
+* ``patcher`` intercepts ``munmap(2)`` and related calls.
+
+Open MPI uses the highest-priority component that it can open (see
+the ``memory_ucm_priority``, ``memory_kdreg2_priority`` and
+``memory_patcher_priority`` MCA parameters), and moves on to the next
+one when a component cannot be used, such as ``kdreg2`` when its
+device is missing.  Set the ``memory`` MCA parameter to choose one;
+for example, ``--mca memory kdreg2``.  If none of the named components
+can be used, Open MPI prints an error and runs without memory hooks.
+
+The component that Open MPI uses also decides Libfabric's monitor, as
+follows:
+
+* With ``ucm`` or ``patcher``, Open MPI exports its monitor to
+  Libfabric (version 1.14 and later), and Libfabric uses it instead of
+  the monitor that ``FI_MR_CACHE_MONITOR`` names.
+* With ``kdreg2``, Open MPI does not export a monitor, because
+  ``kdreg2`` only watches the regions that Open MPI registers.
+  Libfabric picks its own monitor, which ``FI_MR_CACHE_MONITOR``
+  controls.  When built with kdreg2 support, Libfabric 2.4 and later
+  uses its own ``kdreg2`` monitor by default; Open MPI and Libfabric
+  then each open the kdreg2 device and watch their own regions.
+
+With ``OMPI_MCA_opal_common_ofi_verbose=1``, Open MPI prints a message
+when it does not export its monitor.

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 #define OPAL_MEMORY_BASE_H
 
 #include "opal_config.h"
+#include "opal/constants.h"
 #include "opal/mca/base/mca_base_framework.h"
 #include "opal/mca/memory/memory.h"
 
@@ -33,6 +35,18 @@ BEGIN_C_DECLS
 OPAL_DECLSPEC extern mca_base_framework_t opal_memory_base_framework;
 
 OPAL_DECLSPEC void opal_memory_base_malloc_init_hook(void);
+
+/**
+ * Let the selected component report changes to the regions passed to
+ * memoryc_register.  Cheap when nothing changed.
+ */
+static inline int opal_memory_base_process(void)
+{
+    if (NULL == opal_memory->memoryc_process) {
+        return OPAL_SUCCESS;
+    }
+    return opal_memory->memoryc_process();
+}
 
 END_C_DECLS
 #endif /* OPAL_BASE_MEMORY_H */

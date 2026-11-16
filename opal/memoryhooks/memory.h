@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2018      Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -110,7 +111,10 @@ typedef void(opal_mem_hooks_callback_fn_t)(void *buf, size_t length, void *cbdat
  * Register callback for when memory is to be released
  *
  * Register a \c opal_mem_hooks_callback_fn_t function pointer to be called
- * whenever the current process is about to release memory.
+ * whenever the current process is about to release memory.  It is only
+ * called if the selected memory component reports releases (see
+ * opal_mem_hooks_support_level()) or changes to the regions passed to
+ * its memoryc_register function.
  *
  * @param func    Function pointer to call when memory is to be released
  * @param cbdata  A pointer-length field to be passed to func when it is
@@ -119,8 +123,6 @@ typedef void(opal_mem_hooks_callback_fn_t)(void *buf, size_t length, void *cbdat
  * @retval OPAL_SUCCESS The registration completed successfully.
  * @retval OPAL_EXISTS  The function is already registered and will not
  *                      be registered again.
- * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for
- *                      receiving callbacks when memory is to be released
  */
 OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, void *cbdata);
 
