@@ -705,7 +705,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                            sm->btl_component->btl_version.mca_component_name);
             return OMPI_ERR_BAD_PARAM;
         }
-#if OPAL_CUDA_GDR_SUPPORT
         /* If size is SIZE_MAX, then we know we want to set this to the minimum possible
          * value which is the size of the PML header. */
         if (SIZE_MAX == sm->btl_module->btl_accelerator_eager_limit) {
@@ -744,7 +743,6 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                 return OMPI_ERR_BAD_PARAM;
             }
         }
-#endif /* OPAL_CUDA_GDR_SUPPORT */
     }
 
     return OMPI_SUCCESS;
