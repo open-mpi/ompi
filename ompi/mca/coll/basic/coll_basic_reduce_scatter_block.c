@@ -40,29 +40,6 @@
 #include "coll_basic.h"
 #include "ompi/op/op.h"
 
-#define COMMUTATIVE_LONG_MSG 8 * 1024 * 1024
-
-/*
- *	reduce_scatter_block
- *
- *	Function:	- reduce then scatter
- *	Accepts:	- same as MPI_Reduce_scatter_block()
- *	Returns:	- MPI_SUCCESS or error code
- *
- * Algorithm:
- *     reduce and scatter (needs to be cleaned
- *     up at some point)
- */
-int
-mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf, size_t rcount,
-                                          struct ompi_datatype_t *dtype,
-                                          struct ompi_op_t *op,
-                                          struct ompi_communicator_t *comm,
-                                          mca_coll_base_module_t *module)
-{
-    return ompi_coll_base_reduce_scatter_block_basic_linear(sbuf, rbuf, rcount, dtype, op, comm, module);
-}
-
 /*
  *	reduce_scatter_block_inter
  *

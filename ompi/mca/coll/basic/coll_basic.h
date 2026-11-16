@@ -69,11 +69,6 @@ BEGIN_C_DECLS
                                         struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module);
 
-    int mca_coll_basic_allreduce_intra(const void *sbuf, void *rbuf, size_t count,
-                                       struct ompi_datatype_t *dtype,
-                                       struct ompi_op_t *op,
-                                       struct ompi_communicator_t *comm,
-                                       mca_coll_base_module_t *module);
     int mca_coll_basic_allreduce_inter(const void *sbuf, void *rbuf, size_t count,
                                        struct ompi_datatype_t *dtype,
                                        struct ompi_op_t *op,
@@ -169,12 +164,6 @@ BEGIN_C_DECLS
                                         struct ompi_communicator_t *comm,
                                         mca_coll_base_module_t *module);
 
-    int mca_coll_basic_reduce_scatter_block_intra(const void *sbuf, void *rbuf,
-                                                  size_t rcount,
-                                                  struct ompi_datatype_t *dtype,
-                                                  struct ompi_op_t *op,
-                                                  struct ompi_communicator_t *comm,
-                                                  mca_coll_base_module_t *module);
 
     int mca_coll_basic_reduce_scatter_block_inter(const void *sbuf, void *rbuf,
                                                   size_t rcount,

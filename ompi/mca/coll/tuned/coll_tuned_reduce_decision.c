@@ -146,6 +146,14 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
         coll_tuned_reduce_max_requests = 0;
     }
 
+    (void) mca_base_component_var_register(&mca_coll_tuned_component.super.collm_version,
+                                           "reduce_knomial_arrival_max_size",
+                                           "Largest message size, in bytes, for which the knomial reduce algorithm combines the data of its children in the order it arrives, instead of in tree order. Only used for commutative operations whose result does not depend on the order of the operands (integer sum and product, min, max, logical and bitwise operations). 0 disables arrival order.",
+                                           MCA_BASE_VAR_TYPE_SIZE_T, NULL, 0, MCA_BASE_VAR_FLAG_SETTABLE,
+                                           OPAL_INFO_LVL_5,
+                                           MCA_BASE_VAR_SCOPE_ALL,
+                                           &ompi_coll_base_reduce_knomial_arrival_max);
+
     return (MPI_SUCCESS);
 }
 

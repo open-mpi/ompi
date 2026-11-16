@@ -135,14 +135,14 @@ mca_coll_basic_module_enable(mca_coll_base_module_t *module,
         }
         BASIC_INSTALL_COLL_API(comm, basic_module, allgather, ompi_coll_base_allgather_intra_basic_linear);
         BASIC_INSTALL_COLL_API(comm, basic_module, allgatherv, ompi_coll_base_allgatherv_intra_basic_default);
-        BASIC_INSTALL_COLL_API(comm, basic_module, allreduce, mca_coll_basic_allreduce_intra);
+        BASIC_INSTALL_COLL_API(comm, basic_module, allreduce, ompi_coll_base_allreduce_intra_nonoverlapping);
         BASIC_INSTALL_COLL_API(comm, basic_module, alltoall, ompi_coll_base_alltoall_intra_basic_linear);
         BASIC_INSTALL_COLL_API(comm, basic_module, alltoallv, ompi_coll_base_alltoallv_intra_basic_linear);
         BASIC_INSTALL_COLL_API(comm, basic_module, alltoallw, mca_coll_basic_alltoallw_intra);
         BASIC_INSTALL_COLL_API(comm, basic_module, exscan, ompi_coll_base_exscan_intra_linear);
         BASIC_INSTALL_COLL_API(comm, basic_module, gather, ompi_coll_base_gather_intra_basic_linear);
         BASIC_INSTALL_COLL_API(comm, basic_module, gatherv, mca_coll_basic_gatherv_intra);
-        BASIC_INSTALL_COLL_API(comm, basic_module, reduce_scatter_block, mca_coll_basic_reduce_scatter_block_intra);
+        BASIC_INSTALL_COLL_API(comm, basic_module, reduce_scatter_block, ompi_coll_base_reduce_scatter_block_basic_linear);
         BASIC_INSTALL_COLL_API(comm, basic_module, reduce_scatter, mca_coll_basic_reduce_scatter_intra);
         BASIC_INSTALL_COLL_API(comm, basic_module, scan, ompi_coll_base_scan_intra_linear);
         BASIC_INSTALL_COLL_API(comm, basic_module, scatter, ompi_coll_base_scatter_intra_basic_linear);

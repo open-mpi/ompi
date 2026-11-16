@@ -63,6 +63,23 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, size_t count,
     /* Otherwise receive previous buffer and reduce. */
 
     else {
+        /* Out of place with a commutative operation the prior answer is
+         * received straight into the receive buffer and our data is combined
+         * into it: no copy of the send buffer, no temporary buffer. */
+
+        if (MPI_IN_PLACE != sbuf && ompi_op_is_commute(op)) {
+            err = MCA_PML_CALL(recv(rbuf, count, dtype,
+                                    rank - 1, MCA_COLL_BASE_TAG_SCAN, comm,
+                                    MPI_STATUS_IGNORE));
+            if (MPI_SUCCESS != err) {
+                return err;
+            }
+
+            /* rbuf = sbuf <op> rbuf */
+            ompi_op_reduce(op, (void *) sbuf, rbuf, count, dtype);
+            goto send_result;
+        }
+
         /* Allocate a temporary buffer.  Rationale for this size is
          * listed in coll_basic_reduce.c.  Use this temporary buffer to
          * receive into, later. */
@@ -111,6 +128,7 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, size_t count,
 
     /* Send result to next process. */
 
+send_result:
     if (rank < (size - 1)) {
         return MCA_PML_CALL(send(rbuf, count, dtype, rank + 1,
                                  MCA_COLL_BASE_TAG_SCAN,
@@ -122,6 +140,164 @@ ompi_coll_base_scan_intra_linear(const void *sbuf, void *rbuf, size_t count,
     return MPI_SUCCESS;
 }
 
+
+/*
+ * What the reduction after an exchange of the commutative recursive doubling
+ * scan does, which depends on the rank of the peer and on how far the
+ * partial result (psend) and the prefix result (recvbuf) have progressed.
+ * All of them are element-wise, so they can be applied segment by segment.
+ */
+typedef enum {
+    SCAN_RECD_FIRST_LOWER,   /* peer below, psend is still the input: the first prefix */
+    SCAN_RECD_LOWER_NOPREFIX,/* peer below, psend is reduced, no prefix yet */
+    SCAN_RECD_LOWER,         /* peer below, prefix exists */
+    SCAN_RECD_FIRST_UPPER,   /* peer above, psend is still the input */
+    SCAN_RECD_UPPER          /* peer above, psend is reduced */
+} scan_recd_kind_t;
+
+typedef struct {
+    struct ompi_op_t *op;
+    struct ompi_datatype_t *datatype;
+    scan_recd_kind_t kind;
+    char *own, *psend, *pspare, *precv, *recvbuf;
+    int err;
+} scan_recd_ctx_t;
+
+static void scan_recd_apply(void *vctx, ptrdiff_t offset, size_t count)
+{
+    scan_recd_ctx_t *ctx = (scan_recd_ctx_t *) vctx;
+    struct ompi_op_t *op = ctx->op;
+    struct ompi_datatype_t *dt = ctx->datatype;
+    char *own = ctx->own + offset, *psend = ctx->psend + offset, *pspare = ctx->pspare + offset;
+    char *precv = ctx->precv + offset, *recvbuf = ctx->recvbuf + offset;
+    int err = MPI_SUCCESS;
+
+    switch (ctx->kind) {
+    case SCAN_RECD_FIRST_LOWER:
+        /* recvbuf = own <op> received, and the partial result is the same value */
+        ompi_op_reduce(op, own, recvbuf, count, dt);
+        err = ompi_datatype_copy_content_same_ddt(dt, count, pspare, recvbuf);
+        break;
+    case SCAN_RECD_LOWER_NOPREFIX:
+        /* psend = received <op> psend; recvbuf = own <op> received */
+        ompi_op_reduce(op, precv, psend, count, dt);
+        err = ompi_datatype_copy_content_same_ddt(dt, count, recvbuf, precv);
+        ompi_op_reduce(op, own, recvbuf, count, dt);
+        break;
+    case SCAN_RECD_LOWER:
+        /* Accumulate prefix reduction: recvbuf = precv <op> recvbuf */
+        ompi_op_reduce(op, precv, recvbuf, count, dt);
+        /* Partial result: psend = precv <op> psend */
+        ompi_op_reduce(op, precv, psend, count, dt);
+        break;
+    case SCAN_RECD_FIRST_UPPER:
+        /* pspare = own <op> received */
+        ompi_op_reduce(op, own, pspare, count, dt);
+        break;
+    case SCAN_RECD_UPPER:
+        /* psend = precv <op> psend */
+        ompi_op_reduce(op, precv, psend, count, dt);
+        break;
+    }
+    if (MPI_SUCCESS != err) {
+        ctx->err = err;
+    }
+}
+
+/*
+ * Recursive doubling scan for a commutative operation and an input that is
+ * not MPI_IN_PLACE. The input vector is never copied up front: the partial
+ * result (psend) is the user send buffer until the first reduction that
+ * involves it, which is written to a spare buffer, and the prefix result is
+ * built in recvbuf from the first block received from a lower rank. The
+ * input is copied into recvbuf only on rank 0, which never receives from a
+ * lower rank. Large messages are exchanged in segments, so that the
+ * reduction of a segment overlaps the transfer of the following ones.
+ */
+static int ompi_coll_base_scan_recd_commute(
+    const void *sendbuf, void *recvbuf, size_t count, struct ompi_datatype_t *datatype,
+    struct ompi_op_t *op, struct ompi_communicator_t *comm)
+{
+    int err = MPI_SUCCESS;
+    char *tmpspare_raw = NULL, *tmprecv_raw = NULL;
+    int comm_size = ompi_comm_size(comm);
+    int rank = ompi_comm_rank(comm);
+    int nsegs = ompi_coll_base_recdoubling_nsegs(count, datatype);
+    ptrdiff_t dsize, gap;
+
+    dsize = opal_datatype_span(&datatype->super, count, &gap);
+    /* A single allocation holds both temporaries: it is cheaper than two
+     * and avoids the allocator trimming and re-faulting them on every call */
+    ptrdiff_t dsize_padded = (dsize + 63) & ~(ptrdiff_t) 63;
+    tmpspare_raw = malloc(2 * dsize_padded);
+    tmprecv_raw = (NULL == tmpspare_raw) ? NULL : tmpspare_raw + dsize_padded;
+    if (NULL == tmpspare_raw) {
+        err = OMPI_ERR_OUT_OF_RESOURCE;
+        goto cleanup_and_return;
+    }
+    char *pspare = tmpspare_raw - gap;
+    char *precv = tmprecv_raw - gap;
+    char *own = (char *) sendbuf;
+    char *psend = own;
+    bool recvbuf_valid = false;
+
+    for (int mask = 1; mask < comm_size; mask <<= 1) {
+        int remote = rank ^ mask;
+        if (remote >= comm_size) {
+            continue;
+        }
+        bool from_lower = (rank > remote);
+        scan_recd_ctx_t ctx = {op, datatype, SCAN_RECD_UPPER, own, psend, pspare, precv,
+                               (char *) recvbuf, MPI_SUCCESS};
+
+        /* Receive where the reduction will be written, when possible */
+        char *target = precv;
+        if (psend == own) {
+            target = from_lower ? (char *) recvbuf : pspare;
+        }
+        if (from_lower) {
+            ctx.kind = (psend == own) ? SCAN_RECD_FIRST_LOWER
+                     : (!recvbuf_valid ? SCAN_RECD_LOWER_NOPREFIX : SCAN_RECD_LOWER);
+        } else if (psend == own) {
+            ctx.kind = SCAN_RECD_FIRST_UPPER;
+        }
+
+        if (nsegs > 1) {
+            err = ompi_coll_base_segmented_sendrecv(psend, target, count, datatype, remote,
+                                                    MCA_COLL_BASE_TAG_SCAN, comm, nsegs,
+                                                    scan_recd_apply, &ctx);
+        } else {
+            err = ompi_coll_base_sendrecv(psend, count, datatype, remote,
+                                          MCA_COLL_BASE_TAG_SCAN,
+                                          target, count, datatype, remote,
+                                          MCA_COLL_BASE_TAG_SCAN, comm,
+                                          MPI_STATUS_IGNORE, rank);
+            if (MPI_SUCCESS == err) {
+                scan_recd_apply(&ctx, 0, count);
+            }
+        }
+        if (MPI_SUCCESS == err) {
+            err = ctx.err;
+        }
+        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+
+        if (SCAN_RECD_FIRST_LOWER == ctx.kind || SCAN_RECD_FIRST_UPPER == ctx.kind) {
+            psend = pspare;
+        }
+        if (from_lower) {
+            recvbuf_valid = true;
+        }
+    }
+
+    if (!recvbuf_valid) {
+        /* Rank 0: the result is its own input */
+        err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, own);
+    }
+
+cleanup_and_return:
+    free(tmpspare_raw);
+    return err;
+}
 
 /*
  * ompi_coll_base_scan_intra_recursivedoubling
@@ -171,6 +347,10 @@ int ompi_coll_base_scan_intra_recursivedoubling(
     if (count == 0)
         return MPI_SUCCESS;
 
+    if (comm_size >= 2 && sendbuf != MPI_IN_PLACE && ompi_op_is_commute(op)) {
+        return ompi_coll_base_scan_recd_commute(sendbuf, recvbuf, count, datatype, op, comm);
+    }
+
     if (sendbuf != MPI_IN_PLACE) {
         err = ompi_datatype_copy_content_same_ddt(datatype, count, recvbuf, (char *)sendbuf);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
@@ -180,9 +360,12 @@ int ompi_coll_base_scan_intra_recursivedoubling(
 
     ptrdiff_t dsize, gap;
     dsize = opal_datatype_span(&datatype->super, count, &gap);
-    tmpsend_raw = malloc(dsize);
-    tmprecv_raw = malloc(dsize);
-    if (NULL == tmpsend_raw || NULL == tmprecv_raw) {
+    /* A single allocation holds both temporaries: it is cheaper than two
+     * and avoids the allocator trimming and re-faulting them on every call */
+    ptrdiff_t dsize_padded = (dsize + 63) & ~(ptrdiff_t) 63;
+    tmpsend_raw = malloc(2 * dsize_padded);
+    tmprecv_raw = (NULL == tmpsend_raw) ? NULL : tmpsend_raw + dsize_padded;
+    if (NULL == tmpsend_raw) {
         err = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup_and_return;
     }
@@ -223,9 +406,6 @@ int ompi_coll_base_scan_intra_recursivedoubling(
     }
 
 cleanup_and_return:
-    if (NULL != tmpsend_raw)
-        free(tmpsend_raw);
-    if (NULL != tmprecv_raw)
-        free(tmprecv_raw);
+    free(tmpsend_raw);
     return err;
 }

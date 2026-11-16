@@ -203,6 +203,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
 {
     struct ompi_datatype_t *dtypesend = NULL, *dtyperecv = NULL;
     char *tmprecv_raw = NULL, *tmpbuf_raw = NULL, *tmprecv, *tmpbuf;
+    const char *cur;
+    bool direct;
     ptrdiff_t span, gap, totalcount, extent;
     size_t blocklens[2];
     ptrdiff_t displs[2];
@@ -239,14 +241,24 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
     tmpbuf = tmpbuf_raw - gap;
     tmprecv = tmprecv_raw - gap;
 
-    if (sbuf != MPI_IN_PLACE) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, tmpbuf, (char *)sbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
-    } else {
-        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, tmpbuf, rbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
-    }
     int is_commutative = ompi_op_is_commute(op);
+
+    /* Out of place and commutative: the user send buffer is read directly
+       until the first reduction, which is written to the receive buffer
+       (together with the few blocks that were not received) instead of
+       copying the whole input first. From then on cur is tmpbuf. */
+    direct = (sbuf != MPI_IN_PLACE) && is_commutative;
+    if (direct) {
+        cur = (const char *) sbuf;
+    } else {
+        if (sbuf != MPI_IN_PLACE) {
+            err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, tmpbuf, (char *)sbuf);
+        } else {
+            err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, tmpbuf, rbuf);
+        }
+        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        cur = tmpbuf;
+    }
 
     /* Recursive distance doubling */
     for (int mask = 1; mask < comm_size; mask <<= 1) {
@@ -293,7 +305,7 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
 
         int is_block_received = 0;
         if (remote < comm_size) {
-            err = ompi_coll_base_sendrecv(tmpbuf, 1, dtypesend, remote,
+            err = ompi_coll_base_sendrecv((char *) cur, 1, dtypesend, remote,
                                           MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                           tmprecv, 1, dtyperecv, remote,
                                           MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
@@ -338,7 +350,24 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
             }
         }
 
-        if (is_block_received) {
+        if (is_block_received && cur != tmpbuf) {
+            /* The local data is still the user buffer: reduce it into the
+               received blocks, keep the blocks that were not received, and
+               make that buffer the current one. */
+            ompi_op_reduce(op, cur, tmprecv, blocklens[0], dtype);
+            ompi_op_reduce(op, cur + (ptrdiff_t)displs[1] * extent,
+                           tmprecv + (ptrdiff_t)displs[1] * extent,
+                           blocklens[1], dtype);
+            err = ompi_datatype_copy_content_same_ddt(dtype,
+                                                      displs[1] - (ptrdiff_t)blocklens[0],
+                                                      tmprecv + (ptrdiff_t)blocklens[0] * extent,
+                                                      (char *) cur + (ptrdiff_t)blocklens[0] * extent);
+            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            char *swap = tmpbuf;
+            tmpbuf = tmprecv;
+            tmprecv = swap;
+            cur = tmpbuf;
+        } else if (is_block_received) {
             /* After reduction the result must be in tmpbuf */
             if (is_commutative || (remote_tree_root < cur_tree_root)) {
                 ompi_op_reduce(op, tmprecv, tmpbuf, blocklens[0], dtype);
@@ -361,7 +390,7 @@ ompi_coll_base_reduce_scatter_block_intra_recursivedoubling(
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
     }
     err = ompi_datatype_copy_content_same_ddt(dtype, rcount, rbuf,
-                                              tmpbuf + (ptrdiff_t)rank * rcount * extent);
+                                              (char *) cur + (ptrdiff_t)rank * rcount * extent);
     if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
 cleanup_and_return:
@@ -410,6 +439,8 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     mca_coll_base_module_t *module)
 {
     char *tmprecv_raw = NULL, *tmpbuf_raw = NULL, *tmprecv, *tmpbuf;
+    const char *partial;
+    bool direct;
     ptrdiff_t span, gap, totalcount, extent;
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
@@ -441,12 +472,16 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     tmpbuf = tmpbuf_raw - gap;
     tmprecv = tmprecv_raw - gap;
 
-    if (sbuf != MPI_IN_PLACE) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, tmpbuf, (char *)sbuf);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+    /* Out of place, the partial result starts as the user send buffer and
+       is never copied: the first slice that is received goes straight into
+       tmpbuf, where it is reduced with the local slice. */
+    direct = (sbuf != MPI_IN_PLACE);
+    if (direct) {
+        partial = (const char *) sbuf;
     } else {
         err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, tmpbuf, rbuf);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        partial = tmpbuf;
     }
 
     /*
@@ -471,7 +506,7 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
     if (rank < 2 * nprocs_rem) {
         if ((rank % 2) == 0) {
             /* Even process */
-            err = MCA_PML_CALL(send(tmpbuf, totalcount, dtype, rank + 1,
+            err = MCA_PML_CALL(send(partial, totalcount, dtype, rank + 1,
                                     MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
             if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
@@ -479,11 +514,16 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
             vrank = -1;
         } else {
             /* Odd process */
-            err = MCA_PML_CALL(recv(tmprecv, totalcount, dtype, rank - 1,
+            err = MCA_PML_CALL(recv(direct ? tmpbuf : tmprecv, totalcount, dtype, rank - 1,
                                     MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                     comm, MPI_STATUS_IGNORE));
             if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
-            ompi_op_reduce(op, tmprecv, tmpbuf, totalcount, dtype);
+            if (direct) {
+                ompi_op_reduce(op, partial, tmpbuf, totalcount, dtype);
+                partial = tmpbuf;
+            } else {
+                ompi_op_reduce(op, tmprecv, tmpbuf, totalcount, dtype);
+            }
             /* Adjust rank to be the bottom "remain" ranks */
             vrank = rank / 2;
         }
@@ -532,13 +572,14 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
             struct ompi_request_t *request = NULL;
 
             if (recv_count > 0) {
-                err = MCA_PML_CALL(irecv(tmprecv + rdispl * extent, recv_count,
+                err = MCA_PML_CALL(irecv(((partial != tmpbuf) ? tmpbuf : tmprecv) + rdispl * extent,
+                                         recv_count,
                                          dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                          comm, &request));
                 if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
             }
             if (send_count > 0) {
-                err = MCA_PML_CALL(send(tmpbuf + sdispl * extent, send_count,
+                err = MCA_PML_CALL(send(partial + sdispl * extent, send_count,
                                         dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                         MCA_PML_BASE_SEND_STANDARD,
                                         comm));
@@ -547,14 +588,21 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
             if (recv_count > 0) {
                 err = ompi_request_wait(&request, MPI_STATUS_IGNORE);
                 if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
-                ompi_op_reduce(op, tmprecv + rdispl * extent,
-                               tmpbuf + rdispl * extent, recv_count, dtype);
+                if (partial != tmpbuf) {
+                    /* received into tmpbuf: reduce the local slice into it */
+                    ompi_op_reduce(op, partial + rdispl * extent,
+                                   tmpbuf + rdispl * extent, recv_count, dtype);
+                    partial = tmpbuf;
+                } else {
+                    ompi_op_reduce(op, tmprecv + rdispl * extent,
+                                   tmpbuf + rdispl * extent, recv_count, dtype);
+                }
             }
             send_index = recv_index;
             last_index = recv_index + mask;
         }
         err = ompi_datatype_copy_content_same_ddt(dtype, rcount, rbuf,
-                                                  tmpbuf + (ptrdiff_t)rank * rcount * extent);
+                                                  (char *) partial + (ptrdiff_t)rank * rcount * extent);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
     }
 
@@ -568,7 +616,7 @@ ompi_coll_base_reduce_scatter_block_intra_recursivehalving(
             if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
         } else {
             /* Odd process */
-            err = MCA_PML_CALL(send(tmpbuf + (ptrdiff_t)(rank - 1) * rcount * extent,
+            err = MCA_PML_CALL(send(partial + (ptrdiff_t)(rank - 1) * rcount * extent,
                                     rcount, dtype, rank - 1,
                                     MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                     MCA_PML_BASE_SEND_STANDARD, comm));
@@ -651,7 +699,9 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
     struct ompi_op_t *op, struct ompi_communicator_t *comm,
     mca_coll_base_module_t *module)
 {
-    char *tmpbuf[2] = {NULL, NULL}, *psend, *precv;
+    char *tmpbuf[2] = {NULL, NULL}, *precv, *tmp_other;
+    const char *psend;
+    bool direct;
     ptrdiff_t span, gap, totalcount, extent;
     int err = MPI_SUCCESS;
     int comm_size = ompi_comm_size(comm);
@@ -680,12 +730,22 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
     }
     psend = tmpbuf[0] - gap;
     precv = tmpbuf[1] - gap;
+    tmp_other = tmpbuf[0] - gap;
 
-    if (sbuf != MPI_IN_PLACE) {
-        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, psend, (char *)sbuf);
+    /* When the operation is commutative and the input is not in place, the
+       user send buffer is read directly: every reduction is written to the
+       receive side (precv = psend <op> precv) and the two temporary buffers
+       swap roles, so the input vector is never copied. Otherwise the
+       order of the operands matters, or rbuf holds the input, and the
+       input vector is copied. */
+    direct = (sbuf != MPI_IN_PLACE) && ompi_op_is_commute(op);
+    if (direct) {
+        psend = (const char *) sbuf;
+    } else if (sbuf != MPI_IN_PLACE) {
+        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, (char *) psend, (char *)sbuf);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
     } else {
-        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, psend, rbuf);
+        err = ompi_datatype_copy_content_same_ddt(dtype, totalcount, (char *) psend, rbuf);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
     }
 
@@ -724,7 +784,14 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
                                     MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                     comm, MPI_STATUS_IGNORE));
             if (OMPI_SUCCESS != err) { goto cleanup_and_return; }
-            ompi_op_reduce(op, precv, psend, totalcount, dtype);
+            if (direct) {
+                /* precv = psend <op> precv, then precv becomes the vector */
+                ompi_op_reduce(op, psend, precv, totalcount, dtype);
+                psend = precv;
+                precv = tmp_other;
+            } else {
+                ompi_op_reduce(op, precv, (char *) psend, totalcount, dtype);
+            }
             /* Adjust rank to be the bottom "remain" ranks */
             vrank = rank / 2;
         }
@@ -772,24 +839,30 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
             ptrdiff_t rdispl = rcount * (size_t)((recv_index <= nprocs_rem - 1) ?
                                          2 * recv_index : nprocs_rem + recv_index);
 
-            err = ompi_coll_base_sendrecv(psend + (ptrdiff_t)sdispl * extent, send_count,
+            err = ompi_coll_base_sendrecv((char *) psend + (ptrdiff_t)sdispl * extent, send_count,
                                           dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                           precv + (ptrdiff_t)rdispl * extent, recv_count,
                                           dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                           comm, MPI_STATUS_IGNORE, rank);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
-            if (vrank < vpeer) {
+            if (direct || vrank < vpeer) {
                 /* precv = psend <op> precv */
                 ompi_op_reduce(op, psend + (ptrdiff_t)rdispl * extent,
                                precv + (ptrdiff_t)rdispl * extent, recv_count, dtype);
-                char *p = psend;
-                psend = precv;
-                precv = p;
+                if (direct && psend == (const char *) sbuf) {
+                    /* the user buffer never becomes a receive target */
+                    psend = precv;
+                    precv = tmp_other;
+                } else {
+                    char *p = (char *) psend;
+                    psend = precv;
+                    precv = p;
+                }
             } else {
                 /* psend = precv <op> psend */
                 ompi_op_reduce(op, precv + (ptrdiff_t)rdispl * extent,
-                               psend + (ptrdiff_t)rdispl * extent, recv_count, dtype);
+                               (char *) psend + (ptrdiff_t)rdispl * extent, recv_count, dtype);
             }
             send_index = recv_index;
         }
@@ -821,7 +894,7 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
         if (vpeer < nprocs_rem)
             sdispl += rcount;
         if (vpeer != vrank) {
-            err = ompi_coll_base_sendrecv(psend + (ptrdiff_t)sdispl * extent, rcount,
+            err = ompi_coll_base_sendrecv((char *) psend + (ptrdiff_t)sdispl * extent, rcount,
                                           dtype, peer, MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
                                           rbuf, rcount, dtype, peer,
                                           MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
@@ -829,7 +902,7 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly(
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
         } else {
             err = ompi_datatype_copy_content_same_ddt(dtype, rcount, rbuf,
-                                                      psend + (ptrdiff_t)sdispl * extent);
+                                                      (char *) psend + (ptrdiff_t)sdispl * extent);
             if (MPI_SUCCESS != err) { goto cleanup_and_return; }
         }
 
@@ -919,14 +992,24 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
     psend = tmpbuf[0] - gap;
     precv = tmpbuf[1] - gap;
 
-    /* Permute the blocks according to a mirror permutation */
     int log2_comm_size = opal_cube_dim(comm_size);
     char *pdata = (sbuf != MPI_IN_PLACE) ? (char *)sbuf : rbuf;
-    for (int i = 0; i < comm_size; i++) {
-        char *src = pdata + (ptrdiff_t)i * extent * rcount;
-        char *dst = psend + (ptrdiff_t)ompi_mirror_perm(i, log2_comm_size) * extent * rcount;
-        err = ompi_datatype_copy_content_same_ddt(dtype, rcount, dst, src);
-        if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+    ptrdiff_t blockext = (ptrdiff_t)extent * rcount;
+
+    /* Permute the blocks according to a mirror permutation. With a
+       commutative operation only the blocks sent in the first round are
+       permuted (below), the others are reduced straight from the input in
+       that round: block j of psend is block mirror_perm(j) of the input.
+       The input is not modified before the final copy to rbuf, so this
+       also holds for MPI_IN_PLACE. */
+    bool direct = ompi_op_is_commute(op);
+    if (!direct) {
+        for (int i = 0; i < comm_size; i++) {
+            char *src = pdata + (ptrdiff_t)i * blockext;
+            char *dst = psend + (ptrdiff_t)ompi_mirror_perm(i, log2_comm_size) * blockext;
+            err = ompi_datatype_copy_content_same_ddt(dtype, rcount, dst, src);
+            if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+        }
     }
 
     size_t nblocks = totalcount, send_index = 0, recv_index = 0;
@@ -941,6 +1024,14 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
             /* Send the upper half of reduction buffer, recv the lower half */
             recv_index += nblocks;
         }
+        if (direct && 1 == mask) {
+            /* Permute the blocks sent in this round */
+            for (size_t j = send_index / rcount; j < (send_index + nblocks) / rcount; j++) {
+                err = ompi_datatype_copy_content_same_ddt(dtype, rcount, psend + j * blockext,
+                                                          pdata + ompi_mirror_perm((int) j, log2_comm_size) * blockext);
+                if (MPI_SUCCESS != err) { goto cleanup_and_return; }
+            }
+        }
         err = ompi_coll_base_sendrecv(psend + (ptrdiff_t)send_index * extent,
                                       nblocks, dtype, peer,
                                       MCA_COLL_BASE_TAG_REDUCE_SCATTER_BLOCK,
@@ -950,7 +1041,17 @@ ompi_coll_base_reduce_scatter_block_intra_butterfly_pof2(
                                       comm, MPI_STATUS_IGNORE, rank);
         if (MPI_SUCCESS != err) { goto cleanup_and_return; }
 
-        if (rank < peer) {
+        if (direct && 1 == mask) {
+            /* precv = local <op> precv, block by block, then the buffers
+               swap roles: only the received half is meaningful in precv */
+            for (size_t j = recv_index / rcount; j < (recv_index + nblocks) / rcount; j++) {
+                ompi_op_reduce(op, pdata + ompi_mirror_perm((int) j, log2_comm_size) * blockext,
+                               precv + j * blockext, rcount, dtype);
+            }
+            char *p = psend;
+            psend = precv;
+            precv = p;
+        } else if (rank < peer) {
             /* precv = psend <op> precv */
             ompi_op_reduce(op, psend + (ptrdiff_t)recv_index * extent,
                            precv + (ptrdiff_t)recv_index * extent, nblocks, dtype);

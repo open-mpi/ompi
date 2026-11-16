@@ -39,6 +39,88 @@
 #include "coll_base_functions.h"
 #include <ctype.h>
 
+size_t ompi_coll_base_recdoubling_segsize = 256 * 1024;
+int ompi_coll_base_recdoubling_window = 4;
+
+#define COLL_BASE_RECD_MIN_SEGS 4
+#define COLL_BASE_RECD_MAX_SEGS 4096
+#define COLL_BASE_RECD_MAX_WINDOW 16
+
+int ompi_coll_base_recdoubling_nsegs(size_t count, ompi_datatype_t *dtype)
+{
+    size_t dtype_size, nsegs;
+
+    if (0 == ompi_coll_base_recdoubling_segsize) {
+        return 1;
+    }
+    ompi_datatype_type_size(dtype, &dtype_size);
+    nsegs = (count * dtype_size) / ompi_coll_base_recdoubling_segsize;
+    if (nsegs < COLL_BASE_RECD_MIN_SEGS || count < nsegs) {
+        return 1;
+    }
+    return (int) ((nsegs > COLL_BASE_RECD_MAX_SEGS) ? COLL_BASE_RECD_MAX_SEGS : nsegs);
+}
+
+int ompi_coll_base_segmented_sendrecv(const void *sendbuf, void *recvbuf, size_t count,
+                                      ompi_datatype_t *dtype, int remote, int tag,
+                                      struct ompi_communicator_t *comm, int nsegs,
+                                      ompi_coll_base_segment_fn_t fn, void *ctx)
+{
+    ompi_request_t *reqs[2 * COLL_BASE_RECD_MAX_WINDOW];
+    ptrdiff_t lb, extent;
+    size_t seg_count = count / nsegs;
+    int window = ompi_coll_base_recdoubling_window, ret, next = 0;
+
+    if (window < 1) {
+        window = 1;
+    } else if (window > COLL_BASE_RECD_MAX_WINDOW) {
+        window = COLL_BASE_RECD_MAX_WINDOW;
+    }
+    if (window > nsegs) {
+        window = nsegs;
+    }
+    for (int i = 0; i < 2 * window; i++) {
+        reqs[i] = MPI_REQUEST_NULL;
+    }
+    ompi_datatype_get_extent(dtype, &lb, &extent);
+
+#define COLL_BASE_SEGMENT_POST(SEG)                                                        \
+    do {                                                                                   \
+        ptrdiff_t off_ = (ptrdiff_t) (seg_count * (SEG)) * extent;                         \
+        size_t cnt_ = ((SEG) == nsegs - 1) ? count - seg_count * (SEG) : seg_count;        \
+        ompi_request_t **slot_ = &reqs[2 * ((SEG) % window)];                              \
+        ret = MCA_PML_CALL(irecv((char *) recvbuf + off_, cnt_, dtype, remote, tag, comm,  \
+                                 &slot_[0]));                                              \
+        if (MPI_SUCCESS != ret) { goto error_hndl; }                                       \
+        ret = MCA_PML_CALL(isend((const char *) sendbuf + off_, cnt_, dtype, remote, tag,  \
+                                 MCA_PML_BASE_SEND_STANDARD, comm, &slot_[1]));            \
+        if (MPI_SUCCESS != ret) { goto error_hndl; }                                       \
+    } while (0)
+
+    for (; next < window; next++) {
+        COLL_BASE_SEGMENT_POST(next);
+    }
+    for (int seg = 0; seg < nsegs; seg++) {
+        ptrdiff_t offset = (ptrdiff_t) (seg_count * seg) * extent;
+        size_t cnt = (seg == nsegs - 1) ? count - seg_count * seg : seg_count;
+
+        ret = ompi_request_wait_all(2, &reqs[2 * (seg % window)], MPI_STATUSES_IGNORE);
+        if (MPI_SUCCESS != ret) { goto error_hndl; }
+        /* Keep the window full while this segment is being processed */
+        if (next < nsegs) {
+            COLL_BASE_SEGMENT_POST(next);
+            next++;
+        }
+        fn(ctx, offset, cnt);
+    }
+    return MPI_SUCCESS;
+
+ error_hndl:
+    ompi_coll_base_free_reqs(reqs, 2 * window);
+    return ret;
+}
+#undef COLL_BASE_SEGMENT_POST
+
 int ompi_coll_base_sendrecv_actual( const void* sendbuf, size_t scount,
                                     ompi_datatype_t* sdatatype,
                                     int dest, int stag,

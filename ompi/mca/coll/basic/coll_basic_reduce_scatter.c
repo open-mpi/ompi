@@ -35,6 +35,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/mca/coll/base/coll_base_functions.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "coll_basic.h"
@@ -51,18 +52,13 @@
  *
  * Algorithm:
  *   Commutative, reasonable sized messages
- *     recursive halving algorithm
+ *     recursive halving algorithm (base component)
  *   Others:
- *     reduce and scatterv (needs to be cleaned
- *     up at some point)
+ *     reduce and scatterv (base component)
  *
- * NOTE: that the recursive halving algorithm should be faster than
- * the reduce/scatter for all message sizes.  However, the memory
- * usage for the recursive halving is msg_size + 2 * comm_size greater
- * for the recursive halving, so I've limited where the recursive
- * halving is used to be nice to the app memory wise.  There are much
- * better algorithms for large messages with commutative operations,
- * so this should be investigated further.
+ * NOTE: the recursive halving algorithm needs more memory than reduce
+ * and scatterv, so its use is limited to messages under
+ * COMMUTATIVE_LONG_MSG bytes to be nice to the application memory wise.
  */
 int
 mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, ompi_count_array_t rcounts,
@@ -71,287 +67,26 @@ mca_coll_basic_reduce_scatter_intra(const void *sbuf, void *rbuf, ompi_count_arr
                                     struct ompi_communicator_t *comm,
                                     mca_coll_base_module_t *module)
 {
-    int i, rank, size, count, err = OMPI_SUCCESS;
-    ptrdiff_t extent, buf_size, gap;
-    ptrdiff_t *disps = NULL;
-    ompi_disp_array_t disps_desc;
-    char *recv_buf = NULL, *recv_buf_free = NULL;
-    char *result_buf = NULL, *result_buf_free = NULL;
-    /* Initialize */
-    rank = ompi_comm_rank(comm);
-    size = ompi_comm_size(comm);
+    int size = ompi_comm_size(comm);
+    size_t count = 0;
+    ptrdiff_t gap;
 
-    /* Find displacements and the like */
-    disps = (ptrdiff_t*) malloc(sizeof(ptrdiff_t) * size);
-    if (NULL == disps) return OMPI_ERR_OUT_OF_RESOURCE;
-
-    disps[0] = 0;
-    for (i = 0; i < (size - 1); ++i) {
-        disps[i + 1] = disps[i] + ompi_count_array_get(rcounts, i);
+    for (int i = 0; i < size; ++i) {
+        count += ompi_count_array_get(rcounts, i);
     }
-    count = disps[size - 1] + ompi_count_array_get(rcounts, size - 1);
 
     /* short cut the trivial case */
     if (0 == count) {
-        free(disps);
         return OMPI_SUCCESS;
     }
 
-    /* get datatype information */
-    ompi_datatype_type_extent(dtype, &extent);
-    buf_size = opal_datatype_span(&dtype->super, count, &gap);
-
-    /* Handle MPI_IN_PLACE */
-    if (MPI_IN_PLACE == sbuf) {
-        sbuf = rbuf;
+    if (ompi_op_is_commute(op) &&
+        opal_datatype_span(&dtype->super, count, &gap) < COMMUTATIVE_LONG_MSG) {
+        return ompi_coll_base_reduce_scatter_intra_basic_recursivehalving(sbuf, rbuf, rcounts, dtype,
+                                                                          op, comm, module);
     }
-
-    if ((op->o_flags & OMPI_OP_FLAGS_COMMUTE) &&
-        (buf_size < COMMUTATIVE_LONG_MSG)) {
-        int tmp_size, remain = 0, tmp_rank;
-
-        /* temporary receive buffer.  See coll_basic_reduce.c for details on sizing */
-        recv_buf_free = (char*) malloc(buf_size);
-        recv_buf = recv_buf_free - gap;
-        if (NULL == recv_buf_free) {
-            err = OMPI_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-
-        /* allocate temporary buffer for results */
-        result_buf_free = (char*) malloc(buf_size);
-        result_buf = result_buf_free - gap;
-
-        /* copy local buffer into the temporary results */
-        err = ompi_datatype_sndrcv(sbuf, count, dtype, result_buf, count, dtype);
-        if (OMPI_SUCCESS != err) goto cleanup;
-
-        /* figure out power of two mapping: grow until larger than
-           comm size, then go back one, to get the largest power of
-           two less than comm size */
-        tmp_size = opal_next_poweroftwo(size);
-        tmp_size >>= 1;
-        remain = size - tmp_size;
-
-        /* If comm size is not a power of two, have the first "remain"
-           procs with an even rank send to rank + 1, leaving a power of
-           two procs to do the rest of the algorithm */
-        if (rank < 2 * remain) {
-            if ((rank & 1) == 0) {
-                err = MCA_PML_CALL(send(result_buf, count, dtype, rank + 1,
-                                        MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                        MCA_PML_BASE_SEND_STANDARD,
-                                        comm));
-                if (OMPI_SUCCESS != err) goto cleanup;
-
-                /* we don't participate from here on out */
-                tmp_rank = -1;
-            } else {
-                err = MCA_PML_CALL(recv(recv_buf, count, dtype, rank - 1,
-                                        MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                        comm, MPI_STATUS_IGNORE));
-                if (OMPI_SUCCESS != err) goto cleanup;
-
-                /* integrate their results into our temp results */
-                ompi_op_reduce(op, recv_buf, result_buf, count, dtype);
-
-                /* adjust rank to be the bottom "remain" ranks */
-                tmp_rank = rank / 2;
-            }
-        } else {
-            /* just need to adjust rank to show that the bottom "even
-               remain" ranks dropped out */
-            tmp_rank = rank - remain;
-        }
-
-        /* For ranks not kicked out by the above code, perform the
-           recursive halving */
-        if (tmp_rank >= 0) {
-            int *tmp_disps = NULL, *tmp_rcounts = NULL;
-            int mask, send_index, recv_index, last_index;
-
-            /* recalculate disps and rcounts to account for the
-               special "remainder" processes that are no longer doing
-               anything */
-            tmp_rcounts = (int*) malloc(tmp_size * sizeof(int));
-            if (NULL == tmp_rcounts) {
-                err = OMPI_ERR_OUT_OF_RESOURCE;
-                goto cleanup;
-            }
-            tmp_disps = (int*) malloc(tmp_size * sizeof(int));
-            if (NULL == tmp_disps) {
-                free(tmp_rcounts);
-                err = OMPI_ERR_OUT_OF_RESOURCE;
-                goto cleanup;
-            }
-
-            for (i = 0 ; i < tmp_size ; ++i) {
-                if (i < remain) {
-                    /* need to include old neighbor as well */
-                    tmp_rcounts[i] = ompi_count_array_get(rcounts, i * 2 + 1)
-                                     + ompi_count_array_get(rcounts, i * 2);
-                } else {
-                    tmp_rcounts[i] = ompi_count_array_get(rcounts, i + remain);
-                }
-            }
-
-            tmp_disps[0] = 0;
-            for (i = 0; i < tmp_size - 1; ++i) {
-                tmp_disps[i + 1] = tmp_disps[i] + tmp_rcounts[i];
-            }
-
-            /* do the recursive halving communication.  Don't use the
-               dimension information on the communicator because I
-               think the information is invalidated by our "shrinking"
-               of the communicator */
-            mask = tmp_size >> 1;
-            send_index = recv_index = 0;
-            last_index = tmp_size;
-            while (mask > 0) {
-                int tmp_peer, peer, send_count, recv_count;
-                struct ompi_request_t *request;
-
-                tmp_peer = tmp_rank ^ mask;
-                peer = (tmp_peer < remain) ? tmp_peer * 2 + 1 : tmp_peer + remain;
-
-                /* figure out if we're sending, receiving, or both */
-                send_count = recv_count = 0;
-                if (tmp_rank < tmp_peer) {
-                    send_index = recv_index + mask;
-                    for (i = send_index ; i < last_index ; ++i) {
-                        send_count += tmp_rcounts[i];
-                    }
-                    for (i = recv_index ; i < send_index ; ++i) {
-                        recv_count += tmp_rcounts[i];
-                    }
-                } else {
-                    recv_index = send_index + mask;
-                    for (i = send_index ; i < recv_index ; ++i) {
-                        send_count += tmp_rcounts[i];
-                    }
-                    for (i = recv_index ; i < last_index ; ++i) {
-                        recv_count += tmp_rcounts[i];
-                    }
-                }
-
-                /* actual data transfer.  Send from result_buf,
-                   receive into recv_buf */
-                if (recv_count > 0) {
-                    err = MCA_PML_CALL(irecv(recv_buf + tmp_disps[recv_index] * extent,
-                                             recv_count, dtype, peer,
-                                             MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                             comm, &request));
-                    if (OMPI_SUCCESS != err) {
-                        free(tmp_rcounts);
-                        free(tmp_disps);
-                        goto cleanup;
-                    }
-                }
-                if (send_count > 0) {
-                    err = MCA_PML_CALL(send(result_buf + tmp_disps[send_index] * extent,
-                                            send_count, dtype, peer,
-                                            MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                            MCA_PML_BASE_SEND_STANDARD,
-                                            comm));
-                    if (OMPI_SUCCESS != err) {
-                        free(tmp_rcounts);
-                        free(tmp_disps);
-                        goto cleanup;
-                    }
-                }
-
-                /* if we received something on this step, push it into
-                   the results buffer */
-                if (recv_count > 0) {
-                    err = ompi_request_wait(&request, MPI_STATUS_IGNORE);
-                    if (OMPI_SUCCESS != err) {
-                        free(tmp_rcounts);
-                        free(tmp_disps);
-                        goto cleanup;
-                    }
-
-                    ompi_op_reduce(op,
-                                   recv_buf + tmp_disps[recv_index] * extent,
-                                   result_buf + tmp_disps[recv_index] * extent,
-                                   recv_count, dtype);
-                }
-
-                /* update for next iteration */
-                send_index = recv_index;
-                last_index = recv_index + mask;
-                mask >>= 1;
-            }
-
-            /* copy local results from results buffer into real receive buffer */
-            if (0 != ompi_count_array_get(rcounts, rank)) {
-                err = ompi_datatype_sndrcv(result_buf + disps[rank] * extent,
-                                      ompi_count_array_get(rcounts, rank), dtype,
-                                      rbuf, ompi_count_array_get(rcounts, rank), dtype);
-                if (OMPI_SUCCESS != err) {
-                    free(tmp_rcounts);
-                    free(tmp_disps);
-                    goto cleanup;
-                }
-            }
-
-            free(tmp_rcounts);
-            free(tmp_disps);
-        }
-
-        /* Now fix up the non-power of two case, by having the odd
-           procs send the even procs the proper results */
-        if (rank < 2 * remain) {
-            if ((rank & 1) == 0) {
-                if (ompi_count_array_get(rcounts, rank)) {
-                    err = MCA_PML_CALL(recv(rbuf, ompi_count_array_get(rcounts, rank), dtype, rank + 1,
-                                            MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                            comm, MPI_STATUS_IGNORE));
-                    if (OMPI_SUCCESS != err) goto cleanup;
-                }
-            } else {
-                if (ompi_count_array_get(rcounts, rank - 1)) {
-                    err = MCA_PML_CALL(send(result_buf + disps[rank - 1] * extent,
-                                            ompi_count_array_get(rcounts, rank - 1), dtype, rank - 1,
-                                            MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                            MCA_PML_BASE_SEND_STANDARD,
-                                            comm));
-                    if (OMPI_SUCCESS != err) goto cleanup;
-                }
-            }
-        }
-
-    } else {
-        if (0 == rank) {
-            /* temporary receive buffer.  See coll_basic_reduce.c for
-               details on sizing */
-            recv_buf_free = (char*) malloc(buf_size);
-            recv_buf = recv_buf_free - gap;
-            if (NULL == recv_buf_free) {
-                err = OMPI_ERR_OUT_OF_RESOURCE;
-                goto cleanup;
-            }
-        }
-
-        /* reduction */
-        err =
-            comm->c_coll->coll_reduce(sbuf, recv_buf, count, dtype, op, 0,
-                                     comm, comm->c_coll->coll_reduce_module);
-
-        /* scatter */
-        if (MPI_SUCCESS == err) {
-            OMPI_DISP_ARRAY_INIT(&disps_desc, disps);
-            err = comm->c_coll->coll_scatterv(recv_buf, rcounts, disps_desc, dtype,
-                                             rbuf, ompi_count_array_get(rcounts, rank), dtype, 0,
-                                             comm, comm->c_coll->coll_scatterv_module);
-        }
-    }
-
- cleanup:
-    if (NULL != disps) free(disps);
-    if (NULL != recv_buf_free) free(recv_buf_free);
-    if (NULL != result_buf_free) free(result_buf_free);
-
-    return err;
+    return ompi_coll_base_reduce_scatter_intra_nonoverlapping(sbuf, rbuf, rcounts, dtype,
+                                                              op, comm, module);
 }
 
 
