@@ -40,7 +40,11 @@ int MPIX_Comm_ack_failed(MPI_Comm comm, int num_to_ack, int* num_acked)
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         }
-        if (num_to_ack > ompi_comm_size(comm)) {
+        /* Both groups of an intercommunicator can lose processes, and the
+         * documented way to acknowledge them all is to pass the size of the
+         * group this reports on. */
+        if (num_to_ack > ompi_comm_size(comm) + (OMPI_COMM_IS_INTER(comm)
+                                                 ? ompi_comm_remote_size(comm) : 0)) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);

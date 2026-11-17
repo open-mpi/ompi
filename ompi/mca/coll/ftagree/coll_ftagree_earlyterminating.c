@@ -3,6 +3,7 @@
  * Copyright (c) 2013-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -84,6 +85,10 @@ mca_coll_ftagree_eta_intra(void *contrib,
     ompi_datatype_type_size(dt, &dt_size);
     msg_size = sizeof(ftagree_eta_agreement_msg_t) + dt_count * dt_size;
 
+/* The agreed value is a flexible array member, so sizeof() is not the
+ * size of a message and 'in' is not an array of them. */
+#define IN_MSG(_i) ((ftagree_eta_agreement_msg_t*)(((char*)in) + ((_i) * msg_size)))
+
     /* This should go in the module query, and a module member should be used here */
     reqs = (ompi_request_t **)calloc( 2 * np, sizeof(ompi_request_t *) ); /** < Need to calloc or set to MPI_REQUEST_NULL to ensure cleanup in all cases. */
     statuses = (MPI_Status*)malloc( 2 * np * sizeof(MPI_Status) );
@@ -144,7 +149,7 @@ mca_coll_ftagree_eta_intra(void *contrib,
 
             if( NEED_TO_RECV(i) ) {
                 /* Need to know more about this guy */
-                MCA_PML_CALL(irecv(((char*)in) + (i*msg_size), msg_size, MPI_BYTE,
+                MCA_PML_CALL(irecv(IN_MSG(i), msg_size, MPI_BYTE,
                                    i, FTAGREE_ETA_TAG_AGREEMENT, comm,
                                    &reqs[nr++]));
                 proc_status[i] &= ~STATUS_RECV_COMPLETE;
@@ -215,11 +220,11 @@ mca_coll_ftagree_eta_intra(void *contrib,
                         assert(MPI_REQUEST_NULL == reqs[ri]);
 
                         /* Implements the binary and of answers */
-                        ompi_op_reduce(op, in[i].est_value, out->est_value, dt_count, dt);
+                        ompi_op_reduce(op, IN_MSG(i)->est_value, out->est_value, dt_count, dt);
 
                         /* Implements the logical or of ERR_PROC_FAILED returns */
-                        out->pf |= in[i].pf;
-                        proc_status[i] |= ( (in[i].knows * STATUS_TOLD_ME_HE_KNOWS) | STATUS_RECV_COMPLETE);
+                        out->pf |= IN_MSG(i)->pf;
+                        proc_status[i] |= ( (IN_MSG(i)->knows * STATUS_TOLD_ME_HE_KNOWS) | STATUS_RECV_COMPLETE);
                         nbrecv++;
 
                         OPAL_OUTPUT_VERBOSE((100, ompi_ftmpi_output_handle,
@@ -304,6 +309,7 @@ mca_coll_ftagree_eta_intra(void *contrib,
 
 #undef NEED_TO_SEND
 #undef NEED_TO_RECV
+#undef IN_MSG
 
         nbcrashed = 0;
         for(i = 0; i < np; i++)

@@ -417,6 +417,7 @@ test/simple/concurrent_spawn
 test/simple/connect
 test/simple/crisscross
 test/simple/delayed_abort
+test/simple/ft_intercomm
 test/simple/hello_barrier
 test/simple/hello_nodename
 test/simple/hello_output

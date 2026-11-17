@@ -66,6 +66,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_rte.h"
+#include "ompi/runtime/params.h"
 #include "ompi/info/info.h"
 
 #include "ompi/dpm/dpm.h"
@@ -1857,6 +1858,19 @@ int ompi_dpm_spawn(int count, const char *array_of_commands[],
         PMIX_INFO_LOAD(&info->info, PMIX_PERSONALITY, "ompi5", PMIX_STRING);
         opal_list_append(&job_info, &info->super);
     }
+
+#if OPAL_ENABLE_FT_MPI
+    /* A spawned job inherits none of the options "--with-ft" put on the
+     * job mpirun launched, and PRRTE's defaults are the opposite of what
+     * ULFM needs: one failure terminates the whole child job, and nobody
+     * is told. Ask for the same two options here. */
+    if (ompi_ftmpi_enabled) {
+        info = OBJ_NEW(opal_info_item_t);
+        PMIX_INFO_LOAD(&info->info, PMIX_RUNTIME_OPTIONS,
+                       "recoverable,notifyerrors", PMIX_STRING);
+        opal_list_append(&job_info, &info->super);
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
 
     if (opal_process_info.is_singleton) {
         /* The GDS 'hash' component is known to work for singleton, so
