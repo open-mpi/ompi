@@ -320,11 +320,19 @@ static void mca_btl_uct_enable_tl(mca_btl_uct_module_t *module, mca_btl_uct_tl_t
         return;
     } 
 
+    /* The first context of every tl is opened when the tl is discovered, before there is a
+     * module. Hand it over to this module now that the tl is known to be in use. */
+    mca_btl_uct_device_context_t *context =
+        mca_btl_uct_module_get_tl_context_specific(module, tl, /*context_id=*/0);
+    if (NULL == context) {
+        return;
+    }
+
+    context->uct_btl = module;
+    mca_btl_uct_context_enable_progress(context);
+
     if (tl == module->am_tl) {
-        mca_btl_uct_device_context_t *context =
-            mca_btl_uct_module_get_tl_context_specific(module, tl, /*context_id=*/0);
-        /* If this context was created before a module was created it may not
-         * have an active message handler installed. Attempt to install one now. */
+        /* the context may not have an active message handler installed yet */
         mca_btl_uct_context_enable_am_handler(tl, context);
     }
 

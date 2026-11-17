@@ -28,11 +28,13 @@
 #include "opal/mca/btl/btl.h"
 #include "opal/mca/mpool/base/base.h"
 #include "opal/mca/mpool/mpool.h"
+#include "opal/mca/timer/base/base.h"
 #include <stdlib.h>
 #include <string.h>
 
 #include "btl_uct.h"
 #include "btl_uct_am.h"
+#include "btl_uct_device_context.h"
 #include "btl_uct_endpoint.h"
 
 struct mca_btl_base_endpoint_t *mca_btl_uct_get_ep(struct mca_btl_base_module_t *module,
@@ -312,11 +314,60 @@ mca_btl_uct_module_t *mca_btl_uct_alloc_module(mca_btl_uct_md_t *md,
  * Cleanup/release module resources.
  */
 
+/*
+ * Wait until everything posted on the interfaces of a transport has left
+ * the local side, so the endpoints that carried it can be destroyed.
+ * Destroying a UCT endpoint (and, for DC, the interface behind it) with
+ * operations still queued on it is not defined by UCT; UCP always flushes
+ * first.  The wait is bounded: a peer that no longer answers must not be
+ * able to keep this process from exiting.
+ */
+static void mca_btl_uct_tl_flush_for_finalize(mca_btl_uct_tl_t *tl, opal_timer_t deadline_usec)
+{
+    if (NULL == tl) {
+        return;
+    }
+
+    for (int context_id = 0; context_id < MCA_BTL_UCT_MAX_WORKERS; ++context_id) {
+        mca_btl_uct_device_context_t *context = tl->uct_dev_contexts[context_id];
+        ucs_status_t ucs_status;
+
+        if (NULL == context || NULL == context->uct_iface) {
+            continue;
+        }
+
+        mca_btl_uct_context_lock(context);
+        do {
+            uct_worker_progress(context->uct_worker);
+            ucs_status = uct_iface_flush(context->uct_iface, UCT_FLUSH_FLAG_LOCAL, NULL);
+        } while (UCS_INPROGRESS == ucs_status && opal_timer_base_get_usec() < deadline_usec);
+        mca_btl_uct_context_unlock(context);
+
+        if (UCS_INPROGRESS == ucs_status) {
+            BTL_VERBOSE(("timed out flushing %s::%s context %d at finalize", tl->uct_md->md_name,
+                         tl->uct_tl_name, context_id));
+        } else {
+            mca_btl_uct_device_handle_completions(context);
+        }
+    }
+}
+
 int mca_btl_uct_finalize(mca_btl_base_module_t *btl)
 {
     mca_btl_uct_module_t *uct_module = (mca_btl_uct_module_t *) btl;
     mca_btl_uct_endpoint_t *endpoint;
     uint64_t key;
+
+    if (0 != mca_btl_uct_component.finalize_flush_timeout) {
+        const opal_timer_t deadline_usec = opal_timer_base_get_usec()
+                                           + (opal_timer_t) mca_btl_uct_component.finalize_flush_timeout
+                                                 * 1000;
+
+        mca_btl_uct_tl_flush_for_finalize(uct_module->am_tl, deadline_usec);
+        if (uct_module->rdma_tl != uct_module->am_tl) {
+            mca_btl_uct_tl_flush_for_finalize(uct_module->rdma_tl, deadline_usec);
+        }
+    }
 
     /* clean up any leftover endpoints */
     OPAL_HASH_TABLE_FOREACH (key, uint64, endpoint, &uct_module->id_to_endpoint) {
@@ -416,12 +467,19 @@ static void mca_btl_uct_md_construct(mca_btl_uct_md_t *md)
     md->uct_component = NULL;
     md->uct_md = NULL;
     md->md_name = NULL;
+    md->ucs_async = NULL;
     OBJ_CONSTRUCT(&md->tls, opal_list_t);
 }
 
 static void mca_btl_uct_md_destruct(mca_btl_uct_md_t *md)
 {
+    /* the tls (and their device contexts, which use the async context) go first */
     OPAL_LIST_DESTRUCT(&md->tls);
+
+    if (md->ucs_async) {
+        ucs_async_context_destroy(md->ucs_async);
+        md->ucs_async = NULL;
+    }
 
     free(md->md_name);
     if (md->uct_md) {
