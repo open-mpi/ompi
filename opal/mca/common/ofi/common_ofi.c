@@ -1320,7 +1320,7 @@ error:
 /**
  * Get or create fabric object
  *
- * Reuses existing fabric from fabric_attr->fabric if available,
+ * Reuses cached fabric if fabric_attr->fabric matches it,
  * otherwise creates new fabric using fi_fabric().
  *
  * @param fabric_attr (IN) Fabric attributes
@@ -1335,19 +1335,27 @@ int opal_common_ofi_fi_fabric(struct fi_fabric_attr *fabric_attr,
 
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
     
-    if (fabric_attr->fabric) {
+    /* Reuse ONLY if it matches our live cached handle; fi_getinfo() can
+     * report a previously opened (and possibly already closed) fabric in
+     * fabric_attr->fabric, which must not be trusted blindly. */
+    if (NULL != fabric_attr->fabric
+        && fabric_attr->fabric == opal_common_ofi.fabric) {
         *fabric = fabric_attr->fabric;
         opal_common_ofi.fabric_ref_count++;
         opal_output_verbose(1, opal_common_ofi.output, "Reusing existing fabric: %s",
                             fabric_attr->name);
     } else {
+        /* clear any stale handle fi_getinfo may have left behind */
+        fabric_attr->fabric = NULL;
         ret = fi_fabric(fabric_attr, fabric, NULL);
         if (0 != ret) {
             OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
             return ret;
         }
-        opal_common_ofi.fabric = *fabric;
-        opal_common_ofi.fabric_ref_count = 1;
+        if (NULL == opal_common_ofi.fabric) {
+            opal_common_ofi.fabric = *fabric;
+            opal_common_ofi.fabric_ref_count = 1;
+        }
     }
 
     OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
@@ -1357,7 +1365,7 @@ int opal_common_ofi_fi_fabric(struct fi_fabric_attr *fabric_attr,
 /**
  * Get or create domain object
  *
- * Reuses existing domain from info->domain_attr->domain if available,
+ * Reuses cached domain if info->domain_attr->domain matches it,
  * otherwise creates new domain using fi_domain().  A new domain becomes the
  * shared one only if no shared domain is open yet: a component that opens
  * several domains, one per NIC, must not replace the domain another component
@@ -1377,12 +1385,18 @@ int opal_common_ofi_fi_domain(struct fid_fabric *fabric, struct fi_info *info,
 
     OPAL_THREAD_LOCK(&opal_common_ofi_mutex);
 
-    if (info->domain_attr->domain) {
+    /* Reuse ONLY if it matches our live cached handle; fi_getinfo() can
+     * report a previously opened (and possibly already closed) domain in
+     * domain_attr->domain, which must not be trusted blindly. */
+    if (NULL != info->domain_attr->domain
+        && info->domain_attr->domain == opal_common_ofi.domain) {
         *domain = info->domain_attr->domain;
         opal_common_ofi.domain_ref_count++;
         opal_output_verbose(1, opal_common_ofi.output, "Reusing existing domain: %s",
                             info->domain_attr->name);
     } else {
+        /* clear any stale handle fi_getinfo may have left behind */
+        info->domain_attr->domain = NULL;
         ret = fi_domain(fabric, info, domain, NULL);
         if (0 != ret) {
             OPAL_THREAD_UNLOCK(&opal_common_ofi_mutex);
