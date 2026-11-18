@@ -234,7 +234,7 @@ OPAL_DECLSPEC int opal_common_ofi_fi_getname(fid_t fid, void **addr, size_t *add
 /**
  * Get or create fabric object
  *
- * Reuses existing fabric from fabric_attr->fabric if available,
+ * Reuses cached fabric if fabric_attr->fabric matches it,
  * otherwise creates new fabric using fi_fabric().
  *
  * @param fabric_attr (IN) Fabric attributes
@@ -248,7 +248,7 @@ OPAL_DECLSPEC int opal_common_ofi_fi_fabric(struct fi_fabric_attr *fabric_attr,
 /**
  * Get or create domain object
  *
- * Reuses existing domain from info->domain_attr->domain if available,
+ * Reuses cached domain if info->domain_attr->domain matches it,
  * otherwise creates new domain using fi_domain().
  *
  * @param fabric (IN)      Fabric object
