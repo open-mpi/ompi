@@ -1096,7 +1096,7 @@ $(SENTINEL_OMPI_MAN3_BINDING): $(builddir)/man-openmpi/man3/bindings
 $(SENTINEL_OMPI_MAN3_BINDING): generate-mpi-man3-bindings.py
 $(SENTINEL_OMPI_MAN3_BINDING): ompi_docs_common.py
 $(SENTINEL_OMPI_MAN3_BINDING): mpi-standard-apis.json
-	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-mpi-man3-bindings.py \
+	$(OMPI_V_GEN) $(PYTHON) $(srcdir)/generate-mpi-man3-bindings.py \
 		--srcdir $(srcdir) --builddir $(builddir)
 
 # Generate the LLM-friendly artifacts into the build-tree staging
@@ -1114,13 +1114,13 @@ $(SENTINEL_OMPI_LLM): llms-src/openmpi-mpi-api.schema.json
 $(SENTINEL_OMPI_LLM): llms-src/openmpi-docs-manifest.schema.json
 $(SENTINEL_OMPI_LLM): $(RST_SOURCE_FILES)
 $(SENTINEL_OMPI_LLM): $(SENTINEL_OMPI_MAN3_BINDING)
-	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-llm-docs.py \
+	$(OMPI_V_GEN) $(PYTHON) $(srcdir)/generate-llm-docs.py \
 		--srcdir $(srcdir) --builddir $(builddir)
 	@touch $@
 
 $(CODE_OF_CONDUCT_RST): $(top_srcdir)/.github/CODE_OF_CONDUCT.md
 $(CODE_OF_CONDUCT_RST): generate-code-of-conduct-rst.py
-	$(OMPI_V_GEN) $(PYTHON3) $(srcdir)/generate-code-of-conduct-rst.py \
+	$(OMPI_V_GEN) $(PYTHON) $(srcdir)/generate-code-of-conduct-rst.py \
 		--input $(top_srcdir)/.github/CODE_OF_CONDUCT.md --output $@
 
 $(ALL_MAN_BUILT): $(builddir)/prrte-rst-content
@@ -1226,14 +1226,14 @@ linkcheck:
 # always present (a missing/failed generation now fails the check loudly rather
 # than being silently skipped).
 check-local: $(SENTINEL_OMPI_LLM)
-	@$(PYTHON3) $(srcdir)/validate-llm-docs.py \
+	@$(PYTHON) $(srcdir)/validate-llm-docs.py \
 	    --srcdir $(srcdir) --llms-dir $(builddir)/llms-build/llms \
 	    --samples $(srcdir)/../specs/llms-friendly-docs/sample-records.jsonl && \
 	rm -rf $(builddir)/llms-det-a $(builddir)/llms-det-b && \
-	SOURCE_DATE_EPOCH=1700000000 $(PYTHON3) $(srcdir)/generate-llm-docs.py \
+	SOURCE_DATE_EPOCH=1700000000 $(PYTHON) $(srcdir)/generate-llm-docs.py \
 	    --srcdir $(srcdir) --builddir $(builddir) \
 	    --outdir $(builddir)/llms-det-a > /dev/null && \
-	SOURCE_DATE_EPOCH=1700000000 $(PYTHON3) $(srcdir)/generate-llm-docs.py \
+	SOURCE_DATE_EPOCH=1700000000 $(PYTHON) $(srcdir)/generate-llm-docs.py \
 	    --srcdir $(srcdir) --builddir $(builddir) \
 	    --outdir $(builddir)/llms-det-b > /dev/null && \
 	if diff -r $(builddir)/llms-det-a $(builddir)/llms-det-b > /dev/null; then \
