@@ -88,7 +88,16 @@ Open MPI Version v5.0.12rc1
   variable classes, and machine-readable release discovery.  Added a
   security policy and improved CI isolation and nightly tarball builds.
 
-- Bundled dependency versions remain PMIx 5.0.11 and PRRTE 3.0.14.
+- Updated bundled PMIx to the ``v5.0`` branch after the v5.0.11 release,
+  at commit ``27b74290cf88f0fde7c936bf208f0bf9ba25ee45``.  This includes
+  fixes for zero-byte stdin forwarding, repeated initialization and
+  finalization, topology ownership, process maps, IOF output directories,
+  and compiler compatibility.  Corrected the PMIx branch setting in
+  ``.gitmodules`` from ``v4.2`` to ``v5.0`` to match the bundled release
+  series used since Open MPI v5.0.3.
+
+- Bundled PRRTE remains v3.0.14, at commit
+  ``a99bf3a006ddc8609e85da8f8eef13ba6d27aaba``.
 
 Open MPI Version v5.0.11
 ------------------------------
