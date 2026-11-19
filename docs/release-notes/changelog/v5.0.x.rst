@@ -4,9 +4,33 @@ Open MPI v5.0.x series
 This file contains all the NEWS updates for the Open MPI v5.0.x
 series, in reverse chronological order.
 
-Open MPI Version v5.0.11
+Open MPI Version v5.0.12rc1
 ------------------------------
-:Date: August 2026
+:Date: November 2026
+
+- TCP connections now skip local interfaces without carrier and suppress
+  ``SIGPIPE`` when a peer closes a connection during a blocking send.
+
+- PML/OB1 now creates accelerator streams and events on first use and
+  grows the event pool on demand.  It also correctly matches fragments
+  received before a communicator created from a group is registered.
+
+- Fixed parent-communicator lifetime and request cleanup during
+  nonblocking communicator duplication.
+
+- Fixed Fortran attribute delete callbacks receiving an invalid object
+  handle, which could also cause a crash when freeing the object.
+
+- ``MPI_Exscan`` now rejects intercommunicators.  Partitioned
+  communication fixes prevent hangs when starting multiple requests and
+  handle null and inactive requests in ``MPI_Parrived`` even when
+  parameter checking is disabled.
+
+- Fixed collective selection after communicator revocation and a null
+  pointer dereference during local revocation.
+
+- Fixed Lustre file handling of relative symbolic links and the OFI
+  build on macOS when ``EREMOTEIO`` is unavailable.
 
 - Fixed ``btl/tcp`` failing to connect, or hanging, on nodes that have an
   interface whose IP address is not unique across the job -- a container
@@ -34,6 +58,41 @@ Open MPI Version v5.0.11
   point-to-point messages with a tag reserved when ``MPI_Comm_idup`` is
   called, instead of sharing the parent's nonblocking-collective stream
   with the application.
+
+- Fixed OSC/UCX finalization ordering and handling of the origin datatype's
+  true lower bound in the accumulate reduction fast path.
+
+- Fixed nonblocking neighborhood collectives with duplicate Cartesian
+  neighbors and error propagation when starting a collective round.
+
+- Fixed active-message compare-and-swap progress and OSC/RDMA shared-state
+  selection with alternate BTLs and global atomicity capabilities.
+
+- Fixed predefined communicator name buffer sizing and the associated
+  memory-checker validation.
+
+- TCP connections now let the kernel select the source port.  Also fixed
+  a TCP build failure on Cygwin.
+
+- Closed a file descriptor leaked during POSIX shared-memory component
+  queries, improved job-id hashing, serialized help-file parsing, and
+  guarded diagnostic calls for BTLs without a dump callback.
+
+- Hardened directory creation and removal against filesystem races and
+  corrected singleton output-file cleanup and error handling.
+
+- Improved Fortran alignment probes by avoiding the nonstandard ``LOC``
+  intrinsic.
+
+- Updated documentation for locked-memory limits, MPI_T performance
+  variable classes, and machine-readable release discovery.  Added a
+  security policy and improved CI isolation and nightly tarball builds.
+
+- Bundled dependency versions remain PMIx 5.0.11 and PRRTE 3.0.14.
+
+Open MPI Version v5.0.11
+------------------------------
+:Date: August 2026
 
 - Internal PMIx and PRRTe versions:
   - PMIx (v5.0.11). Repo: ``https://github.com/openpmix/openpmix``. Commit hash: ``3795947f0fa625f406f1d085d1e70a8413b3febc``.
