@@ -255,6 +255,7 @@ ompi/test/file/file_info_set_view
 
 ompi/test/part/parrived_null_inactive
 ompi/test/part/partitioned_proc_null
+ompi/test/part/part_persist_thread_init
 
 ompi/test/datatype/abi_set_fortran_info
 ompi/test/datatype/ddt_pack

@@ -21,7 +21,8 @@ include $(top_srcdir)/Makefile.mca-dso-check
 
 check_PROGRAMS = \
         parrived_null_inactive \
-        partitioned_proc_null
+        partitioned_proc_null \
+        part_persist_thread_init
 TESTS = $(check_PROGRAMS)
 
 common_ldflags = $(OMPI_PKG_CONFIG_LDFLAGS)
@@ -54,6 +55,11 @@ partitioned_proc_null_SOURCES = partitioned_proc_null.c
 partitioned_proc_null_LDFLAGS = $(common_ldflags)
 partitioned_proc_null_LDADD = $(common_ldadd)
 
+part_persist_thread_init_SOURCES = part_persist_thread_init.c
+part_persist_thread_init_LDFLAGS = $(common_ldflags)
+part_persist_thread_init_LDADD = $(common_ldadd) -lpthread
+
 distclean-local:
 	rm -rf *.dSYM .deps .libs *.la *.lo *.log *.o *.trs \
-		parrived_null_inactive partitioned_proc_null Makefile
+		parrived_null_inactive partitioned_proc_null \
+		part_persist_thread_init Makefile
