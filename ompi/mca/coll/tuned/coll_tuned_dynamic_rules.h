@@ -55,10 +55,11 @@ typedef struct msg_rule_s {
     size_t msg_size_max; /* message size max (defaults to SSIZE_MAX)*/
 
     /* RESULT */
-    int result_alg;              /* result algorithm to use */
-    int result_topo_faninout;    /* result topology fan in/out to use (if applicable) */
-    long result_segsize;         /* result segment size to use */
-    int result_max_requests;     /* maximum number of outstanding requests (if applicable) */
+    int result_alg;                 /* result algorithm to use */
+    int result_topo_faninout;       /* result topology fan in/out to use (if applicable) */
+    long result_segsize;            /* result segment size to use */
+    int result_max_requests;        /* maximum number of outstanding requests (if applicable) */
+    int result_bine_implementation; /* selected bine implemantion (if algo is bine) */
 } ompi_coll_msg_rule_t;
 
 
@@ -110,10 +111,9 @@ int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p);
 
 ompi_coll_com_rule_t* ompi_coll_tuned_get_com_rule_ptr (ompi_coll_alg_rule_t* rules, int alg_id, struct ompi_communicator_t *comm);
 
-int ompi_coll_tuned_get_target_method_params (ompi_coll_com_rule_t* base_com_rule, size_t mpi_msgsize,
-                                              int* result_topo_faninout, int* result_segsize,
-                                              int* max_requests);
-
+int ompi_coll_tuned_get_target_method_params(ompi_coll_com_rule_t *base_com_rule,
+                                             size_t mpi_msgsize, int *result_topo_faninout,
+                                             int *result_segsize, int *max_requests, int *bine_imp);
 
 END_C_DECLS
 #endif /* MCA_COLL_TUNED_DYNAMIC_RULES_H_HAS_BEEN_INCLUDED */
