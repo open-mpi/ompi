@@ -244,8 +244,19 @@ AC_DEFUN([_OMPI_SETUP_PRRTE_INTERNAL], [
     OPAL_SUBDIR_ENV_RESTORE([opal_prrte_configure])
     OPAL_3RDPARTY_DIST_SUBDIRS="$OPAL_3RDPARTY_DIST_SUBDIRS prrte"
 
+    dnl The most common reason for the internal PRRTE to fail here is
+    dnl an external PMIx that Open MPI accepts but that is older than
+    dnl the internal PRRTE's own minimum.  Point the user at the easy
+    dnl way out.
     AS_IF([test "$internal_prrte_happy" = "no" -a "$enable_internal_rte" != "no"],
-          [AC_MSG_ERROR([PRRTE configuration failed.  Cannot continue.])])
+          [AS_IF([test "$opal_pmix_mode" = "external"],
+                 [AC_MSG_WARN([The internal PRRTE could not be configured against the])
+                  AC_MSG_WARN([external PMIx that Open MPI selected.  If the PRRTE output])
+                  AC_MSG_WARN([above says that this PMIx is too old, configure Open MPI])
+                  AC_MSG_WARN([with --with-pmix=internal --with-prrte=internal to use the])
+                  AC_MSG_WARN([bundled PMIx and PRRTE, or point --with-prrte at an])
+                  AC_MSG_WARN([external PRRTE built against this PMIx.])])
+           AC_MSG_ERROR([PRRTE configuration failed.  Cannot continue.])])
 
     OMPI_HAVE_PRRTE_RST=0
     AS_IF([test "$internal_prrte_happy" = "yes"],
