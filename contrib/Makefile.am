@@ -34,6 +34,21 @@ dist_amca_param_DATA += amca-param-sets/ft-mpi
 endif # WANT_FT_MPI
 
 EXTRA_DIST = \
+        pdb \
+        pdeb/commands/attach \
+        pdeb/commands/backtrace \
+        pdeb/commands/btlsm_dump \
+        pdeb/commands/detach \
+        pdeb/commands/do \
+        pdeb/commands/frame \
+        pdeb/commands/interrupt \
+        pdeb/commands/pml_dump \
+        pdeb/commands/req_dump \
+        pdeb/commands/select \
+        pdeb/commands/show \
+        pdeb/debugger/gdb \
+        pdeb/debugger/lldb \
+        pdeb/debugger/lldb_inspector.py \
         completion/mpirun.sh \
         completion/mpirun.zsh \
         datatype/README.md \
