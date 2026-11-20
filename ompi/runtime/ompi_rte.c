@@ -549,6 +549,8 @@ int ompi_rte_init(int *pargc, char ***pargv)
          * server, then we assume we are operating as a singleton */
         if (PMIX_ERR_UNREACH == ret) {
             bool found_a_pmi = false;
+            /* the variable that said a launcher started us */
+            char *found_var = NULL;
             int n = 0;
             /* if we are in a PMI environment with two tasks or more,
              * we probably do not want to start singletons */
@@ -558,6 +560,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
                     for (n = 0; NULL != sentinels[n]; n++) {
                         if (NULL != getenv(sentinels[n])) {
                             found_a_pmi = true;
+                            found_var = strdup(sentinels[n]);
                             break;
                         }
                     }
@@ -573,6 +576,7 @@ int ompi_rte_init(int *pargc, char ***pargv)
                         for (n = 0; NULL != slurm_types[n]; n++) {
                             if (0 == strcasecmp(slurm_mpi_type, slurm_types[n])) {
                                 found_a_pmi = true;
+                                found_var = strdup("SLURM_MPI_TYPE");
                                 break;
                             }
                         }
@@ -581,9 +585,16 @@ int ompi_rte_init(int *pargc, char ***pargv)
                 }
             }
             if (found_a_pmi) {
+                /* PMI_SIZE/PMI_RANK: a PMI launcher. SLURM_NPROCS/
+                 * SLURM_PROCID: srun. OMPI_COMM_WORLD_SIZE/
+                 * OMPI_COMM_WORLD_RANK: a PMIx server, which sets them
+                 * for a process of an Open MPI job */
                 char *size_str = getenv("PMI_SIZE");
                 if (NULL == size_str) {
                     size_str = getenv("SLURM_NPROCS");
+                }
+                if (NULL == size_str) {
+                    size_str = getenv("OMPI_COMM_WORLD_SIZE");
                 }
                 int size = (NULL != size_str)?atoi(size_str):1;
                 if (1 < size) {
@@ -591,12 +602,18 @@ int ompi_rte_init(int *pargc, char ***pargv)
                     if (NULL == rank_str) {
                         rank_str = getenv("SLURM_PROCID");
                     }
+                    if (NULL == rank_str) {
+                        rank_str = getenv("OMPI_COMM_WORLD_RANK");
+                    }
                     int rank = (NULL != rank_str)?atoi(rank_str):0;
                     if (0 == rank) {
-                        opal_show_help("help-mpi-runtime.txt", "no-pmix-but", false, size);
+                        opal_show_help("help-mpi-runtime.txt", "no-pmix-but", false, size,
+                                       (NULL == found_var) ? "(unknown)" : found_var,
+                                       size);
                     }
                 }
             }
+            free(found_var);
             singleton = true;
         } else {
             /* we cannot run - this could be due to being direct launched
