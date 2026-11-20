@@ -34,7 +34,6 @@
 #include "ompi/mca/part/part.h"
 #include "ompi/mca/part/base/part_base_prequest.h"
 #include "opal/datatype/opal_convertor.h"
-#include "ompi/peruse/peruse-internal.h"
 
 BEGIN_C_DECLS
 

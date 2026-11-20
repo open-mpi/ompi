@@ -316,13 +316,6 @@ struct ompi_communicator_t {
        if this is not a cart, graph or dist graph communicator) */
     struct mca_topo_base_module_t* c_topo;
 
-#ifdef OMPI_WANT_PERUSE
-    /*
-     * Place holder for the PERUSE events.
-     */
-    struct ompi_peruse_handle_t** c_peruse_handles;
-#endif
-
     /* Error handling.  This field does not have the "c_" prefix so
        that the OMPI_ERRHDL_* macros can find it, regardless of whether
        it's a comm, window, or file. */

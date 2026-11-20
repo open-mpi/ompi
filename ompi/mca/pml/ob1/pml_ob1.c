@@ -490,8 +490,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
          * figure out if the messages are not received in the correct
          * order (if multiple network interfaces).
          */
-        PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_ARRIVED, comm,
-                               hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
         mca_pml_ob1_event_raise_message(MCA_PML_OB1_EVENT_MESSAGE_ARRIVED, comm,
                                         hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx, hdr->hdr_seq);
 
@@ -527,8 +525,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             mca_pml_ob1_event_raise_unex_insert(comm, frag,
                                                 hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx,
                                                 hdr->hdr_seq);
@@ -545,8 +541,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 #else
             custom_match_umq_append(pml_comm->umq, hdr->hdr_tag, hdr->hdr_src, frag);
 #endif
-            PERUSE_TRACE_MSG_EVENT(PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm,
-                                   hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
             mca_pml_ob1_event_raise_unex_insert(comm, frag,
                                                 hdr->hdr_src, hdr->hdr_tag, hdr->hdr_ctx,
                                                 hdr->hdr_seq);

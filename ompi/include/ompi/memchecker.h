@@ -231,9 +231,6 @@ static inline int memchecker_comm(MPI_Comm comm)
     opal_memchecker_base_isdefined (&comm->c_cube_dim, sizeof(int));
     opal_memchecker_base_isdefined (&comm->c_topo, sizeof(const struct mca_topo_base_module_t *));
     opal_memchecker_base_isdefined (&comm->c_f_to_c_index, sizeof(int));
-#ifdef OMPI_WANT_PERUSE
-    opal_memchecker_base_isdefined (&comm->c_peruse_handles, sizeof(struct ompi_peruse_handle_t **));
-#endif
     opal_memchecker_base_isdefined (&comm->error_handler, sizeof(ompi_errhandler_t *));
     opal_memchecker_base_isdefined (&comm->errhandler_type, sizeof(ompi_errhandler_type_t));
     opal_memchecker_base_isdefined (&comm->c_pml_comm, sizeof(struct mca_pml_comm_t *));
