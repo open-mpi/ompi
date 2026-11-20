@@ -32,6 +32,19 @@ OUTDIR             = _build
 SPHINX_CONFIG      = $(srcdir)/conf.py
 SPHINX_OPTS       ?= -W --keep-going -j auto
 
+# Environment variables that docs/conf.py reads to learn how Open MPI
+# was configured (e.g., whether the embedded copies of the support
+# libraries are being used).
+SPHINX_ENV = \
+        OMPI_TOP_SRCDIR="$(top_srcdir)" \
+        OMPI_DOCDIR="$(docdir)" \
+        OPAL_PMIX_DOCS_URL_BASE="$(OPAL_PMIX_DOCS_URL_BASE)" \
+        OPAL_USING_INTERNAL_PMIX="$(OPAL_USING_INTERNAL_PMIX)" \
+        OMPI_PRRTE_DOCS_URL_BASE="$(OMPI_PRRTE_DOCS_URL_BASE)" \
+        OMPI_USING_INTERNAL_PRRTE="$(OMPI_USING_INTERNAL_PRRTE)" \
+        OPAL_USING_INTERNAL_HWLOC="$(OPAL_USING_INTERNAL_HWLOC)" \
+        OPAL_USING_INTERNAL_LIBEVENT="$(OPAL_USING_INTERNAL_LIBEVENT)"
+
 # Note: it is significantly more convenient to list all the source
 # files here using wildcards (vs. listing every single .rst file).
 # However, it is necessary to list $(srcdir) when using wildcards.
@@ -1184,28 +1197,18 @@ $(ALL_MAN_BUILT):
 	copied_dir=`basename $(OMPI_PRRTE_RST_CONTENT_DIR)`; \
 	chmod -R u+w "$(builddir)/$$copied_dir"
 	$(OMPI_V_SPHINX_HTML) \
-	    OMPI_TOP_SRCDIR="$(top_srcdir)" \
-	    OMPI_DOCDIR="$(docdir)" \
-	    OPAL_PMIX_DOCS_URL_BASE="$(OPAL_PMIX_DOCS_URL_BASE)" \
-	    OPAL_USING_INTERNAL_PMIX="$(OPAL_USING_INTERNAL_PMIX)" \
-	    OMPI_PRRTE_DOCS_URL_BASE="$(OMPI_PRRTE_DOCS_URL_BASE)" \
-	    OMPI_USING_INTERNAL_PRRTE="$(OMPI_USING_INTERNAL_PRRTE)" \
+	    $(SPHINX_ENV) \
 	    OMPI_LLM_BUILDDIR="$(builddir)" \
 	    $(SPHINX_BUILD) -M html "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 	$(OMPI_V_SPHINX_HTML) \
-	    OMPI_TOP_SRCDIR="$(top_srcdir)" \
-	    OMPI_DOCDIR="$(docdir)" \
-	    OPAL_PMIX_DOCS_URL_BASE="$(OPAL_PMIX_DOCS_URL_BASE)" \
-	    OPAL_USING_INTERNAL_PMIX="$(OPAL_USING_INTERNAL_PMIX)" \
-	    OMPI_PRRTE_DOCS_URL_BASE="$(OMPI_PRRTE_DOCS_URL_BASE)" \
-	    OMPI_USING_INTERNAL_PRRTE="$(OMPI_USING_INTERNAL_PRRTE)" \
+	    $(SPHINX_ENV) \
 	    $(SPHINX_BUILD) -M man "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 # A useful rule to invoke manually to ensure that all of the external
 # HTML links we have are valid.  Running this rule requires
 # connectivity to the general internet.
 linkcheck:
-	$(SPHINX_BUILD) -M linkcheck "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
+	$(SPHINX_ENV) $(SPHINX_BUILD) -M linkcheck "$(builddir)" "$(OUTDIR)" $(SPHINX_OPTS)
 
 .PHONY: linkcheck
 

@@ -62,5 +62,6 @@ oshmem_info_SOURCES = \
         param.c
 
 oshmem_info_LDADD = $(top_builddir)/ompi/lib@OMPI_LIBMPI_NAME@.la
+oshmem_info_LDADD += $(top_builddir)/ompi/libopen_mpi.la
 oshmem_info_LDADD += $(top_builddir)/oshmem/liboshmem.la
 oshmem_info_LDADD += $(top_builddir)/opal/lib@OPAL_LIB_NAME@.la

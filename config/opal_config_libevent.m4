@@ -75,6 +75,14 @@ AC_DEFUN([OPAL_CONFIG_LIBEVENT], [
     AS_IF([test "$external_libevent_happy" = "0" -a "$internal_libevent_happy" = "0"],
           [AC_MSG_ERROR([Could not find viable libevent build.])])
 
+    AS_IF([test "$opal_libevent_mode" = "internal"],
+          [OPAL_USING_INTERNAL_LIBEVENT=1],
+          [OPAL_USING_INTERNAL_LIBEVENT=0])
+    AC_DEFINE_UNQUOTED([OPAL_USING_INTERNAL_LIBEVENT],
+                       [$OPAL_USING_INTERNAL_LIBEVENT],
+                       [Whether or not we are using the internal Libevent])
+    AC_SUBST(OPAL_USING_INTERNAL_LIBEVENT)
+
     dnl this will work even if there is no libevent package included,
     dnl because libevent_tarball and libevent_directory will evaluate to
     dnl an empty string.  These are relative to the 3rd-party/

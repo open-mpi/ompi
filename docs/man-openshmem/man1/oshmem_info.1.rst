@@ -88,6 +88,21 @@ OPTIONS
 
 * ``-V``, ``--version*``: Show version of OpenSHMEM.
 
+.. _man1-oshmem_info-support-library-versions:
+
+SUPPORT LIBRARY VERSIONS
+------------------------
+
+As part of its configuration output (i.e., in the default output, and
+with ``--config`` and ``--all``), ``oshmem_info`` shows, for each of Open
+MPI's support libraries (OpenPMIx, PRRTE, hwloc, and Libevent),
+whether Open MPI was built with its embedded copy or an external
+installation, and which version of it is loaded at run time.  These are the same
+values, with the same pretty-print labels and ``--parsable`` keys,
+that ``ompi_info`` shows; see the :ref:`SUPPORT LIBRARY VERSIONS
+section of ompi_info(1) <man1-ompi_info-support-library-versions>`
+for details.
+
 .. _man1-oshmem_info-levels:
 
 LEVELS

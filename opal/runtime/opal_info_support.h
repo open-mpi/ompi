@@ -97,6 +97,27 @@ OPAL_DECLSPEC void opal_info_do_arch(void);
 
 OPAL_DECLSPEC void opal_info_do_hostname(void);
 
+/*
+ * Show whether each of the OPAL-level support libraries (OpenPMIx,
+ * hwloc, and Libevent) was built from its embedded copy or an
+ * external installation, and the version of each that is loaded at
+ * run time.
+ */
+OPAL_DECLSPEC void opal_info_do_3rd_party_versions(void);
+
+/*
+ * Return value, or "not available" if value is NULL or empty.
+ */
+OPAL_DECLSPEC const char *opal_info_value_or_not_available(const char *value);
+
+/*
+ * Given a string returned by PMIx_Get_version(), return a
+ * newly-allocated copy of just the version number in it (e.g.,
+ * "6.0.1"), or a copy of the entire string if it is not in a known
+ * format.  Returns NULL if str is NULL.
+ */
+OPAL_DECLSPEC char *opal_info_pmix_version_from_string(const char *str);
+
 OPAL_DECLSPEC void opal_info_do_type(opal_cmd_line_t *opal_info_cmd_line);
 
 OPAL_DECLSPEC void opal_info_do_event(bool want_all, opal_cmd_line_t *opal_info_cmd_line);

@@ -147,3 +147,16 @@ void ompi_info_show_ompi_version(const char *scope)
 
     opal_info_out("Ident string", "ident", OPAL_IDENT_STRING);
 }
+
+/*
+ * MPI processes never load PRRTE (it runs as separate executables),
+ * so there is no version that this process is "running with".
+ */
+void ompi_info_do_prrte_versions(void)
+{
+    opal_info_out("PRRTE built from", "3rdparty:prrte:build:source",
+                  !OMPI_HAVE_PRRTE ? "not built" :
+                  (OMPI_USING_INTERNAL_PRRTE ? "embedded" : "external"));
+    opal_info_out("PRRTE running with", "3rdparty:prrte:version:runtime",
+                  "not applicable");
+}
