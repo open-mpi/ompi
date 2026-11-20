@@ -2,6 +2,7 @@
  * Copyright (c) 2014-2020 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA CORPORATION. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -18,10 +19,50 @@
 #include "ompi/op/op.h"
 #include "ompi/mca/coll/base/coll_base_topo.h"
 #include "coll_adapt_inbuf.h"
+#include "coll_adapt_algorithms.h"
+
+/*
+ * State shared by the constant context of every pipelined ADAPT collective:
+ * where a nested completion is parked, and whether a body is already
+ * running.  Managed only by ompi_coll_adapt_run_callbacks().  No callback
+ * body takes cb_mutex, so a body can defer from inside a lock of its own.
+ */
+struct ompi_coll_adapt_constant_context_s {
+    opal_object_t super;
+    opal_list_t cb_deferred;
+    opal_mutex_t cb_mutex;
+    bool cb_running;
+};
+
+typedef struct ompi_coll_adapt_constant_context_s ompi_coll_adapt_constant_context_t;
+
+OBJ_CLASS_DECLARATION(ompi_coll_adapt_constant_context_t);
+
+/* Per-segment context header, so that a deferred context can be run without
+ * knowing which collective or which operation it came from. */
+struct ompi_coll_adapt_context_s {
+    opal_free_list_item_t super;
+    /* The callback body this context is waiting for */
+    int (*cb_body) (struct ompi_coll_adapt_context_s * context);
+};
+
+typedef struct ompi_coll_adapt_context_s ompi_coll_adapt_context_t;
+
+/*
+ * Run a context's callback body, or hand it to the frame already running one.
+ *
+ * A body posts the next operation before returning, and that operation can
+ * complete inline, calling back into a body from inside one.  Left to nest,
+ * the stack and the live contexts grow by one per already-arrived segment.
+ * Draining here bounds both by the outstanding operations; bodies still run
+ * in completion order on the same thread.
+ */
+void ompi_coll_adapt_run_callbacks(ompi_coll_adapt_constant_context_t * con,
+                                   ompi_coll_adapt_context_t * context);
 
 /* Bcast constant context in bcast context */
 struct ompi_coll_adapt_constant_bcast_context_s {
-    opal_object_t super;
+    ompi_coll_adapt_constant_context_t super;
     int root;
     size_t count;
     size_t seg_count;
@@ -33,6 +74,8 @@ struct ompi_coll_adapt_constant_bcast_context_s {
     opal_mutex_t *mutex;
     int *recv_array;
     int *send_array;
+    /* Send-side state for each child, tree_nextsize entries */
+    ompi_coll_adapt_peer_send_t *peer_send;
     /* Length of the fragment array, which is the number of received segments */
     int num_recv_segs;
     /* Number of segments that is finishing recving */
@@ -54,7 +97,7 @@ typedef struct ompi_coll_adapt_bcast_context_s ompi_coll_adapt_bcast_context_t;
 typedef int (*ompi_coll_adapt_bcast_cuda_callback_fn_t) (ompi_coll_adapt_bcast_context_t * context);
 
 struct ompi_coll_adapt_bcast_context_s {
-    opal_free_list_item_t super;
+    ompi_coll_adapt_context_t super;
     char *buff;
     int frag_id;
     int child_id;
@@ -66,7 +109,7 @@ OBJ_CLASS_DECLARATION(ompi_coll_adapt_bcast_context_t);
 
 /* Reduce constant context in reduce context */
 struct ompi_coll_adapt_constant_reduce_context_s {
-    opal_object_t super;
+    ompi_coll_adapt_constant_context_t super;
     size_t count;
     size_t seg_count;
     ompi_datatype_t *datatype;
@@ -80,8 +123,8 @@ struct ompi_coll_adapt_constant_reduce_context_s {
     /* The distance between the address of inbuf->buff and the address of inbuf */
     int distance;
     int ireduce_tag;
-    /* How many sends are posted but not finished */
-    int32_t ongoing_send;
+    /* Send-side state for the parent */
+    ompi_coll_adapt_peer_send_t peer_send;
     /* Length of the fragment array, which is the number of received segments */
     int32_t num_recv_segs;
     /* Number of sent segments */
@@ -116,7 +159,7 @@ typedef struct ompi_coll_adapt_reduce_context_s ompi_coll_adapt_reduce_context_t
 typedef int (*ompi_coll_adapt_reduce_cuda_callback_fn_t) (ompi_coll_adapt_reduce_context_t * context);
 
 struct ompi_coll_adapt_reduce_context_s {
-    opal_free_list_item_t super;
+    ompi_coll_adapt_context_t super;
     char *buff;
     int seg_index;
     int child_id;
