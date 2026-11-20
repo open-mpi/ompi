@@ -12,6 +12,7 @@
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2015-2017 Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -77,8 +78,14 @@ void ompi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr,
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(comm_name, name_len,
                                                        &c_name))) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE(c_comm, ret,
-                                        "MPI_COMM_SET_NAME");
+        /* MPI_COMM_NULL converts to a real object, so the NULL test inside
+         * the macro does not catch it, and its error handler is permanently
+         * MPI_ERRORS_ARE_FATAL.  Reduce it to the no-handle case. */
+        if (ompi_comm_invalid(c_comm)) {
+            c_comm = NULL;
+        }
+        c_ierr = OMPI_ERRHANDLER_INVOKE_OR_NOHANDLE(c_comm, ret,
+                                                    "MPI_COMM_SET_NAME");
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }
