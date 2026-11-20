@@ -111,6 +111,7 @@ static void test_destroy_recursive_with_callback(void);
 static void test_destroy_nonexistent(void);
 static void test_create_on_file(void);
 static void test_create_on_symlink(void);
+static void test_create_on_symlink_trailing_separator(void);
 static void test_destroy_does_not_follow_symlink(void);
 static void test_destroy_symlink_base(void);
 static void test_destroy_nonrecursive_with_subdir(void);
@@ -144,6 +145,7 @@ int main(int argc, char *argv[])
     test_destroy_nonexistent();
     test_create_on_file();
     test_create_on_symlink();
+    test_create_on_symlink_trailing_separator();
     test_destroy_does_not_follow_symlink();
     test_destroy_symlink_base();
     test_destroy_nonrecursive_with_subdir();
@@ -508,6 +510,49 @@ out:
     rmdir(base);
     free(target);
     free(link);
+}
+
+/*
+ * A symlink planted at the requested path must still be refused when the
+ * name is given with a trailing separator.  The separator makes the kernel
+ * resolve the final component as a directory, following the link to do it,
+ * so open(..., O_DIRECTORY | O_NOFOLLOW) opens the link's target and the
+ * fchmod() that follows re-permissions whatever the link names.  The target
+ * is a directory here (rather than a file as in test_create_on_symlink)
+ * because O_DIRECTORY has to succeed for the resolution to land at all.
+ */
+static void test_create_on_symlink_trailing_separator(void)
+{
+    char tmpl[] = "/tmp/opal_test_XXXXXX";
+    char *base = mkdtemp(tmpl);
+    if (NULL == base) {
+        test_failure("test_create_on_symlink_trailing_separator: mkdtemp failed");
+        return;
+    }
+    char *target = path_join(base, "target");
+    char *link = path_join(base, "link");
+    char *link_sep = path_join(base, "link/");
+    struct stat before, after;
+
+    if (0 != mkdir(target, S_IRWXU) || 0 != symlink(target, link)
+        || 0 != stat(target, &before)) {
+        test_failure("test_create_on_symlink_trailing_separator: setup failed");
+        goto out;
+    }
+
+    (void) opal_os_dirpath_create(link_sep, S_IRWXU | S_IRGRP | S_IXGRP);
+
+    test_verify("symlink target mode unchanged through a trailing separator",
+                0 == stat(target, &after)
+                    && (before.st_mode & 07777) == (after.st_mode & 07777));
+
+out:
+    unlink(link);
+    rmdir(target);
+    rmdir(base);
+    free(target);
+    free(link);
+    free(link_sep);
 }
 
 /* ------------------------------------------------------------------ */
