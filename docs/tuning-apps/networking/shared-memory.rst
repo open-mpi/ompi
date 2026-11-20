@@ -57,7 +57,10 @@ performance for memory.
   sender will only write the first part of a message, then wait for
   the receiver to acknowledge its readiness before continuing.  Eager
   sends *can* improve performance by decoupling senders from
-  receivers.
+  receivers.  The default is 16 KiB, or 32 KiB when a single-copy
+  component that maps a peer's memory (``xpmem``) is available.  Above
+  the limit, messages use the single-copy component, which without
+  ``xpmem`` is a copy system call (``cma``) per message.
 
 * ``btl_sm_max_send_size``: Large messages are sent in fragments of
   this size.  Larger segments *can* lead to greater efficiencies,
