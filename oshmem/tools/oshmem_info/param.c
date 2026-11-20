@@ -126,7 +126,7 @@ void oshmem_info_do_config(bool want_all)
     }
 
     (void)opal_asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: yes, OPAL support: yes, OMPI progress: %s, Event lib: yes)",
-                   "posix", OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
+                   "posix", opal_async_progress_thread_spawned ? "yes" : "no");
 
     /* output values */
     opal_info_out("Configured by", "config:user", OPAL_CONFIGURE_USER);

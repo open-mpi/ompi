@@ -222,19 +222,19 @@ int mca_io_base_file_select(ompi_file_t *file,
         opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
 
         if (OMPI_SUCCESS !=
-            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            (ret = mca_fs_base_find_available(opal_async_progress_thread_spawned, 1))) {
             return err;
         }
         if (OMPI_SUCCESS !=
-            (ret = mca_fcoll_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            (ret = mca_fcoll_base_find_available(opal_async_progress_thread_spawned, 1))) {
             return err;
         }
         if (OMPI_SUCCESS !=
-            (ret = mca_fbtl_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            (ret = mca_fbtl_base_find_available(opal_async_progress_thread_spawned, 1))) {
             return err;
         }
         if (OMPI_SUCCESS !=
-            (ret = mca_sharedfp_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            (ret = mca_sharedfp_base_find_available(opal_async_progress_thread_spawned, 1))) {
             return err;
         }
 
