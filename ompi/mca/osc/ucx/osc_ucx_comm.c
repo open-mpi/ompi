@@ -720,7 +720,7 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
     int ret = OMPI_SUCCESS;
     uint64_t remote_addr = (module->addrs[target]) + target_disp *
         OSC_UCX_GET_DISP(module, target);
-    void *free_ptr = NULL;
+    void *allocation_base = NULL;
     bool lock_acquired = false;
 
     ret = check_sync_state(module, target, false);
@@ -757,7 +757,7 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
         void *temp_addr = NULL;
         uint32_t temp_count;
         ompi_datatype_t *temp_dt;
-        ptrdiff_t temp_lb, temp_extent;
+        ptrdiff_t temp_lb, temp_extent, temp_gap, temp_span;
         bool is_origin_contig = ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
 
         if (ompi_datatype_is_predefined(target_dt)) {
@@ -770,22 +770,26 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
             }
             temp_count *= target_count;
         }
-        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-        temp_addr = free_ptr = malloc(temp_extent * temp_count);
-        if (temp_addr == NULL) {
+        /* span sizes the allocation; extent is the per-element stride */
+        ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
+        temp_span = opal_datatype_span(&temp_dt->super, temp_count, &temp_gap);
+        assert(0 == temp_gap);
+        allocation_base = malloc((size_t)temp_span);
+        if (allocation_base == NULL && temp_span > 0) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
+        temp_addr = (char *)allocation_base - temp_gap;
 
         ret = ompi_osc_ucx_get(temp_addr, (int)temp_count, temp_dt,
                                target, target_disp, target_count, target_dt, win);
         if (ret != OMPI_SUCCESS) {
-            free(temp_addr);
+            free(allocation_base);
             return ret;
         }
 
         ret = opal_common_ucx_ctx_flush(module->ctx, OPAL_COMMON_UCX_SCOPE_EP, target);
         if (ret != OMPI_SUCCESS) {
-            free(temp_addr);
+            free(allocation_base);
             return ret;
         }
 
@@ -800,7 +804,7 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
             ret = create_iov_list(origin_addr, origin_count, origin_dt,
                                   &origin_ucx_iov, &origin_ucx_iov_count);
             if (ret != OMPI_SUCCESS) {
-                free(temp_addr);
+                free(allocation_base);
                 return ret;
             }
 
@@ -838,7 +842,7 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
         ret = ompi_osc_ucx_put(temp_addr, (int)temp_count, temp_dt, target, target_disp,
                                target_count, target_dt, win);
         if (ret != OMPI_SUCCESS) {
-            free(temp_addr);
+            free(allocation_base);
             return ret;
         }
 
@@ -854,7 +858,7 @@ int accumulate_req(const void *origin_addr, size_t origin_count,
         ompi_request_complete(&ucx_req->super.super, true);
     }
 
-    return ompi_osc_ucx_acc_unlock(module, target, lock_acquired, free_ptr);
+    return ompi_osc_ucx_acc_unlock(module, target, lock_acquired, allocation_base);
 }
 
 int ompi_osc_ucx_accumulate(const void *origin_addr, size_t origin_count,
@@ -872,7 +876,7 @@ static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, size_t stage_count,
                     size_t target_count, struct ompi_datatype_t *target_dt, struct ompi_op_t
                     *op, struct ompi_win_t *win, bool lock_acquired, const void
                     *origin_addr, size_t origin_count, struct ompi_datatype_t *origin_dt, bool is_put,
-                    int phase, int acc_type) {
+                    int phase, int acc_type, void *stage_allocation_base) {
     ompi_osc_ucx_module_t *module = (ompi_osc_ucx_module_t*) win->w_osc_module;
     ucp_ep_h *ep;
     OSC_UCX_GET_DEFAULT_EP(ep, module, target);
@@ -916,7 +920,8 @@ static inline int ompi_osc_ucx_acc_rputget(void *stage_addr, size_t stage_count,
         }
         ucx_req->target_disp = target_disp;
         ucx_req->target_count = target_count;
-        ucx_req->free_ptr = NULL;
+        /* allocation base, freed by the completion path */
+        ucx_req->free_ptr = stage_allocation_base;
     }
     sync_check = module->skip_sync_check;
     module->skip_sync_check = true; /* we already hold the acc lock, so no need for sync check*/
@@ -1076,7 +1081,6 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, size
     int ret = OMPI_SUCCESS;
     uint64_t remote_addr = (module->addrs[target]) + target_disp *
         OSC_UCX_GET_DISP(module, target);
-    void *free_ptr = NULL;
     bool lock_acquired = false;
 
     ret = check_sync_state(module, target, false);
@@ -1114,7 +1118,8 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, size
         /* This is a get-accumulate operation, so read the target data into result addr */
         ret = ompi_osc_ucx_acc_rputget(result_addr, (int)result_count, result_dt, target,
                 target_disp, target_count, target_dt, op,  win, lock_acquired,
-                origin_addr, origin_count, origin_dt, false, ACC_GET_RESULTS_DATA, GET_ACCUMULATE);
+                origin_addr, origin_count, origin_dt, false, ACC_GET_RESULTS_DATA, GET_ACCUMULATE,
+                NULL);
         if (ret != OMPI_SUCCESS) {
             return ret;
         } else if (op == &ompi_mpi_op_no_op.op || op == &ompi_mpi_op_replace.op) {
@@ -1128,15 +1133,16 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, size
         /* No need for get, just use put and realize when to release the lock */
         ret = ompi_osc_ucx_acc_rputget(NULL, 0, NULL, target, target_disp,
                 target_count, target_dt, op,  win, lock_acquired, origin_addr,
-                origin_count, origin_dt, true, ACC_PUT_TARGET_DATA, ACCUMULATE);
+                origin_count, origin_dt, true, ACC_PUT_TARGET_DATA, ACCUMULATE, NULL);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
     } else {
         void *temp_addr = NULL;
+        void *allocation_base = NULL;
         uint32_t temp_count;
         ompi_datatype_t *temp_dt;
-        ptrdiff_t temp_lb, temp_extent;
+        ptrdiff_t temp_lb, temp_extent, temp_gap, temp_span;
 
         if (ompi_datatype_is_predefined(target_dt)) {
             temp_dt = target_dt;
@@ -1148,16 +1154,20 @@ static int ompi_osc_ucx_get_accumulate_nonblocking(const void *origin_addr, size
             }
             temp_count *= target_count;
         }
-        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-        temp_addr = free_ptr = malloc(temp_extent * temp_count);
-        if (temp_addr == NULL) {
+        /* span sizes the allocation; extent is the per-element stride */
+        ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
+        temp_span = opal_datatype_span(&temp_dt->super, temp_count, &temp_gap);
+        assert(0 == temp_gap);
+        allocation_base = malloc((size_t)temp_span);
+        if (allocation_base == NULL && temp_span > 0) {
             return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
+        temp_addr = (char *)allocation_base - temp_gap;
 
         ret = ompi_osc_ucx_acc_rputget(temp_addr, (int)temp_count, temp_dt, target,
                 target_disp, target_count, target_dt, op,  win, lock_acquired,
                 origin_addr, origin_count, origin_dt, false, ACC_GET_STAGE_DATA,
-                acc_type);
+                acc_type, allocation_base);
         if (ret != OMPI_SUCCESS) {
             return ret;
         }
@@ -1393,7 +1403,7 @@ int get_accumulate_req(const void *origin_addr, size_t origin_count,
             void *temp_addr = NULL;
             uint32_t temp_count;
             ompi_datatype_t *temp_dt;
-            ptrdiff_t temp_lb, temp_extent;
+            ptrdiff_t temp_lb, temp_extent, temp_gap, temp_span;
             bool is_origin_contig = ompi_datatype_is_contiguous_memory_layout(origin_dt, origin_count);
 
             if (ompi_datatype_is_predefined(target_dt)) {
@@ -1406,11 +1416,15 @@ int get_accumulate_req(const void *origin_addr, size_t origin_count,
                 }
                 temp_count *= target_count;
             }
-            ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
-            temp_addr = free_addr = malloc(temp_extent * temp_count);
-            if (temp_addr == NULL) {
+            /* span sizes the allocation; extent is the per-element stride */
+            ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
+            temp_span = opal_datatype_span(&temp_dt->super, temp_count, &temp_gap);
+            assert(0 == temp_gap);
+            free_addr = malloc((size_t)temp_span);
+            if (free_addr == NULL && temp_span > 0) {
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             }
+            temp_addr = (char *)free_addr - temp_gap;
 
             ret = ompi_osc_ucx_get(temp_addr, (int)temp_count, temp_dt,
                                    target, target_disp, target_count, target_dt, win);
@@ -1804,7 +1818,7 @@ void ompi_osc_ucx_req_completion(void *request) {
                      * buffer with origin buffer and then release the lock  */
                     ret = ompi_osc_ucx_acc_rputget(NULL, 0, NULL, target, target_disp,
                             target_count, target_dt, op, win, 0, origin_addr, origin_count,
-                            origin_dt, true, -1, NONE);
+                            origin_dt, true, -1, NONE, NULL);
                     if (ret != OMPI_SUCCESS) {
                         OSC_UCX_ERROR("ompi_osc_ucx_acc_rputget failed ret= %d\n", ret);
                         free(temp_addr);
@@ -1862,7 +1876,7 @@ void ompi_osc_ucx_req_completion(void *request) {
                     } else {
                         int i;
                         void *curr_origin_addr = origin_ucx_iov[origin_ucx_iov_idx].addr;
-                        ompi_datatype_get_true_extent(temp_dt, &temp_lb, &temp_extent);
+                        ompi_datatype_get_extent(temp_dt, &temp_lb, &temp_extent);
                         for (i = 0; i < (int)temp_count; i++) {
                             ompi_op_reduce(op, curr_origin_addr,
                                            (void *)((char *)temp_addr + i * temp_extent),
@@ -1895,14 +1909,14 @@ void ompi_osc_ucx_req_completion(void *request) {
 
                 ret = ompi_osc_ucx_acc_rputget(NULL, 0, NULL, target, target_disp,
                         target_count, target_dt, op, win, 0, temp_addr, temp_count,
-                        temp_dt, true, -1, NONE);
+                        temp_dt, true, -1, NONE, NULL);
                 if (ret != OMPI_SUCCESS) {
                     OSC_UCX_ERROR("ompi_osc_ucx_acc_rputget failed ret= %d\n", ret);
-                    free(temp_addr);
+                    free(req->free_ptr);
                     abort();
                 }
                 release_lock = true;
-                free_addr = temp_addr;
+                free_addr = req->free_ptr;
                 break;
             }
 
