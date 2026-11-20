@@ -76,7 +76,7 @@ struct ompi_part_persist_t {
     ompi_request_t        *part_comm_sreq;
     int32_t                part_comm_sready;
     int32_t                init_comms;    
-    int32_t                init_world;
+    opal_atomic_int32_t    init_world;
     int32_t                my_world_rank; /* Because the back end communicators use a world rank, we need to communicate ours 
                                              to set up the requests. */
     opal_atomic_int32_t    block_entry;
@@ -160,12 +160,46 @@ mca_part_persist_complete(struct mca_part_persist_request_t* request)
  * both send and recv request testing and completion. It also handles freeing requests,
  * after MPI_Free is called and the requests have become inactive.
  */
+__opal_attribute_always_inline__ static inline int32_t
+mca_part_persist_load_init_world(void)
+{
+#if OPAL_USE_GCC_BUILTIN_ATOMICS
+    return __atomic_load_n(&ompi_part_persist.init_world, __ATOMIC_ACQUIRE);
+#elif OPAL_USE_C11_ATOMICS
+    return atomic_load_explicit(&ompi_part_persist.init_world, memory_order_acquire);
+#else
+    int32_t val = ompi_part_persist.init_world;
+    opal_atomic_rmb();
+    return val;
+#endif
+}
+
+__opal_attribute_always_inline__ static inline void
+mca_part_persist_store_init_world(int32_t val)
+{
+#if OPAL_USE_GCC_BUILTIN_ATOMICS
+    __atomic_store_n(&ompi_part_persist.init_world, val, __ATOMIC_RELEASE);
+#elif OPAL_USE_C11_ATOMICS
+    atomic_store_explicit(&ompi_part_persist.init_world, val, memory_order_release);
+#else
+    opal_atomic_wmb();
+    ompi_part_persist.init_world = val;
+#endif
+}
+
 __opal_attribute_always_inline__ static inline int
 mca_part_persist_progress(void)
 {
     mca_part_persist_list_t *current;
     int err;
     size_t i;
+
+    /* Don't do anything till a function in the module is called.
+     * Acquire load pairs with the release CAS in precv_init/psend_init
+     * under weak memory ordering (MPI_THREAD_MULTIPLE). */
+    if (-1 == mca_part_persist_load_init_world()) {
+        return OMPI_SUCCESS;
+    }
 
     /* prevent re-entry, */
     int block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), 1);
@@ -180,15 +214,14 @@ mca_part_persist_progress(void)
     mca_part_persist_request_t* to_delete = NULL;
 
     /* Don't do anything till a function in the module is called. */
-    if(-1 == ompi_part_persist.init_world)
-    {
+    if (-1 == mca_part_persist_load_init_world()) {
         OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
         block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
         return OMPI_SUCCESS;
     }
 
     /* Can't do anything if we don't have world */
-    if(0 == ompi_part_persist.init_world) {
+    if (0 == mca_part_persist_load_init_world()) {
         ompi_part_persist.my_world_rank = ompi_comm_rank(&ompi_mpi_comm_world.comm);
         err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm, &ompi_part_persist.part_comm_req);
         if(err != OMPI_SUCCESS) {
@@ -200,7 +233,7 @@ mca_part_persist_progress(void)
             exit(-1);
         }
         ompi_part_persist.part_comm_sready = 0;
-        ompi_part_persist.init_world = 1;
+        mca_part_persist_store_init_world(1);
 
         OPAL_THREAD_UNLOCK(&ompi_part_persist.lock);
         block_entry = opal_atomic_add_fetch_32(&(ompi_part_persist.block_entry), -1);
@@ -369,9 +402,9 @@ mca_part_persist_precv_init(void *buf,
     mca_part_persist_precv_request_t *recvreq;
 
     /* if module hasn't been called before, flag module to init. */
-    if(-1 == ompi_part_persist.init_world)
-    {
-        ompi_part_persist.init_world = 0;
+    if (-1 == mca_part_persist_load_init_world()) {
+        int32_t expected = -1;
+        opal_atomic_compare_exchange_strong_rel_32(&ompi_part_persist.init_world, &expected, 0);
     }
 
     /* Allocate a new request */
@@ -439,9 +472,9 @@ mca_part_persist_psend_init(const void* buf,
     mca_part_persist_psend_request_t *sendreq;
 
     /* if module hasn't been called before, flag module to init. */
-    if(-1 == ompi_part_persist.init_world)
-    {
-        ompi_part_persist.init_world = 0;
+    if (-1 == mca_part_persist_load_init_world()) {
+        int32_t expected = -1;
+        opal_atomic_compare_exchange_strong_rel_32(&ompi_part_persist.init_world, &expected, 0);
     }
 
     /* Create new request object */
