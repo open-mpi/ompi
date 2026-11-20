@@ -118,6 +118,12 @@ WHEN COMMUNICATOR IS AN INTER-COMMUNICATOR
 When the communicator is an inter-communicator, the failures of members
 in both the local and the remote groups of *comm* are acknowledged.
 
+MPI_ANY_SOURCE receive operations on an inter-communicator only match
+processes of the remote group. Thus, only a failure in the remote group
+raises an error of class MPIX_ERR_PROC_FAILED_PENDING for them, and they
+proceed again once all the known failures of the remote group have been
+acknowledged, whether or not those of the local group have.
+
 ERRORS
 ------
 

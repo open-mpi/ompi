@@ -6,7 +6,7 @@ PROGS = mpi_no_op mpi_barrier hello hello_nodename abort multi_abort comm_abort 
 		parallel_w8 parallel_w64 parallel_r8 parallel_r64 sio sendrecv_blaster early_abort \
 		debugger singleton_client_server intercomm_create spawn_tree init-exit77 mpi_info \
 		info_spawn server client ring binding badcoll attach xlib ompio_file_info \
-		no-disconnect nonzero interlib pinterlib add_host \
+		no-disconnect nonzero interlib pinterlib add_host ft_intercomm \
 		buffer_attach_detach_f08 \
 		osc_ucx_bottom_accumulate
 

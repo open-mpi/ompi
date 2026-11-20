@@ -8,6 +8,63 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- The ULFM failure queries on an intercommunicator --
+  ``MPIX_Comm_get_failed``, ``MPIX_Comm_ack_failed`` and
+  ``MPIX_Comm_failure_get_acked`` -- now report and acknowledge the
+  failed processes of both of its groups, as their man pages describe.
+  They reported only the local group, so a process could not learn
+  through an intercommunicator that the processes on the other side of
+  it -- the only ones it can address through that communicator -- were
+  gone, could not acknowledge their failure, and could therefore
+  neither re-enable ``MPI_ANY_SOURCE`` nor complete an
+  ``MPIX_Comm_agree``.  ``MPIX_Comm_ack_failed`` also rejected a
+  ``num_to_ack`` larger than the local group, although the failures it
+  acknowledges can be in either group.  ``MPI_ANY_SOURCE`` receives
+  on an intercommunicator, which only match the remote group, are now
+  disabled only by a failure in the remote group, and resume once the
+  failures there are acknowledged; a failure in the local group no
+  longer affects them.
+
+- ULFM's non-blocking agreement, ``MPIX_Comm_iagree``, is now available
+  on intercommunicators, and with it ``MPIX_Comm_ishrink``.  Both
+  previously fell back on a plain ``MPI_Iallreduce``, which does not
+  survive a process failure.  Their blocking counterparts were already
+  fault tolerant on an intercommunicator.
+
+- ``MPIX_Comm_shrink`` and ``MPIX_Comm_ishrink`` now work on an
+  intercommunicator.  Three things stood between them and a result:
+  they computed the group of failed processes from the remote group
+  alone, although both groups of an intercommunicator can lose
+  processes; rebuilding the local communicator settled on its context
+  id with an ordinary allreduce over a communicator that had just lost
+  a process; and agreeing on the new intercommunicator's context id had
+  no fault tolerant implementation at all.
+
+- A job created by ``MPI_COMM_SPAWN`` is now launched with the same
+  runtime options ULFM asks for on the job ``mpirun`` started.
+  Previously the children got PRRTE's defaults, under which the first
+  process to fail took the entire child job down with it, and the
+  survivors were never notified -- so a failure in a spawned job was
+  reported to its parents as the loss of every one of its processes.
+
+- The early terminating agreement, ``coll_ftagree_agreement=2``, works
+  again.  It read each peer's contribution at the wrong offset,
+  subscripting a message whose agreed value is a flexible array member
+  as if ``sizeof()`` gave its size on the wire.  Peers disagreed on
+  whether the agreement had converged and the ones left behind hung.
+  It also had no non-blocking agreement to create communicators with,
+  and now borrows the early returning one.
+
+- Fixed ULFM agreements silently losing their fault tolerance.  When
+  ``coll/ftagree`` had no agreement to offer for a communicator -- which
+  was the case for every communicator under
+  ``coll_ftagree_agreement=0`` (allreduce), and for intercommunicators
+  under ``coll_ftagree_agreement=2`` (early terminating) -- it replaced
+  the implementation installed by ``coll/basic`` with a null one,
+  leaving the communicator with no agreement at all.  ``coll/ftagree``
+  now installs only the agreements it implements, and declines
+  communicators it has nothing to offer for.
+
 - ``coll/ucc`` now creates a UCC context per family of communicators
   instead of one per process over ``MPI_COMM_WORLD``.  MPI Sessions
   programs that never create ``MPI_COMM_WORLD`` can use UCC, and a

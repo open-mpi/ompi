@@ -18,6 +18,9 @@
  */
 
 #include "ompi_config.h"
+
+#include <limits.h>
+
 #include "opal/class/opal_free_list.h"
 #include "opal/mca/btl/btl.h"
 
@@ -381,6 +384,12 @@ struct era_iagree_request_s {
     void                 *contrib;
     ompi_group_t        **outgroup;
     ompi_coll_ftagree_era_agreement_info_t *ci;
+    /* An intercommunicator agrees on both halves at once, so the agreement
+     * operates on the pair and the caller's half is copied back on
+     * completion.  user_contrib is NULL when contrib is already theirs. */
+    void                 *user_contrib;
+    int                   contriblh[2];
+    bool                  first;
 };
 
 OBJ_CLASS_INSTANCE(ompi_coll_ftagree_era_iagree_request_t,
@@ -952,15 +961,31 @@ int mca_coll_ftagree_era_comm_init(ompi_communicator_t *comm, mca_coll_ftagree_m
     comm_ag_info->agreement_seq_num = 0;
 
     module->agreement_info = comm_ag_info;
+    module->comm = comm;
+    /* An intracommunicator agrees over itself; a shadow for an
+     * intercommunicator is built on first use. */
+    module->agreement_comm = OMPI_COMM_IS_INTER(comm) ? NULL : comm;
 
     return OMPI_SUCCESS;
 }
 
 int mca_coll_ftagree_era_comm_finalize(mca_coll_ftagree_module_t *module)
 {
-    mca_coll_ftagree_t *comm_ag_info;
-    comm_ag_info = module->agreement_info;
-    OBJ_RELEASE(comm_ag_info);
+    if( NULL != module->agreement_comm ) {
+        if( module->agreement_comm != module->comm ) {
+            /* The shadow borrowed its cid; give it back, or the
+             * destructor frees an index that is still in use. */
+            module->agreement_comm->c_index = MPI_UNDEFINED;
+            OBJ_RELEASE(module->agreement_comm);
+        }
+        module->agreement_comm = NULL;
+    }
+    module->comm = NULL;
+
+    if( NULL != module->agreement_info ) {
+        OBJ_RELEASE(module->agreement_info);
+        module->agreement_info = NULL;
+    }
     return OMPI_SUCCESS;
 }
 
@@ -2789,10 +2814,31 @@ static void era_cb_fn(struct mca_btl_base_module_t* btl,
     }
 }
 
+/**
+ * The shadow of 'comm' if one was already built, else NULL.  Unlike
+ * era_agreement_comm() this never creates one: a failure is no reason to
+ * build a shadow for a communicator that has never agreed on anything.
+ */
+static ompi_communicator_t *era_agreement_comm_lookup(ompi_communicator_t *comm)
+{
+    mca_coll_ftagree_module_t *module;
+
+    if( NULL == comm->c_coll
+     || mca_coll_ftagree_era_inter != comm->c_coll->coll_agree ) {
+        return NULL;
+    }
+    module = (mca_coll_ftagree_module_t *)comm->c_coll->coll_agree_module;
+    if( NULL == module || module->agreement_comm == comm ) {
+        return NULL;
+    }
+    return module->agreement_comm;
+}
+
 static void era_on_comm_rank_failure(ompi_communicator_t *comm, int rank, bool remote)
 {
     void *value, *next_value;
     ompi_coll_ftagree_era_agreement_info_t *ci;
+    ompi_communicator_t *agreement_comm;
     void *node;
     uint64_t key64, key64_2;
     int rc;
@@ -2811,6 +2857,13 @@ static void era_on_comm_rank_failure(ompi_communicator_t *comm, int rank, bool r
         AGS(comm)->ags_status |= AGS_AFR_DIRTY;
     }
 
+    /** The loop below only reaches agreements in flight.  An
+     *  intercommunicator keeps its state on a shadow that outlives them, so
+     *  mark that too or the next agreement starts from a stale tree. */
+    agreement_comm = era_agreement_comm_lookup(comm);
+    if( NULL != agreement_comm && NULL != AGS(agreement_comm) ) {
+        AGS(agreement_comm)->ags_status |= AGS_AFR_DIRTY;
+    }
     /** Discard incomplete messages, and remove the entry to store these messages */
     proc_name = ompi_group_get_proc_name(remote ? comm->c_remote_group : comm->c_local_group, rank);
     key64 = hash_name( proc_name );
@@ -3224,6 +3277,70 @@ int mca_coll_ftagree_era_intra(void *contrib,
     return rc;
 }
 
+/**
+ * The communicator the agreements of 'comm' run over, NULL on failure.
+ *
+ * An agreement has to reach every participant from a single group, which an
+ * intercommunicator does not provide, so its agreements run over a shadow
+ * spanning the union of the two groups.  The shadow shares the cid and epoch
+ * of the communicator it stands for: ERA matches agreements by those from its
+ * own BML callbacks, which is also how a failure reported against the
+ * original finds an agreement running over the shadow.
+ *
+ * Built once and kept for as long as the module lives; groups are immutable,
+ * and a non-blocking agreement needs it after its call has returned.
+ */
+static ompi_communicator_t *era_agreement_comm(ompi_communicator_t *comm,
+                                               mca_coll_ftagree_module_t *module)
+{
+    ompi_communicator_t *shadowcomm;
+    ompi_group_t *uniongrp;
+    int rc;
+
+    if( OPAL_LIKELY(NULL != module->agreement_comm) ) {
+        return module->agreement_comm;
+    }
+    /* era_comm_init() already pointed an intracommunicator at itself. */
+    assert(OMPI_COMM_IS_INTER(comm));
+
+    /* Ordered the same way on both sides, so a rank means the same
+     * thing to everyone. */
+    module->agreement_comm_first = (0 != ompi_comm_determine_first_auto(comm));
+    if( module->agreement_comm_first ) {
+        rc = ompi_group_union( comm->c_local_group, comm->c_remote_group, &uniongrp );
+    }
+    else {
+        rc = ompi_group_union( comm->c_remote_group, comm->c_local_group, &uniongrp );
+    }
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        return NULL;
+    }
+
+    rc = ompi_comm_set(&shadowcomm,                 /* new comm */
+                  comm,                            /* old comm */
+                  ompi_group_size(uniongrp),       /* local_size */
+                  NULL,                            /* local_procs */
+                  0,                               /* remote_size */
+                  NULL,                            /* remote procs */
+                  NULL,                            /* attrs */
+                  comm->error_handler,             /* error handler */
+                  uniongrp,                        /* local group */
+                  NULL,                            /* remote group */
+                  0);                              /* flags */
+    ompi_group_free(&uniongrp);
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
+        return NULL;
+    }
+
+    shadowcomm->c_contextid = comm->c_contextid;
+    shadowcomm->c_epoch = comm->c_epoch;
+    shadowcomm->c_index = comm->c_index;
+    snprintf(shadowcomm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "SHADOW OF %s", &comm->c_name[0]);
+
+    module->agreement_comm = shadowcomm;
+    return module->agreement_comm;
+}
+
 /*
  * mca_coll_ftagree_era_inter
  *
@@ -3239,63 +3356,15 @@ int mca_coll_ftagree_era_inter(void *contrib,
                                          ompi_communicator_t* comm,
                                          mca_coll_base_module_t *module)
 {
-    ompi_communicator_t* shadowcomm;
-    ompi_group_t* uniongrp;
-    int contriblh[2];
     int rc;
-    int first;
+    ompi_request_t* req;
 
-    if( OPAL_UNLIKELY(op != &ompi_mpi_op_band.op
-                   || dt != &ompi_mpi_int.dt
-                   || dt_count != 1) ) {
-        return MPI_ERR_UNSUPPORTED_OPERATION;
-    }
-
-    first = ompi_comm_determine_first_auto(comm);
-    if( first ) {
-        ompi_group_union( comm->c_local_group, comm->c_remote_group, &uniongrp );
-        contriblh[0] = *(int*)contrib;
-        contriblh[1] = ~0;
-    }
-    else {
-        ompi_group_union( comm->c_remote_group, comm->c_local_group, &uniongrp );
-        contriblh[0] = ~0;
-        contriblh[1] = *(int*)contrib;
-    }
-
-    /* The 'shadowcomm' is used to perform the agreement on the union of the
-     * local and remote groups. We create a 'fake' new communicator that shares
-     * the cid/c_index with the original. This is possible because ERA does not
-     * use normal MPI messages, but only uses c_index to match agreements
-     * from its own BML callbacks.
-     */
-    ompi_comm_set(&shadowcomm,                     /* new comm */
-                  comm,                            /* old comm */
-                  ompi_group_size(uniongrp),       /* local_size */
-                  NULL,                            /* local_procs */
-                  0,                               /* remote_size */
-                  NULL,                            /* remote procs */
-                  NULL,                            /* attrs */
-                  comm->error_handler,             /* error handler */
-                  uniongrp,                        /* local group */
-                  NULL,                            /* remote group */
-                  0);                              /* flags */
-
-    ompi_group_free(&uniongrp);
-    shadowcomm->c_contextid = comm->c_contextid;
-    shadowcomm->c_epoch = comm->c_epoch;
-    shadowcomm->c_index = comm->c_index;
-    snprintf(shadowcomm->c_name, OMPI_MPI_MAX_OBJECT_NAME_ABI, "SHADOW OF %s", &comm->c_name[0]);
-    shadowcomm->any_source_offset = comm->any_source_offset;
-    shadowcomm->agreement_specific = comm->agreement_specific;
-
-    rc = mca_coll_ftagree_era_intra(contriblh, dt_count*2, dt, op, group, grp_update, shadowcomm, module);
-
-    comm->agreement_specific = shadowcomm->agreement_specific;
-    if( NULL != comm->agreement_specific ) OBJ_RETAIN(comm->agreement_specific);
-    OBJ_RELEASE(shadowcomm);
-
-    *(int*)contrib = first? contriblh[1]: contriblh[0];
+    rc = mca_coll_ftagree_iera_inter(contrib, dt_count, dt, op, group, grp_update, comm, &req, module);
+    if(OPAL_UNLIKELY( OMPI_SUCCESS != rc ))
+        return rc;
+    ompi_request_wait_completion(req);
+    rc = req->req_status.MPI_ERROR;
+    ompi_request_free(&req);
     return rc;
 }
 
@@ -3322,34 +3391,33 @@ static int era_iagree_req_complete_cb(struct ompi_request_t* request)
     assert( req->ci->status == COMPLETED );
 
     rc = mca_coll_ftagree_era_complete_agreement(req->agreement_id, req->contrib, req->outgroup);
+    if( NULL != req->user_contrib ) {
+        /* Agreed on both halves; the caller only asked about its own */
+        *(int*)req->user_contrib = req->first? req->contriblh[1]: req->contriblh[0];
+    }
     req->ci = NULL;
     req->super.req_status.MPI_ERROR = rc;
     return 0;
 }
 
-int mca_coll_ftagree_iera_intra(void *contrib,
-                                          size_t dt_count,
-                                          ompi_datatype_t *dt,
-                                          ompi_op_t *op,
-                                          ompi_group_t **group, bool grp_update,
-                                          ompi_communicator_t* comm,
-                                          ompi_request_t **request,
-                                          mca_coll_base_module_t *module)
+/**
+ * A request for an agreement about to start on 'comm', the communicator the
+ * user called on -- an error handler is raised against that one, not against
+ * the one the agreement runs over.
+ */
+static ompi_coll_ftagree_era_iagree_request_t *
+era_iagree_request_get(ompi_communicator_t* comm)
 {
     opal_free_list_item_t* item;
     ompi_coll_ftagree_era_iagree_request_t *req;
-    era_identifier_t agreement_id;
-    ompi_coll_ftagree_era_agreement_info_t *ci;
 
     item = opal_free_list_get(&era_iagree_requests);
-    if( NULL == item ) return OMPI_ERR_OUT_OF_RESOURCE;
+    if( NULL == item ) return NULL;
     req = (ompi_coll_ftagree_era_iagree_request_t*)item;
 
     OMPI_REQUEST_INIT(&req->super, false);
     assert(MPI_UNDEFINED == req->super.req_f_to_c_index);
 
-    mca_coll_ftagree_era_prepare_agreement(comm, *group, op, dt, dt_count, contrib, module,
-                                                     &agreement_id, &ci);
     req->super.req_state = OMPI_REQUEST_ACTIVE;
     req->super.req_type = OMPI_REQUEST_COLL;
     req->super.req_status.MPI_SOURCE = MPI_ANY_SOURCE;
@@ -3363,6 +3431,31 @@ int mca_coll_ftagree_iera_intra(void *contrib,
     req->super.req_free = era_iagree_req_free;
     req->super.req_cancel = NULL; /**< Don't know how to cancel an immediate agreement */
     req->super.req_complete_cb = era_iagree_req_complete_cb;
+
+    req->user_contrib = NULL;
+    req->first = false;
+
+    return req;
+}
+
+/**
+ * Enter the agreement and attach it to the request.  'contrib' is what the
+ * agreement operates on, req->contriblh when that is not the caller's buffer.
+ */
+static void era_iagree_request_start(ompi_coll_ftagree_era_iagree_request_t *req,
+                                     void *contrib,
+                                     size_t dt_count,
+                                     ompi_datatype_t *dt,
+                                     ompi_op_t *op,
+                                     ompi_group_t **group, bool grp_update,
+                                     ompi_communicator_t* agreement_comm,
+                                     mca_coll_base_module_t *module)
+{
+    era_identifier_t agreement_id;
+    ompi_coll_ftagree_era_agreement_info_t *ci;
+
+    mca_coll_ftagree_era_prepare_agreement(agreement_comm, *group, op, dt, dt_count, contrib, module,
+                                                     &agreement_id, &ci);
 
     req->agreement_id = agreement_id;
     req->contrib = contrib;
@@ -3378,6 +3471,103 @@ int mca_coll_ftagree_iera_intra(void *contrib,
         ompi_request_complete(&req->super, false);
         opal_mutex_unlock(&era_mutex);
     }
+}
+
+int mca_coll_ftagree_iera_intra(void *contrib,
+                                          size_t dt_count,
+                                          ompi_datatype_t *dt,
+                                          ompi_op_t *op,
+                                          ompi_group_t **group, bool grp_update,
+                                          ompi_communicator_t* comm,
+                                          ompi_request_t **request,
+                                          mca_coll_base_module_t *module)
+{
+    ompi_coll_ftagree_era_iagree_request_t *req;
+
+    req = era_iagree_request_get(comm);
+    if( NULL == req ) return OMPI_ERR_OUT_OF_RESOURCE;
+
+    era_iagree_request_start(req, contrib, dt_count, dt, op, group, grp_update,
+                             comm, module);
+
+    *request = &req->super;
+
+    return OMPI_SUCCESS;
+}
+
+/**
+ * The identity element of 'op' over a single int, in *identity.
+ *
+ * Both halves are reduced at once, so each side has to leave in the half it
+ * does not belong to something that cannot change that half's result.
+ */
+static int era_op_identity(ompi_op_t *op, int *identity)
+{
+    if(      &ompi_mpi_op_band.op == op ) { *identity = ~0;      }
+    else if( &ompi_mpi_op_bor.op  == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_bxor.op == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_land.op == op ) { *identity = 1;       }
+    else if( &ompi_mpi_op_lor.op  == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_lxor.op == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_max.op  == op ) { *identity = INT_MIN; }
+    else if( &ompi_mpi_op_min.op  == op ) { *identity = INT_MAX; }
+    else if( &ompi_mpi_op_sum.op  == op ) { *identity = 0;       }
+    else if( &ompi_mpi_op_prod.op == op ) { *identity = 1;       }
+    else {
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
+    return OMPI_SUCCESS;
+}
+
+/*
+ * mca_coll_ftagree_iera_inter
+ *
+ * Function:	- MPI_Comm_iagree()
+ * Accepts:	- same as MPI_Comm_iagree()
+ * Returns:	- MPI_SUCCESS or an MPI error code
+ */
+int mca_coll_ftagree_iera_inter(void *contrib,
+                                          size_t dt_count,
+                                          ompi_datatype_t *dt,
+                                          ompi_op_t *op,
+                                          ompi_group_t **group, bool grp_update,
+                                          ompi_communicator_t* comm,
+                                          ompi_request_t **request,
+                                          mca_coll_base_module_t *module)
+{
+    ompi_coll_ftagree_era_iagree_request_t *req;
+    ompi_communicator_t *agreement_comm;
+    int identity;
+
+    /* The pair of halves is a fixed two ints, so only a single int can be
+     * agreed on.  Every caller in the tree asks for exactly that. */
+    if( OPAL_UNLIKELY(dt != &ompi_mpi_int.dt || 1 != dt_count
+                   || OMPI_SUCCESS != era_op_identity(op, &identity)) ) {
+        return MPI_ERR_UNSUPPORTED_OPERATION;
+    }
+
+    agreement_comm = era_agreement_comm(comm, (mca_coll_ftagree_module_t *)module);
+    if( OPAL_UNLIKELY(NULL == agreement_comm) ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    req = era_iagree_request_get(comm);
+    if( NULL == req ) return OMPI_ERR_OUT_OF_RESOURCE;
+
+    /* Contribute to our own half, leave the identity in the other's. */
+    req->user_contrib = contrib;
+    req->first = ((mca_coll_ftagree_module_t *)module)->agreement_comm_first;
+    if( req->first ) {
+        req->contriblh[0] = *(int*)contrib;
+        req->contriblh[1] = identity;
+    }
+    else {
+        req->contriblh[0] = identity;
+        req->contriblh[1] = *(int*)contrib;
+    }
+
+    era_iagree_request_start(req, req->contriblh, dt_count*2, dt, op, group, grp_update,
+                             agreement_comm, module);
 
     *request = &req->super;
 
