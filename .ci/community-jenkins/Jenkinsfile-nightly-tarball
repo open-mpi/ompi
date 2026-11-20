@@ -105,6 +105,12 @@ currentBuild.displayName = "#${currentBuild.number} - ${branchName}"
 currentBuild.description = "<b>Branch:</b> ${branchName}<br>\n"
 
 node("release-builder") {
+  // Wrap the entire build in a try/catch so that any failure sends a Slack
+  // notification to the community Jenkins' configured channel before the
+  // exception propagates and marks the build FAILED.  The early "return"s in
+  // the change-detection / ineligible-branch paths above exit normally and do
+  // not trigger this catch, so only genuine build failures are reported.
+  try {
     // Per-branch output location in S3, e.g. "main/" or "v6.0.x/".
     def outputLocation = "${branchName}/"
     def buildUnixTime  = (System.currentTimeMillis() / 1000L) as long
@@ -415,6 +421,18 @@ node("release-builder") {
     }
 
     cleanWs(notFailBuild: true)
+  } catch (err) {
+    // Notify Slack that a nightly tarball build failed, including the branch
+    // name and a link to this build's page on Jenkins, then re-throw so the
+    // build is still recorded as FAILED.  The Slack Notification Plugin is
+    // installed and configured on the community Jenkins server, so slackSend
+    // posts to the channel named below using that global configuration.
+    slackSend(
+        channel: '#feed',
+        message: "Nightly tarball build failed for branch `${branchName}` " +
+                 "(<${env.BUILD_URL}|${currentBuild.displayName}>)")
+    throw err
+  }
 }
 
 // ===========================================================================
