@@ -327,7 +327,32 @@ AC_DEFUN([OMPI_SETUP_FC],[
     # Use Autoconf 2.69 Fortran detection macros for improved portability
     AS_IF([test $ompi_fc_happy -eq 1],
           [# Detect preprocessor define flag (usually -D)
-           AC_FC_PP_DEFINE])
+           AC_FC_PP_DEFINE
+
+           # Detect flag for module output directory (e.g., "-module " for Intel,
+           # "-J" for gfortran).  Used by the Fortran Makefile.am files to send
+           # generated .mod files explicitly to the build directory, which is
+           # more robust for VPATH builds.
+           #
+           # Pass an explicit non-fatal ACTION-IF-FAILURE: the default is
+           # AC_MSG_FAILURE, which would abort configure for any otherwise
+           # usable compiler whose module-output flag is not on Autoconf's
+           # probe list.  Leave FC_MODOUT empty in that case; the build then
+           # falls back to the compiler's default of writing .mod files into
+           # the current directory.
+           AC_FC_MODULE_OUTPUT_FLAG([],
+                 [AC_MSG_WARN([Could not determine Fortran module output flag])])
+           AS_IF([test -n "$FC_MODOUT"],
+                 [AC_MSG_NOTICE([Fortran module output flag: $FC_MODOUT])])
+           # Derive a ready-to-use flag that directs .mod output to the current
+           # build directory ("."), or an empty string when the compiler has no
+           # such flag.  Computing it here keeps the Makefile.am files from
+           # emitting a stray "." argument when FC_MODOUT is empty.
+           AS_IF([test -n "$FC_MODOUT"],
+                 [FC_MODOUT_CURDIR="${FC_MODOUT}."],
+                 [FC_MODOUT_CURDIR=])
+           AC_SUBST([FC_MODOUT])
+           AC_SUBST([FC_MODOUT_CURDIR])])
 
     # Use Autoconf 2.69 macro to detect .F90 preprocessing support
     # This tests if the compiler can preprocess .F90 files and sets
