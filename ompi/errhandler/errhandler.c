@@ -41,6 +41,7 @@
 #include "opal/util/string_copy.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/ompi_modex.h"
 
 /*
  * Table for Fortran <-> C errhandler handle conversion
@@ -413,6 +414,13 @@ int ompi_errhandler_proc_failed_internal(ompi_proc_t* ompi_proc, int status, boo
      * signal it so it will check again.
      */
     wait_sync_global_wakeup(PMIX_ERR_PROC_ABORTED == status? MPI_ERR_PROC_ABORTED: MPI_ERR_PROC_FAILED);
+
+    /* Work parked on this peer's connection info is waiting for the
+     * runtime to deliver something, and the runtime has nothing to say
+     * about a peer that died before publishing. Count the death as the
+     * answer it is, so the gates open and whoever is holding that work
+     * gets the one pass in which it now reads the proc as failed. */
+    ompi_modex_epoch_advance();
 
     /* Collectives:
      * Propagate the error (this has been selected rather than the "roll

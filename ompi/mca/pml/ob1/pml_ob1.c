@@ -54,7 +54,7 @@
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/errhandler/errhandler.h"
-#include "opal/mca/pmix/pmix-internal.h"
+#include "ompi/runtime/ompi_modex.h"
 #include "ompi/runtime/ompi_spc.h"
 
 #include "pml_ob1.h"
@@ -310,6 +310,17 @@ static bool mca_pml_ob1_start_staged(mca_pml_ob1_send_request_t *sendreq)
 
     ep = mca_pml_ob1_ensure_endpoint(proc, &rc);
     if (NULL == ep) {
+#if OPAL_ENABLE_FT_MPI
+        /* A dead peer publishes nothing, so there is no later tick on
+         * which this would succeed. Ahead of the NOT_READY retry, which
+         * would otherwise park this request for good: the peer's death
+         * is not something the runtime answers a modex get with. */
+        if (!ompi_proc_is_active(proc)) {
+            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = MPI_ERR_PROC_FAILED;
+            send_request_pml_complete(sendreq);
+            return true;
+        }
+#endif /* OPAL_ENABLE_FT_MPI */
         /* A LOCAL Get can miss a blob that is on its way. NOT_READY means
          * try again on a later tick; anything else is final. */
         if (OMPI_ERR_NOT_READY == rc) {
@@ -342,10 +353,16 @@ static bool mca_pml_ob1_start_staged(mca_pml_ob1_send_request_t *sendreq)
     return true;
 }
 
+/* The epoch as of the last pass that left something parked. No atomic
+ * needed: it is only compared for equality against a count nothing here
+ * moves, and a stale read costs one pass. */
+static uint64_t mca_pml_ob1_staged_epoch;
+
 int mca_pml_ob1_drain_staged_sends(void)
 {
     opal_list_t ready;
     mca_pml_ob1_send_request_t *sendreq, *next;
+    uint64_t epoch;
     int started = 0;
 
     /* Unlocked: runs on every tick and is almost always empty. A park
@@ -354,6 +371,17 @@ int mca_pml_ob1_drain_staged_sends(void)
     if (opal_list_is_empty(&mca_pml_ob1.modex_pending)) {
         return 0;
     }
+
+    /* Everything parked here waits on a peer's information, which only
+     * the runtime delivers, so a pass made since the last answer would
+     * just park it all again -- and re-issue a fetch per peer doing it.
+     * Read before the pass, so an answer landing mid-pass is not recorded
+     * as already accounted for. */
+    epoch = opal_modex_knowledge_epoch;
+    if (epoch == mca_pml_ob1_staged_epoch) {
+        return 0;
+    }
+    mca_pml_ob1_staged_epoch = epoch;
 
     OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
     /* Emptied here, started outside the lock: starting reaches the BTLs
