@@ -48,6 +48,21 @@ static inline void* _shrealloc(void *ptr, size_t size)
 
     RUNTIME_CHECK_INIT();
 
+    if (0 == size) {
+        /* NULL ptr behaves like shmem_malloc(0), which does nothing. A
+         * non-NULL ptr is freed as if by shmem_free. */
+        if (ptr) {
+            if (!MCA_MEMHEAP_CALL(is_symmetric_addr(ptr))) {
+                SHMEM_API_VERBOSE(1,
+                                  "Allocation with shrealloc(ptr=%p, size=0) "
+                                  "failed.", ptr);
+                return NULL;
+            }
+            oshmem_shmem_free(ptr);
+        }
+        return NULL;
+    }
+
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
 
     if (ptr) {

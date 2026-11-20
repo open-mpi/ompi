@@ -40,17 +40,13 @@ void shfree(void* ptr)
     _shfree(ptr);
 }
 
-static inline void _shfree(void* ptr)
+/* Free a symmetric heap block.  ptr must be non-NULL and symmetric.  This
+ * is not the public shmem_free, so it is neither profiled nor subject to
+ * its address check; shmem_realloc(ptr, 0) uses it. */
+void oshmem_shmem_free(void *ptr)
 {
     int rc;
     map_segment_t *s;
-
-    RUNTIME_CHECK_INIT();
-    if (NULL == ptr) {
-        return;
-    }
-
-    RUNTIME_CHECK_ADDR(ptr);
 
 #if OSHMEM_SPEC_COMPAT == 1
     shmem_barrier_all();
@@ -58,9 +54,7 @@ static inline void _shfree(void* ptr)
 
     SHMEM_MUTEX_LOCK(shmem_internal_mutex_alloc);
 
-    if (ptr) {
-        s = memheap_find_va(ptr);
-    }
+    s = memheap_find_va(ptr);
 
     if (s && s->allocator) {
         rc = s->allocator->sa_free(s, ptr);
@@ -75,3 +69,14 @@ static inline void _shfree(void* ptr)
     }
 }
 
+static inline void _shfree(void* ptr)
+{
+    RUNTIME_CHECK_INIT();
+    if (NULL == ptr) {
+        return;
+    }
+
+    RUNTIME_CHECK_ADDR(ptr);
+
+    oshmem_shmem_free(ptr);
+}
