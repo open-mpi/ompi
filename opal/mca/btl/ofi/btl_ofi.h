@@ -170,9 +170,17 @@ struct mca_btl_ofi_component_t {
 
     /** Maximum inject size */
     size_t max_inject_size;
+
+    /** payload bytes of one fragment: the eager limit and the largest send */
+    size_t frag_size;
     bool disable_inject;
 
     bool disable_hmem;
+
+    /** btl_ofi_modules_per_proc: how many NICs (one module each) the user asked each process to
+     * open; 0 = divide the node's NICs among its local processes. The number actually opened is
+     * computed in mca_btl_ofi_component_init(). */
+    int requested_modules_per_proc;
 
     /** All BTL OFI modules (1 per tl) */
     mca_btl_ofi_module_t **modules;
@@ -213,6 +221,10 @@ struct mca_btl_ofi_base_frag_t {
     struct mca_btl_ofi_module_t *btl;
     struct mca_btl_base_endpoint_t *endpoint;
     opal_free_list_t *free_list;
+    /* references held on a send fragment whose completion is reported to the PML when the
+     * provider accepts it (see mca_btl_ofi_send): one by the sender, one by the provider's
+     * completion. Whichever drops the last one returns the fragment. 0 otherwise. */
+    opal_atomic_int32_t send_refs;
     mca_btl_ofi_header_t hdr;
 };
 

@@ -1328,10 +1328,8 @@ struct mca_btl_base_module_t {
     mca_mpool_base_module_t *btl_mpool;
     /** register a default error handler */
     mca_btl_base_module_register_error_fn_t btl_register_error;
-#if OPAL_CUDA_GDR_SUPPORT
     size_t btl_accelerator_eager_limit; /**< switch from eager to RDMA */
     size_t btl_accelerator_rdma_limit;  /**< switch from RDMA to rndv pipeline */
-#endif /* OPAL_CUDA_GDR_SUPPORT */
     size_t btl_accelerator_max_send_size; /**< set if CUDA max send_size is different from host max send
                                       size */
 
