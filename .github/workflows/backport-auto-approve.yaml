@@ -1,0 +1,86 @@
+# Auto-approve backport PRs opened by the backport bot.
+#
+# The Backport workflow (backport.yaml) opens cherry-pick PRs against release
+# branches as the "ompi-backport-bot" GitHub App.  When the original PR was
+# merged into the default branch (main), its changes have already been
+# reviewed there, so approve the backport automatically to save a manual
+# review round-trip.  CI must still pass before it can be merged.  Backports
+# of PRs that were not merged into main are left for manual review.
+#
+# The approval is submitted with GITHUB_TOKEN (as github-actions[bot]), which
+# requires "Allow GitHub Actions to create and approve pull requests" to be
+# enabled in the repository's Actions settings.  The backport bot itself
+# cannot be used, as GitHub does not allow approving one's own PR.
+#
+# Only the "opened" event is handled: a PR that is closed and reopened (for
+# example after changes were requested) is not re-approved.  Likewise, only
+# the first run attempt approves: re-running the workflow replays the
+# original "opened" payload and could otherwise restore a dismissed approval.
+# If the first attempt fails, approve the PR manually.
+#
+# This workflow uses pull_request_target so that it has a write token, but it
+# never checks out or runs code from the PR.
+
+name: Backport auto-approve
+
+on:
+    pull_request_target:
+        types: [opened]
+        branches:
+            - 'v*.*.x'
+
+permissions: {}
+
+jobs:
+    approve:
+        name: Approve backport PR
+        runs-on: ubuntu-latest
+        # Only consider PRs authored by the backport bot from a branch in this
+        # repository.  Bot logins ("[bot]" suffix) cannot be taken by users.
+        # Skip re-runs (see above).
+        if: >
+            github.run_attempt == 1 &&
+            github.event.pull_request.user.login == 'ompi-backport-bot[bot]' &&
+            github.event.pull_request.head.repo.full_name == github.repository &&
+            startsWith(github.event.pull_request.head.ref, 'backport/pr-')
+        permissions:
+            pull-requests: write
+        steps:
+            - name: Verify original PR and approve
+              uses: actions/github-script@v8
+              with:
+                  script: |
+                      const pr        = context.payload.pull_request;
+                      const mainRef   = context.payload.repository.default_branch;
+
+                      // backport.yaml names branches
+                      // "backport/pr-<N>-to-<target>[-<suffix>]".
+                      const match = pr.head.ref.match(/^backport\/pr-(\d+)-to-(.+)$/);
+                      if (!match || !(match[2] === pr.base.ref ||
+                                      match[2].startsWith(`${pr.base.ref}-`))) {
+                          core.warning(`Unexpected backport branch "${pr.head.ref}" for base "${pr.base.ref}" — not approving.`);
+                          return;
+                      }
+                      const origNumber = Number(match[1]);
+
+                      // Only approve if the original PR was merged into main,
+                      // i.e. its changes went through review there.
+                      const { data: orig } = await github.rest.pulls.get({
+                          owner:       context.repo.owner,
+                          repo:        context.repo.repo,
+                          pull_number: origNumber,
+                      });
+                      if (!orig.merged || orig.base.ref !== mainRef) {
+                          core.warning(`Original PR #${origNumber} was not merged into ${mainRef} — not approving.`);
+                          return;
+                      }
+
+                      await github.rest.pulls.createReview({
+                          owner:       context.repo.owner,
+                          repo:        context.repo.repo,
+                          pull_number: pr.number,
+                          commit_id:   pr.head.sha,
+                          event:       'APPROVE',
+                          body:        `Auto-approved: automated backport of #${origNumber}, which was merged to ${mainRef}.`,
+                      });
+                      core.notice(`Approved backport PR #${pr.number} of #${origNumber}.`);
