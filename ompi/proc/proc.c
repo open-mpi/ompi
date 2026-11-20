@@ -306,8 +306,10 @@ opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name)
     ompi_proc_t *proc = NULL;
     int ret;
 
-    /* try to lookup the value in the hash table */
+    /* The hash table may be modified or resized by another thread in the same MPI rank. */
+    opal_mutex_lock (&ompi_proc_lock);
     ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
+    opal_mutex_unlock (&ompi_proc_lock);
 
     if (OPAL_SUCCESS == ret) {
         return &proc->super;
@@ -321,7 +323,7 @@ static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_na
     ompi_proc_t *proc = NULL;
     int ret;
 
-    /* double-check that another competing thread has not added this proc */
+    /* Check whether the proc already exists. The caller holds ompi_proc_lock. */
     ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
     if (OPAL_SUCCESS == ret) {
         goto exit;
@@ -345,13 +347,13 @@ opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
     ompi_proc_t *proc = NULL;
     int ret;
 
-    /* try to lookup the value in the hash table */
+    opal_mutex_lock (&ompi_proc_lock);
+
     ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
     if (OPAL_SUCCESS == ret) {
+        opal_mutex_unlock (&ompi_proc_lock);
         return &proc->super;
     }
-
-    opal_mutex_lock (&ompi_proc_lock);
 
     /* Some callers reach here with a name they were handed by a peer
      * rather than by the runtime -- the tcp and uct btls resolve the
