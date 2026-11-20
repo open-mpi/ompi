@@ -3,6 +3,7 @@
  *                         reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2025-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +35,11 @@ OPAL_DECLSPEC extern mca_base_framework_t opal_installdirs_base_framework;
    it exists/is set.  This function should *only* be used during the
    setup routines of installdirs. */
 char *opal_install_dirs_expand_setup(const char *input);
+
+/* Register the installdirs MCA variables.  Must be called after
+   mca_base_var_init(), which is why it cannot live in the framework open:
+   installdirs is opened before the variable system exists. */
+OPAL_DECLSPEC int opal_installdirs_base_register_params(void);
 
 END_C_DECLS
 

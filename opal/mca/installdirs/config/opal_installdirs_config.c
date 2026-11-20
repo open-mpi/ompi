@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
+ * Copyright (c) 2025-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -11,7 +12,7 @@
 
 #include "opal_config.h"
 
-#include "opal/mca/installdirs/config/install_dirs.h"
+#include "opal/mca/installdirs/install_dirs.h"
 #include "opal/mca/installdirs/installdirs.h"
 
 const opal_installdirs_base_component_t mca_installdirs_config_component = {
