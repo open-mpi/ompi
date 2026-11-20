@@ -1335,6 +1335,8 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
         return ret;
     }
 
+    ompi_comm_mark_communicator_as_internal (module->shared_comm);
+
     local_rank = ompi_comm_rank (module->shared_comm);
 
     comm_rank = ompi_comm_rank (module->comm);
@@ -1346,6 +1348,7 @@ static int ompi_osc_rdma_create_groups (ompi_osc_rdma_module_t *module)
                             "failed to create local leaders communicator. error code %d", ret);
         return ret;
     }
+    ompi_comm_mark_communicator_as_internal (module->local_leaders);
 
     if (0 == local_rank) {
         values[0] = ompi_comm_size (module->local_leaders);
@@ -1486,6 +1489,7 @@ static int ompi_osc_rdma_component_select (struct ompi_win_t *win, void **base, 
         ompi_osc_rdma_free (win);
         return ret;
     }
+    ompi_comm_mark_communicator_as_internal(module->comm);
 
     opal_output_verbose(MCA_BASE_VERBOSE_INFO, ompi_osc_base_framework.framework_output,
                         "creating osc/rdma window of flavor %d with id %s",

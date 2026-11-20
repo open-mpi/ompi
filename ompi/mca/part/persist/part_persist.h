@@ -14,6 +14,7 @@
  * Copyright (c) 2021      Tennessee Technological University. All rights reserved.
  * Copyright (c) 2021      Cisco Systems, Inc.  All rights reserved
  * Copyright (c) 2021      Bull S.A.S. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -194,11 +195,13 @@ mca_part_persist_progress(void)
         if(err != OMPI_SUCCESS) {
              exit(-1);
         }
+        ompi_comm_mark_communicator_as_internal(ompi_part_persist.part_comm);
         ompi_part_persist.part_comm_ready = 0;
         err = ompi_comm_idup(&ompi_mpi_comm_world.comm, &ompi_part_persist.part_comm_setup, &ompi_part_persist.part_comm_sreq);
         if(err != OMPI_SUCCESS) {
             exit(-1);
         }
+        ompi_comm_mark_communicator_as_internal(ompi_part_persist.part_comm_setup);
         ompi_part_persist.part_comm_sready = 0;
         ompi_part_persist.init_world = 1;
 

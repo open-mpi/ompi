@@ -3,6 +3,7 @@
  * Copyright (c) 2014      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2014      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -163,6 +164,7 @@ mca_scoll_mpi_comm_query(oshmem_group_t *osh_group, int *priority)
             free(ranks);
             return NULL;
         }
+        ompi_comm_mark_communicator_as_internal(newcomm);
         OPAL_TIMING_ENV_NEXT(comm_query, "ompi_comm_create_group");
 
         err = ompi_group_free(&new_group);

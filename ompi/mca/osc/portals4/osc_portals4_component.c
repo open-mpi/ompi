@@ -12,6 +12,7 @@
  * Copyright (c) 2018-2022 Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2020      High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -435,6 +436,7 @@ component_select(struct ompi_win_t *win, void **base, size_t size, ptrdiff_t dis
 
     ret = ompi_comm_dup(comm, &module->comm);
     if (OMPI_SUCCESS != ret) goto error;
+    ompi_comm_mark_communicator_as_internal(module->comm);
 
     opal_output_verbose(1, ompi_osc_base_framework.framework_output,
                         "portals4 component creating window with id %d",
