@@ -27,7 +27,8 @@ headers += \
 	ompi/types.h \
 	ompi/memchecker.h \
 	ompi/totalview.h \
-	ompi/frameworks.h
+	ompi/frameworks.h \
+	ompi/xcallbacks.h
 
 nodist_headers += \
 	ompi/version.h
