@@ -548,6 +548,25 @@ problem:
    shell$ mpirun --mca mpi_common_cuda_verbose 20 ...    # more detail
    shell$ mpirun --mca mpi_common_cuda_verbose 100 ...   # most detail
 
+Device buffers in the ``sm`` BTL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``sm`` BTL moves large messages between processes on one node with a
+single-copy (``smsc``) component.  When the accelerator supports IPC, the
+``accelerator`` smsc component is selected by default: it copies device buffers
+directly between GPUs with CUDA IPC, and passes host buffers on to the best
+host single-copy component (``xpmem`` or ``cma``).  Without it, the ``sm`` BTL
+stages every device buffer through host shared memory.
+
+Gets of a peer's device buffer are queued on an accelerator stream and
+completed from the progress engine, so a process receiving device buffers from
+several peers does not wait for each copy in turn.
+
+.. code-block:: sh
+
+   # Keep device buffers out of the accelerator single-copy component
+   shell$ mpirun --mca smsc ^accelerator ...
+
 Developing CUDA-aware applications
 ----------------------------------
 

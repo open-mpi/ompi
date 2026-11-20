@@ -75,7 +75,8 @@ void mca_smsc_accelerator_unmap_peer_region(void *ctx)
 }
 
 static int mca_smsc_accelerator_copy (mca_smsc_endpoint_t *endpoint, void *local_address, void *remote_address,
-                                      size_t size, void *reg_handle, bool is_remote_write)
+                                      size_t size, void *reg_handle, bool is_remote_write,
+                                      opal_accelerator_stream_t *stream)
 {
     mca_smsc_accelerator_endpoint_t *ep = (mca_smsc_accelerator_endpoint_t *)endpoint;
     mca_smsc_accelerator_registration_data_t *reg = (mca_smsc_accelerator_registration_data_t *)reg_handle;
@@ -108,6 +109,16 @@ static int mca_smsc_accelerator_copy (mca_smsc_endpoint_t *endpoint, void *local
             opal_output(0, "mca_smsc_accelerator_copy: accelerator mem_copy write failed, ret %d remote_address %p "
                         "local_address %p size %lu", ret, remote_memory_address, local_address, size);
         }
+    } else if (NULL != stream) {
+        ret = opal_accelerator.mem_copy_async(mca_smsc_accelerator_module.device_id,
+                                              MCA_ACCELERATOR_NO_DEVICE_ID, local_address,
+                                              remote_memory_address, size, stream,
+                                              MCA_ACCELERATOR_TRANSFER_DTOD);
+        if (ret != OPAL_SUCCESS) {
+            opal_output(0, "mca_smsc_accelerator_copy: accelerator mem_copy_async read failed, ret %d "
+                        "remote_address %p local_address %p size %lu", ret, remote_memory_address,
+                        local_address, size);
+        }
     } else {
         ret = opal_accelerator.mem_copy(mca_smsc_accelerator_module.device_id, MCA_ACCELERATOR_NO_DEVICE_ID,
                                         local_address, remote_memory_address, size,
@@ -129,7 +140,8 @@ int mca_smsc_accelerator_copy_to(mca_smsc_endpoint_t *endpoint, void *local_addr
     int ret = OPAL_SUCCESS;
 
     if ((NULL != reg) && (0 != reg->base_addr)) {
-        ret = mca_smsc_accelerator_copy (endpoint, local_address, remote_address, size, reg_handle, true);
+        ret = mca_smsc_accelerator_copy (endpoint, local_address, remote_address, size, reg_handle, true,
+                                         NULL);
     }
     else if (NULL != mca_smsc_accelerator_module.prev_smsc) {
         ret = mca_smsc_accelerator_module.prev_smsc->copy_to(ep->prev_endpoint, local_address,
@@ -147,7 +159,8 @@ int mca_smsc_accelerator_copy_from(mca_smsc_endpoint_t *endpoint, void *local_ad
     int ret = OPAL_SUCCESS;
 
     if ((NULL != reg) && (0 != reg->base_addr)) {
-        ret = mca_smsc_accelerator_copy (endpoint, local_address, remote_address, size, reg_handle, false);
+        ret = mca_smsc_accelerator_copy (endpoint, local_address, remote_address, size, reg_handle, false,
+                                         NULL);
     }
     else if (NULL != mca_smsc_accelerator_module.prev_smsc) {
         ret = mca_smsc_accelerator_module.prev_smsc->copy_from(ep->prev_endpoint, local_address,
@@ -155,6 +168,28 @@ int mca_smsc_accelerator_copy_from(mca_smsc_endpoint_t *endpoint, void *local_ad
     }
 
     return ret;
+}
+
+/* Device memory is copied on the caller's stream; anything else is left to copy_from */
+int mca_smsc_accelerator_copy_from_async(mca_smsc_endpoint_t *endpoint, void *local_address,
+                                         void *remote_address, size_t size, void *reg_handle,
+                                         opal_accelerator_stream_t **stream)
+{
+    mca_smsc_accelerator_registration_data_t *reg = (mca_smsc_accelerator_registration_data_t *)reg_handle;
+    int ret;
+
+    if ((NULL == reg) || (0 == reg->base_addr)) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+    if (NULL == *stream) {
+        ret = opal_accelerator.create_stream(mca_smsc_accelerator_module.device_id, stream);
+        if (OPAL_SUCCESS != ret) {
+            *stream = NULL;
+            return ret;
+        }
+    }
+    return mca_smsc_accelerator_copy (endpoint, local_address, remote_address, size, reg_handle, false,
+                                      *stream);
 }
 
 void *mca_smsc_accelerator_register_region(void *local_address, size_t size)
@@ -224,6 +259,7 @@ mca_smsc_accelerator_module_t mca_smsc_accelerator_module = {
         .return_endpoint = mca_smsc_accelerator_return_endpoint,
         .copy_to = mca_smsc_accelerator_copy_to,
         .copy_from = mca_smsc_accelerator_copy_from,
+        .copy_from_async = mca_smsc_accelerator_copy_from_async,
         .map_peer_region = mca_smsc_accelerator_map_peer_region,
         .unmap_peer_region = mca_smsc_accelerator_unmap_peer_region,
         .register_region = mca_smsc_accelerator_register_region,

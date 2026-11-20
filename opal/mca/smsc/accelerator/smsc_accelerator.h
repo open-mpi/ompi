@@ -25,6 +25,10 @@ int mca_smsc_accelerator_copy_to(mca_smsc_endpoint_t *endpoint, void *local_addr
 int mca_smsc_accelerator_copy_from(mca_smsc_endpoint_t *endpoint, void *local_address,
                              void *remote_address, size_t size, void *reg_handle);
 
+int mca_smsc_accelerator_copy_from_async(mca_smsc_endpoint_t *endpoint, void *local_address,
+                                         void *remote_address, size_t size, void *reg_handle,
+                                         struct opal_accelerator_stream_t **stream);
+
 void *mca_smsc_accelerator_map_peer_region(mca_smsc_endpoint_t *endpoint, uint64_t flags,
                                      void *remote_ptr, size_t size, void **local_ptr);
 void mca_smsc_accelerator_unmap_peer_region(void *ctx);
