@@ -89,6 +89,11 @@ struct mca_btl_uct_md_t {
     /** memory domain attributes */
     uct_md_attr_t md_attr;
 
+    /** async context shared by all the tls (and their device contexts) of this
+     * memory domain. created when the first tl is created and destroyed after the
+     * last one. */
+    ucs_async_context_t *ucs_async;
+
 #if UCT_API >= UCT_VERSION(1, 7)
     uct_component_h uct_component;
 #endif
@@ -371,7 +376,7 @@ struct mca_btl_uct_tl_t {
     /** interface attributes */
     uct_iface_attr_t uct_iface_attr;
 
-    /** async context */
+    /** async context (owned by the memory domain, shared with its other tls) */
     ucs_async_context_t *ucs_async;
 
     /** pending connection requests */
