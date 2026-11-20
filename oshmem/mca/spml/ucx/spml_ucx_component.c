@@ -317,11 +317,15 @@ static int spml_ucx_init(void)
     }
 
     mca_spml_ucx.active_array.ctxs_count = mca_spml_ucx.idle_array.ctxs_count = 0;
+    mca_spml_ucx.private_array.ctxs_count = 0;
     mca_spml_ucx.active_array.ctxs_num = mca_spml_ucx.idle_array.ctxs_num = MCA_SPML_UCX_CTXS_ARRAY_SIZE;
+    mca_spml_ucx.private_array.ctxs_num = MCA_SPML_UCX_CTXS_ARRAY_SIZE;
     mca_spml_ucx.active_array.ctxs = calloc(mca_spml_ucx.active_array.ctxs_num,
                                             sizeof(mca_spml_ucx_ctx_t *));
     mca_spml_ucx.idle_array.ctxs = calloc(mca_spml_ucx.idle_array.ctxs_num,
                                           sizeof(mca_spml_ucx_ctx_t *));
+    mca_spml_ucx.private_array.ctxs = calloc(mca_spml_ucx.private_array.ctxs_num,
+                                             sizeof(mca_spml_ucx_ctx_t *));
 
     SHMEM_MUTEX_INIT(mca_spml_ucx.internal_mutex);
     pthread_mutex_init(&mca_spml_ucx.ctx_create_mutex, NULL);
@@ -418,25 +422,33 @@ static void _ctx_cleanup(mca_spml_ucx_ctx_t *ctx)
 {
     int i, j, nprocs = oshmem_num_procs();
     opal_common_ucx_del_proc_t *del_procs;
-    spml_ucx_mkey_t   *ucx_mkey;
+    ucp_peer_t *peer;
     int rc;
 
     del_procs = malloc(sizeof(*del_procs) * nprocs);
 
     for (i = 0; i < nprocs; ++i) {
-        for (j = 0; j < memheap_map->n_segments; j++) {
-            rc = mca_spml_ucx_ctx_mkey_by_seg(ctx, i, j, &ucx_mkey);
-            if (OSHMEM_SUCCESS != rc) {
-                SPML_UCX_ERROR("mca_spml_ucx_ctx_mkey_by_seg failed");
+        peer = &ctx->ucp_peers[i];
+
+        /* The memheap map is already destroyed when the SPML is finalized,
+         * so release the mkeys cached by this context rather than looping
+         * over the memheap segments. */
+        for (j = 0; j < (int)peer->mkeys_cnt; j++) {
+            if (NULL == peer->mkeys[j]) {
+                continue;
+            }
+
+            if (NULL != peer->mkeys[j]->key.rkey) {
+                rc = mca_spml_ucx_ctx_mkey_del(ctx, i, j, &peer->mkeys[j]->key);
             } else {
-                if (ucx_mkey->rkey != NULL) {
-                    rc = mca_spml_ucx_ctx_mkey_del(ctx, i, j, ucx_mkey);
-                    if (OSHMEM_SUCCESS != rc) {
-                        SPML_UCX_ERROR("mca_spml_ucx_ctx_mkey_del failed");
-                    }
-                }
+                rc = mca_spml_ucx_peer_mkey_cache_del(peer, j);
+            }
+            if (OSHMEM_SUCCESS != rc) {
+                SPML_UCX_ERROR("failed to release mkey of pe %d segment %d",
+                               i, j);
             }
         }
+        mca_spml_ucx_peer_mkey_cache_release(peer);
 
         del_procs[i].ep   = ctx->ucp_peers[i].ucp_conn;
         del_procs[i].vpid = i;
@@ -498,6 +510,10 @@ static int mca_spml_ucx_component_fini(void)
         _ctx_cleanup(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
+    for (i = 0; i < mca_spml_ucx.private_array.ctxs_count; i++) {
+        _ctx_cleanup(mca_spml_ucx.private_array.ctxs[i]);
+    }
+
 
     ret = opal_common_ucx_mca_pmix_fence_nb(&fenced);
     if (ret != PMIX_SUCCESS) {
@@ -513,6 +529,10 @@ static int mca_spml_ucx_component_fini(void)
 
         for (i = 0; i < mca_spml_ucx.idle_array.ctxs_count; i++) {
             ucp_worker_progress(mca_spml_ucx.idle_array.ctxs[i]->ucp_worker[0]);
+        }
+
+        for (i = 0; i < mca_spml_ucx.private_array.ctxs_count; i++) {
+            ucp_worker_progress(mca_spml_ucx.private_array.ctxs[i]->ucp_worker[0]);
         }
         
         for (i = 0; i < (signed int)mca_spml_ucx.ucp_workers; i++) {
@@ -532,6 +552,10 @@ static int mca_spml_ucx_component_fini(void)
         mca_spml_ucx_ctx_fini(mca_spml_ucx.idle_array.ctxs[i]);
     }
 
+    for (i = 0; i < mca_spml_ucx.private_array.ctxs_count; i++) {
+        mca_spml_ucx_ctx_fini(mca_spml_ucx.private_array.ctxs[i]);
+    }
+
     if (mca_spml_ucx_ctx_default.ucp_worker) {
         mca_spml_ucx_ctx_fini(&mca_spml_ucx_ctx_default);
     }
@@ -544,6 +568,7 @@ static int mca_spml_ucx_component_fini(void)
 
     free(mca_spml_ucx.active_array.ctxs);
     free(mca_spml_ucx.idle_array.ctxs);
+    free(mca_spml_ucx.private_array.ctxs);
 
     SHMEM_MUTEX_DESTROY(mca_spml_ucx.internal_mutex);
     pthread_mutex_destroy(&mca_spml_ucx.ctx_create_mutex);
