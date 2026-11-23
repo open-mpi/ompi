@@ -78,5 +78,5 @@ PROTOTYPE ERROR_CLASS testany(INT count, REQUEST_INOUT requests:count, INT_OUT i
         return MPI_SUCCESS;
     }
 
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, true);
 }

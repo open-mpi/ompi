@@ -68,7 +68,18 @@ PROTOTYPE ERROR_CLASS request_get_status(REQUEST request, INT_OUT flag,
         }
         return MPI_SUCCESS;
     }
-    if( request->req_complete ) {
+#if OPAL_ENABLE_FT_MPI
+    /* As MPI_Test, detect a request terminated by a process failure. A
+       MPI_ANY_SOURCE receive that cannot complete is reported as pending,
+       and remains active. */
+    if( ompi_request_is_failed(request) &&
+        MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR ) {
+        *flag = false;
+        return ompi_errhandler_request_invoke(1, &request, FUNC_NAME,
+                                              MPI_ERR_PROC_FAILED_PENDING, false);
+    }
+#endif
+    if( REQUEST_COMPLETE(request) ) {
         *flag = true;
         /* If this is a generalized request, we *always* have to call
            the query function to get the status (MPI-2:8.2), even if
@@ -78,6 +89,10 @@ PROTOTYPE ERROR_CLASS request_get_status(REQUEST request, INT_OUT flag,
         }
         if (MPI_STATUS_IGNORE != status) {
             OMPI_COPY_STATUS(status, request->req_status, false);
+        }
+        /* Report the error as MPI_Test does, without freeing the request */
+        if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
+            return ompi_errhandler_request_invoke(1, &request, FUNC_NAME, false);
         }
         return MPI_SUCCESS;
     }

@@ -418,10 +418,15 @@ extern opal_atomic_int32_t ompi_instance_count;
    * that has a non-MPI_SUCCESS value for MPI_ERROR in its status.  It
    * is safe to invoke this function if none of the requests have an
    * outstanding error; MPI_SUCCESS will be returned.
+   *
+   * If release_failed is true, failed non-persistent requests are
+   * released first.  Pass false to leave all requests valid, as the
+   * non-destructive MPI_Request_get_status* functions do.
    */
   int ompi_errhandler_request_invoke(int count,
                                      struct ompi_request_t **requests,
-                                     const char *message);
+                                     const char *message,
+                                     bool release_failed);
 
   /**
    * Create a ompi_errhandler_t

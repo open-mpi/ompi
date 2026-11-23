@@ -421,9 +421,12 @@ recheck:
                 rc = ompi_grequest_invoke_query(request, &request->req_status);
             }
 
+            /* Report the request error even without a status to store it */
+            rc = request->req_status.MPI_ERROR;
+
             if (request->req_persistent) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
-            } else if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
+            } else if (MPI_SUCCESS == rc) {
                 /* Only free the request if there is no error on it */
                 rc = ompi_request_free(rptr);
             }

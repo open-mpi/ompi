@@ -80,5 +80,5 @@ PROTOTYPE ERROR_CLASS wait(REQUEST_INOUT request, STATUS_OUT status)
             opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
         }
     );
-    return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
+    return ompi_errhandler_request_invoke(1, request, FUNC_NAME, true);
 }

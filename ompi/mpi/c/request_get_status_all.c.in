@@ -75,6 +75,7 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
     }
 
     bool all_done;
+    ompi_request_t *failed = NULL;
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 0
     bool do_it_once = true;
@@ -85,8 +86,29 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
     int i;
     all_done = true;
     for (i = 0; i < count; i++) {
-        if( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ||
-            (requests[i]->req_complete) ) {
+        if( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ) {
+            continue;
+        }
+#if OPAL_ENABLE_FT_MPI
+        /* As MPI_Testall, detect a request terminated by a process failure.
+           A MPI_ANY_SOURCE receive that cannot complete is reported as
+           pending, and remains active. */
+        if( ompi_request_is_failed(requests[i]) &&
+            MPI_ERR_PROC_FAILED_PENDING == requests[i]->req_status.MPI_ERROR ) {
+            ompi_request_t *pending = requests[i];
+            if (MPI_STATUSES_IGNORE != statuses) {
+                OMPI_COPY_STATUS(&statuses[i], pending->req_status, true);
+                statuses[i].MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
+            }
+            *flag = false;
+            if (MPI_SUCCESS != ompi_errhandler_request_invoke(1, &pending, FUNC_NAME,
+                                                              MPI_ERR_PROC_FAILED_PENDING, false)) {
+                return MPI_ERR_IN_STATUS;
+            }
+            return MPI_SUCCESS;
+        }
+#endif
+        if( REQUEST_COMPLETE(requests[i]) ) {
             continue;
         }
         all_done = false;
@@ -110,7 +132,7 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
 
     for (i = 0; i < count; i++) {
         if( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ) {
-            if (MPI_STATUS_IGNORE != statuses) {
+            if (MPI_STATUSES_IGNORE != statuses) {
                 OMPI_COPY_STATUS(&statuses[i], ompi_status_empty, true);
             }
             continue;
@@ -121,11 +143,22 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
         if (OMPI_REQUEST_GEN == requests[i]->req_type) {
             ompi_grequest_invoke_query(requests[i], &requests[i]->req_status);
         }
-        if (MPI_STATUS_IGNORE != statuses) {
-            OMPI_COPY_STATUS(&statuses[i], requests[i]->req_status, false);
+        if (MPI_STATUSES_IGNORE != statuses) {
+            OMPI_COPY_STATUS(&statuses[i], requests[i]->req_status, true);
+        }
+        if (MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+            if (NULL == failed) {
+                failed = requests[i];
+            }
         }
     }
 
     *flag = true;
+    if (NULL != failed) {
+        /* As for MPI_Testall, even with MPI_STATUSES_IGNORE */
+        if (MPI_SUCCESS != ompi_errhandler_request_invoke(1, &failed, FUNC_NAME, false)) {
+            return MPI_ERR_IN_STATUS;
+        }
+    }
     return MPI_SUCCESS;
 }

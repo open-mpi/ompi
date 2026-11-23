@@ -77,7 +77,7 @@ PROTOTYPE ERROR_CLASS testsome(INT incount, REQUEST_INOUT requests:incount,
     }
 
     if (MPI_SUCCESS !=
-        ompi_errhandler_request_invoke(incount, requests, FUNC_NAME)) {
+        ompi_errhandler_request_invoke(incount, requests, FUNC_NAME, true)) {
         return MPI_ERR_IN_STATUS;
     }
 

@@ -220,7 +220,8 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 
 int ompi_errhandler_request_invoke(int count,
                                    struct ompi_request_t **requests,
-                                   const char *message)
+                                   const char *message,
+                                   bool release_failed)
 {
     int i, ec, type;
     ompi_mpi_object_t mpi_object;
@@ -249,7 +250,7 @@ int ompi_errhandler_request_invoke(int count,
        can examine them here), go through and free all requests with
        errors.  We only invoke the error on the *first* request
        that had an error. */
-    for (; i < count; ++i) {
+    for (; release_failed && i < count; ++i) {
         if (MPI_REQUEST_NULL != requests[i] &&
             !requests[i]->req_persistent &&
             MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
