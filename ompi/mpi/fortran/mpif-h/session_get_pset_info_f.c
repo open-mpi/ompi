@@ -16,6 +16,7 @@
  * Copyright (c) 2015      Research Organization for Information Science
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2019      Triad National Security, LLC.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -84,8 +85,9 @@ void ompi_session_get_pset_info_f(MPI_Fint *session,char *pset_name, MPI_Fint *i
 
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(pset_name, name_len,
                                                        &c_name))) {
-        c_ierr = OMPI_ERRHANDLER_INVOKE((ompi_instance_t *)c_session, ret,
-                                        "MPI_SESSION_GET_PSET_INFO");
+        c_ierr = OMPI_ERRHANDLER_INVOKE_OR_NOHANDLE((ompi_instance_t *)c_session,
+                                                    ret,
+                                                    "MPI_SESSION_GET_PSET_INFO");
         if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
         return;
     }

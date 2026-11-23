@@ -19,6 +19,7 @@
  *                         and Technology (RIST). All rights reserved.
  * Copyright (c) 2018-2025 Triad National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -264,6 +265,39 @@ extern opal_atomic_int32_t ompi_instance_count;
     ompi_errhandler_invoke(NULL, NULL, -1, \
                            ompi_errcode_get_mpi_code(err_code), \
                            (message));
+
+/**
+ * Invoke an MPI error handler on an object that may not be valid.
+ *
+ * @param mpi_object The MPI object to invoke the errhandler on, or NULL
+ * @param err_code The error code
+ * @param message Any additional message; typically the name of the
+ *    MPI function that is invoking the error.
+ *
+ * Same as OMPI_ERRHANDLER_INVOKE(), except that a NULL object routes to
+ * the default handler instead of being dereferenced.  The Fortran
+ * bindings need this: they convert their handle arguments with
+ * MPI_<Object>_f2c() on entry, which yields NULL for an invalid handle
+ * (MPI-2:4.12.4 forbids raising an error there), and nothing has
+ * validated the handle yet if the binding has to raise an error of its
+ * own before reaching the back-end call.
+ *
+ * This only covers a NULL pointer.  A handle naming the null object of
+ * its type -- MPI_COMM_NULL and friends -- converts to a real object
+ * that is equally wrong to raise on, since its error handler is
+ * permanently MPI_ERRORS_ARE_FATAL.  Callers that can see one have to
+ * reduce it to NULL themselves; there is no type-independent test.
+ */
+#define OMPI_ERRHANDLER_INVOKE_OR_NOHANDLE(mpi_object, err_code, message) \
+    (NULL == (mpi_object) \
+         ? ompi_errhandler_invoke(NULL, NULL, -1, \
+                                  ompi_errcode_get_mpi_code(err_code), \
+                                  (message)) \
+         : ompi_errhandler_invoke((mpi_object)->error_handler, \
+                                  (mpi_object), \
+                                  (int)(mpi_object)->errhandler_type, \
+                                  ompi_errcode_get_mpi_code(err_code), \
+                                  (message)))
 
 /**
  * Conditionally invoke an MPI error handler.
