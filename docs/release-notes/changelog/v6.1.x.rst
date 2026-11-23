@@ -8,6 +8,10 @@ Open MPI version v6.1.0
 --------------------------
 :Date: ...fill me in...
 
+- Request completion and status functions now follow the MPI standard
+  requirements when reporting errors, including for generalized
+  requests whose ``free_fn`` callback fails.
+
 - The ULFM failure queries on an intercommunicator --
   ``MPIX_Comm_get_failed``, ``MPIX_Comm_ack_failed`` and
   ``MPIX_Comm_failure_get_acked`` -- now report and acknowledge the
