@@ -156,7 +156,8 @@ PROTOTYPE ERROR_CLASS request_get_status_all(INT count, REQUEST_CONST requests:c
     *flag = true;
     if (NULL != failed) {
         /* As for MPI_Testall, even with MPI_STATUSES_IGNORE */
-        if (MPI_SUCCESS != ompi_errhandler_request_invoke(1, &failed, FUNC_NAME, false)) {
+        if (MPI_SUCCESS != ompi_errhandler_request_invoke(1, &failed, FUNC_NAME,
+                                                         failed->req_status.MPI_ERROR, false)) {
             return MPI_ERR_IN_STATUS;
         }
     }

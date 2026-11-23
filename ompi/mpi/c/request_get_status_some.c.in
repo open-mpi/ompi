@@ -140,7 +140,8 @@ PROTOTYPE ERROR_CLASS request_get_status_some(INT incount, REQUEST_CONST request
         *outcount = indx;
         if (NULL != failed) {
             /* As for MPI_Waitsome, even with MPI_STATUSES_IGNORE */
-            if (MPI_SUCCESS != ompi_errhandler_request_invoke(1, &failed, FUNC_NAME, false)) {
+            if (MPI_SUCCESS != ompi_errhandler_request_invoke(1, &failed, FUNC_NAME,
+                                                         failed->req_status.MPI_ERROR, false)) {
                 return MPI_ERR_IN_STATUS;
             }
         }

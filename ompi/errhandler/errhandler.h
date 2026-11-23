@@ -415,9 +415,11 @@ extern opal_atomic_int32_t ompi_instance_count;
 
   /**
    * Invoke an MPI error on the first request found in the array
-   * that has a non-MPI_SUCCESS value for MPI_ERROR in its status.  It
-   * is safe to invoke this function if none of the requests have an
-   * outstanding error; MPI_SUCCESS will be returned.
+   * that has a non-MPI_SUCCESS value for MPI_ERROR in its status.  If
+   * none of the requests has an error, the error handler is invoked on
+   * err, the error returned by the request function, as the failed
+   * request may have been released already.  It is safe to invoke this
+   * function if there is no error at all; MPI_SUCCESS will be returned.
    *
    * If release_failed is true, failed non-persistent requests are
    * released first.  Pass false to leave all requests valid, as the
@@ -426,6 +428,7 @@ extern opal_atomic_int32_t ompi_instance_count;
   int ompi_errhandler_request_invoke(int count,
                                      struct ompi_request_t **requests,
                                      const char *message,
+                                     int err,
                                      bool release_failed);
 
   /**

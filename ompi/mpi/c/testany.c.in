@@ -38,6 +38,8 @@
 
 PROTOTYPE ERROR_CLASS testany(INT count, REQUEST_INOUT requests:count, INT_OUT indx, INT_OUT completed, STATUS_OUT status)
 {
+    int ret;
+
     SPC_RECORD(OMPI_SPC_TESTANY, 1);
 
     MEMCHECKER(
@@ -73,10 +75,10 @@ PROTOTYPE ERROR_CLASS testany(INT count, REQUEST_INOUT requests:count, INT_OUT i
         return MPI_SUCCESS;
     }
 
-    if (OMPI_SUCCESS == ompi_request_test_any(count, requests,
-                                              indx, completed, status)) {
+    ret = ompi_request_test_any(count, requests, indx, completed, status);
+    if (OMPI_SUCCESS == ret) {
         return MPI_SUCCESS;
     }
 
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, true);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, ret, true);
 }

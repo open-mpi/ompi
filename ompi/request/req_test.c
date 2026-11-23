@@ -186,6 +186,7 @@ int ompi_request_default_test_all(
     ompi_status_public_t * statuses)
 {
     size_t i, rc;
+    int free_rc = OMPI_SUCCESS;
     ompi_request_t **rptr;
     size_t num_completed = 0;
     ompi_request_t *request;
@@ -268,7 +269,12 @@ int ompi_request_default_test_all(
                 /* Only free the request if there was no error on it */
                 int tmp = ompi_request_free(rptr);
                 if (tmp != OMPI_SUCCESS) {
-                    return tmp;
+                    /* The error of the free callback belongs to the status */
+                    statuses[i].MPI_ERROR = tmp;
+                    rc = MPI_ERR_IN_STATUS;
+                    if (OMPI_SUCCESS == free_rc) {
+                        free_rc = tmp;
+                    }
                 }
             }
         }
@@ -300,13 +306,17 @@ int ompi_request_default_test_all(
                 /* Only free the request if there was no error */
                 int tmp = ompi_request_free(rptr);
                 if (tmp != OMPI_SUCCESS) {
-                    return tmp;
+                    rc = MPI_ERR_IN_STATUS;
+                    if (OMPI_SUCCESS == free_rc) {
+                        free_rc = tmp;
+                    }
                 }
             }
         }
     }
 
-    return rc;
+    /* The error of a released request is reported as such, see wait_all */
+    return (OMPI_SUCCESS != free_rc) ? free_rc : (int) rc;
 }
 
 
@@ -318,7 +328,7 @@ int ompi_request_default_test_some(
     ompi_status_public_t * statuses)
 {
     size_t i, num_requests_null_inactive = 0, num_requests_done = 0;
-    int rc = OMPI_SUCCESS;
+    int rc = OMPI_SUCCESS, free_rc = OMPI_SUCCESS;
     ompi_request_t **rptr;
     ompi_request_t *request;
 
@@ -404,14 +414,21 @@ int ompi_request_default_test_some(
         } else {
             /* Only free the request if there was no error */
             if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
-                int tmp;
-                tmp = ompi_request_free(&(requests[indices[i]]));
+                int tmp = ompi_request_free(&(requests[indices[i]]));
                 if (OMPI_SUCCESS != tmp) {
-                    return tmp;
+                    /* The error of the free callback belongs to the status */
+                    if (MPI_STATUSES_IGNORE != statuses) {
+                        statuses[i].MPI_ERROR = tmp;
+                    }
+                    rc = MPI_ERR_IN_STATUS;
+                    if (OMPI_SUCCESS == free_rc) {
+                        free_rc = tmp;
+                    }
                 }
             }
         }
     }
 
-    return rc;
+    /* The error of a released request is reported as such, see wait_all */
+    return (OMPI_SUCCESS != free_rc) ? free_rc : rc;
 }

@@ -50,6 +50,6 @@ PROTOTYPE ERROR_CLASS grequest_complete(REQUEST request)
     }
 
     rc = ompi_grequest_complete(request);
-    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, MPI_ERR_INTERN, FUNC_NAME);
+    OMPI_ERRHANDLER_NOHANDLE_RETURN(rc, rc, FUNC_NAME);
 }
 

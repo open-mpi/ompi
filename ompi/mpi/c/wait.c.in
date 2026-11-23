@@ -36,6 +36,8 @@
 
 PROTOTYPE ERROR_CLASS wait(REQUEST_INOUT request, STATUS_OUT status)
 {
+    int ret;
+
     SPC_RECORD(OMPI_SPC_WAIT, 1);
 
     MEMCHECKER(
@@ -63,7 +65,8 @@ PROTOTYPE ERROR_CLASS wait(REQUEST_INOUT request, STATUS_OUT status)
         return MPI_SUCCESS;
     }
 
-    if (OMPI_SUCCESS == ompi_request_wait(request, status)) {
+    ret = ompi_request_wait(request, status);
+    if (OMPI_SUCCESS == ret) {
         /*
          * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
          */
@@ -80,5 +83,5 @@ PROTOTYPE ERROR_CLASS wait(REQUEST_INOUT request, STATUS_OUT status)
             opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
         }
     );
-    return ompi_errhandler_request_invoke(1, request, FUNC_NAME, true);
+    return ompi_errhandler_request_invoke(1, request, FUNC_NAME, ret, true);
 }

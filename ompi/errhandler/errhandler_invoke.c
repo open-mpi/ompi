@@ -221,6 +221,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 int ompi_errhandler_request_invoke(int count,
                                    struct ompi_request_t **requests,
                                    const char *message,
+                                   int err,
                                    bool release_failed)
 {
     int i, ec, type;
@@ -237,9 +238,15 @@ int ompi_errhandler_request_invoke(int count,
             break;
         }
     }
-    /* If there were no errors, return SUCCESS */
     if (i >= count) {
-        return MPI_SUCCESS;
+        if (MPI_SUCCESS == err) {
+            return MPI_SUCCESS;
+        }
+        /* No request carries the error, as the failing request was already
+           released (e.g. a generalized request whose free_fn failed): invoke
+           the default error handler with the error from the caller. */
+        ec = ompi_errcode_get_mpi_code(err);
+        return ompi_errhandler_invoke(NULL, NULL, -1, ec, message);
     }
 
     ec = ompi_errcode_get_mpi_code(requests[i]->req_status.MPI_ERROR);

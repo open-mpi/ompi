@@ -92,7 +92,8 @@ PROTOTYPE ERROR_CLASS request_get_status(REQUEST request, INT_OUT flag,
         }
         /* Report the error as MPI_Test does, without freeing the request */
         if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
-            return ompi_errhandler_request_invoke(1, &request, FUNC_NAME, false);
+            return ompi_errhandler_request_invoke(1, &request, FUNC_NAME,
+                                                  request->req_status.MPI_ERROR, false);
         }
         return MPI_SUCCESS;
     }

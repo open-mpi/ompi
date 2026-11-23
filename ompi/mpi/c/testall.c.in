@@ -39,6 +39,8 @@
 PROTOTYPE ERROR_CLASS testall(INT count, REQUEST_INOUT requests:count, INT_OUT flag,
                               STATUS_OUT statuses:count)
 {
+    int ret;
+
     SPC_RECORD(OMPI_SPC_TESTALL, 1);
 
     MEMCHECKER(
@@ -69,13 +71,13 @@ PROTOTYPE ERROR_CLASS testall(INT count, REQUEST_INOUT requests:count, INT_OUT f
         return MPI_SUCCESS;
     }
 
-    if (OMPI_SUCCESS == ompi_request_test_all(count, requests, flag,
-                                              statuses)) {
+    ret = ompi_request_test_all(count, requests, flag, statuses);
+    if (OMPI_SUCCESS == ret) {
         return MPI_SUCCESS;
     }
 
     if (MPI_SUCCESS !=
-        ompi_errhandler_request_invoke(count, requests, FUNC_NAME, true)) {
+        ompi_errhandler_request_invoke(count, requests, FUNC_NAME, ret, true)) {
         return MPI_ERR_IN_STATUS;
     }
 
