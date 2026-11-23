@@ -154,6 +154,9 @@ struct mca_btl_uct_component_t {
     /** connection retry timeout */
     unsigned int connection_retry_timeout;
 
+    /** longest wait (ms) for in-flight operations to complete when a module is finalized */
+    unsigned int finalize_flush_timeout;
+
 #if UCT_API >= UCT_VERSION(1, 7)
     uct_component_h *uct_components;
     unsigned num_uct_components;

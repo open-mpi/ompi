@@ -17,6 +17,7 @@
 
 #include "btl_uct_am.h"
 #include "btl_uct_device_context.h"
+#include "btl_uct_include_list.h"
 #include "opal/util/argv.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/minmax.h"
@@ -155,10 +156,6 @@ static void mca_btl_uct_tl_destructor(mca_btl_uct_tl_t *tl)
         }
     }
 
-    if (tl->ucs_async) {
-        ucs_async_context_destroy(tl->ucs_async);
-    }
-
     free(tl->uct_tl_name);
     free(tl->uct_dev_name);
 
@@ -257,6 +254,9 @@ static int mca_btl_uct_setup_connection_tl(mca_btl_uct_tl_t *tl)
         mca_btl_uct_module_get_tl_context_specific(/*module=*/NULL, tl,
                                                    /*context_id=*/0);
 
+    /* the context was opened (without progress) when the tl was discovered */
+    mca_btl_uct_context_enable_progress(context);
+
     ucs_status = uct_iface_set_am_handler(context->uct_iface,
                                           MCA_BTL_UCT_CONNECT_RDMA, mca_btl_uct_conn_req_cb,
                                           tl, UCT_CB_FLAG_ASYNC);
@@ -265,53 +265,6 @@ static int mca_btl_uct_setup_connection_tl(mca_btl_uct_tl_t *tl)
     }
 
     return UCS_OK == ucs_status ? OPAL_SUCCESS : OPAL_ERROR;
-}
-
-static int mca_btl_uct_populate_tl_attr(mca_btl_uct_tl_t *tl) {
-#if UCT_API >= UCT_VERSION(1, 6)
-    uct_iface_params_t iface_params = {.field_mask = UCT_IFACE_PARAM_FIELD_OPEN_MODE
-                                                     | UCT_IFACE_PARAM_FIELD_DEVICE,
-                                       .open_mode = UCT_IFACE_OPEN_MODE_DEVICE,
-                                       .mode = {.device = {.tl_name = tl->uct_tl_name,
-                                                           .dev_name = tl->uct_dev_name}}};
-#else
-    uct_iface_params_t iface_params = {.rndv_cb = NULL,
-                                       .eager_cb = NULL,
-                                       .stats_root = NULL,
-                                       .rx_headroom = 0,
-                                       .open_mode = UCT_IFACE_OPEN_MODE_DEVICE,
-                                       .mode = {.device = {.tl_name = tl->uct_tl_name,
-                                                           .dev_name = tl->uct_dev_name}}};
-#endif
-    ucs_status_t ucs_status;
-
-    /* do the bare minimum to get tl attributes */
-    uct_worker_h uct_worker;
-    ucs_status = uct_worker_create(tl->ucs_async, UCS_THREAD_MODE_SINGLE, &uct_worker);
-    if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
-        BTL_VERBOSE(("could not create a UCT worker"));
-        return OPAL_ERROR;
-    }
-
-    uct_iface_h uct_iface;
-    ucs_status = uct_iface_open(tl->uct_md->uct_md, uct_worker, &iface_params,
-                                tl->uct_tl_config, &uct_iface);
-    if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
-        BTL_VERBOSE(("could not open UCT interface. error code: %d", ucs_status));
-        uct_worker_destroy(uct_worker);
-        return OPAL_ERROR;
-    }
-
-    int rc = OPAL_SUCCESS;
-    ucs_status = uct_iface_query(uct_iface, &tl->uct_iface_attr);
-    if (UCS_OK != ucs_status) {
-        BTL_VERBOSE(("Error querying UCT interface"));
-        rc = OPAL_ERROR;
-    }
-
-    uct_iface_close(uct_iface);
-    uct_worker_destroy(uct_worker);
-    return rc;
 }
 
 static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_md_t *md,
@@ -333,15 +286,34 @@ static mca_btl_uct_tl_t *mca_btl_uct_create_tl(mca_btl_uct_md_t *md,
 
     (void) uct_md_iface_config_read(md->uct_md, tl_desc->tl_name, NULL, NULL, &tl->uct_tl_config);
 
-    ucs_status_t ucs_status = ucs_async_context_create(UCS_ASYNC_MODE_THREAD, &tl->ucs_async);
-    if (UCS_OK != ucs_status) {
-        BTL_VERBOSE(("Could not create a UCT async context"));
+    ucs_status_t ucs_status;
+    if (NULL == md->ucs_async) {
+        ucs_status = ucs_async_context_create(UCS_ASYNC_MODE_THREAD, &md->ucs_async);
+        if (UCS_OK != ucs_status) {
+            BTL_VERBOSE(("Could not create a UCT async context"));
+            OBJ_RELEASE(tl);
+            return NULL;
+        }
+    }
+    tl->ucs_async = md->ucs_async;
+
+    /* The only way to learn what a tl can do is to open an interface on it. That interface is
+     * exactly what the first device context of the tl needs, so keep it instead of closing it
+     * and opening an identical one later. The module is not known yet: it adopts the context
+     * if it ends up using the tl, otherwise the tl is released (and the interface closed) once
+     * the modules and the connection tl have been selected. */
+    mca_btl_uct_device_context_t *context = mca_btl_uct_context_create(/*module=*/NULL, tl,
+                                                                       /*context_id=*/0,
+                                                                       /*enable_progress=*/false);
+    if (OPAL_UNLIKELY(NULL == context)) {
         OBJ_RELEASE(tl);
         return NULL;
     }
+    tl->uct_dev_contexts[0] = context;
 
-    int rc = mca_btl_uct_populate_tl_attr(tl);
-    if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+    ucs_status = uct_iface_query(context->uct_iface, &tl->uct_iface_attr);
+    if (OPAL_UNLIKELY(UCS_OK != ucs_status)) {
+        BTL_VERBOSE(("Error querying UCT interface"));
         OBJ_RELEASE(tl);
         return NULL;
     }
@@ -469,7 +441,19 @@ int mca_btl_uct_populate_tls(mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_de
 {
     BTL_VERBOSE(("processing %u tls in memory domain %s", tl_count, md->md_name));
 
+    /* Creating a tl opens a UCT interface (for dc_mlx5 this creates an SRQ and a DCT). Do not
+     * do that for transports the transport filter is going to discard anyway. */
+    mca_btl_uct_include_list_t allowed_list;
+    OBJ_CONSTRUCT(&allowed_list, mca_btl_uct_include_list_t);
+    mca_btl_uct_include_list_parse(mca_btl_uct_component.allowed_transports, &allowed_list);
+
     for (unsigned i = 0; i < tl_count; ++i) {
+        if (mca_btl_uct_include_list_rank(tl_descs[i].tl_name, &allowed_list) < 0) {
+            BTL_VERBOSE(("skipping tl %s::%s::%s (not an allowed transport)", md->md_name,
+                         tl_descs[i].tl_name, tl_descs[i].dev_name));
+            continue;
+        }
+
         BTL_VERBOSE(("processing tl %s::%s::%s", md->md_name, tl_descs[i].tl_name, tl_descs[i].dev_name));
 
         /* the priority will be set during module creation */
@@ -478,6 +462,8 @@ int mca_btl_uct_populate_tls(mca_btl_uct_md_t *md, uct_tl_resource_desc_t *tl_de
             opal_list_append(&md->tls, &tl->super);
         }
     }
+
+    OBJ_DESTRUCT(&allowed_list);
 
     if (0 == opal_list_get_size(&md->tls)) {
         BTL_VERBOSE(("no suitable tls match filter: %s", mca_btl_uct_component.allowed_transports));
