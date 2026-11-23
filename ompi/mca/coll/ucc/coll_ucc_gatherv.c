@@ -30,6 +30,7 @@ mca_coll_ucc_gatherv_init_common(const void *sbuf, size_t scount, struct ompi_da
         if (!is_inplace) {
             ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
         }
+#if UCC_API_VERSION < UCC_VERSION(1, 8)
         if ((COLL_UCC_DT_UNSUPPORTED == ucc_sdt) ||
             (COLL_UCC_DT_UNSUPPORTED == ucc_rdt)) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
@@ -37,13 +38,16 @@ mca_coll_ucc_gatherv_init_common(const void *sbuf, size_t scount, struct ompi_da
                         sdtype->super.name : rdtype->super.name);
             goto fallback;
         }
+#endif
     } else {
         ucc_sdt = ompi_dtype_to_ucc_dtype(sdtype);
+#if UCC_API_VERSION < UCC_VERSION(1, 8)
         if (COLL_UCC_DT_UNSUPPORTED == ucc_sdt) {
             UCC_VERBOSE(5, "ompi_datatype is not supported: dtype = %s",
                         sdtype->super.name);
             goto fallback;
         }
+#endif
     }
 
     flags = (ompi_count_array_is_64bit(rcounts) ? UCC_COLL_ARGS_FLAG_COUNT_64BIT : 0) |
