@@ -1,6 +1,7 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2017. ALL RIGHTS RESERVED.
  * Copyright (c) 2025      Stony Brook University.  All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -17,6 +18,7 @@
 #include "ompi/group/group.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/mca/common/ucx/common_ucx.h"
+#include "opal/class/opal_hash_table.h"
 #include "opal/mca/common/ucx/common_ucx_wpool.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
@@ -39,8 +41,13 @@ typedef struct ompi_osc_ucx_component {
     bool env_initialized; /* UCX environment is initialized or not */
     bool priority_is_set; /* Is ucp_ctx created and component priority has been set */
     opal_common_ucx_support_level_t support_level;
-    int comm_world_size;
-    ucp_ep_h *endpoints;
+    /* The endpoint to each peer, shared by all the windows (single threaded
+     * mode only): hardware endpoints are a limited resource. Maps the name of
+     * a process, whatever its job, to a ucp_ep_h slot that is NULL until
+     * the endpoint is created. The slots are allocated one by one and
+     * never move, so a window keeps pointers to them. */
+    opal_proc_table_t endpoint_table;
+    bool endpoint_table_ready;
     int num_modules;
     bool no_locks; /* Default value of the no_locks info key for new windows */
     bool acc_single_intrinsic;
@@ -127,7 +134,7 @@ typedef struct ompi_osc_ucx_module {
     size_t   *sizes; /* used if not every process has the same size */
     uint64_t *addrs;
     uint64_t *state_addrs;
-    uint64_t *comm_world_ranks;
+    ucp_ep_h **ep_slots; /* per target, its slot in the component's endpoint table (single threaded mode) */
     ptrdiff_t disp_unit; /* if disp_unit >= 0, then everyone has the same
                           * disp unit size; if disp_unit == -1, then we
                           * need to look at disp_units */
@@ -174,14 +181,13 @@ typedef struct ompi_osc_ucx_lock {
     bool is_nocheck;
 } ompi_osc_ucx_lock_t;
 
-#define OSC_UCX_GET_EP(_module, rank_) (mca_osc_ucx_component.endpoints[_module->comm_world_ranks[rank_]])
 #define OSC_UCX_GET_DISP(module_, rank_) ompi_osc_ucx_get_disp_unit((module_), (rank_))
 
 #define OSC_UCX_GET_DEFAULT_EP(_ep_ptr, _module, _target)                   \
     if (opal_common_ucx_thread_enabled) {                  \
         _ep_ptr = NULL;                                                     \
     } else {                                                                \
-        _ep_ptr = (ucp_ep_h *)&(OSC_UCX_GET_EP(_module, _target));          \
+        _ep_ptr = (_module)->ep_slots[_target];                             \
     }
 
 extern size_t ompi_osc_ucx_outstanding_ops_flush_threshold;
