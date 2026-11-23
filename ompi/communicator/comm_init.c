@@ -400,6 +400,24 @@ static int ompi_comm_finalize (void)
     /* Shut down MPI_COMM_NULL */
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
 
+    /* Report what the application never freed. Must precede the release loop
+     * below, which drops the communicators held only by the user. The
+     * reference count says nothing here: a communicator kept alive by a
+     * pending request is the request's leak, not the communicator's. */
+    if ( ompi_debug_show_handle_leaks ) {
+        max = ompi_comm_get_num_communicators();
+        for ( i=3; i<max; i++ ) {
+            comm = ompi_comm_lookup(i);
+            if ( NULL == comm || OMPI_COMM_IS_INTERNAL(comm) ||
+                 OMPI_COMM_IS_FREED(comm) ) {
+                continue;
+            }
+            opal_output(0, "WARNING: MPI_Comm %u (%s) still allocated at MPI_FINALIZE",
+                        ompi_comm_get_local_cid(comm), comm->c_name);
+            ompi_comm_dump ( comm);
+        }
+    }
+
     /* Check whether we have some communicators left */
     max = ompi_comm_get_num_communicators();
     for ( i=3; i<max; i++ ) {
@@ -411,20 +429,6 @@ static int ompi_comm_finalize (void)
             OBJ_RELEASE(comm);
         }
     }
-
-#if OPAL_ENABLE_DEBUG
-    if ( ompi_debug_show_handle_leaks ) {
-        max = ompi_comm_get_num_communicators();
-        for ( i=3; i<max; i++ ) {
-            comm = ompi_comm_lookup(i);
-            if (NULL == comm) continue;
-            opal_output(0, "WARNING: %u(%s) unnamed MPI_Comm handles still allocated at MPI_FINALIZE",
-                        ompi_comm_get_local_cid(comm), comm->c_name);
-            ompi_comm_dump ( comm);
-            OBJ_RELEASE(comm);
-        }
-    }
-#endif  /* OPAL_ENABLE_DEBUG */
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
     OBJ_DESTRUCT (&ompi_comm_hash);
@@ -440,6 +444,17 @@ static int ompi_comm_finalize (void)
 
     /* release a reference to the attributes subsys */
     return ompi_attr_put_ref();
+}
+
+void ompi_comm_mark_communicator_as_internal (ompi_communicator_t *comm)
+{
+    /* Ignore what a non-participating split returns, so callers need no
+     * guard, and never claim a predefined communicator. */
+    if ( NULL == comm || &ompi_mpi_comm_null.comm == comm ||
+         OMPI_COMM_IS_INTRINSIC(comm) ) {
+        return;
+    }
+    comm->c_flags |= OMPI_COMM_INTERNAL;
 }
 
 /********************************************************************************/

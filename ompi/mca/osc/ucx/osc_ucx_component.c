@@ -759,6 +759,7 @@ select_unlock:
     if (ret != OMPI_SUCCESS) {
         goto error;
     }
+    ompi_comm_mark_communicator_as_internal(module->comm);
 
     *model = MPI_WIN_UNIFIED;
     opal_asprintf(&name, "ucx window %s", ompi_comm_print_cid(module->comm));
