@@ -58,6 +58,11 @@ standard draft document.
   operation bitwise AND) (API).  Absorbs all new failures, and
   propagate the knowledge about failures among the participants. see
   :ref:`MPIX_Comm_agree`, :ref:`MPIX_Comm_iagree`.
+
+  .. note:: On an intercommunicator, and like any other
+     intercommunicator collective, the agreement combines the
+     contributions of the remote group: each group obtains the bitwise
+     AND of the values supplied by the other group.
 * ``MPIX_Comm_get_failed(MPI_Comm comm, MPI_Group* failedgrp)`` obtains the
   group of currently failed processes (API). See :ref:`MPIX_Comm_get_failed`.
 * ``MPIX_Comm_ack_failed(MPI_Comm comm, int num_to_ack, int* num_acked)``
