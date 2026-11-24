@@ -182,10 +182,17 @@ static int mca_pml_ucx_recv_worker_address(ompi_proc_t *proc,
                                            size_t *addrlen_p)
 {
     int ret;
+    /* Two blobs are published only with HAVE_UCP_WORKER_ADDRESS_FLAGS. */
+#if HAVE_UCP_WORKER_ADDRESS_FLAGS
+    const bool peer_is_local = OPAL_PROC_ON_LOCAL_NODE(proc->super.proc_flags);
+#else
+    const bool peer_is_local = false;
+#endif
 
     *address_p = NULL;
-    OPAL_MODEX_RECV(ret, &mca_pml_ucx_component.pmlm_version, &proc->super.proc_name,
-                    (void**)address_p, addrlen_p);
+    OPAL_MODEX_RECV_PREFER_LOCAL(ret, &mca_pml_ucx_component.pmlm_version,
+                                 &proc->super.proc_name, (void**)address_p,
+                                 addrlen_p, peer_is_local);
     if (ret < 0) {
         PML_UCX_ERROR("Failed to receive UCX worker address: %s (%d)",
                       opal_strerror(ret), ret);
