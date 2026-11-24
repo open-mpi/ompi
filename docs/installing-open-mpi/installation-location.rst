@@ -160,7 +160,45 @@ these hard-coded directory paths at run time (*assuming* that you have
 already adjusted your ``PATH`` and/or ``LD_LIBRARY_PATH`` environment
 variables to the new location where Open MPI now resides).
 
-There are three methods.
+There are four methods.
+
+.. _install-location-automatic:
+
+Let Open MPI find its new prefix by itself
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the installation tree was moved as a whole, and is visible at the
+same path on every node, Open MPI locates itself and no environment
+variable needs to be set at all.
+
+Open MPI asks the operating system where its own shared library was
+loaded from, and strips the configured ``libdir`` suffix off that path.
+The commands that do not load that library |mdash| ``mpirun`` and the
+wrapper compilers, which link Open MPI statically on purpose |mdash|
+use the location of the command itself and strip the configured
+``bindir`` suffix instead.
+
+This cannot work in the following cases, where Open MPI falls back to
+the paths recorded at ``configure`` time and one of the methods below
+must be used:
+
+* The tree is not at the same path on every node.  Open MPI can only
+  see the local copy, so the remote daemons would be sent to the wrong
+  place.
+
+* An installation directory was configured as an absolute path that is
+  not relative to ``prefix`` or ``exec_prefix`` (see the note in the
+  next section).
+
+* ``prefix`` and ``exec_prefix`` name different directories.  Only the
+  one that ``libdir`` is relative to can be recovered from the library
+  location; the other keeps its configured value.
+
+Setting ``OPAL_PREFIX``, or any of the individual directory variables
+below, always takes precedence over the location Open MPI detects.
+Setting the MCA parameter ``opal_installdir_warn`` to ``1`` reports any
+installation directory that does not exist, which is a quick way to see
+whether a relocated tree was found.
 
 .. _install-location-opal-prefix:
 

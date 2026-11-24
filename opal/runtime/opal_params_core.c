@@ -28,6 +28,7 @@
  * Copyright (c) 2022      Computer Architecture and VLSI Systems (CARV)
  *                         Laboratory, ICS Forth. All rights reserved.
  * Copyright (c) 2023      Triad National Security, LLC. All rights reserved.
+ * Copyright (c) 2025-2026 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +45,7 @@
 #include "opal/constants.h"
 #include "opal/datatype/opal_datatype.h"
 #include "opal/mca/base/mca_base_var.h"
+#include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/threads/mutex.h"
 #include "opal/mca/threads/threads.h"
@@ -425,6 +427,13 @@ int opal_register_util_params(void)
                                  " GPU memory or use alternative path using IPC events",
                                  MCA_BASE_VAR_TYPE_BOOL, NULL, 0, 0, OPAL_INFO_LVL_9,
                                  MCA_BASE_VAR_SCOPE_READONLY, &opal_accelerator_use_sync_memops);
+
+    /* The installdirs framework is opened before the variable system exists,
+     * so its variables have to be registered from here instead. */
+    ret = opal_installdirs_base_register_params();
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
 
     opal_finalize_register_cleanup(opal_deregister_util_params);
 
