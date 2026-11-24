@@ -31,8 +31,7 @@
  *
  * Raising must stay free on the critical path.  Each helper below reads the
  * event's listener gate first and returns before touching the payload, so
- * an unobserved event costs one load and a predicted branch -- the same
- * shape as the PERUSE handle check it sits beside.
+ * an unobserved event costs one load and a predicted branch.
  */
 
 #ifndef MCA_PML_OB1_EVENTS_H
