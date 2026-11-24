@@ -162,7 +162,7 @@ int mca_io_base_delete(const char *filename, struct opal_info_t *info)
         opal_mutex_unlock(&ompi_mpi_ompio_bootstrap_mutex);
 
         if (OMPI_SUCCESS !=
-            (ret = mca_fs_base_find_available(OPAL_ENABLE_PROGRESS_THREADS, 1))) {
+            (ret = mca_fs_base_find_available(opal_async_progress_thread_spawned, 1))) {
             return err;
         }
     }

@@ -143,10 +143,23 @@ OPAL_DECLSPEC void opal_progress_set_event_poll_rate(int microseconds);
  *
  * Prototype for the a progress function callback.  Progress function
  * callbacks can be registered with opal_progress_register() and
- * deregistered with opal_progress_deregister().  It should be noted
+ * deregistered with opal_progress_unregister().  It should be noted
  * that either registering or deregistering a function callback is an
  * extraordinarily expensive operation and should not be used for
  * potentially short callback lifetimes.
+ *
+ * A component-specific progress callback should generally be implemented
+ * to be thread-safe (recommended). However, some progress callbacks can
+ * be unsafe by choice for performance reason.
+ *
+ * opal_progress_register() and opal_progress_register_lp() will treat
+ * callbacks as **unsafe** by default. It is the responsibility of
+ * component developers to turn them to thread-safe (or not) and
+ * use opal_progress_register[_thread_safe][_lp]() to register.
+ *
+ * Note that a callback can be swapped between the safe and unsafe list
+ * by re-registering with the appropriate thread-safe variant
+ * (default opal_progress_register() is unsafe (false)).
  *
  * @return         Number of events progressed during the callback
  */
@@ -161,6 +174,16 @@ typedef int (*opal_progress_callback_t)(void);
 OPAL_DECLSPEC int opal_progress_register(opal_progress_callback_t cb);
 
 OPAL_DECLSPEC int opal_progress_register_lp(opal_progress_callback_t cb);
+
+/**
+ * Register an event to be progressed, with thread-safety indication
+ *
+ * Register an event to be progressed during calls to opal_progress().
+ * Please read the note in opal_progress_callback_t.
+ */
+OPAL_DECLSPEC int opal_progress_register_thread_safe(opal_progress_callback_t cb, bool is_thread_safe);
+
+OPAL_DECLSPEC int opal_progress_register_thread_safe_lp(opal_progress_callback_t cb, bool is_thread_safe);
 
 /**
  * Deregister previously registered event
@@ -195,6 +218,9 @@ static inline bool opal_progress_spin(volatile bool *complete)
 
     return false;
 }
+
+/* shutdown the async progress thread. Do nothing if disabled */
+OPAL_DECLSPEC void opal_progress_shutdown_async_progress_thread(void);
 
 END_C_DECLS
 
