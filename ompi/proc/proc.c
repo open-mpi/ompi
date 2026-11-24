@@ -52,6 +52,8 @@
 
 opal_list_t  ompi_proc_list = {{0}};
 static opal_mutex_t ompi_proc_lock;
+/* Modex progress takes this lock. Hold it only for individual hash operations. */
+static opal_mutex_t ompi_proc_hash_lock;
 static opal_hash_table_t ompi_proc_hash;
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 /* Serializes architecture (and convertor) seeding, reachable from any
@@ -150,7 +152,9 @@ void ompi_proc_destruct(ompi_proc_t* proc)
     OBJ_RELEASE( proc->super.proc_convertor );
     opal_mutex_lock (&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
+    OPAL_THREAD_LOCK(&ompi_proc_hash_lock);
     opal_hash_table_remove_value_ptr (&ompi_proc_hash, &proc->super.proc_name, sizeof (proc->super.proc_name));
+    OPAL_THREAD_UNLOCK(&ompi_proc_hash_lock);
     opal_mutex_unlock (&ompi_proc_lock);
 }
 
@@ -172,9 +176,6 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
     OMPI_CAST_RTE_NAME(&proc->super.proc_name)->jobid = jobid;
     OMPI_CAST_RTE_NAME(&proc->super.proc_name)->vpid = vpid;
 
-    opal_hash_table_set_value_ptr (&ompi_proc_hash, &proc->super.proc_name, sizeof (proc->super.proc_name),
-                                   proc);
-
     /* by default we consider process to be remote */
     proc->super.proc_flags = OPAL_PROC_NON_LOCAL;
 
@@ -182,6 +183,11 @@ static int ompi_proc_allocate (ompi_jobid_t jobid, ompi_vpid_t vpid, ompi_proc_t
     if (ompi_modex_all_ready()) {
         opal_proc_learned(&proc->super, OPAL_PROC_FLAG_AVAILABLE);
     }
+
+    OPAL_THREAD_LOCK(&ompi_proc_hash_lock);
+    opal_hash_table_set_value_ptr (&ompi_proc_hash, &proc->super.proc_name, sizeof (proc->super.proc_name),
+                                   proc);
+    OPAL_THREAD_UNLOCK(&ompi_proc_hash_lock);
 
     *procp = proc;
 
@@ -306,10 +312,12 @@ opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name)
     ompi_proc_t *proc = NULL;
     int ret;
 
-    /* try to lookup the value in the hash table */
+    OPAL_THREAD_LOCK(&ompi_proc_hash_lock);
     ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
+    OPAL_THREAD_UNLOCK(&ompi_proc_hash_lock);
 
     if (OPAL_SUCCESS == ret) {
+        /* The proc's initial reference keeps it alive until finalize. */
         return &proc->super;
     }
 
@@ -318,12 +326,11 @@ opal_proc_t *ompi_proc_lookup (const opal_process_name_t proc_name)
 
 static ompi_proc_t *ompi_proc_for_name_nolock (const opal_process_name_t proc_name)
 {
-    ompi_proc_t *proc = NULL;
+    /* Recheck under ompi_proc_lock in case another thread inserted the proc. */
+    ompi_proc_t *proc = (ompi_proc_t *) ompi_proc_lookup (proc_name);
     int ret;
 
-    /* double-check that another competing thread has not added this proc */
-    ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
-    if (OPAL_SUCCESS == ret) {
+    if (NULL != proc) {
         goto exit;
     }
 
@@ -342,13 +349,10 @@ exit:
 
 opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
 {
-    ompi_proc_t *proc = NULL;
-    int ret;
+    opal_proc_t *proc = ompi_proc_lookup (proc_name);
 
-    /* try to lookup the value in the hash table */
-    ret = opal_hash_table_get_value_ptr (&ompi_proc_hash, &proc_name, sizeof (proc_name), (void **) &proc);
-    if (OPAL_SUCCESS == ret) {
-        return &proc->super;
+    if (NULL != proc) {
+        return proc;
     }
 
     opal_mutex_lock (&ompi_proc_lock);
@@ -369,10 +373,10 @@ opal_proc_t *ompi_proc_for_name (const opal_process_name_t proc_name)
         return NULL;
     }
 
-    proc = ompi_proc_for_name_nolock (proc_name);
+    proc = (opal_proc_t *) ompi_proc_for_name_nolock (proc_name);
     opal_mutex_unlock (&ompi_proc_lock);
 
-    return (opal_proc_t *) proc;
+    return proc;
 }
 
 int ompi_proc_init(void)
@@ -384,6 +388,7 @@ int ompi_proc_init(void)
 
     OBJ_CONSTRUCT(&ompi_proc_list, opal_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ompi_proc_hash_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ompi_proc_hash, opal_hash_table_t);
 
     ret = opal_hash_table_init (&ompi_proc_hash, opal_proc_hash_init_size);
@@ -470,6 +475,8 @@ int ompi_proc_complete_init(void)
             }
             ret = ompi_proc_allocate (OMPI_PROC_MY_NAME->jobid, local_rank, &proc);
             if (OMPI_SUCCESS != ret) {
+                opal_argv_free(peers);
+                opal_mutex_unlock (&ompi_proc_lock);
                 return ret;
             }
             /* get the locality information - all RTEs are required
@@ -534,6 +541,7 @@ int ompi_proc_finalize (void)
     OBJ_DESTRUCT(&ompi_proc_list);
     OBJ_DESTRUCT(&ompi_proc_lock);
     OBJ_DESTRUCT(&ompi_proc_hash);
+    OBJ_DESTRUCT(&ompi_proc_hash_lock);
 
     free (ompi_proc_jobids);
     ompi_proc_jobids = NULL;
