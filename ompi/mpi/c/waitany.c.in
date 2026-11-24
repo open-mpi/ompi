@@ -40,6 +40,8 @@
 
 PROTOTYPE ERROR_CLASS waitany(INT count, REQUEST_INOUT requests:count, INT_OUT indx, STATUS_OUT status)
 {
+    int ret;
+
     SPC_RECORD(OMPI_SPC_WAITANY, 1);
 
     MEMCHECKER(
@@ -74,9 +76,10 @@ PROTOTYPE ERROR_CLASS waitany(INT count, REQUEST_INOUT requests:count, INT_OUT i
         return MPI_SUCCESS;
     }
 
-    if (OMPI_SUCCESS == ompi_request_wait_any(count, requests, indx, status)) {
+    ret = ompi_request_wait_any(count, requests, indx, status);
+    if (OMPI_SUCCESS == ret) {
         return MPI_SUCCESS;
     }
 
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, ret, true);
 }

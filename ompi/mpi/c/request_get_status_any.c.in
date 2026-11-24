@@ -93,7 +93,20 @@ PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_CONST requests:c
         if ( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ) {
             continue;
         }
-        if (requests[i]->req_complete ) {
+#if OPAL_ENABLE_FT_MPI
+        /* As MPI_Testany, detect a request terminated by a process failure.
+           A MPI_ANY_SOURCE receive that cannot complete is reported as
+           pending, and remains active. */
+        if( ompi_request_is_failed(requests[i]) &&
+            MPI_ERR_PROC_FAILED_PENDING == requests[i]->req_status.MPI_ERROR ) {
+            ompi_request_t *pending = requests[i];
+            *flag = false;
+            *indx = i;
+            return ompi_errhandler_request_invoke(1, &pending, FUNC_NAME,
+                                                  MPI_ERR_PROC_FAILED_PENDING, false);
+        }
+#endif
+        if (REQUEST_COMPLETE(requests[i])) {
             *flag = true;
             *indx = i;
             /* If this is a generalized request, we *always* have to call
@@ -104,6 +117,12 @@ PROTOTYPE ERROR_CLASS request_get_status_any(INT count, REQUEST_CONST requests:c
             }
             if (MPI_STATUS_IGNORE != status) {
                 OMPI_COPY_STATUS(status, requests[i]->req_status, false);
+            }
+            /* As for MPI_Testany, without freeing the request */
+            if (MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+                ompi_request_t *failed = requests[i];
+                return ompi_errhandler_request_invoke(1, &failed, FUNC_NAME,
+                                                  failed->req_status.MPI_ERROR, false);
             }
             return MPI_SUCCESS;
         } else {

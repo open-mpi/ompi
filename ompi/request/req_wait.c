@@ -231,7 +231,7 @@ int ompi_request_default_wait_all( size_t count,
     size_t i, completed = 0, failed = 0;
     ompi_request_t **rptr;
     ompi_request_t *request;
-    int mpi_error = OMPI_SUCCESS, rc;
+    int mpi_error = OMPI_SUCCESS, rc, free_rc = OMPI_SUCCESS;
     ompi_wait_sync_t sync;
 
     if (OPAL_UNLIKELY(0 == count)) {
@@ -367,8 +367,12 @@ recheck:
                 assume that the request is still there.
                 Otherwise, Bad Things will happen later! */
                 int tmp = ompi_request_free(rptr);
-                if (OMPI_SUCCESS == mpi_error && OMPI_SUCCESS != tmp) {
-                    mpi_error = tmp;
+                if (OMPI_SUCCESS != tmp) {
+                    /* The error of the free callback belongs to the status */
+                    statuses[i].MPI_ERROR = tmp;
+                    if (OMPI_SUCCESS == free_rc) {
+                        free_rc = tmp;
+                    }
                 }
             }
             if( statuses[i].MPI_ERROR != OMPI_SUCCESS) {
@@ -421,11 +425,17 @@ recheck:
                 rc = ompi_grequest_invoke_query(request, &request->req_status);
             }
 
+            /* Report the request error even without a status to store it */
+            rc = request->req_status.MPI_ERROR;
+
             if (request->req_persistent) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
-            } else if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
+            } else if (MPI_SUCCESS == rc) {
                 /* Only free the request if there is no error on it */
                 rc = ompi_request_free(rptr);
+                if (OMPI_SUCCESS == free_rc) {
+                    free_rc = rc;
+                }
             }
 #if OPAL_ENABLE_FT_MPI
             if( (MPI_ERR_PROC_FAILED == rc) || (MPI_ERR_REVOKED == rc) ) {
@@ -445,7 +455,9 @@ recheck:
         }
     }
     WAIT_SYNC_RELEASE(&sync);
-    return mpi_error;
+    /* The error of a released request that nobody can find anymore (a failed
+     * free callback) is reported as such, and not as MPI_ERR_IN_STATUS */
+    return (OMPI_SUCCESS != free_rc) ? free_rc : mpi_error;
 }
 
 
@@ -456,7 +468,7 @@ int ompi_request_default_wait_some(size_t count,
                                    ompi_status_public_t * statuses)
 {
     size_t num_requests_null_inactive, num_requests_done, num_active_reqs;
-    int rc = MPI_SUCCESS;
+    int rc = MPI_SUCCESS, free_rc = MPI_SUCCESS;
     ompi_request_t **rptr = NULL;
     ompi_request_t *request = NULL;
     ompi_wait_sync_t sync;
@@ -622,14 +634,21 @@ int ompi_request_default_wait_some(size_t count,
         } else {
             /* Only free the request if there was no error */
             if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
-                int tmp;
-                tmp = ompi_request_free(&(requests[indices[i]]));
+                int tmp = ompi_request_free(&(requests[indices[i]]));
                 if (OMPI_SUCCESS != tmp) {
-                    return tmp;
+                    /* The error of the free callback belongs to the status */
+                    if (MPI_STATUSES_IGNORE != statuses) {
+                        statuses[i].MPI_ERROR = tmp;
+                    }
+                    rc = MPI_ERR_IN_STATUS;
+                    if (MPI_SUCCESS == free_rc) {
+                        free_rc = tmp;
+                    }
                 }
             }
         }
     }
 
-    return rc;
+    /* The error of a released request is reported as such, see wait_all */
+    return (MPI_SUCCESS != free_rc) ? free_rc : rc;
 }

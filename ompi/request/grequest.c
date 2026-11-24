@@ -62,6 +62,9 @@ static inline int ompi_grequest_internal_free(ompi_grequest_t* greq)
  *
  * Note that TEST* and WAIT* will call this function when a request
  * has been completed.
+ *
+ * The request is released even if the user free_fn fails, in which
+ * case the error is returned (and also stored in the request status).
  */
 static int ompi_grequest_free(ompi_request_t** req)
 {
@@ -75,10 +78,8 @@ static int ompi_grequest_free(ompi_request_t** req)
     if( REQUEST_COMPLETE(*req) ) {
         rc = ompi_grequest_internal_free(greq);
     }
-    if (OMPI_SUCCESS == rc ) {
-        OBJ_RELEASE(*req);
-        *req = MPI_REQUEST_NULL;
-    }
+    OBJ_RELEASE(*req);
+    *req = MPI_REQUEST_NULL;
     return rc;
 }
 

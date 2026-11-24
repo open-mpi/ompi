@@ -85,13 +85,32 @@ PROTOTYPE ERROR_CLASS request_get_status_some(INT incount, REQUEST_CONST request
     opal_atomic_mb();
     int i;
     int indx = 0;
+    ompi_request_t *failed = NULL;
     all_inactive = true;
     for (i = 0; i < incount; i++) {
         if ( (requests[i] == MPI_REQUEST_NULL) || (requests[i]->req_state == OMPI_REQUEST_INACTIVE) ) {
             continue;
         }
         all_inactive = false;
-        if (requests[i]->req_complete ) {
+#if OPAL_ENABLE_FT_MPI
+        /* As MPI_Testsome, detect a request terminated by a process failure.
+           A MPI_ANY_SOURCE receive that cannot complete is reported as
+           pending, and remains active. */
+        if( ompi_request_is_failed(requests[i]) &&
+            MPI_ERR_PROC_FAILED_PENDING == requests[i]->req_status.MPI_ERROR ) {
+            indices[indx] = i;
+            if (MPI_STATUSES_IGNORE != statuses) {
+                OMPI_COPY_STATUS(&statuses[indx], requests[i]->req_status, true);
+                statuses[indx].MPI_ERROR = MPI_ERR_PROC_FAILED_PENDING;
+            }
+            if (NULL == failed) {
+                failed = requests[i];
+            }
+            indx++;
+            continue;
+        }
+#endif
+        if (REQUEST_COMPLETE(requests[i])) {
             indices[indx] = i;
             /* If this is a generalized request, we *always* have to call
                the query function to get the status (MPI-2:8.2), even if
@@ -100,7 +119,13 @@ PROTOTYPE ERROR_CLASS request_get_status_some(INT incount, REQUEST_CONST request
                 ompi_grequest_invoke_query(requests[i], &requests[i]->req_status);
             }
             if (MPI_STATUS_IGNORE != statuses) {
-                OMPI_COPY_STATUS(&statuses[indx], requests[i]->req_status, false);
+                OMPI_COPY_STATUS(&statuses[indx], requests[i]->req_status, true);
+            }
+            if (MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+                /* Keep the first failure to invoke its error handler */
+                if (NULL == failed) {
+                    failed = requests[i];
+                }
             }
             indx++;
         }
@@ -113,6 +138,13 @@ PROTOTYPE ERROR_CLASS request_get_status_some(INT incount, REQUEST_CONST request
 
     if (0 < indx) {
         *outcount = indx;
+        if (NULL != failed) {
+            /* As for MPI_Waitsome, even with MPI_STATUSES_IGNORE */
+            if (MPI_SUCCESS != ompi_errhandler_request_invoke(1, &failed, FUNC_NAME,
+                                                         failed->req_status.MPI_ERROR, false)) {
+                return MPI_ERR_IN_STATUS;
+            }
+        }
         return MPI_SUCCESS;
     }
 

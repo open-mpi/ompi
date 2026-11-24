@@ -521,6 +521,16 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
 {
     int rc = 0;
 
+#if OPAL_ENABLE_FT_MPI
+    /* A MPI_ANY_SOURCE receive is marked MPI_ERR_PROC_FAILED_PENDING while it
+     * cannot be matched because of a process failure. This is not an error of
+     * the request, and does not survive its completion (after the failure has
+     * been acknowledged, the request is a regular active request). */
+    if(OPAL_UNLIKELY( MPI_ERR_PROC_FAILED_PENDING == request->req_status.MPI_ERROR )) {
+        request->req_status.MPI_ERROR = MPI_SUCCESS;
+    }
+#endif /* OPAL_ENABLE_FT_MPI */
+
     if(NULL != request->req_complete_cb) {
         /* Set the request cb to NULL to allow resetting in the callback */
         ompi_request_complete_fn_t fct = request->req_complete_cb;
