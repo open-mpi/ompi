@@ -120,5 +120,23 @@ that either you are operating in a PMIx-enabled environment, or use "mpirun"
 to execute the job.
 #
 [no-pmix-but]
-No PMIx server was reachable, but a PMI1/2 was detected.
-If srun is being used to launch application,  %d singletons will be started.
+No PMIx server was reachable, but the environment says that this process
+was started by a launcher, in a job of %d processes:
+
+  Variable found: %s
+
+Each of the %d processes will run as a singleton, with an
+MPI_COMM_WORLD of one process.
+
+If the variable is a PMI one (PMI_FD, PMI_CONTROL_PORT, SLURM_MPI_TYPE),
+the launcher provides PMI-1 or PMI-2, which Open MPI does not use: launch
+with a PMIx-enabled launcher (for example, "srun --mpi=pmix") or "mpirun".
+
+If the variable is PMIX_NAMESPACE, a PMIx server started this process,
+but the PMIx library Open MPI uses could not find a server variable it
+recognizes. This happens when that library is of an earlier PMIx release
+than the server's: a PMIx v7 server built without support for clients of
+earlier releases (the default) offers itself only to clients of v7 or
+later. Either build Open MPI against a PMIx of the server's release or
+later, or use a launcher whose PMIx server was configured with
+--enable-legacy-clients and run with PMIX_MCA_ptl_base_legacy_clients=1.

@@ -413,10 +413,21 @@ int ompi_mpi_register_params(void)
                                   0, 0, OPAL_INFO_LVL_3, MCA_BASE_VAR_SCOPE_LOCAL,
                                   &ompi_pmix_connect_timeout);
 
-    ompi_mpi_pmi_sentinels = "PMI_FD,PMI_CONTROL_PORT";
+    /* PMI_FD: SLURM PMI1/2. PMI_CONTROL_PORT: Cray Shasta.
+     * PMIX_NAMESPACE: every PMIx server sets it in the environment of a
+     * process it starts. A PMIx library of a release before the server's
+     * can fail to recognize the server variables that sit alongside it -
+     * a PMIx v7 server built without support for clients of earlier
+     * releases (the default) names itself only in PMIX_SERVER_URI70 -
+     * and then reports that there is no server. A PMIx v7 or later client
+     * removes PMIX_NAMESPACE from the environment when it initializes and
+     * does not report that there is no server while it is set, so the
+     * variable is seen here only in that case */
+    ompi_mpi_pmi_sentinels = "PMI_FD,PMI_CONTROL_PORT,PMIX_NAMESPACE";
     (void) mca_base_var_register("ompi", "mpi", NULL, "pmi_sentinels",
                                  "A comma-delimited list of environment variable names to check "
-                                 "when detecting if running in a PMI environment.",
+                                 "when detecting if running in a PMI environment, or in one "
+                                 "started by a PMIx server the PMIx library could not use.",
                                  MCA_BASE_VAR_TYPE_STRING, NULL, 0, 0,
                                  OPAL_INFO_LVL_4,
                                  MCA_BASE_VAR_SCOPE_READONLY,
