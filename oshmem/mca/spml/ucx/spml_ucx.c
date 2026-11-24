@@ -1186,6 +1186,11 @@ void mca_spml_ucx_ctx_destroy(shmem_ctx_t ctx)
 
 int mca_spml_ucx_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src)
 {
+    /* A zero-length transfer is a no-op; the address need not be mapped. */
+    if (OPAL_UNLIKELY(0 == size)) {
+        return OSHMEM_SUCCESS;
+    }
+
     void *rva = NULL;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, src, src_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
@@ -1213,6 +1218,10 @@ int mca_spml_ucx_get(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_add
 
 int mca_spml_ucx_get_nb(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src, void **handle)
 {
+    if (OPAL_UNLIKELY(0 == size)) {
+        return OSHMEM_SUCCESS;
+    }
+
     void *rva = NULL;
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, src, src_addr, &rva, &mca_spml_ucx);
@@ -1241,6 +1250,10 @@ int mca_spml_ucx_get_nb(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_
 int mca_spml_ucx_get_nb_wprogress(shmem_ctx_t ctx, void *src_addr, size_t size, void *dst_addr, int src, void **handle)
 {
     unsigned int i;
+    if (OPAL_UNLIKELY(0 == size)) {
+        return OSHMEM_SUCCESS;
+    }
+
     void *rva = NULL;
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, src, src_addr, &rva, &mca_spml_ucx);
@@ -1279,6 +1292,11 @@ int mca_spml_ucx_get_nb_wprogress(shmem_ctx_t ctx, void *src_addr, size_t size, 
 
 int mca_spml_ucx_put(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_addr, int dst)
 {
+    /* A zero-length transfer is a no-op; the address need not be mapped. */
+    if (OPAL_UNLIKELY(0 == size)) {
+        return OSHMEM_SUCCESS;
+    }
+
     void *rva = NULL;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
@@ -1313,6 +1331,10 @@ int mca_spml_ucx_put(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_add
 
 int mca_spml_ucx_put_nb(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_addr, int dst, void **handle)
 {
+    if (OPAL_UNLIKELY(0 == size)) {
+        return OSHMEM_SUCCESS;
+    }
+
     void *rva = NULL;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
     assert(NULL != ucx_mkey);
@@ -1346,6 +1368,10 @@ int mca_spml_ucx_put_nb(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_
 int mca_spml_ucx_put_nb_wprogress(shmem_ctx_t ctx, void* dst_addr, size_t size, void* src_addr, int dst, void **handle)
 {
     unsigned int i;
+    if (OPAL_UNLIKELY(0 == size)) {
+        return OSHMEM_SUCCESS;
+    }
+
     void *rva = NULL;
     ucs_status_t status;
     spml_ucx_mkey_t *ucx_mkey = mca_spml_ucx_ctx_mkey_by_va(ctx, dst, dst_addr, &rva, &mca_spml_ucx);
