@@ -44,11 +44,11 @@ author = 'The Open MPI Community'
 # we might be doing a VPATH build.
 ompi_top_srcdir = os.environ.get('OMPI_TOP_SRCDIR', '..')
 
-# Read an Open MPI-style VERSION file
+# Read an Open MPI-style VERSION file.  Return None if the file does
+# not exist.
 def read_version_file(path):
     if not os.path.exists(path):
-        print(f"ERROR: Unable to find file {path}")
-        exit(1)
+        return None
 
     with open(path) as fp:
         version_lines = fp.readlines()
@@ -81,18 +81,73 @@ def get_tarball_version(path, expr):
             continue
         return m.group(1)
 
-    return ""
+    return None
+
+# The docs describe the versions of the support libraries that are
+# embedded in the Open MPI distribution.  Some source trees do not
+# include all of the embedded copies (e.g., a downstream packager that
+# removes the embedded PMIx and PRRTE and builds against external
+# installations instead).  When the docs are built as part of such a
+# build, configure tells us (via the env_var named below, set by
+# docs/Makefile.am) that the build does not use the embedded copy, and
+# we say that the embedded copy was not included.  In every other case
+# -- including when the docs are built without configure (e.g., on
+# ReadTheDocs) -- the embedded copy must be present.
+embedded_not_included = 'not included in the source code used to build this installation of Open MPI'
+
+def embedded_version_or_exit(name, version, env_var, what):
+    if version is not None:
+        return version
+
+    if os.environ.get(env_var, '').strip() == '0':
+        print(f"OMPI: The embedded {name} is not included in this source tree, "
+              "and configure reported that it is not being used.")
+        return embedded_not_included
+
+    print(f"ERROR: Unable to find the embedded {name} ({what}).")
+    if env_var not in os.environ:
+        print(f"ERROR: {env_var} is not set (i.e., the docs are not being built "
+              "from a configured Open MPI build tree), so the embedded "
+              f"{name} must be present.")
+    else:
+        print(f"ERROR: configure reported that the embedded {name} is being "
+              "used, but it is not present.")
+    exit(1)
+
+def version_file_or_exit(name, path, env_var):
+    data = read_version_file(path)
+    if data is None:
+        return embedded_version_or_exit(name, None, env_var, path), None
+    version = f"v{data['major']}.{data['minor']}.{data['release']}{data['greek']}"
+    series = f"v{data['major']}.{data['minor']}"
+    return version, series
+
+def tarball_or_exit(name, expr, env_var):
+    path = f"{ompi_top_srcdir}/3rd-party/"
+    version = get_tarball_version(path, expr)
+    return embedded_version_or_exit(name, version,
+                                    env_var, f"no file matching {expr} in {path}")
 
 # Read all the various versions from the source tree
 
 ompi_data = read_version_file(f"{ompi_top_srcdir}/VERSION")
-pmix_data = read_version_file(f"{ompi_top_srcdir}/3rd-party/openpmix/VERSION")
-prte_data = read_version_file(f"{ompi_top_srcdir}/3rd-party/prrte/VERSION")
+if ompi_data is None:
+    print(f"ERROR: Unable to find file {ompi_top_srcdir}/VERSION")
+    exit(1)
 
-hwloc_embedded_version = get_tarball_version(f"{ompi_top_srcdir}/3rd-party/",
-                                             r"hwloc-([^-]+).*\.tar")
-event_embedded_version = get_tarball_version(f"{ompi_top_srcdir}/3rd-party/",
-                                             r"libevent-([^-]+).*\.tar")
+pmix_embedded_version, _ = version_file_or_exit("OpenPMIx",
+                                                f"{ompi_top_srcdir}/3rd-party/openpmix/VERSION",
+                                                "OPAL_USING_INTERNAL_PMIX")
+prte_embedded_version, prte_embedded_series = version_file_or_exit("PRRTE",
+                                                                   f"{ompi_top_srcdir}/3rd-party/prrte/VERSION",
+                                                                   "OMPI_USING_INTERNAL_PRRTE")
+if prte_embedded_series is None:
+    prte_embedded_series = embedded_not_included
+
+hwloc_embedded_version = tarball_or_exit("hwloc", r"hwloc-([^-]+).*\.tar",
+                                         "OPAL_USING_INTERNAL_HWLOC")
+event_embedded_version = tarball_or_exit("Libevent", r"libevent-([^-]+).*\.tar",
+                                         "OPAL_USING_INTERNAL_LIBEVENT")
 
 # ---------------------------
 
@@ -100,10 +155,6 @@ event_embedded_version = get_tarball_version(f"{ompi_top_srcdir}/3rd-party/",
 
 ompi_series = f"v{ompi_data['major']}.{ompi_data['minor']}.x"
 ompi_ver = f"v{ompi_data['major']}.{ompi_data['minor']}.{ompi_data['release']}{ompi_data['greek']}"
-
-pmix_embedded_version = f"v{pmix_data['major']}.{pmix_data['minor']}.{pmix_data['release']}{pmix_data['greek']}"
-prte_embedded_version = f"v{prte_data['major']}.{prte_data['minor']}.{prte_data['release']}{prte_data['greek']}"
-prte_embedded_series = f"v{prte_data['major']}.{prte_data['minor']}"
 
 pmix_min_version = f"{ompi_data['pmix_min_version']}"
 prte_min_version = f"{ompi_data['prte_min_version']}"

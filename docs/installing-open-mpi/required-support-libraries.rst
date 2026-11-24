@@ -19,6 +19,13 @@ description of how Open MPI chooses whether to use the embedded
 versions of these packages or versions already installed on your
 system.
 
+.. note:: The versions listed below as "embedded" are the ones
+          embedded in the Open MPI distribution.  To see whether an
+          installation of Open MPI was built with these embedded
+          copies or with external installations |mdash| and, for all
+          but PRRTE, which version of each it loads at run time
+          |mdash| run :ref:`ompi_info(1) <man1-ompi_info>`.
+
 * `Hardware Locality <https://www.open-mpi.org/projects/hwloc/>`_
 
   * This library is required; Open MPI will not build without it.
@@ -72,11 +79,11 @@ system.
   * **Version embedded in Open MPI distribution:**
     |event_embedded_version|
 
-    .. note:: The Open MPI community has heavily tested Libevent
-              |event_embedded_version|.  Other versions should *work*,
-              but |mdash| unlike Hwloc, OpenPMIx, and PRRTE |mdash|
-              there is not much reason to upgrade to use a later
-              version of Libevent.
+    .. note:: The Open MPI community has heavily tested the version of
+              Libevent embedded in the Open MPI distribution.  Other
+              versions should *work*, but |mdash| unlike Hwloc,
+              OpenPMIx, and PRRTE |mdash| there is not much reason to
+              upgrade to use a later version of Libevent.
 
 * `OpenPMIx <https://docs.openpmix.org/>`_
 

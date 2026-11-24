@@ -55,7 +55,10 @@
 
 #include "opal/include/opal/frameworks.h"
 
+#include "opal/mca/hwloc/hwloc-internal.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/pmix/pmix-internal.h"
+#include "opal/util/event.h"
 
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "opal/runtime/opal_info_support.h"
@@ -960,6 +963,107 @@ void opal_info_do_arch(void)
 void opal_info_do_hostname(void)
 {
     opal_info_out("Configure host", "config:host", OPAL_CONFIGURE_HOST);
+}
+
+const char *opal_info_value_or_not_available(const char *value)
+{
+    if (NULL == value || '\0' == value[0]) {
+        return "not available";
+    }
+    return value;
+}
+
+char *opal_info_pmix_version_from_string(const char *str)
+{
+    static const char prefix[] = "OpenPMIx ";
+    const char *start;
+    size_t len;
+    char *version;
+
+    if (NULL == str) {
+        return NULL;
+    }
+
+    // PMIx_Get_version() returns "OpenPMIx <version> (PMIx Standard:
+    // ...)", or "OpenPMIx <version>, repo rev: ... (...)" when PMIx
+    // was built from a git clone.
+    if (0 != strncmp(str, prefix, sizeof(prefix) - 1)) {
+        return strdup(str);
+    }
+    start = str + sizeof(prefix) - 1;
+    len = strcspn(start, " ,");
+    if (0 == len) {
+        return strdup(str);
+    }
+
+    version = malloc(len + 1);
+    if (NULL == version) {
+        return NULL;
+    }
+    memcpy(version, start, len);
+    version[len] = '\0';
+    return version;
+}
+
+// Return the version of the hwloc library that this process is
+// running with, or NULL if it cannot be determined.
+// hwloc_get_api_version() is not useful here: it returns the API
+// version, which stable releases of the same series share.  Instead,
+// load a trivial synthetic topology: hwloc labels the root object of
+// any topology it discovers (i.e., one not loaded from XML) with the
+// library's own HWLOC_VERSION (unless the HWLOC_DONT_ADD_VERSION_INFO
+// environment variable is set, in which case this returns NULL).
+static char *opal_info_hwloc_running_version(void)
+{
+    hwloc_topology_t topo;
+    const char *value;
+    char *version = NULL;
+
+    if (0 != hwloc_topology_init(&topo)) {
+        return NULL;
+    }
+    if (0 == hwloc_topology_set_synthetic(topo, "pu:1") && 0 == hwloc_topology_load(topo)) {
+        value = hwloc_obj_get_info_by_name(hwloc_get_root_obj(topo), "hwlocVersion");
+        if (NULL != value) {
+            version = strdup(value);
+        }
+    }
+    hwloc_topology_destroy(topo);
+
+    return version;
+}
+
+void opal_info_do_3rd_party_versions(void)
+{
+    char *str;
+
+    // For each package, show:
+    //
+    // - built from: whether Open MPI was built with the copy embedded
+    //   in the Open MPI source code or with an external installation
+    // - running with: the version of the library loaded in this
+    //   process (e.g., LD_LIBRARY_PATH may cause a different
+    //   installation to be loaded than the one Open MPI was built
+    //   with)
+
+    opal_info_out("OpenPMIx built from", "3rdparty:pmix:build:source",
+                  OPAL_USING_INTERNAL_PMIX ? "embedded" : "external");
+    str = opal_info_pmix_version_from_string(PMIx_Get_version());
+    opal_info_out("OpenPMIx running with", "3rdparty:pmix:version:runtime",
+                  opal_info_value_or_not_available(str));
+    free(str);
+
+    opal_info_out("hwloc built from", "3rdparty:hwloc:build:source",
+                  OPAL_USING_INTERNAL_HWLOC ? "embedded" : "external");
+    str = opal_info_hwloc_running_version();
+    opal_info_out("hwloc running with", "3rdparty:hwloc:version:runtime",
+                  opal_info_value_or_not_available(str));
+    free(str);
+
+    opal_info_out("Libevent built from", "3rdparty:libevent:build:source",
+                  OPAL_USING_INTERNAL_LIBEVENT ? "embedded" : "external");
+    opal_info_out("Libevent running with", "3rdparty:libevent:version:runtime",
+                  opal_info_value_or_not_available(event_get_version()));
 }
 
 static char *escape_quotes(const char *value)

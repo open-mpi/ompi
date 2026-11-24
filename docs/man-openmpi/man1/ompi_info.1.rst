@@ -106,6 +106,52 @@ OPTIONS
 
 * ``-V``, ``--version``: Show version of Open MPI.
 
+.. _man1-ompi_info-support-library-versions:
+
+SUPPORT LIBRARY VERSIONS
+------------------------
+
+Open MPI requires several support libraries: OpenPMIx, hwloc,
+Libevent, and (optionally) PRRTE.  The Open MPI distribution embeds a
+copy of each of them, but Open MPI can also be built against external
+installations of them (see the :ref:`Required support libraries
+section <label-install-required-support-libraries>`).
+
+As part of its configuration output (i.e., in the default output, and
+with ``--config`` and ``--all``), ``ompi_info`` shows two values for
+each of these libraries.  Both values are always shown, even when one
+of them is not available.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 30 50
+
+   * - Pretty-print label
+     - ``--parsable`` key
+     - Meaning
+
+   * - ``<library> built from``
+     - ``3rdparty:<lib>:build:source``
+     - ``embedded`` if Open MPI was built with its embedded copy of
+       the library, ``external`` if it was built with an external
+       installation of the library, or (for PRRTE only) ``not built``
+       if Open MPI was built without PRRTE support.
+
+   * - ``<library> running with``
+     - ``3rdparty:<lib>:version:runtime``
+     - The version of the library that is loaded at run time, or
+       ``not available`` if it cannot be determined.  This may not be
+       the installation of the library that Open MPI was built with
+       (e.g., if ``LD_LIBRARY_PATH`` points to a different
+       installation of the library).
+       This is always ``not applicable`` for PRRTE: MPI processes do
+       not load PRRTE (it runs as separate executables, such as
+       ``mpirun``).
+
+``<library>`` is one of ``OpenPMIx``, ``PRRTE``, ``hwloc``, or
+``Libevent``, and ``<lib>`` is the corresponding ``pmix``, ``prrte``,
+``hwloc``, or ``libevent``.
+
 .. _man1-ompi_info-levels:
 
 LEVELS
@@ -216,6 +262,16 @@ human-readable / prettyprint format:
 .. code-block::
 
    ompi_info --type string --pretty-print --level 3
+
+Show whether Open MPI was built with the embedded or external copies
+of its support libraries, and which versions of them it loads at run
+time, in a machine-parsable format (see the
+:ref:`SUPPORT LIBRARY VERSIONS
+<man1-ompi_info-support-library-versions>` section):
+
+.. code-block::
+
+   ompi_info --config --parsable | grep ^3rdparty:
 
 Show the "bindir" that Open MPI was configured with:
 
