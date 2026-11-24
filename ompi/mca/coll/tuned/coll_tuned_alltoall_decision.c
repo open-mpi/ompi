@@ -45,6 +45,7 @@ static const mca_base_var_enum_value_t alltoall_algorithms[] = {
     {3, "modified_bruck"},
     {4, "linear_sync"},
     {5, "two_proc"},
+    {6, "bine"},
     {0, NULL}
 };
 
@@ -186,6 +187,9 @@ int ompi_coll_tuned_alltoall_intra_do_this(const void *sbuf, size_t scount,
         return ompi_coll_base_alltoall_intra_linear_sync(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module, max_requests);
     case (5):
         return ompi_coll_base_alltoall_intra_two_procs(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm, module);
+    case (6):
+        return ompi_coll_base_alltoall_intra_bine(sbuf, scount, sdtype, rbuf, rcount, rdtype, comm,
+                                                  module);
     } /* switch */
     OPAL_OUTPUT_VERBOSE((COLL_TUNED_TRACING_VERBOSE, ompi_coll_tuned_stream,
         "coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",

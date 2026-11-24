@@ -185,6 +185,19 @@ integer mapping to the classic file format, or a string.  In both cases, the
 value is checked against the appropriate coll_tuned_<collectived>_algorithm MCA
 parameter, and un-recognized values will cause the rule to be ignored.
 
+The optional `bine_imp` field selects the variant of a Bine algorithm.  It is
+only used when `alg` identifies one of the Bine algorithms; any other algorithm
+ignores it.  As with `alg`, the value may be an integer or a string naming the
+variant (see the appropriate coll_tuned_<collective>_bine_implementation MCA
+parameter for the accepted names).  Un-recognized bine variants are ignored.
+The available variants, and how they differ, are listed in the Bine
+implementation tables under :ref:`collectives and
+algorithms <CollectivesAndAlgorithms>`.
+For example, to select the "block by block" variant of the Bine allgather
+algorithm::
+
+    { "msg_size_min" : 0, "alg" : "bine", "bine_imp" : "block_by_block" }
+
 
 Classic file format:
 
@@ -214,6 +227,23 @@ Classic file format:
    786432000    4 0 0 1
    1572864000   4 0 0 1
    2621440000   0 0 0 0
+
+An example of a version 3 file is shown here.  Note that the `bine_imp`
+column precedes the optional `reqs` column:
+
+.. code-block:: sh
+
+   rule-file-version-3
+   1   # num of collectives
+   0   # collective ID (allgather)
+   1   # number of comm sizes
+   #=====================
+   64   # comm size
+   2   # number of rules
+   # Bytes      alg topo segs bine_imp reqs
+   #---------------------------------------
+   0            9   0    0    2        64
+   512000       9   2    65536 4        16
 
 The rules file effectively defines, for one or more collectives, a function of
 two variables, which given communicator and message size, returns an algorithm
@@ -246,6 +276,17 @@ releases older than v5.0.7 do not support the file format version
 identifier. When using older releases of Open MPI do not include a version
 specifier and do not use the `max requests` parameter in message size rules.
 
+Version 3 of the file format adds a `bine implementation` column after
+`segment size` (and before `max requests`, when present).  It selects the
+variant of a Bine collective algorithm, and is only used when the rule's
+algorithm ID identifies one of the Bine algorithms (for example, allgather
+id 9, allreduce id 8, alltoall id 6, bcast id 10, gather id 4, reduce id 9,
+reduce_scatter id 5, or scatter id 4); for any other algorithm the value is
+ignored.  A version 3 rule therefore has the layout
+`MSGSIZE ALG FANINOUT SEGSIZE BINE_IMP [MAXREQ]`, where `bine implementation`
+is required but `max requests` remains optional, mirroring the version 2
+behavior.
+
 .. _CollectivesAndAlgorithms:
 
 Collectives and their Algorithms
@@ -275,6 +316,16 @@ Tables describing the algorithms available for each collective, and there identi
    :ref:`Scan<Scan>`, 14, "datatype size * comm size"
    :ref:`Scatter<Scatter>`, 15, "datatype size * number of elements in send buffer"
 
+Some collectives provide the ``bine`` algorithm in several *implementations*
+(variants).  Every variant of a given collective executes the same Bine
+(binomial-negabinary) communication schedule and differs only in how data
+blocks are laid out, exchanged, and overlapped.  The tables below list the
+variants available for each collective.  Implementation 0 (``ignore``) is the
+default and leaves the choice to the fixed decision rules, which select a
+variant from the communicator and message size.  A variant that cannot handle
+the communicator size, or a non-commutative operator, automatically falls back
+to a conventional algorithm.
+
 .. _Allgather:
 
 Allgather (Id=0)
@@ -293,6 +344,17 @@ Allgather (Id=0)
    6, "two_proc", "..."
    7, "sparbit", "..."
    8, "direct-messaging", "..."
+   9, "bine", "..."
+
+.. csv-table:: Allgather Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Default: let the fixed decision rules choose a Bine variant"
+   1, "send_remap", "Each rank first sends its block to its Bine-order position, then a distance-doubling butterfly exchanges blocks; no final reorder is needed."
+   2, "block_by_block", "Distance-doubling butterfly in which every data block is sent independently with non-blocking operations, overlapping communication with data movement."
+   3, "2_block", "Distance-halving tree exchanging two contiguous blocks per step, alternating the extension direction between even and odd ranks."
+   4, "permutation", "Distance-doubling butterfly that tracks block positions in a permutation array and reorders the blocks locally at the end."
 
 .. _Allgatherv:
 
@@ -328,6 +390,17 @@ Allreduce (Id=2)
    5, "segmented_ring", "..."
    6, "rabenseifner", "..."
    7, "allgather_reduce", "..."
+   8, "bine", "..."
+
+.. csv-table:: Allreduce Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Default: let the fixed decision rules choose a Bine variant"
+   1, "lat", "Distance-halving tree that exchanges the full buffer at each step and applies the reduction operator after every receive; latency oriented."
+   2, "bdw_remap", "Distance-doubling Bine reduce-scatter followed by a distance-halving Bine allgather, moving half of the data per step; bandwidth oriented."
+   3, "block_by_block_any_even_over", "Bine reduce-scatter and allgather in which each block is reduced and transmitted independently, overlapping reduction with communication."
+   4, "bdw_remap_segmented", "Same reduce-scatter/allgather split as bdw_remap, but the vector is processed in segments of the rule's segment size, double-buffered to pipeline communication and reduction."
 
 .. _Alltoall:
 
@@ -344,6 +417,11 @@ Alltoall (Id=3)
    3, "modified_bruck", "An algorithm exploiting network packet quantization to achieve O(log) time complexity. Typically best for very small message sizes."
    4, "linear_sync", "Keep N non-blocking MPI_Isend/Irecv pairs in flight at all times. N is set by the coll_tuned_alltoall_max_requests MCA variable."
    5, "two_proc", "An implementation tailored for alltoall between 2 ranks, otherwise it is not used."
+   6, "bine", "..."
+
+The Bine alltoall has a single implementation: it does not have a
+corresponding Bine implementation table, and the ``bine_imp`` column/field is
+ignored for this collective.
 
 .. _Alltoallv:
 
@@ -394,6 +472,18 @@ Bcast (Id=7)
    7, "knomial", "..."
    8, "scatter_allgather", "..."
    9, "scatter_allgather_ring", "..."
+   10, "bine", "..."
+
+.. csv-table:: Bcast Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Default: let the fixed decision rules choose a Bine variant"
+   1, "lat", "Distance-halving tree rooted at the broadcast root: each rank receives the data from its parent and forwards it to its children."
+   2, "lat_reversed", "Same tree as lat, traversed in reverse (distance-doubling) order."
+   3, "lat_new", "Same communication pattern as lat, with a cheaper step and rank calculation."
+   4, "lat_i_new", "Same communication pattern as lat, with an iterative rank-to-parent lookup."
+   5, "bdw_remap", "Bine scatter of contiguous blocks followed by a Bine allgather, so each rank sends and receives large contiguous chunks; bandwidth oriented."
 
 .. _Exscan:
 
@@ -421,6 +511,11 @@ Gather (Id=9)
    1, "basic_linear", "..."
    2, "binomial", "..."
    3, "linear_sync", "..."
+   4, "bine", "..."
+
+The Bine gather has a single implementation: it does not have a
+corresponding Bine implementation table, and the ``bine_imp`` column/field is
+ignored for this collective.
 
 .. _Reduce:
 
@@ -440,6 +535,15 @@ Reduce (Id=11)
    6, "in-order_binary", "..."
    7, "rabenseifner", "..."
    8, "knomial", "..."
+   9, "bine", "..."
+
+.. csv-table:: Reduce Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Default: let the fixed decision rules choose a Bine variant"
+   1, "lat", "Distance-halving tree that reduces data from the leaves toward the root, applying the operator at each step; latency oriented."
+   2, "bdw", "Distance-doubling Bine reduce-scatter followed by a distance-halving Bine gather, moving half of the data per step; bandwidth oriented."
 
 .. _Reduce_scatter:
 
@@ -455,6 +559,16 @@ Reduce_scatter (Id=12)
    2, "recursive_halving", "..."
    3, "ring", "..."
    4, "butterfly", "..."
+   5, "bine", "..."
+
+.. csv-table:: Reduce_scatter Bine Implementations
+   :header: "Id", "Name", "Description"
+   :widths: 10, 25, 60
+
+   0, "ignore", "Default: let the fixed decision rules choose a Bine variant"
+   1, "block_by_block_any_even", "Distance-doubling butterfly in which each block is reduced and sent independently with non-blocking operations, overlapping reduction with communication."
+   2, "send_remap", "Distance-doubling butterfly with direct remapped block selection, followed by one final send/receive to put the data in order."
+   3, "permute_remap", "Data is permuted locally first so the butterfly transfers contiguous blocks, which avoids send_remap's final exchange."
 
 .. _Reduce_scatter_block:
 
@@ -497,4 +611,9 @@ Scatter (Id=15)
    1, "basic_linear", "..."
    2, "binomial", "..."
    3, "linear_nb", "..."
+   4, "bine", "..."
+
+The Bine scatter has a single implementation: it does not have a
+corresponding Bine implementation table, and the ``bine_imp`` column/field is
+ignored for this collective.
 
