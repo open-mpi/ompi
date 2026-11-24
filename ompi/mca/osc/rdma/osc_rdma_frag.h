@@ -23,10 +23,15 @@ static inline void ompi_osc_rdma_frag_complete (ompi_osc_rdma_frag_t *frag)
 {
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "returning frag. pending = %d", frag->pending);
     if (0 == OPAL_THREAD_ADD_FETCH32(&frag->pending, -1)) {
+        /* Recycle the fragment. Only the thread that dropped the last reference
+         * gets here, because ompi_osc_rdma_frag_alloc() never takes a reference
+         * on a fragment whose count is 0. Rewind the index before restoring the
+         * base reference, so that an allocation cannot be handed an offset that
+         * belongs to the previous cycle. */
         opal_atomic_rmb ();
 
-        (void) opal_atomic_swap_32 (&frag->pending, 1);
         (void) opal_atomic_swap_64 (&frag->curr_index, 0);
+        (void) opal_atomic_swap_32 (&frag->pending, 1);
     }
 }
 
@@ -38,6 +43,7 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
 {
     ompi_osc_rdma_frag_t *curr = module->rdma_frag;
     int64_t my_index;
+    int32_t pending;
     int ret;
 
     /* ensure all buffers are 8-byte aligned */
@@ -83,7 +89,16 @@ static inline int ompi_osc_rdma_frag_alloc (ompi_osc_rdma_module_t *module, size
     }
 
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "allocating frag. pending = %d", curr->pending);
-    OPAL_THREAD_ADD_FETCH32(&curr->pending, 1);
+    /* Take a reference only while the fragment is live. A count of 0 means the
+     * thread that dropped the last reference is recycling the fragment; an
+     * increment from 0 would race with that reset and could hand out a slot
+     * that is handed out again after the reset. */
+    pending = curr->pending;
+    do {
+        if (0 == pending) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+    } while (!opal_atomic_compare_exchange_strong_32 (&curr->pending, &pending, pending + 1));
 
     my_index = opal_atomic_fetch_add_64 (&curr->curr_index, request_len);
     if (my_index + request_len > mca_osc_rdma_component.buffer_size) {
