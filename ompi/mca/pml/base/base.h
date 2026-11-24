@@ -48,6 +48,20 @@ BEGIN_C_DECLS
  */
 #define PML_SELECT_WRAPPER_PRIORITY -128
 
+/**
+ * The modex key the selected PML's name is published under.
+ *
+ * A literal because no component owns it: it names the framework's
+ * choice, not a candidate. The spelling is what a fabricated "base"
+ * component used to render to, kept so the wire format does not change.
+ *
+ * Every rank publishes it whenever a peer might fetch it, which is what
+ * lets ompi_modex.c tell a committed peer from one that has not. Changing
+ * when it is published has to account for that; see
+ * mca_pml_base_pml_selected().
+ */
+#define OMPI_MODEX_KEY_PML "pml.base.2.0"
+
 /*
  * MCA framework
  */
@@ -103,9 +117,6 @@ OMPI_DECLSPEC int mca_pml_base_revoke_comm(struct ompi_communicator_t *comm, boo
 /*
  * Globals
  */
-/* Component the selected PML name is published under; its key also
- * tells whether a peer has committed its connection info at all. */
-OMPI_DECLSPEC extern mca_base_component_t mca_pml_base_modex_component;
 OMPI_DECLSPEC extern mca_pml_base_component_t mca_pml_base_selected_component;
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 OMPI_DECLSPEC extern opal_pointer_array_t mca_pml_base_pml;
