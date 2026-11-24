@@ -165,6 +165,13 @@ struct mca_btl_sm_t {
      *  (negative) opal status here, which disables this btl for good. */
     int btl_inited;
     mca_btl_base_module_error_cb_fn_t error_cb;
+
+    /* gets from peers' device buffers queued on an accelerator stream (see btl_sm_get.c) */
+    opal_mutex_t async_get_lock;
+    struct opal_accelerator_stream_t *get_stream; /**< created on the first such get */
+    bool async_gets_disabled;                     /**< set when no stream could be created */
+    opal_free_list_t async_get_free;              /**< get objects, each keeping its event */
+    opal_list_t async_gets;                       /**< queued gets, in the order queued */
 };
 typedef struct mca_btl_sm_t mca_btl_sm_t;
 

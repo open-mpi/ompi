@@ -76,6 +76,29 @@ typedef int (*mca_smsc_module_copy_fn_t)(mca_smsc_endpoint_t *endpoint, void *lo
                                          void *remote_address, size_t size, void *reg_data);
 
 /**
+ * @brief Start copying data from a peer's memory space on an accelerator stream
+ *
+ * Optional. A module that can copy asynchronously (device memory on an accelerator) queues the
+ * copy on *stream, creating the stream first if *stream is NULL; the copy is complete once the
+ * stream reaches that point. Memory the module cannot copy asynchronously is left to copy_from.
+ *
+ * @param(in) endpoint       endpoint for the peer
+ * @param(in) local_address  local destination
+ * @param(in) remote_address remote source
+ * @param(in) size           bytes to copy
+ * @param(in) reg_handle     registration handle, as for copy_from
+ * @param(inout) stream      accelerator stream to queue the copy on
+ *
+ * @returns OPAL_SUCCESS when the copy was queued, OPAL_ERR_NOT_AVAILABLE when the memory cannot be
+ *          copied asynchronously (use copy_from), or another OPAL error code
+ */
+struct opal_accelerator_stream_t;
+typedef int (*mca_smsc_module_copy_async_fn_t)(mca_smsc_endpoint_t *endpoint, void *local_address,
+                                              void *remote_address, size_t size,
+                                              void *reg_handle,
+                                              struct opal_accelerator_stream_t **stream);
+
+/**
  * @brief Map a peer's memory onto local memory.
  *
  * @param(in)  module         shared-memory single-copy module
@@ -173,6 +196,10 @@ struct mca_smsc_module_t {
     mca_smsc_module_register_region_fn_t register_region;
     /** Deregister a memory region for use with single-copy. */
     mca_smsc_module_deregister_region_fn_t deregister_region;
+
+    /* Optional: NULL if the module only copies synchronously. */
+    /** Start a copy from a peer's memory space on an accelerator stream. */
+    mca_smsc_module_copy_async_fn_t copy_from_async;
 };
 
 typedef struct mca_smsc_module_t mca_smsc_module_t;
