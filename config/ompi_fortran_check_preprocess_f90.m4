@@ -1,5 +1,8 @@
 dnl -*- shell-script -*-
 dnl
+dnl DEPRECATED: This macro has been replaced by AC_FC_PP_SRCEXT (Autoconf 2.69+).
+dnl This file is kept temporarily for reference and will be removed in a future release.
+dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
