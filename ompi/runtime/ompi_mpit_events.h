@@ -35,7 +35,15 @@ BEGIN_C_DECLS
    internal object pointer; the MPI Standard ABI uses an integer handle.  A
    process links exactly one ABI, so this is process-global; it is set by the
    Standard-ABI init entry points (MPI_Init / MPI_Init_thread / MPI_Session_init)
-   and read by the producer raise sites. */
+   and read by the producer raise sites.
+
+   UNSUPPORTED MIXED-ABI COMBINATION: an MPI_T tool linked against one ABI
+   running inside a process linked against the other ABI (for example, an
+   Open MPI ABI tool inside a libmpi_abi process, or vice versa) is not
+   supported.  The converters are installed per-process at init time keyed to
+   the process's own ABI, so a tool whose ABI differs from the process's sees
+   handles and values in the wrong encoding.  There is no per-tool ABI
+   negotiation; tool and process must be built against the same ABI. */
 typedef enum {
     OMPI_MPIT_ABI_OMPI = 0,     /* Open MPI ABI: handle == internal object pointer */
     OMPI_MPIT_ABI_STANDARD = 1  /* MPI Standard ABI: handle == integer handle */

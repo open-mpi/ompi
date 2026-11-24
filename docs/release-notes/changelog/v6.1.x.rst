@@ -362,6 +362,17 @@ Open MPI version v6.1.0
   ``ompi``); the older ``--enable-standard-abi`` and ``--disable-ompi-abi``
   options are retained as deprecated synonyms.
 
+- MPI_T event payloads now carry Standard-ABI encodings when a tool is built
+  against ``libmpi_abi``: object handles (communicator, window, error
+  handler, session, file), MPI error codes, the ``MPI_T_BIND_*`` object
+  binding kind, the MPI thread support level, and the MPI window creation
+  flavor are all converted from their internal Open MPI representation to
+  the Standard-ABI representation at event raise time, via converters
+  installed downward by ``ompi_mpit_register_abi_converters()``. A process
+  links exactly one ABI, so this is process-global and set by the
+  Standard-ABI variants of ``MPI_Init``, ``MPI_Init_thread``, and
+  ``MPI_Session_init``.
+
 - ``MPI_Abi_set_fortran_info`` now configures the sizes of the Fortran
   datatypes when Open MPI is built with ``--disable-mpi-fortran``.  In
   such a build the implementation does not know the Fortran compiler's

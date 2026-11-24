@@ -496,6 +496,14 @@ Open MPI is gaining a second MPI ABI (the MPI Standard ABI, open-mpi/ompi
 differently: the Open MPI ABI uses the internal object pointer; the
 Standard ABI uses an integer handle. A process links exactly one ABI.
 
+**Unsupported mixed-ABI combination.** An MPI_T tool linked against one ABI
+running inside a process linked against the other ABI -- for example, an
+Open MPI ABI tool inside a `libmpi_abi` process, or vice versa -- is not
+supported. The converters are installed per-process at init time keyed to the
+process's own ABI, so a tool whose ABI differs from the process's sees handles
+and values in the wrong encoding. There is no per-tool ABI negotiation; tool
+and process must be built against the same ABI.
+
 This affects the object handles carried in payloads (sec. 6) and the
 bound-object resolution (sec. 6.1), because both must match the ABI of
 the tool that registered the callback:
