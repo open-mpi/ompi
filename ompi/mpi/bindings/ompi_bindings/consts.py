@@ -561,6 +561,13 @@ WIN_LOCK_VALUES = [
     'MPI_LOCK_EXCLUSIVE',
     'MPI_LOCK_SHARED',
 ]
+
+WIN_FLAVOR_VALUES = [
+    'MPI_WIN_FLAVOR_CREATE',
+    'MPI_WIN_FLAVOR_ALLOCATE',
+    'MPI_WIN_FLAVOR_DYNAMIC',
+    'MPI_WIN_FLAVOR_SHARED',
+]
  
 TOPO_VALUES = [
     'MPI_CART',
@@ -693,6 +700,7 @@ class ConvertOMPIToStandard:
     COMBINER = 'ompi_convert_combiner_to_standard'
     TOPO = 'ompi_convert_topo_to_standard'
     BUFFER = 'ompi_convert_buffer_to_standard'
+    WIN_FLAVOR = 'ompi_convert_win_flavor_ompi_to_standard'
 
 
 # Inline function attributes
