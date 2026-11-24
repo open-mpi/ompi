@@ -1212,6 +1212,20 @@ OMPI_DECLSPEC int ompi_comm_activate_nb (ompi_communicator_t **newcomm, ompi_com
                                          const void *arg1, bool send_first, int mode, ompi_request_t **req);
 
 /**
+ * Return the communicator's Fortran handle, registering it on first use.
+ *
+ * Non-predefined communicators start out with c_f_to_c_index ==
+ * MPI_UNDEFINED. This is the only place that hands out an index, so every
+ * path converting a communicator into a Fortran handle must come through it.
+ * Code reached only from Fortran may still read c_f_to_c_index directly,
+ * since Fortran can only name a communicator that already has a handle.
+ *
+ * @param comm: the communicator to register (must not be NULL)
+ * @return the Fortran handle, or MPI_UNDEFINED if the table is exhausted
+ */
+OMPI_DECLSPEC int ompi_comm_assign_f_index (ompi_communicator_t *comm);
+
+/**
  * a simple function to dump the structure
  */
 int ompi_comm_dump ( ompi_communicator_t *comm );
