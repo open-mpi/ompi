@@ -299,6 +299,14 @@ int mca_topo_base_dist_graph_create(mca_topo_base_module_t* module,
         return err;
     }
 
+    /* Drop the topology inherited from comm_old, see
+     * mca_topo_base_dist_graph_create_adjacent(). */
+    if (NULL != (*newcomm)->c_topo) {
+        OBJ_RELEASE((*newcomm)->c_topo);
+        (*newcomm)->c_topo = NULL;
+    }
+    (*newcomm)->c_flags &= ~(OMPI_COMM_CART | OMPI_COMM_GRAPH | OMPI_COMM_DIST_GRAPH);
+
     assert(NULL == (*newcomm)->c_topo);
     (*newcomm)->c_topo             = module;
     (*newcomm)->c_topo->reorder    = reorder;
