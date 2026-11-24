@@ -129,6 +129,13 @@ PROTOTYPE ERROR_CLASS igather(BUFFER_CONST sendbuf, COUNT sendcount, DATATYPE se
                 if (recvcount < 0) {
                     return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
                 }
+
+                /* Identical send and receive pointers are not allowed here;
+                   partial overlap between distinct pointers is not detected. */
+                if (MPI_IN_PLACE != sendbuf && sendcount > 0 && recvcount > 0 &&
+                    MPI_BOTTOM != sendbuf && sendbuf == recvbuf) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_BUFFER, FUNC_NAME);
+                }
             }
         }
 
