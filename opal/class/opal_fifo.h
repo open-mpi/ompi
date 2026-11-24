@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2021      Triad National Security, LLC. All rights reserved.
  * Copyright (c) 2021      Google, LLC. All rights reserved.
+ * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -248,15 +249,15 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
     opal_list_item_t *item, *next;
 
     /* protect against ABA issues by "locking" the head */
-    do {
-        if (!opal_atomic_swap_32((opal_atomic_int32_t *) &fifo->opal_fifo_head.data.counter, 1)) {
-            break;
-        }
+    while (opal_atomic_swap_32((opal_atomic_int32_t *) &fifo->opal_fifo_head.data.counter, 1)) {
+        /* spin until the holder unlocks */
+    }
 
-        opal_atomic_wmb();
-    } while (1);
-
-    opal_atomic_wmb();
+    /* Acquire, pairing with the opal_atomic_wmb() that precedes the unlock
+     * below.  opal_atomic_swap_32() is relaxed, so without this the reads
+     * of the head and of item->opal_list_next below can be satisfied
+     * before the head is locked. */
+    opal_atomic_rmb();
 
     item = opal_fifo_head(fifo);
     if (ghost == item) {
@@ -271,8 +272,13 @@ static inline opal_list_item_t *opal_fifo_pop_atomic(opal_fifo_t *fifo)
     if (ghost == next) {
         void *tmp = item;
 
-        if (!opal_atomic_compare_exchange_strong_ptr(&fifo->opal_fifo_tail.data.item,
-                                                     (intptr_t *) &tmp, (intptr_t) ghost)) {
+        /* Release, so that the new head is visible before the tail is
+         * retired.  Otherwise a concurrent push can observe tail == ghost
+         * while the head still holds the old value, decide the fifo is
+         * empty, and store its item into the head on top of our store,
+         * losing one of the two. */
+        if (!opal_atomic_compare_exchange_strong_rel_ptr(&fifo->opal_fifo_tail.data.item,
+                                                         (intptr_t *) &tmp, (intptr_t) ghost)) {
             do {
                 opal_atomic_rmb();
             } while (ghost == item->opal_list_next);
