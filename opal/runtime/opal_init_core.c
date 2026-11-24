@@ -83,6 +83,9 @@
 
 int opal_util_initialized = 0;
 bool opal_warn_on_fork = true;
+/* One rather than zero, so a reader keeping its last seen value in zeroed
+ * memory sees a difference and posts its first get. */
+opal_atomic_int64_t opal_modex_knowledge_epoch = 1;
 
 int opal_init_error(const char *error, int ret);
 

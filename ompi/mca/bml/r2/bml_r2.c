@@ -460,12 +460,16 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     struct ompi_proc_t **new_procs = NULL;
     struct mca_btl_base_endpoint_t **btl_endpoints = NULL;
     mca_bml_base_endpoint_t **bml_endpoints = NULL;
-    /* Set for a proc whose set of btls is not final yet, because some
-     * btl answered NO_INFO or CONNECTING. */
+    /* Set for a proc whose set of btls is not final yet. */
     bool *proc_deferred = NULL;
     size_t n_new_procs = 0;
     opal_bitmap_t proc_status;
     bool saw_deferred = false, saw_unreach = false;
+    /* Whether anything was deferred for a reason the runtime will not
+     * report the end of -- a btl bringing the connection up on its own,
+     * or a walk that could not finish -- which is what obliges this walk
+     * to move the epoch itself. */
+    bool saw_self_driving = false;
     int rc, ret = OMPI_SUCCESS;
 
     if(0 == nprocs) {
@@ -568,13 +572,16 @@ static int mca_bml_r2_add_procs( size_t nprocs,
             int status = MCA_BTL_PROC_STATUS_GET(&proc_status, i);
             ompi_proc_t *proc = new_procs[i];
 
-            if (!MCA_BTL_PROC_DECIDED(status)
-                || (MCA_BTL_PROC_CLAIMED(status) && !MCA_BTL_PROC_USABLE(status))) {
-                /* This btl belongs in the proc's set and is not in it
-                 * yet: publishing without it commits us to a set the
-                 * peer, walking the same modules in the same order, may
-                 * not have committed to. */
+            /* Either way this btl belongs in the proc's set and is not in
+             * it yet: publishing without it commits us to a set the peer,
+             * walking the same modules in the same order, may not have.
+             * They differ only in who moves the epoch: the runtime
+             * delivering what the first one lacks, or this walk. */
+            if (!MCA_BTL_PROC_DECIDED(status)) {
                 proc_deferred[i] = true;
+            } else if (MCA_BTL_PROC_CLAIMED(status) && !MCA_BTL_PROC_USABLE(status)) {
+                proc_deferred[i] = true;
+                saw_self_driving = true;
             }
 
             if (!MCA_BTL_PROC_USABLE(status)) {
@@ -625,6 +632,9 @@ publish:
      * us to a set the peer, whose own walk did finish, never agreed
      * to -- and a published peer is one add_procs() never revisits. */
     if (OMPI_SUCCESS != ret) {
+        /* Self-driven: what stopped the walk was on this side, and the
+         * peer's information may well have arrived already. */
+        saw_self_driving = true;
         for (size_t p = 0; p < n_new_procs ; ++p) {
             proc_deferred[p] = true;
         }
@@ -699,6 +709,14 @@ publish:
         /* Needs no barrier of its own: nothing reads this flag to reach
          * the endpoint, or to reach anything else. */
         opal_proc_learned(&proc->super, OPAL_PROC_FLAG_WIRED);
+    }
+
+    /* Nothing the runtime reports will end a self-driven wait, so move
+     * the epoch by hand: callers gating a retry on it would otherwise
+     * never make the pass that finds the connection up. This is one walk
+     * per tick for as long as the condition lasts, and stops with it. */
+    if (saw_self_driving) {
+        ompi_modex_epoch_advance();
     }
 
     /* NOT_READY wins over UNREACH in a batch with both: a caller that

@@ -51,6 +51,16 @@ OPAL_DECLSPEC extern int opal_cache_line_size;
 /** Do we want to be warned on fork or not? */
 OPAL_DECLSPEC extern bool opal_warn_on_fork;
 
+/* Monotonically increased as information about other peers is gathered
+ * locally. Compare it against the value seen last to decide whether to
+ * repost a modex get: unchanged means another one would come back with
+ * the same answer.
+ *
+ * Read-only outside the layer running the exchange, and a plain read --
+ * seeing the newest value does not matter, since a reader given a stale
+ * one just looks again on its next tick. */
+OPAL_DECLSPEC extern opal_atomic_int64_t opal_modex_knowledge_epoch;
+
 /**
  * @brief list of cleanup functions that should be called as part of opal_finalize_util().
  *        opal_finalize()
