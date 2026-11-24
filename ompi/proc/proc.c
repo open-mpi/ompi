@@ -470,6 +470,8 @@ int ompi_proc_complete_init(void)
             }
             ret = ompi_proc_allocate (OMPI_PROC_MY_NAME->jobid, local_rank, &proc);
             if (OMPI_SUCCESS != ret) {
+                opal_argv_free(peers);
+                opal_mutex_unlock (&ompi_proc_lock);
                 return ret;
             }
             /* get the locality information - all RTEs are required
