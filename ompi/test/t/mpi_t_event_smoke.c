@@ -87,11 +87,33 @@ int main(void)
     (void) MPI_T_event_get_num(&num);
     expect("MPI_T_event_get_num >= 1", num >= 1);
 
-    rc = MPI_T_event_get_info(ev_index, name, &name_len, &verbosity, NULL, NULL, &num, NULL, NULL,
-                              NULL, NULL, &bind);
-    expect("MPI_T_event_get_info ok", MPI_SUCCESS == rc);
-    expect("get_info reports 2 elements", 2 == num);
-    expect("get_info reports NO_OBJECT bind", MPI_T_BIND_NO_OBJECT == bind);
+    /* Request the info output too: allocating it takes the instance lock,
+       which must not happen while holding the MPI_T lock. */
+    {
+        MPI_Info info = MPI_INFO_NULL;
+
+        rc = MPI_T_event_get_info(ev_index, name, &name_len, &verbosity, NULL, NULL, &num, NULL,
+                                  &info, NULL, NULL, &bind);
+        expect("MPI_T_event_get_info ok", MPI_SUCCESS == rc);
+        expect("get_info reports 2 elements", 2 == num);
+        expect("get_info reports NO_OBJECT bind", MPI_T_BIND_NO_OBJECT == bind);
+        expect("get_info returns an info object", MPI_INFO_NULL != info);
+        if (MPI_INFO_NULL != info) {
+            MPI_Info_free(&info);
+        }
+    }
+
+    /* Likewise for the event's source. */
+    {
+        MPI_Info info = MPI_INFO_NULL;
+
+        rc = MPI_T_source_get_info(src_index, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &info);
+        expect("MPI_T_source_get_info ok", MPI_SUCCESS == rc);
+        expect("source_get_info returns an info object", MPI_INFO_NULL != info);
+        if (MPI_INFO_NULL != info) {
+            MPI_Info_free(&info);
+        }
+    }
 
     /* The event appears in its category (category_get_events, Phase 4). */
     {

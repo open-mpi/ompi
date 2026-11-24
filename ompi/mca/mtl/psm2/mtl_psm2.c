@@ -19,6 +19,7 @@
  * Copyright (c) 2021      Nanook Consulting.  All rights reserved.
  *
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/mca/base/mca_base_var.h"
 #include "opal/mca/pmix/pmix-internal.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
@@ -178,7 +180,11 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
 
     ompi_mtl_psm2.ep   = ep;
     ompi_mtl_psm2.epid = epid;
+    /* Publish the MQ under the MCA tool lock, which the performance
+       variable callbacks hold (see ompi_mtl_psm2_finalize()) */
+    mca_base_tool_lock();
     ompi_mtl_psm2.mq   = mq;
+    mca_base_tool_unlock();
 
     OPAL_MODEX_SEND(rc, PMIX_GLOBAL,
                     &mca_mtl_psm2_component.super.mtl_version,
@@ -204,11 +210,24 @@ int ompi_mtl_psm2_module_init(int local_rank, int num_local_procs) {
 int
 ompi_mtl_psm2_finalize(struct mca_mtl_base_module_t* mtl) {
     psm2_error_t err;
+    psm2_mq_t mq;
 
     opal_progress_unregister(ompi_mtl_psm2_progress);
 
+    /* The performance variables read the MQ (see mca_mtl_psm2_get_stats()),
+       and stay registered after it is finalized: the MTL framework stays
+       open while the MPI tool information interface is initialized, and
+       the component may be initialized again with a new MQ.  Their
+       callbacks run with the MCA tool lock held, so clearing the MQ under
+       that lock guarantees that none of them is using it when it is
+       finalized below. */
+    mca_base_tool_lock();
+    mq = ompi_mtl_psm2.mq;
+    ompi_mtl_psm2.mq = NULL;
+    mca_base_tool_unlock();
+
     /* free resources */
-    err = psm2_mq_finalize(ompi_mtl_psm2.mq);
+    err = psm2_mq_finalize(mq);
     if (err) {
         opal_output(0, "Error in psm2_mq_finalize (error %s)\n",
 		    psm2_error_get_string(err));

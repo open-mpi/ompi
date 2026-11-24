@@ -79,20 +79,21 @@ PROTOTYPE ERROR_CLASS event_get_info (INT event_index, STRING_OUT name, INT_OUT 
             *num_elements = event->num_elements;
         }
 
-        /* The standard requires a fresh, user-freeable MPI_Info.  An event type
-           carries no info hints in this implementation, so return an empty one
-           (ompi_info_allocate yields a valid, user-freeable handle). */
         rc = MPI_SUCCESS;
-        if (NULL != info) {
-            *info = ompi_info_allocate ();
-            if (NULL == *info) {
-                rc = MPI_T_ERR_MEMORY;
-                break;
-            }
-        }
     } while (0);
 
     ompi_mpit_unlock ();
+
+    /* The standard requires a fresh, user-freeable MPI_Info.  An event type
+       carries no info hints in this implementation, so return an empty one.
+       Allocate it after releasing the MPI_T lock: ompi_info_allocate() takes
+       the instance lock, which must be taken before the MPI_T lock. */
+    if (MPI_SUCCESS == rc && NULL != info) {
+        *info = ompi_info_allocate ();
+        if (NULL == *info) {
+            rc = MPI_T_ERR_MEMORY;
+        }
+    }
 
     return rc;
 }

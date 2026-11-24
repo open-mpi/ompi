@@ -44,9 +44,9 @@ PROTOTYPE ERROR_CLASS event_set_dropped_handler(EVENT_REGISTRATION handle, EVENT
         dropped_cb = ompit_event_dropped_trampoline;
     }
 
-    /* No big lock: the OPAL framework is internally synchronized, and replacing
+    /* No MPI_T lock: the OPAL framework is internally synchronized, and replacing
        the handler can run a slot's release_cb at teardown, which must not run
-       with ompi_mpit_big_lock held (sec. 5.10). */
+       with the MPI_T lock held (sec. 5.10). */
     rc = mca_base_event_set_dropped_handler (ompit_event_reg (handle), dropped_cb, ctx,
                                              release_cb);
 

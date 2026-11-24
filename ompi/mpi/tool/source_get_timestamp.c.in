@@ -32,9 +32,9 @@ PROTOTYPE ERROR_CLASS source_get_timestamp(INT source_index, ELEMENT_COUNT times
         return MPI_ERR_ARG;
     }
 
-    /* No big lock: the OPAL framework is internally synchronized, and a read of
+    /* No MPI_T lock: the OPAL framework is internally synchronized, and a read of
        a deferred-release source drives the fold, which can deliver events and
-       invoke user callbacks -- they must not run with ompi_mpit_big_lock held
+       invoke user callbacks -- they must not run with the MPI_T lock held
        (sec. 5.10). */
     rc = mca_base_event_source_get_timestamp (source_index, &ts);
 

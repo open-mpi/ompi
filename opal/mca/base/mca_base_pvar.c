@@ -10,6 +10,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2018      Amazon.com, Inc. or its affiliates.  All Rights reserved.
  * Copyright (c) 2026      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -64,26 +65,7 @@ int mca_base_pvar_init(void)
     return ret;
 }
 
-int mca_base_pvar_find(const char *project, const char *framework, const char *component,
-                       const char *name)
-{
-    char *full_name;
-    int ret, index;
-
-    ret = mca_base_var_generate_full_name4(NULL, framework, component, name, &full_name);
-    if (OPAL_SUCCESS != ret) {
-        return OPAL_ERROR;
-    }
-
-    ret = mca_base_pvar_find_by_name(full_name, MCA_BASE_PVAR_CLASS_ANY, &index);
-    free(full_name);
-
-    /* NTH: should we verify the name components match the returned variable? */
-
-    return (OPAL_SUCCESS != ret) ? ret : index;
-}
-
-int mca_base_pvar_find_by_name(const char *full_name, int var_class, int *index)
+static int pvar_find_by_name(const char *full_name, int var_class, int *index)
 {
     mca_base_pvar_t *pvar;
     void *tmp;
@@ -107,6 +89,50 @@ int mca_base_pvar_find_by_name(const char *full_name, int var_class, int *index)
     *index = (int) (uintptr_t) tmp;
 
     return OPAL_SUCCESS;
+}
+
+static int pvar_find(const char *project, const char *framework, const char *component,
+                     const char *name)
+{
+    char *full_name;
+    int ret, index;
+
+    ret = mca_base_var_generate_full_name4(NULL, framework, component, name, &full_name);
+    if (OPAL_SUCCESS != ret) {
+        return OPAL_ERROR;
+    }
+
+    ret = pvar_find_by_name(full_name, MCA_BASE_PVAR_CLASS_ANY, &index);
+    free(full_name);
+
+    /* NTH: should we verify the name components match the returned variable? */
+
+    return (OPAL_SUCCESS != ret) ? ret : index;
+}
+
+int mca_base_pvar_find(const char *project, const char *framework, const char *component,
+                       const char *name)
+{
+    int ret;
+
+    /* Registration modifies the name table under the MPI_T lock */
+    mca_base_tool_lock();
+    ret = pvar_find(project, framework, component, name);
+    mca_base_tool_unlock();
+
+    return ret;
+}
+
+int mca_base_pvar_find_by_name(const char *full_name, int var_class, int *index)
+{
+    int ret;
+
+    /* As in mca_base_pvar_find() */
+    mca_base_tool_lock();
+    ret = pvar_find_by_name(full_name, var_class, index);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_pvar_finalize(void)
@@ -175,13 +201,13 @@ static int mca_base_pvar_notify_ignore(mca_base_pvar_t *pvar, mca_base_pvar_even
     return OPAL_SUCCESS;
 }
 
-int mca_base_pvar_register(const char *project, const char *framework, const char *component,
-                           const char *name, const char *description,
-                           mca_base_var_info_lvl_t verbosity, int var_class,
-                           mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
-                           mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
-                           mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
-                           void *ctx)
+static int pvar_register(const char *project, const char *framework, const char *component,
+                         const char *name, const char *description,
+                         mca_base_var_info_lvl_t verbosity, int var_class,
+                         mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
+                         mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
+                         mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
+                         void *ctx)
 {
     int ret, group_index, pvar_index;
     mca_base_pvar_t *pvar;
@@ -239,7 +265,7 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
     assert(verbosity >= OPAL_INFO_LVL_1 && verbosity <= OPAL_INFO_LVL_9);
 
     /* check if this variable is already registered */
-    ret = mca_base_pvar_find(project, framework, component, name);
+    ret = pvar_find(project, framework, component, name);
     if (OPAL_SUCCESS <= ret) {
         ret = mca_base_pvar_get_internal(ret, &pvar, true);
         if (OPAL_SUCCESS != ret) {
@@ -252,7 +278,7 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
         }
     } else {
         /* find/register an MCA parameter group for this performance variable */
-        group_index = mca_base_var_group_register(project, framework, component, NULL);
+        group_index = mca_base_var_group_register_locked(project, framework, component, NULL);
         if (-1 > group_index) {
             return group_index;
         }
@@ -287,7 +313,7 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
 
             /* add this performance variable to the MCA variable group */
             if (0 <= group_index) {
-                ret = mca_base_var_group_add_pvar(group_index, pvar_index);
+                ret = mca_base_var_group_add_pvar_locked(group_index, pvar_index);
                 if (0 > ret) {
                     break;
                 }
@@ -332,6 +358,29 @@ int mca_base_pvar_register(const char *project, const char *framework, const cha
     return pvar->pvar_index;
 }
 
+int mca_base_pvar_register(const char *project, const char *framework, const char *component,
+                           const char *name, const char *description,
+                           mca_base_var_info_lvl_t verbosity, int var_class,
+                           mca_base_var_type_t type, mca_base_var_enum_t *enumerator, int bind,
+                           mca_base_pvar_flag_t flags, mca_base_get_value_fn_t get_value,
+                           mca_base_set_value_fn_t set_value, mca_base_notify_fn_t notify,
+                           void *ctx)
+{
+    int ret;
+
+    /* Re-registering a (valid) performance variable replaces its
+       callbacks and context, and registering a new one -- including one
+       whose old registration was invalidated -- grows the variable table
+       and repoints its name, so it must not overlap an MPI_T call that is
+       using the variable. */
+    mca_base_tool_lock();
+    ret = pvar_register(project, framework, component, name, description, verbosity, var_class,
+                        type, enumerator, bind, flags, get_value, set_value, notify, ctx);
+    mca_base_tool_unlock();
+
+    return ret;
+}
+
 int mca_base_component_pvar_register(const mca_base_component_t *component, const char *name,
                                      const char *description, mca_base_var_info_lvl_t verbosity,
                                      int var_class, mca_base_var_type_t type,
@@ -371,19 +420,36 @@ int mca_base_pvar_get(int index, const mca_base_pvar_t **pvar)
     return mca_base_pvar_get_internal(index, (mca_base_pvar_t **) pvar, false);
 }
 
-int mca_base_pvar_mark_invalid(int index)
+int mca_base_pvar_mark_invalid_locked(int index)
 {
     mca_base_pvar_t *pvar;
     int ret;
 
+#if OPAL_ENABLE_DEBUG
+    assert(mca_base_tool_lock_held());
+#endif
+
     ret = mca_base_pvar_get_internal(index, &pvar, false);
-    if (OPAL_SUCCESS != ret) {
-        return ret;
+    if (OPAL_SUCCESS == ret) {
+        pvar->flags |= MCA_BASE_PVAR_FLAG_INVALID;
     }
 
-    pvar->flags |= MCA_BASE_PVAR_FLAG_INVALID;
+    return ret;
+}
 
-    return OPAL_SUCCESS;
+int mca_base_pvar_mark_invalid(int index)
+{
+    int ret;
+
+    /* Every MPI_T call that can reach this variable's callbacks holds the
+       MPI_T lock, so once this returns no such call is still running and
+       none will start: the caller may then free whatever the callbacks
+       use, or unload the code that implements them. */
+    mca_base_tool_lock();
+    ret = mca_base_pvar_mark_invalid_locked(index);
+    mca_base_tool_unlock();
+
+    return ret;
 }
 
 int mca_base_pvar_notify(mca_base_pvar_handle_t *handle, mca_base_pvar_event_t event, int *count)
@@ -460,8 +526,6 @@ int mca_base_pvar_handle_alloc(mca_base_pvar_session_t *session, int index, void
         pvar_handle->obj_handle = (NULL == obj_handle ? NULL : *(void **) obj_handle);
         pvar_handle->pvar = pvar;
 
-        *handle = pvar_handle;
-
         /* notify the variable that a handle has been bound and determine
            how many values this handle has. NTH: finding the count should
            probably be pushed into a separate function. */
@@ -523,7 +587,7 @@ int mca_base_pvar_handle_alloc(mca_base_pvar_session_t *session, int index, void
                 }
 
                 if (OPAL_SUCCESS != ret) {
-                    return ret;
+                    break;
                 }
             }
         }
@@ -539,6 +603,7 @@ int mca_base_pvar_handle_alloc(mca_base_pvar_session_t *session, int index, void
             pvar_handle->started = true;
         }
 
+        *handle = pvar_handle;
         ret = OPAL_SUCCESS;
     } while (0);
 
@@ -737,6 +802,10 @@ int mca_base_pvar_handle_write_value(mca_base_pvar_handle_t *handle, const void 
 int mca_base_pvar_handle_start(mca_base_pvar_handle_t *handle)
 {
     int ret;
+
+    if (mca_base_pvar_is_invalid(handle->pvar)) {
+        return OPAL_ERR_NOT_BOUND;
+    }
 
     /* Can't start a continuous or an already started variable */
     if ((handle->pvar->flags & MCA_BASE_PVAR_FLAG_CONTINUOUS) || handle->started) {
@@ -998,14 +1067,16 @@ static void mca_base_pvar_handle_destructor(mca_base_pvar_handle_t *handle)
         free(handle->tmp_value);
     }
 
-    /* remove this handle from the pvar list */
-    if (handle->pvar) {
+    /* remove this handle from the pvar list and the session.
+       mca_base_pvar_handle_alloc() sets the session only when it puts the
+       handle on both lists, so a handle that failed to allocate is on
+       neither. */
+    if (handle->session) {
         opal_list_remove_item(&handle->pvar->bound_handles, &handle->list2);
     }
 
     OBJ_DESTRUCT(&handle->list2);
 
-    /* remove this handle from the session */
     if (handle->session) {
         opal_list_remove_item(&handle->session->handles, &handle->super);
     }

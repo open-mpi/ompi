@@ -29,7 +29,12 @@ PROTOTYPE ERROR_CLASS pvar_session_free(PVAR_SESSION_INOUT session)
     if (MPI_T_PVAR_SESSION_NULL == *session) {
         ret = MPI_T_ERR_INVALID_SESSION;
     } else {
+        /* Freeing the session frees its handles, which calls each
+           variable's notify callback and modifies the variable's list of
+           bound handles: both need the MPI_T lock. */
+        ompi_mpit_lock ();
         OBJ_RELEASE(*session);
+        ompi_mpit_unlock ();
         *session = MPI_T_PVAR_SESSION_NULL;
     }
 

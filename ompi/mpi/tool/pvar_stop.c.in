@@ -6,6 +6,7 @@
  * Copyright (c) 2017      IBM Corporation. All rights reserved.
  * Copyright (c) 2021      Amazon.com, Inc. or its affiliates.  All Rights
  *                         reserved.
+ * Copyright (c) 2026      Jeffrey M. Squyres.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,7 +21,12 @@
 
 static int pvar_handle_stop (mca_base_pvar_handle_t *handle)
 {
-    if (OPAL_SUCCESS != mca_base_pvar_handle_stop (handle)) {
+    int rc = mca_base_pvar_handle_stop (handle);
+
+    if (OPAL_ERR_NOT_BOUND == rc) {
+        /* The variable has been invalidated */
+        return MPI_T_ERR_INVALID_HANDLE;
+    } else if (OPAL_SUCCESS != rc) {
         return MPI_T_ERR_PVAR_NO_STARTSTOP;
     }
 
@@ -41,11 +47,12 @@ PROTOTYPE ERROR_CLASS pvar_stop(PVAR_SESSION session, PVAR_HANDLE handle)
         OPAL_LIST_FOREACH(handle, &session->handles, mca_base_pvar_handle_t) {
             /* Per MPI 3.0: ignore continuous and stopped variables when stopping
                all variable handles. */
-            if (mca_base_pvar_handle_is_running (handle) && !mca_base_pvar_is_continuous (handle->pvar) &&
-                MPI_SUCCESS != pvar_handle_stop (handle)) {
-                /* If we failed to stop any variable we need to return
-                   an error. */
-                ret = MPI_T_ERR_PVAR_NO_STARTSTOP;
+            if (mca_base_pvar_handle_is_running (handle) && !mca_base_pvar_is_continuous (handle->pvar)) {
+                int rc = pvar_handle_stop (handle);
+                /* Keep going, but report the first failure */
+                if (MPI_SUCCESS != rc && MPI_SUCCESS == ret) {
+                    ret = rc;
+                }
             }
         }
     } else {
