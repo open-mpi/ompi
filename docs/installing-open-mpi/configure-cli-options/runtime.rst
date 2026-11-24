@@ -47,11 +47,12 @@ can be used with ``configure``:
   HPC systems.  It used to be called the "Sun Grid Engine", which is
   why the option is still named ``--with-sge``.
 
-* ``--with-tm=DIR``:
-  Specify the directory where the TM libraries and header files are
-  located.  This option is generally only necessary if the TM headers
-  and libraries are not in default compiler/linker search paths.
-
-  TM is the support library for the Torque and PBS Pro resource
-  manager systems, both of which are frequently used as a batch
-  scheduler in HPC systems.
+* ``--with-pbs[=DIR]``:
+  Build support for the PBS Pro, OpenPBS, and Torque resource
+  manager systems, which are frequently used as batch schedulers in
+  HPC systems.  The node allocation is read from the PBS node file,
+  and processes are launched on remote nodes with ``pbs_tmrsh``.
+  ``DIR`` is the PBS installation directory; configure looks for
+  ``pbs_tmrsh`` in ``DIR/bin``, or in ``PATH`` if ``DIR`` is not
+  given.  PBS support is off by default and is only available on
+  Linux.
