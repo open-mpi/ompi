@@ -704,6 +704,31 @@ typedef struct {
         }                                                                            \
     } while (0);
 
+/**
+ * Retrieve a blob that may be published twice under one key: a fuller
+ * one with PMIX_LOCAL scope for peers on the publisher's node, and a
+ * reduced one with PMIX_REMOTE scope for everybody else.
+ *
+ * An unscoped Get may return the PMIX_REMOTE copy even for a peer on
+ * our node. So if "local" is set, ask for the PMIX_LOCAL copy first and
+ * fall back to the unscoped Get if there is none.
+ *
+ * Arguments as for OPAL_MODEX_RECV, plus:
+ *
+ * local - nonzero if the peer shares our node, normally
+ *         OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)
+ */
+#define OPAL_MODEX_RECV_PREFER_LOCAL(r, s, p, d, sz, local)         \
+    do {                                                            \
+        (r) = OPAL_ERR_NOT_FOUND;                                   \
+        if (local) {                                                \
+            OPAL_MODEX_RECV_LOCAL((r), (s), (p), (d), (sz));        \
+        }                                                           \
+        if (OPAL_SUCCESS != (r)) {                                  \
+            OPAL_MODEX_RECV((r), (s), (p), (d), (sz));              \
+        }                                                           \
+    } while (0)
+
 #define PMIX_ERROR_LOG(r) \
     opal_output(0, "[%s:%d] PMIx Error: %s", __FILE__, __LINE__, PMIx_Error_string((r)))
 
