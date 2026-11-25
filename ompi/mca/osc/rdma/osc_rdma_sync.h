@@ -98,6 +98,9 @@ struct ompi_osc_rdma_sync_t {
     /** communication has started on this epoch */
     bool epoch_active;
 
+    /** targeted lock reservation is not yet remotely acquired */
+    opal_atomic_int32_t lock_pending;
+
     /** outstanding rdma operations on epoch */
     ompi_osc_rdma_sync_aligned_counter_t outstanding_rdma __opal_attribute_aligned__(64);
 

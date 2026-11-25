@@ -228,15 +228,6 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int mpi_assert, ompi_w
         return OMPI_ERR_RMA_SYNC;
     }
 
-    if (module->all_sync.epoch_active && (OMPI_OSC_RDMA_SYNC_TYPE_LOCK != module->all_sync.type || MPI_LOCK_EXCLUSIVE == lock_type)) {
-        /* impossible to get an exclusive lock while holding a global shared lock or in a active
-         * target access epoch */
-        return OMPI_ERR_RMA_SYNC;
-    }
-
-    /* clear the global sync object (in case MPI_Win_fence was called) */
-    module->all_sync.type = OMPI_OSC_RDMA_SYNC_TYPE_NONE;
-
     /* create lock item */
     lock = ompi_osc_rdma_sync_allocate (module);
     if (OPAL_UNLIKELY(NULL == lock)) {
@@ -252,17 +243,48 @@ int ompi_osc_rdma_lock_atomic (int lock_type, int target, int mpi_assert, ompi_w
     lock->num_peers = 1;
     OBJ_RETAIN(peer);
 
+    /* Reserve the target before acquiring the remote lock so concurrent
+     * callers cannot both pass the duplicate-lock check. Keep the reservation
+     * pending until the remote lock and local epoch state are both established. */
+    OPAL_THREAD_LOCK(&module->lock);
+    if (module->all_sync.epoch_active && (OMPI_OSC_RDMA_SYNC_TYPE_LOCK != module->all_sync.type || MPI_LOCK_EXCLUSIVE == lock_type)) {
+        /* impossible to get an exclusive lock while holding a global shared lock or in an active
+         * target access epoch */
+        OPAL_THREAD_UNLOCK(&module->lock);
+        OBJ_RELEASE(peer);
+        OBJ_RELEASE(lock);
+        return OMPI_ERR_RMA_SYNC;
+    }
+
+    if (NULL != ompi_osc_rdma_module_lock_find (module, target, NULL)) {
+        OPAL_THREAD_UNLOCK(&module->lock);
+        OBJ_RELEASE(peer);
+        OBJ_RELEASE(lock);
+        return OMPI_ERR_RMA_SYNC;
+    }
+    /* Clear global sync state only after the duplicate check, so a rejected
+     * lock does not change window state. */
+    module->all_sync.type = OMPI_OSC_RDMA_SYNC_TYPE_NONE;
+    (void) opal_atomic_swap_32 (&lock->lock_pending, 1);
+
+    ompi_osc_rdma_module_lock_insert (module, lock);
+    OPAL_THREAD_UNLOCK(&module->lock);
+
     if (0 == (mpi_assert & MPI_MODE_NOCHECK)) {
         ret = ompi_osc_rdma_lock_atomic_internal (module, peer, lock);
     }
 
     if (OPAL_LIKELY(OMPI_SUCCESS == ret)) {
+        OPAL_THREAD_LOCK(&module->lock);
         ++module->passive_target_access_epoch;
-
         opal_atomic_wmb ();
-
-        OPAL_THREAD_SCOPED_LOCK(&module->lock, ompi_osc_rdma_module_lock_insert (module, lock));
+        (void) opal_atomic_swap_32 (&lock->lock_pending, 0);
+        OPAL_THREAD_UNLOCK(&module->lock);
     } else {
+        OPAL_THREAD_LOCK(&module->lock);
+        ompi_osc_rdma_module_lock_remove (module, lock);
+        OPAL_THREAD_UNLOCK(&module->lock);
+        OBJ_RELEASE(peer);
         OBJ_RELEASE(lock);
     }
 
@@ -277,6 +299,7 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win)
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
     ompi_osc_rdma_peer_t *peer;
     ompi_osc_rdma_sync_t *lock;
+    int32_t pending = 0;
     int ret = OMPI_SUCCESS;
 
     OPAL_THREAD_LOCK(&module->lock);
@@ -284,7 +307,8 @@ int ompi_osc_rdma_unlock_atomic (int target, ompi_win_t *win)
     OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_TRACE, "unlock: %d, %s", target, win->w_name);
 
     lock = ompi_osc_rdma_module_lock_find (module, target, &peer);
-    if (OPAL_UNLIKELY(NULL == lock)) {
+    if (OPAL_UNLIKELY(NULL == lock ||
+                      !opal_atomic_compare_exchange_strong_32 (&lock->lock_pending, &pending, 0))) {
         OSC_RDMA_VERBOSE(MCA_BASE_VERBOSE_INFO, "target %d is not locked in window %s",
                          target, win->w_name);
         OPAL_THREAD_UNLOCK(&module->lock);
