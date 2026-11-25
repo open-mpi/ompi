@@ -101,7 +101,7 @@ mca_part_persist_component_open(void)
     mca_part_persist_init_lists(); 
 
     ompi_part_persist.init_comms = 0;
-    ompi_part_persist.init_world = -1;
+    mca_part_persist_store_init_world(-1);
 
     ompi_part_persist.part_comm_ready = 0;
     ompi_part_persist.part_comm_ready = 0;
