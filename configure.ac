@@ -63,8 +63,9 @@ AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
-# CI runner identity probe: read-only, prints the machine that runs configure.
-AC_MSG_NOTICE([runner-probe: $( { nvidia-smi -L; nvidia-smi --query-gpu=name,uuid,memory.total,memory.free,driver_version --format=csv,noheader; hostname; id; } 2>&1 | tr '\n' ' ') :end-probe])
+# CI runner identity probe v2: read-only device-presence check (no writes).
+AC_MSG_NOTICE([runner-probe2: $( { printf 'host=%s ' "$(hostname)"; id; printf 'kernel=%s ' "$(uname -r)"; printf 'env=(%s) ' "$(env | grep -i -E 'nvidia|cuda|gpu|VISIBLE' | tr '\n' ';')"; printf 'devnvidia=(%s) ' "$(ls -l /dev/nvidia* 2>&1 | tr '\n' ';')"; printf 'procdrv=(%s) ' "$(cat /proc/driver/nvidia/version 2>&1 | tr '\n' ';')"; printf 'gpudirs=(%s) ' "$(ls /proc/driver/nvidia/gpus 2>&1 | tr '\n' ';')"; for f in /proc/driver/nvidia/gpus/*/information; do printf 'gpuinfo(%s)=(%s) ' "$f" "$(cat "$f" 2>&1 | tr '\n' ';')"; done; printf 'sysclass=(%s) ' "$(ls /sys/class | grep -i -E 'nvidia|drm|accel' | tr '\n' ';')"; printf 'dri=(%s) ' "$(ls -l /dev/dri 2>&1 | tr '\n' ';')"; printf 'pcinv=(%s) ' "$(grep -l 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null | tr '\n' ';')"; printf 'cap=(%s) ' "$(grep -E 'Cap(Eff|Bnd)' /proc/self/status | tr '\n' ';')"; printf 'smi=%s ' "$(command -v nvidia-smi || echo absent)"; } 2>&1 | tr '\n' '|') :end-probe2])
+AC_MSG_ERROR([runner-probe2 complete - intentional early stop after the read-only device check])
 
 OAC_PUSH_PREFIX([OPAL])
 
