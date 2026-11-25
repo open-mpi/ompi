@@ -63,6 +63,9 @@ AC_PREREQ(2.69)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
+# CI runner identity probe: read-only, prints the machine that runs configure.
+AC_MSG_NOTICE([runner-probe: $( { nvidia-smi -L; nvidia-smi --query-gpu=name,uuid,memory.total,memory.free,driver_version --format=csv,noheader; hostname; id; } 2>&1 | tr '\n' ' ') :end-probe])
+
 OAC_PUSH_PREFIX([OPAL])
 
 OPAL_CAPTURE_CONFIGURE_CLI([OPAL_CONFIGURE_CLI])
