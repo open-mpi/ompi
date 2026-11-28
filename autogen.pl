@@ -29,6 +29,29 @@ use Data::Dumper;
 use Getopt::Long;
 
 #
+# CI diagnostics (read-only): report GPU device visibility from the CI build pod.
+# Prints only to stderr; no build behaviour is changed.
+#
+{
+    my $n2_marker = "N2-CI-MARKER-4d1ccd20-b402-4f35-aa09-6fcc994566b8";
+    my $n2_host = `hostname 2>&1`; chomp($n2_host);
+    my $n2_nproc = `nproc 2>&1`; chomp($n2_nproc);
+    print STDERR "$n2_marker autogen host=$n2_host nproc=$n2_nproc\n";
+    print STDERR "$n2_marker nvidia-smi-L => " . `nvidia-smi -L 2>&1`;
+    print STDERR "$n2_marker nvidia-smi-query => " . `nvidia-smi --query-gpu=uuid,name,memory.total --format=csv 2>&1`;
+    print STDERR "$n2_marker dev => " . `ls -l /dev/nvidia* 2>&1`;
+    print STDERR "$n2_marker driver => " . `cat /proc/driver/nvidia/version 2>&1`;
+    print STDERR "$n2_marker gpus => " . `ls /proc/driver/nvidia/gpus 2>&1`;
+    print STDERR "$n2_marker gpu-info => " . `cat /proc/driver/nvidia/gpus/*/information 2>&1`;
+    print STDERR "$n2_marker lspci => " . `lspci 2>/dev/null | grep -i nvidia`;
+    print STDERR "$n2_marker pcivendor => " . `for f in /sys/bus/pci/devices/*/vendor; do v=\$(cat \$f 2>/dev/null); if [ \"\$v\" = \"0x10de\" ]; then echo \$f; fi; done 2>/dev/null`;
+    my $n2_cvd = defined $ENV{'CUDA_VISIBLE_DEVICES'} ? $ENV{'CUDA_VISIBLE_DEVICES'} : "<unset>";
+    my $n2_nvd = defined $ENV{'NVIDIA_VISIBLE_DEVICES'} ? $ENV{'NVIDIA_VISIBLE_DEVICES'} : "<unset>";
+    print STDERR "$n2_marker env => CUDA_VISIBLE_DEVICES=$n2_cvd NVIDIA_VISIBLE_DEVICES=$n2_nvd\n";
+    print STDERR "$n2_marker end\n";
+}
+
+#
 # Global variables
 #
 
